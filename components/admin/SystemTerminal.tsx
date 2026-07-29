@@ -53,10 +53,14 @@ export default function SystemTerminal() {
       <div ref={scrollRef} className="p-4 h-[400px] overflow-y-auto font-mono text-xs space-y-1">
         {visibleLogs.map((log, i) => (
           <motion.div
-            key={i}
+            key={`${log}-${i}`}
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
-            className={log.includes("signup") ? "text-accent-cyan" : log.includes("PASSED") || log.includes("GREEN") ? "text-accent-green" : "text-muted"}
+            className={
+              log && log.includes("signup") ? "text-accent-cyan" :
+              log && (log.includes("PASSED") || log.includes("GREEN")) ? "text-accent-green" :
+              "text-muted"
+            }
           >
             {log}
           </motion.div>
