@@ -1,0 +1,164 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Mail, ArrowRight, Check, Sparkles, Users, Clock, Crown, Zap, Building2, User, Briefcase } from "lucide-react";
+import ScrollReveal from "@/components/ui/ScrollReveal";
+import Confetti from "@/components/ui/Confetti";
+import { addWaitlistUser } from "@/lib/data";
+
+const industries = ["Technology", "Finance", "Healthcare", "Retail", "Manufacturing", "Education", "Media", "Energy", "Logistics", "Construction", "Other"];
+const employeeRanges = ["1-10", "10-50", "50-200", "200-1000", "1000+"];
+const interests = ["Automation", "Data Analysis", "Customer Support", "Marketing Content", "Document Generation", "Workflow Optimization", "Problem Solving", "Other"];
+
+export default function Waitlist() {
+  const [form, setForm] = useState({ name: "", email: "", company: "", industry: "", employees: "", interest: "" });
+  const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [confetti, setConfetti] = useState(false);
+  const [count, setCount] = useState(127);
+
+  useEffect(() => {
+    const interval = setInterval(() => setCount((c) => c + Math.floor(Math.random() * 3)), 8000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.email.includes("@")) return;
+    setLoading(true);
+    await addWaitlistUser(form);
+    setLoading(false);
+    setSubmitted(true);
+    setConfetti(true);
+    setTimeout(() => setConfetti(false), 4000);
+  };
+
+  return (
+    <section id="waitlist" className="relative py-32 overflow-hidden">
+      <Confetti active={confetti} />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-accent-purple/8 rounded-full blur-[180px] pointer-events-none" />
+
+      <div className="relative z-10 max-w-4xl mx-auto px-6 lg:px-8">
+        <ScrollReveal className="text-center mb-12">
+          <span className="inline-block px-4 py-1.5 rounded-full glass text-sm font-medium text-accent-purple mb-4">Exclusive Access</span>
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6">
+            Join the <span className="text-gradient">Founding Companies</span>
+          </h2>
+          <p className="text-lg text-muted max-w-2xl mx-auto">
+            Be among the first Swedish companies to experience BudAI. Early adopters receive lifetime priority support, exclusive features, and founding company status.
+          </p>
+        </ScrollReveal>
+
+        <ScrollReveal>
+          <div className="relative p-8 md:p-12 rounded-3xl glass-strong overflow-hidden border border-white/[0.06]">
+            <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-br from-accent-cyan/8 to-accent-purple/8 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+            <div className="absolute bottom-0 left-0 w-60 h-60 bg-gradient-to-tr from-accent-green/8 to-accent-cyan/8 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
+
+            <AnimatePresence mode="wait">
+              {!submitted ? (
+                <motion.div key="form" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, y: -20 }} className="relative z-10">
+                  <form onSubmit={handleSubmit} className="space-y-4 mb-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="relative">
+                        <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
+                        <input type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Full name" required className="w-full pl-11 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-muted focus:outline-none focus:border-accent-cyan/40 transition-colors text-sm" />
+                      </div>
+                      <div className="relative">
+                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
+                        <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="Business email" required className="w-full pl-11 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-muted focus:outline-none focus:border-accent-cyan/40 transition-colors text-sm" />
+                      </div>
+                      <div className="relative">
+                        <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
+                        <input type="text" value={form.company} onChange={(e) => setForm({ ...form, company: e.target.value })} placeholder="Company name" required className="w-full pl-11 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-muted focus:outline-none focus:border-accent-cyan/40 transition-colors text-sm" />
+                      </div>
+                      <div className="relative">
+                        <Briefcase className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
+                        <select value={form.industry} onChange={(e) => setForm({ ...form, industry: e.target.value })} required className="w-full pl-11 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-muted focus:outline-none focus:border-accent-cyan/40 transition-colors text-sm appearance-none">
+                          <option value="" disabled className="bg-surface">Select industry</option>
+                          {industries.map((i) => <option key={i} value={i} className="bg-surface">{i}</option>)}
+                        </select>
+                      </div>
+                      <div className="relative">
+                        <Users className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
+                        <select value={form.employees} onChange={(e) => setForm({ ...form, employees: e.target.value })} required className="w-full pl-11 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-muted focus:outline-none focus:border-accent-cyan/40 transition-colors text-sm appearance-none">
+                          <option value="" disabled className="bg-surface">Number of employees</option>
+                          {employeeRanges.map((e) => <option key={e} value={e} className="bg-surface">{e}</option>)}
+                        </select>
+                      </div>
+                      <div className="relative">
+                        <Sparkles className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
+                        <select value={form.interest} onChange={(e) => setForm({ ...form, interest: e.target.value })} required className="w-full pl-11 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-muted focus:outline-none focus:border-accent-cyan/40 transition-colors text-sm appearance-none">
+                          <option value="" disabled className="bg-surface">What do you need AI for?</option>
+                          {interests.map((i) => <option key={i} value={i} className="bg-surface">{i}</option>)}
+                        </select>
+                      </div>
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="w-full md:w-auto px-8 py-4 bg-gradient-to-r from-accent-cyan to-accent-purple rounded-xl font-semibold text-white flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-40"
+                    >
+                      {loading ? (
+                        <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }} className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full" />
+                      ) : (
+                        <>Request Access <ArrowRight className="w-5 h-5" /></>
+                      )}
+                    </button>
+                  </form>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    {[
+                      { icon: Users, label: "Companies Waiting", value: `${count}+`, color: "text-accent-cyan" },
+                      { icon: Crown, label: "Founding Spots", value: "500", color: "text-accent-purple" },
+                      { icon: Clock, label: "Expected Launch", value: "Q2 2026", color: "text-accent-green" },
+                    ].map((s) => (
+                      <div key={s.label} className="flex items-center gap-3 p-4 rounded-xl bg-white/[0.02] border border-white/[0.03]">
+                        <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center">
+                          <s.icon className={`w-5 h-5 ${s.color}`} />
+                        </div>
+                        <div>
+                          <div className="text-xl font-bold text-white">{s.value}</div>
+                          <div className="text-xs text-muted">{s.label}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="mt-6 flex items-center justify-center gap-6 text-xs text-muted/50">
+                    <span className="flex items-center gap-1.5"><Zap className="w-3 h-3 text-accent-cyan" /> Priority Support</span>
+                    <span className="flex items-center gap-1.5"><Sparkles className="w-3 h-3 text-accent-purple" /> Exclusive Features</span>
+                    <span className="flex items-center gap-1.5"><Crown className="w-3 h-3 text-accent-green" /> Founding Status</span>
+                  </div>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="success"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="relative z-10 text-center py-10"
+                >
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: "spring", stiffness: 200, damping: 15 }}
+                    className="w-20 h-20 rounded-full bg-gradient-to-br from-accent-green to-accent-cyan flex items-center justify-center mx-auto mb-6 shadow-[0_0_40px_rgba(0,255,157,0.3)]"
+                  >
+                    <Check className="w-10 h-10 text-white" />
+                  </motion.div>
+                  <h3 className="text-3xl font-bold mb-3">Welcome to the future.</h3>
+                  <p className="text-muted mb-2">We have added <span className="text-accent-cyan font-medium">{form.email}</span> to our founding companies list.</p>
+                  <p className="text-sm text-muted/50">You will be among the first to experience BudAI. We will be in touch soon.</p>
+                  <div className="mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-full glass text-sm text-accent-green">
+                    <Crown className="w-4 h-4" />
+                    Founding Company Status: ACTIVE
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </ScrollReveal>
+      </div>
+    </section>
+  );
+}
