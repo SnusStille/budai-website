@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { ArrowRight, Sparkles, Code2, Zap, Shield, ChevronDown } from "lucide-react";
+import BuddyCard from "@/components/sections/BuddyCard";
 
 export default function Hero() {
   return (
@@ -116,6 +117,10 @@ export default function Hero() {
           <span className="text-muted/30">·</span>
           <span>Sweden</span>
         </motion.p>
+
+        <div className="flex items-center justify-center">
+          <BuddyCard />
+        </div>
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
