@@ -1,22 +1,48 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowRight, Sparkles, Code2, Zap, Shield, ChevronDown } from "lucide-react";
-import BuddyCard from "@/components/sections/BuddyCard";
+import { ArrowRight, Sparkles, Code2, Zap, Shield, ChevronDown, X } from "lucide-react";
 
 export default function Hero() {
+  const [devMode, setDevMode] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < 768);
+    onResize();
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  useEffect(() => {
+    if (!devMode) return;
+    const t = setTimeout(() => setDevMode(false), 4000);
+    return () => clearTimeout(t);
+  }, [devMode]);
+
+  const particleCount = isMobile ? 1 : 4;
+
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[900px] bg-accent-cyan/8 rounded-full blur-[180px] pointer-events-none" />
-      <div className="absolute top-1/3 right-1/4 w-[600px] h-[600px] bg-accent-purple/6 rounded-full blur-[150px] pointer-events-none" />
-      <div className="absolute bottom-1/4 left-1/4 w-[500px] h-[500px] bg-accent-green/5 rounded-full blur-[130px] pointer-events-none" />
+      {!isMobile && (
+        <>
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[900px] bg-accent-cyan/8 rounded-full blur-[180px] pointer-events-none" />
+          <div className="absolute top-1/3 right-1/4 w-[600px] h-[600px] bg-accent-purple/6 rounded-full blur-[150px] pointer-events-none" />
+          <div className="absolute bottom-1/4 left-1/4 w-[500px] h-[500px] bg-accent-green/5 rounded-full blur-[130px] pointer-events-none" />
+        </>
+      )}
 
       <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8 text-center">
         <motion.div
           initial={{ opacity: 0, y: 20, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 0.6, delay: 0.3 }}
-          className="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full glass mb-10"
+          className="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full glass mb-10 cursor-pointer"
+          onClick={() => setDevMode((s) => !s)}
+          role="button"
+          aria-pressed={devMode}
+          aria-label="Toggle developer preview overlay"
         >
           <span className="relative flex h-2.5 w-2.5">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-green opacity-75" />
@@ -55,7 +81,7 @@ export default function Hero() {
             </motion.div>
           </div>
 
-          {[0, 1, 2, 3].map((i) => (
+          {Array.from({ length: particleCount }).map((_, i) => (
             <motion.div
               key={i}
               animate={{ rotate: 360 }}
@@ -118,9 +144,7 @@ export default function Hero() {
           <span>Sweden</span>
         </motion.p>
 
-        <div className="flex items-center justify-center">
-          <BuddyCard />
-        </div>
+        {/* Buddy moved to footer; keep hero minimal for performance */}
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -179,6 +203,21 @@ export default function Hero() {
             <ChevronDown className="w-5 h-5 text-muted/40" />
           </motion.div>
         </motion.div>
+        {devMode && (
+          <div className="fixed inset-0 z-40 flex items-center justify-center pointer-events-none">
+            <div className="absolute inset-0 pointer-events-auto" />
+            <div className="absolute inset-0 bg-gradient-to-br from-[#00121a]/40 via-[#3a003d]/30 to-[#072013]/30 backdrop-blur-sm animate-pulse" />
+            <div className="relative z-50 pointer-events-auto flex items-start justify-end w-full h-full p-6">
+              <button
+                onClick={() => setDevMode(false)}
+                className="ml-auto bg-black/60 text-white/90 px-3 py-2 rounded-full shadow-lg"
+                aria-label="Close developer overlay"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </section>
   );
