@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Bot, User, Sparkles, Loader2, Zap, Brain, Target, TrendingUp, FileText, ToggleLeft, ToggleRight } from "lucide-react";
+import { Send, Bot, User, Sparkles, Loader2, Zap, Brain, Target, TrendingUp, FileText } from "lucide-react";
 import ScrollReveal from "@/components/ui/ScrollReveal";
 
 interface Msg {
@@ -22,13 +22,12 @@ const presets = [
 
 export default function AIPlayground() {
   const [messages, setMessages] = useState<Msg[]>([
-    { id: 0, type: "ai", text: "Hello! I'm BudAI. Ask me anything, or try one of the examples below." },
+    { id: 0, type: "ai", text: "Hello! I'm BudAI. Ask me anything about your business, or try one of the examples below." },
   ]);
   const [input, setInput] = useState("");
   const [thinking, setThinking] = useState(false);
   const [typingText, setTypingText] = useState("");
   const [confidence, setConfidence] = useState(0);
-  const [memoryEnabled, setMemoryEnabled] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
   const idRef = useRef(1);
 
@@ -44,28 +43,23 @@ export default function AIPlayground() {
       current += lines[i];
       if (i < lines.length - 1) current += "\n";
       setTypingText(current);
-      await new Promise((r) => setTimeout(r, 20 + Math.random() * 30));
+      await new Promise((r) => setTimeout(r, 30 + Math.random() * 50));
     }
     setTypingText("");
     setMessages((prev) => [...prev, { id: idRef.current++, type: "ai", text: fullText }]);
   };
 
+  // Calls the real backend route, which calls Claude.
   const callBudAI = async (text: string): Promise<string> => {
     try {
-      const payload = {
-        message: text,
-        memoryEnabled,
-        history: memoryEnabled ? messages.slice(-4).map(m => ({ role: m.type, content: m.text })) : []
-      };
-
       const res = await fetch("/api/playground", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ message: text }),
       });
 
       if (res.status === 429) {
-        return "You've hit the beta message limit for now — please try again in a bit.";
+        return "You've hit the demo's message limit for now — please try again in a bit, or request early access to keep exploring BudAI's full capabilities.";
       }
 
       if (!res.ok) {
@@ -125,7 +119,7 @@ export default function AIPlayground() {
             Experience <span className="text-gradient">BudAI</span>
           </h2>
           <p className="text-lg text-muted max-w-2xl mx-auto">
-            Try BudAI right now. See how it interacts and remembers context.
+            Try BudAI right now. See how it will interact with your business.
           </p>
         </ScrollReveal>
 
@@ -144,27 +138,19 @@ export default function AIPlayground() {
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-green opacity-75" />
                       <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-accent-green" />
                     </span>
-                    Online — Beta
+                    Online — Developer Preview
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-4">
-                <button
-                  onClick={() => setMemoryEnabled(!memoryEnabled)}
-                  className="flex items-center gap-2 text-xs text-muted hover:text-white transition-colors"
-                  title="When enabled, BudAI remembers recent messages for context."
-                >
-                  <Brain className={`w-4 h-4 ${memoryEnabled ? 'text-accent-cyan' : ''}`} />
-                  <span className="hidden sm:inline">Memory</span>
-                  {memoryEnabled ? <ToggleRight className="w-5 h-5 text-accent-cyan" /> : <ToggleLeft className="w-5 h-5" />}
-                </button>
-                {thinking && (
-                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent-cyan/10 text-xs">
-                    <Brain className="w-3.5 h-3.5 text-accent-cyan animate-pulse" />
-                    <span className="text-accent-cyan">Thinking...</span>
-                  </div>
-                )}
-              </div>
+              {thinking && (
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent-cyan/10 text-xs">
+                  <Brain className="w-3.5 h-3.5 text-accent-cyan animate-pulse" />
+                  <span className="text-accent-cyan">Thinking...</span>
+                  {confidence > 0 && (
+                    <span className="text-muted">{Math.round(confidence)}% confidence</span>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Messages */}
