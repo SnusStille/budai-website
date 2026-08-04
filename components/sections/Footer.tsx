@@ -2,7 +2,16 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { Cpu, Github, MessageSquare, Linkedin, Mail, ArrowUpRight, X } from "lucide-react";
+import { motion } from "framer-motion";
+import {
+  Cpu,
+  Github,
+  MessageSquare,
+  Linkedin,
+  Mail,
+  ArrowUpRight,
+  X,
+} from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 
 export default function Footer() {
