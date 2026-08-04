@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { CheckCircle, XCircle, Trash2, Search } from "lucide-react";
+import { CheckCircle, XCircle, Trash2, Search, User, Building2 } from "lucide-react";
 import { WaitlistUser } from "@/types";
 import { updateUserStatus, deleteUser } from "@/lib/data";
 
@@ -11,7 +11,8 @@ export default function UserTable({ users, loading, onUpdate }: { users: Waitlis
   const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "approved" | "rejected">("all");
 
   const filtered = users.filter((u) => {
-    const matchesSearch = u.name.toLowerCase().includes(filter.toLowerCase()) || u.email.toLowerCase().includes(filter.toLowerCase()) || u.company.toLowerCase().includes(filter.toLowerCase());
+    const searchStr = `${u.name || ""} ${u.email} ${u.company || ""}`.toLowerCase();
+    const matchesSearch = searchStr.includes(filter.toLowerCase());
     const matchesStatus = statusFilter === "all" || u.access_status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -22,8 +23,10 @@ export default function UserTable({ users, loading, onUpdate }: { users: Waitlis
   };
 
   const handleDelete = async (id: string) => {
-    await deleteUser(id);
-    onUpdate();
+    if (confirm("Are you sure you want to delete this user?")) {
+      await deleteUser(id);
+      onUpdate();
+    }
   };
 
   const statusColors = {
@@ -52,7 +55,7 @@ export default function UserTable({ users, loading, onUpdate }: { users: Waitlis
             onChange={(e) => setStatusFilter(e.target.value as any)}
             className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-white appearance-none"
           >
-            <option value="all">All</option>
+            <option value="all">All Status</option>
             <option value="pending">Pending</option>
             <option value="approved">Approved</option>
             <option value="rejected">Rejected</option>
@@ -64,9 +67,9 @@ export default function UserTable({ users, loading, onUpdate }: { users: Waitlis
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-white/[0.06] text-muted text-xs uppercase tracking-wider">
-              <th className="text-left px-5 py-3">User</th>
+              <th className="text-left px-5 py-3">Type</th>
+              <th className="text-left px-5 py-3">User / Email</th>
               <th className="text-left px-5 py-3">Company</th>
-              <th className="text-left px-5 py-3">Industry</th>
               <th className="text-left px-5 py-3">Status</th>
               <th className="text-left px-5 py-3">Date</th>
               <th className="text-right px-5 py-3">Actions</th>
@@ -86,13 +89,24 @@ export default function UserTable({ users, loading, onUpdate }: { users: Waitlis
                   className="border-b border-white/[0.03] hover:bg-white/[0.02] transition-colors"
                 >
                   <td className="px-5 py-4">
-                    <div className="font-medium text-white">{user.name}</div>
+                    <div className="flex items-center gap-2">
+                      {user.type === "business" ? (
+                        <Building2 className="w-4 h-4 text-accent-purple" />
+                      ) : (
+                        <User className="w-4 h-4 text-accent-cyan" />
+                      )}
+                      <span className="text-[10px] font-mono uppercase tracking-tighter opacity-50">
+                        {user.type}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-5 py-4">
+                    <div className="font-medium text-white">{user.name || "Anonymous"}</div>
                     <div className="text-xs text-muted">{user.email}</div>
                   </td>
-                  <td className="px-5 py-4 text-muted">{user.company}</td>
-                  <td className="px-5 py-4 text-muted">{user.industry}</td>
+                  <td className="px-5 py-4 text-muted">{user.company || "—"}</td>
                   <td className="px-5 py-4">
-                    <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${statusColors[user.access_status]}`}>
+                    <span className={`inline-flex px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${statusColors[user.access_status]}`}>
                       {user.access_status}
                     </span>
                   </td>

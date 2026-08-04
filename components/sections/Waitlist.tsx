@@ -10,7 +10,7 @@ import { useLanguage } from "@/context/LanguageContext";
 
 export default function Waitlist() {
   const { language } = useLanguage();
-  const [form, setForm] = useState({ email: "", company: "", type: "individual" });
+  const [form, setForm] = useState<{ email: string; company: string; type: "individual" | "business" }>({ email: "", company: "", type: "individual" });
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [confetti, setConfetti] = useState(false);

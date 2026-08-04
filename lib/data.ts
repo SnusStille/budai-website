@@ -8,11 +8,11 @@ const supabase = (supabaseUrl && supabaseKey) ? createClient(supabaseUrl, supaba
 
 // Fallback mock data (used if Supabase is not connected)
 const mockUsers: WaitlistUser[] = [
-  { id: "1", name: "Anna Lindqvist", email: "anna@techcorp.se", company: "TechCorp AB", industry: "Technology", employees: "50-200", interest: "Automation", created_at: "2026-07-20T10:00:00Z", access_status: "approved" },
-  { id: "2", name: "Erik Johansson", email: "erik@nordicretail.se", company: "Nordic Retail", industry: "Retail", employees: "200-1000", interest: "Data Analysis", created_at: "2026-07-21T14:30:00Z", access_status: "pending" },
-  { id: "3", name: "Sofia Bergström", email: "sofia@healthplus.se", company: "HealthPlus", industry: "Healthcare", employees: "10-50", interest: "Customer Support", created_at: "2026-07-22T09:15:00Z", access_status: "pending" },
-  { id: "4", name: "Marcus Holm", email: "marcus@finova.se", company: "Finova Group", industry: "Finance", employees: "1000+", interest: "Workflow Optimization", created_at: "2026-07-23T16:45:00Z", access_status: "approved" },
-  { id: "5", name: "Lisa Andersson", email: "lisa@buildit.se", company: "BuildIt Construction", industry: "Construction", employees: "50-200", interest: "Document Generation", created_at: "2026-07-24T11:20:00Z", access_status: "pending" },
+  { id: "1", name: "Anna Lindqvist", email: "anna@techcorp.se", company: "TechCorp AB", industry: "Technology", employees: "50-200", interest: "Automation", type: "business", created_at: "2026-07-20T10:00:00Z", access_status: "approved" },
+  { id: "2", name: "Erik Johansson", email: "erik@nordicretail.se", company: "Nordic Retail", industry: "Retail", employees: "200-1000", interest: "Data Analysis", type: "business", created_at: "2026-07-21T14:30:00Z", access_status: "pending" },
+  { id: "3", name: "Sofia Bergström", email: "sofia@healthplus.se", company: "HealthPlus", industry: "Healthcare", employees: "10-50", interest: "Customer Support", type: "business", created_at: "2026-07-22T09:15:00Z", access_status: "pending" },
+  { id: "4", name: "Marcus Holm", email: "marcus@finova.se", company: "Finova Group", industry: "Finance", employees: "1000+", interest: "Workflow Optimization", type: "business", created_at: "2026-07-23T16:45:00Z", access_status: "approved" },
+  { id: "5", name: "Lisa Andersson", email: "lisa@buildit.se", company: "BuildIt Construction", industry: "Construction", employees: "50-200", interest: "Document Generation", type: "business", created_at: "2026-07-24T11:20:00Z", access_status: "pending" },
 ];
 
 export const mockAnalytics = [
@@ -57,7 +57,7 @@ export async function addWaitlistUser(
       ...user,
       created_at: new Date().toISOString(),
       access_status: "pending",
-    };
+    } as WaitlistUser;
     mockUsers.unshift(newUser);
     return new Promise((resolve) => setTimeout(() => resolve(newUser), 800));
   }
