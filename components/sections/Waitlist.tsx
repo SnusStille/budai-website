@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mail, ArrowRight, Check, Sparkles, Building2, User, Zap, Crown, Clock, Users } from "lucide-react";
+import { Mail, ArrowRight, Check, Sparkles, Building2, User } from "lucide-react";
 import ScrollReveal from "@/components/ui/ScrollReveal";
 import Confetti from "@/components/ui/Confetti";
 import { addWaitlistUser } from "@/lib/data";
@@ -10,7 +10,17 @@ import { useLanguage } from "@/context/LanguageContext";
 
 export default function Waitlist() {
   const { language } = useLanguage();
-  const [form, setForm] = useState({ email: "", company: "", type: "individual" });
+
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    industry: "",
+    employees: "",
+    interest: "",
+    company: "",
+    type: "individual",
+  });
+
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [confetti, setConfetti] = useState(false);
@@ -18,14 +28,20 @@ export default function Waitlist() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     if (!form.email.includes("@")) return;
+
     setLoading(true);
+
     try {
       await addWaitlistUser(form);
+
       setLoading(false);
       setSubmitted(true);
       setConfetti(true);
+
       setTimeout(() => setConfetti(false), 4000);
+
     } catch (err) {
       setLoading(false);
       alert("Something went wrong. Please try again.");

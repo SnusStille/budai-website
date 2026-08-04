@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { Cpu, Github, MessageSquare, Linkedin, Mail, ArrowUpRight, X } from "lucide-react";
+import { Github, MessageSquare, Linkedin, Mail, Cpu, ArrowUpRight, X } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
+import { motion } from "framer-motion";
 
 export default function Footer() {
   const [showBuddy, setShowBuddy] = useState(false);
