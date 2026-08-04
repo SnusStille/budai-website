@@ -1,10 +1,10 @@
 import { createClient } from "@supabase/supabase-js";
 import { WaitlistUser } from "@/types";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
 
-const supabase = createClient(supabaseUrl, supabaseKey);
+const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
 
 // Fallback mock data (used if Supabase is not connected)
 const mockUsers: WaitlistUser[] = [
@@ -27,7 +27,7 @@ export const mockAnalytics = [
 
 // Check if Supabase is configured
 const isSupabaseReady = () => {
-  return supabaseUrl && supabaseKey && !supabaseUrl.includes("your-project");
+  return supabase !== null && !supabaseUrl.includes("your-project");
 };
 
 export async function getWaitlistUsers(): Promise<WaitlistUser[]> {
@@ -35,7 +35,7 @@ export async function getWaitlistUsers(): Promise<WaitlistUser[]> {
     return new Promise((resolve) => setTimeout(() => resolve([...mockUsers]), 600));
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await supabase!
     .from("waitlist_users")
     .select("*")
     .order("created_at", { ascending: false });
@@ -62,7 +62,7 @@ export async function addWaitlistUser(
     return new Promise((resolve) => setTimeout(() => resolve(newUser), 800));
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await supabase!
     .from("waitlist_users")
     .insert([{ ...user, access_status: "pending" }])
     .select()
@@ -83,7 +83,7 @@ export async function updateUserStatus(id: string, status: WaitlistUser["access_
     return new Promise((resolve) => setTimeout(resolve, 400));
   }
 
-  const { error } = await supabase
+  const { error } = await supabase!
     .from("waitlist_users")
     .update({ access_status: status })
     .eq("id", id);
@@ -101,7 +101,7 @@ export async function deleteUser(id: string): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, 400));
   }
 
-  const { error } = await supabase
+  const { error } = await supabase!
     .from("waitlist_users")
     .delete()
     .eq("id", id);
