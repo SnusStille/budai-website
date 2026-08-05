@@ -2,9 +2,8 @@
 
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Bot, User, Sparkles, Loader2, Zap, Brain, Target, TrendingUp, FileText, ToggleLeft, ToggleRight } from "lucide-react";
+import { Send, Bot, User, Sparkles, Loader2, Zap, Brain, Target, TrendingUp, FileText } from "lucide-react";
 import ScrollReveal from "@/components/ui/ScrollReveal";
-import { useLanguage } from "@/context/LanguageContext";
 
 interface Msg {
   id: number;
@@ -12,26 +11,25 @@ interface Msg {
   text: string;
 }
 
+const presets = [
+  { label: "Create a marketing plan", icon: Target },
+  { label: "Analyze Q3 sales data", icon: TrendingUp },
+  { label: "Draft a professional email", icon: FileText },
+  { label: "Automate weekly reporting", icon: Zap },
+  { label: "Write a job description", icon: FileText },
+  { label: "Improve my workflow", icon: Brain },
+];
+
 export default function AIPlayground() {
-  const { language, t } = useLanguage();
   const [messages, setMessages] = useState<Msg[]>([
-    { id: 0, type: "ai", text: language === "sv" ? "Hej! Jag är BudAI. Fråga mig vad som helst, eller prova ett av exemplen nedan." : "Hello! I'm BudAI. Ask me anything, or try one of the examples below." },
+    { id: 0, type: "ai", text: "Hello! I'm BudAI. Ask me anything about your business, or try one of the examples below." },
   ]);
   const [input, setInput] = useState("");
   const [thinking, setThinking] = useState(false);
   const [typingText, setTypingText] = useState("");
-  const [memoryEnabled, setMemoryEnabled] = useState(true);
+  const [confidence, setConfidence] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
   const idRef = useRef(1);
-
-  const presets = [
-    { label: language === "sv" ? "Skapa en marknadsplan" : "Create a marketing plan", icon: Target },
-    { label: language === "sv" ? "Analysera försäljningsdata" : "Analyze sales data", icon: TrendingUp },
-    { label: language === "sv" ? "Skriv ett professionellt mejl" : "Draft a professional email", icon: FileText },
-    { label: language === "sv" ? "Automatisera veckorapportering" : "Automate weekly reporting", icon: Zap },
-    { label: language === "sv" ? "Skriv en platsannons" : "Write a job description", icon: FileText },
-    { label: language === "sv" ? "Förbättra mitt arbetsflöde" : "Improve my workflow", icon: Brain },
-  ];
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -45,38 +43,33 @@ export default function AIPlayground() {
       current += lines[i];
       if (i < lines.length - 1) current += "\n";
       setTypingText(current);
-      await new Promise((r) => setTimeout(r, 20 + Math.random() * 30));
+      await new Promise((r) => setTimeout(r, 30 + Math.random() * 50));
     }
     setTypingText("");
     setMessages((prev) => [...prev, { id: idRef.current++, type: "ai", text: fullText }]);
   };
 
+  // Calls the real backend route, which calls Claude.
   const callBudAI = async (text: string): Promise<string> => {
     try {
-      const payload = {
-        message: text,
-        memoryEnabled,
-        history: memoryEnabled ? messages.slice(-4).map(m => ({ role: m.type, content: m.text })) : []
-      };
-
       const res = await fetch("/api/playground", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ message: text }),
       });
 
       if (res.status === 429) {
-        return language === "sv" ? "Du har nått gränsen för meddelanden i betan — försök igen om en stund." : "You've hit the beta message limit for now — please try again in a bit.";
+        return "You've hit the demo's message limit for now — please try again in a bit, or request early access to keep exploring BudAI's full capabilities.";
       }
 
       if (!res.ok) {
-        return language === "sv" ? "Något gick fel. Vill du försöka igen?" : "Something went wrong on my end. Mind trying that again?";
+        return "Something went wrong on my end. Mind trying that again?";
       }
 
       const data = await res.json();
-      return data.reply || (language === "sv" ? "Jag är inte säker på hur jag ska svara på det — kan du formulera om frågan?" : "I'm not sure how to respond to that — could you rephrase?");
+      return data.reply || "I'm not sure how to respond to that — could you rephrase?";
     } catch {
-      return language === "sv" ? "Jag har problem med anslutningen just nu. Försök igen om en stund." : "I'm having trouble connecting right now. Please try again in a moment.";
+      return "I'm having trouble connecting right now. Please try again in a moment.";
     }
   };
 
@@ -84,9 +77,16 @@ export default function AIPlayground() {
     if (thinking) return;
     setMessages((prev) => [...prev, { id: idRef.current++, type: "user", text }]);
     setThinking(true);
+    setConfidence(0);
+    const confInterval = setInterval(() => setConfidence((c) => Math.min(c + Math.random() * 15, 98)), 200);
+
     const reply = await callBudAI(text);
+
+    clearInterval(confInterval);
+    setConfidence(98);
     setThinking(false);
     await typeResponse(reply);
+    setConfidence(0);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -96,9 +96,16 @@ export default function AIPlayground() {
     setInput("");
     setMessages((prev) => [...prev, { id: idRef.current++, type: "user", text }]);
     setThinking(true);
+    setConfidence(0);
+    const confInterval = setInterval(() => setConfidence((c) => Math.min(c + Math.random() * 12, 95)), 250);
+
     const reply = await callBudAI(text);
+
+    clearInterval(confInterval);
+    setConfidence(95);
     setThinking(false);
     await typeResponse(reply);
+    setConfidence(0);
   };
 
   return (
@@ -107,12 +114,12 @@ export default function AIPlayground() {
 
       <div className="relative z-10 max-w-5xl mx-auto px-6 lg:px-8">
         <ScrollReveal className="text-center mb-16">
-          <span className="inline-block px-4 py-1.5 rounded-full glass text-sm font-medium text-accent-purple mb-4">{t.nav.playground}</span>
+          <span className="inline-block px-4 py-1.5 rounded-full glass text-sm font-medium text-accent-purple mb-4">AI Playground</span>
           <h2 className="text-4xl md:text-5xl font-bold tracking-tight mb-6">
-            {language === "sv" ? "Upplev " : "Experience "}<span className="text-gradient">BudAI</span>
+            Experience <span className="text-gradient">BudAI</span>
           </h2>
           <p className="text-lg text-muted max-w-2xl mx-auto">
-            {language === "sv" ? "Prova BudAI direkt. Se hur den interagerar och kommer ihåg sammanhanget." : "Try BudAI right now. See how it interacts and remembers context."}
+            Try BudAI right now. See how it will interact with your business.
           </p>
         </ScrollReveal>
 
@@ -131,27 +138,19 @@ export default function AIPlayground() {
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-green opacity-75" />
                       <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-accent-green" />
                     </span>
-                    Online — Beta
+                    Online — Developer Preview
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-4">
-                <button
-                  onClick={() => setMemoryEnabled(!memoryEnabled)}
-                  className="flex items-center gap-2 text-xs text-muted hover:text-white transition-colors"
-                  title={language === "sv" ? "När aktiverat kommer BudAI ihåg tidigare meddelanden." : "When enabled, BudAI remembers recent messages for context."}
-                >
-                  <Brain className={`w-4 h-4 ${memoryEnabled ? 'text-accent-cyan' : ''}`} />
-                  <span className="hidden sm:inline">{language === "sv" ? "Minne" : "Memory"}</span>
-                  {memoryEnabled ? <ToggleRight className="w-5 h-5 text-accent-cyan" /> : <ToggleLeft className="w-5 h-5" />}
-                </button>
-                {thinking && (
-                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent-cyan/10 text-xs">
-                    <Brain className="w-3.5 h-3.5 text-accent-cyan animate-pulse" />
-                    <span className="text-accent-cyan">{language === "sv" ? "Tänker..." : "Thinking..."}</span>
-                  </div>
-                )}
-              </div>
+              {thinking && (
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent-cyan/10 text-xs">
+                  <Brain className="w-3.5 h-3.5 text-accent-cyan animate-pulse" />
+                  <span className="text-accent-cyan">Thinking...</span>
+                  {confidence > 0 && (
+                    <span className="text-muted">{Math.round(confidence)}% confidence</span>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Messages */}
@@ -196,7 +195,7 @@ export default function AIPlayground() {
                     </div>
                     <div className="glass px-4 py-3 rounded-2xl flex items-center gap-2">
                       <Loader2 className="w-4 h-4 text-accent-cyan animate-spin" />
-                      <span className="text-sm text-muted">{language === "sv" ? "BudAI analyserar..." : "BudAI is analyzing..."}</span>
+                      <span className="text-sm text-muted">BudAI is analyzing...</span>
                     </div>
                   </motion.div>
                 )}
@@ -225,7 +224,7 @@ export default function AIPlayground() {
                   type="text"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  placeholder={language === "sv" ? "Fråga BudAI vad som helst..." : "Ask BudAI anything..."}
+                  placeholder="Ask BudAI anything..."
                   className="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-muted focus:outline-none focus:border-accent-cyan/40 transition-colors text-sm"
                 />
                 <button

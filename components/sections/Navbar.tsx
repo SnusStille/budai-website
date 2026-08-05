@@ -2,22 +2,20 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Cpu, Code2, Globe } from "lucide-react";
-import { useLanguage } from "@/context/LanguageContext";
+import { Menu, X, Cpu, Code2 } from "lucide-react";
+
+const links = [
+  { label: "Capabilities", href: "#capabilities" },
+  { label: "Playground", href: "#playground" },
+  { label: "Terminal", href: "#terminal" },
+  { label: "Waitlist", href: "#waitlist" },
+  { label: "Roadmap", href: "#roadmap" },
+  { label: "Status", href: "#status" },
+];
 
 export default function Navbar({ devMode, onToggleDev }: { devMode: boolean; onToggleDev: () => void }) {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { language, setLanguage, t } = useLanguage();
-
-  const links = [
-    { label: t.nav.capabilities, href: "#capabilities" },
-    { label: t.nav.playground, href: "#playground" },
-    { label: t.nav.terminal, href: "#terminal" },
-    { label: t.nav.waitlist, href: "#waitlist" },
-    { label: t.nav.roadmap, href: "#roadmap" },
-    { label: t.nav.status, href: "#status" },
-  ];
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
@@ -61,21 +59,6 @@ export default function Navbar({ devMode, onToggleDev }: { devMode: boolean; onT
             </div>
 
             <div className="hidden lg:flex items-center gap-3">
-              <div className="flex items-center bg-white/5 rounded-lg p-1 mr-2 border border-white/10">
-                <button
-                  onClick={() => setLanguage("sv")}
-                  className={`px-2 py-1 text-[10px] font-bold rounded transition-colors ${language === "sv" ? "bg-accent-cyan text-black" : "text-muted hover:text-white"}`}
-                >
-                  SV
-                </button>
-                <button
-                  onClick={() => setLanguage("en")}
-                  className={`px-2 py-1 text-[10px] font-bold rounded transition-colors ${language === "en" ? "bg-accent-cyan text-black" : "text-muted hover:text-white"}`}
-                >
-                  EN
-                </button>
-              </div>
-
               <motion.button
                 onClick={onToggleDev}
                 whileTap={{ scale: 0.95 }}
@@ -95,7 +78,7 @@ export default function Navbar({ devMode, onToggleDev }: { devMode: boolean; onT
                 href="#waitlist"
                 className="relative px-5 py-2.5 text-sm font-semibold bg-gradient-to-r from-accent-cyan to-accent-purple rounded-xl text-white overflow-hidden group"
               >
-                <span className="relative z-10">{t.nav.requestAccess}</span>
+                <span className="relative z-10">Request Access</span>
                 <div className="absolute inset-0 bg-gradient-to-r from-accent-purple to-accent-cyan opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               </a>
             </div>
@@ -117,12 +100,6 @@ export default function Navbar({ devMode, onToggleDev }: { devMode: boolean; onT
           >
             <div className="absolute inset-0 bg-background/98 backdrop-blur-2xl" onClick={() => setMobileOpen(false)} />
             <div className="relative pt-24 px-6 flex flex-col gap-1">
-              <div className="flex items-center gap-2 mb-6 px-4">
-                <Globe className="w-4 h-4 text-accent-cyan" />
-                <button onClick={() => { setLanguage("sv"); setMobileOpen(false); }} className={`text-sm ${language === "sv" ? "text-accent-cyan font-bold" : "text-white/60"}`}>Svenska</button>
-                <span className="text-white/20">|</span>
-                <button onClick={() => { setLanguage("en"); setMobileOpen(false); }} className={`text-sm ${language === "en" ? "text-accent-cyan font-bold" : "text-white/60"}`}>English</button>
-              </div>
               {links.map((l, i) => (
                 <motion.a
                   key={l.href}
@@ -144,7 +121,7 @@ export default function Navbar({ devMode, onToggleDev }: { devMode: boolean; onT
                 onClick={() => setMobileOpen(false)}
                 className="mt-4 px-5 py-3 text-center font-semibold bg-gradient-to-r from-accent-cyan to-accent-purple rounded-xl text-white"
               >
-                {t.nav.requestAccess}
+                Request Access
               </motion.a>
             </div>
           </motion.div>
