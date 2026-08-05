@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowRight, Sparkles, Code2, Zap, Shield, ChevronDown } from "lucide-react";
+import { ArrowRight, Sparkles, Bot, Zap, Brain, ChevronDown } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 
-export default function Hero({ devMode, onToggleDev }: { devMode: boolean; onToggleDev: () => void }) {
+export default function Hero() {
   const [isMobile, setIsMobile] = useState(false);
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   useEffect(() => {
     const onResize = () => setIsMobile(window.innerWidth < 768);
@@ -17,6 +17,12 @@ export default function Hero({ devMode, onToggleDev }: { devMode: boolean; onTog
   }, []);
 
   const particleCount = isMobile ? 1 : 4;
+
+  const scrollToPlayground = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const el = document.getElementById("playground");
+    if (el) el.scrollIntoView({ behavior: "smooth" });
+  };
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
@@ -29,31 +35,24 @@ export default function Hero({ devMode, onToggleDev }: { devMode: boolean; onTog
       )}
 
       <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8 text-center">
-        <motion.button
+        <motion.div
           initial={{ opacity: 0, y: 20, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 0.6, delay: 0.3 }}
-          whileTap={{ scale: 0.97 }}
-          className={`inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full glass mb-10 border transition-all duration-500 ${
-            devMode
-              ? "border-accent-cyan/40 bg-accent-cyan/10 shadow-[0_0_30px_rgba(0,229,255,0.18)]"
-              : "border-white/10"
-          }`}
-          onClick={onToggleDev}
-          type="button"
-          aria-pressed={devMode}
-          aria-label="Toggle developer preview overlay"
+          className="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full glass mb-10 border border-white/10"
         >
           <span className="relative flex h-2.5 w-2.5">
-            <span className={`absolute inline-flex h-full w-full rounded-full opacity-75 ${devMode ? "bg-accent-cyan animate-ping" : "bg-accent-green"}`} />
-            <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${devMode ? "bg-accent-cyan" : "bg-accent-green"}`} />
+            <span className="absolute inline-flex h-full w-full rounded-full opacity-75 bg-accent-cyan animate-ping" />
+            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-accent-cyan" />
           </span>
-          <span className={`text-sm font-medium ${devMode ? "text-accent-cyan" : "text-accent-green"}`}>
-            {devMode ? "Developer Mode" : t.hero.preview}
+          <span className="text-sm font-medium text-accent-cyan">
+            BudAI Beta
           </span>
           <span className="w-px h-4 bg-white/10" />
-          <span className="text-sm text-muted">{devMode ? "Core systems boosted" : t.hero.underDev}</span>
-        </motion.button>
+          <span className="text-sm text-muted">
+            {language === "sv" ? "Upplev framtidens AI" : "Experience the future of AI"}
+          </span>
+        </motion.div>
 
         <motion.div
           initial={{ opacity: 0, scale: 0.5 }}
@@ -79,7 +78,7 @@ export default function Hero({ devMode, onToggleDev }: { devMode: boolean; onTog
               transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
               className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-gradient-to-br from-accent-cyan to-accent-purple flex items-center justify-center shadow-[0_0_60px_rgba(0,229,255,0.4)]"
             >
-              <Sparkles className="w-8 h-8 md:w-10 md:h-10 text-white" />
+              <Bot className="w-8 h-8 md:w-10 md:h-10 text-white" />
             </motion.div>
           </div>
 
@@ -101,17 +100,6 @@ export default function Hero({ devMode, onToggleDev }: { devMode: boolean; onTog
               />
             </motion.div>
           ))}
-
-          <motion.div
-            animate={{ scale: [1, 1.5, 1.5], opacity: [0.3, 0, 0] }}
-            transition={{ duration: 3, repeat: Infinity, ease: "easeOut" }}
-            className="absolute inset-0 rounded-full border border-accent-cyan/30"
-          />
-          <motion.div
-            animate={{ scale: [1, 1.5, 1.5], opacity: [0.2, 0, 0] }}
-            transition={{ duration: 3, repeat: Infinity, ease: "easeOut", delay: 1.5 }}
-            className="absolute inset-0 rounded-full border border-accent-purple/20"
-          />
         </motion.div>
 
         <motion.h1
@@ -120,29 +108,17 @@ export default function Hero({ devMode, onToggleDev }: { devMode: boolean; onTog
           transition={{ duration: 0.8, delay: 0.4 }}
           className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold tracking-tight leading-[1.05] mb-6"
         >
-          <span className="block">{t.hero.title1}</span>
-          <span className="block text-gradient mt-1">{t.hero.title2}</span>
+          <span className="block">{language === "sv" ? "Din intelligenta" : "Your intelligent"}</span>
+          <span className="block text-gradient mt-1">{language === "sv" ? "AI-assistent" : "AI Assistant"}</span>
         </motion.h1>
 
         <motion.p
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.55 }}
-          className="text-lg sm:text-xl text-muted max-w-2xl mx-auto mb-3 leading-relaxed"
+          className="text-lg sm:text-xl text-muted max-w-2xl mx-auto mb-12 leading-relaxed"
         >
           {t.hero.description}
-        </motion.p>
-
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.7 }}
-          className="text-sm text-muted/50 mb-12 flex items-center justify-center gap-2"
-        >
-          <span className="w-1.5 h-1.5 rounded-full bg-accent-cyan" />
-          {t.hero.developedBy} <span className="text-accent-cyan font-medium">Stilledev</span>
-          <span className="text-muted/30">·</span>
-          <span>Sweden</span>
         </motion.p>
 
         <motion.div
@@ -151,21 +127,15 @@ export default function Hero({ devMode, onToggleDev }: { devMode: boolean; onTog
           transition={{ duration: 0.6, delay: 0.65 }}
           className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16"
         >
-          <a
-            href="#waitlist"
-            className="group relative px-8 py-4 bg-gradient-to-r from-accent-cyan to-accent-purple rounded-xl font-semibold text-white text-lg overflow-hidden transition-all hover:scale-[1.03] hover:shadow-[0_0_40px_rgba(0,229,255,0.3)]"
+          <button
+            onClick={scrollToPlayground}
+            className="group relative px-8 py-4 bg-gradient-to-r from-accent-cyan to-accent-purple rounded-xl font-semibold text-white text-lg overflow-hidden transition-all hover:scale-[1.03] hover:shadow-[0_0_40px_rgba(0,229,255,0.3)] w-full sm:w-auto"
           >
-            <span className="relative z-10 flex items-center gap-2">
-              {t.hero.requestEarlyAccess}
+            <span className="relative z-10 flex items-center justify-center gap-2">
+              {language === "sv" ? "Prova BudAI nu" : "Try BudAI Now"}
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </span>
-          </a>
-          <a
-            href="#playground"
-            className="group px-8 py-4 glass rounded-xl font-semibold text-white text-lg hover:bg-white/5 transition-all hover:scale-[1.02]"
-          >
-            {t.hero.tryPlayground}
-          </a>
+          </button>
         </motion.div>
 
         <motion.div
@@ -175,10 +145,10 @@ export default function Hero({ devMode, onToggleDev }: { devMode: boolean; onTog
           className="flex flex-wrap items-center justify-center gap-3"
         >
           {[
-            { icon: Sparkles, label: t.hero.aiPowered },
-            { icon: Code2, label: t.hero.codeGen },
-            { icon: Zap, label: t.hero.automation },
-            { icon: Shield, label: t.hero.enterpriseReady },
+            { icon: Sparkles, label: language === "sv" ? "Avancerad AI" : "Advanced AI" },
+            { icon: Brain, label: language === "sv" ? "Kontextminne" : "Context Memory" },
+            { icon: Zap, label: language === "sv" ? "Automatisering" : "Task Automation" },
+            { icon: Bot, label: language === "sv" ? "Framtida agenter" : "Future AI Agents" },
           ].map((item) => (
             <div key={item.label} className="flex items-center gap-2 px-4 py-2 rounded-full glass text-sm text-white/70">
               <item.icon className="w-4 h-4 text-accent-cyan" />
@@ -198,7 +168,9 @@ export default function Hero({ devMode, onToggleDev }: { devMode: boolean; onTog
             transition={{ duration: 2, repeat: Infinity }}
             className="flex flex-col items-center gap-2"
           >
-            <span className="text-xs text-muted/40 uppercase tracking-widest">{t.hero.scroll}</span>
+            <span className="text-xs text-muted/40 uppercase tracking-widest">
+              {language === "sv" ? "Upptäck" : "Discover"}
+            </span>
             <ChevronDown className="w-5 h-5 text-muted/40" />
           </motion.div>
         </motion.div>
