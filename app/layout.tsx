@@ -1,36 +1,52 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "./globals.css";
 import LoadingScreen from "@/components/effects/LoadingScreen";
 import VercelAnalytics from "@/components/VercelAnalytics";
+import { LangProvider } from "@/components/ui/LanguageContext";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const [loaded, setLoaded] = useState(false);
+  const [lang, setLang] = useState("sv");
+
+  useEffect(() => {
+    const saved = localStorage.getItem("budai-lang") as "sv" | "en";
+    if (saved) setLang(saved);
+  }, []);
+
+  const title = lang === "sv" 
+    ? "BudAI — Framtiden för Digitalt Arbete för Svenska Företag"
+    : "BudAI — The Future of Digital Work for Swedish Companies";
+
+  const description = lang === "sv"
+    ? "BudAI är en avancerad AI-plattform som hjälper svenska företag att spara tid, automatisera uppgifter, förbättra arbetsflöden och göra verksamheter mer effektiva. Utvecklarförhandsvisning av Stilledev."
+    : "BudAI is an advanced AI platform that helps Swedish companies save time, automate tasks, improve workflows, and make businesses more efficient. Developer Preview by Stilledev.";
 
   return (
-    <html lang="sv" className="font-sans">
+    <html lang={lang} className="font-sans">
       <head>
-        <title>BudAI — The Future of Digital Work for Swedish Companies</title>
-        <meta name="description" content="BudAI is an advanced AI platform that helps Swedish companies save time, automate tasks, improve workflows, and make businesses more efficient. Developer Preview by Stilledev." />
+        <title>{title}</title>
+        <meta name="description" content={description} />
         <meta name="keywords" content="AI, artificial intelligence, Sweden, business automation, digital assistant, Stilledev, BudAI, enterprise AI" />
         <meta name="author" content="Stilledev" />
         <meta name="robots" content="index, follow" />
         <meta property="og:type" content="website" />
-        <meta property="og:title" content="BudAI — The Future of Digital Work" />
-        <meta property="og:description" content="Advanced AI for Swedish companies. Developer Preview." />
+        <meta property="og:title" content={title} />
+        <meta property="og:description" content={description} />
         <meta property="og:site_name" content="BudAI" />
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="BudAI — The Future of Digital Work" />
-        <meta name="twitter:description" content="Advanced AI for Swedish companies. Developer Preview." />
+        <meta name="twitter:title" content={title} />
+        <meta name="twitter:description" content={description} />
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
       </head>
-          <body className="antialiased noise-overlay">
-        <LoadingScreen onComplete={() => setLoaded(true)} />
-        <div style={{ opacity: loaded ? 1 : 0, transition: "opacity 0.3s ease" }}>
-          {children}
-        </div>
-
+      <body className="antialiased noise-overlay">
+        <LangProvider>
+          <LoadingScreen onComplete={() => setLoaded(true)} />
+          <div style={{ opacity: loaded ? 1 : 0, transition: "opacity 0.3s ease" }}>
+            {children}
+          </div>
+        </LangProvider>
         <VercelAnalytics />
       </body>
     </html>

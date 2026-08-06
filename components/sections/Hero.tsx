@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowRight, Sparkles, Code2, Zap, Shield, ChevronDown, X } from "lucide-react";
-import CodeBackground from "@/components/effects/CodeBackground";
+import { ArrowRight, Sparkles, Code2, Zap, Shield, ChevronDown } from "lucide-react";
+import { useLang } from "@/components/ui/LanguageContext";
 
-export default function Hero({ devMode, onToggleDev }: { devMode: boolean; onToggleDev: () => void }) {
+export default function Hero() {
+  const { t } = useLang();
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -28,31 +29,22 @@ export default function Hero({ devMode, onToggleDev }: { devMode: boolean; onTog
       )}
 
       <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8 text-center">
-        <motion.button
+        <motion.div
           initial={{ opacity: 0, y: 20, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 0.6, delay: 0.3 }}
-          whileTap={{ scale: 0.97 }}
-          className={`inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full glass mb-10 border transition-all duration-500 ${
-            devMode
-              ? "border-accent-cyan/40 bg-accent-cyan/10 shadow-[0_0_30px_rgba(0,229,255,0.18)]"
-              : "border-white/10"
-          }`}
-          onClick={onToggleDev}
-          type="button"
-          aria-pressed={devMode}
-          aria-label="Toggle developer preview overlay"
+          className="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full glass mb-10 border border-accent-green/20"
         >
           <span className="relative flex h-2.5 w-2.5">
-            <span className={`absolute inline-flex h-full w-full rounded-full opacity-75 ${devMode ? "bg-accent-cyan animate-ping" : "bg-accent-green"}`} />
-            <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${devMode ? "bg-accent-cyan" : "bg-accent-green"}`} />
+            <span className="absolute inline-flex h-full w-full rounded-full opacity-75 bg-accent-green animate-ping" />
+            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-accent-green" />
           </span>
-          <span className={`text-sm font-medium ${devMode ? "text-accent-cyan" : "text-accent-green"}`}>
-            {devMode ? "Developer Mode" : "Developer Preview"}
+          <span className="text-sm font-medium text-accent-green">
+            {t.hero.badge}
           </span>
           <span className="w-px h-4 bg-white/10" />
-          <span className="text-sm text-muted">{devMode ? "Core systems boosted" : "v0.9.2 — Currently under development"}</span>
-        </motion.button>
+          <span className="text-sm text-muted">v0.9.2 — {t.lang === "sv" ? "Under utveckling" : "Currently under development"}</span>
+        </motion.div>
 
         <motion.div
           initial={{ opacity: 0, scale: 0.5 }}
@@ -119,8 +111,8 @@ export default function Hero({ devMode, onToggleDev }: { devMode: boolean; onTog
           transition={{ duration: 0.8, delay: 0.4 }}
           className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold tracking-tight leading-[1.05] mb-6"
         >
-          <span className="block">The Future of</span>
-          <span className="block text-gradient mt-1">Digital Work</span>
+          <span className="block">{t.hero.title1}</span>
+          <span className="block text-gradient mt-1">{t.hero.title2}</span>
         </motion.h1>
 
         <motion.p
@@ -129,8 +121,7 @@ export default function Hero({ devMode, onToggleDev }: { devMode: boolean; onTog
           transition={{ duration: 0.7, delay: 0.55 }}
           className="text-lg sm:text-xl text-muted max-w-2xl mx-auto mb-3 leading-relaxed"
         >
-          BudAI is an advanced intelligence platform built for Swedish companies.
-          Automate, analyze, and accelerate everything.
+          {t.hero.subtitle}
         </motion.p>
 
         <motion.p
@@ -140,7 +131,7 @@ export default function Hero({ devMode, onToggleDev }: { devMode: boolean; onTog
           className="text-sm text-muted/50 mb-12 flex items-center justify-center gap-2"
         >
           <span className="w-1.5 h-1.5 rounded-full bg-accent-cyan" />
-          Developed by <span className="text-accent-cyan font-medium">Stilledev</span>
+          {t.lang === "sv" ? "Utvecklad av" : "Developed by"} <span className="text-accent-cyan font-medium">Stilledev</span>
           <span className="text-muted/30">·</span>
           <span>Sweden</span>
         </motion.p>
@@ -156,7 +147,7 @@ export default function Hero({ devMode, onToggleDev }: { devMode: boolean; onTog
             className="group relative px-8 py-4 bg-gradient-to-r from-accent-cyan to-accent-purple rounded-xl font-semibold text-white text-lg overflow-hidden transition-all hover:scale-[1.03] hover:shadow-[0_0_40px_rgba(0,229,255,0.3)]"
           >
             <span className="relative z-10 flex items-center gap-2">
-              Request Early Access
+              {t.hero.ctaSecondary}
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </span>
           </a>
@@ -164,7 +155,7 @@ export default function Hero({ devMode, onToggleDev }: { devMode: boolean; onTog
             href="#playground"
             className="group px-8 py-4 glass rounded-xl font-semibold text-white text-lg hover:bg-white/5 transition-all hover:scale-[1.02]"
           >
-            Try the Playground
+            {t.hero.ctaPrimary}
           </a>
         </motion.div>
 
@@ -175,10 +166,10 @@ export default function Hero({ devMode, onToggleDev }: { devMode: boolean; onTog
           className="flex flex-wrap items-center justify-center gap-3"
         >
           {[
-            { icon: Sparkles, label: "AI-Powered" },
-            { icon: Code2, label: "Code Generation" },
-            { icon: Zap, label: "Automation" },
-            { icon: Shield, label: "Enterprise Ready" },
+            { icon: Sparkles, label: t.lang === "sv" ? "AI-Driven" : "AI-Powered" },
+            { icon: Code2, label: t.lang === "sv" ? "Kodgenerering" : "Code Generation" },
+            { icon: Zap, label: t.lang === "sv" ? "Automatisering" : "Automation" },
+            { icon: Shield, label: t.lang === "sv" ? "Företagsklar" : "Enterprise Ready" },
           ].map((item) => (
             <div key={item.label} className="flex items-center gap-2 px-4 py-2 rounded-full glass text-sm text-white/70">
               <item.icon className="w-4 h-4 text-accent-cyan" />
@@ -202,67 +193,6 @@ export default function Hero({ devMode, onToggleDev }: { devMode: boolean; onTog
             <ChevronDown className="w-5 h-5 text-muted/40" />
           </motion.div>
         </motion.div>
-
-        {devMode && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-40 flex items-center justify-center pointer-events-none"
-          >
-            <div className="absolute inset-0 pointer-events-auto bg-black/85" onClick={onToggleDev} />
-            
-            {/* Fast-moving code background */}
-            <CodeBackground />
-            
-            {/* Grid pattern for subtle structure */}
-            <div className="absolute inset-0 bg-[linear-gradient(0deg,transparent_24%,rgba(0,229,255,.04)_25%,rgba(0,229,255,.04)_26%,transparent_27%,transparent_74%,rgba(0,229,255,.04)_75%,rgba(0,229,255,.04)_76%,transparent_77%,transparent),linear-gradient(90deg,transparent_24%,rgba(0,229,255,.04)_25%,rgba(0,229,255,.04)_26%,transparent_27%,transparent_74%,rgba(0,229,255,.04)_75%,rgba(0,229,255,.04)_76%,transparent_77%,transparent)] bg-[length:80px_80px]" />
-            
-            {/* Center content */}
-            <div className="relative z-50 pointer-events-auto text-center">
-              <motion.div
-                initial={{ scale: 0, rotate: -180 }}
-                animate={{ scale: 1, rotate: 0 }}
-                transition={{ duration: 0.6, ease: "backOut" }}
-                className="mb-6"
-              >
-                <div className="inline-flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-accent-cyan to-accent-purple">
-                  <Code2 className="h-10 w-10 text-white" />
-                </div>
-              </motion.div>
-              
-              <motion.h3
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="text-3xl font-bold text-white mb-2"
-              >
-                Dev Mode Activated
-              </motion.h3>
-              
-              <motion.p
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                className="text-muted mb-8 max-w-sm mx-auto"
-              >
-                Core systems boosted. You're running on experimental features.
-              </motion.p>
-              
-              <motion.button
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={onToggleDev}
-                className="px-6 py-3 rounded-xl bg-gradient-to-r from-accent-cyan to-accent-purple text-white font-semibold hover:shadow-[0_0_40px_rgba(0,229,255,0.3)] transition-shadow"
-              >
-                Exit Dev Mode
-              </motion.button>
-            </div>
-          </motion.div>
-        )}
       </div>
     </section>
   );

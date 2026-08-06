@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import NeuralNetwork from "@/components/effects/NeuralNetwork";
 import ParticleField from "@/components/effects/ParticleField";
 import CursorGlow from "@/components/effects/CursorGlow";
 import ScrollProgress from "@/components/ui/ScrollProgress";
+import CookieConsent from "@/components/ui/CookieConsent";
 import Navbar from "@/components/sections/Navbar";
 import Hero from "@/components/sections/Hero";
 import BuddyCard from "@/components/sections/BuddyCard";
@@ -18,8 +19,6 @@ import Vision from "@/components/sections/Vision";
 import Footer from "@/components/sections/Footer";
 
 export default function Home() {
-  const [devMode, setDevMode] = useState(false);
-
   useEffect(() => {
     console.log("%c🧠 BudAI Developer Preview v0.9.2", "color: #00e5ff; font-size: 16px; font-weight: bold;");
     console.log("%cBuilt by Stilledev | Sweden", "color: #b967ff; font-size: 12px;");
@@ -42,7 +41,7 @@ export default function Home() {
   }, []);
 
   return (
-    <main className={`page-transition relative min-h-screen text-white overflow-x-hidden transition-colors duration-700 ${devMode ? "dev-mode" : "bg-background"}`}>
+    <main className="page-transition relative min-h-screen text-white overflow-x-hidden bg-background">
       <ScrollProgress />
       <NeuralNetwork />
       <ParticleField />
@@ -53,8 +52,8 @@ export default function Home() {
         <div className="fixed bottom-4 right-4 z-[30] hidden md:block">
           <BuddyCard />
         </div>
-        <Navbar devMode={devMode} onToggleDev={() => setDevMode(!devMode)} />
-        <Hero devMode={devMode} onToggleDev={() => setDevMode(!devMode)} />
+        <Navbar />
+        <Hero />
         <Capabilities />
         <AIPlayground />
         <Terminal />
@@ -64,6 +63,7 @@ export default function Home() {
         <Vision />
         <Footer />
       </div>
+      <CookieConsent />
     </main>
   );
 }

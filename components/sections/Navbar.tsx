@@ -2,26 +2,28 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Cpu, Code2 } from "lucide-react";
+import { Menu, X, Cpu, Globe } from "lucide-react";
+import { useLang } from "@/components/ui/LanguageContext";
 
-const links = [
-  { label: "Capabilities", href: "#capabilities" },
-  { label: "Playground", href: "#playground" },
-  { label: "Terminal", href: "#terminal" },
-  { label: "Waitlist", href: "#waitlist" },
-  { label: "Roadmap", href: "#roadmap" },
-  { label: "Status", href: "#status" },
-];
-
-export default function Navbar({ devMode, onToggleDev }: { devMode: boolean; onToggleDev: () => void }) {
+export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { lang, setLang, t } = useLang();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  const links = [
+    { label: t.nav.capabilities, href: "#capabilities" },
+    { label: t.nav.playground, href: "#playground" },
+    { label: t.nav.terminal, href: "#terminal" },
+    { label: t.nav.waitlist, href: "#waitlist" },
+    { label: t.nav.roadmap, href: "#roadmap" },
+    { label: t.nav.status, href: "#status" },
+  ];
 
   return (
     <>
@@ -39,6 +41,7 @@ export default function Navbar({ devMode, onToggleDev }: { devMode: boolean; onT
               <div className="relative w-9 h-9 rounded-xl bg-gradient-to-br from-accent-cyan to-accent-purple flex items-center justify-center overflow-hidden">
                 <Cpu className="w-5 h-5 text-white relative z-10" />
                 <div className="absolute inset-0 bg-gradient-to-br from-accent-cyan to-accent-purple opacity-0 group-hover:opacity-60 blur-md transition-opacity duration-500" />
+                <div className="absolute inset-0 bg-gradient-to-br from-accent-cyan to-accent-purple opacity-20 animate-pulse" />
               </div>
               <span className="text-xl font-bold tracking-tight">
                 Bud<span className="text-accent-cyan">AI</span>
@@ -59,26 +62,35 @@ export default function Navbar({ devMode, onToggleDev }: { devMode: boolean; onT
             </div>
 
             <div className="hidden lg:flex items-center gap-3">
-              <motion.button
-                onClick={onToggleDev}
-                whileTap={{ scale: 0.95 }}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono transition-all duration-300 border ${
-                  devMode
-                    ? "bg-accent-cyan/15 text-accent-cyan border-accent-cyan/30 shadow-[0_0_24px_rgba(0,229,255,0.18)]"
-                    : "text-muted hover:text-white hover:bg-white/5 border-transparent"
-                }`}
-                aria-pressed={devMode}
-              >
-                <motion.div animate={{ scale: devMode ? [1, 1.12, 1] : 1 }} transition={{ duration: 1.4, repeat: devMode ? Infinity : 0 }}>
-                  <Code2 className="w-3.5 h-3.5" />
-                </motion.div>
-                {devMode ? "DEV ON" : "DEV"}
-              </motion.button>
+              {/* Language Switcher */}
+              <div className="flex items-center gap-1 p-1 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+                <button
+                  onClick={() => setLang("sv")}
+                  className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-300 ${
+                    lang === "sv"
+                      ? "bg-accent-cyan/15 text-accent-cyan shadow-[0_0_12px_rgba(0,229,255,0.12)]"
+                      : "text-muted hover:text-white"
+                  }`}
+                >
+                  SV
+                </button>
+                <button
+                  onClick={() => setLang("en")}
+                  className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-300 ${
+                    lang === "en"
+                      ? "bg-accent-cyan/15 text-accent-cyan shadow-[0_0_12px_rgba(0,229,255,0.12)]"
+                      : "text-muted hover:text-white"
+                  }`}
+                >
+                  EN
+                </button>
+              </div>
+
               <a
                 href="#waitlist"
                 className="relative px-5 py-2.5 text-sm font-semibold bg-gradient-to-r from-accent-cyan to-accent-purple rounded-xl text-white overflow-hidden group"
               >
-                <span className="relative z-10">Request Access</span>
+                <span className="relative z-10">{t.nav.requestAccess}</span>
                 <div className="absolute inset-0 bg-gradient-to-r from-accent-purple to-accent-cyan opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               </a>
             </div>
@@ -113,15 +125,42 @@ export default function Navbar({ devMode, onToggleDev }: { devMode: boolean; onT
                   {l.label}
                 </motion.a>
               ))}
+
+              {/* Mobile Language Switcher */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.4 }}
+                className="flex items-center gap-2 mt-4 px-4"
+              >
+                <Globe className="w-4 h-4 text-muted" />
+                <button
+                  onClick={() => setLang("sv")}
+                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+                    lang === "sv" ? "bg-accent-cyan/15 text-accent-cyan" : "text-muted"
+                  }`}
+                >
+                  Svenska
+                </button>
+                <button
+                  onClick={() => setLang("en")}
+                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+                    lang === "en" ? "bg-accent-cyan/15 text-accent-cyan" : "text-muted"
+                  }`}
+                >
+                  English
+                </button>
+              </motion.div>
+
               <motion.a
                 href="#waitlist"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ delay: 0.4 }}
+                transition={{ delay: 0.5 }}
                 onClick={() => setMobileOpen(false)}
                 className="mt-4 px-5 py-3 text-center font-semibold bg-gradient-to-r from-accent-cyan to-accent-purple rounded-xl text-white"
               >
-                Request Access
+                {t.nav.requestAccess}
               </motion.a>
             </div>
           </motion.div>
