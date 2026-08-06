@@ -55,7 +55,17 @@ export default function Hero() {
             {t.hero.badge}
           </span>
           <span className="w-px h-4 bg-white/10" />
-          <span className="text-sm text-muted">v0.9.2 — Under utveckling</span>
+          <span className="text-sm text-muted flex items-center gap-2">
+            <span className="relative w-10 h-1.5 rounded-full bg-white/10 overflow-hidden">
+              <motion.span
+                initial={{ width: 0 }}
+                animate={{ width: "68%" }}
+                transition={{ duration: 1.4, delay: 1, ease: [0.22, 1, 0.36, 1] }}
+                className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-accent-cyan to-accent-purple"
+              />
+            </span>
+            68% to launch
+          </span>
         </motion.div>
 
         <motion.div
@@ -123,7 +133,19 @@ export default function Hero() {
           transition={{ duration: 0.8, delay: 0.4 }}
           className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold tracking-tight leading-[1.05] mb-6"
         >
-          <span className="block">{t.hero.title1}</span>
+          <motion.span
+            className="block relative bg-clip-text text-transparent"
+            style={{
+              backgroundImage:
+                "linear-gradient(100deg, #ffffff 30%, #00e5ff 45%, #ffffff 55%, #ffffff 100%)",
+              backgroundSize: "250% 100%",
+              WebkitBackgroundClip: "text",
+            }}
+            animate={{ backgroundPosition: ["150% 0%", "-50% 0%"] }}
+            transition={{ duration: 4, repeat: Infinity, repeatDelay: 2.5, ease: "easeInOut" }}
+          >
+            {t.hero.title1}
+          </motion.span>
           <span className="relative block text-gradient mt-1 h-[1.1em] overflow-hidden">
             <AnimatePresence mode="wait">
               <motion.span
@@ -201,9 +223,9 @@ export default function Hero() {
         >
           {[
             { icon: Sparkles, label: "AI-Driven" },
-            { icon: Code2, label: "Kodgenerering" },
-            { icon: Zap, label: "Automatisering" },
-            { icon: Shield, label: "Företagsklar" },
+            { icon: Code2, label: "Code Generation" },
+            { icon: Zap, label: "Automation" },
+            { icon: Shield, label: "Enterprise-Ready" },
           ].map((item) => (
             <div key={item.label} className="flex items-center gap-2 px-4 py-2 rounded-full glass text-sm text-white/70">
               <item.icon className="w-4 h-4 text-accent-cyan" />

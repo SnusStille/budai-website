@@ -134,14 +134,72 @@ function PulseField() {
   );
 }
 
+// Continuous ECG-style live signal strip. Unlike the periodic (every 2.5s)
+// state updates elsewhere on this section, this one animates constantly via
+// a looping transform — it never sits still, which is what makes the panel
+// read as "live" rather than just "updates sometimes".
+function LiveSignal({ color = "#00ff9d" }: { color?: string }) {
+  const beat = "0,20 8,20 13,20 16,4 19,36 22,20 27,20 40,20";
+  const unit = beat
+    .split(" ")
+    .map((p) => {
+      const [x, y] = p.split(",").map(Number);
+      return `${x},${y}`;
+    })
+    .join(" ");
+  const points = `${unit} ${unit
+    .split(" ")
+    .map((p) => {
+      const [x, y] = p.split(",");
+      return `${Number(x) + 40},${y}`;
+    })
+    .join(" ")}`;
+
+  return (
+    <div className="relative w-full h-6 overflow-hidden">
+      <motion.svg
+        viewBox="0 0 80 40"
+        preserveAspectRatio="none"
+        className="absolute top-0 left-0 h-full"
+        style={{ width: "400%" }}
+        animate={{ x: ["0%", "-50%"] }}
+        transition={{ duration: 2.4, repeat: Infinity, ease: "linear" }}
+      >
+        {Array.from({ length: 5 }).map((_, i) => (
+          <polyline
+            key={i}
+            points={points
+              .split(" ")
+              .map((p) => {
+                const [x, y] = p.split(",");
+                return `${Number(x) + i * 80},${y}`;
+              })
+              .join(" ")}
+            fill="none"
+            stroke={color}
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            opacity="0.6"
+          />
+        ))}
+      </motion.svg>
+      <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a12] via-transparent to-[#0a0a12] pointer-events-none" />
+    </div>
+  );
+}
+
 export default function SystemStatus() {
   const { t } = useLang();
   const [services, setServices] = useState(initialServices);
   const [cpuUsage, setCpuUsage] = useState(42);
   const [ramUsage, setRamUsage] = useState(68);
   const [temp, setTemp] = useState(42);
-  const [latencyData] = useState([12, 11, 13, 10, 11, 12, 11, 10, 12, 11]);
-  const [throughputData] = useState([2800, 2850, 2820, 2900, 2847, 2860, 2830, 2880, 2850, 2840]);
+  // These now actually update on every tick instead of being frozen sample
+  // arrays — the sparklines genuinely scroll/move instead of just sitting
+  // there as a static decorative squiggle.
+  const [latencyData, setLatencyData] = useState([12, 11, 13, 10, 11, 12, 11, 10, 12, 11]);
+  const [throughputData, setThroughputData] = useState([2800, 2850, 2820, 2900, 2847, 2860, 2830, 2880, 2850, 2840]);
   const [activeService, setActiveService] = useState<string | null>(null);
 
   useEffect(() => {
@@ -149,6 +207,14 @@ export default function SystemStatus() {
       setCpuUsage((prev) => Math.max(30, Math.min(85, prev + (Math.random() - 0.5) * 8)));
       setRamUsage((prev) => Math.max(55, Math.min(80, prev + (Math.random() - 0.5) * 4)));
       setTemp((prev) => Math.max(38, Math.min(52, prev + (Math.random() - 0.5) * 3)));
+      setLatencyData((prev) => {
+        const next = Math.max(4, prev[prev.length - 1] + (Math.random() - 0.5) * 3);
+        return [...prev.slice(1), next];
+      });
+      setThroughputData((prev) => {
+        const next = Math.max(2000, prev[prev.length - 1] + (Math.random() - 0.5) * 140);
+        return [...prev.slice(1), next];
+      });
       setServices((prev) =>
         prev.map((s) =>
           s.status === "operational"
@@ -199,6 +265,8 @@ export default function SystemStatus() {
                   <span className="text-accent-green font-medium">{t.status.allOperational}</span>
                 </div>
               </div>
+
+              <LiveSignal color="#00ff9d" />
 
               <div className="space-y-2 relative z-10">
                 {services.map((s, i) => (

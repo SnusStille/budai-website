@@ -6,16 +6,23 @@ import { Sparkles, ArrowUpRight, X } from "lucide-react";
 import { useLang } from "@/components/ui/LanguageContext";
 
 const DISMISS_KEY = "budai-buddy-popup-dismissed";
+const COOKIE_KEY = "budai-cookies";
 const SHOW_AFTER_MS = 8000; // 7-10s, as requested
 
 export default function BuddyCard({ className = "" }: { className?: string }) {
   const { lang } = useLang();
   const [visible, setVisible] = useState(false);
+  // Sits low near the bottom by default. Only lifts itself above the
+  // cookie-consent banner if that banner is still on screen (unanswered)
+  // at the moment we're about to show — otherwise they'd overlap.
+  const [raised, setRaised] = useState(false);
 
   useEffect(() => {
-    // Session-scoped: shows once per browser tab session, not on every page view.
     if (sessionStorage.getItem(DISMISS_KEY)) return;
-    const timer = setTimeout(() => setVisible(true), SHOW_AFTER_MS);
+    const timer = setTimeout(() => {
+      setRaised(!localStorage.getItem(COOKIE_KEY));
+      setVisible(true);
+    }, SHOW_AFTER_MS);
     return () => clearTimeout(timer);
   }, []);
 
@@ -32,9 +39,9 @@ export default function BuddyCard({ className = "" }: { className?: string }) {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 20, scale: 0.9 }}
           transition={{ duration: 0.4, type: "spring", damping: 18 }}
-          // Sits above the cookie-consent banner (which also lives bottom-right)
-          // so the two never stack on top of each other.
-          className={`${className} fixed bottom-24 md:bottom-28 right-4 z-[30] w-[280px]`}
+          // Sits low by default (matches the original bottom-right feel);
+          // lifts above the cookie banner only when that's still showing.
+          className={`${className} fixed ${raised ? "bottom-24 md:bottom-28" : "bottom-4"} right-4 z-[30] w-[280px] transition-[bottom] duration-300`}
         >
           <div className="group relative rounded-2xl border border-accent-cyan/20 bg-gradient-to-br from-black/80 to-black/60 backdrop-blur-xl shadow-[0_0_30px_rgba(0,229,255,0.12),0_8px_32px_rgba(0,0,0,0.4)] overflow-hidden p-4">
             <div className="absolute inset-0 rounded-2xl border border-accent-cyan/20 animate-ping opacity-10 pointer-events-none" />

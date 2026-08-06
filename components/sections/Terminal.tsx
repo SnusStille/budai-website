@@ -8,8 +8,44 @@ import { useLang } from "@/components/ui/LanguageContext";
 
 interface TLine {
   id: number;
-  type: "cmd" | "out" | "sys" | "think" | "success" | "warn";
+  type: "cmd" | "out" | "sys" | "think" | "success" | "warn" | "code";
   text: string;
+}
+
+// Small inline highlighter so the "code" lines in the terminal actually read
+// like a syntax-highlighted editor rather than plain white monospace text.
+function highlightCode(text: string) {
+  const tokens: { re: RegExp; className: string }[] = [
+    { re: /(\/\/.*$)/, className: "text-muted/40 italic" },
+    { re: /(".*?"|'.*?'|`.*?`)/, className: "text-accent-green" },
+    { re: /\b(const|let|var|function|return|import|export|from|async|await|interface|type|if|else|for|of|in|new|class|extends|default|try|catch|throw|def|SELECT|FROM|WHERE|GROUP BY|ORDER BY|JOIN|AS)\b/, className: "text-accent-purple font-medium" },
+    { re: /\b(useState|useEffect|useMemo|React|NextResponse|Anthropic)\b/, className: "text-accent-cyan" },
+    { re: /(\b\d+(\.\d+)?\b)/, className: "text-orange-300" },
+  ];
+  const parts: { text: string; className?: string }[] = [];
+  let remaining = text;
+  while (remaining.length > 0) {
+    let matched = false;
+    for (const { re, className } of tokens) {
+      const m = remaining.match(re);
+      if (m && m.index !== undefined) {
+        if (m.index > 0) parts.push({ text: remaining.slice(0, m.index) });
+        parts.push({ text: m[0], className });
+        remaining = remaining.slice(m.index + m[0].length);
+        matched = true;
+        break;
+      }
+    }
+    if (!matched) {
+      parts.push({ text: remaining });
+      break;
+    }
+  }
+  return parts.map((p, i) => (
+    <span key={i} className={p.className}>
+      {p.text}
+    </span>
+  ));
 }
 
 const NEURAL_LOGS = [
@@ -93,74 +129,98 @@ const BOOT_PHASES = [
   { type: "out", text: "", delay: 100 },
 ];
 
+// Helper to turn a plain code snippet into typed "code" phases, so each
+// line streams in the same way the boot commands do — this is what makes it
+// look like BudAI is actually writing the file, not just printing logs.
+function codeLines(lines: string[], speed = 9): { type: string; text: string; delay: number; typeSpeed?: number }[] {
+  return lines.map((text) => ({ type: "code", text, delay: 20, typeSpeed: speed }));
+}
+
 const LIVE_TASKS = [
-  { type: "cmd", text: "budai --task 'analyze Q3 revenue' --depth=comprehensive", delay: 800, typeSpeed: 30 },
-  { type: "out", text: "", delay: 150 },
-  { type: "think", text: "[REASONING] Analyzing request...", delay: 300 },
-  { type: "out", text: "  → Intent detected: financial_analysis", delay: 150 },
-  { type: "out", text: "  → Confidence: 97.3%", delay: 150 },
-  { type: "out", text: "  → Tools required: [data_parser, trend_analyzer, report_gen]", delay: 150 },
-  { type: "out", text: "", delay: 80 },
-  { type: "think", text: "[THINKING] Processing Q3 financial data...", delay: 400 },
-  { type: "out", text: "  → Parsing revenue.csv (2.4MB)...", delay: 200 },
-  { type: "out", text: "  → Detected 1,247 transactions across 4 quarters", delay: 200 },
-  { type: "out", text: "  → Running trend analysis...", delay: 300 },
-  { type: "out", text: "", delay: 80 },
-  { type: "out", text: "  ┌─────────────────────────────────────────┐", delay: 150 },
-  { type: "out", text: "  │  Q3 ANALYSIS RESULTS                    │", delay: 150 },
-  { type: "out", text: "  ├─────────────────────────────────────────┤", delay: 150 },
-  { type: "out", text: "  │  YoY Growth:        +23.4%            │", delay: 150 },
-  { type: "out", text: "  │  Revenue:            4.2M SEK          │", delay: 150 },
-  { type: "out", text: "  │  Top Segment:        Enterprise SaaS   │", delay: 150 },
-  { type: "out", text: "  │  Opportunities:     3 identified      │", delay: 150 },
-  { type: "out", text: "  └─────────────────────────────────────────┘", delay: 150 },
-  { type: "out", text: "", delay: 80 },
-  { type: "success", text: "✓ Report generated: /reports/q3_analysis_2026.pdf", delay: 250 },
+  { type: "cmd", text: "budai generate --task 'revenue API route' --lang=ts", delay: 700, typeSpeed: 28 },
+  { type: "think", text: "[PLAN] Scaffolding a typed Next.js route handler...", delay: 300 },
+  { type: "sys", text: "  writing app/api/revenue/route.ts", delay: 150 },
+  ...codeLines([
+    "import { NextResponse } from \"next/server\";",
+    "import { getQuarterlyRevenue } from \"@/lib/analytics\";",
+    "",
+    "export async function GET(req: Request) {",
+    "  const { searchParams } = new URL(req.url);",
+    "  const quarter = searchParams.get(\"q\") ?? \"Q3\";",
+    "",
+    "  const data = await getQuarterlyRevenue(quarter);",
+    "  const yoyGrowth = ((data.current - data.previous) / data.previous) * 100;",
+    "",
+    "  return NextResponse.json({",
+    "    quarter,",
+    "    revenueSek: data.current,",
+    "    yoyGrowth: Number(yoyGrowth.toFixed(1)),",
+    "    topSegment: data.topSegment,",
+    "  });",
+    "}",
+  ]),
+  { type: "success", text: "✓ app/api/revenue/route.ts written · 0 type errors", delay: 250 },
   { type: "out", text: "", delay: 200 },
-  { type: "cmd", text: "budai --assist 'draft email to stakeholders' --tone=formal --lang=sv", delay: 1000, typeSpeed: 28 },
-  { type: "out", text: "", delay: 150 },
-  { type: "think", text: "[REASONING] Generating professional communication...", delay: 400 },
-  { type: "out", text: "  → Tone analysis: Formal | Language: Swedish", delay: 150 },
-  { type: "out", text: "  → Token generation: 187 tokens | Temp: 0.7", delay: 150 },
-  { type: "out", text: "  → Grammar check: PASSED", delay: 150 },
-  { type: "out", text: "", delay: 80 },
-  { type: "out", text: "  Subject: Q3 Resultat — Stark Tillväxt och Nya Möjligheter", delay: 150 },
-  { type: "out", text: "  Length: 180 ord | Läsbarhet: B2-nivå", delay: 150 },
-  { type: "out", text: "", delay: 80 },
-  { type: "success", text: "✓ Draft ready for review. Suggestions: 2 clarity improvements found.", delay: 250 },
+
+  { type: "cmd", text: "budai generate --task 'stakeholder digest' --lang=python", delay: 800, typeSpeed: 28 },
+  { type: "think", text: "[PLAN] Writing a summarizer for the weekly digest job...", delay: 300 },
+  { type: "sys", text: "  writing jobs/weekly_digest.py", delay: 150 },
+  ...codeLines([
+    "from datetime import datetime",
+    "from budai.reports import RevenueReport",
+    "from budai.mailer import send_email",
+    "",
+    "def build_weekly_digest(report: RevenueReport) -> str:",
+    "    lines = [",
+    "        f\"Revenue: {report.total_sek:,.0f} SEK\",",
+    "        f\"YoY growth: {report.yoy_growth:.1f}%\",",
+    "        f\"Top segment: {report.top_segment}\",",
+    "    ]",
+    "    return \"\\n\".join(lines)",
+    "",
+    "def run(recipients: list[str]) -> None:",
+    "    report = RevenueReport.for_week(datetime.now())",
+    "    send_email(recipients, subject=\"Weekly Digest\", body=build_weekly_digest(report))",
+  ]),
+  { type: "success", text: "✓ jobs/weekly_digest.py written · scheduled: Mon 08:00 CET", delay: 250 },
   { type: "out", text: "", delay: 200 },
-  { type: "cmd", text: "budai --automate 'weekly report' --schedule=weekly --time=08:00", delay: 900, typeSpeed: 32 },
-  { type: "out", text: "", delay: 150 },
-  { type: "think", text: "[AUTOMATION] Creating workflow...", delay: 350 },
-  { type: "out", text: "  → Trigger: Every Monday 08:00 CET", delay: 150 },
-  { type: "out", text: "  → Data sources: [sales_db, analytics_api, crm_export]", delay: 150 },
-  { type: "out", text: "  → Format: PDF + Dashboard update", delay: 150 },
-  { type: "out", text: "  → Recipients: management@company.se", delay: 150 },
-  { type: "out", text: "", delay: 80 },
-  { type: "success", text: "✓ Workflow ACTIVE | Next run: 2026-08-10 08:00 CET", delay: 250 },
+
+  { type: "cmd", text: "budai generate --task 'churn risk query' --lang=sql", delay: 700, typeSpeed: 28 },
+  { type: "think", text: "[PLAN] Drafting the churn-risk segment query...", delay: 300 },
+  { type: "sys", text: "  writing queries/churn_risk.sql", delay: 150 },
+  ...codeLines([
+    "SELECT",
+    "  c.customer_id,",
+    "  c.company_name,",
+    "  DATEDIFF(day, c.last_active_at, CURRENT_DATE) AS days_inactive,",
+    "  c.mrr_sek",
+    "FROM customers c",
+    "LEFT JOIN usage_events u",
+    "  ON u.customer_id = c.customer_id",
+    "  AND u.created_at > DATEADD(day, -30, CURRENT_DATE)",
+    "WHERE u.customer_id IS NULL",
+    "  AND c.status = 'active'",
+    "ORDER BY c.mrr_sek DESC;",
+  ]),
+  { type: "success", text: "✓ queries/churn_risk.sql written · 14 accounts flagged", delay: 250 },
   { type: "out", text: "", delay: 200 },
-  { type: "cmd", text: "budai --status --verbose", delay: 700, typeSpeed: 25 },
-  { type: "out", text: "", delay: 150 },
+
+  { type: "cmd", text: "budai --status --verbose", delay: 600, typeSpeed: 25 },
   { type: "out", text: "  Status:        OPERATIONAL", delay: 150 },
   { type: "out", text: "  Neural nets:   ACTIVE (8.7B params)", delay: 150 },
   { type: "out", text: "  Data pipes:    RUNNING (3 nodes)", delay: 150 },
   { type: "out", text: "  Security:      ENTERPRISE-GRADE (A+)", delay: 150 },
-  { type: "out", text: "  Uptime:        99.97% (47d 12h 33m)", delay: 150 },
-  { type: "out", text: "  Tasks today:   1,247 processed", delay: 150 },
+  { type: "out", text: "  Files written today: 214", delay: 150 },
   { type: "out", text: "", delay: 80 },
-  { type: "cmd", text: "budai --version", delay: 500, typeSpeed: 20 },
-  { type: "out", text: "", delay: 150 },
-  { type: "out", text: "  BudAI Developer Preview v0.9.2", delay: 150 },
-  { type: "out", text: "  Built by Stilledev | Sweden", delay: 150 },
-  { type: "out", text: "  © 2026 All rights reserved.", delay: 150 },
-  { type: "out", text: "", delay: 80 },
-  { type: "sys", text: "  [System ready. Awaiting input...]", delay: 300 },
+  { type: "sys", text: "  [Live inference stream continuing...]", delay: 300 },
+  { type: "out", text: "", delay: 200 },
 ];
 
 export default function Terminal() {
   const { t } = useLang();
   const [lines, setLines] = useState<TLine[]>([]);
   const [typing, setTyping] = useState("");
+  const [typingType, setTypingType] = useState<"cmd" | "code">("cmd");
   const [copied, setCopied] = useState(false);
   const [cursorVisible, setCursorVisible] = useState(true);
   const [isComplete, setIsComplete] = useState(false);
@@ -192,17 +252,18 @@ export default function Terminal() {
     };
 
     const runPhase = async (phase: { type: string; text: string; delay: number; typeSpeed?: number }) => {
-      if (phase.type === "cmd") {
+      if (phase.type === "cmd" || phase.type === "code") {
         setTyping("");
-        const speed = phase.typeSpeed || 30;
+        setTypingType(phase.type as "cmd" | "code");
+        const speed = phase.typeSpeed || (phase.type === "code" ? 8 : 30);
         for (let j = 0; j <= phase.text.length; j++) {
           if (cancelled) return;
           setTyping(phase.text.slice(0, j));
-          await new Promise((r) => setTimeout(r, 10 + Math.random() * speed));
+          await new Promise((r) => setTimeout(r, phase.type === "code" ? speed : 10 + Math.random() * speed));
         }
         if (cancelled) return;
-        await new Promise((r) => setTimeout(r, 150));
-        appendLine("cmd", phase.text);
+        await new Promise((r) => setTimeout(r, phase.type === "code" ? 15 : 150));
+        appendLine(phase.type as TLine["type"], phase.text);
         setTyping("");
       } else {
         await new Promise((r) => setTimeout(r, phase.delay));
@@ -266,6 +327,7 @@ export default function Terminal() {
   const getLineColor = (type: string) => {
     switch (type) {
       case "cmd": return "text-white";
+      case "code": return "text-white/90";
       case "think": return "text-accent-purple/80";
       case "success": return "text-accent-green";
       case "warn": return "text-yellow-400";
@@ -335,35 +397,59 @@ export default function Terminal() {
                 backgroundSize: "40px 40px",
               }}
             >
-              {lines.map((l) => {
-                const prefix = getPrefix(l.type);
+              {(() => {
+                let codeLineNo = 0;
+                const rendered = lines.map((l) => {
+                  const prefix = getPrefix(l.type);
+                  if (l.type === "cmd") codeLineNo = 0;
+                  if (l.type === "code") codeLineNo += 1;
+                  return (
+                    <motion.div
+                      key={l.id}
+                      initial={{ opacity: 0, x: -5 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.1 }}
+                      className="mb-0.5"
+                    >
+                      {l.type === "cmd" ? (
+                        <div className="flex items-start gap-2">
+                          <span className={`${prefix.color} shrink-0 select-none font-bold`}>{prefix.icon}</span>
+                          <span className="text-white">{l.text}</span>
+                        </div>
+                      ) : l.type === "code" ? (
+                        <div className="flex items-start gap-3">
+                          <span className="shrink-0 select-none text-muted/25 text-[11px] w-5 text-right tabular-nums">{codeLineNo}</span>
+                          <span className="whitespace-pre">{l.text.length ? highlightCode(l.text) : "\u00a0"}</span>
+                        </div>
+                      ) : (
+                        <div className={`${getLineColor(l.type)} pl-4`}>{l.text}</div>
+                      )}
+                    </motion.div>
+                  );
+                });
+                if (typing && typingType === "code") codeLineNo += 1;
                 return (
-                  <motion.div
-                    key={l.id}
-                    initial={{ opacity: 0, x: -5 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.1 }}
-                    className="mb-0.5"
-                  >
-                    {l.type === "cmd" ? (
+                  <>
+                    {rendered}
+                    {typing && typingType === "cmd" && (
                       <div className="flex items-start gap-2">
-                        <span className={`${prefix.color} shrink-0 select-none font-bold`}>{prefix.icon}</span>
-                        <span className="text-white">{l.text}</span>
+                        <span className="text-accent-green shrink-0 select-none font-bold">$</span>
+                        <span className="text-white">{typing}</span>
+                        <span className={`w-2 h-4 bg-accent-cyan ml-0.5 ${cursorVisible ? "opacity-100" : "opacity-0"}`} />
                       </div>
-                    ) : (
-                      <div className={`${getLineColor(l.type)} pl-4`}>{l.text}</div>
                     )}
-                  </motion.div>
+                    {typing && typingType === "code" && (
+                      <div className="flex items-start gap-3">
+                        <span className="shrink-0 select-none text-muted/25 text-[11px] w-5 text-right tabular-nums">{codeLineNo}</span>
+                        <span className="whitespace-pre">
+                          {highlightCode(typing)}
+                          <span className={`inline-block w-1.5 h-3.5 bg-accent-cyan ml-0.5 align-middle ${cursorVisible ? "opacity-100" : "opacity-0"}`} />
+                        </span>
+                      </div>
+                    )}
+                  </>
                 );
-              })}
-
-              {typing && (
-                <div className="flex items-start gap-2">
-                  <span className="text-accent-green shrink-0 select-none font-bold">$</span>
-                  <span className="text-white">{typing}</span>
-                  <span className={`w-2 h-4 bg-accent-cyan ml-0.5 ${cursorVisible ? "opacity-100" : "opacity-0"}`} />
-                </div>
-              )}
+              })()}
 
               {isComplete && neuralLogs.length > 0 && (
                 <div className="mt-3 pt-3 border-t border-white/[0.04]">
