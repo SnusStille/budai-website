@@ -2,173 +2,321 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mail, ArrowRight, Check, Sparkles, Users, Clock, Crown, Zap, Building2, User, Briefcase } from "lucide-react";
+import { Mail, ArrowRight, Check, Sparkles, Users, Clock, Crown, Zap, Building2, User, Briefcase, AlertCircle } from "lucide-react";
 import ScrollReveal from "@/components/ui/ScrollReveal";
 import Confetti from "@/components/ui/Confetti";
 import { addWaitlistUser } from "@/lib/data";
+import { useLang } from "@/components/ui/LanguageContext";
 
-const industries = ["Technology", "Finance", "Healthcare", "Retail", "Manufacturing", "Education", "Media", "Energy", "Logistics", "Construction", "Other"];
+const industries = [
+  "Technology", "Finance", "Healthcare", "Retail", "Manufacturing",
+  "Education", "Media", "Energy", "Logistics", "Construction", "Other"
+];
 const employeeRanges = ["1-10", "10-50", "50-200", "200-1000", "1000+"];
-const interests = ["Automation", "Data Analysis", "Customer Support", "Marketing Content", "Document Generation", "Workflow Optimization", "Problem Solving", "Other"];
+const interests = [
+  "Automation", "Data Analysis", "Customer Support", "Marketing Content",
+  "Document Generation", "Workflow Optimization", "Problem Solving", "Other"
+];
+
+interface FormErrors {
+  name?: string;
+  email?: string;
+  company?: string;
+}
 
 export default function Waitlist() {
-  const [form, setForm] = useState({ name: "", email: "", company: "", industry: "", employees: "", interest: "" });
+  const { t, lang } = useLang();
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    company: "",
+    industry: "",
+    employees: "",
+    interest: "",
+  });
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [confetti, setConfetti] = useState(false);
   const [count, setCount] = useState(127);
-  const [error, setError] = useState(false);
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [submitError, setSubmitError] = useState("");
 
   useEffect(() => {
     const interval = setInterval(() => setCount((c) => c + Math.floor(Math.random() * 3)), 8000);
     return () => clearInterval(interval);
   }, []);
 
+  const validate = (): boolean => {
+    const newErrors: FormErrors = {};
+    if (!form.name.trim() || form.name.length < 2) {
+      newErrors.name = lang === "sv" ? "Namn krävs" : "Name is required";
+    }
+    if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+      newErrors.email = lang === "sv" ? "Ogiltig e-postadress" : "Invalid email address";
+    }
+    if (!form.company.trim()) {
+      newErrors.company = lang === "sv" ? "Företag krävs" : "Company is required";
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.email.includes("@")) return;
+    setSubmitError("");
+    if (!validate()) return;
+
     setLoading(true);
-    setError(false);
     try {
       await addWaitlistUser(form);
       setSubmitted(true);
       setConfetti(true);
       setTimeout(() => setConfetti(false), 4000);
     } catch (err) {
-      // Previously an unhandled rejection here (e.g. a Supabase RLS/network
-      // error) left the button stuck on its loading spinner forever with no
-      // feedback — this is what "waitlist fungerar inte korrekt" was.
       console.error("Waitlist submit error:", err);
-      setError(true);
+      setSubmitError(
+        lang === "sv"
+          ? "Något gick fel. Försök igen senare eller kontakta oss."
+          : "Something went wrong. Please try again later or contact us."
+      );
     } finally {
       setLoading(false);
     }
   };
 
+  const stats = [
+    { icon: Users, label: lang === "sv" ? "Företag i kö" : "Companies Waiting", value: `${count}+`, color: "text-accent-cyan" },
+    { icon: Crown, label: lang === "sv" ? "Grundarplatser" : "Founding Spots", value: "500", color: "text-accent-purple" },
+    { icon: Clock, label: lang === "sv" ? "Förväntad lansering" : "Expected Launch", value: "Q2 2026", color: "text-accent-green" },
+  ];
+
+  const features = [
+    lang === "sv" ? "Prioriterad support" : "Priority Support",
+    lang === "sv" ? "Exklusiva funktioner" : "Exclusive Features",
+    lang === "sv" ? "Grundarstatus" : "Founding Status",
+  ];
+
   return (
     <section id="waitlist" className="relative py-32 overflow-hidden">
-      <Confetti active={confetti} />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-accent-purple/8 rounded-full blur-[180px] pointer-events-none" />
+      {confetti && <Confetti />}
 
-      <div className="relative z-10 max-w-4xl mx-auto px-6 lg:px-8">
-        <ScrollReveal className="text-center mb-12">
-          <span className="inline-block px-4 py-1.5 rounded-full glass text-sm font-medium text-accent-purple mb-4">Exclusive Access</span>
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6">
-            Join the <span className="text-gradient">Founding Companies</span>
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[900px] bg-accent-purple/5 rounded-full blur-[180px] pointer-events-none" />
+
+      <div className="relative z-10 max-w-5xl mx-auto px-6 lg:px-8">
+        <ScrollReveal className="text-center mb-16">
+          <motion.span
+            className="inline-block px-4 py-1.5 rounded-full glass text-sm font-medium text-accent-purple mb-4"
+            whileHover={{ scale: 1.05 }}
+          >
+            {lang === "sv" ? "Exklusiv Åtkomst" : "Exclusive Access"}
+          </motion.span>
+          <h2 className="text-4xl md:text-5xl font-bold tracking-tight mb-6">
+            {lang === "sv" ? "Gå Med i " : "Join the "}
+            <span className="text-gradient">{lang === "sv" ? "Väntelistan" : "Waitlist"}</span>
           </h2>
           <p className="text-lg text-muted max-w-2xl mx-auto">
-            Be among the first Swedish companies to experience BudAI. Early adopters receive lifetime priority support, exclusive features, and founding company status.
+            {lang === "sv"
+              ? "Bli en av de första svenska företagen att uppleva BudAI. Tidiga användare får livstidsprioriterad support, exklusiva funktioner och grundarstatus."
+              : "Be among the first Swedish companies to experience BudAI. Early adopters receive lifetime priority support, exclusive features, and founding company status."}
           </p>
         </ScrollReveal>
 
-        <ScrollReveal>
-          <div className="relative p-8 md:p-12 rounded-3xl glass-strong overflow-hidden border border-white/[0.06]">
-            <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-br from-accent-cyan/8 to-accent-purple/8 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-            <div className="absolute bottom-0 left-0 w-60 h-60 bg-gradient-to-tr from-accent-green/8 to-accent-cyan/8 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
+        <div className="grid lg:grid-cols-5 gap-8">
+          {/* Left: Stats */}
+          <div className="lg:col-span-2 space-y-6">
+            {stats.map((s) => (
+              <div key={s.label} className="glass-strong rounded-2xl p-6 border border-white/[0.06]">
+                <div className="flex items-center gap-4 mb-2">
+                  <s.icon className={`w-6 h-6 ${s.color}`} />
+                  <span className="text-3xl font-bold">{s.value}</span>
+                </div>
+                <p className="text-sm text-muted">{s.label}</p>
+              </div>
+            ))}
 
+            <div className="flex flex-wrap gap-2">
+              {features.map((f) => (
+                <span key={f} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/[0.03] border border-white/[0.06] text-xs text-muted">
+                  <Zap className="w-3 h-3 text-accent-cyan" />
+                  {f}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* Right: Form */}
+          <div className="lg:col-span-3">
             <AnimatePresence mode="wait">
               {!submitted ? (
-                <motion.div key="form" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, y: -20 }} className="relative z-10">
-                  <form onSubmit={handleSubmit} className="space-y-4 mb-8">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="relative">
-                        <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
-                        <input type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Full name" required className="w-full pl-11 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-muted focus:outline-none focus:border-accent-cyan/40 transition-colors text-sm" />
-                      </div>
-                      <div className="relative">
-                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
-                        <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="Business email" required className="w-full pl-11 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-muted focus:outline-none focus:border-accent-cyan/40 transition-colors text-sm" />
-                      </div>
-                      <div className="relative">
-                        <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
-                        <input type="text" value={form.company} onChange={(e) => setForm({ ...form, company: e.target.value })} placeholder="Company name" required className="w-full pl-11 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-muted focus:outline-none focus:border-accent-cyan/40 transition-colors text-sm" />
-                      </div>
-                      <div className="relative">
-                        <Briefcase className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
-                        <select value={form.industry} onChange={(e) => setForm({ ...form, industry: e.target.value })} required className="w-full pl-11 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-muted focus:outline-none focus:border-accent-cyan/40 transition-colors text-sm appearance-none">
-                          <option value="" disabled className="bg-surface">Select industry</option>
-                          {industries.map((i) => <option key={i} value={i} className="bg-surface">{i}</option>)}
-                        </select>
-                      </div>
-                      <div className="relative">
-                        <Users className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
-                        <select value={form.employees} onChange={(e) => setForm({ ...form, employees: e.target.value })} required className="w-full pl-11 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-muted focus:outline-none focus:border-accent-cyan/40 transition-colors text-sm appearance-none">
-                          <option value="" disabled className="bg-surface">Number of employees</option>
-                          {employeeRanges.map((e) => <option key={e} value={e} className="bg-surface">{e}</option>)}
-                        </select>
-                      </div>
-                      <div className="relative">
-                        <Sparkles className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
-                        <select value={form.interest} onChange={(e) => setForm({ ...form, interest: e.target.value })} required className="w-full pl-11 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-muted focus:outline-none focus:border-accent-cyan/40 transition-colors text-sm appearance-none">
-                          <option value="" disabled className="bg-surface">What do you need AI for?</option>
-                          {interests.map((i) => <option key={i} value={i} className="bg-surface">{i}</option>)}
-                        </select>
-                      </div>
+                <motion.form
+                  key="form"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  onSubmit={handleSubmit}
+                  className="glass-strong rounded-2xl p-6 sm:p-8 border border-white/[0.06] space-y-4"
+                  noValidate
+                >
+                  {submitError && (
+                    <div className="flex items-center gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+                      <AlertCircle className="w-4 h-4 shrink-0" />
+                      {submitError}
                     </div>
-                    <button
-                      type="submit"
-                      disabled={loading}
-                      className="w-full md:w-auto px-8 py-4 bg-gradient-to-r from-accent-cyan to-accent-purple rounded-xl font-semibold text-white flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-40"
-                    >
-                      {loading ? (
-                        <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }} className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full" />
-                      ) : (
-                        <>Request Access <ArrowRight className="w-5 h-5" /></>
-                      )}
-                    </button>
-                  </form>
+                  )}
 
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    {[
-                      { icon: Users, label: "Companies Waiting", value: `${count}+`, color: "text-accent-cyan" },
-                      { icon: Crown, label: "Founding Spots", value: "500", color: "text-accent-purple" },
-                      { icon: Clock, label: "Expected Launch", value: "Q2 2026", color: "text-accent-green" },
-                    ].map((s) => (
-                      <div key={s.label} className="flex items-center gap-3 p-4 rounded-xl bg-white/[0.02] border border-white/[0.03]">
-                        <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center">
-                          <s.icon className={`w-5 h-5 ${s.color}`} />
-                        </div>
-                        <div>
-                          <div className="text-xl font-bold text-white">{s.value}</div>
-                          <div className="text-xs text-muted">{s.label}</div>
-                        </div>
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-medium text-muted mb-1.5">
+                        {t.waitlist.name} *
+                      </label>
+                      <div className="relative">
+                        <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted/50" />
+                        <input
+                          type="text"
+                          value={form.name}
+                          onChange={(e) => setForm({ ...form, name: e.target.value })}
+                          className={`w-full pl-10 pr-4 py-3 rounded-xl bg-white/[0.03] border text-sm text-white placeholder:text-muted/50 focus:outline-none focus:border-accent-cyan/30 transition-colors ${
+                            errors.name ? "border-red-500/50" : "border-white/[0.06]"
+                          }`}
+                          placeholder="Anna Lindqvist"
+                        />
                       </div>
-                    ))}
+                      {errors.name && <p className="mt-1 text-xs text-red-400">{errors.name}</p>}
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-muted mb-1.5">
+                        {t.waitlist.email} *
+                      </label>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted/50" />
+                        <input
+                          type="email"
+                          value={form.email}
+                          onChange={(e) => setForm({ ...form, email: e.target.value })}
+                          className={`w-full pl-10 pr-4 py-3 rounded-xl bg-white/[0.03] border text-sm text-white placeholder:text-muted/50 focus:outline-none focus:border-accent-cyan/30 transition-colors ${
+                            errors.email ? "border-red-500/50" : "border-white/[0.06]"
+                          }`}
+                          placeholder="anna@foretag.se"
+                        />
+                      </div>
+                      {errors.email && <p className="mt-1 text-xs text-red-400">{errors.email}</p>}
+                    </div>
                   </div>
 
-                  <div className="mt-6 flex items-center justify-center gap-6 text-xs text-muted/50">
-                    <span className="flex items-center gap-1.5"><Zap className="w-3 h-3 text-accent-cyan" /> Priority Support</span>
-                    <span className="flex items-center gap-1.5"><Sparkles className="w-3 h-3 text-accent-purple" /> Exclusive Features</span>
-                    <span className="flex items-center gap-1.5"><Crown className="w-3 h-3 text-accent-green" /> Founding Status</span>
+                  <div>
+                    <label className="block text-xs font-medium text-muted mb-1.5">
+                      {t.waitlist.company} *
+                    </label>
+                    <div className="relative">
+                      <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted/50" />
+                      <input
+                        type="text"
+                        value={form.company}
+                        onChange={(e) => setForm({ ...form, company: e.target.value })}
+                        className={`w-full pl-10 pr-4 py-3 rounded-xl bg-white/[0.03] border text-sm text-white placeholder:text-muted/50 focus:outline-none focus:border-accent-cyan/30 transition-colors ${
+                          errors.company ? "border-red-500/50" : "border-white/[0.06]"
+                        }`}
+                        placeholder="Företag AB"
+                      />
+                    </div>
+                    {errors.company && <p className="mt-1 text-xs text-red-400">{errors.company}</p>}
                   </div>
-                </motion.div>
+
+                  <div className="grid sm:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-xs font-medium text-muted mb-1.5">
+                        {t.waitlist.industry}
+                      </label>
+                      <select
+                        value={form.industry}
+                        onChange={(e) => setForm({ ...form, industry: e.target.value })}
+                        className="w-full px-4 py-3 rounded-xl bg-white/[0.03] border border-white/[0.06] text-sm text-white focus:outline-none focus:border-accent-cyan/30 transition-colors appearance-none"
+                      >
+                        <option value="">{lang === "sv" ? "Välj..." : "Select..."}</option>
+                        {industries.map((i) => (
+                          <option key={i} value={i}>{i}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-muted mb-1.5">
+                        {t.waitlist.employees}
+                      </label>
+                      <select
+                        value={form.employees}
+                        onChange={(e) => setForm({ ...form, employees: e.target.value })}
+                        className="w-full px-4 py-3 rounded-xl bg-white/[0.03] border border-white/[0.06] text-sm text-white focus:outline-none focus:border-accent-cyan/30 transition-colors appearance-none"
+                      >
+                        <option value="">{lang === "sv" ? "Välj..." : "Select..."}</option>
+                        {employeeRanges.map((r) => (
+                          <option key={r} value={r}>{r}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-muted mb-1.5">
+                        {t.waitlist.interest}
+                      </label>
+                      <select
+                        value={form.interest}
+                        onChange={(e) => setForm({ ...form, interest: e.target.value })}
+                        className="w-full px-4 py-3 rounded-xl bg-white/[0.03] border border-white/[0.06] text-sm text-white focus:outline-none focus:border-accent-cyan/30 transition-colors appearance-none"
+                      >
+                        <option value="">{lang === "sv" ? "Välj..." : "Select..."}</option>
+                        {interests.map((i) => (
+                          <option key={i} value={i}>{i}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <motion.button
+                    type="submit"
+                    disabled={loading}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="w-full py-4 rounded-xl bg-gradient-to-r from-accent-cyan to-accent-purple text-white font-semibold disabled:opacity-40 disabled:cursor-not-allowed shadow-[0_0_20px_rgba(0,229,255,0.15)] hover:shadow-[0_0_30px_rgba(0,229,255,0.25)] transition-shadow flex items-center justify-center gap-2"
+                  >
+                    {loading ? (
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    ) : (
+                      <>
+                        {t.waitlist.submit}
+                        <ArrowRight className="w-4 h-4" />
+                      </>
+                    )}
+                  </motion.button>
+
+                  <p className="text-xs text-muted/60 text-center">
+                    {lang === "sv"
+                      ? "Genom att gå med godkänner du att vi kontaktar dig angående BudAI."
+                      : "By joining, you agree to be contacted about BudAI."}
+                  </p>
+                </motion.form>
               ) : (
                 <motion.div
                   key="success"
-                  initial={{ opacity: 0, scale: 0.9 }}
+                  initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="relative z-10 text-center py-10"
+                  className="glass-strong rounded-2xl p-8 sm:p-12 border border-white/[0.06] text-center"
                 >
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ type: "spring", stiffness: 200, damping: 15 }}
-                    className="w-20 h-20 rounded-full bg-gradient-to-br from-accent-green to-accent-cyan flex items-center justify-center mx-auto mb-6 shadow-[0_0_40px_rgba(0,255,157,0.3)]"
-                  >
-                    <Check className="w-10 h-10 text-white" />
-                  </motion.div>
-                  <h3 className="text-3xl font-bold mb-3">Welcome to the future.</h3>
-                  <p className="text-muted mb-2">We have added <span className="text-accent-cyan font-medium">{form.email}</span> to our founding companies list.</p>
-                  <p className="text-sm text-muted/50">You will be among the first to experience BudAI. We will be in touch soon.</p>
-                  <div className="mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-full glass text-sm text-accent-green">
-                    <Crown className="w-4 h-4" />
-                    Founding Company Status: ACTIVE
+                  <div className="w-16 h-16 rounded-full bg-accent-green/10 border border-accent-green/20 flex items-center justify-center mx-auto mb-6">
+                    <Check className="w-8 h-8 text-accent-green" />
+                  </div>
+                  <h3 className="text-2xl font-bold mb-2">{t.waitlist.success}</h3>
+                  <p className="text-muted mb-6">{t.waitlist.successMsg}</p>
+                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent-green/10 border border-accent-green/20 text-accent-green text-sm font-medium">
+                    <Sparkles className="w-4 h-4" />
+                    {lang === "sv" ? "Grundarföretag: AKTIV" : "Founding Company: ACTIVE"}
                   </div>
                 </motion.div>
               )}
             </AnimatePresence>
           </div>
-        </ScrollReveal>
+        </div>
       </div>
     </section>
   );
