@@ -136,6 +136,14 @@ body {
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
+  .text-shimmer {
+    background: linear-gradient(100deg, #ffffff 20%, var(--cyan) 40%, #ffffff 60%, #ffffff 100%);
+    background-size: 250% 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: shimmer 5s ease-in-out infinite;
+  }
   .glow-cyan { box-shadow: 0 0 40px rgba(0, 229, 255, 0.15), 0 0 80px rgba(0, 229, 255, 0.05); }
   .glow-purple { box-shadow: 0 0 40px rgba(185, 103, 255, 0.15), 0 0 80px rgba(185, 103, 255, 0.05); }
   .glow-green { box-shadow: 0 0 40px rgba(0, 255, 157, 0.15), 0 0 80px rgba(0, 255, 157, 0.05); }

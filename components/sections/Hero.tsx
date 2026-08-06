@@ -5,10 +5,30 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Sparkles, Code2, Zap, Shield, ChevronDown } from "lucide-react";
 import { useLang } from "@/components/ui/LanguageContext";
 
+// A small easter egg for anyone who clicks the orb — the site notices.
+const FUN_MESSAGES = [
+  "⚡ 68% caffeine, 32% code.",
+  "🤖 Beep boop. Nice click.",
+  "✨ You found the secret button.",
+  "🧠 Still thinking about that click.",
+  "🚀 Extra sparkle, on the house.",
+  "👀 We see you.",
+];
+
 export default function Hero() {
   const { t } = useLang();
   const [isMobile, setIsMobile] = useState(false);
   const [wordIndex, setWordIndex] = useState(0);
+  const [burstId, setBurstId] = useState<number | null>(null);
+  const [funMsg, setFunMsg] = useState<string | null>(null);
+
+  const handleOrbClick = () => {
+    const id = Date.now();
+    setBurstId(id);
+    setFunMsg(FUN_MESSAGES[Math.floor(Math.random() * FUN_MESSAGES.length)]);
+    setTimeout(() => setBurstId((cur) => (cur === id ? null : cur)), 850);
+    setTimeout(() => setFunMsg(null), 2600);
+  };
 
   useEffect(() => {
     const onResize = () => setIsMobile(window.innerWidth < 768);
@@ -56,15 +76,26 @@ export default function Hero() {
           </span>
           <span className="w-px h-4 bg-white/10" />
           <span className="text-sm text-muted flex items-center gap-2">
-            <span className="relative w-10 h-1.5 rounded-full bg-white/10 overflow-hidden">
-              <motion.span
-                initial={{ width: 0 }}
-                animate={{ width: "68%" }}
+            <svg width="18" height="18" viewBox="0 0 18 18" className="shrink-0 -rotate-90">
+              <circle cx="9" cy="9" r="7" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="2.5" />
+              <motion.circle
+                cx="9" cy="9" r="7" fill="none"
+                stroke="url(#heroProgressGradient)"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeDasharray={2 * Math.PI * 7}
+                initial={{ strokeDashoffset: 2 * Math.PI * 7 }}
+                animate={{ strokeDashoffset: 2 * Math.PI * 7 * (1 - 0.68) }}
                 transition={{ duration: 1.4, delay: 1, ease: [0.22, 1, 0.36, 1] }}
-                className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-accent-cyan to-accent-purple"
               />
-            </span>
-            68% to launch
+              <defs>
+                <linearGradient id="heroProgressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#00e5ff" />
+                  <stop offset="100%" stopColor="#b967ff" />
+                </linearGradient>
+              </defs>
+            </svg>
+            <span className="font-semibold text-white">68%</span> to launch
           </span>
         </motion.div>
 
@@ -86,7 +117,48 @@ export default function Hero() {
             className="absolute inset-3 rounded-full border border-accent-purple/15"
           />
           <div className="absolute inset-8 rounded-full bg-gradient-to-br from-accent-cyan/30 via-accent-purple/20 to-accent-green/30 blur-xl animate-glow-pulse" />
-          <div className="absolute inset-10 rounded-full bg-gradient-to-br from-accent-cyan/40 to-accent-purple/40 flex items-center justify-center">
+
+          <AnimatePresence>
+            {funMsg && (
+              <motion.div
+                initial={{ opacity: 0, y: 8, scale: 0.85 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -8, scale: 0.85 }}
+                transition={{ type: "spring", damping: 18 }}
+                className="absolute -top-2 left-1/2 -translate-x-1/2 -translate-y-full whitespace-nowrap px-4 py-2 rounded-xl glass-strong border border-accent-cyan/25 text-xs font-medium text-white shadow-[0_0_25px_rgba(0,229,255,0.2)] z-30"
+              >
+                {funMsg}
+                <span className="absolute top-full left-1/2 -translate-x-1/2 w-2 h-2 rotate-45 bg-[#08080f] border-r border-b border-accent-cyan/25" />
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {burstId && (
+            <div key={burstId} className="absolute inset-0 pointer-events-none z-20">
+              {Array.from({ length: 14 }).map((_, i) => {
+                const angle = (i / 14) * Math.PI * 2;
+                const dist = 85 + ((i * 37) % 40);
+                return (
+                  <motion.span
+                    key={i}
+                    className="absolute top-1/2 left-1/2 w-1.5 h-1.5 rounded-full"
+                    style={{ background: i % 2 === 0 ? "#00e5ff" : "#b967ff", boxShadow: `0 0 8px ${i % 2 === 0 ? "#00e5ff" : "#b967ff"}` }}
+                    initial={{ x: 0, y: 0, opacity: 1, scale: 1 }}
+                    animate={{ x: Math.cos(angle) * dist, y: Math.sin(angle) * dist, opacity: 0, scale: 0 }}
+                    transition={{ duration: 0.8, ease: "easeOut" }}
+                  />
+                );
+              })}
+            </div>
+          )}
+
+          <motion.div
+            onClick={handleOrbClick}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.92 }}
+            title="Click me"
+            className="absolute inset-10 rounded-full bg-gradient-to-br from-accent-cyan/40 to-accent-purple/40 flex items-center justify-center cursor-pointer z-10"
+          >
             <motion.div
               animate={{ scale: [1, 1.1, 1] }}
               transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
@@ -94,7 +166,7 @@ export default function Hero() {
             >
               <Sparkles className="w-8 h-8 md:w-10 md:h-10 text-white" />
             </motion.div>
-          </div>
+          </motion.div>
 
           {Array.from({ length: particleCount }).map((_, i) => (
             <motion.div
@@ -133,19 +205,7 @@ export default function Hero() {
           transition={{ duration: 0.8, delay: 0.4 }}
           className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold tracking-tight leading-[1.05] mb-6"
         >
-          <motion.span
-            className="block relative bg-clip-text text-transparent"
-            style={{
-              backgroundImage:
-                "linear-gradient(100deg, #ffffff 30%, #00e5ff 45%, #ffffff 55%, #ffffff 100%)",
-              backgroundSize: "250% 100%",
-              WebkitBackgroundClip: "text",
-            }}
-            animate={{ backgroundPosition: ["150% 0%", "-50% 0%"] }}
-            transition={{ duration: 4, repeat: Infinity, repeatDelay: 2.5, ease: "easeInOut" }}
-          >
-            {t.hero.title1}
-          </motion.span>
+          <span className="block text-shimmer">{t.hero.title1}</span>
           <span className="relative block text-gradient mt-1 h-[1.1em] overflow-hidden">
             <AnimatePresence mode="wait">
               <motion.span
