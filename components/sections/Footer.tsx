@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Cpu, Github, MessageSquare, Linkedin, Mail, ArrowUpRight, X, Shield, FileText, Cookie, Scale } from "lucide-react";
+import { motion } from "framer-motion";
 import { useLang } from "@/components/ui/LanguageContext";
 
 const groups = (lang: string) => [

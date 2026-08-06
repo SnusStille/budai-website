@@ -43,7 +43,7 @@ export default function Hero() {
             {t.hero.badge}
           </span>
           <span className="w-px h-4 bg-white/10" />
-          <span className="text-sm text-muted">v0.9.2 — {t.lang === "sv" ? "Under utveckling" : "Currently under development"}</span>
+          <span className="text-sm text-muted">v0.9.2 — Under utveckling</span>
         </motion.div>
 
         <motion.div
@@ -131,7 +131,7 @@ export default function Hero() {
           className="text-sm text-muted/50 mb-12 flex items-center justify-center gap-2"
         >
           <span className="w-1.5 h-1.5 rounded-full bg-accent-cyan" />
-          {t.lang === "sv" ? "Utvecklad av" : "Developed by"} <span className="text-accent-cyan font-medium">Stilledev</span>
+          Utvecklad av <span className="text-accent-cyan font-medium">Stilledev</span>
           <span className="text-muted/30">·</span>
           <span>Sweden</span>
         </motion.p>
@@ -166,10 +166,10 @@ export default function Hero() {
           className="flex flex-wrap items-center justify-center gap-3"
         >
           {[
-            { icon: Sparkles, label: t.lang === "sv" ? "AI-Driven" : "AI-Powered" },
-            { icon: Code2, label: t.lang === "sv" ? "Kodgenerering" : "Code Generation" },
-            { icon: Zap, label: t.lang === "sv" ? "Automatisering" : "Automation" },
-            { icon: Shield, label: t.lang === "sv" ? "Företagsklar" : "Enterprise Ready" },
+            { icon: Sparkles, label: "AI-Driven" },
+            { icon: Code2, label: "Kodgenerering" },
+            { icon: Zap, label: "Automatisering" },
+            { icon: Shield, label: "Företagsklar" },
           ].map((item) => (
             <div key={item.label} className="flex items-center gap-2 px-4 py-2 rounded-full glass text-sm text-white/70">
               <item.icon className="w-4 h-4 text-accent-cyan" />

@@ -194,7 +194,14 @@ export default function Terminal() {
           setTyping("");
         } else {
           await new Promise((r) => setTimeout(r, phase.delay));
-          setLines((p) => [...p, { id: lineId.current++, type: phase.type, text: phase.text }]);
+          setLines((p) => [
+  ...p,
+  { 
+    id: lineId.current++, 
+    type: phase.type as TLine["type"], 
+    text: phase.text 
+  }
+]);
         }
       }
       setIsComplete(true);
