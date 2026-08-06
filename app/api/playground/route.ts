@@ -7,7 +7,7 @@ const anthropic = new Anthropic({
 
 // Very simple in-memory rate limit (resets on redeploy — fine for a dev preview)
 const requestCounts = new Map<string, { count: number; resetAt: number }>();
-const LIMIT = 50; // 3 meddelanden
+const LIMIT = 50; // 50 messages per IP per window
 const WINDOW_MS = 60 * 60 * 1000; // 1 hour
 
 function isRateLimited(ip: string): boolean {
@@ -27,7 +27,7 @@ function isRateLimited(ip: string): boolean {
 
 const SYSTEM_PROMPT = `You are BudAI, an AI assistant demo for Swedish businesses, built by Stilledev.
 You're being tried out by a potential customer on a marketing site's "playground" demo.
-Keep replies concise (2-4 sentences), professional but warm, and focused on business use cases:
+Keep replies concise (3-6 sentences), professional but warm, and focused on business use cases:
 automation, document generation, data analysis, customer support, marketing content, workflow optimization.
 This is a developer preview — if asked about pricing, availability, or timelines, say the team can share
 details when they request access, don't invent specifics.
@@ -53,7 +53,10 @@ export async function POST(req: NextRequest) {
 
     const response = await anthropic.messages.create({
       model: "claude-sonnet-4-6",
-      max_tokens: 300,
+      // Raised from 300 -> 500 so visitors can actually see the quality of a
+      // full response in the demo, while still keeping a hard ceiling so a
+      // single reply can't run away and rack up cost.
+      max_tokens: 500,
       system: SYSTEM_PROMPT,
       messages: [{ role: "user", content: message }],
     });

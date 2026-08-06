@@ -5,10 +5,10 @@ import { Target, TrendingUp, Heart, Globe } from "lucide-react";
 import ScrollReveal from "@/components/ui/ScrollReveal";
 
 const pillars = [
-  { icon: Target, title: "Mission", desc: "To make advanced AI accessible to every Swedish company, regardless of size or technical expertise. We believe AI should empower, not replace, human potential." },
-  { icon: TrendingUp, title: "Growth", desc: "BudAI will continuously evolve—learning from every interaction, expanding capabilities, and growing alongside the businesses it serves." },
-  { icon: Heart, title: "Swedish Values", desc: "Built with Swedish principles at its core: transparency, sustainability, equality, and innovation. Data stays in the Nordics. Privacy is non-negotiable." },
-  { icon: Globe, title: "Global Impact", desc: "Starting in Sweden, scaling to the Nordics, and eventually empowering businesses worldwide with ethical, powerful AI solutions." },
+  { icon: Target, title: "Mission", desc: "To make advanced AI accessible to every Swedish company, regardless of size or technical expertise. We believe AI should empower, not replace, human potential.", gradient: "from-accent-cyan to-accent-blue", accent: "text-accent-cyan", glow: "shadow-[0_0_30px_rgba(0,229,255,0.1)]" },
+  { icon: TrendingUp, title: "Growth", desc: "BudAI will continuously evolve—learning from every interaction, expanding capabilities, and growing alongside the businesses it serves.", gradient: "from-accent-purple to-accent-pink", accent: "text-accent-purple", glow: "shadow-[0_0_30px_rgba(185,103,255,0.1)]" },
+  { icon: Heart, title: "Swedish Values", desc: "Built with Swedish principles at its core: transparency, sustainability, equality, and innovation. Data stays in the Nordics. Privacy is non-negotiable.", gradient: "from-accent-green to-accent-cyan", accent: "text-accent-green", glow: "shadow-[0_0_30px_rgba(0,255,157,0.1)]" },
+  { icon: Globe, title: "Global Impact", desc: "Starting in Sweden, scaling to the Nordics, and eventually empowering businesses worldwide with ethical, powerful AI solutions.", gradient: "from-accent-pink to-accent-purple", accent: "text-accent-pink", glow: "shadow-[0_0_30px_rgba(255,107,157,0.1)]" },
 ];
 
 export default function Vision() {
@@ -31,14 +31,19 @@ export default function Vision() {
           {pillars.map((p, i) => (
             <ScrollReveal key={p.title} delay={i * 0.1}>
               <motion.div
-                whileHover={{ y: -4 }}
-                className="group p-8 rounded-2xl glass border border-white/[0.06] h-full hover:border-white/[0.1] transition-colors"
+                whileHover={{ y: -6, scale: 1.01 }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                className={`group relative h-full holo-card rounded-2xl p-8 ${p.glow} hover:shadow-[0_0_40px_rgba(0,229,255,0.08)] transition-shadow duration-500`}
               >
-                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-accent-cyan/15 to-accent-purple/15 flex items-center justify-center mb-6 group-hover:from-accent-cyan/25 group-hover:to-accent-purple/25 transition-colors">
-                  <p.icon className="w-7 h-7 text-accent-cyan" />
+                <div className={`absolute top-0 left-6 right-6 h-px bg-gradient-to-r ${p.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
+                <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${p.gradient} p-[1px] mb-6`}>
+                  <div className="w-full h-full rounded-xl bg-surface flex items-center justify-center">
+                    <p.icon className={`w-7 h-7 ${p.accent}`} />
+                  </div>
                 </div>
-                <h3 className="text-2xl font-semibold mb-4 text-white">{p.title}</h3>
+                <h3 className="text-2xl font-semibold mb-4 text-white group-hover:text-accent-cyan transition-colors duration-300">{p.title}</h3>
                 <p className="text-muted leading-relaxed">{p.desc}</p>
+                <div className="absolute top-4 right-4 w-8 h-8 border-t border-r border-white/5 rounded-tr-lg opacity-0 group-hover:opacity-100 transition-opacity" />
               </motion.div>
             </ScrollReveal>
           ))}

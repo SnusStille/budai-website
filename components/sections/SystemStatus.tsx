@@ -106,14 +106,19 @@ function MiniSpark({ data, color }: { data: number[]; color: string }) {
 }
 
 // Live pulsing dot field - lightweight visual effect
+// Dots are generated once via lazy useState init, not on every render —
+// this section's parent re-renders every 2.5s (live metrics), and without
+// this the whole field used to jump to new random positions each tick.
 function PulseField() {
-  const dots = Array.from({ length: 20 }, (_, i) => ({
-    id: i,
-    x: Math.random() * 100,
-    y: Math.random() * 100,
-    delay: Math.random() * 3,
-    duration: 2 + Math.random() * 2,
-  }));
+  const [dots] = useState(() =>
+    Array.from({ length: 20 }, (_, i) => ({
+      id: i,
+      x: Math.random() * 100,
+      y: Math.random() * 100,
+      delay: Math.random() * 3,
+      duration: 2 + Math.random() * 2,
+    }))
+  );
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
       {dots.map((dot) => (

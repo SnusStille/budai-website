@@ -1,57 +1,78 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, ArrowUpRight } from "lucide-react";
+import { Sparkles, ArrowUpRight, X } from "lucide-react";
 import { useLang } from "@/components/ui/LanguageContext";
+
+const DISMISS_KEY = "budai-buddy-popup-dismissed";
+const SHOW_AFTER_MS = 8000; // 7-10s, as requested
 
 export default function BuddyCard({ className = "" }: { className?: string }) {
   const { lang } = useLang();
-  const [hovered, setHovered] = useState(false);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    // Session-scoped: shows once per browser tab session, not on every page view.
+    if (sessionStorage.getItem(DISMISS_KEY)) return;
+    const timer = setTimeout(() => setVisible(true), SHOW_AFTER_MS);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const dismiss = () => {
+    setVisible(false);
+    sessionStorage.setItem(DISMISS_KEY, "true");
+  };
 
   return (
-    <motion.a
-      href="#playground"
-      initial={{ opacity: 0, y: 20, scale: 0.8 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 0.6, delay: 1.5, type: "spring", damping: 15 }}
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      className={`${className} group relative flex items-center gap-0 rounded-2xl border border-accent-cyan/20 bg-gradient-to-br from-black/70 to-black/50 backdrop-blur-xl shadow-[0_0_30px_rgba(0,229,255,0.12),0_8px_32px_rgba(0,0,0,0.4)] transition-all hover:shadow-[0_0_40px_rgba(0,229,255,0.22),0_8px_32px_rgba(0,0,0,0.4)] hover:border-accent-cyan/40 overflow-hidden`}
-    >
-      {/* Glow ring */}
-      <div className="absolute inset-0 rounded-2xl border border-accent-cyan/20 animate-ping opacity-20" />
+    <AnimatePresence>
+      {visible && (
+        <motion.div
+          initial={{ opacity: 0, y: 20, scale: 0.9 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: 20, scale: 0.9 }}
+          transition={{ duration: 0.4, type: "spring", damping: 18 }}
+          // Sits above the cookie-consent banner (which also lives bottom-right)
+          // so the two never stack on top of each other.
+          className={`${className} fixed bottom-24 md:bottom-28 right-4 z-[30] w-[280px]`}
+        >
+          <div className="group relative rounded-2xl border border-accent-cyan/20 bg-gradient-to-br from-black/80 to-black/60 backdrop-blur-xl shadow-[0_0_30px_rgba(0,229,255,0.12),0_8px_32px_rgba(0,0,0,0.4)] overflow-hidden p-4">
+            <div className="absolute inset-0 rounded-2xl border border-accent-cyan/20 animate-ping opacity-10 pointer-events-none" />
 
-      {/* Icon */}
-      <div className="relative flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-accent-cyan to-accent-purple shadow-[0_0_15px_rgba(0,229,255,0.3)] shrink-0">
-        <Sparkles className="w-6 h-6 text-white" />
-        <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-accent-cyan to-accent-purple animate-pulse opacity-30" />
-      </div>
+            <button
+              onClick={dismiss}
+              aria-label={lang === "sv" ? "Stäng" : "Close"}
+              className="absolute top-2.5 right-2.5 p-1 rounded-lg text-muted hover:text-white hover:bg-white/10 transition-colors"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
 
-      {/* Expandable text on hover */}
-      <AnimatePresence>
-        {hovered && (
-          <motion.div
-            initial={{ width: 0, opacity: 0, paddingLeft: 0, paddingRight: 0 }}
-            animate={{ width: "auto", opacity: 1, paddingLeft: 12, paddingRight: 12 }}
-            exit={{ width: 0, opacity: 0, paddingLeft: 0, paddingRight: 0 }}
-            transition={{ duration: 0.25, ease: "easeOut" }}
-            className="flex items-center gap-2 overflow-hidden whitespace-nowrap"
-          >
-            <div className="flex flex-col">
-              <span className="text-sm font-bold text-white">
-                {lang === "sv" ? "Testa mig!" : "Try me!"}
-              </span>
-              <span className="text-[10px] text-accent-cyan/70">
-                {lang === "sv" ? "AI Playground →" : "AI Playground →"}
-              </span>
+            <div className="relative flex items-start gap-3 pr-4">
+              <div className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-accent-cyan to-accent-purple shadow-[0_0_15px_rgba(0,229,255,0.3)] shrink-0">
+                <Sparkles className="w-5 h-5 text-white" />
+                <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-accent-cyan to-accent-purple animate-pulse opacity-30" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold text-white leading-snug">
+                  {lang === "sv" ? "Testa din nya bästa vän" : "Try your new best friend"}
+                </p>
+                <p className="text-[11px] text-muted mt-0.5">
+                  {lang === "sv" ? "Se vad BudAI kan göra på under en minut." : "See what BudAI can do in under a minute."}
+                </p>
+              </div>
             </div>
-            <ArrowUpRight className="w-4 h-4 text-accent-cyan shrink-0" />
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.a>
+
+            <a
+              href="#playground"
+              onClick={dismiss}
+              className="relative mt-3 flex items-center justify-center gap-1.5 w-full px-4 py-2.5 rounded-xl bg-gradient-to-r from-accent-cyan to-accent-purple text-sm font-semibold text-white hover:opacity-90 transition-opacity"
+            >
+              {lang === "sv" ? "Testa BudAI" : "Try BudAI"}
+              <ArrowUpRight className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+            </a>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }

@@ -158,7 +158,16 @@ export default function Footer() {
           <p className="text-sm text-muted">© 2026 BudAI. {lang === "sv" ? "Alla rättigheter förbehållna." : "All rights reserved."}</p>
           <div className="flex items-center gap-4">
             <p className="text-sm text-muted flex items-center gap-1.5">
-              {lang === "sv" ? "Utvecklad av" : "Developed by"} <span className="text-accent-cyan font-medium">Stilledev</span>
+              {lang === "sv" ? "Utvecklad av" : "Developed by"}{" "}
+              <a
+                href="https://discord.com/users/353944097301594123"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="relative text-accent-cyan font-medium hover:text-white transition-colors duration-300 group"
+              >
+                Stilledev
+                <span className="absolute -bottom-0.5 left-0 w-0 h-px bg-accent-cyan group-hover:w-full transition-all duration-300" />
+              </a>
               <span className="text-muted/30">·</span>
               <span className="text-xs">Sweden</span>
             </p>

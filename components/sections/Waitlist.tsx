@@ -17,6 +17,7 @@ export default function Waitlist() {
   const [loading, setLoading] = useState(false);
   const [confetti, setConfetti] = useState(false);
   const [count, setCount] = useState(127);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     const interval = setInterval(() => setCount((c) => c + Math.floor(Math.random() * 3)), 8000);
@@ -27,11 +28,21 @@ export default function Waitlist() {
     e.preventDefault();
     if (!form.email.includes("@")) return;
     setLoading(true);
-    await addWaitlistUser(form);
-    setLoading(false);
-    setSubmitted(true);
-    setConfetti(true);
-    setTimeout(() => setConfetti(false), 4000);
+    setError(false);
+    try {
+      await addWaitlistUser(form);
+      setSubmitted(true);
+      setConfetti(true);
+      setTimeout(() => setConfetti(false), 4000);
+    } catch (err) {
+      // Previously an unhandled rejection here (e.g. a Supabase RLS/network
+      // error) left the button stuck on its loading spinner forever with no
+      // feedback — this is what "waitlist fungerar inte korrekt" was.
+      console.error("Waitlist submit error:", err);
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

@@ -178,35 +178,65 @@ export default function Terminal() {
   useEffect(() => {
     if (started.current) return;
     started.current = true;
+    let cancelled = false;
 
-    const allPhases = [...BOOT_PHASES, ...LIVE_TASKS];
-    const run = async () => {
-      for (const phase of allPhases) {
-        if (phase.type === "cmd") {
-          setTyping("");
-          const speed = phase.typeSpeed || 30;
-          for (let j = 0; j <= phase.text.length; j++) {
-            setTyping(phase.text.slice(0, j));
-            await new Promise((r) => setTimeout(r, 10 + Math.random() * speed));
-          }
-          await new Promise((r) => setTimeout(r, 150));
-          setLines((p) => [...p, { id: lineId.current++, type: "cmd", text: phase.text }]);
-          setTyping("");
-        } else {
-          await new Promise((r) => setTimeout(r, phase.delay));
-          setLines((p) => [
-  ...p,
-  { 
-    id: lineId.current++, 
-    type: phase.type as TLine["type"], 
-    text: phase.text 
-  }
-]);
+    // Keeps state (and the DOM) bounded even though the terminal now loops
+    // forever — without this, `lines` would grow without limit the longer
+    // someone leaves the tab open.
+    const MAX_LINES = 160;
+    const appendLine = (type: TLine["type"], text: string) => {
+      setLines((p) => {
+        const next = [...p, { id: lineId.current++, type, text }];
+        return next.length > MAX_LINES ? next.slice(next.length - MAX_LINES) : next;
+      });
+    };
+
+    const runPhase = async (phase: { type: string; text: string; delay: number; typeSpeed?: number }) => {
+      if (phase.type === "cmd") {
+        setTyping("");
+        const speed = phase.typeSpeed || 30;
+        for (let j = 0; j <= phase.text.length; j++) {
+          if (cancelled) return;
+          setTyping(phase.text.slice(0, j));
+          await new Promise((r) => setTimeout(r, 10 + Math.random() * speed));
         }
+        if (cancelled) return;
+        await new Promise((r) => setTimeout(r, 150));
+        appendLine("cmd", phase.text);
+        setTyping("");
+      } else {
+        await new Promise((r) => setTimeout(r, phase.delay));
+        if (cancelled) return;
+        appendLine(phase.type as TLine["type"], phase.text);
       }
+    };
+
+    const run = async () => {
+      for (const phase of BOOT_PHASES) {
+        if (cancelled) return;
+        await runPhase(phase);
+      }
+      if (cancelled) return;
       setIsComplete(true);
+
+      // The terminal must never stop: once boot finishes, keep replaying the
+      // live task simulation indefinitely so it always looks like BudAI is
+      // actively working, not frozen on a finished script.
+      while (!cancelled) {
+        for (const phase of LIVE_TASKS) {
+          if (cancelled) return;
+          await runPhase(phase);
+        }
+        if (cancelled) return;
+        appendLine("sys", "  [Cycle complete. Restarting live inference loop...]");
+        await new Promise((r) => setTimeout(r, 600));
+      }
     };
     run();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {

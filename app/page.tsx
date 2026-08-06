@@ -49,9 +49,7 @@ export default function Home() {
       <div className="fixed inset-0 z-[2] pointer-events-none grid-bg opacity-25" />
 
       <div className="relative z-10">
-        <div className="fixed bottom-4 right-4 z-[30] hidden md:block">
-          <BuddyCard />
-        </div>
+        <BuddyCard />
         <Navbar />
         <Hero />
         <Capabilities />

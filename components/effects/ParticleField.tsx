@@ -20,6 +20,8 @@ export default function ParticleField() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
     let W = window.innerWidth, H = window.innerHeight;
     canvas.width = W; canvas.height = H;
 
@@ -55,11 +57,22 @@ export default function ParticleField() {
         ctx.fillStyle = `${p.color}${p.opacity})`;
         ctx.fillText(p.char, p.x, p.y);
       }
-      rafRef.current = requestAnimationFrame(draw);
+      if (running) rafRef.current = requestAnimationFrame(draw);
     };
 
+    let running = true;
+    const onVisibility = () => {
+      running = document.visibilityState === "visible";
+      if (running) rafRef.current = requestAnimationFrame(draw);
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+
     draw();
-    return () => { window.removeEventListener("resize", onResize); cancelAnimationFrame(rafRef.current); };
+    return () => {
+      window.removeEventListener("resize", onResize);
+      document.removeEventListener("visibilitychange", onVisibility);
+      cancelAnimationFrame(rafRef.current);
+    };
   }, []);
 
   return <canvas ref={canvasRef} className="fixed inset-0 z-[1] pointer-events-none" style={{ opacity: 0.5 }} />;

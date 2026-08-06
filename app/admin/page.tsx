@@ -128,7 +128,7 @@ export default function AdminPage() {
   return (
     <AdminLayout>
       <div className="space-y-8">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+        <motion.div id="dashboard" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="scroll-mt-24">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-white mb-2">BudAI Control Center</h1>
@@ -150,10 +150,10 @@ export default function AdminPage() {
         <StatsCards users={users} />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
+          <div id="waitlist" className="lg:col-span-2 scroll-mt-24">
             <UserTable users={users} loading={loading} onUpdate={refresh} />
           </div>
-          <div>
+          <div id="logs" className="scroll-mt-24">
             <SystemTerminal />
           </div>
         </div>

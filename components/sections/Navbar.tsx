@@ -43,9 +43,14 @@ export default function Navbar() {
                 <div className="absolute inset-0 bg-gradient-to-br from-accent-cyan to-accent-purple opacity-0 group-hover:opacity-60 blur-md transition-opacity duration-500" />
                 <div className="absolute inset-0 bg-gradient-to-br from-accent-cyan to-accent-purple opacity-20 animate-pulse" />
               </div>
-              <span className="text-xl font-bold tracking-tight">
-                Bud<span className="text-accent-cyan">AI</span>
-              </span>
+              <div className="flex flex-col leading-none">
+                <span className="text-xl font-bold tracking-tight">
+                  Bud<span className="text-accent-cyan">AI</span>
+                </span>
+                <span className="text-[10px] text-muted/50 group-hover:text-accent-cyan/70 transition-colors duration-300 tracking-wide">
+                  {t.nav.developedBy} Stilledev
+                </span>
+              </div>
             </a>
 
             <div className="hidden lg:flex items-center gap-1">

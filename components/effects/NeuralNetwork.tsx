@@ -18,13 +18,18 @@ export default function NeuralNetwork() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
+    // Respect reduced-motion preference: skip the animated canvas entirely.
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
     let W = window.innerWidth;
     let H = window.innerHeight;
     canvas.width = W;
     canvas.height = H;
 
     const isMobile = W < 768;
-    const count = isMobile ? 60 : 140;
+    // Lower counts (and dropped-frame-friendly O(n^2) link pass below) keep this
+    // smooth even on mid-range phones running alongside the other effects.
+    const count = isMobile ? 32 : 90;
     const nodes: Node[] = [];
     const layers = 3;
 
@@ -114,13 +119,23 @@ export default function NeuralNetwork() {
       ctx.fillStyle = mg;
       ctx.fillRect(0, 0, W, H);
 
-      rafRef.current = requestAnimationFrame(draw);
+      if (running) rafRef.current = requestAnimationFrame(draw);
     };
+
+    // Pause entirely when the tab is backgrounded — no point burning CPU
+    // animating a canvas nobody can see.
+    let running = true;
+    const onVisibility = () => {
+      running = document.visibilityState === "visible";
+      if (running) rafRef.current = requestAnimationFrame(draw);
+    };
+    document.addEventListener("visibilitychange", onVisibility);
 
     draw();
     return () => {
       window.removeEventListener("mousemove", onMove);
       window.removeEventListener("resize", onResize);
+      document.removeEventListener("visibilitychange", onVisibility);
       cancelAnimationFrame(rafRef.current);
     };
   }, []);

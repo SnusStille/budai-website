@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Sparkles, Code2, Zap, Shield, ChevronDown } from "lucide-react";
 import { useLang } from "@/components/ui/LanguageContext";
 
 export default function Hero() {
   const { t } = useLang();
   const [isMobile, setIsMobile] = useState(false);
+  const [wordIndex, setWordIndex] = useState(0);
 
   useEffect(() => {
     const onResize = () => setIsMobile(window.innerWidth < 768);
@@ -15,6 +16,17 @@ export default function Hero() {
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, []);
+
+  // Cycles the last part of the headline through a few alternatives
+  // ("...for Business" -> "...for Automation" -> ...), resetting to 0
+  // whenever the language (and therefore the word list) changes.
+  useEffect(() => {
+    setWordIndex(0);
+    const interval = setInterval(() => {
+      setWordIndex((i) => (i + 1) % t.hero.words.length);
+    }, 2800);
+    return () => clearInterval(interval);
+  }, [t.hero.words]);
 
   const particleCount = isMobile ? 1 : 4;
 
@@ -112,7 +124,20 @@ export default function Hero() {
           className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold tracking-tight leading-[1.05] mb-6"
         >
           <span className="block">{t.hero.title1}</span>
-          <span className="block text-gradient mt-1">{t.hero.title2}</span>
+          <span className="relative block text-gradient mt-1 h-[1.1em] overflow-hidden">
+            <AnimatePresence mode="wait">
+              <motion.span
+                key={t.hero.words[wordIndex]}
+                initial={{ y: "60%", opacity: 0 }}
+                animate={{ y: "0%", opacity: 1 }}
+                exit={{ y: "-60%", opacity: 0 }}
+                transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                className="block"
+              >
+                {t.hero.words[wordIndex]}
+              </motion.span>
+            </AnimatePresence>
+          </span>
         </motion.h1>
 
         <motion.p
@@ -131,7 +156,16 @@ export default function Hero() {
           className="text-sm text-muted/50 mb-12 flex items-center justify-center gap-2"
         >
           <span className="w-1.5 h-1.5 rounded-full bg-accent-cyan" />
-          Utvecklad av <span className="text-accent-cyan font-medium">Stilledev</span>
+          Utvecklad av{" "}
+          <a
+            href="https://discord.com/users/353944097301594123"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="relative text-accent-cyan font-medium hover:text-white transition-colors duration-300 group"
+          >
+            Stilledev
+            <span className="absolute -bottom-0.5 left-0 w-0 h-px bg-accent-cyan group-hover:w-full transition-all duration-300" />
+          </a>
           <span className="text-muted/30">·</span>
           <span>Sweden</span>
         </motion.p>
