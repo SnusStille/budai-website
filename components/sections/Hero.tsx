@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Sparkles, Code2, Zap, Shield, ChevronDown } from "lucide-react";
 import { useLang } from "@/components/ui/LanguageContext";
@@ -15,12 +15,63 @@ const FUN_MESSAGES = [
   "👀 We see you.",
 ];
 
+// A bigger surprise for anyone determined enough: 5 orb clicks within 3
+// seconds unlocks this. Full-screen confetti + a little acknowledgment.
+function SecretMode() {
+  const [pieces] = useState(() =>
+    Array.from({ length: 80 }, (_, i) => ({
+      id: i,
+      left: Math.random() * 100,
+      delay: Math.random() * 0.6,
+      duration: 2.2 + Math.random() * 1.8,
+      color: ["#00e5ff", "#b967ff", "#00ff9d", "#ff6b9d", "#ffd700"][i % 5],
+      rotate: Math.floor(Math.random() * 360),
+    }))
+  );
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[100] pointer-events-none overflow-hidden"
+    >
+      {pieces.map((p) => (
+        <span
+          key={p.id}
+          className="confetti-piece"
+          style={{
+            left: `${p.left}%`,
+            background: p.color,
+            animationDelay: `${p.delay}s`,
+            animationDuration: `${p.duration}s`,
+            transform: `rotate(${p.rotate}deg)`,
+          }}
+        />
+      ))}
+      <motion.div
+        initial={{ scale: 0.7, opacity: 0, y: 10 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+        transition={{ delay: 0.15, type: "spring", damping: 16 }}
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 px-8 py-6 rounded-2xl glass-strong border border-accent-cyan/25 text-center shadow-[0_0_60px_rgba(0,229,255,0.25)] max-w-xs"
+      >
+        <div className="text-3xl mb-2">🎉</div>
+        <div className="text-xl font-bold text-white mb-1">Secret Mode Unlocked</div>
+        <div className="text-sm text-muted">Five clicks. We respect the dedication.</div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
 export default function Hero() {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const [isMobile, setIsMobile] = useState(false);
   const [wordIndex, setWordIndex] = useState(0);
   const [burstId, setBurstId] = useState<number | null>(null);
   const [funMsg, setFunMsg] = useState<string | null>(null);
+  const [secretMode, setSecretMode] = useState(false);
+  const clickTimestamps = useRef<number[]>([]);
 
   const handleOrbClick = () => {
     const id = Date.now();
@@ -28,6 +79,15 @@ export default function Hero() {
     setFunMsg(FUN_MESSAGES[Math.floor(Math.random() * FUN_MESSAGES.length)]);
     setTimeout(() => setBurstId((cur) => (cur === id ? null : cur)), 850);
     setTimeout(() => setFunMsg(null), 2600);
+
+    // Big surprise: 5 clicks within 3 seconds unlocks secret mode.
+    const now = Date.now();
+    clickTimestamps.current = [...clickTimestamps.current, now].filter((t) => now - t < 3000);
+    if (clickTimestamps.current.length >= 5) {
+      clickTimestamps.current = [];
+      setSecretMode(true);
+      setTimeout(() => setSecretMode(false), 4000);
+    }
   };
 
   useEffect(() => {
@@ -52,6 +112,8 @@ export default function Hero() {
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
+      <AnimatePresence>{secretMode && <SecretMode />}</AnimatePresence>
+
       {!isMobile && (
         <>
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[900px] bg-accent-cyan/8 rounded-full blur-[180px] pointer-events-none" />
@@ -76,26 +138,10 @@ export default function Hero() {
           </span>
           <span className="w-px h-4 bg-white/10" />
           <span className="text-sm text-muted flex items-center gap-2">
-            <svg width="18" height="18" viewBox="0 0 18 18" className="shrink-0 -rotate-90">
-              <circle cx="9" cy="9" r="7" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="2.5" />
-              <motion.circle
-                cx="9" cy="9" r="7" fill="none"
-                stroke="url(#heroProgressGradient)"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeDasharray={2 * Math.PI * 7}
-                initial={{ strokeDashoffset: 2 * Math.PI * 7 }}
-                animate={{ strokeDashoffset: 2 * Math.PI * 7 * (1 - 0.68) }}
-                transition={{ duration: 1.4, delay: 1, ease: [0.22, 1, 0.36, 1] }}
-              />
-              <defs>
-                <linearGradient id="heroProgressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#00e5ff" />
-                  <stop offset="100%" stopColor="#b967ff" />
-                </linearGradient>
-              </defs>
-            </svg>
-            <span className="font-semibold text-white">68%</span> to launch
+            <span className="font-mono text-[11px] px-2 py-0.5 rounded-md bg-white/[0.06] border border-accent-cyan/20 text-accent-cyan tracking-wide">
+              v0.68
+            </span>
+            68% to launch
           </span>
         </motion.div>
 
@@ -205,7 +251,7 @@ export default function Hero() {
           transition={{ duration: 0.8, delay: 0.4 }}
           className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold tracking-tight leading-[1.05] mb-6"
         >
-          <span className="block text-shimmer">{t.hero.title1}</span>
+          <span className="block text-gradient-shimmer">{t.hero.title1}</span>
           <span className="relative block text-gradient mt-1 h-[1.1em] overflow-hidden">
             <AnimatePresence mode="wait">
               <motion.span
@@ -238,7 +284,7 @@ export default function Hero() {
           className="text-sm text-muted/50 mb-12 flex items-center justify-center gap-2"
         >
           <span className="w-1.5 h-1.5 rounded-full bg-accent-cyan" />
-          Utvecklad av{" "}
+          {lang === "sv" ? "Utvecklad av" : "Developed by"}{" "}
           <a
             href="https://discord.com/users/353944097301594123"
             target="_blank"
