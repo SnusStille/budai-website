@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import {
   Server, Activity, Shield, Database, Cpu, Network, CheckCircle2,
-  TrendingUp, Zap, Thermometer, Radio
+  AlertCircle, TrendingUp, Zap, Thermometer, BarChart3, Radio,
+  Wifi, Waves, Flame
 } from "lucide-react";
 import ScrollReveal from "@/components/ui/ScrollReveal";
 import { useLang } from "@/components/ui/LanguageContext";
@@ -33,6 +34,7 @@ const metrics = [
   { label: "security", value: "A+", icon: Shield, change: "Enterprise" },
 ];
 
+// Fixed: use en-US locale to prevent hydration mismatch
 function LiveCounter({ value }: { value: number }) {
   const [display, setDisplay] = useState(value);
   const [mounted, setMounted] = useState(false);
@@ -45,6 +47,23 @@ function LiveCounter({ value }: { value: number }) {
   }, []);
   if (!mounted) return <span>{value.toLocaleString("en-US")}</span>;
   return <span>{display.toLocaleString("en-US")}</span>;
+}
+
+function AnimatedBar({ value, color, label }: { value: number; color: string; label: string }) {
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-[10px] text-muted w-8 shrink-0">{label}</span>
+      <div className="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden">
+        <motion.div
+          className="h-full rounded-full"
+          style={{ backgroundColor: color }}
+          animate={{ width: `${value}%` }}
+          transition={{ duration: 2, ease: "easeInOut" }}
+        />
+      </div>
+      <span className="text-[10px] font-mono text-white/60 w-8 text-right">{value}%</span>
+    </div>
+  );
 }
 
 function StatusIndicator({ status }: { status: string }) {
@@ -69,6 +88,7 @@ function StatusIndicator({ status }: { status: string }) {
   );
 }
 
+// Simple SVG sparkline
 function MiniSpark({ data, color }: { data: number[]; color: string }) {
   const max = Math.max(...data);
   const min = Math.min(...data);
@@ -85,14 +105,102 @@ function MiniSpark({ data, color }: { data: number[]; color: string }) {
   );
 }
 
+// Live pulsing dot field - lightweight visual effect
+// Dots are generated once via lazy useState init, not on every render —
+// this section's parent re-renders every 2.5s (live metrics), and without
+// this the whole field used to jump to new random positions each tick.
+function PulseField() {
+  const [dots] = useState(() =>
+    Array.from({ length: 20 }, (_, i) => ({
+      id: i,
+      x: Math.random() * 100,
+      y: Math.random() * 100,
+      delay: Math.random() * 3,
+      duration: 2 + Math.random() * 2,
+    }))
+  );
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      {dots.map((dot) => (
+        <motion.div
+          key={dot.id}
+          className="absolute w-1 h-1 rounded-full bg-accent-cyan/20"
+          style={{ left: `${dot.x}%`, top: `${dot.y}%` }}
+          animate={{ opacity: [0.1, 0.5, 0.1], scale: [1, 1.5, 1] }}
+          transition={{ duration: dot.duration, delay: dot.delay, repeat: Infinity, ease: "easeInOut" }}
+        />
+      ))}
+    </div>
+  );
+}
+
+// Continuous ECG-style live signal strip. Unlike the periodic (every 2.5s)
+// state updates elsewhere on this section, this one animates constantly via
+// a looping transform — it never sits still, which is what makes the panel
+// read as "live" rather than just "updates sometimes".
+function LiveSignal({ color = "#00ff9d" }: { color?: string }) {
+  const beat = "0,20 8,20 13,20 16,4 19,36 22,20 27,20 40,20";
+  const unit = beat
+    .split(" ")
+    .map((p) => {
+      const [x, y] = p.split(",").map(Number);
+      return `${x},${y}`;
+    })
+    .join(" ");
+  const points = `${unit} ${unit
+    .split(" ")
+    .map((p) => {
+      const [x, y] = p.split(",");
+      return `${Number(x) + 40},${y}`;
+    })
+    .join(" ")}`;
+
+  return (
+    <div className="relative w-full h-6 overflow-hidden">
+      <motion.svg
+        viewBox="0 0 80 40"
+        preserveAspectRatio="none"
+        className="absolute top-0 left-0 h-full"
+        style={{ width: "400%" }}
+        animate={{ x: ["0%", "-50%"] }}
+        transition={{ duration: 2.4, repeat: Infinity, ease: "linear" }}
+      >
+        {Array.from({ length: 5 }).map((_, i) => (
+          <polyline
+            key={i}
+            points={points
+              .split(" ")
+              .map((p) => {
+                const [x, y] = p.split(",");
+                return `${Number(x) + i * 80},${y}`;
+              })
+              .join(" ")}
+            fill="none"
+            stroke={color}
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            opacity="0.6"
+          />
+        ))}
+      </motion.svg>
+      <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a12] via-transparent to-[#0a0a12] pointer-events-none" />
+    </div>
+  );
+}
+
 export default function SystemStatus() {
   const { t } = useLang();
   const [services, setServices] = useState(initialServices);
   const [cpuUsage, setCpuUsage] = useState(42);
   const [ramUsage, setRamUsage] = useState(68);
   const [temp, setTemp] = useState(42);
+  // These now actually update on every tick instead of being frozen sample
+  // arrays — the sparklines genuinely scroll/move instead of just sitting
+  // there as a static decorative squiggle.
   const [latencyData, setLatencyData] = useState([12, 11, 13, 10, 11, 12, 11, 10, 12, 11]);
   const [throughputData, setThroughputData] = useState([2800, 2850, 2820, 2900, 2847, 2860, 2830, 2880, 2850, 2840]);
+  const [activeService, setActiveService] = useState<string | null>(null);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -126,7 +234,7 @@ export default function SystemStatus() {
     <section id="status" className="relative py-32 overflow-hidden">
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-accent-cyan/3 rounded-full blur-[200px] pointer-events-none" />
 
-      <div className="max-w-5xl mx-auto px-6 lg:px-8 relative z-10">
+      <div className="max-w-6xl mx-auto px-6 lg:px-8 relative z-10">
         <ScrollReveal className="text-center mb-16">
           <span className="inline-block px-4 py-1.5 rounded-full glass text-sm font-medium text-accent-green mb-4">
             {t.status.badge}
@@ -137,143 +245,201 @@ export default function SystemStatus() {
           <p className="text-lg text-muted max-w-2xl mx-auto">{t.status.subtitle}</p>
         </ScrollReveal>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Main Status Panel - CLEANER */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Main Status Panel */}
           <ScrollReveal className="lg:col-span-2">
-            <div className="p-6 rounded-2xl glass-strong border border-white/[0.06] relative overflow-hidden">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-accent-green/10 flex items-center justify-center">
-                    <Radio className="w-5 h-5 text-accent-green" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-semibold text-white">{t.status.serviceHealth}</h3>
-                    <p className="text-xs text-accent-green">{t.status.allOperational}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 text-xs text-muted">
-                  <span className="relative flex h-2 w-2">
+            <div className="p-6 rounded-2xl glass-strong border border-white/[0.06] h-full relative overflow-hidden">
+              <PulseField />
+              <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-accent-cyan/30 to-transparent animate-scan" />
+
+              <div className="flex items-center justify-between mb-6 relative z-10">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <Radio className="w-5 h-5 text-accent-cyan animate-pulse" />
+                  {t.status.serviceHealth}
+                </h3>
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="relative flex h-2.5 w-2.5">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-green opacity-75" />
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-accent-green" />
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-accent-green" />
                   </span>
-                  Live
+                  <span className="text-accent-green font-medium">{t.status.allOperational}</span>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {services.map((service) => (
+              <LiveSignal color="#00ff9d" />
+
+              <div className="space-y-2 relative z-10">
+                {services.map((s, i) => (
                   <motion.div
-                    key={service.name}
-                    whileHover={{ scale: 1.02 }}
-                    className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.04] hover:border-white/[0.08] transition-colors group"
+                    key={s.name}
+                    initial={{ opacity: 0, x: -20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: i * 0.05 }}
+                    onMouseEnter={() => setActiveService(s.name)}
+                    onMouseLeave={() => setActiveService(null)}
+                    className={`flex items-center justify-between p-4 rounded-xl transition-all cursor-default border ${
+                      activeService === s.name
+                        ? "bg-white/[0.06] border-accent-cyan/20 shadow-[0_0_20px_rgba(0,229,255,0.08)]"
+                        : "bg-white/[0.015] border-transparent hover:bg-white/[0.04] hover:border-white/[0.06]"
+                    }`}
                   >
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center group-hover:bg-white/[0.08] transition-colors">
-                          <service.icon className="w-4 h-4 text-white/70" />
-                        </div>
-                        <span className="text-sm font-medium text-white/90">{service.name}</span>
+                    <div className="flex items-center gap-3">
+                      <motion.div
+                        animate={activeService === s.name ? { scale: [1, 1.15, 1] } : {}}
+                        transition={{ duration: 0.5 }}
+                        className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 ${
+                          s.status === "operational"
+                            ? "bg-accent-green/10"
+                            : s.status === "degraded"
+                            ? "bg-yellow-500/10"
+                            : "bg-accent-purple/10"
+                        }`}
+                      >
+                        <s.icon className={`w-4 h-4 ${
+                          s.status === "operational" ? "text-accent-green" : s.status === "degraded" ? "text-yellow-500" : "text-accent-purple"
+                        }`} />
+                      </motion.div>
+                      <div>
+                        <div className="font-medium text-sm text-white">{s.name}</div>
+                        <StatusIndicator status={s.status} />
                       </div>
-                      <StatusIndicator status={service.status} />
                     </div>
-                    <div className="flex items-center justify-between text-xs text-muted">
-                      <span>{service.latency.toFixed(0)}ms</span>
-                      <span><LiveCounter value={service.requests} /> req</span>
+
+                    <div className="flex items-center gap-6">
+                      <div className="hidden sm:block text-right">
+                        <div className="text-[10px] text-muted">Latency</div>
+                        <motion.div
+                          key={Math.round(s.latency)}
+                          initial={{ opacity: 0.5, y: -2 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="text-xs font-mono text-white"
+                        >
+                          {Math.round(s.latency)}ms
+                        </motion.div>
+                      </div>
+                      <div className="hidden md:block text-right">
+                        <div className="text-[10px] text-muted">Req/s</div>
+                        <div className="text-xs font-mono text-accent-cyan">
+                          <LiveCounter value={s.requests} />
+                        </div>
+                      </div>
+                      {s.status === "operational" ? (
+                        <CheckCircle2 className="w-5 h-5 text-accent-green shrink-0" />
+                      ) : s.status === "degraded" ? (
+                        <AlertCircle className="w-5 h-5 text-yellow-500 shrink-0" />
+                      ) : (
+                        <Zap className="w-5 h-5 text-accent-purple shrink-0 animate-pulse" />
+                      )}
                     </div>
                   </motion.div>
                 ))}
               </div>
+
+              {/* Mini sparklines */}
+              <div className="mt-4 grid grid-cols-2 gap-3 relative z-10">
+                <div className="p-3 rounded-xl bg-white/[0.015] border border-white/[0.04]">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[10px] text-muted uppercase tracking-wider">Avg Latency</span>
+                    <span className="text-[10px] text-accent-green">↓</span>
+                  </div>
+                  <MiniSpark data={latencyData} color="#00e5ff" />
+                  <div className="mt-1 text-xs font-mono text-accent-cyan">{Math.round(latencyData[latencyData.length - 1])}ms</div>
+                </div>
+                <div className="p-3 rounded-xl bg-white/[0.015] border border-white/[0.04]">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[10px] text-muted uppercase tracking-wider">Throughput</span>
+                    <span className="text-[10px] text-accent-green">↑</span>
+                  </div>
+                  <MiniSpark data={throughputData} color="#00ff9d" />
+                  <div className="mt-1 text-xs font-mono text-accent-green">{Math.round(throughputData[throughputData.length - 1]).toLocaleString("en-US")} req/s</div>
+                </div>
+              </div>
             </div>
           </ScrollReveal>
 
-          {/* Metrics - SIMPLER */}
-          <ScrollReveal>
-            <div className="p-6 rounded-2xl glass-strong border border-white/[0.06]">
-              <h3 className="text-sm font-semibold text-white mb-4">{t.status.platformMetrics}</h3>
-              <div className="space-y-4">
-                {metrics.map((m) => (
-                  <div key={m.label} className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center">
-                        <m.icon className="w-4 h-4 text-white/60" />
-                      </div>
-                      <div>
-                        <div className="text-xs text-muted">{t.status[m.label as keyof typeof t.status]}</div>
-                        <div className="text-lg font-bold text-white">{m.value}</div>
-                      </div>
+          {/* Side Panel */}
+          <ScrollReveal delay={0.2}>
+            <div className="p-6 rounded-2xl glass-strong border border-white/[0.06] h-full flex flex-col gap-4">
+              <h3 className="text-lg font-semibold">{t.status.platformMetrics}</h3>
+
+              <div className="grid grid-cols-2 gap-3">
+                {metrics.map((m, i) => (
+                  <motion.div
+                    key={m.label}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: i * 0.1 }}
+                    whileHover={{ scale: 1.03, y: -2 }}
+                    className="p-4 rounded-xl bg-white/[0.015] text-center group hover:bg-white/[0.04] transition-all border border-transparent hover:border-white/[0.06] cursor-default"
+                  >
+                    <motion.div
+                      whileHover={{ rotate: 10, scale: 1.1 }}
+                      transition={{ type: "spring", stiffness: 300 }}
+                    >
+                      <m.icon className="w-5 h-5 text-accent-cyan mx-auto mb-2" />
+                    </motion.div>
+                    <div className="text-2xl font-bold text-white">{m.value}</div>
+                    <div className="text-[10px] text-muted uppercase tracking-wider">{t.status[m.label as keyof typeof t.status] || m.label}</div>
+                    <div className="text-[10px] text-accent-green mt-1 flex items-center justify-center gap-0.5">
+                      <TrendingUp className="w-3 h-3" /> {m.change}
                     </div>
-                    <span className="text-xs text-accent-green bg-accent-green/10 px-2 py-1 rounded-full">{m.change}</span>
-                  </div>
+                  </motion.div>
                 ))}
               </div>
-            </div>
-          </ScrollReveal>
 
-          {/* Live Charts - CLEANER */}
-          <ScrollReveal>
-            <div className="p-6 rounded-2xl glass-strong border border-white/[0.06]">
-              <h3 className="text-sm font-semibold text-white mb-4">{t.status.developmentProgress}</h3>
-              <div className="space-y-5">
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs text-muted flex items-center gap-2">
-                      <Cpu className="w-3.5 h-3.5" /> CPU
-                    </span>
-                    <span className="text-xs font-mono text-white">{cpuUsage.toFixed(0)}%</span>
-                  </div>
-                  <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
-                    <motion.div
-                      className="h-full rounded-full bg-gradient-to-r from-accent-cyan to-accent-purple"
-                      animate={{ width: `${cpuUsage}%` }}
-                      transition={{ duration: 1.5, ease: "easeOut" }}
-                    />
-                  </div>
+              {/* System Resources */}
+              <div className="p-4 rounded-xl bg-white/[0.015] border border-white/[0.04]">
+                <div className="flex items-center gap-2 mb-3">
+                  <Cpu className="w-4 h-4 text-accent-cyan" />
+                  <span className="text-sm font-medium">System Resources</span>
                 </div>
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs text-muted flex items-center gap-2">
-                      <Zap className="w-3.5 h-3.5" /> RAM
-                    </span>
-                    <span className="text-xs font-mono text-white">{ramUsage.toFixed(0)}%</span>
-                  </div>
-                  <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
-                    <motion.div
-                      className="h-full rounded-full bg-gradient-to-r from-accent-purple to-accent-pink"
-                      animate={{ width: `${ramUsage}%` }}
-                      transition={{ duration: 1.5, ease: "easeOut" }}
-                    />
-                  </div>
-                </div>
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs text-muted flex items-center gap-2">
-                      <Thermometer className="w-3.5 h-3.5" /> Temp
-                    </span>
-                    <span className="text-xs font-mono text-white">{temp.toFixed(0)}°C</span>
-                  </div>
-                  <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
-                    <motion.div
-                      className="h-full rounded-full bg-gradient-to-r from-accent-green to-accent-cyan"
-                      animate={{ width: `${(temp / 80) * 100}%` }}
-                      transition={{ duration: 1.5, ease: "easeOut" }}
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <AnimatedBar value={Math.round(cpuUsage)} color="#00e5ff" label="CPU" />
+                  <AnimatedBar value={Math.round(ramUsage)} color="#b967ff" label="RAM" />
                 </div>
               </div>
 
-              <div className="mt-6 pt-4 border-t border-white/[0.04]">
+              {/* Temperature */}
+              <div className="p-4 rounded-xl bg-white/[0.015] border border-white/[0.04]">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs text-muted">Latency</span>
-                  <TrendingUp className="w-3 h-3 text-accent-green" />
+                  <div className="flex items-center gap-2">
+                    <Thermometer className="w-4 h-4 text-accent-pink" />
+                    <span className="text-sm font-medium">Core Temp</span>
+                  </div>
+                  <span className="text-sm font-mono text-accent-pink">{Math.round(temp)}°C</span>
                 </div>
-                <MiniSpark data={latencyData} color="#00e5ff" />
+                <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
+                  <motion.div
+                    className="h-full rounded-full bg-gradient-to-r from-accent-cyan via-accent-purple to-accent-pink"
+                    animate={{ width: `${(temp / 60) * 100}%` }}
+                    transition={{ duration: 1 }}
+                  />
+                </div>
               </div>
-              <div className="mt-3">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs text-muted">Throughput</span>
-                  <TrendingUp className="w-3 h-3 text-accent-purple" />
+
+              {/* Development Progress */}
+              <div className="p-4 rounded-xl bg-gradient-to-br from-accent-cyan/8 to-accent-purple/8 border border-accent-cyan/15">
+                <div className="flex items-center gap-2 mb-3">
+                  <BarChart3 className="w-4 h-4 text-accent-cyan" />
+                  <span className="text-sm font-medium">{t.status.developmentProgress}</span>
                 </div>
-                <MiniSpark data={throughputData} color="#b967ff" />
+                <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    whileInView={{ width: "68%" }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 2, ease: "easeOut" }}
+                    className="h-full bg-gradient-to-r from-accent-cyan to-accent-purple rounded-full relative"
+                  >
+                    <div className="absolute inset-0 bg-white/20 animate-pulse rounded-full" />
+                  </motion.div>
+                </div>
+                <div className="flex justify-between text-xs mt-2">
+                  <span className="text-muted">{t.status.coreSystems}</span>
+                  <span className="text-accent-cyan font-medium">68%</span>
+                </div>
               </div>
             </div>
           </ScrollReveal>

@@ -5,27 +5,34 @@ const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
+// Very simple in-memory rate limit (resets on redeploy — fine for a dev preview)
 const requestCounts = new Map<string, { count: number; resetAt: number }>();
-const LIMIT = 50;
-const WINDOW_MS = 60 * 60 * 1000;
+const LIMIT = 50; // 50 messages per IP per window
+const WINDOW_MS = 60 * 60 * 1000; // 1 hour
 
 function isRateLimited(ip: string): boolean {
   const now = Date.now();
   const entry = requestCounts.get(ip);
+
   if (!entry || now > entry.resetAt) {
     requestCounts.set(ip, { count: 1, resetAt: now + WINDOW_MS });
     return false;
   }
+
   if (entry.count >= LIMIT) return true;
+
   entry.count += 1;
   return false;
 }
 
-const SYSTEM_PROMPT = `You are BudAI, a helpful AI assistant built by Stilledev in Sweden.
-You can answer ANY question — coding, business, science, creative writing, math, general knowledge, whatever the user asks.
-Keep replies concise but useful (3-8 sentences). Be warm, professional, and helpful.
-If asked about pricing or timelines for BudAI specifically, say the team can share details when they request access.
-Never claim to have completed real external actions.`;
+const SYSTEM_PROMPT = `You are BudAI, an AI assistant demo for Swedish businesses, built by Stilledev.
+You're being tried out by a potential customer on a marketing site's "playground" demo.
+Keep replies concise (3-6 sentences), professional but warm, and focused on business use cases:
+automation, document generation, data analysis, customer support, marketing content, workflow optimization.
+This is a developer preview — if asked about pricing, availability, or timelines, say the team can share
+details when they request access, don't invent specifics.
+Never claim to have already completed real actions (e.g. don't say "I've drafted the email" — instead
+describe what you *would* produce).`;
 
 export async function POST(req: NextRequest) {
   const ip = req.headers.get("x-forwarded-for") ?? "unknown";
@@ -38,27 +45,20 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { message, history } = await req.json();
+    const { message } = await req.json();
 
-    if (!message || typeof message !== "string" || message.length > 500) {
+    if (!message || typeof message !== "string" || message.length > 200) {
       return NextResponse.json({ error: "Invalid message" }, { status: 400 });
     }
 
-    const apiMessages = [];
-    if (history && Array.isArray(history)) {
-      for (const h of history) {
-        if (h.role === "user" || h.role === "assistant") {
-          apiMessages.push({ role: h.role, content: h.content });
-        }
-      }
-    }
-    apiMessages.push({ role: "user", content: message });
-
     const response = await anthropic.messages.create({
       model: "claude-sonnet-4-6",
-      max_tokens: 600,
+      // Raised from 300 -> 500 so visitors can actually see the quality of a
+      // full response in the demo, while still keeping a hard ceiling so a
+      // single reply can't run away and rack up cost.
+      max_tokens: 500,
       system: SYSTEM_PROMPT,
-      messages: apiMessages as any,
+      messages: [{ role: "user", content: message }],
     });
 
     const textBlock = response.content.find((block) => block.type === "text");

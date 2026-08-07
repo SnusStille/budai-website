@@ -3,7 +3,6 @@
 import { useEffect } from "react";
 import NeuralNetwork from "@/components/effects/NeuralNetwork";
 import ParticleField from "@/components/effects/ParticleField";
-import MatrixRain from "@/components/effects/MatrixRain";
 import CursorGlow from "@/components/effects/CursorGlow";
 import ScrollProgress from "@/components/ui/ScrollProgress";
 import CookieConsent from "@/components/ui/CookieConsent";
@@ -46,7 +45,6 @@ export default function Home() {
       <ScrollProgress />
       <NeuralNetwork />
       <ParticleField />
-      <MatrixRain />
       <CursorGlow />
       <div className="fixed inset-0 z-[2] pointer-events-none grid-bg opacity-25" />
 

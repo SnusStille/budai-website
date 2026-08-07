@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mail, ArrowRight, Check, Sparkles, Users, Clock, Crown, Zap, Building2, User, Briefcase, AlertTriangle } from "lucide-react";
+import { Mail, ArrowRight, Check, Sparkles, Users, Clock, Crown, Zap, Building2, User, Briefcase } from "lucide-react";
 import ScrollReveal from "@/components/ui/ScrollReveal";
 import Confetti from "@/components/ui/Confetti";
 import { addWaitlistUser } from "@/lib/data";
@@ -21,7 +21,6 @@ export default function Waitlist() {
   const [confetti, setConfetti] = useState(false);
   const [count, setCount] = useState(127);
   const [error, setError] = useState(false);
-  const [errorMsg, setErrorMsg] = useState("");
 
   useEffect(() => {
     const interval = setInterval(() => setCount((c) => c + Math.floor(Math.random() * 3)), 8000);
@@ -30,46 +29,30 @@ export default function Waitlist() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.email.includes("@")) {
-      setError(true);
-      setErrorMsg("Please enter a valid email address.");
-      return;
-    }
+    if (!form.email.includes("@")) return;
     setLoading(true);
     setError(false);
-    setErrorMsg("");
-
-    const waitlistData = {
-      name: form.name,
-      email: form.email,
-      interest: form.interest,
-      account_type: accountType,
-      company: accountType === "company" ? form.company : null,
-      industry: accountType === "company" ? form.industry : null,
-      employees: accountType === "company" ? form.employees : null,
-    };
-
     try {
-      await addWaitlistUser(waitlistData);
+      await addWaitlistUser({
+        name: form.name,
+        email: form.email,
+        interest: form.interest,
+        account_type: accountType,
+        // Company-only fields simply don't exist for an individual signup —
+        // sent as null rather than forced/fake values.
+        company: accountType === "company" ? form.company : null,
+        industry: accountType === "company" ? form.industry : null,
+        employees: accountType === "company" ? form.employees : null,
+      });
       setSubmitted(true);
       setConfetti(true);
       setTimeout(() => setConfetti(false), 4000);
-    } catch (err: any) {
+    } catch (err) {
+      // Previously an unhandled rejection here (e.g. a Supabase RLS/network
+      // error) left the button stuck on its loading spinner forever with no
+      // feedback — this is what "waitlist fungerar inte korrekt" was.
       console.error("Waitlist submit error:", err);
-
-      // FALLBACK: Save locally if Supabase fails
-      try {
-        const existing = JSON.parse(localStorage.getItem("budai-waitlist") || "[]");
-        existing.push({ ...waitlistData, timestamp: new Date().toISOString() });
-        localStorage.setItem("budai-waitlist", JSON.stringify(existing));
-
-        setSubmitted(true);
-        setConfetti(true);
-        setTimeout(() => setConfetti(false), 4000);
-      } catch (localErr) {
-        setError(true);
-        setErrorMsg("Something went wrong on our end — please try again in a moment.");
-      }
+      setError(true);
     } finally {
       setLoading(false);
     }
@@ -87,7 +70,7 @@ export default function Waitlist() {
             Join the <span className="text-gradient">Founding Members</span>
           </h2>
           <p className="text-lg text-muted max-w-2xl mx-auto">
-            Be among the first to experience BudAI. Early adopters receive lifetime priority support, exclusive features, and founding member status.
+            Be among the first — companies and individuals alike — to experience BudAI. Early adopters receive lifetime priority support, exclusive features, and founding member status.
           </p>
         </ScrollReveal>
 
@@ -99,6 +82,8 @@ export default function Waitlist() {
             <AnimatePresence mode="wait">
               {!submitted ? (
                 <motion.div key="form" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, y: -20 }} className="relative z-10">
+                  {/* Individual / Company toggle — everyone starts as an individual signup,
+                      the company-only fields only appear once that's explicitly chosen. */}
                   <div className="inline-flex p-1 rounded-xl bg-white/[0.04] border border-white/[0.06] mb-6">
                     {(["individual", "company"] as const).map((opt) => (
                       <button
@@ -138,18 +123,33 @@ export default function Waitlist() {
                       <AnimatePresence>
                         {accountType === "company" && (
                           <>
-                            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="relative overflow-hidden">
+                            <motion.div
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: "auto" }}
+                              exit={{ opacity: 0, height: 0 }}
+                              className="relative overflow-hidden"
+                            >
                               <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
                               <input type="text" value={form.company} onChange={(e) => setForm({ ...form, company: e.target.value })} placeholder="Company name" required={accountType === "company"} className="w-full pl-11 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-muted focus:outline-none focus:border-accent-cyan/40 transition-colors text-sm" />
                             </motion.div>
-                            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="relative overflow-hidden">
+                            <motion.div
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: "auto" }}
+                              exit={{ opacity: 0, height: 0 }}
+                              className="relative overflow-hidden"
+                            >
                               <Briefcase className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
                               <select value={form.industry} onChange={(e) => setForm({ ...form, industry: e.target.value })} required={accountType === "company"} className="w-full pl-11 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-muted focus:outline-none focus:border-accent-cyan/40 transition-colors text-sm appearance-none">
                                 <option value="" disabled className="bg-surface">Select industry</option>
                                 {industries.map((i) => <option key={i} value={i} className="bg-surface">{i}</option>)}
                               </select>
                             </motion.div>
-                            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="relative overflow-hidden md:col-span-2">
+                            <motion.div
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: "auto" }}
+                              exit={{ opacity: 0, height: 0 }}
+                              className="relative overflow-hidden md:col-span-2"
+                            >
                               <Users className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
                               <select value={form.employees} onChange={(e) => setForm({ ...form, employees: e.target.value })} required={accountType === "company"} className="w-full pl-11 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-muted focus:outline-none focus:border-accent-cyan/40 transition-colors text-sm appearance-none">
                                 <option value="" disabled className="bg-surface">Number of employees</option>
@@ -170,10 +170,7 @@ export default function Waitlist() {
                     </div>
 
                     {error && (
-                      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-2 text-sm text-red-400 bg-red-500/10 px-4 py-3 rounded-xl border border-red-500/20">
-                        <AlertTriangle className="w-4 h-4 shrink-0" />
-                        {errorMsg}
-                      </motion.div>
+                      <p className="text-sm text-red-400">Something went wrong on our end — please try again in a moment.</p>
                     )}
 
                     <button

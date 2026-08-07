@@ -5,6 +5,7 @@ import "./globals.css";
 import LoadingScreen from "@/components/effects/LoadingScreen";
 import VercelAnalytics from "@/components/VercelAnalytics";
 import { LangProvider } from "@/components/ui/LanguageContext";
+import CommandPalette from "@/components/ui/CommandPalette";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const [loaded, setLoaded] = useState(false);
@@ -46,6 +47,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div style={{ opacity: loaded ? 1 : 0, transition: "opacity 0.3s ease" }}>
             {children}
           </div>
+          <CommandPalette />
         </LangProvider>
         <VercelAnalytics />
       </body>

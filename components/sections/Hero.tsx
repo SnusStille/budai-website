@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Sparkles, Code2, Zap, Shield, ChevronDown } from "lucide-react";
 import { useLang } from "@/components/ui/LanguageContext";
 
+// A small easter egg for anyone who clicks the orb — the site notices.
 const FUN_MESSAGES = [
   "⚡ 68% caffeine, 32% code.",
   "🤖 Beep boop. Nice click.",
@@ -14,6 +15,8 @@ const FUN_MESSAGES = [
   "👀 We see you.",
 ];
 
+// A bigger surprise for anyone determined enough: 5 orb clicks within 3
+// seconds unlocks this. Full-screen confetti + a little acknowledgment.
 function SecretMode() {
   const [pieces] = useState(() =>
     Array.from({ length: 80 }, (_, i) => ({
@@ -77,6 +80,7 @@ export default function Hero() {
     setTimeout(() => setBurstId((cur) => (cur === id ? null : cur)), 850);
     setTimeout(() => setFunMsg(null), 2600);
 
+    // Big surprise: 5 clicks within 3 seconds unlocks secret mode.
     const now = Date.now();
     clickTimestamps.current = [...clickTimestamps.current, now].filter((t) => now - t < 3000);
     if (clickTimestamps.current.length >= 5) {
@@ -93,6 +97,9 @@ export default function Hero() {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
+  // Cycles the last part of the headline through a few alternatives
+  // ("...for Business" -> "...for Automation" -> ...), resetting to 0
+  // whenever the language (and therefore the word list) changes.
   useEffect(() => {
     setWordIndex(0);
     const interval = setInterval(() => {
@@ -218,7 +225,7 @@ export default function Hero() {
               <div
                 className="absolute top-1/2 left-1/2 w-2 h-2 rounded-full"
                 style={{
-                  transform: `translate(-50%, -50%) translateX(${90 + i * 25}px)`,
+                  transform: `translate(-50%, -50%) translateX(${70 + i * 15}px)`,
                   background: i % 2 === 0 ? "#00e5ff" : "#b967ff",
                   boxShadow: `0 0 10px ${i % 2 === 0 ? "#00e5ff" : "#b967ff"}`,
                 }}
@@ -238,15 +245,14 @@ export default function Hero() {
           />
         </motion.div>
 
-        {/* CLEANER HEADLINE - No chaotic colors */}
         <motion.h1
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.4 }}
           className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold tracking-tight leading-[1.05] mb-6"
         >
-          <span className="block text-white">{t.hero.title1}</span>
-          <span className="relative block text-white/90 mt-1 h-[1.1em] overflow-hidden">
+          <span className="block text-gradient">{t.hero.title1}</span>
+          <span className="relative block text-gradient mt-1 h-[1.1em] overflow-hidden">
             <AnimatePresence mode="wait">
               <motion.span
                 key={t.hero.words[wordIndex]}
@@ -254,7 +260,7 @@ export default function Hero() {
                 animate={{ y: "0%", opacity: 1 }}
                 exit={{ y: "-60%", opacity: 0 }}
                 transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-                className="block text-gradient"
+                className="block"
               >
                 {t.hero.words[wordIndex]}
               </motion.span>
@@ -262,7 +268,6 @@ export default function Hero() {
           </span>
         </motion.h1>
 
-        {/* SUBTITLE WITH HIGHLIGHT UNDERLINE EFFECT */}
         <motion.p
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -272,7 +277,6 @@ export default function Hero() {
           {t.hero.subtitle}
         </motion.p>
 
-        {/* Highlight underline effect on the "Developed by Stilledev" line */}
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -287,16 +291,11 @@ export default function Hero() {
             rel="noopener noreferrer"
             className="relative text-accent-cyan font-medium hover:text-white transition-colors duration-300 group"
           >
-            <span className="relative">
-              Stilledev
-              <span className="absolute bottom-0 left-0 w-full h-[2px] bg-gradient-to-r from-accent-cyan to-accent-purple origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
-            </span>
+            Stilledev
+            <span className="absolute -bottom-0.5 left-0 w-0 h-px bg-accent-cyan group-hover:w-full transition-all duration-300" />
           </a>
           <span className="text-muted/30">·</span>
-          <span className="relative group cursor-default">
-            Sweden
-            <span className="absolute -bottom-1 left-0 w-full h-[2px] bg-gradient-to-r from-accent-green to-accent-cyan origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
-          </span>
+          <span>Sweden</span>
         </motion.p>
 
         <motion.div
@@ -329,7 +328,7 @@ export default function Hero() {
           className="flex flex-wrap items-center justify-center gap-3"
         >
           {[
-            { icon: Sparkles, label: "AI-Powered", color: "text-accent-cyan", ring: "hover:border-accent-cyan/30" },
+            { icon: Sparkles, label: "AI-Driven", color: "text-accent-cyan", ring: "hover:border-accent-cyan/30" },
             { icon: Code2, label: "Code Generation", color: "text-accent-purple", ring: "hover:border-accent-purple/30" },
             { icon: Zap, label: "Automation", color: "text-accent-green", ring: "hover:border-accent-green/30" },
             { icon: Shield, label: "Enterprise-Ready", color: "text-accent-pink", ring: "hover:border-accent-pink/30" },
