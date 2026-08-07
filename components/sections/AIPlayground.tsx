@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Bot, User, Sparkles, Zap, Brain, Target, TrendingUp, FileText, Wand2 } from "lucide-react";
+import { Send, Bot, User, Sparkles, Zap, Brain, Target, TrendingUp, FileText, Wand2, Trash2, Clock } from "lucide-react";
 import ScrollReveal from "@/components/ui/ScrollReveal";
 import { useLang } from "@/components/ui/LanguageContext";
 
@@ -13,31 +13,54 @@ interface Msg {
   timestamp?: Date;
 }
 
+const STORAGE_KEY = "budai-playground-chat";
+
 export default function AIPlayground() {
   const { t, lang } = useLang();
-  const [messages, setMessages] = useState<Msg[]>([
-    { id: 0, type: "ai", text: lang === "sv" ? "Hej! Jag är BudAI. Fråga mig vad som helst om ditt företag, eller prova ett av exemplen nedan." : "Hello! I'm BudAI. Ask me anything about your business, or try one of the examples below.", timestamp: new Date() },
-  ]);
+  const [messages, setMessages] = useState<Msg[]>(() => {
+    if (typeof window === "undefined") return [];
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        return parsed.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) }));
+      } catch { return []; }
+    }
+    return [
+      { id: 0, type: "ai", text: lang === "sv" ? "Hej! Jag är BudAI. Fråga mig vad som helst — jag kan hjälpa med allt från kod och affärsfrågor till kreativa projekt." : "Hey! I'm BudAI. Ask me anything — I can help with everything from coding and business questions to creative projects.", timestamp: new Date() },
+    ];
+  });
   const [input, setInput] = useState("");
   const [thinking, setThinking] = useState(false);
   const [typingText, setTypingText] = useState("");
   const [confidence, setConfidence] = useState(0);
   const [activePreset, setActivePreset] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const idRef = useRef(1);
+  const idRef = useRef(messages.length > 0 ? Math.max(...messages.map(m => m.id)) + 1 : 1);
 
   const presets = [
     { label: lang === "sv" ? "Skapa en marknadsföringsplan" : "Create a marketing plan", icon: Target },
     { label: lang === "sv" ? "Analysera Q3-försäljning" : "Analyze Q3 sales data", icon: TrendingUp },
     { label: lang === "sv" ? "Skriv ett professionellt mejl" : "Draft a professional email", icon: FileText },
-    { label: lang === "sv" ? "Automatisera veckorapportering" : "Automate weekly reporting", icon: Zap },
-    { label: lang === "sv" ? "Skriv en jobbannons" : "Write a job description", icon: FileText },
-    { label: lang === "sv" ? "Förbättra mitt arbetsflöde" : "Improve my workflow", icon: Brain },
+    { label: lang === "sv" ? "Förklara kvantdatorer" : "Explain quantum computing", icon: Brain },
+    { label: lang === "sv" ? "Skriv Python för web scraping" : "Write Python web scraper", icon: Zap },
+    { label: lang === "sv" ? "Hjälp mig brainstorma" : "Help me brainstorm ideas", icon: Sparkles },
   ];
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [messages, typingText]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
+  }, [messages]);
+
+  const clearChat = () => {
+    const welcome = { id: 0, type: "ai" as const, text: lang === "sv" ? "Hej! Jag är BudAI. Fråga mig vad som helst — jag kan hjälpa med allt från kod och affärsfrågor till kreativa projekt." : "Hey! I'm BudAI. Ask me anything — I can help with everything from coding and business questions to creative projects.", timestamp: new Date() };
+    setMessages([welcome]);
+    idRef.current = 1;
+    localStorage.removeItem(STORAGE_KEY);
+  };
 
   const typeResponse = async (fullText: string) => {
     setTypingText("");
@@ -47,24 +70,29 @@ export default function AIPlayground() {
       current += lines[i];
       if (i < lines.length - 1) current += "\n";
       setTypingText(current);
-      await new Promise((r) => setTimeout(r, 20 + Math.random() * 40));
+      await new Promise((r) => setTimeout(r, 15 + Math.random() * 30));
     }
     setTypingText("");
     setMessages((prev) => [...prev, { id: idRef.current++, type: "ai", text: fullText, timestamp: new Date() }]);
   };
 
-  const callBudAI = async (text: string): Promise<string> => {
+  const callBudAI = async (text: string, history: Msg[]): Promise<string> => {
     try {
+      const historyForAPI = history.slice(-10).map(m => ({
+        role: m.type === "user" ? "user" : "assistant",
+        content: m.text
+      }));
+
       const res = await fetch("/api/playground", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text }),
+        body: JSON.stringify({ message: text, history: historyForAPI }),
       });
 
       if (res.status === 429) {
         return lang === "sv"
-          ? "Du har nått demons meddelandegräns för tillfället — försök igen om en stund, eller begär tidig åtkomst för att fortsätta utforska BudAI:s fulla kapacitet."
-          : "You've hit the demo's message limit for now — please try again in a bit, or request early access to keep exploring BudAI's full capabilities.";
+          ? "Du har nått demons meddelandegräns för tillfället — försök igen om en stund."
+          : "You've hit the demo's message limit for now — please try again in a bit.";
       }
 
       if (!res.ok) {
@@ -81,12 +109,13 @@ export default function AIPlayground() {
   const handlePreset = async (text: string) => {
     if (thinking) return;
     setActivePreset(text);
-    setMessages((prev) => [...prev, { id: idRef.current++, type: "user", text, timestamp: new Date() }]);
+    const newMsg = { id: idRef.current++, type: "user" as const, text, timestamp: new Date() };
+    setMessages((prev) => [...prev, newMsg]);
     setThinking(true);
     setConfidence(0);
     const confInterval = setInterval(() => setConfidence((c) => Math.min(c + Math.random() * 15, 98)), 200);
 
-    const reply = await callBudAI(text);
+    const reply = await callBudAI(text, [...messages, newMsg]);
 
     clearInterval(confInterval);
     setConfidence(98);
@@ -101,12 +130,13 @@ export default function AIPlayground() {
     if (!input.trim() || thinking) return;
     const text = input.trim();
     setInput("");
-    setMessages((prev) => [...prev, { id: idRef.current++, type: "user", text, timestamp: new Date() }]);
+    const newMsg = { id: idRef.current++, type: "user" as const, text, timestamp: new Date() };
+    setMessages((prev) => [...prev, newMsg]);
     setThinking(true);
     setConfidence(0);
     const confInterval = setInterval(() => setConfidence((c) => Math.min(c + Math.random() * 12, 95)), 250);
 
-    const reply = await callBudAI(text);
+    const reply = await callBudAI(text, [...messages, newMsg]);
 
     clearInterval(confInterval);
     setConfidence(95);
@@ -118,7 +148,6 @@ export default function AIPlayground() {
   return (
     <section id="playground" className="relative py-32 overflow-hidden">
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[900px] bg-accent-purple/5 rounded-full blur-[180px] pointer-events-none" />
-      <div className="absolute top-1/3 right-0 w-[400px] h-[400px] bg-accent-cyan/5 rounded-full blur-[150px] pointer-events-none" />
 
       <div className="relative z-10 max-w-5xl mx-auto px-6 lg:px-8">
         <ScrollReveal className="text-center mb-16">
@@ -140,6 +169,7 @@ export default function AIPlayground() {
           <div className="rounded-3xl glass-strong overflow-hidden border border-white/[0.06] shadow-[0_0_80px_rgba(0,229,255,0.06)] relative">
             <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-accent-cyan/40 to-transparent" />
 
+            {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.04] relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-r from-accent-cyan/5 via-transparent to-accent-purple/5 opacity-50" />
               <div className="relative flex items-center gap-3">
@@ -158,21 +188,34 @@ export default function AIPlayground() {
                   </div>
                 </div>
               </div>
-              {thinking && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="flex items-center gap-2 px-4 py-2 rounded-full bg-accent-cyan/10 border border-accent-cyan/20 text-xs"
-                >
-                  <Brain className="w-3.5 h-3.5 text-accent-cyan animate-pulse" />
-                  <span className="text-accent-cyan">{t.playground.thinking}</span>
-                  {confidence > 0 && (
-                    <span className="text-muted">{Math.round(confidence)}% {t.playground.confidence}</span>
-                  )}
-                </motion.div>
-              )}
+              <div className="relative flex items-center gap-3">
+                {messages.length > 2 && (
+                  <button
+                    onClick={clearChat}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-muted hover:text-white hover:bg-white/5 transition-colors"
+                    title="Clear conversation"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                    Clear
+                  </button>
+                )}
+                {thinking && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="flex items-center gap-2 px-4 py-2 rounded-full bg-accent-cyan/10 border border-accent-cyan/20 text-xs"
+                  >
+                    <Brain className="w-3.5 h-3.5 text-accent-cyan animate-pulse" />
+                    <span className="text-accent-cyan">{t.playground.thinking}</span>
+                    {confidence > 0 && (
+                      <span className="text-muted">{Math.round(confidence)}% {t.playground.confidence}</span>
+                    )}
+                  </motion.div>
+                )}
+              </div>
             </div>
 
+            {/* Messages */}
             <div ref={scrollRef} className="h-[420px] overflow-y-auto p-6 space-y-4 bg-gradient-to-b from-transparent to-black/10">
               <AnimatePresence>
                 {messages.map((msg) => (
@@ -199,6 +242,12 @@ export default function AIPlayground() {
                         : "bg-gradient-to-r from-accent-cyan/15 to-accent-purple/15 border border-accent-cyan/20 text-white shadow-[0_4px_20px_rgba(0,229,255,0.08)]"
                     }`}>
                       {msg.text}
+                      {msg.timestamp && (
+                        <div className={`mt-1.5 flex items-center gap-1 text-[10px] text-muted/40 ${msg.type === "user" ? "justify-end" : ""}`}>
+                          <Clock className="w-3 h-3" />
+                          {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </div>
+                      )}
                     </div>
                   </motion.div>
                 ))}
@@ -222,21 +271,9 @@ export default function AIPlayground() {
                     </div>
                     <div className="glass px-5 py-3.5 rounded-2xl flex items-center gap-3 border border-white/[0.06]">
                       <div className="flex gap-1">
-                        <motion.div
-                          className="w-2 h-2 rounded-full bg-accent-cyan"
-                          animate={{ scale: [1, 1.3, 1], opacity: [0.5, 1, 0.5] }}
-                          transition={{ duration: 1, repeat: Infinity, delay: 0 }}
-                        />
-                        <motion.div
-                          className="w-2 h-2 rounded-full bg-accent-purple"
-                          animate={{ scale: [1, 1.3, 1], opacity: [0.5, 1, 0.5] }}
-                          transition={{ duration: 1, repeat: Infinity, delay: 0.2 }}
-                        />
-                        <motion.div
-                          className="w-2 h-2 rounded-full bg-accent-green"
-                          animate={{ scale: [1, 1.3, 1], opacity: [0.5, 1, 0.5] }}
-                          transition={{ duration: 1, repeat: Infinity, delay: 0.4 }}
-                        />
+                        <motion.div className="w-2 h-2 rounded-full bg-accent-cyan" animate={{ scale: [1, 1.3, 1], opacity: [0.5, 1, 0.5] }} transition={{ duration: 1, repeat: Infinity, delay: 0 }} />
+                        <motion.div className="w-2 h-2 rounded-full bg-accent-purple" animate={{ scale: [1, 1.3, 1], opacity: [0.5, 1, 0.5] }} transition={{ duration: 1, repeat: Infinity, delay: 0.2 }} />
+                        <motion.div className="w-2 h-2 rounded-full bg-accent-green" animate={{ scale: [1, 1.3, 1], opacity: [0.5, 1, 0.5] }} transition={{ duration: 1, repeat: Infinity, delay: 0.4 }} />
                       </div>
                       <span className="text-sm text-muted">{t.playground.analyzing}</span>
                     </div>
@@ -245,6 +282,7 @@ export default function AIPlayground() {
               </AnimatePresence>
             </div>
 
+            {/* Presets */}
             <div className="px-6 py-3 border-t border-white/[0.04] flex gap-2 overflow-x-auto bg-white/[0.01]">
               {presets.map((p) => (
                 <motion.button
@@ -265,6 +303,7 @@ export default function AIPlayground() {
               ))}
             </div>
 
+            {/* Input */}
             <form onSubmit={handleSubmit} className="p-4 border-t border-white/[0.04] bg-white/[0.01]">
               <div className="flex gap-3">
                 <div className="flex-1 relative">
