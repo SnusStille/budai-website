@@ -251,7 +251,7 @@ export default function Hero() {
           transition={{ duration: 0.8, delay: 0.4 }}
           className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold tracking-tight leading-[1.05] mb-6"
         >
-          <span className="block text-gradient-shimmer">{t.hero.title1}</span>
+          <span className="block text-gradient">{t.hero.title1}</span>
           <span className="relative block text-gradient mt-1 h-[1.1em] overflow-hidden">
             <AnimatePresence mode="wait">
               <motion.span
@@ -328,15 +328,22 @@ export default function Hero() {
           className="flex flex-wrap items-center justify-center gap-3"
         >
           {[
-            { icon: Sparkles, label: "AI-Driven" },
-            { icon: Code2, label: "Code Generation" },
-            { icon: Zap, label: "Automation" },
-            { icon: Shield, label: "Enterprise-Ready" },
-          ].map((item) => (
-            <div key={item.label} className="flex items-center gap-2 px-4 py-2 rounded-full glass text-sm text-white/70">
-              <item.icon className="w-4 h-4 text-accent-cyan" />
+            { icon: Sparkles, label: "AI-Driven", color: "text-accent-cyan", ring: "hover:border-accent-cyan/30" },
+            { icon: Code2, label: "Code Generation", color: "text-accent-purple", ring: "hover:border-accent-purple/30" },
+            { icon: Zap, label: "Automation", color: "text-accent-green", ring: "hover:border-accent-green/30" },
+            { icon: Shield, label: "Enterprise-Ready", color: "text-accent-pink", ring: "hover:border-accent-pink/30" },
+          ].map((item, i) => (
+            <motion.div
+              key={item.label}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1.2 + i * 0.08, duration: 0.4 }}
+              whileHover={{ y: -2 }}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full glass border border-white/[0.06] text-sm text-white/70 hover:text-white transition-colors duration-300 ${item.ring}`}
+            >
+              <item.icon className={`w-4 h-4 ${item.color}`} />
               {item.label}
-            </div>
+            </motion.div>
           ))}
         </motion.div>
 

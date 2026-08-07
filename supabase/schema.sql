@@ -18,21 +18,53 @@ begin
   end if;
 end $$;
 
+-- Enum for account_type. Matches types/index.ts:
+--   "individual" | "company"
+-- Added when the waitlist form opened up to individual signups, not just
+-- companies.
+do $$
+begin
+  if not exists (select 1 from pg_type where typname = 'waitlist_account_type') then
+    create type waitlist_account_type as enum ('individual', 'company');
+  end if;
+end $$;
+
 -- ============================================================================
 -- Table: waitlist_users
 -- ============================================================================
+-- company / industry / employees are nullable: they only apply to
+-- account_type = 'company' signups. The app sends null for individuals
+-- rather than empty strings.
 create table if not exists public.waitlist_users (
   id uuid primary key default gen_random_uuid(),
   name text not null,
   email text not null,
-  company text not null,
-  industry text not null,
-  employees text not null,
+  account_type waitlist_account_type not null default 'individual',
+  company text,
+  industry text,
+  employees text,
   interest text not null,
   access_status waitlist_access_status not null default 'pending',
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+-- ----------------------------------------------------------------------------
+-- Migration for a project that already ran an earlier version of this file
+-- (back when every signup was required to be a company). Safe to run even on
+-- a brand-new table — every statement here is a no-op if already applied.
+-- ----------------------------------------------------------------------------
+alter table public.waitlist_users
+  add column if not exists account_type waitlist_account_type not null default 'company';
+
+alter table public.waitlist_users alter column company drop not null;
+alter table public.waitlist_users alter column industry drop not null;
+alter table public.waitlist_users alter column employees drop not null;
+
+-- Any row inserted before this migration was a company signup by definition
+-- (individuals weren't possible yet) — the default above already covers new
+-- rows, this just makes sure that's explicit for anyone auditing the data.
+update public.waitlist_users set account_type = 'company' where account_type is null;
 
 -- One waitlist entry per email address.
 create unique index if not exists waitlist_users_email_key
@@ -45,6 +77,10 @@ create index if not exists waitlist_users_created_at_idx
 -- Used by: UserTable status filter (pending / approved / rejected)
 create index if not exists waitlist_users_access_status_idx
   on public.waitlist_users (access_status);
+
+-- Used by: StatsCards account-type breakdown / UserTable type badge
+create index if not exists waitlist_users_account_type_idx
+  on public.waitlist_users (account_type);
 
 -- Keep updated_at current on every UPDATE (e.g. updateUserStatus()).
 create or replace function public.set_updated_at()

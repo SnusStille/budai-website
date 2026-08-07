@@ -5,6 +5,7 @@ import "./globals.css";
 import LoadingScreen from "@/components/effects/LoadingScreen";
 import VercelAnalytics from "@/components/VercelAnalytics";
 import { LangProvider } from "@/components/ui/LanguageContext";
+import CommandPalette from "@/components/ui/CommandPalette";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const [loaded, setLoaded] = useState(false);
@@ -16,12 +17,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   }, []);
 
   const title = lang === "sv" 
-    ? "BudAI — Framtiden för Digitalt Arbete för Svenska Företag"
-    : "BudAI — The Future of Digital Work for Swedish Companies";
+    ? "BudAI — Framtiden för Digitalt Arbete för Svenska Företag och Privatpersoner"
+    : "BudAI — The Future of Digital Work for Swedish Companies and Individuals";
 
   const description = lang === "sv"
-    ? "BudAI är en avancerad AI-plattform som hjälper svenska företag att spara tid, automatisera uppgifter, förbättra arbetsflöden och göra verksamheter mer effektiva. Utvecklarförhandsvisning av Stilledev."
-    : "BudAI is an advanced AI platform that helps Swedish companies save time, automate tasks, improve workflows, and make businesses more efficient. Developer Preview by Stilledev.";
+    ? "BudAI är en avancerad AI-plattform som hjälper svenska företag och privatpersoner att spara tid, automatisera uppgifter, förbättra arbetsflöden och göra verksamheter mer effektiva. Utvecklarförhandsvisning av Stilledev."
+    : "BudAI is an advanced AI platform that helps Swedish companies and individuals save time, automate tasks, improve workflows, and get more done. Developer Preview by Stilledev.";
 
   return (
     <html lang={lang} className="font-sans">
@@ -46,6 +47,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div style={{ opacity: loaded ? 1 : 0, transition: "opacity 0.3s ease" }}>
             {children}
           </div>
+          <CommandPalette />
         </LangProvider>
         <VercelAnalytics />
       </body>

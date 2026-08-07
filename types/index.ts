@@ -2,9 +2,10 @@ export interface WaitlistUser {
   id: string;
   name: string;
   email: string;
-  company: string;
-  industry: string;
-  employees: string;
+  account_type: "individual" | "company";
+  company: string | null;
+  industry: string | null;
+  employees: string | null;
   interest: string;
   created_at: string;
   access_status: "pending" | "approved" | "rejected";

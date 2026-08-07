@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { CheckCircle, XCircle, Trash2, Search } from "lucide-react";
+import { CheckCircle, XCircle, Trash2, Search, Building2, User } from "lucide-react";
 import { WaitlistUser } from "@/types";
 import { updateUserStatus, deleteUser } from "@/lib/data";
 
@@ -11,7 +11,13 @@ export default function UserTable({ users, loading, onUpdate }: { users: Waitlis
   const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "approved" | "rejected">("all");
 
   const filtered = users.filter((u) => {
-    const matchesSearch = u.name.toLowerCase().includes(filter.toLowerCase()) || u.email.toLowerCase().includes(filter.toLowerCase()) || u.company.toLowerCase().includes(filter.toLowerCase());
+    const q = filter.toLowerCase();
+    // company can be null for individual signups — guard against it rather
+    // than crashing on .toLowerCase() of null.
+    const matchesSearch =
+      u.name.toLowerCase().includes(q) ||
+      u.email.toLowerCase().includes(q) ||
+      (u.company ?? "").toLowerCase().includes(q);
     const matchesStatus = statusFilter === "all" || u.access_status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -65,6 +71,7 @@ export default function UserTable({ users, loading, onUpdate }: { users: Waitlis
           <thead>
             <tr className="border-b border-white/[0.06] text-muted text-xs uppercase tracking-wider">
               <th className="text-left px-5 py-3">User</th>
+              <th className="text-left px-5 py-3">Type</th>
               <th className="text-left px-5 py-3">Company</th>
               <th className="text-left px-5 py-3">Industry</th>
               <th className="text-left px-5 py-3">Status</th>
@@ -74,9 +81,9 @@ export default function UserTable({ users, loading, onUpdate }: { users: Waitlis
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={6} className="px-5 py-8 text-center text-muted">Loading users...</td></tr>
+              <tr><td colSpan={7} className="px-5 py-8 text-center text-muted">Loading users...</td></tr>
             ) : filtered.length === 0 ? (
-              <tr><td colSpan={6} className="px-5 py-8 text-center text-muted">No users found.</td></tr>
+              <tr><td colSpan={7} className="px-5 py-8 text-center text-muted">No users found.</td></tr>
             ) : (
               filtered.map((user) => (
                 <motion.tr
@@ -89,8 +96,14 @@ export default function UserTable({ users, loading, onUpdate }: { users: Waitlis
                     <div className="font-medium text-white">{user.name}</div>
                     <div className="text-xs text-muted">{user.email}</div>
                   </td>
-                  <td className="px-5 py-4 text-muted">{user.company}</td>
-                  <td className="px-5 py-4 text-muted">{user.industry}</td>
+                  <td className="px-5 py-4">
+                    <span className={`inline-flex items-center gap-1.5 text-xs ${user.account_type === "company" ? "text-accent-cyan" : "text-accent-purple"}`}>
+                      {user.account_type === "company" ? <Building2 className="w-3.5 h-3.5" /> : <User className="w-3.5 h-3.5" />}
+                      {user.account_type === "company" ? "Company" : "Individual"}
+                    </span>
+                  </td>
+                  <td className="px-5 py-4 text-muted">{user.company ?? <span className="text-muted/30">—</span>}</td>
+                  <td className="px-5 py-4 text-muted">{user.industry ?? <span className="text-muted/30">—</span>}</td>
                   <td className="px-5 py-4">
                     <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${statusColors[user.access_status]}`}>
                       {user.access_status}

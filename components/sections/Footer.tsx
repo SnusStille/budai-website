@@ -107,8 +107,8 @@ export default function Footer() {
             </a>
             <p className="text-sm text-muted leading-relaxed max-w-sm mb-6">
               {lang === "sv"
-                ? "En avancerad AI-plattform som hjälper svenska företag att spara tid, automatisera uppgifter och förbättra arbetsflöden."
-                : "An advanced AI platform that helps Swedish companies save time, automate tasks, and improve workflows."}
+                ? "En avancerad AI-plattform som hjälper svenska företag och privatpersoner att spara tid, automatisera uppgifter och förbättra arbetsflöden."
+                : "An advanced AI platform that helps Swedish companies and individuals save time, automate tasks, and improve workflows."}
             </p>
             <div className="flex items-center gap-3">
               {socials.map((s) => (

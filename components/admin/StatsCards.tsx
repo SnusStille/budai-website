@@ -19,7 +19,7 @@ export default function StatsCards({ users }: { users: WaitlistUser[] }) {
     { label: "Approved", value: approved, icon: Shield, color: "text-accent-green", bg: "bg-accent-green/10" },
     { label: "Pending", value: pending, icon: Clock, color: "text-accent-yellow", bg: "bg-accent-yellow/10" },
     { label: "Today", value: today, icon: TrendingUp, color: "text-accent-purple", bg: "bg-accent-purple/10" },
-    { label: "Industries", value: new Set(users.map((u) => u.industry)).size, icon: Building2, color: "text-accent-pink", bg: "bg-accent-pink/10" },
+    { label: "Industries", value: new Set(users.map((u) => u.industry).filter(Boolean)).size, icon: Building2, color: "text-accent-pink", bg: "bg-accent-pink/10" },
     { label: "Playground Uses", value: 426, icon: Sparkles, color: "text-accent-blue", bg: "bg-accent-blue/10" },
   ];
 
