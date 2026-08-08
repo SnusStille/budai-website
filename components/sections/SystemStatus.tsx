@@ -105,35 +105,6 @@ function MiniSpark({ data, color }: { data: number[]; color: string }) {
   );
 }
 
-// Live pulsing dot field - lightweight visual effect
-// Dots are generated once via lazy useState init, not on every render —
-// this section's parent re-renders every 2.5s (live metrics), and without
-// this the whole field used to jump to new random positions each tick.
-function PulseField() {
-  const [dots] = useState(() =>
-    Array.from({ length: 20 }, (_, i) => ({
-      id: i,
-      x: Math.random() * 100,
-      y: Math.random() * 100,
-      delay: Math.random() * 3,
-      duration: 2 + Math.random() * 2,
-    }))
-  );
-  return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      {dots.map((dot) => (
-        <motion.div
-          key={dot.id}
-          className="absolute w-1 h-1 rounded-full bg-accent-cyan/20"
-          style={{ left: `${dot.x}%`, top: `${dot.y}%` }}
-          animate={{ opacity: [0.1, 0.5, 0.1], scale: [1, 1.5, 1] }}
-          transition={{ duration: dot.duration, delay: dot.delay, repeat: Infinity, ease: "easeInOut" }}
-        />
-      ))}
-    </div>
-  );
-}
-
 // Continuous ECG-style live signal strip. Unlike the periodic (every 2.5s)
 // state updates elsewhere on this section, this one animates constantly via
 // a looping transform — it never sits still, which is what makes the panel
@@ -249,7 +220,6 @@ export default function SystemStatus() {
           {/* Main Status Panel */}
           <ScrollReveal className="lg:col-span-2">
             <div className="p-6 rounded-2xl glass-strong border border-white/[0.06] h-full relative overflow-hidden">
-              <PulseField />
               <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-accent-cyan/30 to-transparent animate-scan" />
 
               <div className="flex items-center justify-between mb-6 relative z-10">
@@ -412,7 +382,7 @@ export default function SystemStatus() {
                 </div>
                 <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
                   <motion.div
-                    className="h-full rounded-full bg-gradient-to-r from-accent-cyan via-accent-purple to-accent-pink"
+                    className="h-full rounded-full bg-accent-pink"
                     animate={{ width: `${(temp / 60) * 100}%` }}
                     transition={{ duration: 1 }}
                   />

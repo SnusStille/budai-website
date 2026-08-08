@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Sparkles, Code2, Zap, Shield, ChevronDown } from "lucide-react";
 import { useLang } from "@/components/ui/LanguageContext";
+import MarkerUnderline from "@/components/ui/MarkerUnderline";
 
 // A small easter egg for anyone who clicks the orb — the site notices.
 const FUN_MESSAGES = [
@@ -116,9 +117,8 @@ export default function Hero() {
 
       {!isMobile && (
         <>
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[900px] bg-accent-cyan/8 rounded-full blur-[180px] pointer-events-none" />
-          <div className="absolute top-1/3 right-1/4 w-[600px] h-[600px] bg-accent-purple/6 rounded-full blur-[150px] pointer-events-none" />
-          <div className="absolute bottom-1/4 left-1/4 w-[500px] h-[500px] bg-accent-green/5 rounded-full blur-[130px] pointer-events-none" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[900px] bg-accent-cyan/6 rounded-full blur-[180px] pointer-events-none" />
+          <div className="absolute top-1/3 right-1/4 w-[600px] h-[600px] bg-accent-purple/4 rounded-full blur-[150px] pointer-events-none" />
         </>
       )}
 
@@ -249,10 +249,10 @@ export default function Hero() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.4 }}
-          className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold tracking-tight leading-[1.05] mb-6"
+          className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold tracking-tight leading-[1.05] mb-6 text-white"
         >
-          <span className="block text-gradient">{t.hero.title1}</span>
-          <span className="relative block text-gradient mt-1 h-[1.1em] overflow-hidden">
+          <span className="block">{t.hero.title1}</span>
+          <span className="relative block mt-2 h-[1.2em] pb-3 overflow-visible">
             <AnimatePresence mode="wait">
               <motion.span
                 key={t.hero.words[wordIndex]}
@@ -260,9 +260,15 @@ export default function Hero() {
                 animate={{ y: "0%", opacity: 1 }}
                 exit={{ y: "-60%", opacity: 0 }}
                 transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-                className="block"
+                className="relative inline-block"
               >
                 {t.hero.words[wordIndex]}
+                <MarkerUnderline
+                  color={["#00e5ff", "#b967ff", "#00ff9d", "#ff6b9d"][wordIndex % 4]}
+                  delay={0.25}
+                  duration={0.55}
+                  viewOnce={false}
+                />
               </motion.span>
             </AnimatePresence>
           </span>

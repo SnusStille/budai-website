@@ -25,14 +25,16 @@ function isRateLimited(ip: string): boolean {
   return false;
 }
 
-const SYSTEM_PROMPT = `You are BudAI, an AI assistant demo for Swedish businesses, built by Stilledev.
-You're being tried out by a potential customer on a marketing site's "playground" demo.
-Keep replies concise (3-6 sentences), professional but warm, and focused on business use cases:
-automation, document generation, data analysis, customer support, marketing content, workflow optimization.
-This is a developer preview — if asked about pricing, availability, or timelines, say the team can share
-details when they request access, don't invent specifics.
-Never claim to have already completed real actions (e.g. don't say "I've drafted the email" — instead
-describe what you *would* produce).`;
+const SYSTEM_PROMPT = `You are BudAI, an AI assistant demo built by Stilledev, running in the "playground" section of a marketing site.
+You're being tried out by a visitor — could be an individual or a business, and could ask about absolutely anything,
+not just business topics. Answer whatever they ask genuinely and helpfully, the way a capable general-purpose
+assistant would; don't redirect non-business questions back to business use cases.
+Keep replies concise (3-6 sentences) and warm.
+This is a developer preview — if asked about pricing, availability, or timelines for BudAI itself, say the team can
+share details when they request access, don't invent specifics.
+Never claim to have already completed real actions (e.g. don't say "I've drafted the email" — instead describe what
+you *would* produce).
+The conversation may include earlier turns — use them for context like a normal chat.`;
 
 export async function POST(req: NextRequest) {
   const ip = req.headers.get("x-forwarded-for") ?? "unknown";
@@ -45,9 +47,32 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { message } = await req.json();
+    const body = await req.json();
+    const rawMessages = body?.messages;
 
-    if (!message || typeof message !== "string" || message.length > 200) {
+    if (!Array.isArray(rawMessages) || rawMessages.length === 0) {
+      return NextResponse.json({ error: "Invalid message" }, { status: 400 });
+    }
+
+    // Cap history so a long-running chat can't balloon token usage/cost —
+    // keep the most recent turns, that's what matters for context anyway.
+    const recent = rawMessages.slice(-16);
+
+    const messages = [];
+    for (const m of recent) {
+      if (
+        !m ||
+        (m.role !== "user" && m.role !== "assistant") ||
+        typeof m.content !== "string" ||
+        m.content.length === 0 ||
+        m.content.length > 1000
+      ) {
+        return NextResponse.json({ error: "Invalid message" }, { status: 400 });
+      }
+      messages.push({ role: m.role as "user" | "assistant", content: m.content });
+    }
+
+    if (messages[messages.length - 1].role !== "user") {
       return NextResponse.json({ error: "Invalid message" }, { status: 400 });
     }
 
@@ -58,7 +83,7 @@ export async function POST(req: NextRequest) {
       // single reply can't run away and rack up cost.
       max_tokens: 500,
       system: SYSTEM_PROMPT,
-      messages: [{ role: "user", content: message }],
+      messages,
     });
 
     const textBlock = response.content.find((block) => block.type === "text");

@@ -3,12 +3,13 @@
 import { motion } from "framer-motion";
 import { Target, TrendingUp, Heart, Globe } from "lucide-react";
 import ScrollReveal from "@/components/ui/ScrollReveal";
+import MarkerUnderline from "@/components/ui/MarkerUnderline";
 
 const pillars = [
-  { icon: Target, title: "Mission", desc: "To make advanced AI accessible to every Swedish company, regardless of size or technical expertise. We believe AI should empower, not replace, human potential.", gradient: "from-accent-cyan to-accent-blue", accent: "text-accent-cyan", glow: "shadow-[0_0_30px_rgba(0,229,255,0.1)]" },
-  { icon: TrendingUp, title: "Growth", desc: "BudAI will continuously evolve—learning from every interaction, expanding capabilities, and growing alongside the businesses it serves.", gradient: "from-accent-purple to-accent-pink", accent: "text-accent-purple", glow: "shadow-[0_0_30px_rgba(185,103,255,0.1)]" },
+  { icon: Target, title: "Mission", desc: "To make advanced AI accessible to every person and company in Sweden, regardless of size or technical expertise. We believe AI should empower, not replace, human potential.", gradient: "from-accent-cyan to-accent-blue", accent: "text-accent-cyan", glow: "shadow-[0_0_30px_rgba(0,229,255,0.1)]" },
+  { icon: TrendingUp, title: "Growth", desc: "BudAI will continuously evolve—learning from every interaction, expanding capabilities, and growing alongside the people and businesses it serves.", gradient: "from-accent-purple to-accent-pink", accent: "text-accent-purple", glow: "shadow-[0_0_30px_rgba(185,103,255,0.1)]" },
   { icon: Heart, title: "Swedish Values", desc: "Built with Swedish principles at its core: transparency, sustainability, equality, and innovation. Data stays in the Nordics. Privacy is non-negotiable.", gradient: "from-accent-green to-accent-cyan", accent: "text-accent-green", glow: "shadow-[0_0_30px_rgba(0,255,157,0.1)]" },
-  { icon: Globe, title: "Global Impact", desc: "Starting in Sweden, scaling to the Nordics, and eventually empowering businesses worldwide with ethical, powerful AI solutions.", gradient: "from-accent-pink to-accent-purple", accent: "text-accent-pink", glow: "shadow-[0_0_30px_rgba(255,107,157,0.1)]" },
+  { icon: Globe, title: "Global Impact", desc: "Starting in Sweden, scaling to the Nordics, and eventually empowering people and businesses worldwide with ethical, powerful AI solutions.", gradient: "from-accent-pink to-accent-purple", accent: "text-accent-pink", glow: "shadow-[0_0_30px_rgba(255,107,157,0.1)]" },
 ];
 
 export default function Vision() {
@@ -19,11 +20,11 @@ export default function Vision() {
       <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8">
         <ScrollReveal className="text-center mb-20">
           <span className="inline-block px-4 py-1.5 rounded-full glass text-sm font-medium text-accent-green mb-4">Our Vision</span>
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6">
-            The AI Assistant for <span className="text-gradient">Swedish Business</span>
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6 text-white">
+            The AI Assistant for <span className="relative inline-block">Sweden<MarkerUnderline color="#00ff9d" /></span>
           </h2>
           <p className="text-lg text-muted max-w-3xl mx-auto leading-relaxed">
-            BudAI is not just another AI tool. It is a vision for how Swedish companies will work in the future—smarter, faster, and more human than ever before.
+            BudAI is not just another AI tool. It is a vision for how people and companies in Sweden will work in the future—smarter, faster, and more human than ever before.
           </p>
         </ScrollReveal>
 

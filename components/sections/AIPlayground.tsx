@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Bot, User, Sparkles, Zap, Brain, Target, TrendingUp, FileText, Wand2 } from "lucide-react";
+import { Send, Bot, User, Sparkles, Zap, Brain, Target, TrendingUp, FileText, Wand2, RotateCcw } from "lucide-react";
 import ScrollReveal from "@/components/ui/ScrollReveal";
 import { useLang } from "@/components/ui/LanguageContext";
 
@@ -16,7 +16,7 @@ interface Msg {
 export default function AIPlayground() {
   const { t, lang } = useLang();
   const [messages, setMessages] = useState<Msg[]>([
-    { id: 0, type: "ai", text: lang === "sv" ? "Hej! Jag är BudAI. Fråga mig vad som helst om ditt företag, eller prova ett av exemplen nedan." : "Hello! I'm BudAI. Ask me anything about your business, or try one of the examples below.", timestamp: new Date() },
+    { id: 0, type: "ai", text: lang === "sv" ? "Hej! Jag är BudAI. Fråga mig vad som helst, eller prova ett av exemplen nedan." : "Hello! I'm BudAI. Ask me anything, or try one of the examples below.", timestamp: new Date() },
   ]);
   const [input, setInput] = useState("");
   const [thinking, setThinking] = useState(false);
@@ -53,12 +53,12 @@ export default function AIPlayground() {
     setMessages((prev) => [...prev, { id: idRef.current++, type: "ai", text: fullText, timestamp: new Date() }]);
   };
 
-  const callBudAI = async (text: string): Promise<string> => {
+  const callBudAI = async (history: { role: "user" | "assistant"; content: string }[]): Promise<string> => {
     try {
       const res = await fetch("/api/playground", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text }),
+        body: JSON.stringify({ messages: history }),
       });
 
       if (res.status === 429) {
@@ -78,15 +78,35 @@ export default function AIPlayground() {
     }
   };
 
+  // Builds the API-format history from everything said so far in this chat
+  // (skipping the canned opening greeting, which the model doesn't need)
+  // plus the new message — this is what gives BudAI actual memory of the
+  // conversation instead of answering each message in isolation.
+  const toHistory = (newText: string) => {
+    const prior = messages
+      .filter((m, idx) => !(idx === 0 && m.type === "ai"))
+      .map((m) => ({ role: (m.type === "user" ? "user" : "assistant") as "user" | "assistant", content: m.text }));
+    return [...prior, { role: "user" as const, content: newText }];
+  };
+
+  const resetChat = () => {
+    if (thinking) return;
+    setMessages([
+      { id: 0, type: "ai", text: lang === "sv" ? "Hej! Jag är BudAI. Fråga mig vad som helst, eller prova ett av exemplen nedan." : "Hello! I'm BudAI. Ask me anything, or try one of the examples below.", timestamp: new Date() },
+    ]);
+    idRef.current = 1;
+  };
+
   const handlePreset = async (text: string) => {
     if (thinking) return;
     setActivePreset(text);
+    const history = toHistory(text);
     setMessages((prev) => [...prev, { id: idRef.current++, type: "user", text, timestamp: new Date() }]);
     setThinking(true);
     setConfidence(0);
     const confInterval = setInterval(() => setConfidence((c) => Math.min(c + Math.random() * 15, 98)), 200);
 
-    const reply = await callBudAI(text);
+    const reply = await callBudAI(history);
 
     clearInterval(confInterval);
     setConfidence(98);
@@ -101,12 +121,13 @@ export default function AIPlayground() {
     if (!input.trim() || thinking) return;
     const text = input.trim();
     setInput("");
+    const history = toHistory(text);
     setMessages((prev) => [...prev, { id: idRef.current++, type: "user", text, timestamp: new Date() }]);
     setThinking(true);
     setConfidence(0);
     const confInterval = setInterval(() => setConfidence((c) => Math.min(c + Math.random() * 12, 95)), 250);
 
-    const reply = await callBudAI(text);
+    const reply = await callBudAI(history);
 
     clearInterval(confInterval);
     setConfidence(95);
@@ -170,6 +191,16 @@ export default function AIPlayground() {
                     <span className="text-muted">{Math.round(confidence)}% {t.playground.confidence}</span>
                   )}
                 </motion.div>
+              )}
+              {!thinking && messages.length > 1 && (
+                <button
+                  onClick={resetChat}
+                  className="relative flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs text-muted hover:text-white hover:bg-white/5 border border-white/[0.06] transition-colors"
+                  title={lang === "sv" ? "Ny konversation" : "New conversation"}
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  {lang === "sv" ? "Ny chatt" : "New chat"}
+                </button>
               )}
             </div>
 

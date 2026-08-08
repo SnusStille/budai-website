@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { Terminal as TermIcon, Copy, Check, Brain, Cpu, Database, Zap, Shield, Activity } from "lucide-react";
+import CodeBackground from "@/components/effects/CodeBackground";
 import ScrollReveal from "@/components/ui/ScrollReveal";
 import { useLang } from "@/components/ui/LanguageContext";
 
@@ -137,10 +138,8 @@ function codeLines(lines: string[], speed = 9): { type: string; text: string; de
 }
 
 const LIVE_TASKS = [
-  { type: "cmd", text: "budai generate --task 'revenue API route' --lang=ts", delay: 700, typeSpeed: 28 },
-  { type: "think", text: "[PLAN] Scaffolding a typed Next.js route handler...", delay: 300 },
-  { type: "sys", text: "  writing app/api/revenue/route.ts", delay: 150 },
   ...codeLines([
+    "// app/api/revenue/route.ts",
     "import { NextResponse } from \"next/server\";",
     "import { getQuarterlyRevenue } from \"@/lib/analytics\";",
     "",
@@ -158,14 +157,12 @@ const LIVE_TASKS = [
     "    topSegment: data.topSegment,",
     "  });",
     "}",
+    "",
+    "",
   ]),
-  { type: "success", text: "✓ app/api/revenue/route.ts written · 0 type errors", delay: 250 },
-  { type: "out", text: "", delay: 200 },
 
-  { type: "cmd", text: "budai generate --task 'stakeholder digest' --lang=python", delay: 800, typeSpeed: 28 },
-  { type: "think", text: "[PLAN] Writing a summarizer for the weekly digest job...", delay: 300 },
-  { type: "sys", text: "  writing jobs/weekly_digest.py", delay: 150 },
   ...codeLines([
+    "# jobs/weekly_digest.py",
     "from datetime import datetime",
     "from budai.reports import RevenueReport",
     "from budai.mailer import send_email",
@@ -181,14 +178,12 @@ const LIVE_TASKS = [
     "def run(recipients: list[str]) -> None:",
     "    report = RevenueReport.for_week(datetime.now())",
     "    send_email(recipients, subject=\"Weekly Digest\", body=build_weekly_digest(report))",
+    "",
+    "",
   ]),
-  { type: "success", text: "✓ jobs/weekly_digest.py written · scheduled: Mon 08:00 CET", delay: 250 },
-  { type: "out", text: "", delay: 200 },
 
-  { type: "cmd", text: "budai generate --task 'churn risk query' --lang=sql", delay: 700, typeSpeed: 28 },
-  { type: "think", text: "[PLAN] Drafting the churn-risk segment query...", delay: 300 },
-  { type: "sys", text: "  writing queries/churn_risk.sql", delay: 150 },
   ...codeLines([
+    "-- queries/churn_risk.sql",
     "SELECT",
     "  c.customer_id,",
     "  c.company_name,",
@@ -201,19 +196,22 @@ const LIVE_TASKS = [
     "WHERE u.customer_id IS NULL",
     "  AND c.status = 'active'",
     "ORDER BY c.mrr_sek DESC;",
+    "",
+    "",
   ]),
-  { type: "success", text: "✓ queries/churn_risk.sql written · 14 accounts flagged", delay: 250 },
-  { type: "out", text: "", delay: 200 },
 
-  { type: "cmd", text: "budai --status --verbose", delay: 600, typeSpeed: 25 },
-  { type: "out", text: "  Status:        OPERATIONAL", delay: 150 },
-  { type: "out", text: "  Neural nets:   ACTIVE (8.7B params)", delay: 150 },
-  { type: "out", text: "  Data pipes:    RUNNING (3 nodes)", delay: 150 },
-  { type: "out", text: "  Security:      ENTERPRISE-GRADE (A+)", delay: 150 },
-  { type: "out", text: "  Files written today: 214", delay: 150 },
-  { type: "out", text: "", delay: 80 },
-  { type: "sys", text: "  [Live inference stream continuing...]", delay: 300 },
-  { type: "out", text: "", delay: 200 },
+  ...codeLines([
+    "// components/WaitlistBadge.tsx",
+    "export function WaitlistBadge({ count }: { count: number }) {",
+    "  return (",
+    "    <span className=\"rounded-full px-3 py-1 text-xs\">",
+    "      {count.toLocaleString()} on the waitlist",
+    "    </span>",
+    "  );",
+    "}",
+    "",
+    "",
+  ]),
 ];
 
 export default function Terminal() {
@@ -289,8 +287,7 @@ export default function Terminal() {
           await runPhase(phase);
         }
         if (cancelled) return;
-        appendLine("sys", "  [Cycle complete. Restarting live inference loop...]");
-        await new Promise((r) => setTimeout(r, 600));
+        await new Promise((r) => setTimeout(r, 400));
       }
     };
     run();
@@ -350,6 +347,7 @@ export default function Terminal() {
   return (
     <section id="terminal" className="relative py-32 overflow-hidden">
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-accent-green/3 rounded-full blur-[200px] pointer-events-none" />
+      <CodeBackground />
 
       <div className="max-w-5xl mx-auto px-6 lg:px-8 relative z-10">
         <ScrollReveal className="text-center mb-16">
@@ -402,6 +400,10 @@ export default function Terminal() {
                 const rendered = lines.map((l) => {
                   const prefix = getPrefix(l.type);
                   if (l.type === "cmd") codeLineNo = 0;
+                  // A file-header comment ("// path/to/file.ts") marks the
+                  // start of a new file — reset the gutter to line 1 there,
+                  // same as opening a fresh file in an editor.
+                  if (l.type === "code" && /^\s*(\/\/|#|--)\s*\S+\.(tsx?|jsx?|py|sql)\b/.test(l.text)) codeLineNo = 0;
                   if (l.type === "code") codeLineNo += 1;
                   return (
                     <motion.div

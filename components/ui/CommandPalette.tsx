@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Search, ArrowRight, Sparkles, Terminal as TerminalIcon, Users, Map,
-  Activity, Cpu, Languages, MessageCircle, CornerDownLeft, Command,
+  Activity, Cpu, Languages, MessageCircle, CornerDownLeft,
 } from "lucide-react";
 import { useLang } from "@/components/ui/LanguageContext";
 
@@ -118,19 +118,6 @@ export default function CommandPalette() {
 
   return (
     <>
-      {/* Discoverable trigger, not just a hidden shortcut */}
-      <button
-        onClick={() => setOpen(true)}
-        className="fixed bottom-4 left-4 z-[25] hidden md:flex items-center gap-2 px-3.5 py-2 rounded-full glass-strong border border-white/[0.08] text-xs text-muted hover:text-white hover:border-accent-cyan/30 transition-colors"
-        aria-label="Open command menu"
-      >
-        <Search className="w-3.5 h-3.5" />
-        <span>{lang === "sv" ? "Sök" : "Search"}</span>
-        <span className="flex items-center gap-0.5 pl-1.5 ml-0.5 border-l border-white/10">
-          <Command className="w-3 h-3" />K
-        </span>
-      </button>
-
       <AnimatePresence>
         {open && (
           <>

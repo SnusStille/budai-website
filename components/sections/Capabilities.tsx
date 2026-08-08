@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { Bot, FileText, BarChart3, Headphones, Megaphone, Users, Workflow, BrainCircuit, Lightbulb } from "lucide-react";
 import ScrollReveal from "@/components/ui/ScrollReveal";
+import MarkerUnderline from "@/components/ui/MarkerUnderline";
 
 const capabilities = [
   { icon: Bot, title: "Task Automation", desc: "Eliminate repetitive work. BudAI automates daily operations, data entry, and routine processes so your team focuses on what matters.", gradient: "from-accent-cyan to-accent-blue", accent: "text-accent-cyan", glow: "shadow-[0_0_30px_rgba(0,229,255,0.1)]" },
@@ -22,11 +23,11 @@ export default function Capabilities() {
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         <ScrollReveal className="text-center mb-20">
           <span className="inline-block px-4 py-1.5 rounded-full glass text-sm font-medium text-accent-cyan mb-4">Intelligence System</span>
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6">
-            What BudAI <span className="text-gradient">Will Do</span>
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6 text-white">
+            What BudAI <span className="relative inline-block">Will Do<MarkerUnderline color="#00e5ff" /></span>
           </h2>
           <p className="text-lg text-muted max-w-2xl mx-auto">
-            A comprehensive AI platform designed to handle the full spectrum of digital work for modern Swedish enterprises.
+            A comprehensive AI platform designed to handle the full spectrum of digital work — for individuals and modern Swedish businesses alike.
           </p>
         </ScrollReveal>
 

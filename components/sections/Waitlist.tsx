@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mail, ArrowRight, Check, Sparkles, Users, Clock, Crown, Zap, Building2, User, Briefcase } from "lucide-react";
 import ScrollReveal from "@/components/ui/ScrollReveal";
+import MarkerUnderline from "@/components/ui/MarkerUnderline";
 import Confetti from "@/components/ui/Confetti";
 import { addWaitlistUser } from "@/lib/data";
 
@@ -21,6 +22,7 @@ export default function Waitlist() {
   const [confetti, setConfetti] = useState(false);
   const [count, setCount] = useState(127);
   const [error, setError] = useState(false);
+  const [errorDetail, setErrorDetail] = useState<string | null>(null);
 
   useEffect(() => {
     const interval = setInterval(() => setCount((c) => c + Math.floor(Math.random() * 3)), 8000);
@@ -32,6 +34,7 @@ export default function Waitlist() {
     if (!form.email.includes("@")) return;
     setLoading(true);
     setError(false);
+    setErrorDetail(null);
     try {
       await addWaitlistUser({
         name: form.name,
@@ -47,11 +50,18 @@ export default function Waitlist() {
       setSubmitted(true);
       setConfetti(true);
       setTimeout(() => setConfetti(false), 4000);
-    } catch (err) {
+    } catch (err: any) {
       // Previously an unhandled rejection here (e.g. a Supabase RLS/network
       // error) left the button stuck on its loading spinner forever with no
-      // feedback — this is what "waitlist fungerar inte korrekt" was.
+      // feedback. The most common real cause: the live Supabase table's
+      // columns don't match what the app sends (e.g. missing "account_type",
+      // or "company"/"industry"/"employees" still set NOT NULL) — that
+      // happens if supabase/schema.sql hasn't been (re-)run against the
+      // actual project yet. Surface Supabase's own message when we have one
+      // so that's diagnosable from the browser console without guessing.
       console.error("Waitlist submit error:", err);
+      const detail = err?.message || err?.error_description || err?.details;
+      setErrorDetail(typeof detail === "string" ? detail : null);
       setError(true);
     } finally {
       setLoading(false);
@@ -66,8 +76,8 @@ export default function Waitlist() {
       <div className="relative z-10 max-w-4xl mx-auto px-6 lg:px-8">
         <ScrollReveal className="text-center mb-12">
           <span className="inline-block px-4 py-1.5 rounded-full glass text-sm font-medium text-accent-purple mb-4">Exclusive Access</span>
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6">
-            Join the <span className="text-gradient">Founding Members</span>
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6 text-white">
+            Join the <span className="relative inline-block">Founding Members<MarkerUnderline color="#b967ff" /></span>
           </h2>
           <p className="text-lg text-muted max-w-2xl mx-auto">
             Be among the first — companies and individuals alike — to experience BudAI. Early adopters receive lifetime priority support, exclusive features, and founding member status.
@@ -170,7 +180,10 @@ export default function Waitlist() {
                     </div>
 
                     {error && (
-                      <p className="text-sm text-red-400">Something went wrong on our end — please try again in a moment.</p>
+                      <p className="text-sm text-red-400">
+                        Something went wrong on our end — please try again in a moment.
+                        {errorDetail && <span className="block text-red-400/60 text-xs mt-1 font-mono">{errorDetail}</span>}
+                      </p>
                     )}
 
                     <button
