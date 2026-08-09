@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, type ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Send, Bot, User, Sparkles, Zap, Brain, Target, TrendingUp, FileText, Wand2, RotateCcw } from "lucide-react";
 import ScrollReveal from "@/components/ui/ScrollReveal";
@@ -11,6 +11,28 @@ interface Msg {
   type: "user" | "ai";
   text: string;
   timestamp?: Date;
+}
+
+// BudAI's replies sometimes use light markdown (**bold**, `code`) — this
+// renders it properly instead of showing the literal asterisks/backticks.
+// Deliberately minimal: just the inline styles a chat bubble needs, not a
+// full markdown engine.
+function renderMarkdown(text: string): ReactNode[] {
+  const pattern = /(\*\*.+?\*\*|`.+?`)/g;
+  const parts = text.split(pattern);
+  return parts.map((part, i) => {
+    if (part.startsWith("**") && part.endsWith("**") && part.length > 3) {
+      return <strong key={i} className="font-semibold text-white">{part.slice(2, -2)}</strong>;
+    }
+    if (part.startsWith("`") && part.endsWith("`") && part.length > 1) {
+      return (
+        <code key={i} className="px-1.5 py-0.5 rounded bg-white/10 text-accent-cyan text-[0.85em] font-mono">
+          {part.slice(1, -1)}
+        </code>
+      );
+    }
+    return part;
+  });
 }
 
 export default function AIPlayground() {
@@ -58,7 +80,7 @@ export default function AIPlayground() {
       const res = await fetch("/api/playground", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: history }),
+        body: JSON.stringify({ messages: history, lang }),
       });
 
       if (res.status === 429) {
@@ -229,7 +251,7 @@ export default function AIPlayground() {
                         ? "glass text-white/90 border border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.2)]"
                         : "bg-gradient-to-r from-accent-cyan/15 to-accent-purple/15 border border-accent-cyan/20 text-white shadow-[0_4px_20px_rgba(0,229,255,0.08)]"
                     }`}>
-                      {msg.text}
+                      {msg.type === "ai" ? renderMarkdown(msg.text) : msg.text}
                     </div>
                   </motion.div>
                 ))}
@@ -240,7 +262,7 @@ export default function AIPlayground() {
                       <Bot className="w-4 h-4 text-white" />
                     </div>
                     <div className="glass px-5 py-3.5 rounded-2xl text-sm text-white/90 whitespace-pre-wrap border border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.2)]">
-                      {typingText}
+                      {renderMarkdown(typingText)}
                       <span className="inline-block w-2 h-4 bg-accent-cyan ml-0.5 animate-pulse align-middle rounded-sm" />
                     </div>
                   </motion.div>

@@ -1,11 +1,10 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   Server, Activity, Shield, Database, Cpu, Network, CheckCircle2,
-  AlertCircle, TrendingUp, Zap, Thermometer, BarChart3, Radio,
-  Wifi, Waves, Flame
+  AlertCircle, TrendingUp, Zap, BarChart3, Radio,
 } from "lucide-react";
 import ScrollReveal from "@/components/ui/ScrollReveal";
 import { useLang } from "@/components/ui/LanguageContext";
@@ -34,22 +33,22 @@ const metrics = [
   { label: "security", value: "A+", icon: Shield, change: "Enterprise" },
 ];
 
-// Fixed: use en-US locale to prevent hydration mismatch
+// Reflects the real `value` from the parent's single update cycle, with a
+// small fade/rise on change — it used to run its own separate 3s timer that
+// ignored the actual data entirely, so this number ticked up independently
+// and out of sync with the rest of the panel. One source of truth now.
 function LiveCounter({ value }: { value: number }) {
-  const [display, setDisplay] = useState(value);
   const [mounted, setMounted] = useState(false);
-  useEffect(() => {
-    setMounted(true);
-    const interval = setInterval(() => {
-      setDisplay((v) => v + Math.floor(Math.random() * 3));
-    }, 3000);
-    return () => clearInterval(interval);
-  }, []);
+  useEffect(() => setMounted(true), []);
   if (!mounted) return <span>{value.toLocaleString("en-US")}</span>;
-  return <span>{display.toLocaleString("en-US")}</span>;
+  return (
+    <motion.span key={value} initial={{ opacity: 0.4, y: -2 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="inline-block">
+      {value.toLocaleString("en-US")}
+    </motion.span>
+  );
 }
 
-function AnimatedBar({ value, color, label }: { value: number; color: string; label: string }) {
+function AnimatedBar({ value, color, label, suffix }: { value: number; color: string; label: string; suffix?: string }) {
   return (
     <div className="flex items-center gap-2">
       <span className="text-[10px] text-muted w-8 shrink-0">{label}</span>
@@ -61,7 +60,7 @@ function AnimatedBar({ value, color, label }: { value: number; color: string; la
           transition={{ duration: 2, ease: "easeInOut" }}
         />
       </div>
-      <span className="text-[10px] font-mono text-white/60 w-8 text-right">{value}%</span>
+      <span className="text-[10px] font-mono text-white/60 w-10 text-right">{suffix ?? `${value}%`}</span>
     </div>
   );
 }
@@ -85,23 +84,6 @@ function StatusIndicator({ status }: { status: string }) {
       </span>
       <span className="text-[10px] text-muted">{labels[status as keyof typeof labels]}</span>
     </div>
-  );
-}
-
-// Simple SVG sparkline
-function MiniSpark({ data, color }: { data: number[]; color: string }) {
-  const max = Math.max(...data);
-  const min = Math.min(...data);
-  const range = max - min || 1;
-  const points = data.map((v, i) => {
-    const x = (i / (data.length - 1)) * 100;
-    const y = 100 - ((v - min) / range) * 100;
-    return `${x},${y}`;
-  }).join(" ");
-  return (
-    <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-6">
-      <polyline points={points} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
   );
 }
 
@@ -166,11 +148,6 @@ export default function SystemStatus() {
   const [cpuUsage, setCpuUsage] = useState(42);
   const [ramUsage, setRamUsage] = useState(68);
   const [temp, setTemp] = useState(42);
-  // These now actually update on every tick instead of being frozen sample
-  // arrays — the sparklines genuinely scroll/move instead of just sitting
-  // there as a static decorative squiggle.
-  const [latencyData, setLatencyData] = useState([12, 11, 13, 10, 11, 12, 11, 10, 12, 11]);
-  const [throughputData, setThroughputData] = useState([2800, 2850, 2820, 2900, 2847, 2860, 2830, 2880, 2850, 2840]);
   const [activeService, setActiveService] = useState<string | null>(null);
 
   useEffect(() => {
@@ -178,14 +155,6 @@ export default function SystemStatus() {
       setCpuUsage((prev) => Math.max(30, Math.min(85, prev + (Math.random() - 0.5) * 8)));
       setRamUsage((prev) => Math.max(55, Math.min(80, prev + (Math.random() - 0.5) * 4)));
       setTemp((prev) => Math.max(38, Math.min(52, prev + (Math.random() - 0.5) * 3)));
-      setLatencyData((prev) => {
-        const next = Math.max(4, prev[prev.length - 1] + (Math.random() - 0.5) * 3);
-        return [...prev.slice(1), next];
-      });
-      setThroughputData((prev) => {
-        const next = Math.max(2000, prev[prev.length - 1] + (Math.random() - 0.5) * 140);
-        return [...prev.slice(1), next];
-      });
       setServices((prev) =>
         prev.map((s) =>
           s.status === "operational"
@@ -305,26 +274,6 @@ export default function SystemStatus() {
                   </motion.div>
                 ))}
               </div>
-
-              {/* Mini sparklines */}
-              <div className="mt-4 grid grid-cols-2 gap-3 relative z-10">
-                <div className="p-3 rounded-xl bg-white/[0.015] border border-white/[0.04]">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-[10px] text-muted uppercase tracking-wider">Avg Latency</span>
-                    <span className="text-[10px] text-accent-green">↓</span>
-                  </div>
-                  <MiniSpark data={latencyData} color="#00e5ff" />
-                  <div className="mt-1 text-xs font-mono text-accent-cyan">{Math.round(latencyData[latencyData.length - 1])}ms</div>
-                </div>
-                <div className="p-3 rounded-xl bg-white/[0.015] border border-white/[0.04]">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-[10px] text-muted uppercase tracking-wider">Throughput</span>
-                    <span className="text-[10px] text-accent-green">↑</span>
-                  </div>
-                  <MiniSpark data={throughputData} color="#00ff9d" />
-                  <div className="mt-1 text-xs font-mono text-accent-green">{Math.round(throughputData[throughputData.length - 1]).toLocaleString("en-US")} req/s</div>
-                </div>
-              </div>
             </div>
           </ScrollReveal>
 
@@ -359,33 +308,18 @@ export default function SystemStatus() {
                 ))}
               </div>
 
-              {/* System Resources */}
+              {/* System Resources — CPU, RAM, and core temp together in one
+                  card instead of two, so the sidebar reads as one coherent
+                  "machine health" block rather than a stack of separate tiles. */}
               <div className="p-4 rounded-xl bg-white/[0.015] border border-white/[0.04]">
                 <div className="flex items-center gap-2 mb-3">
                   <Cpu className="w-4 h-4 text-accent-cyan" />
                   <span className="text-sm font-medium">System Resources</span>
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-2.5">
                   <AnimatedBar value={Math.round(cpuUsage)} color="#00e5ff" label="CPU" />
                   <AnimatedBar value={Math.round(ramUsage)} color="#b967ff" label="RAM" />
-                </div>
-              </div>
-
-              {/* Temperature */}
-              <div className="p-4 rounded-xl bg-white/[0.015] border border-white/[0.04]">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <Thermometer className="w-4 h-4 text-accent-pink" />
-                    <span className="text-sm font-medium">Core Temp</span>
-                  </div>
-                  <span className="text-sm font-mono text-accent-pink">{Math.round(temp)}°C</span>
-                </div>
-                <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
-                  <motion.div
-                    className="h-full rounded-full bg-accent-pink"
-                    animate={{ width: `${(temp / 60) * 100}%` }}
-                    transition={{ duration: 1 }}
-                  />
+                  <AnimatedBar value={Math.round((temp / 60) * 100)} color="#ff6b9d" label="Temp" suffix={`${Math.round(temp)}°C`} />
                 </div>
               </div>
 

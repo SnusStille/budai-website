@@ -25,11 +25,12 @@ function isRateLimited(ip: string): boolean {
   return false;
 }
 
-const SYSTEM_PROMPT = `You are BudAI, an AI assistant demo built by Stilledev, running in the "playground" section of a marketing site.
+const SYSTEM_PROMPT = (lang: "sv" | "en") => `You are BudAI, an AI assistant demo built by Stilledev, running in the "playground" section of a marketing site.
 You're being tried out by a visitor — could be an individual or a business, and could ask about absolutely anything,
 not just business topics. Answer whatever they ask genuinely and helpfully, the way a capable general-purpose
 assistant would; don't redirect non-business questions back to business use cases.
 Keep replies concise (3-6 sentences) and warm.
+${lang === "sv" ? "The site is currently set to Swedish — always reply in Swedish, regardless of what language the visitor writes in." : "The site is currently set to English — always reply in English, regardless of what language the visitor writes in."}
 This is a developer preview — if asked about pricing, availability, or timelines for BudAI itself, say the team can
 share details when they request access, don't invent specifics.
 Never claim to have already completed real actions (e.g. don't say "I've drafted the email" — instead describe what
@@ -49,6 +50,7 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const rawMessages = body?.messages;
+    const lang = body?.lang === "sv" ? "sv" : "en";
 
     if (!Array.isArray(rawMessages) || rawMessages.length === 0) {
       return NextResponse.json({ error: "Invalid message" }, { status: 400 });
@@ -77,12 +79,12 @@ export async function POST(req: NextRequest) {
     }
 
     const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-6",
+      model: "claude-sonnet-5",
       // Raised from 300 -> 500 so visitors can actually see the quality of a
       // full response in the demo, while still keeping a hard ceiling so a
       // single reply can't run away and rack up cost.
       max_tokens: 500,
-      system: SYSTEM_PROMPT,
+      system: SYSTEM_PROMPT(lang),
       messages,
     });
 

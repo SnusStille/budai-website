@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Cookie, X, Shield } from "lucide-react";
+import { Cookie, X } from "lucide-react";
 import { useLang } from "./LanguageContext";
 
 export default function CookieConsent() {
@@ -35,7 +35,7 @@ export default function CookieConsent() {
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 100, opacity: 0 }}
           transition={{ type: "spring", damping: 25, stiffness: 300 }}
-          className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-[420px] z-[60]"
+          className="fixed bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] md:w-[440px] z-[60]"
         >
           <div className="relative rounded-2xl glass-strong border border-white/[0.08] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.4)] overflow-hidden">
             {/* Animated border glow */}

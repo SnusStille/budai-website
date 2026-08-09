@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Bot, FileText, BarChart3, Headphones, Megaphone, Users, Workflow, BrainCircuit, Lightbulb } from "lucide-react";
 import ScrollReveal from "@/components/ui/ScrollReveal";
 import MarkerUnderline from "@/components/ui/MarkerUnderline";
+import { useLang } from "@/components/ui/LanguageContext";
 
 const capabilities = [
   { icon: Bot, title: "Task Automation", desc: "Eliminate repetitive work. BudAI automates daily operations, data entry, and routine processes so your team focuses on what matters.", gradient: "from-accent-cyan to-accent-blue", accent: "text-accent-cyan", glow: "shadow-[0_0_30px_rgba(0,229,255,0.1)]" },
@@ -18,17 +19,16 @@ const capabilities = [
 ];
 
 export default function Capabilities() {
+  const { t } = useLang();
   return (
     <section id="capabilities" className="relative py-32">
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         <ScrollReveal className="text-center mb-20">
-          <span className="inline-block px-4 py-1.5 rounded-full glass text-sm font-medium text-accent-cyan mb-4">Intelligence System</span>
+          <span className="inline-block px-4 py-1.5 rounded-full glass text-sm font-medium text-accent-cyan mb-4">{t.capabilities.badge}</span>
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6 text-white">
-            What BudAI <span className="relative inline-block">Will Do<MarkerUnderline color="#00e5ff" /></span>
+            {t.capabilities.title} <span className="relative inline-block">{t.capabilities.titleHighlight}<MarkerUnderline color="#00e5ff" /></span>
           </h2>
-          <p className="text-lg text-muted max-w-2xl mx-auto">
-            A comprehensive AI platform designed to handle the full spectrum of digital work — for individuals and modern Swedish businesses alike.
-          </p>
+          <p className="text-lg text-muted max-w-2xl mx-auto">{t.capabilities.subtitle}</p>
         </ScrollReveal>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">

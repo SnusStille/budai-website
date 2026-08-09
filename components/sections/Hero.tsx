@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Sparkles, Code2, Zap, Shield, ChevronDown } from "lucide-react";
 import { useLang } from "@/components/ui/LanguageContext";
 import MarkerUnderline from "@/components/ui/MarkerUnderline";
+import Magnetic from "@/components/ui/Magnetic";
 
 // A small easter egg for anyone who clicks the orb — the site notices.
 const FUN_MESSAGES = [
@@ -310,21 +311,25 @@ export default function Hero() {
           transition={{ duration: 0.6, delay: 0.65 }}
           className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16"
         >
-          <a
-            href="#waitlist"
-            className="group relative px-8 py-4 bg-gradient-to-r from-accent-cyan to-accent-purple rounded-xl font-semibold text-white text-lg overflow-hidden transition-all hover:scale-[1.03] hover:shadow-[0_0_40px_rgba(0,229,255,0.3)]"
-          >
-            <span className="relative z-10 flex items-center gap-2">
-              {t.hero.ctaSecondary}
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </span>
-          </a>
-          <a
-            href="#playground"
-            className="group px-8 py-4 glass rounded-xl font-semibold text-white text-lg hover:bg-white/5 transition-all hover:scale-[1.02]"
-          >
-            {t.hero.ctaPrimary}
-          </a>
+          <Magnetic>
+            <a
+              href="#waitlist"
+              className="group relative px-8 py-4 bg-gradient-to-r from-accent-cyan to-accent-purple rounded-xl font-semibold text-white text-lg overflow-hidden transition-all hover:scale-[1.03] hover:shadow-[0_0_40px_rgba(0,229,255,0.3)]"
+            >
+              <span className="relative z-10 flex items-center gap-2">
+                {t.hero.ctaSecondary}
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </span>
+            </a>
+          </Magnetic>
+          <Magnetic strength={0.2}>
+            <a
+              href="#playground"
+              className="group px-8 py-4 glass rounded-xl font-semibold text-white text-lg hover:bg-white/5 transition-all hover:scale-[1.02]"
+            >
+              {t.hero.ctaPrimary}
+            </a>
+          </Magnetic>
         </motion.div>
 
         <motion.div

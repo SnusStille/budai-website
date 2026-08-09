@@ -6,6 +6,7 @@ import ParticleField from "@/components/effects/ParticleField";
 import CursorGlow from "@/components/effects/CursorGlow";
 import Meteors from "@/components/effects/Meteors";
 import ScrollProgress from "@/components/ui/ScrollProgress";
+import SectionDots from "@/components/ui/SectionDots";
 import CookieConsent from "@/components/ui/CookieConsent";
 import Navbar from "@/components/sections/Navbar";
 import Hero from "@/components/sections/Hero";
@@ -41,6 +42,25 @@ export default function Home() {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
+  // Surprise #1: a friendly nudge in the tab title when someone tabs away
+  // and comes back — a small, honest touch (no fake numbers, no urgency
+  // tricks), just "hey, welcome back."
+  useEffect(() => {
+    const originalTitle = document.title;
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") {
+        document.title = "👋 Come back to BudAI";
+      } else {
+        document.title = originalTitle;
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibility);
+      document.title = originalTitle;
+    };
+  }, []);
+
   return (
     <main className="page-transition relative min-h-screen text-white overflow-x-hidden bg-background">
       <ScrollProgress />
@@ -48,6 +68,7 @@ export default function Home() {
       <ParticleField />
       <Meteors count={7} />
       <CursorGlow />
+      <SectionDots />
       <div className="fixed inset-0 z-[2] pointer-events-none grid-bg opacity-25" />
 
       <div className="relative z-10">

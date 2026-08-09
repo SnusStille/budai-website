@@ -6,23 +6,15 @@ import { Sparkles, ArrowUpRight, X } from "lucide-react";
 import { useLang } from "@/components/ui/LanguageContext";
 
 const DISMISS_KEY = "budai-buddy-popup-dismissed";
-const COOKIE_KEY = "budai-cookies";
 const SHOW_AFTER_MS = 8000; // 7-10s, as requested
 
 export default function BuddyCard({ className = "" }: { className?: string }) {
   const { lang } = useLang();
   const [visible, setVisible] = useState(false);
-  // Sits low near the bottom by default. Only lifts itself above the
-  // cookie-consent banner if that banner is still on screen (unanswered)
-  // at the moment we're about to show — otherwise they'd overlap.
-  const [raised, setRaised] = useState(false);
 
   useEffect(() => {
     if (sessionStorage.getItem(DISMISS_KEY)) return;
-    const timer = setTimeout(() => {
-      setRaised(!localStorage.getItem(COOKIE_KEY));
-      setVisible(true);
-    }, SHOW_AFTER_MS);
+    const timer = setTimeout(() => setVisible(true), SHOW_AFTER_MS);
     return () => clearTimeout(timer);
   }, []);
 
@@ -39,9 +31,9 @@ export default function BuddyCard({ className = "" }: { className?: string }) {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 20, scale: 0.9 }}
           transition={{ duration: 0.4, type: "spring", damping: 18 }}
-          // Sits low by default (matches the original bottom-right feel);
-          // lifts above the cookie banner only when that's still showing.
-          className={`${className} fixed ${raised ? "bottom-24 md:bottom-28" : "bottom-4"} right-4 z-[30] w-[290px] transition-[bottom] duration-300`}
+          // The cookie banner now lives centered at the bottom, so this can
+          // just sit in its corner without needing to dodge it.
+          className={`${className} fixed bottom-4 right-4 z-[30] w-[290px]`}
         >
           <div className="group relative rounded-2xl border border-white/10 bg-gradient-to-b from-[#12121c] to-[#0a0a12] shadow-[0_8px_40px_rgba(0,0,0,0.5)] overflow-hidden">
             <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-accent-cyan/50 to-transparent" />
