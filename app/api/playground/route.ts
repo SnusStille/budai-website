@@ -4,8 +4,19 @@ import { NextRequest, NextResponse } from "next/server";
 // Lazy client so missing API keys don't crash the module at import time.
 function getClient() {
   const key = process.env.ANTHROPIC_API_KEY;
+  const workspaceId = process.env.ANTHROPIC_WORKSPACE_ID;
   if (!key) return null;
-  return new Anthropic({ apiKey: key });
+
+  return new Anthropic({
+    apiKey: key,
+    ...(workspaceId
+      ? {
+          defaultHeaders: {
+            "anthropic-workspace-id": workspaceId,
+          },
+        }
+      : {}),
+  });
 }
 
 // Very simple in-memory rate limit (resets on redeploy — fine for a dev preview)
@@ -95,9 +106,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid message" }, { status: 400 });
     }
 
-    // Prefer a widely available current model; fall back gracefully.
-    const model =
-      process.env.ANTHROPIC_MODEL || "claude-sonnet-4-20250514";
+    // Prefer a currently supported model and keep the app resilient if a stale
+    // model name is still left in the environment.
+    const model = process.env.ANTHROPIC_MODEL || "claude-3-5-sonnet-latest";
 
     const response = await anthropic.messages.create({
       model,

@@ -9,6 +9,7 @@ out
 # local env and secrets
 .env
 .env.*
+!.env.example
 .env.local
 .env.*.local
 env.local
@@ -20,4 +21,6 @@ Thumbs.db
 # optional local logs
 npm-debug.log*
 *.log
+
+# keep dependency install result out of source control
 node_modules
