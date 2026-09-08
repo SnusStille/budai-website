@@ -1,31 +1,38 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { useEffect, useRef } from "react";
 
+/** Transform-based progress bar — no React re-renders on every scroll tick */
 export default function ScrollProgress() {
-  const [progress, setProgress] = useState(0);
+  const barRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const onScroll = () => {
-      const windowHeight = window.innerHeight;
-      const documentHeight = document.documentElement.scrollHeight - windowHeight;
-      const scrolled = window.scrollY;
-      const scrollPercent = documentHeight > 0 ? (scrolled / documentHeight) * 100 : 0;
-      setProgress(scrollPercent);
+    let raf = 0;
+    const update = () => {
+      const h = document.documentElement.scrollHeight - window.innerHeight;
+      const p = h > 0 ? window.scrollY / h : 0;
+      if (barRef.current) {
+        barRef.current.style.transform = `scaleX(${Math.min(1, Math.max(0, p))})`;
+      }
     };
-
+    const onScroll = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(update);
+    };
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    update();
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      cancelAnimationFrame(raf);
+    };
   }, []);
 
   return (
-    <motion.div
-      className="fixed top-0 left-0 h-0.5 bg-gradient-to-r from-accent-cyan via-accent-purple to-accent-green z-[100]"
-      style={{
-        width: `${progress}%`,
-      }}
-      transition={{ duration: 0.1, ease: "easeOut" }}
+    <div
+      ref={barRef}
+      className="fixed top-0 left-0 right-0 h-[2px] origin-left z-[100] bg-gradient-to-r from-accent-cyan via-accent-purple to-accent-green"
+      style={{ transform: "scaleX(0)", willChange: "transform" }}
+      aria-hidden
     />
   );
 }

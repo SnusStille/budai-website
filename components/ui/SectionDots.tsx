@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 
 const SECTIONS = [
@@ -12,35 +12,70 @@ const SECTIONS = [
   { id: "status", label: "Status" },
 ];
 
-// A quiet side-rail nav that tracks scroll position — the kind of detail
-// premium product pages (Apple, Linear, Stripe) use so a long single-page
-// site never feels like an endless, disorienting scroll. Purely additive:
-// doesn't replace the top nav, just gives a persistent sense of "where am I".
 export default function SectionDots() {
   const [active, setActive] = useState<string | null>(null);
   const [visible, setVisible] = useState(false);
+  const ratios = useRef<Record<string, number>>({});
 
   useEffect(() => {
+    const pick = () => {
+      const mid = window.scrollY + window.innerHeight * 0.35;
+      let closest: string | null = null;
+      let dist = Infinity;
+      for (const s of SECTIONS) {
+        const el = document.getElementById(s.id);
+        if (!el) continue;
+        const top = el.offsetTop;
+        const bottom = top + el.offsetHeight;
+        if (mid >= top - 60 && mid <= bottom + 40) {
+          const d = Math.abs(top - mid);
+          if (d < dist) {
+            dist = d;
+            closest = s.id;
+          }
+        }
+      }
+      if (closest) setActive(closest);
+    };
+
     const sections = SECTIONS.map((s) => document.getElementById(s.id)).filter(
       (el): el is HTMLElement => !!el
     );
-    if (sections.length === 0) return;
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) setActive(entry.target.id);
-        });
-      },
-      { rootMargin: "-45% 0px -45% 0px" }
-    );
-    sections.forEach((el) => observer.observe(el));
+    const observer =
+      sections.length > 0
+        ? new IntersectionObserver(
+            (entries) => {
+              for (const e of entries) {
+                ratios.current[e.target.id] = e.isIntersecting ? e.intersectionRatio : 0;
+              }
+              let best = "";
+              let bestR = 0;
+              for (const s of SECTIONS) {
+                const r = ratios.current[s.id] ?? 0;
+                if (r > bestR) {
+                  bestR = r;
+                  best = s.id;
+                }
+              }
+              if (bestR >= 0.08 && best) setActive(best);
+              else pick();
+            },
+            { rootMargin: "-35% 0px -50% 0px", threshold: [0, 0.15, 0.3, 0.5, 0.7] }
+          )
+        : null;
 
-    const onScroll = () => setVisible(window.scrollY > window.innerHeight * 0.6);
+    sections.forEach((el) => observer?.observe(el));
+
+    const onScroll = () => {
+      setVisible(window.scrollY > window.innerHeight * 0.55);
+      pick();
+    };
     window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
 
     return () => {
-      observer.disconnect();
+      observer?.disconnect();
       window.removeEventListener("scroll", onScroll);
     };
   }, []);
@@ -53,9 +88,10 @@ export default function SectionDots() {
     <motion.nav
       initial={{ opacity: 0, x: 10 }}
       animate={{ opacity: visible ? 1 : 0, x: visible ? 0 : 10 }}
-      transition={{ duration: 0.3 }}
-      className="fixed right-5 top-1/2 -translate-y-1/2 z-[20] hidden lg:flex flex-col gap-4 pointer-events-none"
+      transition={{ duration: 0.25 }}
+      className="fixed right-5 top-1/2 -translate-y-1/2 z-[20] hidden lg:flex flex-col gap-3.5"
       style={{ pointerEvents: visible ? "auto" : "none" }}
+      aria-label="Section navigation"
     >
       {SECTIONS.map((s) => (
         <button
@@ -63,13 +99,16 @@ export default function SectionDots() {
           onClick={() => goTo(s.id)}
           className="group relative flex items-center justify-end"
           aria-label={`Go to ${s.label}`}
+          aria-current={active === s.id ? "true" : undefined}
         >
-          <span className="absolute right-5 whitespace-nowrap px-2.5 py-1 rounded-md bg-black/80 border border-white/10 text-[11px] text-white opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+          <span className="absolute right-5 whitespace-nowrap px-2.5 py-1 rounded-md bg-black/85 border border-white/10 text-[11px] text-white opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
             {s.label}
           </span>
           <span
-            className={`block rounded-full transition-all duration-300 ${
-              active === s.id ? "w-2.5 h-2.5 bg-accent-cyan shadow-[0_0_8px_rgba(0,229,255,0.6)]" : "w-1.5 h-1.5 bg-white/25 group-hover:bg-white/50"
+            className={`block rounded-full transition-all duration-250 ${
+              active === s.id
+                ? "w-2.5 h-2.5 bg-accent-cyan shadow-[0_0_10px_rgba(0,229,255,0.7)]"
+                : "w-1.5 h-1.5 bg-white/25 group-hover:bg-white/50"
             }`}
           />
         </button>

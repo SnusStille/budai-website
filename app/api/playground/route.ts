@@ -1,9 +1,12 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { NextRequest, NextResponse } from "next/server";
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
+// Lazy client so missing API keys don't crash the module at import time.
+function getClient() {
+  const key = process.env.ANTHROPIC_API_KEY;
+  if (!key) return null;
+  return new Anthropic({ apiKey: key });
+}
 
 // Very simple in-memory rate limit (resets on redeploy — fine for a dev preview)
 const requestCounts = new Map<string, { count: number; resetAt: number }>();
@@ -30,7 +33,11 @@ You're being tried out by a visitor — could be an individual or a business, an
 not just business topics. Answer whatever they ask genuinely and helpfully, the way a capable general-purpose
 assistant would; don't redirect non-business questions back to business use cases.
 Keep replies concise (3-6 sentences) and warm.
-${lang === "sv" ? "The site is currently set to Swedish — always reply in Swedish, regardless of what language the visitor writes in." : "The site is currently set to English — always reply in English, regardless of what language the visitor writes in."}
+${
+  lang === "sv"
+    ? "The site is currently set to Swedish — always reply in Swedish, regardless of what language the visitor writes in."
+    : "The site is currently set to English — always reply in English, regardless of what language the visitor writes in."
+}
 This is a developer preview — if asked about pricing, availability, or timelines for BudAI itself, say the team can
 share details when they request access, don't invent specifics.
 Never claim to have already completed real actions (e.g. don't say "I've drafted the email" — instead describe what
@@ -38,12 +45,23 @@ you *would* produce).
 The conversation may include earlier turns — use them for context like a normal chat.`;
 
 export async function POST(req: NextRequest) {
-  const ip = req.headers.get("x-forwarded-for") ?? "unknown";
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
 
   if (isRateLimited(ip)) {
     return NextResponse.json(
       { error: "Rate limit reached. Try again later." },
       { status: 429 }
+    );
+  }
+
+  const anthropic = getClient();
+  if (!anthropic) {
+    return NextResponse.json(
+      {
+        error: "Playground is not configured. Set ANTHROPIC_API_KEY.",
+        reply: null,
+      },
+      { status: 503 }
     );
   }
 
@@ -56,11 +74,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid message" }, { status: 400 });
     }
 
-    // Cap history so a long-running chat can't balloon token usage/cost —
-    // keep the most recent turns, that's what matters for context anyway.
+    // Cap history so a long-running chat can't balloon token usage/cost
     const recent = rawMessages.slice(-16);
 
-    const messages = [];
+    const messages: { role: "user" | "assistant"; content: string }[] = [];
     for (const m of recent) {
       if (
         !m ||
@@ -78,11 +95,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid message" }, { status: 400 });
     }
 
+    // Prefer a widely available current model; fall back gracefully.
+    const model =
+      process.env.ANTHROPIC_MODEL || "claude-sonnet-4-20250514";
+
     const response = await anthropic.messages.create({
-      model: "claude-sonnet-5",
-      // Raised from 300 -> 500 so visitors can actually see the quality of a
-      // full response in the demo, while still keeping a hard ceiling so a
-      // single reply can't run away and rack up cost.
+      model,
       max_tokens: 500,
       system: SYSTEM_PROMPT(lang),
       messages,

@@ -5,25 +5,29 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Cookie, X } from "lucide-react";
 import { useLang } from "./LanguageContext";
 
+/**
+ * Compact bottom cookie bar — never a full-screen overlay.
+ */
 export default function CookieConsent() {
   const [visible, setVisible] = useState(false);
-  const { t } = useLang();
+  const { t, lang } = useLang();
 
   useEffect(() => {
-    const consent = localStorage.getItem("budai-cookies");
-    if (!consent) {
-      const timer = setTimeout(() => setVisible(true), 1500);
-      return () => clearTimeout(timer);
+    try {
+      if (localStorage.getItem("budai-cookies")) return;
+    } catch {
+      return;
     }
+    const timer = setTimeout(() => setVisible(true), 2200);
+    return () => clearTimeout(timer);
   }, []);
 
-  const handleAccept = () => {
-    localStorage.setItem("budai-cookies", "accepted");
-    setVisible(false);
-  };
-
-  const handleDecline = () => {
-    localStorage.setItem("budai-cookies", "declined");
+  const save = (v: string) => {
+    try {
+      localStorage.setItem("budai-cookies", v);
+    } catch {
+      /* ignore */
+    }
     setVisible(false);
   };
 
@@ -31,53 +35,54 @@ export default function CookieConsent() {
     <AnimatePresence>
       {visible && (
         <motion.div
-          initial={{ y: 100, opacity: 0 }}
+          initial={{ y: 24, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          exit={{ y: 100, opacity: 0 }}
-          transition={{ type: "spring", damping: 25, stiffness: 300 }}
-          className="fixed bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] md:w-[440px] z-[60]"
+          exit={{ y: 24, opacity: 0 }}
+          transition={{ duration: 0.3 }}
+          className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[55] w-[calc(100%-1.5rem)] max-w-md"
+          role="dialog"
+          aria-label={t.cookie.title}
         >
-          <div className="relative rounded-2xl glass-strong border border-white/[0.08] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.4)] overflow-hidden">
-            {/* Animated border glow */}
-            <div className="absolute inset-0 rounded-2xl opacity-30 pointer-events-none"
-              style={{
-                background: "linear-gradient(90deg, transparent, rgba(0,229,255,0.1), transparent)",
-                backgroundSize: "200% 100%",
-                animation: "shimmer 3s linear infinite",
-              }}
-            />
-
-            <div className="relative flex items-start gap-4">
-              <div className="shrink-0 w-10 h-10 rounded-xl bg-accent-cyan/10 flex items-center justify-center">
-                <Cookie className="w-5 h-5 text-accent-cyan" />
+          <div className="rounded-xl glass-strong border border-white/[0.08] px-3.5 py-3 shadow-[0_12px_40px_rgba(0,0,0,0.4)] flex items-start gap-3">
+            <div className="w-8 h-8 rounded-lg bg-accent-cyan/10 flex items-center justify-center shrink-0 mt-0.5">
+              <Cookie className="w-4 h-4 text-accent-cyan" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-xs font-semibold text-white">{t.cookie.title}</p>
+                <button
+                  type="button"
+                  onClick={() => save("declined")}
+                  className="p-1 rounded-md text-muted hover:text-white"
+                  aria-label="Close"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
               </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between mb-1">
-                  <h3 className="text-sm font-semibold text-white">{t.cookie.title}</h3>
-                  <button
-                    onClick={handleDecline}
-                    className="p-1 rounded-lg hover:bg-white/5 transition-colors text-muted hover:text-white"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-                <p className="text-xs text-muted leading-relaxed mb-3">
-                  {t.cookie.text}
-                </p>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={handleAccept}
-                    className="px-4 py-2 text-xs font-semibold bg-gradient-to-r from-accent-cyan to-accent-purple rounded-lg text-white hover:opacity-90 transition-opacity"
-                  >
-                    {t.cookie.accept}
-                  </button>
-                  <button
-                    onClick={handleDecline}
-                    className="px-4 py-2 text-xs font-medium text-muted hover:text-white transition-colors"
-                  >
-                    {t.cookie.decline}
-                  </button>
-                </div>
+              <p className="text-[11px] text-muted leading-relaxed mt-0.5 mb-2">
+                {t.cookie.text}
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => save("accepted")}
+                  className="px-3 py-1.5 text-[11px] font-semibold rounded-lg bg-gradient-to-r from-accent-cyan to-accent-purple text-white"
+                >
+                  {t.cookie.accept}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => save("declined")}
+                  className="px-3 py-1.5 text-[11px] text-muted hover:text-white"
+                >
+                  {t.cookie.decline}
+                </button>
+                <a
+                  href="/legal/cookies"
+                  className="text-[11px] text-accent-cyan hover:text-white ml-auto"
+                >
+                  {lang === "sv" ? "Mer" : "More"}
+                </a>
               </div>
             </div>
           </div>

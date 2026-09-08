@@ -1,54 +1,84 @@
-"use client";
-
-import { useState, useEffect } from "react";
+import type { Metadata, Viewport } from "next";
+import { Sora, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
-import LoadingScreen from "@/components/effects/LoadingScreen";
+import Providers from "@/components/Providers";
 import VercelAnalytics from "@/components/VercelAnalytics";
-import { LangProvider } from "@/components/ui/LanguageContext";
-import CommandPalette from "@/components/ui/CommandPalette";
+
+const sora = Sora({
+  subsets: ["latin", "latin-ext"],
+  variable: "--font-sora",
+  display: "swap",
+});
+
+const jetbrains = JetBrains_Mono({
+  subsets: ["latin", "latin-ext"],
+  variable: "--font-jetbrains",
+  display: "swap",
+});
+
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://stilledev.se";
+
+export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: "BudAI — Framtiden för Digitalt Arbete",
+    template: "%s · BudAI",
+  },
+  description:
+    "BudAI är en avancerad AI-plattform som hjälper svenska företag och privatpersoner att spara tid, automatisera uppgifter, förbättra arbetsflöden och göra verksamheter mer effektiva. Utvecklarförhandsvisning av Stilledev.",
+  keywords: [
+    "AI",
+    "artificial intelligence",
+    "Sweden",
+    "Sverige",
+    "business automation",
+    "digital assistant",
+    "Stilledev",
+    "BudAI",
+    "enterprise AI",
+    "automatisering",
+  ],
+  authors: [{ name: "Stilledev" }],
+  creator: "Stilledev",
+  publisher: "Stilledev",
+  robots: { index: true, follow: true },
+  openGraph: {
+    type: "website",
+    locale: "sv_SE",
+    alternateLocale: ["en_US"],
+    url: siteUrl,
+    siteName: "BudAI",
+    title: "BudAI — Framtiden för Digitalt Arbete",
+    description:
+      "Avancerad AI-plattform för svenska företag och privatpersoner. Automatisera, analysera och accelerera ditt arbete.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "BudAI — Framtiden för Digitalt Arbete",
+    description:
+      "Avancerad AI-plattform för svenska företag och privatpersoner. Automatisera, analysera och accelerera ditt arbete.",
+  },
+  icons: {
+    icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
+  },
+  alternates: {
+    canonical: siteUrl,
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#020205",
+  colorScheme: "dark",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+};
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const [loaded, setLoaded] = useState(false);
-  const [lang, setLang] = useState("sv");
-
-  useEffect(() => {
-    const saved = localStorage.getItem("budai-lang") as "sv" | "en";
-    if (saved) setLang(saved);
-  }, []);
-
-  const title = lang === "sv" 
-    ? "BudAI — Framtiden för Digitalt Arbete för Svenska Företag och Privatpersoner"
-    : "BudAI — The Future of Digital Work for Swedish Companies and Individuals";
-
-  const description = lang === "sv"
-    ? "BudAI är en avancerad AI-plattform som hjälper svenska företag och privatpersoner att spara tid, automatisera uppgifter, förbättra arbetsflöden och göra verksamheter mer effektiva. Utvecklarförhandsvisning av Stilledev."
-    : "BudAI is an advanced AI platform that helps Swedish companies and individuals save time, automate tasks, improve workflows, and get more done. Developer Preview by Stilledev.";
-
   return (
-    <html lang={lang} className="font-sans">
-      <head>
-        <title>{title}</title>
-        <meta name="description" content={description} />
-        <meta name="keywords" content="AI, artificial intelligence, Sweden, business automation, digital assistant, Stilledev, BudAI, enterprise AI" />
-        <meta name="author" content="Stilledev" />
-        <meta name="robots" content="index, follow" />
-        <meta property="og:type" content="website" />
-        <meta property="og:title" content={title} />
-        <meta property="og:description" content={description} />
-        <meta property="og:site_name" content="BudAI" />
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={title} />
-        <meta name="twitter:description" content={description} />
-        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-      </head>
-      <body className="antialiased noise-overlay">
-        <LangProvider>
-          <LoadingScreen onComplete={() => setLoaded(true)} />
-          <div style={{ opacity: loaded ? 1 : 0, transition: "opacity 0.3s ease" }}>
-            {children}
-          </div>
-          <CommandPalette />
-        </LangProvider>
+    <html lang="sv" className={`${sora.variable} ${jetbrains.variable} font-sans`} suppressHydrationWarning>
+      <body className="antialiased noise-overlay bg-background text-white">
+        <Providers>{children}</Providers>
         <VercelAnalytics />
       </body>
     </html>

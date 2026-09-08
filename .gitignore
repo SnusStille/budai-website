@@ -1,4 +1,23 @@
-node_modules
+# dependencies	node_modules
+
+# build output
 .next
 dist
+out
+*.tsbuildinfo
+
+# local env and secrets
+.env
+.env.*
 .env.local
+.env.*.local
+env.local
+
+# OS / editor artifacts
+.DS_Store
+Thumbs.db
+
+# optional local logs
+npm-debug.log*
+*.log
+node_modules

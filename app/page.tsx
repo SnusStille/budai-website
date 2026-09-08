@@ -1,40 +1,59 @@
 "use client";
 
 import { useEffect } from "react";
-import NeuralNetwork from "@/components/effects/NeuralNetwork";
-import ParticleField from "@/components/effects/ParticleField";
-import CursorGlow from "@/components/effects/CursorGlow";
-import Meteors from "@/components/effects/Meteors";
+import dynamic from "next/dynamic";
 import ScrollProgress from "@/components/ui/ScrollProgress";
 import SectionDots from "@/components/ui/SectionDots";
 import CookieConsent from "@/components/ui/CookieConsent";
+import AIActivityHUD from "@/components/ui/AIActivityHUD";
+import BackToTop from "@/components/ui/BackToTop";
+import SurpriseToasts from "@/components/ui/SurpriseToasts";
+import Signature from "@/components/ui/Signature";
+import ThemePulse from "@/components/ui/ThemePulse";
 import Navbar from "@/components/sections/Navbar";
 import Hero from "@/components/sections/Hero";
 import BuddyCard from "@/components/sections/BuddyCard";
 import Capabilities from "@/components/sections/Capabilities";
-import AIPlayground from "@/components/sections/AIPlayground";
-import Terminal from "@/components/sections/Terminal";
 import Waitlist from "@/components/sections/Waitlist";
 import Timeline from "@/components/sections/Timeline";
-import SystemStatus from "@/components/sections/SystemStatus";
 import Vision from "@/components/sections/Vision";
 import Footer from "@/components/sections/Footer";
 
+const AIEnvironment = dynamic(() => import("@/components/effects/AIEnvironment"), {
+  ssr: false,
+});
+const CursorGlow = dynamic(() => import("@/components/effects/CursorGlow"), { ssr: false });
+
+const AIPlayground = dynamic(() => import("@/components/sections/AIPlayground"));
+const Terminal = dynamic(() => import("@/components/sections/Terminal"));
+const SystemStatus = dynamic(() => import("@/components/sections/SystemStatus"));
+
 export default function Home() {
   useEffect(() => {
-    console.log("%c🧠 BudAI Developer Preview v0.9.2", "color: #00e5ff; font-size: 16px; font-weight: bold;");
-    console.log("%cBuilt by Stilledev | Sweden", "color: #b967ff; font-size: 12px;");
-    console.log("%cTry typing 'budai' anywhere on the page...", "color: #8892a0; font-size: 11px; font-style: italic;");
+    console.log(
+      "%c🧠 BudAI Developer Preview v0.92",
+      "color: #00e5ff; font-size: 16px; font-weight: bold;"
+    );
+    console.log("%cBuilt by Stilledev | Sweden", "color: #00e5ff; font-size: 12px;");
+    console.log(
+      "%cTry typing 'budai' or 'stille' · press N · press ⌘K · or Konami",
+      "color: #8892a0; font-size: 11px; font-style: italic;"
+    );
 
     let buffer = "";
     const target = "budai";
     const onKey = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || (e.target as HTMLElement)?.isContentEditable)
+        return;
       buffer += e.key.toLowerCase();
       if (buffer.length > target.length) buffer = buffer.slice(-target.length);
       if (buffer === target) {
         console.log("%c🚀 Welcome, developer.", "color: #00e5ff; font-size: 14px; font-weight: bold;");
         console.log("%cYou found the easter egg.", "color: #00ff9d; font-size: 12px;");
-        console.log("%cBudAI is being built with passion in Sweden.", "color: #8892a0; font-size: 11px;");
+        document.documentElement.classList.add("egg-flash");
+        setTimeout(() => document.documentElement.classList.remove("egg-flash"), 1200);
+        window.dispatchEvent(new Event("budai:egg"));
         buffer = "";
       }
     };
@@ -42,9 +61,6 @@ export default function Home() {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  // Surprise #1: a friendly nudge in the tab title when someone tabs away
-  // and comes back — a small, honest touch (no fake numbers, no urgency
-  // tricks), just "hey, welcome back."
   useEffect(() => {
     const originalTitle = document.title;
     const onVisibility = () => {
@@ -64,12 +80,11 @@ export default function Home() {
   return (
     <main className="page-transition relative min-h-screen text-white overflow-x-hidden bg-background">
       <ScrollProgress />
-      <NeuralNetwork />
-      <ParticleField />
-      <Meteors count={7} />
+      <AIEnvironment />
       <CursorGlow />
       <SectionDots />
-      <div className="fixed inset-0 z-[2] pointer-events-none grid-bg opacity-25" />
+      <div className="fixed inset-0 z-[1] pointer-events-none ai-grid opacity-[0.35]" aria-hidden />
+      <div className="fixed inset-0 z-[1] pointer-events-none ai-vignette" aria-hidden />
 
       <div className="relative z-10">
         <BuddyCard />
@@ -84,6 +99,12 @@ export default function Home() {
         <Vision />
         <Footer />
       </div>
+
+      <AIActivityHUD />
+      <BackToTop />
+      <SurpriseToasts />
+      <Signature />
+      <ThemePulse />
       <CookieConsent />
     </main>
   );

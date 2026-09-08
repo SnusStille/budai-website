@@ -35,7 +35,7 @@ export default function CursorGlow() {
       currentRef.current.x += (mouseRef.current.x - currentRef.current.x) * 0.15;
       currentRef.current.y += (mouseRef.current.y - currentRef.current.y) * 0.15;
       if (glowRef.current) {
-        glowRef.current.style.transform = `translate3d(${currentRef.current.x - 200}px, ${currentRef.current.y - 200}px, 0)`;
+        glowRef.current.style.transform = `translate3d(${currentRef.current.x - 160}px, ${currentRef.current.y - 160}px, 0)`;
       }
       if (running) rafRef.current = requestAnimationFrame(update);
     };
@@ -51,10 +51,11 @@ export default function CursorGlow() {
   return (
     <div
       ref={glowRef}
-      className="fixed top-0 left-0 w-[400px] h-[400px] rounded-full pointer-events-none z-[5] hidden md:block"
+      className="fixed top-0 left-0 w-[320px] h-[320px] rounded-full pointer-events-none z-[5] hidden lg:block"
       style={{
-        background: "radial-gradient(circle, rgba(0,229,255,0.04) 0%, transparent 70%)",
+        background: "radial-gradient(circle, rgba(0,229,255,0.05) 0%, transparent 68%)",
         willChange: "transform",
+        contain: "strict",
       }}
     />
   );

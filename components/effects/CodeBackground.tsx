@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
 
 const codeSnippets = [
   "const ai = new BudAI();",
@@ -9,34 +9,32 @@ const codeSnippets = [
   "system.optimize();",
   "const insight = extract();",
   "workflow.enhance();",
-  "data.transform();",
 ];
 
+/** CSS-only marquee — no framer infinite loops per row */
 export default function CodeBackground() {
+  const [ok, setOk] = useState(false);
+  useEffect(() => {
+    setOk(!window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+  }, []);
+  if (!ok) return null;
+
   return (
-    <div className="absolute inset-0 overflow-hidden opacity-35">
-      {Array.from({ length: 5 }).map((_, row) => (
-        <motion.div
+    <div className="absolute inset-0 overflow-hidden opacity-30 pointer-events-none" aria-hidden>
+      {codeSnippets.slice(0, 5).map((snippet, row) => (
+        <div
           key={row}
-          initial={{ x: "100vw", opacity: 0 }}
-          animate={{ x: "-100vw", opacity: [0, 0.5, 0] }}
-          transition={{
-            duration: 7 + row * 0.4,
-            repeat: Infinity,
-            ease: "linear",
-            delay: row * 0.25,
-          }}
-          className="absolute whitespace-nowrap text-xs font-mono text-accent-cyan/50 will-change-transform"
+          className="absolute whitespace-nowrap text-xs font-mono text-accent-cyan/45 code-marquee"
           style={{
-            top: `${20 + row * 14}%`,
-            textShadow: "0 0 8px rgba(0,229,255,0.15)",
-            pointerEvents: "none",
+            top: `${18 + row * 15}%`,
+            animationDuration: `${18 + row * 3}s`,
+            animationDelay: `${row * -2.5}s`,
+            textShadow: "0 0 8px rgba(0,229,255,0.12)",
           }}
         >
-          {codeSnippets[row % codeSnippets.length]}
-        </motion.div>
+          {snippet}&nbsp;&nbsp;&nbsp;{snippet}&nbsp;&nbsp;&nbsp;{snippet}&nbsp;&nbsp;&nbsp;{snippet}
+        </div>
       ))}
     </div>
   );
 }
-

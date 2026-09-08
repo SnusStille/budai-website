@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Cpu, Github, MessageSquare, Linkedin, Mail, ArrowUpRight, X, Shield, FileText, Cookie, Scale } from "lucide-react";
-import { motion } from "framer-motion";
+import { Github, MessageSquare, Linkedin, Mail, ArrowUpRight, X } from "lucide-react";
+import BudAILogo, { StilledevLink } from "@/components/ui/BudAILogo";
+import { motion, AnimatePresence } from "framer-motion";
 import { useLang } from "@/components/ui/LanguageContext";
 
 const groups = (lang: string) => [
@@ -12,7 +13,7 @@ const groups = (lang: string) => [
       { label: lang === "sv" ? "Förmågor" : "Capabilities", href: "#capabilities" },
       { label: "AI Playground", href: "#playground" },
       { label: "Terminal", href: "#terminal" },
-      { label: lang === "sv" ? "Roadmap" : "Roadmap", href: "#roadmap" },
+      { label: "Roadmap", href: "#roadmap" },
       { label: lang === "sv" ? "Systemstatus" : "System Status", href: "#status" },
     ],
   },
@@ -27,10 +28,10 @@ const groups = (lang: string) => [
   {
     title: "Legal",
     links: [
-      { label: lang === "sv" ? "Integritetspolicy" : "Privacy Policy", href: "/legal/privacy", icon: Shield },
-      { label: lang === "sv" ? "Användarvillkor" : "Terms of Service", href: "/legal/terms", icon: FileText },
-      { label: lang === "sv" ? "Cookiepolicy" : "Cookie Policy", href: "/legal/cookies", icon: Cookie },
-      { label: "GDPR", href: "/legal/gdpr", icon: Scale },
+      { label: lang === "sv" ? "Integritetspolicy" : "Privacy Policy", href: "/legal/privacy" },
+      { label: lang === "sv" ? "Användarvillkor" : "Terms of Service", href: "/legal/terms" },
+      { label: lang === "sv" ? "Cookiepolicy" : "Cookie Policy", href: "/legal/cookies" },
+      { label: "GDPR", href: "/legal/gdpr" },
     ],
   },
 ];
@@ -96,21 +97,22 @@ export default function Footer() {
 
   return (
     <footer className="relative border-t border-white/[0.04]">
-      <div className="max-w-7xl mx-auto px-6 lg:px-8 py-16">
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent-cyan/20 to-transparent" />
+      <div className="max-w-7xl mx-auto px-6 lg:px-8 py-14 md:py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 lg:gap-8">
           <div className="lg:col-span-2">
-            <a href="#" className="flex items-center gap-2.5 mb-5">
-              <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-accent-cyan to-accent-purple flex items-center justify-center">
-                <Cpu className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-xl font-bold tracking-tight">Bud<span className="text-accent-cyan">AI</span></span>
+            <a href="#" className="flex items-center gap-2.5 mb-5 group">
+              <BudAILogo size="sm" animated={false} />
+              <span className="text-xl font-bold tracking-tight">
+                Bud<span className="text-accent-cyan">AI</span>
+              </span>
             </a>
             <p className="text-sm text-muted leading-relaxed max-w-sm mb-6">
               {lang === "sv"
                 ? "En avancerad AI-plattform som hjälper svenska företag och privatpersoner att spara tid, automatisera uppgifter och förbättra arbetsflöden."
                 : "An advanced AI platform that helps Swedish companies and individuals save time, automate tasks, and improve workflows."}
             </p>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2.5">
               {socials.map((s) => (
                 <a
                   key={s.label}
@@ -118,7 +120,7 @@ export default function Footer() {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={s.label}
-                  className="w-9 h-9 rounded-lg bg-white/5 flex items-center justify-center text-muted hover:text-white hover:bg-white/10 transition-colors"
+                  className="w-9 h-9 rounded-lg bg-white/5 flex items-center justify-center text-muted hover:text-white hover:bg-white/10 hover:border-accent-cyan/20 border border-transparent transition-all"
                 >
                   <s.icon className="w-4 h-4" />
                 </a>
@@ -130,12 +132,12 @@ export default function Footer() {
             <div key={g.title}>
               <h4 className="text-sm font-semibold text-white mb-4">{g.title}</h4>
               <ul className="space-y-3">
-                {g.links.map((l: any) => (
+                {g.links.map((l) => (
                   <li key={l.label}>
                     <a
                       href={l.href}
-                      target={l.external ? "_blank" : undefined}
-                      rel={l.external ? "noopener noreferrer" : undefined}
+                      target={"external" in l && l.external ? "_blank" : undefined}
+                      rel={"external" in l && l.external ? "noopener noreferrer" : undefined}
                       onClick={(e) => {
                         if (l.href.startsWith("/legal/")) {
                           e.preventDefault();
@@ -154,53 +156,64 @@ export default function Footer() {
           ))}
         </div>
 
-        <div className="mt-16 pt-8 border-t border-white/[0.04] flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-sm text-muted">© 2026 BudAI. {lang === "sv" ? "Alla rättigheter förbehållna." : "All rights reserved."}</p>
-          <div className="flex items-center gap-4">
-            <p className="text-sm text-muted flex items-center gap-1.5">
-              {lang === "sv" ? "Utvecklad av" : "Developed by"}{" "}
-              <a
-                href="https://discord.com/users/353944097301594123"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="relative text-accent-cyan font-medium hover:text-white transition-colors duration-300 group"
-              >
-                Stilledev
-                <span className="absolute -bottom-0.5 left-0 w-0 h-px bg-accent-cyan group-hover:w-full transition-all duration-300" />
-              </a>
-              <span className="text-muted/30">·</span>
-              <span className="text-xs">Sweden</span>
-            </p>
-          </div>
+        <div className="mt-14 pt-8 border-t border-white/[0.04] flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="text-sm text-muted">{t.footer.rights}</p>
+          <p className="text-sm text-muted flex items-center gap-1.5">
+            {lang === "sv" ? "Utvecklad av" : "Developed by"}{" "}
+            <StilledevLink />
+            <span className="text-muted/30">·</span>
+            <span className="text-xs">Sweden</span>
+          </p>
         </div>
       </div>
 
-      {/* Legal Modal */}
-      {showLegal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowLegal(null)} />
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="relative z-10 max-w-lg w-full rounded-2xl bg-[#0a0a14] border border-white/[0.08] p-6 shadow-2xl"
-          >
-            <button
-              className="absolute top-4 right-4 text-muted hover:text-white transition-colors"
+      <AnimatePresence>
+        {showLegal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/70 backdrop-blur-sm"
               onClick={() => setShowLegal(null)}
-              aria-label="Close"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 16 }}
+              className="relative z-10 max-w-lg w-full rounded-2xl bg-[#0a0a14] border border-white/[0.08] p-6 shadow-2xl"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="legal-title"
             >
-              <X className="w-5 h-5" />
-            </button>
-            <h3 className="text-xl font-bold text-white mb-4 pr-8">{legalContent[showLegal]?.title}</h3>
-            <div className="space-y-3">
-              {legalContent[showLegal]?.content.map((paragraph, i) => (
-                <p key={i} className="text-sm text-muted leading-relaxed">{paragraph}</p>
-              ))}
-            </div>
-          </motion.div>
-        </div>
-      )}
+              <button
+                className="absolute top-4 right-4 text-muted hover:text-white transition-colors"
+                onClick={() => setShowLegal(null)}
+                aria-label="Close"
+              >
+                <X className="w-5 h-5" />
+              </button>
+              <h3 id="legal-title" className="text-xl font-bold text-white mb-4 pr-8">
+                {legalContent[showLegal]?.title}
+              </h3>
+              <div className="space-y-3">
+                {legalContent[showLegal]?.content.map((paragraph, i) => (
+                  <p key={i} className="text-sm text-muted leading-relaxed">
+                    {paragraph}
+                  </p>
+                ))}
+              </div>
+              <a
+                href={`/legal/${showLegal}`}
+                className="mt-5 inline-flex items-center gap-1 text-sm text-accent-cyan hover:text-white transition-colors"
+              >
+                {lang === "sv" ? "Läs fullständig sida" : "View full page"}
+                <ArrowUpRight className="w-3.5 h-3.5" />
+              </a>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </footer>
   );
 }
