@@ -28,8 +28,8 @@ import UserTable from "@/components/admin/UserTable";
 import ActivityChart from "@/components/admin/ActivityChart";
 import SystemTerminal from "@/components/admin/SystemTerminal";
 import BudAILogo from "@/components/ui/BudAILogo";
-import { getWaitlistUsers, getWaitlistStats, updateUserStatus } from "@/lib/data";
-import { WaitlistUser } from "@/types";
+import { getWaitlistUsers, getWaitlistStats, updateUserStatus, getAdminEvents, logAdminEvent } from "@/lib/data";
+import { WaitlistUser, AdminEvent } from "@/types";
 
 /**
  * Admin password: Daylightshere76 (or NEXT_PUBLIC_ADMIN_PASSWORD).
@@ -52,6 +52,12 @@ export default function AdminPage() {
   const [quickFilter, setQuickFilter] = useState("");
   const [copied, setCopied] = useState(false);
   const [bulkBusy, setBulkBusy] = useState(false);
+  const [events, setEvents] = useState<AdminEvent[]>([]);
+  const [inviteSubject, setInviteSubject] = useState("You're in — BudAI early access");
+  const [inviteBody, setInviteBody] = useState(
+    ["Hi {name},", "", "Welcome to BudAI early access. Your code: BUDAI-EARLY-10 (10% off at launch).", "", "— Stilledev"].join("\n")
+  );
+  const [inviteCopied, setInviteCopied] = useState(false);
 
   useEffect(() => {
     const saved = sessionStorage.getItem("budai_admin_auth");
@@ -60,8 +66,9 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (!authenticated) return;
-    getWaitlistUsers().then((data) => {
+    Promise.all([getWaitlistUsers(), getAdminEvents(40)]).then(([data, ev]) => {
       setUsers(data);
+      setEvents(ev);
       setLoading(false);
     });
   }, [authenticated]);
@@ -83,8 +90,9 @@ export default function AdminPage() {
     setRefreshing(true);
     setLoading(true);
     try {
-      const data = await getWaitlistUsers();
+      const [data, ev] = await Promise.all([getWaitlistUsers(), getAdminEvents(40)]);
       setUsers(data);
+      setEvents(ev);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -164,6 +172,7 @@ export default function AdminPage() {
       for (const u of pending) {
         await updateUserStatus(u.id, "approved");
       }
+      await logAdminEvent("bulk_approve", `Approved ${pending.length} pending users`);
       await refresh();
     } finally {
       setBulkBusy(false);
@@ -486,6 +495,31 @@ export default function AdminPage() {
 
         {tab === "ops" && (
           <div id="logs" className="scroll-mt-24 grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] overflow-hidden flex flex-col max-h-[420px]">
+              <div className="px-4 py-3 border-b border-white/[0.06] flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-white">Activity feed</h3>
+                <span className="text-[10px] font-mono text-muted">{events.length} events</span>
+              </div>
+              <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                {events.length === 0 && (
+                  <p className="text-xs text-muted p-2">No events yet — run schema for admin_events.</p>
+                )}
+                {events.map((ev) => (
+                  <div
+                    key={ev.id}
+                    className="rounded-lg border border-white/[0.05] bg-black/20 px-3 py-2"
+                  >
+                    <div className="flex items-center justify-between gap-2 mb-0.5">
+                      <span className="text-[10px] font-mono uppercase text-accent-cyan/80">{ev.kind}</span>
+                      <span className="text-[10px] text-muted font-mono">
+                        {new Date(ev.created_at).toLocaleString("sv-SE")}
+                      </span>
+                    </div>
+                    <p className="text-xs text-white/80">{ev.message}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
             <SystemTerminal />
             <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5 space-y-4">
               <h3 className="text-sm font-semibold text-white">Ops checklist</h3>
@@ -514,7 +548,8 @@ export default function AdminPage() {
         )}
 
         {tab === "export" && (
-          <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5 sm:p-6 space-y-4 max-w-xl">
+          <div className="space-y-6 max-w-2xl">
+          <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5 sm:p-6 space-y-4">
             <h3 className="text-lg font-semibold text-white">Export & outreach</h3>
             <p className="text-sm text-muted">
               Download waitlist CSV or copy email lists for campaigns.
@@ -550,6 +585,39 @@ export default function AdminPage() {
                 <Mail className="w-4 h-4" /> Approved only
               </button>
             </div>
+          </div>
+
+          <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5 sm:p-6 space-y-3">
+            <h3 className="text-lg font-semibold text-white">Invite draft</h3>
+            <p className="text-xs text-muted">Local template — copy and paste into your mail client. Use {"{name}"} placeholder.</p>
+            <input
+              value={inviteSubject}
+              onChange={(e) => setInviteSubject(e.target.value)}
+              className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-white focus:outline-none focus:border-accent-cyan/40"
+              placeholder="Subject"
+            />
+            <textarea
+              value={inviteBody}
+              onChange={(e) => setInviteBody(e.target.value)}
+              rows={6}
+              className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-white font-mono focus:outline-none focus:border-accent-cyan/40 resize-y"
+            />
+            <button
+              type="button"
+              onClick={async () => {
+                const sample = users.find((u) => u.access_status === "approved") || users[0];
+                const text = `Subject: ${inviteSubject}\n\n${inviteBody.replace(/\{name\}/g, sample?.name || "there")}`;
+                try {
+                  await navigator.clipboard.writeText(text);
+                  setInviteCopied(true);
+                  setTimeout(() => setInviteCopied(false), 1500);
+                } catch { /* ignore */ }
+              }}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-accent-cyan to-accent-purple text-sm font-semibold text-white"
+            >
+              {inviteCopied ? "Copied!" : "Copy sample invite"}
+            </button>
+          </div>
           </div>
         )}
       </div>

@@ -1,5 +1,5 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { WaitlistUser } from "@/types";
+import { WaitlistUser, AdminEvent } from "@/types";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
@@ -29,6 +29,9 @@ const mockUsers: WaitlistUser[] = [
     discount_code: "BUDAI-EARLY-10",
     notes: null,
     source: "landing",
+    priority: 80,
+    last_contacted_at: null,
+    tags: ["enterprise"],
   },
   {
     id: "2",
@@ -44,6 +47,9 @@ const mockUsers: WaitlistUser[] = [
     discount_code: "BUDAI-EARLY-10",
     notes: null,
     source: "landing",
+    priority: 55,
+    last_contacted_at: null,
+    tags: [],
   },
   {
     id: "3",
@@ -59,6 +65,9 @@ const mockUsers: WaitlistUser[] = [
     discount_code: "BUDAI-EARLY-10",
     notes: null,
     source: "landing",
+    priority: 40,
+    last_contacted_at: null,
+    tags: ["creator"],
   },
   {
     id: "4",
@@ -74,6 +83,9 @@ const mockUsers: WaitlistUser[] = [
     discount_code: "BUDAI-EARLY-10",
     notes: "Enterprise lead",
     source: "landing",
+    priority: 95,
+    last_contacted_at: "2026-08-01T10:00:00Z",
+    tags: ["enterprise", "priority"],
   },
   {
     id: "5",
@@ -89,6 +101,33 @@ const mockUsers: WaitlistUser[] = [
     discount_code: "BUDAI-EARLY-10",
     notes: null,
     source: "landing",
+    priority: 35,
+    last_contacted_at: null,
+    tags: null,
+  },
+];
+
+const mockEvents: AdminEvent[] = [
+  {
+    id: "e1",
+    kind: "signup",
+    message: "New waitlist signup",
+    meta: { email: "lisa.andersson@outlook.com" },
+    created_at: new Date(Date.now() - 3600_000).toISOString(),
+  },
+  {
+    id: "e2",
+    kind: "approve",
+    message: "User approved",
+    meta: { email: "marcus@finova.se" },
+    created_at: new Date(Date.now() - 7200_000).toISOString(),
+  },
+  {
+    id: "e3",
+    kind: "system",
+    message: "Schema health check OK",
+    meta: null,
+    created_at: new Date(Date.now() - 10_800_000).toISOString(),
   },
 ];
 
@@ -111,6 +150,18 @@ const isSupabaseReady = () =>
   );
 
 function normalizeUser(row: Record<string, unknown>): WaitlistUser {
+  const tagsRaw = row.tags;
+  let tags: string[] | null = null;
+  if (Array.isArray(tagsRaw)) tags = tagsRaw.map(String);
+  else if (typeof tagsRaw === "string" && tagsRaw) {
+    try {
+      const p = JSON.parse(tagsRaw);
+      tags = Array.isArray(p) ? p.map(String) : [tagsRaw];
+    } catch {
+      tags = tagsRaw.split(",").map((s) => s.trim()).filter(Boolean);
+    }
+  }
+
   return {
     id: String(row.id),
     name: String(row.name ?? ""),
@@ -125,6 +176,9 @@ function normalizeUser(row: Record<string, unknown>): WaitlistUser {
     discount_code: (row.discount_code as string | null) ?? null,
     notes: (row.notes as string | null) ?? null,
     source: (row.source as string | null) ?? null,
+    priority: row.priority == null ? null : Number(row.priority),
+    last_contacted_at: (row.last_contacted_at as string | null) ?? null,
+    tags,
   };
 }
 
@@ -154,6 +208,8 @@ export async function addWaitlistUser(
     ...user,
     discount_code: user.discount_code || "BUDAI-EARLY-10",
     source: user.source || "landing",
+    priority: user.priority ?? 50,
+    tags: user.tags ?? [],
   };
 
   const supabase = getSupabase();
@@ -163,6 +219,7 @@ export async function addWaitlistUser(
       ...payload,
       created_at: new Date().toISOString(),
       access_status: "pending",
+      last_contacted_at: null,
     };
     mockUsers.unshift(newUser);
     return new Promise((resolve) => setTimeout(() => resolve(newUser), 500));
@@ -223,6 +280,45 @@ export async function updateUserNotes(id: string, notes: string): Promise<void> 
   }
 }
 
+export async function updateUserPriority(id: string, priority: number): Promise<void> {
+  const supabase = getSupabase();
+  if (!supabase) {
+    const user = mockUsers.find((u) => u.id === id);
+    if (user) user.priority = priority;
+    return new Promise((resolve) => setTimeout(resolve, 200));
+  }
+
+  const { error } = await supabase
+    .from("waitlist_users")
+    .update({ priority, updated_at: new Date().toISOString() })
+    .eq("id", id);
+
+  if (error) {
+    console.error("Supabase error:", error);
+    throw error;
+  }
+}
+
+export async function markContacted(id: string): Promise<void> {
+  const ts = new Date().toISOString();
+  const supabase = getSupabase();
+  if (!supabase) {
+    const user = mockUsers.find((u) => u.id === id);
+    if (user) user.last_contacted_at = ts;
+    return new Promise((resolve) => setTimeout(resolve, 200));
+  }
+
+  const { error } = await supabase
+    .from("waitlist_users")
+    .update({ last_contacted_at: ts, updated_at: ts })
+    .eq("id", id);
+
+  if (error) {
+    console.error("Supabase error:", error);
+    throw error;
+  }
+}
+
 export async function deleteUser(id: string): Promise<void> {
   const supabase = getSupabase();
   if (!supabase) {
@@ -255,6 +351,54 @@ export async function getWaitlistCount(): Promise<number> {
   return count ?? mockUsers.length;
 }
 
+export async function getAdminEvents(limit = 30): Promise<AdminEvent[]> {
+  const supabase = getSupabase();
+  if (!supabase) {
+    return [...mockEvents];
+  }
+
+  const { data, error } = await supabase
+    .from("admin_events")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    // table may not exist yet
+    console.warn("admin_events:", error.message);
+    return mockEvents;
+  }
+
+  return (data || []).map((r) => ({
+    id: String(r.id),
+    kind: String(r.kind ?? "system"),
+    message: String(r.message ?? ""),
+    meta: (r.meta as Record<string, unknown>) ?? null,
+    created_at: String(r.created_at ?? new Date().toISOString()),
+  }));
+}
+
+export async function logAdminEvent(
+  kind: string,
+  message: string,
+  meta?: Record<string, unknown>
+): Promise<void> {
+  const supabase = getSupabase();
+  if (!supabase) {
+    mockEvents.unshift({
+      id: String(Date.now()),
+      kind,
+      message,
+      meta: meta ?? null,
+      created_at: new Date().toISOString(),
+    });
+    return;
+  }
+
+  const { error } = await supabase.from("admin_events").insert([{ kind, message, meta: meta ?? null }]);
+  if (error) console.warn("logAdminEvent:", error.message);
+}
+
 export function getWaitlistStats(users: WaitlistUser[]) {
   const pending = users.filter((u) => u.access_status === "pending").length;
   const approved = users.filter((u) => u.access_status === "approved").length;
@@ -262,5 +406,15 @@ export function getWaitlistStats(users: WaitlistUser[]) {
   const companies = users.filter((u) => u.account_type === "company").length;
   const individuals = users.filter((u) => u.account_type === "individual").length;
   const withDiscount = users.filter((u) => !!u.discount_code).length;
-  return { total: users.length, pending, approved, rejected, companies, individuals, withDiscount };
+  const highPriority = users.filter((u) => (u.priority ?? 0) >= 70).length;
+  return {
+    total: users.length,
+    pending,
+    approved,
+    rejected,
+    companies,
+    individuals,
+    withDiscount,
+    highPriority,
+  };
 }

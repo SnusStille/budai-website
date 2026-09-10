@@ -13,6 +13,20 @@ export interface WaitlistUser {
   discount_code: string | null;
   notes: string | null;
   source: string | null;
+  /** Priority score 0–100 for launch invites */
+  priority: number | null;
+  /** Last contact / outreach timestamp */
+  last_contacted_at: string | null;
+  /** Soft tags e.g. enterprise, partner */
+  tags: string[] | null;
+}
+
+export interface AdminEvent {
+  id: string;
+  kind: string;
+  message: string;
+  meta: Record<string, unknown> | null;
+  created_at: string;
 }
 
 export interface AnalyticsData {

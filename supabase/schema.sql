@@ -1,5 +1,5 @@
 -- ============================================================================
--- BudAI — Supabase schema (final launch)
+-- BudAI — Supabase schema (launch + admin v2)
 -- Safe to re-run (idempotent). Supabase → SQL Editor → Run.
 -- ============================================================================
 
@@ -30,6 +30,9 @@ create table if not exists public.waitlist_users (
   discount_code text default 'BUDAI-EARLY-10',
   notes text,
   source text default 'landing',
+  priority int default 50 check (priority >= 0 and priority <= 100),
+  last_contacted_at timestamptz,
+  tags text[] default '{}',
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -54,6 +57,15 @@ alter table public.waitlist_users
 alter table public.waitlist_users
   add column if not exists updated_at timestamptz not null default now();
 
+alter table public.waitlist_users
+  add column if not exists priority int default 50;
+
+alter table public.waitlist_users
+  add column if not exists last_contacted_at timestamptz;
+
+alter table public.waitlist_users
+  add column if not exists tags text[] default '{}';
+
 -- Unique email (case-insensitive)
 create unique index if not exists waitlist_users_email_lower_idx
   on public.waitlist_users (lower(email));
@@ -63,6 +75,9 @@ create index if not exists waitlist_users_status_idx
 
 create index if not exists waitlist_users_created_idx
   on public.waitlist_users (created_at desc);
+
+create index if not exists waitlist_users_priority_idx
+  on public.waitlist_users (priority desc nulls last);
 
 -- updated_at trigger
 create or replace function public.set_waitlist_updated_at()
@@ -80,10 +95,22 @@ create trigger waitlist_users_set_updated_at
   before update on public.waitlist_users
   for each row execute function public.set_waitlist_updated_at();
 
+-- Admin activity log
+create table if not exists public.admin_events (
+  id uuid primary key default gen_random_uuid(),
+  kind text not null default 'system',
+  message text not null,
+  meta jsonb default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists admin_events_created_idx
+  on public.admin_events (created_at desc);
+
 -- RLS
 alter table public.waitlist_users enable row level security;
+alter table public.admin_events enable row level security;
 
--- Public can insert (waitlist form) — anon key
 drop policy if exists "waitlist_insert_anon" on public.waitlist_users;
 create policy "waitlist_insert_anon"
   on public.waitlist_users
@@ -91,8 +118,6 @@ create policy "waitlist_insert_anon"
   to anon, authenticated
   with check (true);
 
--- Public can read count-friendly select is optional; admin uses anon in this app
--- Prefer service role for admin in production. For current client admin UX:
 drop policy if exists "waitlist_select_anon" on public.waitlist_users;
 create policy "waitlist_select_anon"
   on public.waitlist_users
@@ -115,8 +140,23 @@ create policy "waitlist_delete_anon"
   to anon, authenticated
   using (true);
 
+drop policy if exists "admin_events_select_anon" on public.admin_events;
+create policy "admin_events_select_anon"
+  on public.admin_events
+  for select
+  to anon, authenticated
+  using (true);
+
+drop policy if exists "admin_events_insert_anon" on public.admin_events;
+create policy "admin_events_insert_anon"
+  on public.admin_events
+  for insert
+  to anon, authenticated
+  with check (true);
+
 -- Note: tighten policies before scale (service role + server routes).
--- For launch preview this matches the existing client-side admin pattern.
 
 comment on table public.waitlist_users is 'BudAI waitlist + early-bird discount codes';
 comment on column public.waitlist_users.discount_code is 'Founder early access code, default BUDAI-EARLY-10 (10% off)';
+comment on column public.waitlist_users.priority is '0-100 invite priority for launch waves';
+comment on table public.admin_events is 'Lightweight admin activity / audit trail';

@@ -11,9 +11,10 @@ import {
   Copy,
   Check,
   Tag,
+  Mail,
 } from "lucide-react";
 import { WaitlistUser } from "@/types";
-import { updateUserStatus, deleteUser, updateUserNotes } from "@/lib/data";
+import { updateUserStatus, deleteUser, updateUserNotes, updateUserPriority, markContacted } from "@/lib/data";
 
 export default function UserTable({
   users,
@@ -228,6 +229,7 @@ export default function UserTable({
               <th className="text-left px-5 py-3">Interest</th>
               <th className="text-left px-5 py-3">Discount</th>
               <th className="text-left px-5 py-3">Status</th>
+              <th className="text-left px-5 py-3">Prio</th>
               <th className="text-left px-5 py-3">Notes</th>
               <th className="text-left px-5 py-3">Date</th>
               <th className="text-right px-5 py-3">Actions</th>
@@ -236,13 +238,13 @@ export default function UserTable({
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={9} className="px-5 py-10 text-center text-muted">
+                <td colSpan={10} className="px-5 py-10 text-center text-muted">
                   Loading users…
                 </td>
               </tr>
             ) : filtered.length === 0 ? (
               <tr>
-                <td colSpan={9} className="px-5 py-10 text-center text-muted">
+                <td colSpan={10} className="px-5 py-10 text-center text-muted">
                   No users found.
                 </td>
               </tr>
@@ -305,6 +307,27 @@ export default function UserTable({
                       {user.access_status}
                     </span>
                   </td>
+                  <td className="px-5 py-3.5">
+                    <input
+                      type="number"
+                      min={0}
+                      max={100}
+                      defaultValue={user.priority ?? 50}
+                      onBlur={async (e) => {
+                        const v = Math.max(0, Math.min(100, Number(e.target.value) || 0));
+                        if (v === (user.priority ?? 50)) return;
+                        setBusy(user.id);
+                        try {
+                          await updateUserPriority(user.id, v);
+                          onUpdate();
+                        } finally {
+                          setBusy(null);
+                        }
+                      }}
+                      className="w-14 px-1.5 py-1 rounded-md bg-white/5 border border-white/10 text-xs text-white font-mono tabular-nums focus:outline-none focus:border-accent-cyan/30"
+                      title="Priority 0-100"
+                    />
+                  </td>
                   <td className="px-5 py-3.5 min-w-[140px]">
                     <div className="flex gap-1">
                       <input
@@ -347,6 +370,22 @@ export default function UserTable({
                         title="Reject"
                       >
                         <XCircle className="w-4 h-4" />
+                      </button>
+                      <button
+                        disabled={busy === user.id}
+                        onClick={async () => {
+                          setBusy(user.id);
+                          try {
+                            await markContacted(user.id);
+                            onUpdate();
+                          } finally {
+                            setBusy(null);
+                          }
+                        }}
+                        className="p-1.5 rounded-lg hover:bg-accent-cyan/10 text-muted hover:text-accent-cyan"
+                        title="Mark contacted"
+                      >
+                        <Mail className="w-4 h-4" />
                       </button>
                       <button
                         disabled={busy === user.id}

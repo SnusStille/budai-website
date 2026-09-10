@@ -20,7 +20,6 @@ import {
   Minimize2,
   Clock,
   Share2,
-  Dice5,
   Languages,
   X,
 } from "lucide-react";
@@ -94,8 +93,8 @@ export default function AIPlayground() {
   const { t, lang } = useLang();
   const greet =
     lang === "sv"
-      ? "Hej — jag är BudAI. Skriv en fråga, eller tryck Random för en överraskning. Single är standard; slå på Dual om du vill ha två alternativ."
-      : "Hey — I'm BudAI. Ask anything, or hit Random for a surprise. Single is default; flip Dual when you want two options.";
+      ? "Hej — jag är BudAI. Skriv en fråga och välj språk. Tryck Inspirera för ett skarpt scenario. Single är standard — Dual ger två alternativ."
+      : "Hey — I'm BudAI. Ask anything and pick a language. Hit Surprise me for a sharp scenario. Single is default — Dual gives two options.";
 
   const [messages, setMessages] = useState<Msg[]>([
     { id: 0, type: "ai", text: greet, ts: Date.now() },
@@ -115,6 +114,8 @@ export default function AIPlayground() {
   const [pendingRandom, setPendingRandom] = useState<{ sv: string; en: string } | null>(
     null
   );
+  const [manualPending, setManualPending] = useState<string | null>(null);
+  const [langPickOpen, setLangPickOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef(false);
   const idRef = useRef(1);
@@ -379,22 +380,31 @@ export default function AIPlayground() {
     }
   };
 
+  const requestSend = (text: string) => {
+    if (!text.trim() || thinking) return;
+    setManualPending(text.trim());
+    setLangPickOpen(true);
+  };
+
+  const confirmManual = (replyLang: "sv" | "en") => {
+    if (!manualPending) return;
+    const text = manualPending;
+    setManualPending(null);
+    setLangPickOpen(false);
+    setInput("");
+    void runPrompt(text, replyLang);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || thinking) return;
-    const text = input.trim();
-    setInput("");
-    await runPrompt(text);
+    requestSend(input);
   };
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      if (input.trim() && !thinking) {
-        const text = input.trim();
-        setInput("");
-        void runPrompt(text);
-      }
+      if (input.trim() && !thinking) requestSend(input);
     }
   };
 
@@ -439,7 +449,7 @@ export default function AIPlayground() {
 
         <ScrollReveal>
           <div
-            className={`rounded-2xl sm:rounded-3xl overflow-hidden border border-white/[0.1] bg-[#06060c]/96 shadow-[0_0_120px_rgba(0,229,255,0.12)] relative ${
+            className={`rounded-2xl sm:rounded-3xl overflow-hidden border border-white/[0.11] bg-[#05050a]/98 shadow-[0_0_100px_rgba(0,229,255,0.12),0_0_1px_rgba(255,255,255,0.08)] relative ${
               expanded ? "fixed inset-3 sm:inset-6 z-[80] max-w-none rounded-2xl" : ""
             }`}
           >
@@ -536,7 +546,7 @@ export default function AIPlayground() {
               </div>
             </div>
 
-            {/* Toolbar: modes + random */}
+            {/* Toolbar: modes */}
             <div className="px-3 sm:px-5 py-2.5 border-b border-white/[0.05] bg-white/[0.015] flex flex-wrap items-center gap-2 justify-between">
               <div className="inline-flex p-0.5 rounded-lg bg-black/35 border border-white/[0.06]">
                 {modes.map((m) => (
@@ -556,21 +566,9 @@ export default function AIPlayground() {
                   </button>
                 ))}
               </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  disabled={thinking}
-                  onClick={openRandom}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold text-accent-cyan border border-accent-cyan/30 bg-accent-cyan/10 hover:bg-accent-cyan/15 disabled:opacity-40 transition-colors"
-                >
-                  <Dice5 className="w-3.5 h-3.5" />
-                  Random
-                </button>
-                <span className="hidden sm:inline text-[10px] text-muted/50 font-mono items-center gap-1">
-                  <Clock className="w-3 h-3 inline" /> Enter · Shift+Enter
-                </span>
-              </div>
+              <span className="hidden sm:inline-flex text-[10px] text-muted/50 font-mono items-center gap-1.5">
+                <Clock className="w-3 h-3" /> Enter · Shift+Enter
+              </span>
             </div>
 
             {/* Messages */}
@@ -756,7 +754,7 @@ export default function AIPlayground() {
             {/* Composer */}
             <form
               onSubmit={handleSubmit}
-              className="p-3 sm:p-4 border-t border-white/[0.05] bg-[#080810]"
+              className="p-3 sm:p-4 border-t border-white/[0.06] bg-gradient-to-b from-[#0a0a12] to-[#07070c]"
             >
               <div className="flex gap-2 items-end">
                 <div className="flex-1 relative">
@@ -768,27 +766,44 @@ export default function AIPlayground() {
                     rows={1}
                     placeholder={
                       lang === "sv"
-                        ? "Ställ en fråga… eller tryck Random"
-                        : "Ask anything… or hit Random"
+                        ? "Skriv din fråga till BudAI…"
+                        : "Message BudAI…"
                     }
                     disabled={thinking}
-                    className="w-full px-3.5 sm:px-5 py-3 sm:py-3.5 pr-9 rounded-xl bg-white/[0.04] border border-white/[0.08] text-sm text-white placeholder:text-muted/70 focus:outline-none focus:border-accent-cyan/40 focus:shadow-[0_0_0_3px_rgba(0,229,255,0.08)] disabled:opacity-50 resize-none min-h-[48px] max-h-32"
+                    className="w-full px-3.5 sm:px-4 py-3 sm:py-3.5 rounded-2xl bg-white/[0.04] border border-white/[0.09] text-sm text-white placeholder:text-muted/65 focus:outline-none focus:border-accent-cyan/45 focus:shadow-[0_0_0_3px_rgba(0,229,255,0.1)] disabled:opacity-50 resize-none min-h-[48px] max-h-32"
                   />
-                  <Wand2 className="absolute right-3 top-3.5 w-4 h-4 text-muted/35 pointer-events-none" />
                 </div>
+                <button
+                  type="button"
+                  disabled={thinking}
+                  onClick={openRandom}
+                  title={lang === "sv" ? "Inspirera — slumpa ett scenario" : "Surprise me — invent a scenario"}
+                  className="shrink-0 h-12 px-3 sm:px-3.5 rounded-2xl border border-white/[0.1] bg-white/[0.04] text-muted hover:text-accent-cyan hover:border-accent-cyan/35 hover:bg-accent-cyan/10 disabled:opacity-40 transition-colors inline-flex items-center gap-1.5"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  <span className="hidden sm:inline text-[11px] font-semibold">
+                    {lang === "sv" ? "Inspirera" : "Surprise"}
+                  </span>
+                </button>
                 <button
                   type="submit"
                   disabled={thinking || !input.trim()}
-                  className="px-3.5 sm:px-5 py-3 rounded-xl bg-gradient-to-r from-accent-cyan to-accent-purple text-white disabled:opacity-40 shadow-[0_0_20px_rgba(0,229,255,0.18)] active:scale-95 transition-transform h-12"
+                  className="shrink-0 h-12 px-3.5 sm:px-5 rounded-2xl bg-gradient-to-r from-accent-cyan to-accent-purple text-white disabled:opacity-40 shadow-[0_0_22px_rgba(0,229,255,0.22)] active:scale-95 transition-transform inline-flex items-center gap-2"
                 >
                   <Send className="w-4 h-4" />
+                  <span className="hidden md:inline text-sm font-semibold">
+                    {lang === "sv" ? "Skicka" : "Send"}
+                  </span>
                 </button>
               </div>
-              <div className="mt-2 flex flex-wrap items-center gap-2 text-[10px] text-muted/45">
+              <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-muted/45">
                 <span className="inline-flex items-center gap-1">
-                  <Sparkles className="w-3 h-3" /> {mode === "dual" ? "Dual" : mode === "concise" ? "Concise" : "Single"}
+                  <span className="w-1.5 h-1.5 rounded-full bg-accent-cyan/70" />
+                  {mode === "dual" ? "Dual" : mode === "concise" ? "Concise" : "Single"}
                 </span>
-                <span>·</span>
+                <span className="text-white/10">·</span>
+                <span>{lang === "sv" ? "Välj språk innan svar" : "Pick language before reply"}</span>
+                <span className="text-white/10">·</span>
                 <span className="inline-flex items-center gap-1">
                   <Zap className="w-3 h-3" /> {lang === "sv" ? "Stopp när som helst" : "Stop anytime"}
                 </span>
@@ -842,9 +857,9 @@ export default function AIPlayground() {
                 <X className="w-4 h-4" />
               </button>
               <div className="flex items-center gap-2 mb-3">
-                <Dice5 className="w-5 h-5 text-accent-cyan" />
+                <Sparkles className="w-5 h-5 text-accent-cyan" />
                 <h3 className="text-base font-semibold text-white">
-                  {lang === "sv" ? "Random fråga" : "Random prompt"}
+                  {lang === "sv" ? "Inspirera" : "Surprise me"}
                 </h3>
               </div>
               <p className="text-sm text-white/80 leading-relaxed mb-4 border border-white/[0.06] rounded-xl bg-white/[0.03] p-3">
@@ -877,12 +892,89 @@ export default function AIPlayground() {
                 onClick={openRandom}
                 className="mt-3 w-full text-[11px] text-muted hover:text-white py-1.5"
               >
-                {lang === "sv" ? "Slå om tärningen 🎲" : "Roll again 🎲"}
+                {lang === "sv" ? "Nytt scenario" : "Another scenario"}
               </button>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Manual message language picker */}
+      <AnimatePresence>
+        {langPickOpen && manualPending && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[90] flex items-center justify-center p-4"
+          >
+            <button
+              type="button"
+              className="absolute inset-0 bg-black/65 backdrop-blur-sm"
+              aria-label="Close"
+              onClick={() => {
+                setLangPickOpen(false);
+                setManualPending(null);
+              }}
+            />
+            <motion.div
+              initial={{ opacity: 0, y: 16, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 10, scale: 0.96 }}
+              className="relative w-full max-w-md rounded-2xl border border-white/[0.1] bg-[#0a0a12] p-5 shadow-[0_0_60px_rgba(0,229,255,0.12)]"
+            >
+              <button
+                type="button"
+                onClick={() => {
+                  setLangPickOpen(false);
+                  setManualPending(null);
+                }}
+                className="absolute top-3 right-3 p-1.5 rounded-lg text-muted hover:text-white"
+              >
+                <X className="w-4 h-4" />
+              </button>
+              <div className="flex items-center gap-2 mb-3">
+                <Languages className="w-5 h-5 text-accent-cyan" />
+                <h3 className="text-base font-semibold text-white">
+                  {lang === "sv" ? "Svarsspråk" : "Answer language"}
+                </h3>
+              </div>
+              <p className="text-sm text-white/75 leading-relaxed mb-3 border border-white/[0.06] rounded-xl bg-white/[0.03] p-3 line-clamp-4">
+                {manualPending}
+              </p>
+              <p className="text-xs text-muted mb-3">
+                {lang === "sv"
+                  ? "Vilket språk ska BudAI svara på?"
+                  : "Which language should BudAI answer in?"}
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => confirmManual("sv")}
+                  className="py-2.5 rounded-xl border border-white/10 bg-white/[0.04] text-sm font-medium text-white hover:border-accent-cyan/40 hover:bg-accent-cyan/10 transition-colors"
+                >
+                  Svenska
+                </button>
+                <button
+                  type="button"
+                  onClick={() => confirmManual("en")}
+                  className="py-2.5 rounded-xl border border-white/10 bg-white/[0.04] text-sm font-medium text-white hover:border-accent-purple/40 hover:bg-accent-purple/10 transition-colors"
+                >
+                  English
+                </button>
+              </div>
+              <button
+                type="button"
+                onClick={() => confirmManual(lang)}
+                className="mt-3 w-full text-[11px] text-muted hover:text-white py-1.5"
+              >
+                {lang === "sv" ? "Använd sidans språk →" : "Use site language →"}
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
     </section>
   );
 }

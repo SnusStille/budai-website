@@ -196,9 +196,7 @@ export default function Hero() {
             aria-label="Scroll to capabilities"
           >
             <span className="text-[10px] uppercase tracking-[0.2em]">Scroll</span>
-            <motion.span animate={{ y: [0, 6, 0] }} transition={{ duration: 2, repeat: Infinity }}>
-              <ChevronDown className="w-5 h-5" />
-            </motion.span>
+            <ChevronDown className="w-5 h-5 opacity-80" />
           </a>
         </motion.div>
       </div>

@@ -814,6 +814,14 @@ h1, h2, h3 {
   to { transform: rotate(360deg); }
 }
 
+.logo-pulse-ring {
+  animation: logo-pulse-ring 2.4s ease-out infinite;
+}
+@keyframes logo-pulse-ring {
+  0% { transform: scale(0.92); opacity: 0.55; }
+  100% { transform: scale(1.35); opacity: 0; }
+}
+
 .logo-ambient-spin {
   animation: logo-ambient-spin 28s linear infinite;
 }
@@ -836,6 +844,7 @@ h1, h2, h3 {
   .logo-glow-breathe,
   .logo-mark-breathe,
   .logo-orbit-2d,
+  .logo-pulse-ring,
   .logo-ambient-spin,
   .logo-float-mote,
   .logo-core-pulse,

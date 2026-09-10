@@ -2,37 +2,30 @@
   <defs>
     <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#fff"/>
-      <stop offset="45%" stop-color="#00e5ff"/>
+      <stop offset="40%" stop-color="#00e5ff"/>
       <stop offset="100%" stop-color="#b967ff"/>
     </linearGradient>
-    <radialGradient id="c" cx="50%" cy="50%" r="50%">
+    <radialGradient id="c" cx="50%" cy="45%" r="50%">
       <stop offset="0%" stop-color="#fff"/>
-      <stop offset="50%" stop-color="#00e5ff"/>
-      <stop offset="100%" stop-color="#b967ff" stop-opacity="0.4"/>
+      <stop offset="35%" stop-color="#00e5ff"/>
+      <stop offset="100%" stop-color="#b967ff" stop-opacity="0.55"/>
+    </radialGradient>
+    <radialGradient id="bg" cx="35%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#1a2240"/>
+      <stop offset="100%" stop-color="#060814"/>
     </radialGradient>
   </defs>
-  <rect width="128" height="128" rx="30" fill="#020205"/>
-  <rect x="14" y="14" width="100" height="100" rx="28" fill="#0a0a14" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>
-  <g fill="none" stroke="url(#g)" stroke-width="3" stroke-linecap="round">
-    <line x1="64" y1="64" x2="64" y2="28"/>
-    <line x1="64" y1="64" x2="94" y2="44"/>
-    <line x1="64" y1="64" x2="96" y2="78"/>
-    <line x1="64" y1="64" x2="64" y2="100"/>
-    <line x1="64" y1="64" x2="32" y2="78"/>
-    <line x1="64" y1="64" x2="34" y2="44"/>
-    <line x1="64" y1="28" x2="94" y2="44" opacity="0.5"/>
-    <line x1="94" y1="44" x2="96" y2="78" opacity="0.5"/>
-    <line x1="96" y1="78" x2="64" y2="100" opacity="0.5"/>
-    <line x1="64" y1="100" x2="32" y2="78" opacity="0.5"/>
-    <line x1="32" y1="78" x2="34" y2="44" opacity="0.5"/>
-    <line x1="34" y1="44" x2="64" y2="28" opacity="0.5"/>
+  <rect width="128" height="128" rx="32" fill="#020205"/>
+  <circle cx="64" cy="64" r="50" fill="url(#bg)" stroke="rgba(255,255,255,0.38)" stroke-width="2"/>
+  <g fill="none" stroke="url(#g)" stroke-width="2.4" opacity="0.9">
+    <ellipse cx="64" cy="64" rx="40" ry="14"/>
+    <ellipse cx="64" cy="64" rx="40" ry="14" transform="rotate(60 64 64)"/>
+    <ellipse cx="64" cy="64" rx="40" ry="14" transform="rotate(-60 64 64)"/>
   </g>
-  <circle cx="64" cy="28" r="5" fill="url(#g)"/>
-  <circle cx="94" cy="44" r="4.5" fill="url(#g)"/>
-  <circle cx="96" cy="78" r="4.5" fill="url(#g)"/>
-  <circle cx="64" cy="100" r="5" fill="url(#g)"/>
-  <circle cx="32" cy="78" r="4.5" fill="url(#g)"/>
-  <circle cx="34" cy="44" r="4.5" fill="url(#g)"/>
-  <circle cx="64" cy="64" r="12" fill="url(#c)"/>
-  <circle cx="64" cy="64" r="5" fill="#fff"/>
+  <circle cx="104" cy="64" r="4.5" fill="url(#g)"/>
+  <circle cx="24" cy="64" r="4.5" fill="url(#g)"/>
+  <circle cx="84" cy="30" r="3.5" fill="url(#g)"/>
+  <circle cx="44" cy="98" r="3.5" fill="url(#g)"/>
+  <circle cx="64" cy="64" r="20" fill="url(#c)"/>
+  <circle cx="64" cy="64" r="8" fill="#fff"/>
 </svg>

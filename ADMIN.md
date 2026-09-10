@@ -1,24 +1,14 @@
 # BudAI Admin
 
 ## Password
-
-**Launch password:** `Daylightshere76`  
-(env override: `NEXT_PUBLIC_ADMIN_PASSWORD`)
-
-**Never display the password on the login screen.** Login copy is owner-only (Stille / Stilledev).
-
-Client-side gate only. Add Vercel password protection for real lock-down.
+**Daylightshere76** (env override `NEXT_PUBLIC_ADMIN_PASSWORD`) — never shown on login.
 
 ## Features
-
-- Tabs: Overview · Waitlist · Ops · Export
-- Stats, recent signups, quick actions
-- Bulk approve pending
-- Copy emails (all / pending / approved)
-- CSV export
-- Waitlist table: search, status, notes, discount codes
-- System terminal + sample activity chart
+- Overview / Waitlist / Ops / Export tabs
+- Priority 0–100 · Mark contacted · Notes · Discount codes
+- Activity feed (`admin_events`)
+- Bulk approve · CSV · copy emails
+- Invite draft template (Export tab)
 
 ## SQL
-
-`supabase/schema.sql` (idempotent).
+Run `supabase/schema.sql` (full) or `supabase/MIGRATION_v2.sql` (delta only).

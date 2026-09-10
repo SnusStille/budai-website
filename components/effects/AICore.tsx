@@ -52,7 +52,7 @@ export default function AICore({ isMobile = false }: { isMobile?: boolean }) {
     },
   ];
 
-  const dim = isMobile ? 152 : 196;
+  const dim = isMobile ? 160 : 212;
 
   return (
     <>
