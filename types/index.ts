@@ -9,6 +9,10 @@ export interface WaitlistUser {
   interest: string;
   created_at: string;
   access_status: "pending" | "approved" | "rejected";
+  /** Early-bird 10% founder discount flag */
+  discount_code: string | null;
+  notes: string | null;
+  source: string | null;
 }
 
 export interface AnalyticsData {

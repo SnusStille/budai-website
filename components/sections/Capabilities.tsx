@@ -111,8 +111,8 @@ const capabilities = [
 export default function Capabilities() {
   const { t, lang } = useLang();
   return (
-    <section id="capabilities" className="relative py-24 md:py-32">
-      <div className="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
+    <section id="capabilities" className="relative py-20 sm:py-24 md:py-32">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <ScrollReveal className="text-center mb-14 md:mb-18">
           <span className="section-badge text-accent-cyan mb-5">{t.capabilities.badge}</span>
           <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-[-0.03em] mb-5 text-white">

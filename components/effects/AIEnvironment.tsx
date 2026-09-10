@@ -46,7 +46,7 @@ export default function AIEnvironment() {
     }
 
     // Hex lattice nodes
-    const nodeCount = isMobile ? 28 : 64;
+    const nodeCount = isMobile ? 16 : 36;
     type Node = { x: number; y: number; vx: number; vy: number; r: number; hue: number; p: number; pulse: number };
     const nodes: Node[] = Array.from({ length: nodeCount }, () => ({
       x: Math.random() * W,
@@ -61,7 +61,7 @@ export default function AIEnvironment() {
 
     // Code rain columns — denser & brighter
     const glyphs = "01<>{}[]/=+*;:#λ∑→αβγδεζη01{}<>AI_CORE_RUN_async_await_fn";
-    const colCount = isMobile ? 14 : 28;
+    const colCount = isMobile ? 8 : 16;
     type Col = {
       x: number;
       y: number;
@@ -102,7 +102,7 @@ export default function AIEnvironment() {
 
     let running = true;
     let last = performance.now();
-    const FRAME_MS = isMobile ? 50 : 33;
+    const FRAME_MS = isMobile ? 66 : 40; // ~15fps mobile / 25fps desktop
 
     const bloom = (cx: number, cy: number, r: number, c: string) => {
       const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);

@@ -38,7 +38,7 @@ export default function Hero() {
         </>
       )}
 
-      <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8 text-center">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <motion.div
           initial={{ opacity: 0, y: 16, scale: 0.96 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -53,11 +53,27 @@ export default function Hero() {
           <span className="w-px h-3.5 bg-white/10" />
           <span className="text-xs sm:text-sm text-muted flex items-center gap-2">
             <span className="font-mono text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 rounded-md bg-white/[0.06] border border-accent-cyan/25 text-accent-cyan tracking-wide">
-              v0.92
+              v0.93
             </span>
-            <span className="hidden sm:inline">92% to launch</span>
+            <span className="hidden sm:inline">93% to launch</span>
           </span>
         </motion.div>
+
+        <motion.a
+          href="#waitlist"
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.28 }}
+          className="mx-auto -mt-5 sm:-mt-6 mb-7 sm:mb-9 block w-fit text-[11px] sm:text-xs text-muted/70 hover:text-accent-green transition-colors"
+        >
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-white/[0.07] bg-white/[0.02] hover:border-accent-green/25">
+            <span className="text-accent-green/90 font-medium">10%</span>
+            <span className="text-muted/40">·</span>
+            <span>
+              {lang === "sv" ? "early access vid join" : "early access on join"}
+            </span>
+          </span>
+        </motion.a>
 
         <AICore isMobile={isMobile} />
 
@@ -72,10 +88,10 @@ export default function Hero() {
             <AnimatePresence mode="wait">
               <motion.span
                 key={t.hero.words[wordIndex]}
-                initial={{ y: "55%", opacity: 0, filter: "blur(8px)" }}
-                animate={{ y: "0%", opacity: 1, filter: "blur(0px)" }}
-                exit={{ y: "-55%", opacity: 0, filter: "blur(8px)" }}
-                transition={{ duration: 0.48, ease: [0.22, 1, 0.36, 1] }}
+                initial={{ y: "40%", opacity: 0 }}
+                animate={{ y: "0%", opacity: 1 }}
+                exit={{ y: "-40%", opacity: 0 }}
+                transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
                 className="relative inline-block text-gradient-shimmer"
               >
                 {t.hero.words[wordIndex]}

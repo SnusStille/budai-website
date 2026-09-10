@@ -29,7 +29,7 @@ html {
 body {
   background: var(--bg);
   color: #ffffff;
-  font-family: var(--font-sora), system-ui, -apple-system, sans-serif;
+  font-family: var(--font-jakarta), system-ui, -apple-system, sans-serif;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -772,7 +772,88 @@ body {
   100% { transform: translate(18px, -12px) scale(1.08); opacity: 1; }
 }
 
-/* Stronger heading tracking for Sora */
+/* Stronger heading tracking for Plus Jakarta Sans */
 h1, h2, h3 {
-  letter-spacing: -0.03em;
+  letter-spacing: -0.035em;
+  font-weight: 700;
+}
+
+
+/* Logo floating motes — subtle motion, not stacked orbs */
+.logo-float-mote {
+  animation: logo-float-mote 4s ease-in-out infinite;
+  opacity: 0.7;
+}
+@keyframes logo-float-mote {
+  0%, 100% { transform: translateY(0) scale(1); opacity: 0.45; }
+  50% { transform: translateY(-10px) scale(1.15); opacity: 0.95; }
+}
+
+/* Single-mark logo motion (2D only — no 3D) */
+.logo-glow-breathe {
+  animation: logo-glow-breathe 3.6s ease-in-out infinite;
+}
+@keyframes logo-glow-breathe {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.06); }
+}
+
+.logo-mark-breathe {
+  animation: logo-mark-breathe 4.2s ease-in-out infinite;
+}
+@keyframes logo-mark-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.025); }
+}
+
+.logo-orbit-2d {
+  animation: logo-orbit-2d 12s linear infinite;
+}
+@keyframes logo-orbit-2d {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.logo-ambient-spin {
+  animation: logo-ambient-spin 28s linear infinite;
+}
+@keyframes logo-ambient-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Loading bar shimmer */
+.loading-bar-shimmer {
+  background-size: 200% 100%;
+  animation: loading-bar-shimmer 1.4s linear infinite;
+}
+@keyframes loading-bar-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .logo-glow-breathe,
+  .logo-mark-breathe,
+  .logo-orbit-2d,
+  .logo-ambient-spin,
+  .logo-float-mote,
+  .logo-core-pulse,
+  .loading-bar-shimmer,
+  .playground-orb,
+  .playground-orb-rev {
+    animation: none !important;
+  }
+}
+
+/* Focus mode (press F) — dim fixed chrome */
+html.budai-focus .ai-grid,
+html.budai-focus .ai-vignette {
+  opacity: 0.12 !important;
+}
+html.budai-focus [class*="SectionDots"],
+html.budai-focus [class*="AIActivityHUD"],
+html.budai-focus [class*="StockholmClock"] {
+  opacity: 0.25;
+  pointer-events: none;
 }

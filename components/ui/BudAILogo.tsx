@@ -1,29 +1,21 @@
 "use client";
 
+import { useId } from "react";
+
 type Size = "xs" | "sm" | "md" | "lg" | "xl" | "hero";
 
 const SIZES: Record<Size, number> = {
   xs: 28,
   sm: 36,
-  md: 48,
-  lg: 72,
-  xl: 104,
-  hero: 240,
-};
-
-/** Wordmark scale so “BudAI” fits cleanly inside the core */
-const WORD: Record<Size, string> = {
-  xs: "text-[6px] tracking-[0.04em]",
-  sm: "text-[8px] tracking-[0.05em]",
-  md: "text-[10px] tracking-[0.06em]",
-  lg: "text-[13px] tracking-[0.07em]",
-  xl: "text-base tracking-[0.08em]",
-  hero: "text-2xl md:text-3xl tracking-[0.1em]",
+  md: 44,
+  lg: 64,
+  xl: 100,
+  hero: 200,
 };
 
 /**
- * WOW-orb — one clean 3D glass sphere + BudAI wordmark.
- * Orbits only on hero/xl so chrome sizes stay sharp.
+ * BudAI mark — crystalline neural core.
+ * One glass tile + living graph (nodes, links, pulse). No letters / monograms / 3D.
  */
 export default function BudAILogo({
   size = "sm",
@@ -40,9 +32,9 @@ export default function BudAILogo({
   onClick?: () => void;
   label?: string;
 }) {
+  const uid = useId().replace(/:/g, "");
   const px = SIZES[size];
   const isHero = size === "hero";
-  const showOrbits = isHero || size === "xl";
   const Tag = interactive || onClick ? "button" : "div";
 
   return (
@@ -53,158 +45,182 @@ export default function BudAILogo({
       className={`relative inline-flex items-center justify-center shrink-0 ${
         interactive || onClick ? "cursor-pointer focus-visible:outline-none" : ""
       } ${className}`}
-      style={{
-        width: px,
-        height: px,
-        perspective: showOrbits ? "900px" : undefined,
-      }}
+      style={{ width: px, height: px }}
     >
-      {/* Ambient glow — single bloom */}
+      {/* Aura */}
       <span
         aria-hidden
-        className={`absolute inset-[-22%] rounded-full pointer-events-none ${
-          animated && isHero ? "animate-glow-pulse" : ""
+        className={`absolute inset-[-20%] rounded-full pointer-events-none ${
+          animated ? "logo-glow-breathe" : ""
         }`}
         style={{
           background:
-            "radial-gradient(circle at 50% 45%, rgba(0,229,255,0.45) 0%, rgba(185,103,255,0.22) 45%, transparent 70%)",
-          filter: `blur(${isHero ? 20 : 8}px)`,
-          opacity: isHero ? 0.95 : 0.7,
+            "radial-gradient(circle at 42% 38%, rgba(0,229,255,0.5) 0%, rgba(185,103,255,0.28) 40%, transparent 68%)",
+          filter: `blur(${isHero ? 18 : 8}px)`,
+          opacity: isHero ? 1 : 0.55,
         }}
       />
 
-      {/* One pair of tilted orbit rings (hero/xl only) */}
-      {showOrbits && animated && (
-        <span aria-hidden className="absolute inset-0 pointer-events-none" style={{ transformStyle: "preserve-3d" }}>
-          <span
-            className="absolute inset-[-10%] rounded-full core-spin-slow"
-            style={{
-              border: "1.5px solid rgba(0,229,255,0.42)",
-              transform: "rotateX(70deg) rotateZ(-14deg)",
-              boxShadow: "0 0 14px rgba(0,229,255,0.22)",
-              animationDuration: "18s",
-            }}
-          />
-          <span
-            className="absolute inset-[-2%] rounded-full core-spin-slow-rev"
-            style={{
-              border: "1px dashed rgba(185,103,255,0.38)",
-              transform: "rotateX(58deg) rotateZ(24deg)",
-              animationDuration: "24s",
-            }}
-          />
-          {/* Two beads only */}
-          {[0, 1].map((i) => (
-            <span
-              key={i}
-              className="absolute inset-[-10%] core-spin-slow"
-              style={{
-                animationDuration: `${14 + i * 5}s`,
-                animationDelay: `${-i * 3}s`,
-                transform: "rotateX(70deg) rotateZ(-14deg)",
-              }}
-            >
-              <span
-                className="absolute top-0 left-1/2 -translate-x-1/2 rounded-full"
-                style={{
-                  width: 5,
-                  height: 5,
-                  background: i === 0 ? "#00e5ff" : "#b967ff",
-                  boxShadow: `0 0 12px ${i === 0 ? "#00e5ff" : "#b967ff"}`,
-                }}
-              />
-            </span>
-          ))}
-        </span>
-      )}
-
-      {/* Single glass sphere */}
-      <span
-        className={`relative z-[2] w-full h-full rounded-full overflow-hidden ${
-          animated && isHero ? "animate-orb-breathe" : ""
-        }`}
-        style={{
-          background: `
-            radial-gradient(circle at 32% 26%,
-              rgba(255,255,255,0.88) 0%,
-              rgba(180,240,255,0.5) 12%,
-              rgba(0,229,255,0.45) 30%,
-              rgba(185,103,255,0.55) 58%,
-              rgba(14,10,30,0.97) 100%)
-          `,
-          boxShadow: isHero
-            ? "0 0 50px rgba(0,229,255,0.4), 0 0 100px rgba(185,103,255,0.25), inset 0 -20px 32px rgba(0,0,0,0.45), inset 0 14px 24px rgba(255,255,255,0.35)"
-            : "0 0 18px rgba(0,229,255,0.35), inset 0 -8px 14px rgba(0,0,0,0.4), inset 0 6px 12px rgba(255,255,255,0.3)",
-          border: "1px solid rgba(255,255,255,0.35)",
-        }}
-      >
-        {/* Wordmark — BudAI (no nested second sphere) */}
-        <span
-          className={`absolute inset-0 flex items-center justify-center font-bold text-white select-none ${WORD[size]} ${
-            animated && isHero ? "logo-core-pulse" : ""
-          }`}
-          style={{
-            textShadow:
-              "0 0 18px rgba(255,255,255,0.85), 0 0 36px rgba(0,229,255,0.7), 0 1px 2px rgba(0,0,0,0.45)",
-          }}
-        >
-          <span>
-            Bud<span className="text-white/95">AI</span>
-          </span>
-        </span>
-
-        {/* Specular */}
-        <span
-          aria-hidden
-          className="absolute pointer-events-none"
-          style={{
-            top: "7%",
-            left: "12%",
-            width: "44%",
-            height: "28%",
-            borderRadius: "50%",
-            background:
-              "radial-gradient(ellipse at 40% 35%, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.25) 40%, transparent 70%)",
-            filter: "blur(1.5px)",
-            mixBlendMode: "screen",
-          }}
-        />
-        <span
-          aria-hidden
-          className="absolute rounded-full bg-white/90 pointer-events-none"
-          style={{
-            top: "15%",
-            left: "22%",
-            width: isHero ? 8 : 4,
-            height: isHero ? 5 : 2.5,
-            filter: "blur(0.5px)",
-          }}
-        />
-
-        {/* Bottom tint */}
-        <span
-          aria-hidden
-          className="absolute inset-x-[14%] bottom-[6%] h-[22%] pointer-events-none rounded-[50%]"
-          style={{
-            background: "radial-gradient(ellipse, rgba(185,103,255,0.35), transparent 70%)",
-            filter: "blur(4px)",
-          }}
-        />
-
-        {/* Single glass rim */}
-        <span
-          aria-hidden
-          className="absolute inset-[3%] rounded-full border border-white/20 pointer-events-none"
-        />
-      </span>
-
-      {/* One pulse ring on hero only */}
       {isHero && animated && (
         <span
           aria-hidden
-          className="absolute inset-0 rounded-full border border-accent-cyan/30 core-pulse-ring pointer-events-none z-[1]"
+          className="absolute inset-[-6%] rounded-full pointer-events-none logo-orbit-2d border border-white/[0.07]"
+          style={{ animationDuration: "32s", borderStyle: "dashed" }}
         />
       )}
+
+      {/* Crystal tile */}
+      <span
+        className={`relative z-[1] w-full h-full overflow-hidden ${
+          animated && isHero ? "logo-mark-breathe" : ""
+        }`}
+        style={{
+          borderRadius: "28%",
+          background:
+            "linear-gradient(155deg, rgba(255,255,255,0.28) 0%, rgba(0,229,255,0.16) 22%, rgba(10,10,24,0.98) 52%, rgba(185,103,255,0.22) 100%)",
+          boxShadow: isHero
+            ? "0 0 44px rgba(0,229,255,0.48), 0 0 90px rgba(185,103,255,0.22), inset 0 1px 0 rgba(255,255,255,0.5), inset 0 -14px 30px rgba(0,0,0,0.5)"
+            : "0 0 18px rgba(0,229,255,0.35), inset 0 1px 0 rgba(255,255,255,0.35), inset 0 -8px 16px rgba(0,0,0,0.4)",
+          border: "1px solid rgba(255,255,255,0.34)",
+        }}
+      >
+        <span
+          aria-hidden
+          className="absolute inset-[8%] rounded-[24%]"
+          style={{
+            background:
+              "radial-gradient(circle at 34% 28%, rgba(255,255,255,0.22) 0%, rgba(0,229,255,0.12) 28%, rgba(6,6,18,0.95) 72%)",
+            boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.06)",
+          }}
+        />
+
+        <svg viewBox="0 0 80 80" className="absolute inset-0 w-full h-full" aria-hidden>
+          <defs>
+            <linearGradient id={`lg-${uid}`} x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#ffffff" />
+              <stop offset="45%" stopColor="#00e5ff" />
+              <stop offset="100%" stopColor="#b967ff" />
+            </linearGradient>
+            <linearGradient id={`lg2-${uid}`} x1="100%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#00ff9d" stopOpacity="0.95" />
+              <stop offset="100%" stopColor="#00e5ff" stopOpacity="0.55" />
+            </linearGradient>
+            <filter id={`lf-${uid}`} x="-30%" y="-30%" width="160%" height="160%">
+              <feGaussianBlur stdDeviation="1.15" result="b" />
+              <feMerge>
+                <feMergeNode in="b" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+            <radialGradient id={`core-${uid}`} cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor="#ffffff" stopOpacity="1" />
+              <stop offset="45%" stopColor="#00e5ff" stopOpacity="0.95" />
+              <stop offset="100%" stopColor="#b967ff" stopOpacity="0.35" />
+            </radialGradient>
+          </defs>
+
+          {/* Hex ring */}
+          <polygon
+            points="40,12 62,25 62,51 40,64 18,51 18,25"
+            fill="none"
+            stroke={`url(#lg-${uid})`}
+            strokeWidth="1.1"
+            opacity="0.35"
+          />
+
+          {/* Links */}
+          <g
+            stroke={`url(#lg-${uid})`}
+            strokeWidth="1.55"
+            strokeLinecap="round"
+            fill="none"
+            opacity="0.85"
+            filter={`url(#lf-${uid})`}
+          >
+            <line x1="40" y1="40" x2="40" y2="18" />
+            <line x1="40" y1="40" x2="58" y2="28" />
+            <line x1="40" y1="40" x2="60" y2="48" />
+            <line x1="40" y1="40" x2="40" y2="62" />
+            <line x1="40" y1="40" x2="20" y2="48" />
+            <line x1="40" y1="40" x2="22" y2="28" />
+            {/* outer ring links */}
+            <line x1="40" y1="18" x2="58" y2="28" opacity="0.55" />
+            <line x1="58" y1="28" x2="60" y2="48" opacity="0.55" />
+            <line x1="60" y1="48" x2="40" y2="62" opacity="0.55" />
+            <line x1="40" y1="62" x2="20" y2="48" opacity="0.55" />
+            <line x1="20" y1="48" x2="22" y2="28" opacity="0.55" />
+            <line x1="22" y1="28" x2="40" y2="18" opacity="0.55" />
+          </g>
+
+          {/* Peripheral nodes */}
+          <g filter={`url(#lf-${uid})`}>
+            <circle cx="40" cy="18" r="3.2" fill={`url(#lg-${uid})`} />
+            <circle cx="58" cy="28" r="2.8" fill={`url(#lg2-${uid})`} />
+            <circle cx="60" cy="48" r="2.8" fill={`url(#lg-${uid})`} />
+            <circle cx="40" cy="62" r="3" fill={`url(#lg2-${uid})`} />
+            <circle cx="20" cy="48" r="2.8" fill={`url(#lg-${uid})`} />
+            <circle cx="22" cy="28" r="2.8" fill={`url(#lg2-${uid})`} />
+          </g>
+
+          {/* Core */}
+          <circle cx="40" cy="40" r="7.2" fill={`url(#core-${uid})`} filter={`url(#lf-${uid})`}>
+            {animated && (
+              <animate attributeName="r" values="6.6;7.8;6.6" dur="2.8s" repeatCount="indefinite" />
+            )}
+          </circle>
+          <circle cx="40" cy="40" r="3.2" fill="#ffffff" opacity="0.95" />
+
+          {/* Signal */}
+          {isHero && animated && (
+            <circle r="2" fill="#fff" filter={`url(#lf-${uid})`}>
+              <animateMotion
+                dur="4.8s"
+                repeatCount="indefinite"
+                path="M40,18 L58,28 L60,48 L40,62 L20,48 L22,28 Z"
+              />
+            </circle>
+          )}
+        </svg>
+
+        <span
+          aria-hidden
+          className="absolute top-[9%] left-[12%] w-[46%] h-[26%] rounded-full bg-white/40 blur-[5px] pointer-events-none"
+        />
+        <span
+          aria-hidden
+          className="absolute inset-[6%] rounded-[24%] border border-white/14 pointer-events-none"
+        />
+        <span
+          aria-hidden
+          className="absolute bottom-0 inset-x-0 h-[38%] bg-gradient-to-t from-black/45 to-transparent pointer-events-none"
+        />
+      </span>
+
+      {/* Orbit dots */}
+      {isHero &&
+        animated &&
+        [0, 1, 2].map((i) => (
+          <span
+            key={i}
+            aria-hidden
+            className="absolute inset-[-9%] pointer-events-none logo-orbit-2d"
+            style={{
+              animationDuration: `${12 + i * 4}s`,
+              animationDelay: `${-i * 2}s`,
+              animationDirection: i === 1 ? "reverse" : "normal",
+            }}
+          >
+            <span
+              className="absolute left-1/2 top-0 -translate-x-1/2 rounded-full"
+              style={{
+                width: i === 0 ? 5 : 3.5,
+                height: i === 0 ? 5 : 3.5,
+                background: ["#00e5ff", "#b967ff", "#00ff9d"][i],
+                boxShadow: `0 0 12px ${["#00e5ff", "#b967ff", "#00ff9d"][i]}`,
+              }}
+            />
+          </span>
+        ))}
     </Tag>
   );
 }

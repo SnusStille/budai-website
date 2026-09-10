@@ -1,13 +1,14 @@
 import type { Metadata, Viewport } from "next";
-import { Sora, JetBrains_Mono } from "next/font/google";
+import { Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/Providers";
 import VercelAnalytics from "@/components/VercelAnalytics";
 
-const sora = Sora({
+const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin", "latin-ext"],
-  variable: "--font-sora",
+  variable: "--font-jakarta",
   display: "swap",
+  weight: ["400", "500", "600", "700", "800"],
 });
 
 const jetbrains = JetBrains_Mono({
@@ -76,7 +77,11 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="sv" className={`${sora.variable} ${jetbrains.variable} font-sans`} suppressHydrationWarning>
+    <html
+      lang="sv"
+      className={`${jakarta.variable} ${jetbrains.variable} font-sans`}
+      suppressHydrationWarning
+    >
       <body className="antialiased noise-overlay bg-background text-white">
         <Providers>{children}</Providers>
         <VercelAnalytics />

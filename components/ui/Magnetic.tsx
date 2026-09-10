@@ -1,12 +1,9 @@
 "use client";
 
-import { useRef, useState, type ReactNode, type MouseEvent } from "react";
+import { useEffect, useRef, useState, type ReactNode, type MouseEvent } from "react";
 import { motion } from "framer-motion";
 
-// Wraps a button/link so it subtly pulls toward the cursor on hover — a
-// small "magnetic" micro-interaction (Stripe, Linear, and most award-winning
-// portfolio sites use a version of this on primary CTAs). Pure CSS-transform,
-// resets smoothly on mouse leave.
+/** Magnetic CTA pull — disabled on touch / reduced-motion for perf. */
 export default function Magnetic({
   children,
   strength = 0.25,
@@ -18,6 +15,17 @@ export default function Magnetic({
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState({ x: 0, y: 0 });
+  const [enabled, setEnabled] = useState(false);
+
+  useEffect(() => {
+    const fine = window.matchMedia("(pointer: fine)").matches;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    setEnabled(fine && !reduce && window.innerWidth >= 768);
+  }, []);
+
+  if (!enabled) {
+    return <div className={className}>{children}</div>;
+  }
 
   const onMouseMove = (e: MouseEvent<HTMLDivElement>) => {
     const el = ref.current;
@@ -36,7 +44,7 @@ export default function Magnetic({
       onMouseMove={onMouseMove}
       onMouseLeave={onMouseLeave}
       animate={{ x: pos.x, y: pos.y }}
-      transition={{ type: "spring", stiffness: 150, damping: 12, mass: 0.1 }}
+      transition={{ type: "spring", stiffness: 180, damping: 18, mass: 0.15 }}
       className={className}
     >
       {children}

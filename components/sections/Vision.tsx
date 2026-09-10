@@ -52,10 +52,10 @@ export default function Vision() {
   const { lang } = useLang();
 
   return (
-    <section className="relative py-28 md:py-32 overflow-hidden">
+    <section className="relative py-20 sm:py-28 md:py-32 overflow-hidden">
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-accent-green/5 rounded-full blur-[180px] pointer-events-none" />
 
-      <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <ScrollReveal className="text-center mb-14 md:mb-18">
           <span className="section-badge text-accent-green mb-4">
             {lang === "sv" ? "Vår vision" : "Our Vision"}

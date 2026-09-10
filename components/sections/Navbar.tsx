@@ -230,7 +230,7 @@ export default function Navbar() {
                 <Command className="w-3 h-3" />K
               </button>
 
-              <a href="#waitlist" className="btn-primary !px-5 !py-2.5 text-sm">
+                            <a href="#waitlist" className="btn-primary !px-5 !py-2.5 text-sm">
                 <span>{t.nav.requestAccess}</span>
               </a>
             </div>

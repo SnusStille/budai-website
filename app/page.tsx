@@ -10,6 +10,9 @@ import BackToTop from "@/components/ui/BackToTop";
 import SurpriseToasts from "@/components/ui/SurpriseToasts";
 import Signature from "@/components/ui/Signature";
 import ThemePulse from "@/components/ui/ThemePulse";
+import ShareMoment from "@/components/ui/ShareMoment";
+import FocusMode from "@/components/ui/FocusMode";
+import LaunchBeacon from "@/components/ui/LaunchBeacon";
 import Navbar from "@/components/sections/Navbar";
 import Hero from "@/components/sections/Hero";
 import BuddyCard from "@/components/sections/BuddyCard";
@@ -31,12 +34,12 @@ const SystemStatus = dynamic(() => import("@/components/sections/SystemStatus"))
 export default function Home() {
   useEffect(() => {
     console.log(
-      "%c🧠 BudAI Developer Preview v0.92",
+      "%c🧠 BudAI Developer Preview v0.93",
       "color: #00e5ff; font-size: 16px; font-weight: bold;"
     );
     console.log("%cBuilt by Stilledev | Sweden", "color: #00e5ff; font-size: 12px;");
     console.log(
-      "%cTry typing 'budai' or 'stille' · press N · press ⌘K · or Konami",
+      "%cTry typing 'budai' or 'stille' · press F (focus) · press N · ⌘K",
       "color: #8892a0; font-size: 11px; font-style: italic;"
     );
 
@@ -65,7 +68,7 @@ export default function Home() {
     const originalTitle = document.title;
     const onVisibility = () => {
       if (document.visibilityState === "hidden") {
-        document.title = "👋 Come back to BudAI";
+        document.title = "Stilledev.se · BudAI";
       } else {
         document.title = originalTitle;
       }
@@ -105,6 +108,9 @@ export default function Home() {
       <SurpriseToasts />
       <Signature />
       <ThemePulse />
+      <ShareMoment />
+      <FocusMode />
+      <LaunchBeacon />
       <CookieConsent />
     </main>
   );

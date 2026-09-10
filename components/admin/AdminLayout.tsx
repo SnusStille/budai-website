@@ -1,7 +1,8 @@
 "use client";
 
 import { ReactNode, useEffect, useState } from "react";
-import { Cpu, Users, BarChart3, Settings, LogOut, Terminal, Menu, X } from "lucide-react";
+import { Users, BarChart3, Settings, LogOut, Terminal, Menu, X, KeyRound } from "lucide-react";
+import BudAILogo from "@/components/ui/BudAILogo";
 
 const NAV_ITEMS = [
   { id: "dashboard", icon: BarChart3, label: "Dashboard" },
@@ -14,12 +15,10 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [settingsHint, setSettingsHint] = useState(false);
 
-  // Highlight the nav item for whichever section is currently in view,
-  // instead of a hardcoded "Dashboard is always active" flag.
   useEffect(() => {
-    const sections = NAV_ITEMS
-      .map((item) => document.getElementById(item.id))
-      .filter((el): el is HTMLElement => !!el);
+    const sections = NAV_ITEMS.map((item) => document.getElementById(item.id)).filter(
+      (el): el is HTMLElement => !!el
+    );
 
     if (sections.length === 0) return;
 
@@ -46,8 +45,10 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     <button
       key={item.id}
       onClick={() => goTo(item.id)}
-      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-colors ${
-        active === item.id ? "bg-accent-cyan/10 text-accent-cyan" : "text-muted hover:text-white hover:bg-white/5"
+      className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+        active === item.id
+          ? "bg-accent-cyan/12 text-accent-cyan border border-accent-cyan/20"
+          : "text-muted hover:text-white hover:bg-white/5 border border-transparent"
       }`}
     >
       <item.icon className="w-4 h-4" />
@@ -58,54 +59,72 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-background text-white">
       <div className="flex">
-        {/* Desktop sidebar */}
-        <aside className="w-64 min-h-screen glass-strong border-r border-white/[0.06] fixed left-0 top-0 hidden lg:flex flex-col">
-          <div className="p-6 border-b border-white/[0.06]">
+        <aside className="w-64 min-h-screen border-r border-white/[0.08] bg-[#07070c] fixed left-0 top-0 hidden lg:flex flex-col">
+          <div className="p-5 border-b border-white/[0.08]">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent-cyan to-accent-purple flex items-center justify-center">
-                <Cpu className="w-4 h-4 text-white" />
+              <BudAILogo size="sm" animated={false} />
+              <div>
+                <div className="font-bold text-sm leading-tight">
+                  Bud<span className="text-accent-cyan">AI</span>
+                </div>
+                <div className="text-[10px] text-muted font-mono">Control Center</div>
               </div>
-              <span className="font-bold">Bud<span className="text-accent-cyan">AI</span> Admin</span>
             </div>
           </div>
 
-          <nav className="flex-1 p-4 space-y-1">
-            {NAV_ITEMS.map((item) => <NavButton key={item.id} item={item} />)}
+          <nav className="flex-1 p-3 space-y-1">
+            {NAV_ITEMS.map((item) => (
+              <NavButton key={item.id} item={item} />
+            ))}
 
-            <div className="relative">
+            <div className="relative pt-2">
               <button
-                onClick={() => setSettingsHint(true)}
-                onBlur={() => setSettingsHint(false)}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-muted/50 cursor-default"
+                type="button"
+                onClick={() => setSettingsHint((v) => !v)}
+                className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm text-muted/60 hover:text-muted border border-transparent"
               >
                 <Settings className="w-4 h-4" />
                 Settings
               </button>
               {settingsHint && (
-                <div className="absolute left-4 right-4 -bottom-1 translate-y-full text-[11px] text-muted/70 bg-white/[0.04] border border-white/[0.06] rounded-lg px-3 py-2 z-10">
-                  Coming soon
+                <div className="mt-1 mx-1 text-[11px] text-muted leading-relaxed bg-white/[0.03] border border-white/[0.08] rounded-xl px-3 py-2.5">
+                  <div className="flex items-start gap-2">
+                    <KeyRound className="w-3.5 h-3.5 text-accent-cyan shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-white/80 font-medium mb-1">Owner console</p>
+                      <p className="text-muted/90">
+                        Private to Stille (Stilledev). Key is never shown in the UI.
+                      </p>
+                      <p className="mt-1 text-muted/70 text-[10px]">
+                        Rotate via env if needed — do not paste secrets here.
+                      </p>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
           </nav>
 
-          <div className="p-4 border-t border-white/[0.06]">
-            <a href="/" className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-muted hover:text-white hover:bg-white/5 transition-colors">
+          <div className="p-3 border-t border-white/[0.08]">
+            <a
+              href="/"
+              className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm text-muted hover:text-white hover:bg-white/5 transition-colors"
+            >
               <LogOut className="w-4 h-4" />
               Exit Admin
             </a>
           </div>
         </aside>
 
-        {/* Mobile top bar */}
-        <div className="lg:hidden fixed top-0 left-0 right-0 z-40 glass-strong border-b border-white/[0.06] flex items-center justify-between px-4 h-16">
+        <div className="lg:hidden fixed top-0 left-0 right-0 z-40 border-b border-white/[0.08] bg-[#07070c]/95 backdrop-blur-xl flex items-center justify-between px-4 h-14">
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-accent-cyan to-accent-purple flex items-center justify-center">
-              <Cpu className="w-4 h-4 text-white" />
-            </div>
-            <span className="font-bold text-sm">Bud<span className="text-accent-cyan">AI</span> Admin</span>
+            <BudAILogo size="xs" animated={false} />
+            <span className="font-bold text-sm">
+              Bud<span className="text-accent-cyan">AI</span> Admin
+            </span>
           </div>
           <button
+            type="button"
             onClick={() => setMobileOpen((v) => !v)}
             className="p-2 rounded-lg text-white hover:bg-white/5 transition-colors"
             aria-label="Toggle menu"
@@ -114,20 +133,20 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           </button>
         </div>
 
-        {/* Mobile menu sheet */}
         {mobileOpen && (
-          <div className="lg:hidden fixed inset-0 z-30 pt-16">
-            <div className="absolute inset-0 bg-background/98 backdrop-blur-xl" onClick={() => setMobileOpen(false)} />
+          <div className="lg:hidden fixed inset-0 z-30 pt-14">
+            <div
+              className="absolute inset-0 bg-background/98 backdrop-blur-xl"
+              onClick={() => setMobileOpen(false)}
+            />
             <nav className="relative p-4 space-y-1">
-              {NAV_ITEMS.map((item) => <NavButton key={item.id} item={item} />)}
-              <button
-                disabled
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-muted/40 cursor-not-allowed"
+              {NAV_ITEMS.map((item) => (
+                <NavButton key={item.id} item={item} />
+              ))}
+              <a
+                href="/"
+                className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm text-muted hover:text-white hover:bg-white/5 transition-colors"
               >
-                <Settings className="w-4 h-4" />
-                Settings <span className="text-[10px] ml-auto">Coming soon</span>
-              </button>
-              <a href="/" className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-muted hover:text-white hover:bg-white/5 transition-colors">
                 <LogOut className="w-4 h-4" />
                 Exit Admin
               </a>
@@ -135,9 +154,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           </div>
         )}
 
-        <main className="flex-1 lg:ml-64 p-6 pt-24 lg:pt-8 lg:p-8">
-          {children}
-        </main>
+        <main className="flex-1 lg:ml-64 p-5 pt-20 lg:pt-8 lg:p-8 max-w-[1400px]">{children}</main>
       </div>
     </div>
   );

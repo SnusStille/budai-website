@@ -4,8 +4,6 @@ import { WaitlistUser } from "@/types";
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
 
-// Lazy client — never throw at module load when env vars are missing
-// (required for production builds / prerender without secrets).
 let _supabase: SupabaseClient | null = null;
 
 function getSupabase(): SupabaseClient | null {
@@ -16,7 +14,6 @@ function getSupabase(): SupabaseClient | null {
   return _supabase;
 }
 
-// Fallback mock data (used if Supabase is not connected)
 const mockUsers: WaitlistUser[] = [
   {
     id: "1",
@@ -29,6 +26,9 @@ const mockUsers: WaitlistUser[] = [
     interest: "Automation",
     created_at: "2026-07-20T10:00:00Z",
     access_status: "approved",
+    discount_code: "BUDAI-EARLY-10",
+    notes: null,
+    source: "landing",
   },
   {
     id: "2",
@@ -41,6 +41,9 @@ const mockUsers: WaitlistUser[] = [
     interest: "Data Analysis",
     created_at: "2026-07-21T14:30:00Z",
     access_status: "pending",
+    discount_code: "BUDAI-EARLY-10",
+    notes: null,
+    source: "landing",
   },
   {
     id: "3",
@@ -53,6 +56,9 @@ const mockUsers: WaitlistUser[] = [
     interest: "Customer Support",
     created_at: "2026-07-22T09:15:00Z",
     access_status: "pending",
+    discount_code: "BUDAI-EARLY-10",
+    notes: null,
+    source: "landing",
   },
   {
     id: "4",
@@ -65,6 +71,9 @@ const mockUsers: WaitlistUser[] = [
     interest: "Workflow Optimization",
     created_at: "2026-07-23T16:45:00Z",
     access_status: "approved",
+    discount_code: "BUDAI-EARLY-10",
+    notes: "Enterprise lead",
+    source: "landing",
   },
   {
     id: "5",
@@ -77,6 +86,9 @@ const mockUsers: WaitlistUser[] = [
     interest: "Document Generation",
     created_at: "2026-07-24T11:20:00Z",
     access_status: "pending",
+    discount_code: "BUDAI-EARLY-10",
+    notes: null,
+    source: "landing",
   },
 ];
 
@@ -90,19 +102,36 @@ export const mockAnalytics = [
   { date: "Sun", visits: 190, signups: 14, playground_uses: 56 },
 ];
 
-const isSupabaseReady = () => {
-  return Boolean(
+const isSupabaseReady = () =>
+  Boolean(
     supabaseUrl &&
       supabaseKey &&
       !supabaseUrl.includes("your-project") &&
       supabaseUrl.startsWith("http")
   );
-};
+
+function normalizeUser(row: Record<string, unknown>): WaitlistUser {
+  return {
+    id: String(row.id),
+    name: String(row.name ?? ""),
+    email: String(row.email ?? ""),
+    account_type: (row.account_type as WaitlistUser["account_type"]) || "individual",
+    company: (row.company as string | null) ?? null,
+    industry: (row.industry as string | null) ?? null,
+    employees: (row.employees as string | null) ?? null,
+    interest: String(row.interest ?? ""),
+    created_at: String(row.created_at ?? new Date().toISOString()),
+    access_status: (row.access_status as WaitlistUser["access_status"]) || "pending",
+    discount_code: (row.discount_code as string | null) ?? null,
+    notes: (row.notes as string | null) ?? null,
+    source: (row.source as string | null) ?? null,
+  };
+}
 
 export async function getWaitlistUsers(): Promise<WaitlistUser[]> {
   const supabase = getSupabase();
   if (!supabase) {
-    return [...mockUsers];
+    return new Promise((resolve) => setTimeout(() => resolve([...mockUsers]), 400));
   }
 
   const { data, error } = await supabase
@@ -115,27 +144,33 @@ export async function getWaitlistUsers(): Promise<WaitlistUser[]> {
     return mockUsers;
   }
 
-  return data || [];
+  return (data || []).map((r) => normalizeUser(r as Record<string, unknown>));
 }
 
 export async function addWaitlistUser(
   user: Omit<WaitlistUser, "id" | "created_at" | "access_status">
 ): Promise<WaitlistUser> {
+  const payload = {
+    ...user,
+    discount_code: user.discount_code || "BUDAI-EARLY-10",
+    source: user.source || "landing",
+  };
+
   const supabase = getSupabase();
   if (!supabase) {
     const newUser: WaitlistUser = {
-      id: String(mockUsers.length + 1),
-      ...user,
+      id: String(Date.now()),
+      ...payload,
       created_at: new Date().toISOString(),
       access_status: "pending",
     };
     mockUsers.unshift(newUser);
-    return newUser;
+    return new Promise((resolve) => setTimeout(() => resolve(newUser), 500));
   }
 
   const { data, error } = await supabase
     .from("waitlist_users")
-    .insert([{ ...user, access_status: "pending" }])
+    .insert([{ ...payload, access_status: "pending" }])
     .select()
     .single();
 
@@ -144,7 +179,7 @@ export async function addWaitlistUser(
     throw error;
   }
 
-  return data;
+  return normalizeUser(data as Record<string, unknown>);
 }
 
 export async function updateUserStatus(
@@ -155,12 +190,31 @@ export async function updateUserStatus(
   if (!supabase) {
     const user = mockUsers.find((u) => u.id === id);
     if (user) user.access_status = status;
-    return;
+    return new Promise((resolve) => setTimeout(resolve, 300));
   }
 
   const { error } = await supabase
     .from("waitlist_users")
-    .update({ access_status: status })
+    .update({ access_status: status, updated_at: new Date().toISOString() })
+    .eq("id", id);
+
+  if (error) {
+    console.error("Supabase error:", error);
+    throw error;
+  }
+}
+
+export async function updateUserNotes(id: string, notes: string): Promise<void> {
+  const supabase = getSupabase();
+  if (!supabase) {
+    const user = mockUsers.find((u) => u.id === id);
+    if (user) user.notes = notes;
+    return new Promise((resolve) => setTimeout(resolve, 300));
+  }
+
+  const { error } = await supabase
+    .from("waitlist_users")
+    .update({ notes, updated_at: new Date().toISOString() })
     .eq("id", id);
 
   if (error) {
@@ -174,7 +228,7 @@ export async function deleteUser(id: string): Promise<void> {
   if (!supabase) {
     const idx = mockUsers.findIndex((u) => u.id === id);
     if (idx > -1) mockUsers.splice(idx, 1);
-    return;
+    return new Promise((resolve) => setTimeout(resolve, 300));
   }
 
   const { error } = await supabase.from("waitlist_users").delete().eq("id", id);
@@ -199,4 +253,14 @@ export async function getWaitlistCount(): Promise<number> {
   }
 
   return count ?? mockUsers.length;
+}
+
+export function getWaitlistStats(users: WaitlistUser[]) {
+  const pending = users.filter((u) => u.access_status === "pending").length;
+  const approved = users.filter((u) => u.access_status === "approved").length;
+  const rejected = users.filter((u) => u.access_status === "rejected").length;
+  const companies = users.filter((u) => u.account_type === "company").length;
+  const individuals = users.filter((u) => u.account_type === "individual").length;
+  const withDiscount = users.filter((u) => !!u.discount_code).length;
+  return { total: users.length, pending, approved, rejected, companies, individuals, withDiscount };
 }

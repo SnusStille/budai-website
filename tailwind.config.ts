@@ -23,7 +23,7 @@ const config: Config = {
         muted: "#8892a0",
       },
       fontFamily: {
-        sans: ["var(--font-sora)", "system-ui", "sans-serif"],
+        sans: ["var(--font-jakarta)", "system-ui", "sans-serif"],
         mono: ["var(--font-jetbrains)", "monospace"],
       },
       animation: {

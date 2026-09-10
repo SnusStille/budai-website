@@ -11,7 +11,7 @@ const EVENTS_SV = [
   "KV-cache 94%",
   "Säkerhet: OK",
   "STO latency 11ms",
-  "v0.92 ready",
+  "v0.93 ready",
 ];
 
 const EVENTS_EN = [
@@ -21,7 +21,7 @@ const EVENTS_EN = [
   "KV-cache 94%",
   "Security: OK",
   "STO latency 11ms",
-  "v0.92 ready",
+  "v0.93 ready",
 ];
 
 /** Compact AI activity chip — bottom-left, smaller than before */

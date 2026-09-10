@@ -15,6 +15,7 @@ import {
   User,
   Briefcase,
   AlertTriangle,
+  Tag,
 } from "lucide-react";
 import ScrollReveal from "@/components/ui/ScrollReveal";
 import Magnetic from "@/components/ui/Magnetic";
@@ -97,6 +98,9 @@ export default function Waitlist() {
         company: accountType === "company" ? form.company : null,
         industry: accountType === "company" ? form.industry : null,
         employees: accountType === "company" ? form.employees : null,
+        discount_code: "BUDAI-EARLY-10",
+        notes: null,
+        source: "landing",
       });
       setSubmitted(true);
       setConfetti(true);
@@ -122,12 +126,21 @@ export default function Waitlist() {
 
       <div className="relative z-10 max-w-4xl mx-auto px-6 lg:px-8">
         <ScrollReveal className="text-center mb-12">
-          <span className="section-badge text-accent-purple mb-4">{t.waitlist.badge}</span>
+          <div className="flex flex-wrap items-center justify-center gap-2 mb-4">
+            <span className="section-badge text-accent-purple">{t.waitlist.badge}</span>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold tracking-wide bg-accent-green/10 text-accent-green border border-accent-green/25">
+              <Crown className="w-3 h-3" />
+              {t.waitlist.discountBadge}
+            </span>
+          </div>
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6 text-white">
             {t.waitlist.title}{" "}
             <span className="text-gradient">{t.waitlist.titleHighlight}</span>
           </h2>
           <p className="text-lg text-muted max-w-2xl mx-auto">{t.waitlist.subtitle}</p>
+          <p className="mt-3 text-sm text-accent-cyan/80 max-w-xl mx-auto">
+            {t.waitlist.discountHint}
+          </p>
         </ScrollReveal>
 
         <ScrollReveal>
@@ -394,6 +407,9 @@ export default function Waitlist() {
 
                   <div className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-muted/50">
                     <span className="flex items-center gap-1.5">
+                      <Tag className="w-3 h-3 text-accent-green" /> {t.waitlist.discountBadge}
+                    </span>
+                    <span className="flex items-center gap-1.5">
                       <Zap className="w-3 h-3 text-accent-cyan" /> {t.waitlist.prioritySupport}
                     </span>
                     <span className="flex items-center gap-1.5">
@@ -450,10 +466,21 @@ export default function Waitlist() {
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.55, duration: 0.4 }}
-                    className="mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-full glass text-sm text-accent-green border border-accent-green/20"
+                    className="mt-6 flex flex-col items-center gap-3"
                   >
-                    <Crown className="w-4 h-4" />
-                    {t.waitlist.foundingActive}
+                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass text-sm text-accent-green border border-accent-green/20">
+                      <Crown className="w-4 h-4" />
+                      {t.waitlist.foundingActive}
+                    </div>
+                    <div className="px-4 py-3 rounded-xl bg-accent-cyan/5 border border-accent-cyan/20 text-center">
+                      <div className="text-[10px] uppercase tracking-wider text-muted mb-1">
+                        {t.waitlist.discountCodeLabel}
+                      </div>
+                      <div className="font-mono text-sm text-accent-cyan tracking-wide">
+                        BUDAI-EARLY-10
+                      </div>
+                      <div className="text-[11px] text-muted mt-1">10% · early access</div>
+                    </div>
                   </motion.div>
                 </motion.div>
               )}
