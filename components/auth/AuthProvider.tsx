@@ -13,6 +13,7 @@ import {
 import type { Session, User } from "@supabase/supabase-js";
 import { createClient, isAuthConfigured } from "@/lib/supabase/client";
 import { LIMITS, type AccessTier, dayKey, limitFor } from "@/lib/limits";
+import { getAuthCallbackUrl, getBrowserOrigin } from "@/lib/site";
 
 type Usage = { messages: number; images: number; generations: number };
 
@@ -267,8 +268,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signInWithGoogle = useCallback(async () => {
     const supabase = createClient();
     if (!supabase) return { error: "Auth is not configured on this server." };
-    const origin = window.location.origin;
-    // Store intent so we can detect cross-browser PKCE issues
+    const origin = getBrowserOrigin();
+    const redirectTo = getAuthCallbackUrl("/#playground");
     try {
       sessionStorage.setItem("budai-oauth-started", String(Date.now()));
       sessionStorage.setItem("budai-oauth-origin", origin);
@@ -278,29 +279,52 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${origin}/auth/callback?next=${encodeURIComponent("/#playground")}`,
+        redirectTo,
         queryParams: { prompt: "select_account" },
+        skipBrowserRedirect: false,
       },
     });
-    return error ? { error: error.message } : {};
+    if (error) {
+      const m = error.message.toLowerCase();
+      if (m.includes("provider is not enabled") || m.includes("unsupported provider")) {
+        return {
+          error:
+            "Google is not enabled in Supabase yet. Open Supabase → Authentication → Providers → Google, add Client ID/Secret, then save. See AUTH_SETUP.md.",
+        };
+      }
+      return { error: error.message };
+    }
+    return {};
   }, []);
 
   const signInWithEmail = useCallback(async (email: string) => {
     const supabase = createClient();
     if (!supabase) return { error: "Auth is not configured on this server." };
-    const origin = window.location.origin;
     const clean = email.trim().toLowerCase();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clean)) {
       return { error: "Enter a valid email address." };
     }
+    // CRITICAL: emailRedirectTo must be on Supabase Redirect allowlist.
+    // If not, Supabase falls back to Dashboard Site URL (often localhost) → ERR_CONNECTION_REFUSED.
+    const emailRedirectTo = getAuthCallbackUrl("/#playground");
     const { error } = await supabase.auth.signInWithOtp({
       email: clean,
       options: {
-        emailRedirectTo: `${origin}/auth/callback?next=${encodeURIComponent("/#playground")}`,
+        emailRedirectTo,
         shouldCreateUser: true,
       },
     });
-    return error ? { error: error.message } : { ok: true };
+    if (error) {
+      const m = error.message.toLowerCase();
+      if (m.includes("redirect") || m.includes("url")) {
+        return {
+          error:
+            "Redirect URL not allowed in Supabase. Set Site URL to https://stilledev.se and add /auth/callback to Redirect URLs (AUTH_SETUP.md).",
+        };
+      }
+      return { error: error.message };
+    }
+    return { ok: true };
   }, []);
 
   const signOut = useCallback(async () => {

@@ -16,12 +16,13 @@ export const translations = {
     },
     hero: {
       badge: "Utvecklarförhandsvisning",
-      title1: "AI-arbete för",
-      title2: "Sverige",
-      words: ["Sverige", "ditt team", "ditt bolag", "din vardag", "Norden"],
+      title1: "AI som tar",
+      title2: "arbetet vidare",
+      titleAccent: "Sverige",
+      words: [],
       subtitle:
-        "Skriv snabbare. Automatisera rutin. Tänk klarare — på svenska och engelska. BudAI är arbetsassistenten för Sverige.",
-      ctaPrimary: "Prova Playground",
+        "BudAI hjälper dig skriva, tänka och fatta beslut snabbare — på svenska och engelska. Byggd i Sverige. Redo att prova i Playground.",
+      ctaPrimary: "Öppna Playground",
       ctaSecondary: "Gå med i väntelistan",
     },
     capabilities: {
@@ -29,14 +30,14 @@ export const translations = {
       title: "Byggd för",
       titleHighlight: "riktigt arbete",
       subtitle:
-        "Fyra kärnlägen som sparar tid varje vecka — från utkast till beslut. Prova samma smak i Playground.",
+        "Skriv, automatisera, besluta och växla språk — samma yta du testar live i Playground.",
     },
     playground: {
       badge: "AI Playground",
-      title: "Upplev",
+      title: "Prata med",
       titleHighlight: "BudAI",
       subtitle:
-        "Inte bara en chat. Minne, historik och ärlig enhetskontext — med ditt godkännande.",
+        "Live assistent med minne, historik, bildanalys och röst — gästläge eller konto.",
       placeholder: "Skriv din fråga till BudAI…",
       online: "Online — Utvecklarförhandsvisning",
       thinking: "Tänker…",
@@ -129,12 +130,13 @@ export const translations = {
     },
     hero: {
       badge: "Developer Preview",
-      title1: "AI work for",
-      title2: "Sweden",
-      words: ["Sweden", "your team", "your company", "everyday work", "the Nordics"],
+      title1: "AI that moves",
+      title2: "work forward",
+      titleAccent: "Sweden",
+      words: [],
       subtitle:
-        "Write faster. Automate the routine. Think clearer — in Swedish and English. BudAI is the work assistant for Sweden.",
-      ctaPrimary: "Try Playground",
+        "BudAI helps you write, think, and decide faster — in English and Swedish. Built in Sweden. Try the live Playground now.",
+      ctaPrimary: "Open Playground",
       ctaSecondary: "Join the waitlist",
     },
     capabilities: {
@@ -142,14 +144,14 @@ export const translations = {
       title: "Built for",
       titleHighlight: "real work",
       subtitle:
-        "Four core modes that save hours every week — from drafts to decisions. Taste the same engine in the Playground.",
+        "Draft, automate, decide, and switch languages — the same surface you test live in the Playground.",
     },
     playground: {
       badge: "AI Playground",
-      title: "Experience",
+      title: "Talk to",
       titleHighlight: "BudAI",
       subtitle:
-        "Not just another chat. Memory, history, and honest device context — with your consent.",
+        "Live assistant with memory, history, image analysis, and voice — guest mode or account.",
       placeholder: "Message BudAI…",
       online: "Online — Developer Preview",
       thinking: "Thinking…",

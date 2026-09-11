@@ -40,6 +40,9 @@ import {
   Clock,
   MessageSquarePlus,
   RefreshCw,
+  Copy,
+  ListTodo,
+  Dices,
 } from "lucide-react";
 import ScrollReveal from "@/components/ui/ScrollReveal";
 import BudAILogo from "@/components/ui/BudAILogo";
@@ -68,25 +71,59 @@ import * as cloud from "@/lib/playground/cloudStore";
 
 /* ─── helpers ─────────────────────────────────────────── */
 
-function renderMarkdown(text: string): ReactNode[] {
+function renderInlineMd(text: string, keyPrefix: string): ReactNode[] {
   const pattern = /(\*\*.+?\*\*|`.+?`)/g;
   return text.split(pattern).map((part, i) => {
     if (part.startsWith("**") && part.endsWith("**"))
       return (
-        <strong key={i} className="text-white font-semibold">
+        <strong key={`${keyPrefix}-b-${i}`} className="text-white font-semibold">
           {part.slice(2, -2)}
         </strong>
       );
     if (part.startsWith("`") && part.endsWith("`"))
       return (
         <code
-          key={i}
+          key={`${keyPrefix}-c-${i}`}
           className="px-1 py-0.5 rounded bg-white/10 text-accent-cyan text-[0.9em] font-mono"
         >
           {part.slice(1, -1)}
         </code>
       );
-    return <span key={i}>{part}</span>;
+    return <span key={`${keyPrefix}-t-${i}`}>{part}</span>;
+  });
+}
+
+function renderMarkdown(text: string): ReactNode[] {
+  const parts = text.split(/(```[\s\S]*?```)/g);
+  return parts.map((block, bi) => {
+    if (block.startsWith("```") && block.endsWith("```")) {
+      const inner = block.slice(3, -3);
+      const nl = inner.indexOf("\n");
+      const langHint = nl > 0 ? inner.slice(0, nl).trim() : "";
+      const code = nl > 0 ? inner.slice(nl + 1) : inner;
+      return (
+        <div key={`code-${bi}`} className="my-2 rounded-xl overflow-hidden border border-white/10 bg-black/40">
+          <div className="flex items-center justify-between px-3 py-1.5 border-b border-white/[0.06] bg-white/[0.03]">
+            <span className="text-[10px] font-mono text-muted">{langHint || "code"}</span>
+            <button
+              type="button"
+              className="text-[10px] text-muted hover:text-accent-cyan"
+              onClick={() => void navigator.clipboard.writeText(code)}
+            >
+              Copy
+            </button>
+          </div>
+          <pre className="p-3 overflow-x-auto text-[12px] font-mono text-white/85 leading-relaxed">
+            <code>{code}</code>
+          </pre>
+        </div>
+      );
+    }
+    return (
+      <span key={`txt-${bi}`} className="whitespace-pre-wrap">
+        {renderInlineMd(block, `b${bi}`)}
+      </span>
+    );
   });
 }
 
@@ -147,73 +184,124 @@ const CAPABILITY_CARDS = {
     {
       icon: "vision" as const,
       title: "Se en bild",
+      blurb: "Bifoga & analysera",
       prompt: "Analysera den här bilden och berätta vad du ser — detaljerat.",
       needsImage: true,
     },
     {
-      icon: "gen" as const,
-      title: "Skapa en bild",
-      prompt: "Skapa en bild av en futuristisk stockholmsk skyline i skymning",
-      gen: true,
-    },
-    {
       icon: "voice" as const,
       title: "Prata in",
+      blurb: "Röst till text",
       prompt: "",
       voice: true,
     },
     {
       icon: "memory" as const,
       title: "Kom ihåg mig",
+      blurb: "Långtidsminne",
       prompt: "Jag heter Alex och jobbar med produkt i Stockholm. Hjälp mig planera veckan.",
     },
     {
       icon: "create" as const,
-      title: "Kreativt",
+      title: "Skapa",
+      blurb: "Text & pitch",
       prompt: "Skriv en kort, varm produktpitch för BudAI på svenska — tre meningar.",
     },
     {
       icon: "analyze" as const,
       title: "Analysera",
+      blurb: "Beslut & SWOT",
       prompt: "Ge mig en ärlig SWOT för att rulla ut AI-assistenter i ett svenskt SME.",
+    },
+    {
+      icon: "plan" as const,
+      title: "Planera dagen",
+      blurb: "Fokusblock",
+      prompt:
+        "Jag har 6 timmar djupjobb idag, två möten och en deadline imorgon. Bygg en realistisk dagsplan med prioriteringar och buffertar.",
+    },
+    {
+      icon: "gen" as const,
+      title: "Skapa bild",
+      blurb: "Kommer snart",
+      prompt: "Skapa en bild av en futuristisk stockholmsk skyline i skymning",
+      gen: true,
     },
   ],
   en: [
     {
       icon: "vision" as const,
       title: "See an image",
+      blurb: "Attach & analyze",
       prompt: "Analyze this image and tell me what you see — in detail.",
       needsImage: true,
     },
     {
-      icon: "gen" as const,
-      title: "Create an image",
-      prompt: "Create an image of a futuristic Stockholm skyline at dusk",
-      gen: true,
-    },
-    {
       icon: "voice" as const,
       title: "Speak",
+      blurb: "Voice to text",
       prompt: "",
       voice: true,
     },
     {
       icon: "memory" as const,
       title: "Remember me",
+      blurb: "Long-term memory",
       prompt: "My name is Alex and I work in product in Stockholm. Help me plan the week.",
     },
     {
       icon: "create" as const,
       title: "Create",
+      blurb: "Copy & pitch",
       prompt: "Write a short, warm product pitch for BudAI in three sentences.",
     },
     {
       icon: "analyze" as const,
       title: "Analyze",
+      blurb: "Decisions & SWOT",
       prompt: "Give me an honest SWOT for rolling out AI assistants in a Swedish SME.",
+    },
+    {
+      icon: "plan" as const,
+      title: "Plan my day",
+      blurb: "Focus blocks",
+      prompt:
+        "I have 6 hours of deep work today, two meetings, and a deadline tomorrow. Build a realistic day plan with priorities and buffers.",
+    },
+    {
+      icon: "gen" as const,
+      title: "Create image",
+      blurb: "Coming soon",
+      prompt: "Create an image of a futuristic Stockholm skyline at dusk",
+      gen: true,
     },
   ],
 };
+
+
+
+const INSPIRE_PROMPTS = {
+  sv: [
+    "Skriv en skarp 5-punkts agenda för mitt första kundmöte om AI-assistenter — varm men proffsig.",
+    "Jag drunknar i mejl. Ge mig ett 20-minuters system för att rensa inboxen utan att missa det viktiga.",
+    "Omvandla den här idén till en one-pager: BudAI hjälper svenska SME att fatta snabbare beslut.",
+    "Ge mig tre ärliga invändningar en CFO har mot AI-verktyg — och hur jag bemöter varje.",
+    "Bygg en veckoplan: 3 deep-work-block, 2 möten, 1 review. Inkludera buffertar.",
+    "Skriv ett kort, respektfullt nej-mejl till en förfrågan jag inte kan ta just nu.",
+    "Förklara GDPR-minded AI för en icke-teknisk VD på 8 meningar.",
+    "Jag ska pitcha BudAI på 60 sekunder. Manus + pauser + en stark avslutning.",
+  ],
+  en: [
+    "Write a sharp 5-point agenda for my first client meeting about AI assistants — warm but professional.",
+    "I'm drowning in email. Give me a 20-minute system to clear the inbox without missing what matters.",
+    "Turn this idea into a one-pager: BudAI helps Swedish SMEs make faster decisions.",
+    "Give me three honest CFO objections to AI tools — and how I answer each.",
+    "Build a week plan: 3 deep-work blocks, 2 meetings, 1 review. Include buffers.",
+    "Write a short, respectful no-email to a request I can't take right now.",
+    "Explain GDPR-minded AI to a non-technical CEO in 8 sentences.",
+    "I need a 60-second BudAI pitch. Script + pauses + a strong close.",
+  ],
+} as const;
 
 /* ─── component ───────────────────────────────────────── */
 
@@ -226,6 +314,8 @@ export default function AIPlayground() {
   const [activity, setActivity] = useState<AiActivity>("idle");
   const [typingText, setTypingText] = useState("");
   const [mode, setMode] = useState<Mode>("single");
+  const [answerLang, setAnswerLang] = useState<"sv" | "en">(lang);
+  const [inspireSpin, setInspireSpin] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [mobileDrawer, setMobileDrawer] = useState(false);
@@ -241,6 +331,7 @@ export default function AIPlayground() {
   const [attach, setAttach] = useState<AttachmentDraft | null>(null);
   const [listening, setListening] = useState(false);
   const [genMode, setGenMode] = useState(false);
+  const [imageGenEnabled, setImageGenEnabled] = useState(false);
   const [lightbox, setLightbox] = useState<string | null>(null);
   const [toast, setToast] = useState<{ kind: "ok" | "warn" | "err"; text: string } | null>(null);
   const [search, setSearch] = useState("");
@@ -276,6 +367,27 @@ export default function AIPlayground() {
   /* boot sidebar on desktop */
   useEffect(() => {
     if (window.innerWidth >= 1024) setSidebarOpen(true);
+  }, []);
+
+  /* Keep answer language aligned with site lang until user overrides */
+  useEffect(() => {
+    setAnswerLang(lang);
+  }, [lang]);
+
+  /* Feature flags — image gen only if server has OPENAI_API_KEY */
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/features")
+      .then((r) => r.json())
+      .then((d) => {
+        if (!cancelled) setImageGenEnabled(!!d.imageGeneration);
+      })
+      .catch(() => {
+        if (!cancelled) setImageGenEnabled(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   /* auth flash */
@@ -515,10 +627,15 @@ export default function AIPlayground() {
     const trimmed = text.trim();
     if (!trimmed || busy) return;
 
-    const wantGen = opts?.forceGen || genMode || looksLikeImageGen(trimmed);
+    const wantGen =
+      imageGenEnabled && (opts?.forceGen || genMode || looksLikeImageGen(trimmed));
     if (wantGen && !opts?.image) {
       setGenMode(false);
       return runImageGen(trimmed);
+    }
+    // If user asked to generate but feature off — honest message, no fake image
+    if (!imageGenEnabled && !opts?.image && looksLikeImageGen(trimmed)) {
+      // fall through as normal chat; model can explain limits
     }
 
     if (!checkQuota("messages")) return;
@@ -570,7 +687,7 @@ export default function AIPlayground() {
         signal: controller.signal,
         body: JSON.stringify({
           messages: apiHistory,
-          lang,
+          lang: answerLang,
           dual: mode === "dual",
           concise: mode === "concise",
           context: contextBlock(),
@@ -651,6 +768,16 @@ export default function AIPlayground() {
   const runImageGen = async (prompt: string) => {
     const trimmed = prompt.trim();
     if (!trimmed || busy) return;
+    if (!imageGenEnabled) {
+      showToast(
+        "warn",
+        lang === "sv"
+          ? "Bildgenerering kommer snart — bifoga en bild för analys i stället."
+          : "Image generation coming soon — attach an image to analyze instead."
+      );
+      setGenMode(false);
+      return;
+    }
     if (auth.isGuest) {
       auth.openAuth(lang === "sv" ? "Bildgenerering kräver konto" : "Image generation needs an account");
       return;
@@ -726,10 +853,23 @@ export default function AIPlayground() {
     }
   };
 
+  const runInspire = () => {
+    if (busy) return;
+    const pool = INSPIRE_PROMPTS[answerLang] || INSPIRE_PROMPTS.en;
+    const pick = pool[Math.floor(Math.random() * pool.length)];
+    setInspireSpin(true);
+    window.setTimeout(() => setInspireSpin(false), 600);
+    setInput(pick);
+    // Auto-send after a beat so it feels magical
+    window.setTimeout(() => {
+      void runPrompt(pick);
+    }, 280);
+  };
+
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() && !attach) return;
-    if (genMode) void runImageGen(input || "image");
+    if (genMode && imageGenEnabled) void runImageGen(input || "image");
     else void runPrompt(input || (attach ? (lang === "sv" ? "Vad ser du?" : "What do you see?") : ""));
   };
 
@@ -935,7 +1075,10 @@ export default function AIPlayground() {
   }, [history, search]);
 
   const grouped = useMemo(() => groupByDate(filteredHistory, lang), [filteredHistory, lang]);
-  const caps = CAPABILITY_CARDS[lang];
+  const caps = useMemo(
+    () => CAPABILITY_CARDS[lang].filter((c) => !("gen" in c && c.gen) || imageGenEnabled),
+    [lang, imageGenEnabled]
+  );
   const isEmpty = messages.length === 0 && activity === "idle";
   const rem = auth.remaining.messages;
   const lim = auth.limits.messagesPerDay;
@@ -1099,7 +1242,7 @@ export default function AIPlayground() {
 
         <ScrollReveal>
           <div
-            className={`rounded-2xl sm:rounded-3xl overflow-hidden border border-white/[0.1] bg-[#05050a]/98 shadow-[0_0_80px_rgba(0,229,255,0.1)] flex ${
+            className={`rounded-2xl sm:rounded-3xl overflow-hidden border border-white/[0.12] bg-[#05050a]/98 shadow-[0_0_100px_rgba(0,229,255,0.12),0_40px_80px_rgba(0,0,0,0.45)] flex ${
               expanded
                 ? "fixed inset-0 sm:inset-3 z-[80] rounded-none sm:rounded-3xl"
                 : "min-h-[min(78vh,720px)]"
@@ -1241,18 +1384,53 @@ export default function AIPlayground() {
                           : "Single"}
                   </button>
                 ))}
-                <button
-                  type="button"
-                  onClick={() => setGenMode((g) => !g)}
-                  className={`ml-auto flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium border ${
-                    genMode
-                      ? "border-accent-purple/40 bg-accent-purple/15 text-accent-purple"
-                      : "border-transparent text-muted hover:text-white"
-                  }`}
+                <div
+                  className="ml-1 flex p-0.5 rounded-full bg-black/40 border border-white/[0.08]"
+                  role="group"
+                  aria-label={lang === "sv" ? "Svarspråk" : "Answer language"}
+                  title={lang === "sv" ? "Svarspråk" : "Answer language"}
                 >
-                  <Wand2 className="w-3 h-3" />
-                  {lang === "sv" ? "Bild" : "Image"}
-                </button>
+                  {(["en", "sv"] as const).map((code) => (
+                    <button
+                      key={code}
+                      type="button"
+                      onClick={() => setAnswerLang(code)}
+                      className={`px-2 py-0.5 text-[10px] font-semibold rounded-full transition-all ${
+                        answerLang === code
+                          ? "bg-gradient-to-r from-accent-cyan to-accent-purple text-white"
+                          : "text-muted/70 hover:text-white"
+                      }`}
+                    >
+                      {code.toUpperCase()}
+                    </button>
+                  ))}
+                </div>
+                {imageGenEnabled ? (
+                  <button
+                    type="button"
+                    onClick={() => setGenMode((g) => !g)}
+                    className={`ml-auto flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium border ${
+                      genMode
+                        ? "border-accent-purple/40 bg-accent-purple/15 text-accent-purple"
+                        : "border-transparent text-muted hover:text-white"
+                    }`}
+                  >
+                    <Wand2 className="w-3 h-3" />
+                    {lang === "sv" ? "Skapa bild" : "Create image"}
+                  </button>
+                ) : (
+                  <span
+                    className="ml-auto inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-medium text-muted/50 border border-white/[0.05] cursor-default"
+                    title={
+                      lang === "sv"
+                        ? "Bildgenerering kommer snart. Du kan bifoga bilder för analys."
+                        : "Image generation coming soon. You can attach images for analysis."
+                    }
+                  >
+                    <Wand2 className="w-3 h-3 opacity-40" />
+                    {lang === "sv" ? "Skapa bild · snart" : "Create image · soon"}
+                  </span>
+                )}
               </div>
 
               {/* Messages / empty */}
@@ -1267,29 +1445,42 @@ export default function AIPlayground() {
                       <BudAILogo size="lg" animated />
                     </div>
                     <h3 className="text-lg sm:text-xl font-semibold text-white mb-1 tracking-tight">
-                      {lang === "sv" ? "Vad vill du göra?" : "What do you want to do?"}
+                      {lang === "sv" ? "Börja med något verkligt" : "Start with something real"}
                     </h3>
                     <p className="text-sm text-muted mb-6 text-center max-w-md leading-relaxed">
                       {lang === "sv"
-                        ? "Multimodalt: text, bild, röst och minne — i en yta."
-                        : "Multimodal: text, image, voice, and memory — one surface."}
+                        ? imageGenEnabled
+                          ? "Text, bildanalys, bildskapande, röst och minne — i en yta."
+                          : "Text, bildanalys (bifoga), röst och minne — i en yta."
+                        : imageGenEnabled
+                          ? "Text, image analysis, image creation, voice, and memory — one surface."
+                          : "Text, image analysis (attach), voice, and memory — one surface."}
                     </p>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 w-full max-w-lg">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 w-full max-w-xl">
                       {caps.map((c) => (
                         <button
                           key={c.title}
                           type="button"
                           onClick={() => {
-                            if (c.voice) {
+                            if ("voice" in c && c.voice) {
                               toggleMic();
                               return;
                             }
-                            if (c.needsImage) {
+                            if ("needsImage" in c && c.needsImage) {
                               fileRef.current?.click();
                               setInput(c.prompt);
                               return;
                             }
-                            if (c.gen) {
+                            if ("gen" in c && c.gen) {
+                              if (!imageGenEnabled) {
+                                showToast(
+                                  "warn",
+                                  lang === "sv"
+                                    ? "Bildgenerering kommer snart."
+                                    : "Image generation coming soon."
+                                );
+                                return;
+                              }
                               setGenMode(true);
                               setInput(c.prompt);
                               taRef.current?.focus();
@@ -1297,20 +1488,38 @@ export default function AIPlayground() {
                             }
                             void runPrompt(c.prompt);
                           }}
-                          className="text-left rounded-2xl border border-white/[0.08] bg-white/[0.03] hover:border-accent-cyan/30 hover:bg-accent-cyan/[0.05] p-3 transition-colors group"
+                          className="text-left rounded-2xl border border-white/[0.09] bg-gradient-to-b from-white/[0.06] to-white/[0.02] hover:border-accent-cyan/40 hover:from-accent-cyan/[0.08] hover:to-accent-purple/[0.04] p-3.5 transition-all duration-200 group shadow-[0_0_0_0_rgba(0,229,255,0)] hover:shadow-[0_8px_28px_rgba(0,0,0,0.25)]"
                         >
-                          <div className="text-accent-cyan mb-1.5 opacity-80 group-hover:opacity-100">
+                          <div className="w-8 h-8 rounded-lg bg-accent-cyan/10 border border-accent-cyan/20 flex items-center justify-center text-accent-cyan mb-2.5 group-hover:scale-105 transition-transform">
                             {c.icon === "vision" && <Eye className="w-4 h-4" />}
                             {c.icon === "gen" && <Wand2 className="w-4 h-4" />}
                             {c.icon === "voice" && <Mic className="w-4 h-4" />}
                             {c.icon === "memory" && <BrainCircuit className="w-4 h-4" />}
                             {c.icon === "create" && <Sparkles className="w-4 h-4" />}
                             {c.icon === "analyze" && <Shield className="w-4 h-4" />}
+                            {c.icon === "plan" && <ListTodo className="w-4 h-4" />}
                           </div>
-                          <div className="text-[13px] font-medium text-white/90">{c.title}</div>
+                          <div className="text-[13px] font-semibold text-white/90">{c.title}</div>
+                          {"blurb" in c && c.blurb ? (
+                            <div className="text-[10px] text-muted mt-0.5">{c.blurb}</div>
+                          ) : null}
                         </button>
                       ))}
                     </div>
+                    <button
+                      type="button"
+                      onClick={runInspire}
+                      disabled={busy}
+                      className="mt-5 group inline-flex items-center gap-2 px-4 py-2.5 rounded-full border border-accent-cyan/25 bg-gradient-to-r from-accent-cyan/10 to-accent-purple/10 hover:from-accent-cyan/20 hover:to-accent-purple/20 text-sm text-white/90 transition-all shadow-[0_0_30px_rgba(0,229,255,0.08)]"
+                    >
+                      <Dices className="w-4 h-4 text-accent-cyan group-hover:rotate-12 transition-transform" />
+                      <span className="font-medium">
+                        {lang === "sv" ? "Inspirera mig" : "Surprise me"}
+                      </span>
+                      <span className="text-[10px] text-muted font-mono hidden sm:inline">
+                        {lang === "sv" ? "slumpad stark prompt" : "random strong prompt"}
+                      </span>
+                    </button>
                   </div>
                 )}
 
@@ -1366,7 +1575,7 @@ export default function AIPlayground() {
                                   return n;
                                 });
                               }}
-                              className="text-left p-3 rounded-2xl border border-white/[0.08] bg-white/[0.03] hover:border-accent-cyan/35"
+                              className="text-left p-3.5 rounded-2xl border border-white/[0.1] bg-gradient-to-b from-white/[0.06] to-white/[0.02] hover:border-accent-cyan/40 hover:shadow-[0_8px_32px_rgba(0,229,255,0.12)] transition-all"
                             >
                               <div className="text-xs font-semibold text-accent-cyan mb-1">
                                 {opt.title}
@@ -1412,6 +1621,47 @@ export default function AIPlayground() {
                         </button>
                       )}
 
+                      {msg.role === "assistant" && !msg.error && !dualPick[msg.id] && (
+                        <div className="flex flex-wrap gap-2 opacity-70 hover:opacity-100 transition-opacity">
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              try {
+                                await navigator.clipboard.writeText(msg.content);
+                                showToast("ok", lang === "sv" ? "Kopierat" : "Copied");
+                              } catch {
+                                showToast("err", "Copy failed");
+                              }
+                            }}
+                            className="inline-flex items-center gap-1 text-[10px] text-muted hover:text-white"
+                          >
+                            <Copy className="w-3 h-3" />
+                            {lang === "sv" ? "Kopiera" : "Copy"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              // regenerate: find preceding user message
+                              const idx = messages.findIndex((m) => m.id === msg.id);
+                              let userText = "";
+                              for (let i = idx - 1; i >= 0; i--) {
+                                if (messages[i].role === "user") {
+                                  userText = messages[i].content;
+                                  break;
+                                }
+                              }
+                              if (!userText) return;
+                              setMessages((p) => p.filter((m) => m.id !== msg.id));
+                              void runPrompt(userText);
+                            }}
+                            className="inline-flex items-center gap-1 text-[10px] text-muted hover:text-white"
+                          >
+                            <RefreshCw className="w-3 h-3" />
+                            {lang === "sv" ? "Generera om" : "Regenerate"}
+                          </button>
+                        </div>
+                      )}
+
                       {msg.generated && msg.imageUrl && (
                         <div className="flex flex-wrap gap-2">
                           <a
@@ -1441,31 +1691,57 @@ export default function AIPlayground() {
                   </div>
                 ))}
 
-                {/* Live activity */}
+                {/* Live activity — cinematic thinking */}
                 {(typingText || (busy && activity !== "typing")) && (
                   <div className="flex gap-2.5">
-                    <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-accent-cyan/80 to-accent-purple/80 p-1.5">
-                      <BudAILogo size="xs" animated className="!w-full !h-full" />
+                    <div className="relative w-9 h-9 rounded-xl bg-gradient-to-br from-accent-cyan/90 to-accent-purple/90 p-[2px] shrink-0 shadow-[0_0_24px_rgba(0,229,255,0.35)]">
+                      <div className="w-full h-full rounded-[10px] bg-[#0a0a12] flex items-center justify-center overflow-hidden">
+                        <BudAILogo size="xs" animated className="!w-[22px] !h-[22px]" />
+                      </div>
+                      {busy && !typingText && (
+                        <span className="absolute -inset-1 rounded-xl border border-accent-cyan/30 logo-pulse-ring pointer-events-none" />
+                      )}
                     </div>
-                    <div className="bg-white/[0.04] px-3.5 py-2.5 rounded-2xl border border-white/[0.07] text-sm text-white/90 min-w-[120px]">
+                    <div className="relative bg-gradient-to-br from-white/[0.06] to-white/[0.02] px-3.5 py-2.5 rounded-2xl border border-accent-cyan/20 text-sm text-white/90 min-w-[140px] max-w-[min(100%,520px)] overflow-hidden shadow-[0_0_40px_rgba(0,229,255,0.08)]">
+                      <div className="absolute inset-0 pointer-events-none opacity-40">
+                        <div className="absolute inset-0 bg-[linear-gradient(110deg,transparent_20%,rgba(0,229,255,0.12)_45%,transparent_70%)] playground-shimmer" />
+                      </div>
                       {typingText ? (
-                        <>
+                        <div className="relative whitespace-pre-wrap leading-relaxed">
                           {renderMarkdown(typingText)}
-                          <span className="inline-block w-1.5 h-4 bg-accent-cyan ml-0.5 animate-pulse align-middle" />
-                        </>
+                          <span className="inline-block w-1.5 h-4 bg-accent-cyan ml-0.5 align-middle animate-pulse" />
+                        </div>
                       ) : (
-                        <span className="text-muted text-xs flex items-center gap-2">
-                          <span className="flex gap-1">
-                            {[0, 1, 2].map((d) => (
+                        <div className="relative space-y-2">
+                          <div className="flex items-center gap-2 text-[12px] text-accent-cyan font-medium">
+                            <span className="relative flex h-2 w-2">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-cyan opacity-50" />
+                              <span className="relative inline-flex rounded-full h-2 w-2 bg-accent-cyan" />
+                            </span>
+                            {activityLabel(activity, lang)}
+                          </div>
+                          <div className="flex gap-1">
+                            {[0, 1, 2, 3, 4].map((d) => (
                               <span
                                 key={d}
-                                className="w-1.5 h-1.5 rounded-full bg-accent-cyan animate-pulse"
-                                style={{ animationDelay: `${d * 0.12}s` }}
-                              />
+                                className="h-1 flex-1 rounded-full bg-white/[0.06] overflow-hidden"
+                              >
+                                <span
+                                  className="block h-full rounded-full bg-gradient-to-r from-accent-cyan to-accent-purple"
+                                  style={{
+                                    width: "40%",
+                                    animation: `playground-bar 1.1s ease-in-out ${d * 0.12}s infinite alternate`,
+                                  }}
+                                />
+                              </span>
                             ))}
-                          </span>
-                          {activityLabel(activity, lang)}
-                        </span>
+                          </div>
+                          <p className="text-[10px] text-muted/70 font-mono">
+                            {lang === "sv"
+                              ? "BudAI Core · v0.93 · nordic path"
+                              : "BudAI Core · v0.93 · nordic path"}
+                          </p>
+                        </div>
                       )}
                     </div>
                   </div>
@@ -1508,12 +1784,12 @@ export default function AIPlayground() {
                   </div>
                 )}
 
-                {genMode && (
+                {genMode && imageGenEnabled && (
                   <div className="mb-2 text-[11px] text-accent-purple flex items-center gap-1.5 px-1">
                     <Wand2 className="w-3.5 h-3.5" />
                     {lang === "sv"
-                      ? "Bildläge — beskriv vad som ska skapas"
-                      : "Image mode — describe what to create"}
+                      ? "Bildgenerering — beskriv vad som ska skapas"
+                      : "Image generation — describe what to create"}
                   </div>
                 )}
                 {listening && (
@@ -1562,7 +1838,7 @@ export default function AIPlayground() {
                       if (e.key === "Enter" && !e.shiftKey) {
                         e.preventDefault();
                         if ((input.trim() || attach) && !busy) {
-                          if (genMode) void runImageGen(input);
+                          if (genMode && imageGenEnabled) void runImageGen(input);
                           else
                             void runPrompt(
                               input ||
@@ -1588,6 +1864,20 @@ export default function AIPlayground() {
                     disabled={busy}
                     className="flex-1 px-3.5 py-2.5 rounded-2xl bg-white/[0.04] border border-white/[0.09] text-sm text-white placeholder:text-muted/60 focus:outline-none focus:border-accent-cyan/40 resize-none min-h-[44px] max-h-[140px]"
                   />
+                  <button
+                    type="button"
+                    onClick={runInspire}
+                    disabled={busy}
+                    title={lang === "sv" ? "Inspirera — överraskningsprompt" : "Surprise — random strong prompt"}
+                    className={`shrink-0 h-11 px-2.5 sm:px-3 rounded-2xl border flex items-center gap-1.5 text-[11px] font-semibold transition-all ${
+                      inspireSpin
+                        ? "border-accent-purple/50 bg-accent-purple/20 text-accent-purple"
+                        : "border-white/[0.1] bg-white/[0.03] text-muted hover:text-accent-cyan hover:border-accent-cyan/30"
+                    } disabled:opacity-40`}
+                  >
+                    <Dices className={`w-3.5 h-3.5 ${inspireSpin ? "animate-spin" : ""}`} />
+                    <span className="hidden sm:inline">{lang === "sv" ? "Inspirera" : "Surprise"}</span>
+                  </button>
                   {busy ? (
                     <button
                       type="button"
@@ -1600,7 +1890,7 @@ export default function AIPlayground() {
                     <button
                       type="submit"
                       disabled={(!input.trim() && !attach) || busy}
-                      className="shrink-0 h-11 px-3.5 sm:px-4 rounded-2xl bg-gradient-to-r from-accent-cyan to-accent-purple text-white disabled:opacity-40 flex items-center"
+                      className="shrink-0 h-11 px-3.5 sm:px-4 rounded-2xl bg-gradient-to-r from-accent-cyan to-accent-purple text-white disabled:opacity-40 flex items-center shadow-[0_0_20px_rgba(0,229,255,0.25)] hover:shadow-[0_0_28px_rgba(0,229,255,0.4)] transition-shadow"
                     >
                       <Send className="w-4 h-4" />
                     </button>

@@ -100,10 +100,10 @@ const PRODUCT_PILLS = [
   },
   {
     icon: ImageIcon,
-    en: "Vision + gen",
-    sv: "Vision + gen",
-    tipEn: "Upload images & generate visuals when keys are set",
-    tipSv: "Ladda upp bilder & generera visuellt när nycklar finns",
+    en: "Vision",
+    sv: "Vision",
+    tipEn: "Upload an image — BudAI analyzes it with Claude vision",
+    tipSv: "Ladda upp en bild — BudAI analyserar med Claude vision",
   },
   {
     icon: Mic,

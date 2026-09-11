@@ -45,7 +45,7 @@ import { createClient, isAuthConfigured } from "@/lib/supabase/client";
 const ADMIN_PASSWORD =
   process.env.NEXT_PUBLIC_ADMIN_PASSWORD || "Daylightshere76";
 
-type Tab = "overview" | "waitlist" | "platform" | "ops" | "export";
+type Tab = "overview" | "waitlist" | "chats" | "platform" | "ops" | "export";
 
 export default function AdminPage() {
   const [users, setUsers] = useState<WaitlistUser[]>([]);
@@ -73,6 +73,24 @@ export default function AdminPage() {
     guestsToday: number | null;
     note: string;
   }>({ profiles: null, conversations: null, memories: null, usageToday: null, guestsToday: null, note: "—" });
+  const [chats, setChats] = useState<
+    {
+      id: string;
+      title: string;
+      email: string | null;
+      display_name: string | null;
+      message_count: number;
+      updated_at: string;
+      user_id: string;
+    }[]
+  >([]);
+  const [chatsLoading, setChatsLoading] = useState(false);
+  const [chatsError, setChatsError] = useState<string | null>(null);
+  const [chatSearch, setChatSearch] = useState("");
+  const [selectedChat, setSelectedChat] = useState<{
+    conversation: Record<string, unknown>;
+    messages: { id: string; role: string; content: string; created_at: string; image_url?: string | null }[];
+  } | null>(null);
 
   useEffect(() => {
     const saved = sessionStorage.getItem("budai_admin_auth");
@@ -133,6 +151,7 @@ export default function AdminPage() {
       setAuthenticated(true);
       setError(false);
       sessionStorage.setItem("budai_admin_auth", "true");
+      sessionStorage.setItem("budai_admin_key", password);
     } else {
       setError(true);
     }
@@ -213,6 +232,49 @@ export default function AdminPage() {
       setTimeout(() => setCopied(false), 1500);
     } catch {
       /* ignore */
+    }
+  };
+
+
+  const adminKey = () =>
+    (typeof window !== "undefined" && sessionStorage.getItem("budai_admin_key")) ||
+    password ||
+    ADMIN_PASSWORD;
+
+  const loadChats = async (q = "") => {
+    setChatsLoading(true);
+    setChatsError(null);
+    try {
+      const res = await fetch(
+        `/api/admin/conversations?limit=50${q ? `&q=${encodeURIComponent(q)}` : ""}`,
+        { headers: { "x-admin-key": adminKey() }, cache: "no-store" }
+      );
+      const data = await res.json();
+      if (!res.ok) {
+        setChatsError(data.error || data.hint || "Failed to load");
+        setChats([]);
+      } else {
+        setChats(data.conversations || []);
+      }
+    } catch {
+      setChatsError("Network error");
+      setChats([]);
+    } finally {
+      setChatsLoading(false);
+    }
+  };
+
+  const openChat = async (id: string) => {
+    try {
+      const res = await fetch(`/api/admin/conversations?id=${encodeURIComponent(id)}`, {
+        headers: { "x-admin-key": adminKey() },
+        cache: "no-store",
+      });
+      const data = await res.json();
+      if (res.ok) setSelectedChat(data);
+      else setChatsError(data.error || "Could not open");
+    } catch {
+      setChatsError("Network error");
     }
   };
 
@@ -332,6 +394,7 @@ export default function AdminPage() {
   const tabs: { id: Tab; label: string; icon: typeof LayoutDashboard }[] = [
     { id: "overview", label: "Overview", icon: LayoutDashboard },
     { id: "waitlist", label: "Waitlist", icon: List },
+    { id: "chats", label: "Chats", icon: MessageSquare },
     { id: "platform", label: "Platform", icon: Cpu },
     { id: "ops", label: "Ops", icon: TerminalIcon },
     { id: "export", label: "Export", icon: Download },
@@ -386,6 +449,7 @@ export default function AdminPage() {
                 type="button"
                 onClick={() => {
                   sessionStorage.removeItem("budai_admin_auth");
+                  sessionStorage.removeItem("budai_admin_key");
                   setAuthenticated(false);
                   setPassword("");
                 }}
@@ -403,7 +467,10 @@ export default function AdminPage() {
             <button
               key={t.id}
               type="button"
-              onClick={() => setTab(t.id)}
+              onClick={() => {
+                setTab(t.id);
+                if (t.id === "chats") void loadChats(chatSearch);
+              }}
               className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium transition-colors ${
                 tab === t.id
                   ? "bg-accent-cyan/15 text-accent-cyan border border-accent-cyan/25"
@@ -548,6 +615,121 @@ export default function AdminPage() {
         )}
 
 
+
+        {tab === "chats" && (
+          <div className="space-y-4">
+            <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-4 sm:p-5">
+              <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+                <div>
+                  <h2 className="text-sm font-semibold text-white flex items-center gap-2">
+                    <MessageSquare className="w-4 h-4 text-accent-cyan" />
+                    Conversation inspector
+                  </h2>
+                  <p className="text-[11px] text-muted mt-1 max-w-xl leading-relaxed">
+                    Stille-only. Requires <code className="font-mono text-white/70">SUPABASE_SERVICE_ROLE_KEY</code> on
+                    the server. User RLS is unchanged — this route uses service role.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => void loadChats(chatSearch)}
+                  className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-white/10 text-sm text-muted hover:text-white"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${chatsLoading ? "animate-spin" : ""}`} />
+                  Refresh
+                </button>
+              </div>
+              <div className="flex gap-2 mb-4">
+                <div className="relative flex-1 max-w-sm">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted" />
+                  <input
+                    value={chatSearch}
+                    onChange={(e) => setChatSearch(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") void loadChats(chatSearch);
+                    }}
+                    placeholder="Search titles…"
+                    className="w-full pl-9 pr-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-white"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => void loadChats(chatSearch)}
+                  className="px-3 py-2 rounded-lg bg-accent-cyan/15 border border-accent-cyan/25 text-accent-cyan text-sm"
+                >
+                  Search
+                </button>
+              </div>
+              {chatsError && (
+                <div className="mb-3 rounded-xl border border-amber-400/25 bg-amber-400/10 px-3 py-2 text-xs text-amber-100">
+                  {chatsError}
+                </div>
+              )}
+              <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+                <div className="lg:col-span-2 space-y-1 max-h-[480px] overflow-y-auto">
+                  {chatsLoading && <p className="text-sm text-muted p-2">Loading…</p>}
+                  {!chatsLoading && chats.length === 0 && (
+                    <p className="text-sm text-muted p-2">No conversations found.</p>
+                  )}
+                  {chats.map((c) => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => void openChat(c.id)}
+                      className={`w-full text-left px-3 py-2.5 rounded-xl border transition-colors ${
+                        (selectedChat?.conversation as { id?: string })?.id === c.id
+                          ? "border-accent-cyan/30 bg-accent-cyan/10"
+                          : "border-white/[0.06] bg-white/[0.02] hover:border-white/15"
+                      }`}
+                    >
+                      <div className="text-sm text-white font-medium truncate">{c.title || "Untitled"}</div>
+                      <div className="text-[10px] text-muted mt-0.5 truncate">
+                        {c.display_name || c.email || c.user_id.slice(0, 8)} · {c.message_count} msgs ·{" "}
+                        {new Date(c.updated_at).toLocaleString("sv-SE")}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+                <div className="lg:col-span-3 rounded-xl border border-white/[0.08] bg-black/25 min-h-[320px] max-h-[480px] overflow-y-auto p-3">
+                  {!selectedChat && (
+                    <p className="text-sm text-muted text-center py-16">Select a conversation</p>
+                  )}
+                  {selectedChat && (
+                    <div className="space-y-3">
+                      <div className="border-b border-white/[0.06] pb-2 mb-2">
+                        <div className="text-sm font-semibold text-white">
+                          {String(selectedChat.conversation.title || "Chat")}
+                        </div>
+                        <div className="text-[10px] text-muted font-mono">
+                          {String(selectedChat.conversation.email || selectedChat.conversation.user_id || "")}
+                        </div>
+                      </div>
+                      {selectedChat.messages.map((m) => (
+                        <div
+                          key={m.id}
+                          className={`rounded-lg px-3 py-2 text-[13px] border ${
+                            m.role === "user"
+                              ? "border-accent-cyan/20 bg-accent-cyan/5 text-white/90"
+                              : "border-white/[0.06] bg-white/[0.03] text-white/80"
+                          }`}
+                        >
+                          <div className="text-[9px] uppercase tracking-wider text-muted mb-1 font-mono">
+                            {m.role} · {new Date(m.created_at).toLocaleString("sv-SE")}
+                          </div>
+                          <div className="whitespace-pre-wrap leading-relaxed">{m.content}</div>
+                          {m.image_url && (
+                            <div className="text-[10px] text-accent-cyan mt-1">[has image]</div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {tab === "platform" && (
           <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -589,7 +771,7 @@ export default function AdminPage() {
                     <span className="text-accent-green font-mono">on</span>
                   </li>
                   <li className="flex justify-between gap-3 border-b border-white/[0.05] pb-2">
-                    <span>Vision upload + image gen (keyed)</span>
+                    <span>Vision upload (Claude) · image gen optional</span>
                     <span className="text-accent-green font-mono">on</span>
                   </li>
                   <li className="flex justify-between gap-3 border-b border-white/[0.05] pb-2">

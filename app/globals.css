@@ -840,6 +840,20 @@ h1, h2, h3 {
   100% { background-position: -200% 0; }
 }
 
+.playground-shimmer {
+  background-size: 200% 100%;
+  animation: playground-shimmer 2.2s linear infinite;
+}
+@keyframes playground-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@keyframes playground-bar {
+  0% { transform: translateX(-30%); opacity: 0.45; }
+  100% { transform: translateX(120%); opacity: 1; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .logo-glow-breathe,
   .logo-mark-breathe,
@@ -850,7 +864,8 @@ h1, h2, h3 {
   .logo-core-pulse,
   .loading-bar-shimmer,
   .playground-orb,
-  .playground-orb-rev {
+  .playground-orb-rev,
+  .playground-shimmer {
     animation: none !important;
   }
 }

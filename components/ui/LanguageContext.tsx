@@ -12,18 +12,30 @@ interface LangContextType {
 const LangContext = createContext<LangContextType | null>(null);
 
 export function LangProvider({ children }: { children: ReactNode }) {
-  const [lang, setLangState] = useState<Lang>("sv");
+  // Default English (product default). Saved preference wins after mount.
+  const [lang, setLangState] = useState<Lang>("en");
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    const saved = localStorage.getItem("budai-lang") as Lang;
-    const next = saved === "en" || saved === "sv" ? saved : "sv";
-    setLangState(next);
-    document.documentElement.lang = next;
+    try {
+      const saved = localStorage.getItem("budai-lang") as Lang | null;
+      // EN is default. Only switch to SV if user explicitly saved sv.
+      const next: Lang = saved === "sv" ? "sv" : "en";
+      setLangState(next);
+      document.documentElement.lang = next;
+    } catch {
+      document.documentElement.lang = "en";
+    }
+    setReady(true);
   }, []);
 
   const setLang = (l: Lang) => {
     setLangState(l);
-    localStorage.setItem("budai-lang", l);
+    try {
+      localStorage.setItem("budai-lang", l);
+    } catch {
+      /* */
+    }
     document.documentElement.lang = l;
   };
 
@@ -31,7 +43,8 @@ export function LangProvider({ children }: { children: ReactNode }) {
 
   return (
     <LangContext.Provider value={{ lang, setLang, t }}>
-      {children}
+      {/* Avoid flash of wrong language content if needed — children always render */}
+      <div className={ready ? undefined : undefined}>{children}</div>
     </LangContext.Provider>
   );
 }

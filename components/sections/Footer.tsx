@@ -103,7 +103,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 lg:gap-8">
           <div className="lg:col-span-2">
             <a href="#" className="flex items-center gap-2.5 mb-5 group">
-              <BudAILogo size="sm" animated={false} />
+              <BudAILogo size="md" animated={false} />
               <span className="text-xl font-bold tracking-tight">
                 Bud<span className="text-accent-cyan">AI</span>
               </span>

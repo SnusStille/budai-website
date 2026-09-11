@@ -143,8 +143,8 @@ export default function AuthModal() {
                 </p>
                 <p className="text-xs text-muted leading-relaxed px-2">
                   {lang === "sv"
-                    ? "Öppna länken i samma webbläsare som du använder nu — annars misslyckas inloggningen (säkerhet)."
-                    : "Open the link in this same browser — finishing login elsewhere will fail (security)."}
+                    ? "Öppna länken i samma webbläsare. Länken ska gå till den domän du är på nu (stilledev.se eller localhost) — inte en gammal localhost-länk."
+                    : "Open the link in this same browser. It should open the domain you’re on now (stilledev.se or localhost) — discard old localhost emails."}
                 </p>
                 <p className="text-xs text-accent-cyan mt-2">{email}</p>
               </div>

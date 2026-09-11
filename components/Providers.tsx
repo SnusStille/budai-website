@@ -7,6 +7,7 @@ import CommandPalette from "@/components/ui/CommandPalette";
 import { ToastProvider } from "@/components/ui/ToastStack";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import AuthModal from "@/components/auth/AuthModal";
+import AuthHashHandler from "@/components/auth/AuthHashHandler";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   const [loaded, setLoaded] = useState(false);
@@ -18,6 +19,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     <LangProvider>
       <AuthProvider>
         <ToastProvider>
+          <AuthHashHandler />
           <LoadingScreen onComplete={handleLoaded} />
           <div
             className={loaded ? "opacity-100" : "opacity-0"}

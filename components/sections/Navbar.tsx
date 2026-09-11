@@ -166,7 +166,7 @@ export default function Navbar() {
                   Bud<span className="text-accent-cyan">AI</span>
                 </span>
                 <span className="text-[10px] tracking-wide">
-                  <span className="text-white/90 font-medium">{t.nav.developedBy}</span>{" "}
+                  <span className="text-white font-medium">{t.nav.developedBy}</span>{" "}
                   <span className="text-accent-cyan group-hover:text-white transition-colors">Stilledev</span>
                 </span>
               </div>
@@ -197,22 +197,23 @@ export default function Navbar() {
             <div className="hidden lg:flex items-center gap-2.5">
               <StockholmClock className="hidden xl:inline-flex" />
               <div
-                className="flex items-center gap-1 p-1 rounded-xl bg-white/[0.03] border border-white/[0.06]"
+                className="flex items-center p-0.5 rounded-full bg-black/40 border border-white/[0.08] shadow-inner"
                 role="group"
                 aria-label="Language"
               >
-                {(["sv", "en"] as const).map((code) => (
+                {(["en", "sv"] as const).map((code) => (
                   <button
                     key={code}
+                    type="button"
                     onClick={() => setLang(code)}
                     aria-pressed={lang === code}
-                    className={`px-2.5 py-1.5 text-xs font-medium rounded-lg transition-all ${
+                    className={`relative min-w-[2.6rem] px-3 py-1.5 text-[11px] font-semibold tracking-wide rounded-full transition-all ${
                       lang === code
-                        ? "bg-accent-cyan/15 text-accent-cyan shadow-[0_0_12px_rgba(0,229,255,0.12)]"
-                        : "text-muted hover:text-white"
+                        ? "bg-gradient-to-r from-accent-cyan to-accent-purple text-white shadow-[0_0_16px_rgba(0,229,255,0.25)]"
+                        : "text-muted/70 hover:text-white"
                     }`}
                   >
-                    {code.toUpperCase()}
+                    {code === "en" ? "EN" : "SV"}
                   </button>
                 ))}
               </div>
@@ -278,24 +279,32 @@ export default function Navbar() {
                 </motion.a>
               ))}
 
-              <div className="flex items-center gap-2 mt-4 px-4">
+              <div className="flex items-center gap-3 mt-4 px-4">
                 <Globe className="w-4 h-4 text-muted" />
-                <button
-                  onClick={() => setLang("sv")}
-                  className={`px-4 py-2 text-sm font-medium rounded-lg ${
-                    lang === "sv" ? "bg-accent-cyan/15 text-accent-cyan" : "text-muted"
-                  }`}
-                >
-                  Svenska
-                </button>
-                <button
-                  onClick={() => setLang("en")}
-                  className={`px-4 py-2 text-sm font-medium rounded-lg ${
-                    lang === "en" ? "bg-accent-cyan/15 text-accent-cyan" : "text-muted"
-                  }`}
-                >
-                  English
-                </button>
+                <div className="flex p-0.5 rounded-full bg-black/40 border border-white/[0.08]">
+                  <button
+                    type="button"
+                    onClick={() => setLang("en")}
+                    className={`px-4 py-2 text-sm font-semibold rounded-full ${
+                      lang === "en"
+                        ? "bg-gradient-to-r from-accent-cyan to-accent-purple text-white"
+                        : "text-muted"
+                    }`}
+                  >
+                    English
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setLang("sv")}
+                    className={`px-4 py-2 text-sm font-semibold rounded-full ${
+                      lang === "sv"
+                        ? "bg-gradient-to-r from-accent-cyan to-accent-purple text-white"
+                        : "text-muted"
+                    }`}
+                  >
+                    Svenska
+                  </button>
+                </div>
               </div>
 
               <a

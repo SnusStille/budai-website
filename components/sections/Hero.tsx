@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, FileText, Languages, Zap, Shield, ChevronDown, Command } from "lucide-react";
+import { motion } from "framer-motion";
+import { ArrowRight, FileText, Languages, Zap, Shield, ChevronDown } from "lucide-react";
 import { useLang } from "@/components/ui/LanguageContext";
 import Magnetic from "@/components/ui/Magnetic";
 import AICore from "@/components/effects/AICore";
@@ -11,7 +11,6 @@ import { StilledevLink } from "@/components/ui/BudAILogo";
 export default function Hero() {
   const { t, lang } = useLang();
   const [isMobile, setIsMobile] = useState(false);
-  const [wordIndex, setWordIndex] = useState(0);
 
   useEffect(() => {
     const onResize = () => setIsMobile(window.innerWidth < 768);
@@ -20,29 +19,27 @@ export default function Hero() {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  useEffect(() => {
-    setWordIndex(0);
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const interval = setInterval(() => {
-      setWordIndex((i) => (i + 1) % t.hero.words.length);
-    }, 3200);
-    return () => clearInterval(interval);
-  }, [t.hero.words]);
-
   const chips =
     lang === "sv"
       ? [
           { icon: FileText, label: "Utkast & dokument", color: "text-accent-cyan" },
           { icon: Zap, label: "Automatisering", color: "text-accent-green" },
-          { icon: Languages, label: "SV · EN", color: "text-accent-purple" },
+          { icon: Languages, label: "EN · SV", color: "text-accent-purple" },
           { icon: Shield, label: "Nordic-first", color: "text-accent-pink" },
         ]
       : [
           { icon: FileText, label: "Drafts & docs", color: "text-accent-cyan" },
           { icon: Zap, label: "Automation", color: "text-accent-green" },
-          { icon: Languages, label: "SV · EN", color: "text-accent-purple" },
+          { icon: Languages, label: "EN · SV", color: "text-accent-purple" },
           { icon: Shield, label: "Nordic-first", color: "text-accent-pink" },
         ];
+
+  const accent =
+    "titleAccent" in t.hero && typeof (t.hero as { titleAccent?: string }).titleAccent === "string"
+      ? (t.hero as { titleAccent: string }).titleAccent
+      : lang === "sv"
+        ? "Sverige"
+        : "Sweden";
 
   return (
     <section className="relative min-h-[100svh] flex items-center justify-center overflow-hidden pt-24 pb-16">
@@ -57,7 +54,7 @@ export default function Hero() {
         <motion.div
           initial={{ opacity: 0, y: 16, scale: 0.96 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.55, delay: 0.15 }}
+          transition={{ duration: 0.55, delay: 0.12 }}
           className="inline-flex items-center gap-2.5 px-4 sm:px-5 py-2 sm:py-2.5 rounded-full glass-strong mb-6 sm:mb-8 border border-accent-green/25 shadow-[0_0_40px_rgba(0,255,157,0.08)]"
         >
           <span className="relative flex h-2 w-2 sm:h-2.5 sm:w-2.5">
@@ -78,7 +75,7 @@ export default function Hero() {
           href="#waitlist"
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.22 }}
+          transition={{ duration: 0.4, delay: 0.18 }}
           className="mx-auto mb-6 sm:mb-8 block w-fit text-[11px] sm:text-xs text-muted/70 hover:text-accent-green transition-colors"
         >
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-white/[0.07] bg-white/[0.02] hover:border-accent-green/25">
@@ -88,132 +85,104 @@ export default function Hero() {
           </span>
         </motion.a>
 
-        <AICore isMobile={isMobile} />
+        {/* Single product mark — no rotating headline words */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.94 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.55, delay: 0.2 }}
+          className="flex justify-center mb-5 sm:mb-7"
+        >
+          <AICore isMobile={isMobile} />
+        </motion.div>
 
         <motion.h1
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.75, delay: 0.25 }}
-          className="text-[2.45rem] leading-[1.08] sm:text-6xl md:text-7xl lg:text-[5.25rem] font-bold tracking-[-0.035em] mb-5 sm:mb-6 text-white"
+          transition={{ duration: 0.7, delay: 0.28 }}
+          className="text-[2.45rem] leading-[1.08] sm:text-6xl md:text-7xl lg:text-[4.75rem] font-bold tracking-[-0.035em] mb-5 sm:mb-6 text-white max-w-4xl mx-auto"
         >
           <span className="block text-white/95">{t.hero.title1}</span>
-          <span className="relative block mt-1.5 h-[1.15em] overflow-visible">
-            <AnimatePresence mode="wait">
-              <motion.span
-                key={t.hero.words[wordIndex]}
-                initial={{ y: "40%", opacity: 0 }}
-                animate={{ y: "0%", opacity: 1 }}
-                exit={{ y: "-40%", opacity: 0 }}
-                transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                className="relative inline-block text-gradient-shimmer"
-              >
-                {t.hero.words[wordIndex]}
-              </motion.span>
-            </AnimatePresence>
+          <span className="block mt-1">
+            <span className="text-gradient">{t.hero.title2}</span>
+          </span>
+          <span className="mt-3 block text-base sm:text-lg md:text-xl font-medium tracking-normal text-muted">
+            {lang === "sv" ? "För " : "For "}
+            <span className="text-accent-cyan font-semibold">{accent}</span>
+            {lang === "sv" ? " · och Norden" : " · and the Nordics"}
           </span>
         </motion.h1>
 
         <motion.p
-          initial={{ opacity: 0, y: 14 }}
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.4 }}
-          className="text-base sm:text-lg md:text-xl text-muted max-w-2xl mx-auto mb-3 leading-relaxed"
+          transition={{ duration: 0.6, delay: 0.38 }}
+          className="text-base sm:text-lg md:text-xl text-muted max-w-2xl mx-auto leading-relaxed mb-8 sm:mb-10"
         >
           {t.hero.subtitle}
-        </motion.p>
-
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-          className="text-sm text-muted/55 mb-9 sm:mb-11 flex flex-wrap items-center justify-center gap-2"
-        >
-          <span className="w-1.5 h-1.5 rounded-full bg-accent-cyan shadow-[0_0_8px_#00e5ff]" />
-          {lang === "sv" ? "Utvecklad av" : "Developed by"} <StilledevLink showMark />
-          <span className="text-muted/30">·</span>
-          <span>Sweden</span>
         </motion.p>
 
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.55, delay: 0.5 }}
-          className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-11 sm:mb-14"
+          transition={{ duration: 0.55, delay: 0.45 }}
+          className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-10 sm:mb-12"
         >
           <Magnetic>
             <a
-              href="#waitlist"
-              className="btn-primary text-base sm:text-lg !px-7 sm:!px-8 !py-3.5 sm:!py-4 group w-full sm:w-auto"
-            >
-              <span className="flex items-center justify-center gap-2">
-                {t.hero.ctaSecondary}
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </span>
-            </a>
-          </Magnetic>
-          <Magnetic strength={0.18}>
-            <a
               href="#playground"
-              className="btn-ghost text-base sm:text-lg !px-7 sm:!px-8 !py-3.5 sm:!py-4 w-full sm:w-auto"
+              className="btn-primary inline-flex items-center gap-2 !px-7 !py-3.5 text-sm sm:text-base shadow-[0_0_40px_rgba(0,229,255,0.2)]"
             >
-              {t.hero.ctaPrimary}
+              <span>{t.hero.ctaPrimary}</span>
+              <ArrowRight className="w-4 h-4" />
             </a>
           </Magnetic>
+          <a
+            href="#waitlist"
+            className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl border border-white/10 bg-white/[0.03] text-sm sm:text-base text-white/85 hover:border-accent-cyan/30 hover:bg-white/[0.05] transition-colors"
+          >
+            {t.hero.ctaSecondary}
+          </a>
         </motion.div>
 
         <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.65 }}
-          className="flex flex-wrap items-center justify-center gap-2 sm:gap-3"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.55 }}
+          className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 mb-8"
         >
-          {chips.map((item, i) => (
-            <motion.div
-              key={item.label}
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.75 + i * 0.05, duration: 0.35 }}
-              className="flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full glass border border-white/[0.07] text-xs sm:text-sm text-white/70"
+          {chips.map((c) => (
+            <span
+              key={c.label}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-white/[0.07] bg-white/[0.02] text-[11px] sm:text-xs text-muted"
             >
-              <item.icon className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${item.color}`} />
-              {item.label}
-            </motion.div>
+              <c.icon className={`w-3.5 h-3.5 ${c.color}`} />
+              {c.label}
+            </span>
           ))}
         </motion.div>
 
-        <motion.button
-          type="button"
+        <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 1.1 }}
-          onClick={() => {
-            window.dispatchEvent(
-              new KeyboardEvent("keydown", { key: "k", metaKey: true, bubbles: true })
-            );
-          }}
-          className="mt-10 hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11px] text-muted/50 hover:text-muted border border-transparent hover:border-white/10 hover:bg-white/[0.03] transition-all font-mono"
+          transition={{ delay: 0.65 }}
+          className="text-xs text-muted/50"
         >
-          <Command className="w-3 h-3" />K
-          <span className="text-muted/35">
-            {lang === "sv" ? "kommandopalett" : "command palette"}
-          </span>
-        </motion.button>
+          {lang === "sv" ? "Utvecklad av " : "Built by "}
+          <StilledevLink />
+          <span className="text-muted/30"> · </span>
+          Sweden
+        </motion.p>
 
-        <motion.div
+        <motion.a
+          href="#capabilities"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 1.25 }}
-          className="absolute bottom-6 left-1/2 -translate-x-1/2 hidden md:block"
+          transition={{ delay: 0.8 }}
+          className="absolute bottom-6 left-1/2 -translate-x-1/2 text-muted/40 hover:text-accent-cyan transition-colors hidden sm:flex flex-col items-center gap-1"
         >
-          <a
-            href="#capabilities"
-            className="flex flex-col items-center gap-1.5 text-muted/35 hover:text-muted/70 transition-colors"
-            aria-label="Scroll to capabilities"
-          >
-            <span className="text-[10px] uppercase tracking-[0.2em]">Scroll</span>
-            <ChevronDown className="w-5 h-5 opacity-80" />
-          </a>
-        </motion.div>
+          <span className="text-[10px] uppercase tracking-widest">Scroll</span>
+          <ChevronDown className="w-4 h-4 animate-bounce" />
+        </motion.a>
       </div>
     </section>
   );

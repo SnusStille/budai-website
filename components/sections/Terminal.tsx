@@ -12,6 +12,8 @@ import {
   Shield,
   Activity,
   RotateCcw,
+  Radio,
+  Circle,
 } from "lucide-react";
 import CodeBackground from "@/components/effects/CodeBackground";
 import ScrollReveal from "@/components/ui/ScrollReveal";
@@ -63,10 +65,10 @@ function highlightCode(text: string) {
 const BOOT: { type: TLine["type"]; text: string; delay: number; typeSpeed?: number }[] = [
   { type: "sys", text: "  BUDAI · v0.93 · nordic · stilledev", delay: 20 },
   { type: "cmd", text: "budai status --live", delay: 200, typeSpeed: 12 },
-  { type: "out", text: "  engine     online   8.7B params", delay: 40 },
-  { type: "out", text: "  nodes      3/3      sto · osl · hel", delay: 40 },
-  { type: "out", text: "  security   A+       TLS 1.3 · GDPR", delay: 40 },
-  { type: "success", text: "  ✓ ready for inference · 11ms avg", delay: 90 },
+  { type: "out", text: "  engine     online   Claude · playground", delay: 40 },
+  { type: "out", text: "  region     SE · Nordics first", delay: 40 },
+  { type: "out", text: "  security   TLS 1.3 · GDPR-minded", delay: 40 },
+  { type: "success", text: "  ✓ ready for inference · preview path", delay: 90 },
   { type: "sys", text: "  streaming tasks…", delay: 100 },
 ];
 
@@ -76,14 +78,14 @@ function codeLines(lines: string[], speed = 3) {
 
 const LIVE = [
   ...codeLines([
-    "// api/revenue/route.ts",
+    "// app/api/playground/route.ts",
     'import { NextResponse } from "next/server";',
-    'import { getQuarterlyRevenue } from "@/lib/analytics";',
+    'import { streamBudAI } from "@/lib/inference";',
     "",
-    "export async function GET(req: Request) {",
-    '  const q = new URL(req.url).searchParams.get("q") ?? "Q3";',
-    "  const data = await getQuarterlyRevenue(q);",
-    "  return NextResponse.json({ quarter: q, ...data });",
+    "export async function POST(req: Request) {",
+    "  const body = await req.json();",
+    "  const stream = await streamBudAI(body);",
+    "  return new NextResponse(stream);",
     "}",
     "",
   ]),
@@ -102,13 +104,20 @@ const LIVE = [
   ),
 ];
 
+const SIDE_METRICS = [
+  { key: "lat", label: "latency", value: "11ms", icon: Zap, color: "text-accent-cyan" },
+  { key: "eng", label: "engine", value: "v0.93", icon: Brain, color: "text-accent-purple" },
+  { key: "sec", label: "security", value: "A+", icon: Shield, color: "text-accent-green" },
+  { key: "up", label: "target uptime", value: "99.9%", icon: Activity, color: "text-accent-green" },
+];
+
 const NEURAL = [
-  "attention · 32 heads",
+  "attention · multi-head",
   "embed · swedish pack",
-  "kv-cache · 94% hit",
+  "kv-cache · warm",
   "stream · sse",
   "guard · pii safe",
-  "gpu · 72%",
+  "region · se-first",
 ];
 
 function sleep(ms: number, signal?: { cancelled: boolean }) {
@@ -139,6 +148,7 @@ export default function Terminal() {
   const [inView, setInView] = useState(false);
   const [runKey, setRunKey] = useState(0);
   const [clock, setClock] = useState("");
+  const [pulse, setPulse] = useState(0);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const sectionRef = useRef<HTMLElement>(null);
@@ -187,6 +197,11 @@ export default function Terminal() {
   }, [lang]);
 
   useEffect(() => {
+    const id = setInterval(() => setPulse((p) => (p + 1) % 100), 80);
+    return () => clearInterval(id);
+  }, []);
+
+  useEffect(() => {
     if (!inView) return;
     const mySession = ++sessionRef.current;
     activeRunner.current = mySession;
@@ -207,7 +222,12 @@ export default function Terminal() {
       });
     };
 
-    const runPhase = async (phase: { type: string; text: string; delay: number; typeSpeed?: number }) => {
+    const runPhase = async (phase: {
+      type: string;
+      text: string;
+      delay: number;
+      typeSpeed?: number;
+    }) => {
       if (!stillActive()) return;
       if (phase.type === "cmd" || phase.type === "code") {
         setTyping("");
@@ -257,9 +277,9 @@ export default function Terminal() {
       setNeuralLogs((prev) => {
         const next = [...prev, NEURAL[i % NEURAL.length]];
         i++;
-        return next.length > 4 ? next.slice(-4) : next;
+        return next.length > 5 ? next.slice(-5) : next;
       });
-    }, 1600);
+    }, 1400);
     return () => clearInterval(interval);
   }, [isComplete, runKey]);
 
@@ -288,39 +308,52 @@ export default function Terminal() {
   };
 
   return (
-    <section id="terminal" ref={sectionRef} className="relative section-hairline py-20 sm:py-24 md:py-32 overflow-hidden">
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(90vw,560px)] h-[min(90vw,560px)] bg-accent-green/[0.03] rounded-full blur-[140px] pointer-events-none" />
+    <section
+      id="terminal"
+      ref={sectionRef}
+      className="relative section-hairline py-20 sm:py-24 md:py-32 overflow-hidden"
+    >
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(90vw,640px)] h-[min(90vw,640px)] bg-accent-green/[0.04] rounded-full blur-[140px] pointer-events-none" />
+      <div className="absolute top-1/3 right-0 w-[min(50vw,360px)] h-[360px] bg-accent-purple/[0.04] rounded-full blur-[120px] pointer-events-none" />
       <CodeBackground />
 
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <ScrollReveal className="text-center mb-10 sm:mb-14">
           <span className="section-badge text-accent-green mb-4">{t.terminal.badge}</span>
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight mb-4 sm:mb-5">
             {t.terminal.title} <span className="text-gradient-cyan">{t.terminal.titleHighlight}</span>
           </h2>
-          <p className="text-sm sm:text-base md:text-lg text-muted max-w-2xl mx-auto">{t.terminal.subtitle}</p>
+          <p className="text-sm sm:text-base md:text-lg text-muted max-w-2xl mx-auto">
+            {t.terminal.subtitle}
+          </p>
           <p className="mt-3 text-[11px] text-muted/50 font-mono">
             {lang === "sv" ? "illustration · inte live-shell" : "illustration · not a live shell"}
           </p>
         </ScrollReveal>
 
         <ScrollReveal>
-          <div className="relative rounded-2xl overflow-hidden border border-white/[0.09] bg-[#06060c] shadow-[0_0_80px_rgba(0,229,255,0.08)]">
-            <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-accent-cyan/55 to-transparent z-20" />
+          <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden border border-white/[0.1] bg-[#05050a] shadow-[0_0_100px_rgba(0,229,255,0.1),0_40px_80px_rgba(0,0,0,0.45)]">
+            {/* Multi-stop top beam */}
+            <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-accent-cyan/70 to-transparent z-20" />
+            <div className="absolute top-0 inset-x-[20%] h-[2px] bg-gradient-to-r from-accent-cyan/0 via-accent-cyan/40 to-accent-purple/0 blur-sm z-20" />
 
             {/* Title bar */}
-            <div className="flex items-center justify-between px-3 sm:px-5 py-2.5 border-b border-white/[0.05] bg-[#0a0a12]/95 relative z-10 gap-2">
+            <div className="flex items-center justify-between px-3 sm:px-5 py-2.5 sm:py-3 border-b border-white/[0.06] bg-gradient-to-r from-[#0a0a14] via-[#0c0c16] to-[#0a0a14] relative z-10 gap-2">
               <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
                 <div className="w-2.5 h-2.5 rounded-full bg-[#ff5f57]/90 shrink-0" />
                 <div className="w-2.5 h-2.5 rounded-full bg-[#febc2e]/90 shrink-0" />
                 <div className="w-2.5 h-2.5 rounded-full bg-[#28c840]/90 shrink-0" />
-                <span className="ml-1.5 sm:ml-2 text-[10px] sm:text-[11px] font-mono text-muted/50 truncate">
-                  neural-shell
+                <span className="ml-1.5 sm:ml-3 text-[10px] sm:text-[11px] font-mono text-muted/55 truncate flex items-center gap-1.5">
+                  <TermIcon className="w-3 h-3 text-accent-cyan/60" />
+                  neural-shell · budai@stilledev
                 </span>
               </div>
-              <div className="flex items-center gap-1.5 text-[11px] sm:text-[12px] text-muted/60 font-mono shrink-0">
-                <TermIcon className="w-3.5 h-3.5 text-accent-cyan/70" />
-                <span className="hidden xs:inline sm:inline">budai@stilledev</span>
+              <div className="hidden md:flex items-center gap-2 text-[10px] font-mono text-muted/50">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-accent-green/10 text-accent-green border border-accent-green/20">
+                  <Radio className="w-2.5 h-2.5" />
+                  LIVE
+                </span>
+                <span className="tabular-nums text-accent-cyan/50">{clock}</span>
               </div>
               <div className="flex items-center gap-0.5 shrink-0">
                 <button
@@ -338,115 +371,193 @@ export default function Terminal() {
                   className="p-1.5 rounded-md hover:bg-white/5 text-muted hover:text-white transition-colors"
                   aria-label="Copy"
                 >
-                  {copied ? <Check className="w-3.5 h-3.5 text-accent-green" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copied ? (
+                    <Check className="w-3.5 h-3.5 text-accent-green" />
+                  ) : (
+                    <Copy className="w-3.5 h-3.5" />
+                  )}
                 </button>
               </div>
             </div>
 
-            <div
-              ref={scrollRef}
-              className="p-3 sm:p-5 h-[320px] sm:h-[420px] md:h-[460px] overflow-y-auto font-mono text-[11px] sm:text-[12.5px] leading-relaxed terminal-scroll relative z-10"
-            >
-              {!inView && (
-                <div className="flex items-center gap-2 text-muted/50 py-10 justify-center">
-                  <span className="w-1.5 h-1.5 rounded-full bg-accent-cyan animate-pulse" />
-                  {lang === "sv" ? "Väntar…" : "Waiting…"}
-                </div>
-              )}
+            {/* Dual pane body */}
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_220px] relative z-10">
+              {/* Main terminal */}
+              <div
+                ref={scrollRef}
+                className="p-3 sm:p-5 h-[300px] sm:h-[400px] md:h-[440px] overflow-y-auto font-mono text-[11px] sm:text-[12.5px] leading-relaxed terminal-scroll border-b lg:border-b-0 lg:border-r border-white/[0.05]"
+              >
+                {!inView && (
+                  <div className="flex items-center gap-2 text-muted/50 py-10 justify-center">
+                    <span className="w-1.5 h-1.5 rounded-full bg-accent-cyan animate-pulse" />
+                    {lang === "sv" ? "Väntar…" : "Waiting…"}
+                  </div>
+                )}
 
-              {inView && lines.length === 0 && !typing && (
-                <div className="flex items-center gap-2 text-accent-cyan/60 py-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-accent-cyan animate-pulse" />
-                  boot…
-                </div>
-              )}
+                {inView && lines.length === 0 && !typing && (
+                  <div className="flex items-center gap-2 text-accent-cyan/60 py-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-accent-cyan animate-pulse" />
+                    boot…
+                  </div>
+                )}
 
-              {(() => {
-                let codeLineNo = 0;
-                const rendered = lines.map((l) => {
-                  if (l.type === "cmd") codeLineNo = 0;
-                  if (l.type === "code" && /^\s*(\/\/|#|--)\s*\S+\.(tsx?|jsx?|py|sql)\b/.test(l.text)) codeLineNo = 0;
-                  if (l.type === "code") codeLineNo += 1;
+                {(() => {
+                  let codeLineNo = 0;
+                  const rendered = lines.map((l) => {
+                    if (l.type === "cmd") codeLineNo = 0;
+                    if (
+                      l.type === "code" &&
+                      /^\s*(\/\/|#|--)\s*\S+\.(tsx?|jsx?|py|sql)\b/.test(l.text)
+                    )
+                      codeLineNo = 0;
+                    if (l.type === "code") codeLineNo += 1;
+                    return (
+                      <div key={l.id} className="mb-0.5">
+                        {l.type === "cmd" ? (
+                          <div className="flex items-start gap-2">
+                            <span className="text-accent-green shrink-0 select-none">❯</span>
+                            <span className="text-white break-all">{l.text}</span>
+                          </div>
+                        ) : l.type === "code" ? (
+                          <div className="flex items-start gap-2 sm:gap-3 overflow-x-auto">
+                            <span className="shrink-0 select-none text-muted/20 text-[10px] w-4 text-right tabular-nums">
+                              {codeLineNo}
+                            </span>
+                            <span className="whitespace-pre">
+                              {l.text.length ? highlightCode(l.text) : "\u00a0"}
+                            </span>
+                          </div>
+                        ) : (
+                          <div className={`${color(l.type)} break-all`}>{l.text}</div>
+                        )}
+                      </div>
+                    );
+                  });
+                  if (typing && typingType === "code") codeLineNo += 1;
                   return (
-                    <div key={l.id} className="mb-0.5">
-                      {l.type === "cmd" ? (
+                    <>
+                      {rendered}
+                      {typing && typingType === "cmd" && (
                         <div className="flex items-start gap-2">
-                          <span className="text-accent-green shrink-0 select-none">❯</span>
-                          <span className="text-white break-all">{l.text}</span>
+                          <span className="text-accent-green shrink-0">❯</span>
+                          <span className="text-white break-all">{typing}</span>
+                          <span
+                            className={`w-1.5 h-3.5 bg-accent-cyan ml-0.5 mt-0.5 shrink-0 ${
+                              cursorVisible ? "opacity-100" : "opacity-0"
+                            }`}
+                          />
                         </div>
-                      ) : l.type === "code" ? (
-                        <div className="flex items-start gap-2 sm:gap-3 overflow-x-auto">
-                          <span className="shrink-0 select-none text-muted/20 text-[10px] w-4 text-right tabular-nums">
+                      )}
+                      {typing && typingType === "code" && (
+                        <div className="flex items-start gap-2 sm:gap-3">
+                          <span className="shrink-0 text-muted/20 text-[10px] w-4 text-right tabular-nums">
                             {codeLineNo}
                           </span>
-                          <span className="whitespace-pre">{l.text.length ? highlightCode(l.text) : "\u00a0"}</span>
+                          <span className="whitespace-pre">
+                            {highlightCode(typing)}
+                            <span
+                              className={`inline-block w-1.5 h-3 bg-accent-cyan ml-0.5 align-middle ${
+                                cursorVisible ? "opacity-100" : "opacity-0"
+                              }`}
+                            />
+                          </span>
                         </div>
-                      ) : (
-                        <div className={`${color(l.type)} break-all`}>{l.text}</div>
                       )}
-                    </div>
+                    </>
                   );
-                });
-                if (typing && typingType === "code") codeLineNo += 1;
-                return (
-                  <>
-                    {rendered}
-                    {typing && typingType === "cmd" && (
-                      <div className="flex items-start gap-2">
-                        <span className="text-accent-green shrink-0">❯</span>
-                        <span className="text-white break-all">{typing}</span>
-                        <span className={`w-1.5 h-3.5 bg-accent-cyan ml-0.5 mt-0.5 shrink-0 ${cursorVisible ? "opacity-100" : "opacity-0"}`} />
-                      </div>
-                    )}
-                    {typing && typingType === "code" && (
-                      <div className="flex items-start gap-2 sm:gap-3">
-                        <span className="shrink-0 text-muted/20 text-[10px] w-4 text-right tabular-nums">{codeLineNo}</span>
-                        <span className="whitespace-pre">
-                          {highlightCode(typing)}
-                          <span className={`inline-block w-1.5 h-3 bg-accent-cyan ml-0.5 align-middle ${cursorVisible ? "opacity-100" : "opacity-0"}`} />
-                        </span>
-                      </div>
-                    )}
-                  </>
-                );
-              })()}
+                })()}
 
-              {isComplete && neuralLogs.length > 0 && (
-                <div className="mt-3 pt-3 border-t border-white/[0.04]">
-                  <div className="text-[9px] text-muted/40 mb-1.5 uppercase tracking-[0.2em]">live</div>
-                  {neuralLogs.map((log, i) => (
-                    <div key={`${log}-${i}`} className="text-accent-cyan/50 text-[11px] mb-0.5">
-                      <span className="text-accent-cyan/30 mr-1.5">›</span>
-                      {log}
+                {isComplete && neuralLogs.length > 0 && (
+                  <div className="mt-3 pt-3 border-t border-white/[0.04]">
+                    <div className="text-[9px] text-muted/40 mb-1.5 uppercase tracking-[0.2em]">
+                      stream
                     </div>
-                  ))}
+                    {neuralLogs.map((log, i) => (
+                      <div key={`${log}-${i}`} className="text-accent-cyan/50 text-[11px] mb-0.5">
+                        <span className="text-accent-cyan/30 mr-1.5">›</span>
+                        {log}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Side panel — metrics / honest infra strip */}
+              <aside className="hidden lg:flex flex-col p-4 bg-[#07070e] gap-3">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[9px] uppercase tracking-[0.18em] text-muted/45 font-mono">
+                    core
+                  </span>
+                  <span className="relative flex h-1.5 w-1.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-green opacity-40" />
+                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-accent-green" />
+                  </span>
                 </div>
-              )}
+
+                {SIDE_METRICS.map((m) => (
+                  <div
+                    key={m.key}
+                    className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5"
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <m.icon className={`w-3 h-3 ${m.color}`} />
+                      <span className="text-[9px] uppercase tracking-wider text-muted/50">
+                        {m.label}
+                      </span>
+                    </div>
+                    <div className={`text-sm font-semibold font-mono ${m.color}`}>{m.value}</div>
+                  </div>
+                ))}
+
+                {/* Mini waveform — pure CSS, cheap */}
+                <div className="mt-auto rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-3">
+                  <div className="text-[9px] uppercase tracking-wider text-muted/45 mb-2 font-mono">
+                    signal
+                  </div>
+                  <div className="flex items-end gap-[3px] h-10">
+                    {Array.from({ length: 16 }).map((_, i) => {
+                      const h = 20 + Math.abs(Math.sin((pulse + i * 7) * 0.12)) * 70;
+                      return (
+                        <div
+                          key={i}
+                          className="flex-1 rounded-sm bg-gradient-to-t from-accent-cyan/30 to-accent-purple/70"
+                          style={{ height: `${h}%`, opacity: 0.55 + (i % 3) * 0.1 }}
+                        />
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1.5 text-[10px] text-muted/40 font-mono">
+                  <Circle className="w-2 h-2 fill-accent-cyan text-accent-cyan" />
+                  SE · preview
+                </div>
+              </aside>
             </div>
 
+            {/* Footer strip */}
             <div className="flex items-center justify-between px-3 sm:px-4 py-2 border-t border-white/[0.05] bg-[#0a0a12] text-[9px] sm:text-[10px] font-mono text-muted/55 flex-wrap gap-2 relative z-10">
               <div className="flex items-center gap-2.5 sm:gap-4">
                 <span className="flex items-center gap-1">
-                  <Brain className="w-3 h-3 text-accent-purple/70" /> 8.7B
+                  <Brain className="w-3 h-3 text-accent-purple/70" /> Claude
                 </span>
                 <span className="flex items-center gap-1">
-                  <Cpu className="w-3 h-3 text-accent-cyan/70" /> 11ms
+                  <Cpu className="w-3 h-3 text-accent-cyan/70" /> preview
                 </span>
                 <span className="hidden sm:flex items-center gap-1">
-                  <Database className="w-3 h-3" /> 3 nodes
+                  <Database className="w-3 h-3" /> Supabase
                 </span>
               </div>
               <div className="flex items-center gap-2.5 sm:gap-4">
                 <span className="flex items-center gap-1">
-                  <Shield className="w-3 h-3 text-accent-green" /> A+
-                </span>
-                <span className="flex items-center gap-1">
-                  <Activity className="w-3 h-3 text-accent-green" /> 99.97%
+                  <Shield className="w-3 h-3 text-accent-green" /> GDPR
                 </span>
                 <span className="flex items-center gap-1">
                   <Zap className="w-3 h-3 text-accent-cyan" /> v0.93
                 </span>
-                {clock && <span className="text-accent-cyan/45 tabular-nums hidden sm:inline">{clock}</span>}
+                {clock && (
+                  <span className="text-accent-cyan/45 tabular-nums hidden sm:inline">{clock}</span>
+                )}
               </div>
             </div>
           </div>

@@ -6,17 +6,17 @@ import BudAILogo from "@/components/ui/BudAILogo";
 import { StilledevMark } from "@/components/ui/BudAILogo";
 
 const STEPS_EN = [
-  "Booting neural core…",
-  "Aligning language paths…",
-  "Securing Nordic edge…",
-  "BudAI is ready.",
+  "Initializing BudAI core…",
+  "Loading Nordic language pack…",
+  "Securing privacy edge…",
+  "Ready · v0.93",
 ];
 
 const STEPS_SV = [
-  "Startar neural kärna…",
-  "Justerar språkvägar…",
-  "Säkrar Nordic edge…",
-  "BudAI är redo.",
+  "Initierar BudAI-kärna…",
+  "Laddar nordiskt språkpaket…",
+  "Säkrar integritetskant…",
+  "Redo · v0.93",
 ];
 
 export default function LoadingScreen({ onComplete }: { onComplete: () => void }) {
@@ -119,14 +119,25 @@ export default function LoadingScreen({ onComplete }: { onComplete: () => void }
               initial={{ scale: 0.88, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-              className="mb-8"
+              className="mb-8 relative"
             >
+              <div
+                aria-hidden
+                className="absolute inset-[-28%] rounded-full border border-dashed border-accent-cyan/25 pointer-events-none logo-ambient-spin"
+              />
+              <div
+                aria-hidden
+                className="absolute inset-[-14%] rounded-full border border-accent-purple/15 pointer-events-none"
+              />
               <BudAILogo size="xl" animated />
             </motion.div>
 
             <h1 className="text-3xl sm:text-4xl font-bold tracking-tight mb-1">
               Bud<span className="text-accent-cyan">AI</span>
             </h1>
+            <p className="text-xs text-muted/70 mb-3 tracking-wide">
+              Nordic AI work assistant
+            </p>
             <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-muted/55 mb-8 font-medium">
               <StilledevMark size={14} />
               <span>Stilledev · Sweden</span>

@@ -49,7 +49,7 @@ export default function AICore({ isMobile = false }: { isMobile?: boolean }) {
         initial={{ opacity: 0, scale: 0.78 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-        className="relative mx-auto mb-9 sm:mb-11 flex flex-col items-center"
+        className="relative mx-auto mb-2 sm:mb-3 flex flex-col items-center"
         style={{ width: dim + 28, height: dim + 32 }}
       >
         <span

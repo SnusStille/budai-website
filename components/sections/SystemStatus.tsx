@@ -193,7 +193,10 @@ export default function SystemStatus() {
                       </div>
                       {s.status === "operational" ? (
                         <span className="text-[11px] text-accent-green inline-flex items-center gap-1">
-                          <CheckCircle2 className="w-3 h-3" />
+                          <span className="relative flex h-1.5 w-1.5 mr-0.5">
+                            <span className="absolute inline-flex h-full w-full rounded-full bg-accent-green opacity-40 animate-ping" />
+                            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-accent-green" />
+                          </span>
                           {lang === "sv" ? "Aktiv" : "Active"}
                         </span>
                       ) : (
