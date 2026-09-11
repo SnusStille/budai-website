@@ -1,31 +1,22 @@
-<svg viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
   <defs>
     <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#fff"/>
-      <stop offset="40%" stop-color="#00e5ff"/>
+      <stop offset="0%" stop-color="#e8ffff"/>
+      <stop offset="45%" stop-color="#00e5ff"/>
       <stop offset="100%" stop-color="#b967ff"/>
     </linearGradient>
-    <radialGradient id="c" cx="50%" cy="45%" r="50%">
+    <radialGradient id="c" cx="50%" cy="50%" r="50%">
       <stop offset="0%" stop-color="#fff"/>
-      <stop offset="35%" stop-color="#00e5ff"/>
-      <stop offset="100%" stop-color="#b967ff" stop-opacity="0.55"/>
-    </radialGradient>
-    <radialGradient id="bg" cx="35%" cy="30%" r="70%">
-      <stop offset="0%" stop-color="#1a2240"/>
-      <stop offset="100%" stop-color="#060814"/>
+      <stop offset="40%" stop-color="#00e5ff"/>
+      <stop offset="100%" stop-color="#7c3aed" stop-opacity="0.9"/>
     </radialGradient>
   </defs>
-  <rect width="128" height="128" rx="32" fill="#020205"/>
-  <circle cx="64" cy="64" r="50" fill="url(#bg)" stroke="rgba(255,255,255,0.38)" stroke-width="2"/>
-  <g fill="none" stroke="url(#g)" stroke-width="2.4" opacity="0.9">
-    <ellipse cx="64" cy="64" rx="40" ry="14"/>
-    <ellipse cx="64" cy="64" rx="40" ry="14" transform="rotate(60 64 64)"/>
-    <ellipse cx="64" cy="64" rx="40" ry="14" transform="rotate(-60 64 64)"/>
-  </g>
-  <circle cx="104" cy="64" r="4.5" fill="url(#g)"/>
-  <circle cx="24" cy="64" r="4.5" fill="url(#g)"/>
-  <circle cx="84" cy="30" r="3.5" fill="url(#g)"/>
-  <circle cx="44" cy="98" r="3.5" fill="url(#g)"/>
-  <circle cx="64" cy="64" r="20" fill="url(#c)"/>
-  <circle cx="64" cy="64" r="8" fill="#fff"/>
+  <circle cx="32" cy="32" r="31" fill="#060912"/>
+  <circle cx="32" cy="32" r="27" stroke="url(#g)" stroke-width="1" opacity="0.3" fill="none"/>
+  <path d="M32 6.5 A25.5 25.5 0 0 1 55.5 32" stroke="url(#g)" stroke-width="3" stroke-linecap="round" fill="none"/>
+  <path d="M32 57.5 A25.5 25.5 0 0 1 8.5 32" stroke="url(#g)" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.55"/>
+  <circle cx="32" cy="6.5" r="2.4" fill="#fff"/>
+  <circle cx="32" cy="32" r="13.5" stroke="url(#g)" stroke-width="1.2" opacity="0.35" fill="none"/>
+  <circle cx="32" cy="32" r="8.5" fill="url(#c)"/>
+  <circle cx="32" cy="32" r="3.4" fill="#fff"/>
 </svg>

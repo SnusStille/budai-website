@@ -5,17 +5,12 @@ import dynamic from "next/dynamic";
 import ScrollProgress from "@/components/ui/ScrollProgress";
 import SectionDots from "@/components/ui/SectionDots";
 import CookieConsent from "@/components/ui/CookieConsent";
-import AIActivityHUD from "@/components/ui/AIActivityHUD";
 import BackToTop from "@/components/ui/BackToTop";
 import SurpriseToasts from "@/components/ui/SurpriseToasts";
 import Signature from "@/components/ui/Signature";
-import ThemePulse from "@/components/ui/ThemePulse";
-import ShareMoment from "@/components/ui/ShareMoment";
 import FocusMode from "@/components/ui/FocusMode";
-import LaunchBeacon from "@/components/ui/LaunchBeacon";
 import Navbar from "@/components/sections/Navbar";
 import Hero from "@/components/sections/Hero";
-import BuddyCard from "@/components/sections/BuddyCard";
 import Capabilities from "@/components/sections/Capabilities";
 import Waitlist from "@/components/sections/Waitlist";
 import Timeline from "@/components/sections/Timeline";
@@ -39,7 +34,7 @@ export default function Home() {
     );
     console.log("%cBuilt by Stilledev | Sweden", "color: #00e5ff; font-size: 12px;");
     console.log(
-      "%cTry typing 'budai' or 'stille' · press F (focus) · press N · ⌘K",
+      "%cTry typing 'budai' or 'stille' · press F (focus) · ⌘K",
       "color: #8892a0; font-size: 11px; font-style: italic;"
     );
 
@@ -90,7 +85,6 @@ export default function Home() {
       <div className="fixed inset-0 z-[1] pointer-events-none ai-vignette" aria-hidden />
 
       <div className="relative z-10">
-        <BuddyCard />
         <Navbar />
         <Hero />
         <Capabilities />
@@ -103,14 +97,10 @@ export default function Home() {
         <Footer />
       </div>
 
-      <AIActivityHUD />
       <BackToTop />
       <SurpriseToasts />
       <Signature />
-      <ThemePulse />
-      <ShareMoment />
       <FocusMode />
-      <LaunchBeacon />
       <CookieConsent />
     </main>
   );

@@ -17,27 +17,36 @@ npm run dev
 | `NEXT_PUBLIC_SITE_URL` | yes | `https://stilledev.se` |
 | `NEXT_PUBLIC_SUPABASE_URL` | waitlist | |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | waitlist | |
-| `ANTHROPIC_API_KEY` | playground | |
+| `ANTHROPIC_API_KEY` | playground | server-only |
 | `ANTHROPIC_MODEL` | optional | default Claude Sonnet |
-| `NEXT_PUBLIC_ADMIN_PASSWORD` | optional | defaults to `Daylightshere76` |
+| `NEXT_PUBLIC_ADMIN_PASSWORD` | optional | defaults to launch key — **client-visible**; Stille-only gate, not enterprise auth |
 
 ## Admin
 
-Password: **`Daylightshere76`** (or env override).
+Restricted to **Stille** only. Password never shown on the login UI.  
+Default key: see `ADMIN.md` / env (not printed on the page).
 
 ## Waitlist 10%
 
-Code `BUDAI-EARLY-10` — hero banner, navbar chip, waitlist section, success panel.
+Code `BUDAI-EARLY-10` — subtle hero chip, Buddy popup, waitlist perks + success copy.
 
 ## Playground
 
-Dual / Single / Concise modes · regenerate · copy · share · thumbs · expand · stop · Enter to send.
+- **Single** default · Dual · Concise  
+- **Inspirera / Surprise** beside Send  
+- Answer language = site language (optional 🌐 override)  
+- Starter chips · regenerate · copy · share · stop  
 
 ## Brand
 
-- Logo: prism **B** monogram glass seal (2D motion only)
-- Font: Plus Jakarta Sans
+- Logo: **circular Neural Orb** (2D motion only)  
+- Font: Plus Jakarta Sans  
+- OG: `/og.png`  
 - Tab hide: `Stilledev.se · BudAI`
+
+## Product wedge
+
+> AI work assistant for Sweden — write, automate, think faster (SV & EN).
 
 ## Build
 
@@ -45,6 +54,11 @@ Dual / Single / Concise modes · regenerate · copy · share · thumbs · expand
 npm run lint && npm run build
 ```
 
-## ZIP
+## Supabase
 
-`/home/user/BudAI-Launch.zip` — no node_modules / .next / secrets.
+Run `supabase/schema.sql` and/or `supabase/MIGRATION_v2.sql` if not already applied.
+
+
+## Optional SQL v3
+
+`supabase/MIGRATION_v3.sql` — playground_conversations / memory / events (for future accounts). Public demo uses localStorage today.

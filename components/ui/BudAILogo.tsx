@@ -1,6 +1,6 @@
 "use client";
 
-import { useId } from "react";
+import { useId, type CSSProperties } from "react";
 
 type Size = "xs" | "sm" | "md" | "lg" | "xl" | "hero";
 
@@ -9,13 +9,15 @@ const SIZES: Record<Size, number> = {
   sm: 36,
   md: 46,
   lg: 72,
-  xl: 110,
-  hero: 212,
+  xl: 108,
+  hero: 196,
 };
 
 /**
- * BudAI mark — circular Neural Orb.
- * Perfect circle glass · triple orbits · luminous core · 2D motion only.
+ * FINAL BudAI mark — "Orbit Core"
+ * A single circular intelligence node: soft outer orbit, dual counter-rotating
+ * arcs, luminous core. Reads at 16px favicon and at hero scale.
+ * No letters. No squircles. Pure orbital geometry.
  */
 export default function BudAILogo({
   size = "sm",
@@ -35,7 +37,6 @@ export default function BudAILogo({
   const uid = useId().replace(/:/g, "");
   const px = SIZES[size];
   const isHero = size === "hero";
-  const showDetail = size !== "xs";
   const Tag = interactive || onClick ? "button" : "div";
 
   return (
@@ -48,270 +49,214 @@ export default function BudAILogo({
       } ${className}`}
       style={{ width: px, height: px }}
     >
-      {/* Soft circular bloom */}
-      <span
-        aria-hidden
-        className={`absolute inset-[-30%] rounded-full pointer-events-none ${
-          animated ? "logo-glow-breathe" : ""
-        }`}
-        style={{
-          background:
-            "radial-gradient(circle at 50% 45%, rgba(0,229,255,0.6) 0%, rgba(185,103,255,0.35) 38%, transparent 70%)",
-          filter: `blur(${isHero ? 24 : 10}px)`,
-          opacity: isHero ? 1 : 0.72,
-        }}
-      />
-
-      {/* Pulse rings — perfect circles */}
-      {isHero && animated && (
-        <>
-          <span
-            aria-hidden
-            className="absolute inset-[-6%] rounded-full border border-accent-cyan/35 pointer-events-none logo-pulse-ring"
-          />
-          <span
-            aria-hidden
-            className="absolute inset-[-6%] rounded-full border border-accent-purple/25 pointer-events-none logo-pulse-ring"
-            style={{ animationDelay: "1s" }}
-          />
-        </>
+      {animated && (
+        <span
+          aria-hidden
+          className="absolute inset-[-28%] rounded-full pointer-events-none logo-glow-breathe"
+          style={{
+            background:
+              "radial-gradient(circle at 50% 45%, rgba(0,229,255,0.55) 0%, rgba(185,103,255,0.2) 45%, transparent 72%)",
+            filter: `blur(${isHero ? 22 : 9}px)`,
+            opacity: isHero ? 0.9 : 0.55,
+          }}
+        />
       )}
 
-      {/* THE ORB — 100% circle */}
       <span
-        className={`relative z-[1] w-full h-full overflow-hidden rounded-full ${
+        className={`relative z-[1] w-full h-full rounded-full overflow-hidden ${
           animated && isHero ? "logo-mark-breathe" : ""
         }`}
         style={{
           background:
-            "radial-gradient(circle at 34% 28%, rgba(255,255,255,0.42) 0%, rgba(0,229,255,0.22) 22%, rgba(8,10,24,0.98) 58%, rgba(185,103,255,0.28) 100%)",
+            "radial-gradient(circle at 32% 28%, #152033 0%, #060912 58%, #0a0614 100%)",
           boxShadow: isHero
-            ? "0 0 56px rgba(0,229,255,0.58), 0 0 110px rgba(185,103,255,0.3), inset 0 2px 0 rgba(255,255,255,0.55), inset 0 -20px 40px rgba(0,0,0,0.5)"
-            : "0 0 24px rgba(0,229,255,0.45), inset 0 1px 0 rgba(255,255,255,0.45), inset 0 -10px 20px rgba(0,0,0,0.45)",
-          border: "1.5px solid rgba(255,255,255,0.4)",
+            ? "0 0 36px rgba(0,229,255,0.4), inset 0 1px 0 rgba(255,255,255,0.32)"
+            : "0 0 14px rgba(0,229,255,0.28), inset 0 1px 0 rgba(255,255,255,0.28)",
+          border: "1px solid rgba(255,255,255,0.22)",
         }}
       >
-        {/* Inner depth disc */}
-        <span
-          aria-hidden
-          className="absolute inset-[7%] rounded-full"
-          style={{
-            background:
-              "radial-gradient(circle at 38% 32%, rgba(255,255,255,0.14) 0%, rgba(0,229,255,0.08) 35%, rgba(4,5,14,0.95) 75%)",
-            boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.08)",
-          }}
-        />
-
-        <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full" aria-hidden>
+        <svg viewBox="0 0 64 64" className="absolute inset-0 w-full h-full" aria-hidden>
           <defs>
-            <linearGradient id={`lg-${uid}`} x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#ffffff" />
-              <stop offset="32%" stopColor="#00e5ff" />
-              <stop offset="68%" stopColor="#b967ff" />
-              <stop offset="100%" stopColor="#00ff9d" stopOpacity="0.9" />
+            <linearGradient id={`og-${uid}`} x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#e8ffff" />
+              <stop offset="45%" stopColor="#00e5ff" />
+              <stop offset="100%" stopColor="#b967ff" />
             </linearGradient>
-            <linearGradient id={`lg2-${uid}`} x1="100%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#00ff9d" />
+            <linearGradient id={`og2-${uid}`} x1="100%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#b967ff" />
               <stop offset="100%" stopColor="#00e5ff" />
             </linearGradient>
-            <radialGradient id={`core-${uid}`} cx="50%" cy="48%" r="50%">
+            <radialGradient id={`oc-${uid}`} cx="50%" cy="50%" r="50%">
               <stop offset="0%" stopColor="#ffffff" />
-              <stop offset="30%" stopColor="#00e5ff" />
-              <stop offset="70%" stopColor="#b967ff" stopOpacity="0.85" />
-              <stop offset="100%" stopColor="#060814" stopOpacity="0" />
+              <stop offset="40%" stopColor="#00e5ff" />
+              <stop offset="100%" stopColor="#7c3aed" stopOpacity="0.85" />
             </radialGradient>
-            <filter id={`f-${uid}`} x="-50%" y="-50%" width="200%" height="200%">
-              <feGaussianBlur stdDeviation="1.4" result="b" />
-              <feMerge>
-                <feMergeNode in="b" />
-                <feMergeNode in="SourceGraphic" />
-              </feMerge>
-            </filter>
           </defs>
 
-          {/* Guide ring */}
+          {/* Soft outer guide ring */}
           <circle
-            cx="50"
-            cy="50"
-            r="38"
+            cx="32"
+            cy="32"
+            r="27"
             fill="none"
-            stroke={`url(#lg-${uid})`}
-            strokeWidth="0.55"
-            opacity="0.22"
+            stroke={`url(#og-${uid})`}
+            strokeWidth="0.8"
+            opacity="0.25"
           />
 
-          {/* Triple orbital ellipses */}
-          {showDetail && (
-            <g
+          {/* Primary orbit arc — clockwise */}
+          <g
+            className={animated ? "logo-orbit-2d" : undefined}
+            style={
+              animated
+                ? ({
+                    transformOrigin: "32px 32px",
+                    animationDuration: isHero ? "14s" : "22s",
+                  } as CSSProperties)
+                : undefined
+            }
+          >
+            <path
+              d="M32 6.5 A25.5 25.5 0 0 1 55.5 32"
               fill="none"
-              stroke={`url(#lg-${uid})`}
-              strokeWidth={isHero ? 1.4 : 1.2}
-              opacity="0.78"
-              filter={`url(#f-${uid})`}
-            >
-              <ellipse cx="50" cy="50" rx="32" ry="11">
-                {animated && isHero && (
-                  <animateTransform
-                    attributeName="transform"
-                    type="rotate"
-                    from="0 50 50"
-                    to="360 50 50"
-                    dur="26s"
-                    repeatCount="indefinite"
-                  />
-                )}
-              </ellipse>
-              <ellipse cx="50" cy="50" rx="32" ry="11" transform="rotate(60 50 50)">
-                {animated && isHero && (
-                  <animateTransform
-                    attributeName="transform"
-                    type="rotate"
-                    from="60 50 50"
-                    to="420 50 50"
-                    dur="32s"
-                    repeatCount="indefinite"
-                  />
-                )}
-              </ellipse>
-              <ellipse cx="50" cy="50" rx="32" ry="11" transform="rotate(-60 50 50)">
-                {animated && isHero && (
-                  <animateTransform
-                    attributeName="transform"
-                    type="rotate"
-                    from="-60 50 50"
-                    to="300 50 50"
-                    dur="38s"
-                    repeatCount="indefinite"
-                  />
-                )}
-              </ellipse>
-            </g>
-          )}
+              stroke={`url(#og-${uid})`}
+              strokeWidth="2.6"
+              strokeLinecap="round"
+              opacity="0.95"
+            />
+            <path
+              d="M32 57.5 A25.5 25.5 0 0 1 8.5 32"
+              fill="none"
+              stroke={`url(#og-${uid})`}
+              strokeWidth="2.6"
+              strokeLinecap="round"
+              opacity="0.55"
+            />
+            {/* Orbit dots */}
+            <circle cx="32" cy="6.5" r="2.2" fill="#fff" opacity="0.95" />
+            <circle cx="55.5" cy="32" r="1.6" fill="#00e5ff" opacity="0.9" />
+          </g>
 
-          {/* Orbit nodes */}
-          {showDetail && (
-            <g filter={`url(#f-${uid})`}>
-              <circle cx="82" cy="50" r="3" fill={`url(#lg-${uid})`} />
-              <circle cx="18" cy="50" r="3" fill={`url(#lg2-${uid})`} />
-              <circle cx="66" cy="22" r="2.5" fill={`url(#lg-${uid})`} />
-              <circle cx="34" cy="78" r="2.5" fill={`url(#lg2-${uid})`} />
-              <circle cx="66" cy="78" r="2.5" fill={`url(#lg-${uid})`} />
-              <circle cx="34" cy="22" r="2.5" fill={`url(#lg2-${uid})`} />
-            </g>
-          )}
+          {/* Counter orbit — reverse */}
+          <g
+            className={animated ? "logo-orbit-2d" : undefined}
+            style={
+              animated
+                ? ({
+                    transformOrigin: "32px 32px",
+                    animationDuration: isHero ? "20s" : "32s",
+                    animationDirection: "reverse",
+                  } as CSSProperties)
+                : undefined
+            }
+          >
+            <path
+              d="M10 18 A22 22 0 0 1 54 18"
+              fill="none"
+              stroke={`url(#og2-${uid})`}
+              strokeWidth="1.4"
+              strokeLinecap="round"
+              opacity="0.5"
+            />
+            <circle cx="10" cy="18" r="1.4" fill="#b967ff" opacity="0.85" />
+          </g>
 
-          {/* Subtle spokes */}
-          {showDetail && (
-            <g stroke={`url(#lg-${uid})`} strokeWidth="0.85" opacity="0.28" strokeLinecap="round">
-              <line x1="50" y1="50" x2="82" y2="50" />
-              <line x1="50" y1="50" x2="18" y2="50" />
-              <line x1="50" y1="50" x2="66" y2="22" />
-              <line x1="50" y1="50" x2="34" y2="78" />
-            </g>
-          )}
+          {/* Mid ring */}
+          <circle
+            cx="32"
+            cy="32"
+            r="13.5"
+            fill="none"
+            stroke={`url(#og-${uid})`}
+            strokeWidth="1"
+            opacity="0.35"
+          />
 
           {/* Core */}
-          <circle cx="50" cy="50" r={isHero ? 15 : 13} fill={`url(#core-${uid})`} filter={`url(#f-${uid})`}>
-            {animated && (
-              <animate
-                attributeName="r"
-                values={isHero ? "14;16.2;14" : "12;13.8;12"}
-                dur="2.7s"
-                repeatCount="indefinite"
-              />
-            )}
-          </circle>
-          <circle cx="50" cy="50" r="6.8" fill="#ffffff" opacity="0.96" />
-          <circle cx="50" cy="50" r="3" fill={`url(#lg2-${uid})`} />
-
-          {/* Sparks */}
-          {isHero && animated && (
-            <>
-              <circle r="2.4" fill="#fff" filter={`url(#f-${uid})`}>
-                <animateMotion
-                  dur="4s"
-                  repeatCount="indefinite"
-                  path="M82,50 A32,11 0 1,1 18,50 A32,11 0 1,1 82,50"
-                />
-              </circle>
-              <circle r="1.9" fill="#00ff9d" filter={`url(#f-${uid})`}>
-                <animateMotion
-                  dur="5.2s"
-                  repeatCount="indefinite"
-                  path="M66,22 A32,11 60 1,1 34,78 A32,11 60 1,1 66,22"
-                />
-              </circle>
-              <circle r="1.7" fill="#b967ff" filter={`url(#f-${uid})`}>
-                <animateMotion
-                  dur="6.4s"
-                  repeatCount="indefinite"
-                  path="M34,22 A32,11 -60 1,0 66,78 A32,11 -60 1,0 34,22"
-                />
-              </circle>
-            </>
-          )}
+          <circle
+            cx="32"
+            cy="32"
+            r="8"
+            fill={`url(#oc-${uid})`}
+            className={animated ? "logo-core-pulse" : undefined}
+            style={{ transformOrigin: "32px 32px" }}
+          />
+          <circle cx="32" cy="32" r="3.2" fill="#fff" opacity="0.95" />
+          <circle cx="29.5" cy="29.5" r="1.1" fill="#fff" opacity="0.7" />
         </svg>
 
-        {/* Specular + rim */}
         <span
           aria-hidden
-          className="absolute top-[9%] left-[14%] w-[46%] h-[28%] rounded-full bg-white/45 blur-[5px] pointer-events-none"
-        />
-        <span
-          aria-hidden
-          className="absolute inset-[4%] rounded-full border border-white/18 pointer-events-none"
-        />
-        <span
-          aria-hidden
-          className="absolute bottom-[6%] inset-x-[12%] h-[28%] rounded-[50%] bg-black/35 blur-[8px] pointer-events-none"
+          className="absolute top-[14%] left-[18%] w-[38%] h-[20%] rounded-full bg-white/22 blur-[2.5px] pointer-events-none"
         />
       </span>
-
-      {/* Outer free dots */}
-      {isHero &&
-        animated &&
-        [0, 1, 2].map((i) => (
-          <span
-            key={i}
-            aria-hidden
-            className="absolute inset-[-14%] pointer-events-none logo-orbit-2d"
-            style={{
-              animationDuration: `${12 + i * 3.5}s`,
-              animationDelay: `${-i * 2}s`,
-              animationDirection: i === 1 ? "reverse" : "normal",
-            }}
-          >
-            <span
-              className="absolute left-1/2 top-0 -translate-x-1/2 rounded-full"
-              style={{
-                width: i === 0 ? 5 : 3.5,
-                height: i === 0 ? 5 : 3.5,
-                background: ["#00e5ff", "#b967ff", "#00ff9d"][i],
-                boxShadow: `0 0 14px ${["#00e5ff", "#b967ff", "#00ff9d"][i]}`,
-              }}
-            />
-          </span>
-        ))}
     </Tag>
+  );
+}
+
+/** Stilledev geometric S */
+export function StilledevMark({
+  size = 20,
+  className = "",
+}: {
+  size?: number;
+  className?: string;
+}) {
+  const uid = useId().replace(/:/g, "");
+  return (
+    <span
+      className={`inline-flex items-center justify-center shrink-0 ${className}`}
+      style={{ width: size, height: size }}
+      aria-hidden
+    >
+      <svg viewBox="0 0 32 32" className="w-full h-full" fill="none">
+        <defs>
+          <linearGradient id={`s-${uid}`} x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#00e5ff" />
+            <stop offset="100%" stopColor="#b967ff" />
+          </linearGradient>
+        </defs>
+        <circle
+          cx="16"
+          cy="16"
+          r="14.5"
+          stroke={`url(#s-${uid})`}
+          strokeWidth="1.5"
+          fill="rgba(0,229,255,0.06)"
+        />
+        <path
+          d="M21.5 11.2c-.6-1.8-2.2-2.9-4.4-2.9-2.8 0-4.6 1.5-4.6 3.5 0 1.9 1.3 2.9 4.2 3.5l1.4.3c2.1.5 3.1 1.2 3.1 2.6 0 1.6-1.5 2.7-3.7 2.7-2.1 0-3.6-1-4.3-2.7"
+          stroke={`url(#s-${uid})`}
+          strokeWidth="2.2"
+          strokeLinecap="round"
+          fill="none"
+        />
+      </svg>
+    </span>
   );
 }
 
 export function StilledevLink({
   className = "",
   children = "Stilledev",
+  showMark = false,
 }: {
   className?: string;
   children?: React.ReactNode;
+  showMark?: boolean;
 }) {
   return (
     <a
       href="https://discord.com/users/353944097301594123"
       target="_blank"
       rel="noopener noreferrer"
-      className={`relative text-accent-cyan font-medium hover:text-white transition-colors duration-300 group ${className}`}
+      className={`relative inline-flex items-center gap-1.5 text-accent-cyan font-medium hover:text-white transition-colors duration-300 group ${className}`}
     >
-      {children}
-      <span className="absolute -bottom-0.5 left-0 w-0 h-px bg-accent-cyan group-hover:w-full transition-all duration-300" />
+      {showMark && <StilledevMark size={16} />}
+      <span className="relative">
+        {children}
+        <span className="absolute -bottom-0.5 left-0 w-0 h-px bg-accent-cyan group-hover:w-full transition-all duration-300" />
+      </span>
     </a>
   );
 }

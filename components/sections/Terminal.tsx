@@ -288,7 +288,7 @@ export default function Terminal() {
   };
 
   return (
-    <section id="terminal" ref={sectionRef} className="relative py-20 sm:py-24 md:py-32 overflow-hidden">
+    <section id="terminal" ref={sectionRef} className="relative section-hairline py-20 sm:py-24 md:py-32 overflow-hidden">
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(90vw,560px)] h-[min(90vw,560px)] bg-accent-green/[0.03] rounded-full blur-[140px] pointer-events-none" />
       <CodeBackground />
 
@@ -299,6 +299,9 @@ export default function Terminal() {
             {t.terminal.title} <span className="text-gradient-cyan">{t.terminal.titleHighlight}</span>
           </h2>
           <p className="text-sm sm:text-base md:text-lg text-muted max-w-2xl mx-auto">{t.terminal.subtitle}</p>
+          <p className="mt-3 text-[11px] text-muted/50 font-mono">
+            {lang === "sv" ? "illustration · inte live-shell" : "illustration · not a live shell"}
+          </p>
         </ScrollReveal>
 
         <ScrollReveal>

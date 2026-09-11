@@ -5,6 +5,8 @@ import LoadingScreen from "@/components/effects/LoadingScreen";
 import { LangProvider } from "@/components/ui/LanguageContext";
 import CommandPalette from "@/components/ui/CommandPalette";
 import { ToastProvider } from "@/components/ui/ToastStack";
+import { AuthProvider } from "@/components/auth/AuthProvider";
+import AuthModal from "@/components/auth/AuthModal";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   const [loaded, setLoaded] = useState(false);
@@ -14,20 +16,23 @@ export default function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <LangProvider>
-      <ToastProvider>
-        <LoadingScreen onComplete={handleLoaded} />
-        <div
-          className={loaded ? "opacity-100" : "opacity-0"}
-          style={{
-            transition: "opacity 0.4s ease",
-            pointerEvents: loaded ? "auto" : "none",
-          }}
-          aria-hidden={!loaded}
-        >
-          {children}
-        </div>
-        <CommandPalette />
-      </ToastProvider>
+      <AuthProvider>
+        <ToastProvider>
+          <LoadingScreen onComplete={handleLoaded} />
+          <div
+            className={loaded ? "opacity-100" : "opacity-0"}
+            style={{
+              transition: "opacity 0.28s ease",
+              pointerEvents: loaded ? "auto" : "none",
+            }}
+            aria-hidden={!loaded}
+          >
+            {children}
+          </div>
+          <CommandPalette />
+          <AuthModal />
+        </ToastProvider>
+      </AuthProvider>
     </LangProvider>
   );
 }

@@ -1,6 +1,6 @@
 # BudAI Website — Launch Edition
 
-The official developer preview website for **BudAI** — an advanced AI platform built for Swedish companies and individuals.
+The official developer preview website for **BudAI** — the AI work assistant for Sweden. Write, automate, and think faster in Swedish and English.
 
 > "BudAI is not another AI tool. BudAI is the future of digital work for Sweden."
 

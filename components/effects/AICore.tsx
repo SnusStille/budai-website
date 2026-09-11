@@ -2,28 +2,17 @@
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Activity, Cpu, Shield, X, Zap, Server, ArrowRight, Tag } from "lucide-react";
+import { Activity, Cpu, Shield, X, Zap, Server, ArrowRight, Tag, Info } from "lucide-react";
 import BudAILogo from "@/components/ui/BudAILogo";
 import { useLang } from "@/components/ui/LanguageContext";
 
 /**
  * Hero logo stage — single BudAILogo, soft ambient motion only.
- * Click → professional Neural Core sheet.
+ * Click → Neural Core sheet (honest preview info).
  */
 export default function AICore({ isMobile = false }: { isMobile?: boolean }) {
   const { lang } = useLang();
   const [open, setOpen] = useState(false);
-  const [latency, setLatency] = useState(11);
-  const [load, setLoad] = useState(42);
-
-  useEffect(() => {
-    if (!open) return;
-    const id = setInterval(() => {
-      setLatency((v) => Math.max(7, Math.min(16, +(v + (Math.random() - 0.5) * 1.2).toFixed(1))));
-      setLoad((v) => Math.max(30, Math.min(70, Math.round(v + (Math.random() - 0.5) * 3))));
-    }, 1800);
-    return () => clearInterval(id);
-  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -40,14 +29,14 @@ export default function AICore({ isMobile = false }: { isMobile?: boolean }) {
   }, [open]);
 
   const rows = [
-    { icon: Server, label: "Region", value: "se-sto-1 · Nordic" },
+    { icon: Server, label: lang === "sv" ? "Fokus" : "Focus", value: lang === "sv" ? "Sverige · Norden" : "Sweden · Nordics" },
     { icon: Cpu, label: lang === "sv" ? "Motor" : "Engine", value: "BudAI Core v0.93" },
-    { icon: Activity, label: "Latency", value: `${Math.round(latency)} ms avg` },
-    { icon: Zap, label: lang === "sv" ? "Last" : "Load", value: `${load}% · healthy` },
-    { icon: Shield, label: lang === "sv" ? "Säkerhet" : "Security", value: "A+ · TLS 1.3 · GDPR" },
+    { icon: Activity, label: lang === "sv" ? "Demo" : "Demo", value: lang === "sv" ? "Live Playground" : "Live Playground" },
+    { icon: Zap, label: lang === "sv" ? "Läge" : "Mode", value: lang === "sv" ? "Developer Preview" : "Developer Preview" },
+    { icon: Shield, label: lang === "sv" ? "Integritet" : "Privacy", value: lang === "sv" ? "GDPR-minded · TLS" : "GDPR-minded · TLS" },
     {
       icon: Tag,
-      label: lang === "sv" ? "Early access" : "Early access",
+      label: "Early access",
       value: "BUDAI-EARLY-10 · 10%",
     },
   ];
@@ -84,7 +73,7 @@ export default function AICore({ isMobile = false }: { isMobile?: boolean }) {
         </div>
 
         <p className="mt-3 text-[10px] sm:text-[11px] text-muted/55 font-mono tracking-wide">
-          {lang === "sv" ? "tryck · systemstatus" : "tap · system status"}
+          {lang === "sv" ? "tryck · neural core" : "tap · neural core"}
         </p>
       </motion.div>
 
@@ -121,10 +110,9 @@ export default function AICore({ isMobile = false }: { isMobile?: boolean }) {
                     <div className="text-sm font-semibold text-white">Neural Core</div>
                     <div className="text-[11px] text-muted font-mono flex items-center gap-1.5">
                       <span className="relative flex h-1.5 w-1.5">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-green opacity-70" />
                         <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-accent-green" />
                       </span>
-                      {lang === "sv" ? "Operativ · v0.93" : "Operational · v0.93"}
+                      {lang === "sv" ? "Preview · v0.93" : "Preview · v0.93"}
                     </div>
                   </div>
                 </div>
@@ -138,11 +126,14 @@ export default function AICore({ isMobile = false }: { isMobile?: boolean }) {
                 </button>
               </div>
 
-              <p className="px-5 text-xs text-muted leading-relaxed mb-2">
-                {lang === "sv"
-                  ? "Live-översikt av BudAI i Nordic-klustret — samma signaler som systemstatus."
-                  : "Live overview of BudAI in the Nordic cluster — same signals as system status."}
-              </p>
+              <div className="mx-5 mb-3 flex items-start gap-2 rounded-xl border border-accent-cyan/15 bg-accent-cyan/[0.04] px-3 py-2">
+                <Info className="w-3.5 h-3.5 text-accent-cyan shrink-0 mt-0.5" />
+                <p className="text-[11px] text-muted leading-relaxed">
+                  {lang === "sv"
+                    ? "Översikt för utvecklarförhandsvisningen — inte live produktionsmetrik. Testa den riktiga motorn i Playground."
+                    : "Developer preview overview — not live production metrics. Try the real engine in Playground."}
+                </p>
+              </div>
 
               <div className="px-3 pb-3 space-y-0.5">
                 {rows.map((r) => (
@@ -157,26 +148,25 @@ export default function AICore({ isMobile = false }: { isMobile?: boolean }) {
                       <div className="text-[10px] uppercase tracking-wider text-muted/70">{r.label}</div>
                       <div className="text-sm text-white/90 font-medium truncate">{r.value}</div>
                     </div>
-                    <span className="text-[10px] text-accent-green font-mono">OK</span>
                   </div>
                 ))}
               </div>
 
               <div className="px-5 pb-5 flex flex-col sm:flex-row gap-2">
                 <a
-                  href="#status"
+                  href="#playground"
                   onClick={() => setOpen(false)}
                   className="flex-1 inline-flex items-center justify-center gap-1.5 text-center text-sm font-medium py-2.5 rounded-xl bg-gradient-to-r from-accent-cyan to-accent-purple text-white"
                 >
-                  {lang === "sv" ? "Systemstatus" : "System status"}
+                  Playground
                   <ArrowRight className="w-3.5 h-3.5" />
                 </a>
                 <a
-                  href="#playground"
+                  href="#waitlist"
                   onClick={() => setOpen(false)}
                   className="flex-1 text-center text-sm font-medium py-2.5 rounded-xl border border-white/[0.1] text-white/80 hover:bg-white/[0.04]"
                 >
-                  Playground
+                  {lang === "sv" ? "Väntelista" : "Waitlist"}
                 </a>
               </div>
             </motion.div>

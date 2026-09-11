@@ -866,3 +866,34 @@ html.budai-focus [class*="StockholmClock"] {
   opacity: 0.25;
   pointer-events: none;
 }
+
+
+/* Final launch polish utilities */
+.section-hairline {
+  position: relative;
+}
+.section-hairline::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(720px, 70%);
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0, 229, 255, 0.22), transparent);
+  pointer-events: none;
+}
+
+.surface-elevated {
+  background: linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.015) 100%);
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow:
+    0 0 0 1px rgba(0,0,0,0.35) inset,
+    0 24px 64px rgba(0,0,0,0.4);
+}
+
+/* Premium select dark options */
+select option {
+  background: #0a0a12;
+  color: #fff;
+}

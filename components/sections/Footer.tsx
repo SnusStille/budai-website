@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Github, MessageSquare, Linkedin, Mail, ArrowUpRight, X } from "lucide-react";
-import BudAILogo, { StilledevLink } from "@/components/ui/BudAILogo";
+import BudAILogo, { StilledevLink, StilledevMark } from "@/components/ui/BudAILogo";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLang } from "@/components/ui/LanguageContext";
 
@@ -11,6 +11,7 @@ const groups = (lang: string) => [
     title: lang === "sv" ? "Produkt" : "Product",
     links: [
       { label: lang === "sv" ? "Förmågor" : "Capabilities", href: "#capabilities" },
+      { label: "FAQ", href: "#faq" },
       { label: "AI Playground", href: "#playground" },
       { label: "Terminal", href: "#terminal" },
       { label: "Roadmap", href: "#roadmap" },
@@ -21,7 +22,7 @@ const groups = (lang: string) => [
     title: lang === "sv" ? "Företag" : "Company",
     links: [
       { label: "Stilledev", href: "https://stilledev.se", external: true },
-      { label: lang === "sv" ? "Karriär" : "Careers", href: "#waitlist" },
+      { label: lang === "sv" ? "Early access" : "Early access", href: "#waitlist" },
       { label: lang === "sv" ? "Kontakt" : "Contact", href: "mailto:Stilleinc@hotmail.com" },
     ],
   },
@@ -160,7 +161,7 @@ export default function Footer() {
           <p className="text-sm text-muted">{t.footer.rights}</p>
           <p className="text-sm text-muted flex items-center gap-1.5">
             {lang === "sv" ? "Utvecklad av" : "Developed by"}{" "}
-            <StilledevLink />
+            <StilledevLink showMark />
             <span className="text-muted/30">·</span>
             <span className="text-xs">Sweden</span>
           </p>

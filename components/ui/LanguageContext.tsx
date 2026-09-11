@@ -16,9 +16,9 @@ export function LangProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const saved = localStorage.getItem("budai-lang") as Lang;
-    if (saved && (saved === "sv" || saved === "en")) {
-      setLangState(saved);
-    }
+    const next = saved === "en" || saved === "sv" ? saved : "sv";
+    setLangState(next);
+    document.documentElement.lang = next;
   }, []);
 
   const setLang = (l: Lang) => {

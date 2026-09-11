@@ -26,7 +26,7 @@ import Confetti from "@/components/ui/Confetti";
 import { addWaitlistUser, getWaitlistCount } from "@/lib/data";
 import { useLang } from "@/components/ui/LanguageContext";
 
-const industries = [
+const industriesEn = [
   "Technology",
   "Finance",
   "Healthcare",
@@ -39,16 +39,39 @@ const industries = [
   "Construction",
   "Other",
 ];
+const industriesSv = [
+  "Teknik",
+  "Finans",
+  "Vård & hälsa",
+  "Detaljhandel",
+  "Tillverkning",
+  "Utbildning",
+  "Media",
+  "Energi",
+  "Logistik",
+  "Bygg",
+  "Annat",
+];
 const employeeRanges = ["1-10", "10-50", "50-200", "200-1000", "1000+"];
-const interests = [
+const interestsEn = [
   "Automation",
-  "Data Analysis",
-  "Customer Support",
-  "Marketing Content",
-  "Document Generation",
-  "Workflow Optimization",
-  "Problem Solving",
+  "Data analysis",
+  "Customer support",
+  "Marketing content",
+  "Document generation",
+  "Workflow optimization",
+  "Problem solving",
   "Other",
+];
+const interestsSv = [
+  "Automatisering",
+  "Dataanalys",
+  "Kundsupport",
+  "Marknadsinnehåll",
+  "Dokumentgenerering",
+  "Arbetsflöden",
+  "Problemlösning",
+  "Annat",
 ];
 
 const initialForm = {
@@ -72,6 +95,15 @@ export default function Waitlist() {
   const [errorDetail, setErrorDetail] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [referral, setReferral] = useState("");
+
+  useEffect(() => {
+    try {
+      const q = new URLSearchParams(window.location.search).get("ref");
+      if (q) setReferral(q.slice(0, 64));
+    } catch {
+      /* ignore */
+    }
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -140,7 +172,7 @@ export default function Waitlist() {
     "w-full pl-11 pr-4 py-3.5 rounded-xl bg-white/[0.04] border border-white/[0.1] text-white placeholder:text-muted focus:outline-none focus:border-accent-cyan/40 focus:shadow-[0_0_0_3px_rgba(0,229,255,0.08)] text-sm transition-shadow";
 
   return (
-    <section id="waitlist" className="relative py-24 md:py-32 overflow-hidden">
+    <section id="waitlist" className="relative section-hairline py-24 md:py-32 overflow-hidden">
       <Confetti active={confetti} />
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-accent-purple/[0.07] rounded-full blur-[180px] pointer-events-none" />
       <div className="absolute top-1/4 right-0 w-[300px] h-[300px] bg-accent-cyan/[0.05] rounded-full blur-[100px] pointer-events-none" />
@@ -169,7 +201,7 @@ export default function Waitlist() {
             <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5 sm:p-6 space-y-4 h-full">
               <h3 className="text-sm font-semibold text-white flex items-center gap-2">
                 <Crown className="w-4 h-4 text-accent-purple" />
-                {lang === "sv" ? "Founding benefits" : "Founding benefits"}
+                {lang === "sv" ? "Founding-förmåner" : "Founding benefits"}
               </h3>
               <ul className="space-y-3">
                 {[
@@ -235,12 +267,12 @@ export default function Waitlist() {
                   {
                     icon: Crown,
                     label: t.waitlist.statSpots,
-                    value: "500",
+                    value: lang === "sv" ? "Vågor" : "Waves",
                   },
                   {
                     icon: Clock,
                     label: t.waitlist.statLaunch,
-                    value: "Q2 26",
+                    value: "2026",
                   },
                 ].map((s) => (
                   <div
@@ -370,7 +402,7 @@ export default function Waitlist() {
                                     <option value="" disabled className="bg-surface">
                                       {t.waitlist.industryPlaceholder}
                                     </option>
-                                    {industries.map((ind) => (
+                                    {(lang === "sv" ? industriesSv : industriesEn).map((ind) => (
                                       <option key={ind} value={ind} className="bg-surface">
                                         {ind}
                                       </option>
@@ -413,7 +445,7 @@ export default function Waitlist() {
                               <option value="" disabled className="bg-surface">
                                 {t.waitlist.interestPlaceholder}
                               </option>
-                              {interests.map((i) => (
+                              {(lang === "sv" ? interestsSv : interestsEn).map((i) => (
                                 <option key={i} value={i} className="bg-surface">
                                   {i}
                                 </option>
@@ -517,6 +549,11 @@ export default function Waitlist() {
                         <Crown className="w-4 h-4" />
                         {t.waitlist.foundingActive}
                       </div>
+                      <p className="text-[11px] text-muted/55 max-w-xs">
+                        {lang === "sv"
+                          ? "Tips: dela stilledev.se/?ref=din-kod — referral sparas i din anmälan."
+                          : "Tip: share stilledev.se/?ref=your-code — referrals are saved with your signup."}
+                      </p>
                       <button
                         type="button"
                         onClick={copyCode}

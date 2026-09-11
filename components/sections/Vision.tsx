@@ -4,15 +4,16 @@ import { Target, TrendingUp, Heart, Globe } from "lucide-react";
 import ScrollReveal from "@/components/ui/ScrollReveal";
 import SpotlightCard from "@/components/ui/SpotlightCard";
 import { useLang } from "@/components/ui/LanguageContext";
+import { StilledevMark } from "@/components/ui/BudAILogo";
 
 const pillars = [
   {
     icon: Target,
     title: "Mission",
     titleSv: "Mission",
-    desc: "To make advanced AI accessible to every person and company in Sweden, regardless of size or technical expertise. We believe AI should empower, not replace, human potential.",
+    desc: "Make advanced AI accessible to every person and company in Sweden — empower people, don't replace them.",
     descSv:
-      "Att göra avancerad AI tillgänglig för varje person och företag i Sverige, oavsett storlek eller teknisk expertis. Vi tror att AI ska stärka — inte ersätta — mänsklig potential.",
+      "Gör avancerad AI tillgänglig för varje person och företag i Sverige — stärk människor, ersätt dem inte.",
     gradient: "from-accent-cyan to-accent-blue",
     accent: "text-accent-cyan",
   },
@@ -20,29 +21,29 @@ const pillars = [
     icon: TrendingUp,
     title: "Growth",
     titleSv: "Tillväxt",
-    desc: "BudAI will continuously evolve—learning from every interaction, expanding capabilities, and growing alongside the people and businesses it serves.",
+    desc: "BudAI evolves with every interaction — expanding capabilities alongside the teams it serves.",
     descSv:
-      "BudAI kommer att utvecklas kontinuerligt — lära av varje interaktion, utöka kapabiliteter och växa tillsammans med de människor och företag den tjänar.",
+      "BudAI växer med varje interaktion — utökar kapabiliteter tillsammans med teamen den tjänar.",
     gradient: "from-accent-purple to-accent-pink",
     accent: "text-accent-purple",
   },
   {
     icon: Heart,
-    title: "Swedish Values",
+    title: "Swedish values",
     titleSv: "Svenska värderingar",
-    desc: "Built with Swedish principles at its core: transparency, sustainability, equality, and innovation. Data stays in the Nordics. Privacy is non-negotiable.",
+    desc: "Transparency, sustainability, equality, innovation. Nordic-first privacy is non-negotiable.",
     descSv:
-      "Byggd med svenska principer i kärnan: transparens, hållbarhet, jämlikhet och innovation. Data stannar i Norden. Integritet är icke-förhandlingsbart.",
+      "Transparens, hållbarhet, jämlikhet, innovation. Nordic-first integritet är icke-förhandlingsbart.",
     gradient: "from-accent-green to-accent-cyan",
     accent: "text-accent-green",
   },
   {
     icon: Globe,
-    title: "Global Impact",
-    titleSv: "Global påverkan",
-    desc: "Starting in Sweden, scaling to the Nordics, and eventually empowering people and businesses worldwide with ethical, powerful AI solutions.",
+    title: "Global path",
+    titleSv: "Global väg",
+    desc: "Start in Sweden, scale the Nordics, then empower ethical AI work worldwide.",
     descSv:
-      "Startar i Sverige, skalas till Norden, och stärker så småningom människor och företag världen över med etiska, kraftfulla AI-lösningar.",
+      "Starta i Sverige, skala Norden, sedan etiskt AI-arbete världen över.",
     gradient: "from-accent-pink to-accent-purple",
     accent: "text-accent-pink",
   },
@@ -52,26 +53,25 @@ export default function Vision() {
   const { lang } = useLang();
 
   return (
-    <section className="relative py-20 sm:py-28 md:py-32 overflow-hidden">
+    <section className="relative section-hairline py-20 sm:py-28 md:py-32 overflow-hidden">
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-accent-green/5 rounded-full blur-[180px] pointer-events-none" />
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <ScrollReveal className="text-center mb-14 md:mb-18">
+        <ScrollReveal className="text-center mb-14 md:mb-16">
           <span className="section-badge text-accent-green mb-4">
-            {lang === "sv" ? "Vår vision" : "Our Vision"}
+            {lang === "sv" ? "Vår vision" : "Our vision"}
           </span>
           <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-[-0.03em] mb-5 text-white">
-            {lang === "sv" ? "AI-assistenten för " : "The AI Assistant for "}
+            {lang === "sv" ? "AI-assistenten för " : "The AI assistant for "}
             <span className="text-gradient">{lang === "sv" ? "Sverige" : "Sweden"}</span>
           </h2>
           <p className="text-base sm:text-lg text-muted max-w-3xl mx-auto leading-relaxed">
             {lang === "sv"
-              ? "BudAI är inte bara ytterligare ett AI-verktyg. Det är en vision för hur människor och företag i Sverige ska arbeta i framtiden — smartare, snabbare och mer mänskligt än någonsin."
-              : "BudAI is not just another AI tool. It is a vision for how people and companies in Sweden will work in the future—smarter, faster, and more human than ever before."}
+              ? "BudAI är inte bara ytterligare ett AI-verktyg. Det är en vision för hur människor och företag i Sverige ska arbeta — smartare, snabbare och mer mänskligt."
+              : "BudAI is not just another AI tool. It is a vision for how people and companies in Sweden will work — smarter, faster, and more human."}
           </p>
         </ScrollReveal>
 
-        {/* Same SpotlightCard language as Capabilities (top cards) */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
           {pillars.map((p, i) => (
             <ScrollReveal key={p.title} delay={Math.min(i * 0.05, 0.2)}>
@@ -101,21 +101,21 @@ export default function Vision() {
           ))}
         </div>
 
-        <ScrollReveal delay={0.2}>
+        <ScrollReveal delay={0.15}>
           <div className="mt-16 md:mt-20 text-center">
             <blockquote className="text-xl md:text-3xl font-light italic text-white/70 max-w-4xl mx-auto leading-relaxed">
               {lang === "sv"
                 ? '"Vi bygger inte bara en AI. Vi bygger framtidens arbete för Sverige — och så småningom, världen."'
-                : '"We are not just building an AI. We are building the future of work for Sweden—and eventually, the world."'}
+                : '"We are not just building an AI. We are building the future of work for Sweden — and eventually, the world."'}
             </blockquote>
             <div className="mt-8 flex items-center justify-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-accent-cyan to-accent-purple flex items-center justify-center text-white font-bold text-lg shadow-[0_0_24px_rgba(0,229,255,0.25)]">
-                S
+              <div className="relative w-14 h-14 rounded-2xl border border-white/15 shadow-[0_0_24px_rgba(0,229,255,0.2)] bg-gradient-to-br from-accent-cyan/15 to-accent-purple/15 flex items-center justify-center">
+                <StilledevMark size={36} />
               </div>
               <div className="text-left">
                 <div className="text-base font-medium text-accent-cyan">Stilledev</div>
                 <div className="text-sm text-muted">
-                  {lang === "sv" ? "Skaparna av BudAI" : "Creators of BudAI"}
+                  {lang === "sv" ? "Skaparna av BudAI · Sverige" : "Creators of BudAI · Sweden"}
                 </div>
               </div>
             </div>

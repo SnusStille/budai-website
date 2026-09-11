@@ -62,7 +62,7 @@ export default function Timeline() {
   const { lang } = useLang();
 
   return (
-    <section id="roadmap" className="relative py-28 md:py-32">
+    <section id="roadmap" className="relative section-hairline py-28 md:py-32">
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-accent-pink/[0.04] rounded-full blur-[140px] pointer-events-none" />
 
       <div className="max-w-5xl mx-auto px-6 lg:px-8 relative z-10">

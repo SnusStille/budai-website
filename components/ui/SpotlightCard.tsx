@@ -39,7 +39,7 @@ export default function SpotlightCard({
         } as React.CSSProperties
       }
     >
-      <div className="relative h-full overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.025] transition-[border-color,transform,box-shadow] duration-300 ease-out will-change-transform group-hover:-translate-y-1 group-hover:border-accent-cyan/25 group-hover:shadow-[0_12px_40px_rgba(0,0,0,0.35),0_0_40px_rgba(0,229,255,0.08)]">
+      <div className="relative h-full overflow-hidden rounded-2xl border border-white/[0.09] bg-gradient-to-b from-white/[0.04] to-white/[0.015] transition-[border-color,transform,box-shadow] duration-300 ease-out will-change-transform group-hover:-translate-y-1 group-hover:border-accent-cyan/25 group-hover:shadow-[0_12px_40px_rgba(0,0,0,0.35),0_0_40px_rgba(0,229,255,0.08)]">
         {/* Spotlight — pure CSS, no JS animation loop */}
         <div
           className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"

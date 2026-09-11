@@ -21,15 +21,22 @@ import {
   List,
   Terminal as TerminalIcon,
   BarChart3,
+  Cpu,
+  Activity,
+  Database,
+  Globe,
+  Sparkles,
+  MessageSquare,
 } from "lucide-react";
 import AdminLayout from "@/components/admin/AdminLayout";
 import StatsCards from "@/components/admin/StatsCards";
 import UserTable from "@/components/admin/UserTable";
 import ActivityChart from "@/components/admin/ActivityChart";
 import SystemTerminal from "@/components/admin/SystemTerminal";
-import BudAILogo from "@/components/ui/BudAILogo";
+import BudAILogo, { StilledevMark } from "@/components/ui/BudAILogo";
 import { getWaitlistUsers, getWaitlistStats, updateUserStatus, getAdminEvents, logAdminEvent } from "@/lib/data";
 import { WaitlistUser, AdminEvent } from "@/types";
+import { createClient, isAuthConfigured } from "@/lib/supabase/client";
 
 /**
  * Admin password: Daylightshere76 (or NEXT_PUBLIC_ADMIN_PASSWORD).
@@ -38,7 +45,7 @@ import { WaitlistUser, AdminEvent } from "@/types";
 const ADMIN_PASSWORD =
   process.env.NEXT_PUBLIC_ADMIN_PASSWORD || "Daylightshere76";
 
-type Tab = "overview" | "waitlist" | "ops" | "export";
+type Tab = "overview" | "waitlist" | "platform" | "ops" | "export";
 
 export default function AdminPage() {
   const [users, setUsers] = useState<WaitlistUser[]>([]);
@@ -58,6 +65,14 @@ export default function AdminPage() {
     ["Hi {name},", "", "Welcome to BudAI early access. Your code: BUDAI-EARLY-10 (10% off at launch).", "", "— Stilledev"].join("\n")
   );
   const [inviteCopied, setInviteCopied] = useState(false);
+  const [platform, setPlatform] = useState<{
+    profiles: number | null;
+    conversations: number | null;
+    memories: number | null;
+    usageToday: number | null;
+    guestsToday: number | null;
+    note: string;
+  }>({ profiles: null, conversations: null, memories: null, usageToday: null, guestsToday: null, note: "—" });
 
   useEffect(() => {
     const saved = sessionStorage.getItem("budai_admin_auth");
@@ -71,6 +86,43 @@ export default function AdminPage() {
       setEvents(ev);
       setLoading(false);
     });
+    void (async () => {
+      if (!isAuthConfigured()) {
+        setPlatform((p) => ({ ...p, note: "Supabase not configured" }));
+        return;
+      }
+      const sb = createClient();
+      if (!sb) {
+        setPlatform((p) => ({ ...p, note: "No client" }));
+        return;
+      }
+      try {
+        const day = new Date().toISOString().slice(0, 10);
+        const [prof, conv, mem, usage, guest] = await Promise.all([
+          sb.from("profiles").select("id", { count: "exact", head: true }),
+          sb.from("conversations").select("id", { count: "exact", head: true }),
+          sb.from("memories").select("id", { count: "exact", head: true }).eq("active", true),
+          sb.from("usage_daily").select("messages").eq("day", day),
+          sb.from("usage_guest_daily").select("messages").eq("day", day),
+        ]);
+        const sum = (rows: { messages?: number }[] | null) =>
+          (rows || []).reduce((a, r) => a + (r.messages || 0), 0);
+        const err =
+          prof.error || conv.error || mem.error || usage.error || guest.error
+            ? "Run MIGRATION_v4_product.sql for live counters"
+            : "Live counters (RLS may limit anon reads)";
+        setPlatform({
+          profiles: prof.count ?? null,
+          conversations: conv.count ?? null,
+          memories: mem.count ?? null,
+          usageToday: usage.error ? null : sum(usage.data as { messages?: number }[]),
+          guestsToday: guest.error ? null : sum(guest.data as { messages?: number }[]),
+          note: err,
+        });
+      } catch {
+        setPlatform((p) => ({ ...p, note: "Could not load platform tables" }));
+      }
+    })();
   }, [authenticated]);
 
   const stats = useMemo(() => getWaitlistStats(users), [users]);
@@ -197,8 +249,8 @@ export default function AdminPage() {
               BudAI Control Center
             </h1>
             <p className="text-muted text-sm max-w-sm mx-auto leading-relaxed">
-              Private area for <span className="text-accent-cyan font-medium">Stille</span>{" "}
-              (Stilledev) only. If you landed here by accident — this is not a public page.
+              Restricted to <span className="text-accent-cyan font-medium">Stille</span>{" "}
+              (Stilledev) only. Access key is never shown here. If you landed by accident — leave.
             </p>
           </div>
 
@@ -269,8 +321,8 @@ export default function AdminPage() {
             </div>
           </div>
 
-          <p className="text-center text-xs text-muted/40 mt-6">
-            BudAI by <span className="text-accent-cyan">Stilledev</span>
+          <p className="text-center text-xs text-muted/40 mt-6 inline-flex items-center justify-center gap-1.5 w-full">
+            BudAI by <StilledevMark size={14} /> <span className="text-accent-cyan">Stilledev</span>
           </p>
         </motion.div>
       </div>
@@ -280,6 +332,7 @@ export default function AdminPage() {
   const tabs: { id: Tab; label: string; icon: typeof LayoutDashboard }[] = [
     { id: "overview", label: "Overview", icon: LayoutDashboard },
     { id: "waitlist", label: "Waitlist", icon: List },
+    { id: "platform", label: "Platform", icon: Cpu },
     { id: "ops", label: "Ops", icon: TerminalIcon },
     { id: "export", label: "Export", icon: Download },
   ];
@@ -305,7 +358,8 @@ export default function AdminPage() {
                   Control Center
                 </h1>
               </div>
-              <p className="text-muted text-sm">
+              <p className="text-muted text-sm inline-flex items-center gap-1.5 flex-wrap">
+                <StilledevMark size={14} />
                 Stilledev ops · waitlist · early access ·{" "}
                 <span className="font-mono text-accent-cyan/80">v0.93</span>
               </p>
@@ -493,6 +547,99 @@ export default function AdminPage() {
           </div>
         )}
 
+
+        {tab === "platform" && (
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              {[
+                { icon: Globe, label: "Site", value: "stilledev.se", note: "Public marketing" },
+                { icon: MessageSquare, label: "Playground", value: "Product AI", note: "Auth · memory · vision" },
+                { icon: Database, label: "Waitlist", value: String(users.length), note: "Signups" },
+                { icon: Activity, label: "Preview", value: "v0.93 · 93%", note: "Toward launch" },
+                { icon: Users, label: "Profiles", value: platform.profiles == null ? "—" : String(platform.profiles), note: "Auth users" },
+                { icon: Cpu, label: "Conversations", value: platform.conversations == null ? "—" : String(platform.conversations), note: "Cloud threads" },
+                { icon: Sparkles, label: "Memories", value: platform.memories == null ? "—" : String(platform.memories), note: "Active facts" },
+                { icon: BarChart3, label: "Msgs today", value: platform.usageToday == null && platform.guestsToday == null ? "—" : String((platform.usageToday || 0) + (platform.guestsToday || 0)), note: platform.note },
+              ].map((c) => (
+                <div key={c.label} className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-8 h-8 rounded-lg bg-accent-cyan/10 flex items-center justify-center">
+                      <c.icon className="w-4 h-4 text-accent-cyan" />
+                    </div>
+                    <span className="text-[11px] text-muted uppercase tracking-wide">{c.label}</span>
+                  </div>
+                  <div className="text-lg font-semibold text-white">{c.value}</div>
+                  <div className="text-[11px] text-muted mt-1">{c.note}</div>
+                </div>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5 space-y-3">
+                <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-accent-purple" /> Feature surface
+                </h3>
+                <ul className="text-xs text-muted space-y-2 leading-relaxed">
+                  <li className="flex justify-between gap-3 border-b border-white/[0.05] pb-2">
+                    <span>Auth (Google + email OTP) + guest</span>
+                    <span className="text-accent-green font-mono">on</span>
+                  </li>
+                  <li className="flex justify-between gap-3 border-b border-white/[0.05] pb-2">
+                    <span>Cloud history + auto memory (members)</span>
+                    <span className="text-accent-green font-mono">on</span>
+                  </li>
+                  <li className="flex justify-between gap-3 border-b border-white/[0.05] pb-2">
+                    <span>Vision upload + image gen (keyed)</span>
+                    <span className="text-accent-green font-mono">on</span>
+                  </li>
+                  <li className="flex justify-between gap-3 border-b border-white/[0.05] pb-2">
+                    <span>Voice input (Web Speech)</span>
+                    <span className="text-accent-green font-mono">on</span>
+                  </li>
+                  <li className="flex justify-between gap-3">
+                    <span>Daily limits guest/member</span>
+                    <span className="text-accent-green font-mono">on</span>
+                  </li>
+                </ul>
+              </div>
+
+              <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5 space-y-3">
+                <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+                  <Cpu className="w-4 h-4 text-accent-cyan" /> Model & env
+                </h3>
+                <div className="font-mono text-[11px] text-white/75 space-y-2 rounded-xl bg-black/25 border border-white/[0.05] p-3">
+                  <div>ANTHROPIC_API_KEY · {process.env.NEXT_PUBLIC_SITE_URL ? "site url set" : "check env"}</div>
+                  <div>Model default · claude-sonnet (server)</div>
+                  <div>Admin gate · client password (Stille-only)</div>
+                  <div>Waitlist · Supabase anon policies</div>
+                </div>
+                <p className="text-[11px] text-muted leading-relaxed">
+                  Product counters need MIGRATION_v4_product.sql + service role for full admin reads.
+                  Waitlist + platform_events remain sources of truth alongside usage_daily.
+                </p>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5">
+              <h3 className="text-sm font-semibold text-white mb-3">Launch readiness</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
+                <div className="rounded-xl border border-accent-green/20 bg-accent-green/[0.06] p-3">
+                  <div className="text-accent-green text-xs font-mono mb-1">Ready</div>
+                  <div className="text-white/90 text-xs leading-relaxed">Landing, waitlist, playground demo, legal, SEO basics</div>
+                </div>
+                <div className="rounded-xl border border-amber-400/20 bg-amber-400/[0.06] p-3">
+                  <div className="text-amber-300 text-xs font-mono mb-1">Watch</div>
+                  <div className="text-white/90 text-xs leading-relaxed">Admin is client-gated — add Vercel protection before scale</div>
+                </div>
+                <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                  <div className="text-muted text-xs font-mono mb-1">Next</div>
+                  <div className="text-white/90 text-xs leading-relaxed">Phone auth (Twilio), storage CDN, deeper admin RLS</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {tab === "ops" && (
           <div id="logs" className="scroll-mt-24 grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] overflow-hidden flex flex-col max-h-[420px]">
@@ -524,7 +671,7 @@ export default function AdminPage() {
             <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5 space-y-4">
               <h3 className="text-sm font-semibold text-white">Ops checklist</h3>
               <ul className="text-xs text-muted space-y-2 list-disc pl-4 leading-relaxed">
-                <li>Run <code className="font-mono text-white/70">supabase/schema.sql</code> if columns missing</li>
+                <li>Run <code className="font-mono text-white/70">supabase/schema.sql</code> + required <code className="font-mono text-white/70">MIGRATION_v4_product.sql</code></li>
                 <li>Discount default: <code className="font-mono text-accent-green/80">BUDAI-EARLY-10</code></li>
                 <li>Playground needs <code className="font-mono text-white/70">ANTHROPIC_API_KEY</code></li>
                 <li>Tighten RLS before scale — service role for admin mutations</li>

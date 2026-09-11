@@ -137,7 +137,7 @@ export default function Navbar() {
         transition={{ duration: 0.6, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-400 ${
           scrolled
-            ? "glass-strong shadow-lg shadow-black/25 border-b border-white/[0.05]"
+            ? "glass-strong shadow-lg shadow-black/30 border-b border-white/[0.07] backdrop-blur-xl"
             : "bg-transparent"
         }`}
       >
@@ -230,7 +230,7 @@ export default function Navbar() {
                 <Command className="w-3 h-3" />K
               </button>
 
-                            <a href="#waitlist" className="btn-primary !px-5 !py-2.5 text-sm">
+              <a href="#waitlist" className="btn-primary !px-5 !py-2.5 text-sm">
                 <span>{t.nav.requestAccess}</span>
               </a>
             </div>
