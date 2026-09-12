@@ -54,26 +54,35 @@ export default function AICore({ isMobile = false }: { isMobile?: boolean }) {
       >
         <span
           aria-hidden
-          className="absolute inset-0 rounded-full pointer-events-none opacity-45 logo-ambient-spin"
+          className="absolute inset-[-8%] rounded-full pointer-events-none opacity-70 logo-ambient-spin"
           style={{
             background:
-              "conic-gradient(from 0deg, transparent 0%, rgba(0,229,255,0.1) 18%, transparent 38%, rgba(185,103,255,0.09) 58%, transparent 78%, rgba(0,255,157,0.06) 90%, transparent 100%)",
-            filter: "blur(10px)",
+              "conic-gradient(from 0deg, transparent 0%, rgba(0,229,255,0.22) 12%, transparent 28%, rgba(185,103,255,0.18) 48%, transparent 62%, rgba(0,255,157,0.12) 78%, transparent 100%)",
+            filter: "blur(14px)",
           }}
         />
+        <span
+          aria-hidden
+          className="absolute inset-[6%] rounded-full pointer-events-none border border-accent-cyan/15 logo-pulse-ring"
+        />
+        <span
+          aria-hidden
+          className="absolute inset-[-4%] rounded-full pointer-events-none border border-dashed border-white/10 logo-ambient-spin"
+          style={{ animationDuration: "40s", animationDirection: "reverse" }}
+        />
 
-        <div className="relative z-10 mt-1 transition-transform duration-300 hover:scale-[1.03] active:scale-[0.98]">
+        <div className="relative z-10 mt-1 transition-transform duration-300 hover:scale-[1.05] active:scale-[0.97]">
           <BudAILogo
             size="hero"
-            animated={!isMobile}
+            animated
             interactive
             onClick={() => setOpen(true)}
             label={lang === "sv" ? "Öppna neural core" : "Open neural core"}
           />
         </div>
 
-        <p className="mt-3 text-[10px] sm:text-[11px] text-muted/55 font-mono tracking-wide">
-          {lang === "sv" ? "tryck · produktinfo" : "tap · product info"}
+        <p className="mt-4 text-[11px] sm:text-xs text-accent-cyan/70 font-mono tracking-wide animate-pulse">
+          {lang === "sv" ? "● live · tryck för info" : "● live · tap for info"}
         </p>
       </motion.div>
 
@@ -105,7 +114,7 @@ export default function AICore({ isMobile = false }: { isMobile?: boolean }) {
 
               <div className="flex items-start justify-between gap-3 px-5 pt-5 pb-3">
                 <div className="flex items-center gap-3">
-                  <BudAILogo size="md" animated={false} />
+                  <BudAILogo size="md" animated />
                   <div>
                     <div className="text-sm font-semibold text-white">Neural Core</div>
                     <div className="text-[11px] text-muted font-mono flex items-center gap-1.5">

@@ -416,7 +416,7 @@ export default function AdminPage() {
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div>
               <div className="flex items-center gap-3 mb-1.5">
-                <BudAILogo size="sm" animated={false} />
+                <BudAILogo size="sm" animated />
                 <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
                   Control Center
                 </h1>

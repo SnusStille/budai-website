@@ -62,7 +62,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         <aside className="w-64 min-h-screen border-r border-white/[0.08] bg-[#07070c] fixed left-0 top-0 hidden lg:flex flex-col">
           <div className="p-5 border-b border-white/[0.08]">
             <div className="flex items-center gap-2.5">
-              <BudAILogo size="sm" animated={false} />
+              <BudAILogo size="sm" animated />
               <div>
                 <div className="font-bold text-sm leading-tight">
                   Bud<span className="text-accent-cyan">AI</span>
@@ -118,7 +118,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 
         <div className="lg:hidden fixed top-0 left-0 right-0 z-40 border-b border-white/[0.08] bg-[#07070c]/95 backdrop-blur-xl flex items-center justify-between px-4 h-14">
           <div className="flex items-center gap-2.5">
-            <BudAILogo size="xs" animated={false} />
+            <BudAILogo size="xs" animated />
             <span className="font-bold text-sm">
               Bud<span className="text-accent-cyan">AI</span> Admin
             </span>

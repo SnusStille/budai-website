@@ -56,6 +56,8 @@ Redeploy after changing env.
 
 ---
 
+**Full step-by-step (copy/paste):** see [`GOOGLE_LOGIN_SETUP.md`](./GOOGLE_LOGIN_SETUP.md)
+
 ## B. Fix Google “provider is not enabled” (REQUIRED)
 
 ### Root cause

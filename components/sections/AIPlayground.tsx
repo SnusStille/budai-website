@@ -43,6 +43,15 @@ import {
   Copy,
   ListTodo,
   Dices,
+  PanelRightClose,
+  PanelRight,
+  FileDown,
+  GripHorizontal,
+  ThumbsUp,
+  ThumbsDown,
+  Share2,
+  Globe2,
+  Command,
 } from "lucide-react";
 import ScrollReveal from "@/components/ui/ScrollReveal";
 import BudAILogo from "@/components/ui/BudAILogo";
@@ -262,6 +271,46 @@ function groupByDate(
   return buckets.filter((b) => b.items.length);
 }
 
+
+function isWorkspaceWorthy(content: string): boolean {
+  if (!content || content.length < 280) return false;
+  if (/```[\s\S]*?```/.test(content)) return true;
+  const lines = content.split("\n").filter((l) => l.trim());
+  const structured =
+    lines.filter((l) => /^(\s*[-*•]|\s*\d+[.)]|#{1,3}\s)/.test(l)).length >= 4;
+  return structured || content.length >= 520;
+}
+
+function workspaceTitle(content: string, lang: "sv" | "en"): string {
+  const m = content.match(/^#{1,3}\s+(.+)$/m);
+  if (m) return m[1].trim().slice(0, 64);
+  const code = content.match(/```(\w+)?/);
+  if (code)
+    return lang === "sv"
+      ? `Kod${code[1] ? ` · ${code[1]}` : ""}`
+      : `Code${code[1] ? ` · ${code[1]}` : ""}`;
+  const first = content.replace(/\s+/g, " ").trim().slice(0, 48);
+  return first + (content.length > 48 ? "…" : "");
+}
+
+
+const INTENT_PRESETS = {
+  sv: [
+    { id: "chat", label: "Chatt", hint: "Vardaglig hjälp", prefix: "", mode: "single" as const },
+    { id: "research", label: "Research", hint: "Djupare + källor-stil", prefix: "Arbeta som research-assistent. Strukturera med: Sammanfattning, Nyckelpunkter, Antaganden, Nästa steg. Var konkret.\n\nFråga: ", mode: "single" as const },
+    { id: "create", label: "Skapa", hint: "Text & pitch", prefix: "Skriv i skarp, publicerbar ton. Ge en färdig leverans (inte meta-råd).\n\nUppgift: ", mode: "single" as const },
+    { id: "analyze", label: "Analys", hint: "Beslut & risk", prefix: "Analysera systematiskt. Använd rubriker, bullets och tydlig rekommendation.\n\nCase: ", mode: "single" as const },
+    { id: "dual", label: "2 vinklar", hint: "Välj mellan svar", prefix: "", mode: "dual" as const },
+  ],
+  en: [
+    { id: "chat", label: "Chat", hint: "Everyday help", prefix: "", mode: "single" as const },
+    { id: "research", label: "Research", hint: "Deeper structured", prefix: "Act as a research assistant. Structure with: Summary, Key points, Assumptions, Next steps. Be concrete.\n\nQuestion: ", mode: "single" as const },
+    { id: "create", label: "Create", hint: "Copy & drafts", prefix: "Write in a sharp, publishable voice. Deliver a finished piece (not meta-advice).\n\nTask: ", mode: "single" as const },
+    { id: "analyze", label: "Analyze", hint: "Decisions & risk", prefix: "Analyze systematically. Use headings, bullets, and a clear recommendation.\n\nCase: ", mode: "single" as const },
+    { id: "dual", label: "2 angles", hint: "Pick a reply", prefix: "", mode: "dual" as const },
+  ],
+} as const;
+
 const CAPABILITY_CARDS = {
   sv: [
     {
@@ -397,8 +446,18 @@ export default function AIPlayground() {
   const [activity, setActivity] = useState<AiActivity>("idle");
   const [typingText, setTypingText] = useState("");
   const [mode, setMode] = useState<Mode>("single");
+  const [intentId, setIntentId] = useState<string>("chat");
+  const [feedback, setFeedback] = useState<Record<string, "up" | "down" | undefined>>({});
+  const [showShortcuts, setShowShortcuts] = useState(false);
   const [answerLang, setAnswerLang] = useState<"sv" | "en">(lang);
   const [inspireSpin, setInspireSpin] = useState(false);
+  const [workspace, setWorkspace] = useState<{
+    msgId: string;
+    title: string;
+    body: string;
+  } | null>(null);
+  const [toolsOpen, setToolsOpen] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [mobileDrawer, setMobileDrawer] = useState(false);
@@ -659,16 +718,24 @@ export default function AIPlayground() {
     }
     setTypingText("");
     setActivity("idle");
+    const mid = newId("m");
     setMessages((prev) => [
       ...prev,
       {
-        id: newId("m"),
+        id: mid,
         role: "assistant",
         content: fullText,
         ts: Date.now(),
         ...extra,
       },
     ]);
+    if (isWorkspaceWorthy(fullText) && typeof window !== "undefined" && window.innerWidth >= 1024) {
+      setWorkspace({
+        msgId: mid,
+        title: workspaceTitle(fullText, lang),
+        body: fullText,
+      });
+    }
     return true;
   };
 
@@ -764,14 +831,23 @@ export default function AIPlayground() {
       const controller = new AbortController();
       const timeout = window.setTimeout(() => controller.abort(), 90_000);
 
+      const intent =
+        (INTENT_PRESETS[lang] || INTENT_PRESETS.en).find((x) => x.id === intentId) || INTENT_PRESETS.en[0];
+      const apiMessages = apiHistory.map((m, i, arr) => {
+        if (i === arr.length - 1 && m.role === "user" && intent.prefix) {
+          return { ...m, content: intent.prefix + m.content };
+        }
+        return m;
+      });
+
       const res = await fetch("/api/playground", {
         method: "POST",
         headers,
         signal: controller.signal,
         body: JSON.stringify({
-          messages: apiHistory,
+          messages: apiMessages,
           lang: answerLang,
-          dual: mode === "dual",
+          dual: mode === "dual" || intent.id === "dual",
           concise: mode === "concise",
           context: contextBlock(),
           guest: auth.isGuest ? auth.guestKey : undefined,
@@ -936,6 +1012,86 @@ export default function AIPlayground() {
     }
   };
 
+
+  const exportThread = () => {
+    if (!messages.length) {
+      showToast("err", lang === "sv" ? "Ingen tråd att exportera" : "No thread to export");
+      return;
+    }
+    const lines = messages.map((m) => {
+      const who = m.role === "user" ? "You" : m.role === "assistant" ? "BudAI" : m.role;
+      return `## ${who}\n${m.content}\n`;
+    });
+    const threadTitle =
+      history.find((c) => c.id === convoId)?.title ||
+      (lang === "sv" ? "Chatt" : "Chat");
+    const md = `# BudAI · ${threadTitle}\n\n${lines.join("\n")}\n`;
+    const blob = new Blob([md], { type: "text/markdown;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `budai-${threadTitle.toLowerCase().replace(/[^a-z0-9]+/gi, "-").slice(0, 40) || "chat"}.md`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast("ok", lang === "sv" ? "Tråd exporterad (.md)" : "Thread exported (.md)");
+  };
+
+  const openWorkspace = (msgId: string, content: string) => {
+    setWorkspace({
+      msgId,
+      title: workspaceTitle(content, lang),
+      body: content,
+    });
+  };
+
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      const inField = tag === "INPUT" || tag === "TEXTAREA" || (e.target as HTMLElement)?.isContentEditable;
+      if (e.key === "Escape") {
+        if (showShortcuts) { setShowShortcuts(false); return; }
+        if (toolsOpen) { setToolsOpen(false); return; }
+        if (workspace) { setWorkspace(null); return; }
+        if (mobileDrawer) { setMobileDrawer(false); return; }
+        return;
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setShowShortcuts((s) => !s);
+        return;
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "n" && !inField) {
+        e.preventDefault();
+        void newChat();
+        return;
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key === "/" && !inField) {
+        e.preventDefault();
+        setShowShortcuts(true);
+        return;
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "e" && !inField) {
+        e.preventDefault();
+        exportThread();
+        return;
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "b" && !inField) {
+        e.preventDefault();
+        setWorkspace((w) => {
+          if (w) return null;
+          const last = [...messages].reverse().find((m) => m.role === "assistant" && m.content);
+          if (!last) return null;
+          return { msgId: last.id, title: workspaceTitle(last.content, lang), body: last.content };
+        });
+        return;
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showShortcuts, toolsOpen, workspace, mobileDrawer, messages, lang]);
+
   const runInspire = () => {
     if (busy) return;
     const pool = INSPIRE_PROMPTS[answerLang] || INSPIRE_PROMPTS.en;
@@ -1076,6 +1232,9 @@ export default function AIPlayground() {
     setInput("");
     setDualPick({});
     setLastFailed(null);
+    setWorkspace(null);
+    setToolsOpen(false);
+    setFeedback({});
     setTemporary(!!opts?.temporary);
 
     try {
@@ -1105,6 +1264,7 @@ export default function AIPlayground() {
     stopAll();
     setDualPick({});
     setLastFailed(null);
+    setWorkspace(null);
     setTemporary(false);
     if (auth.isMember) {
       const c = await cloud.loadConversation(id);
@@ -1328,7 +1488,7 @@ export default function AIPlayground() {
             className={`rounded-2xl sm:rounded-3xl overflow-hidden border border-white/[0.12] bg-[#05050a]/98 shadow-[0_0_100px_rgba(0,229,255,0.12),0_40px_80px_rgba(0,0,0,0.45)] flex ${
               expanded
                 ? "fixed inset-0 sm:inset-3 z-[80] rounded-none sm:rounded-3xl"
-                : "min-h-[min(78vh,720px)]"
+                : "min-h-[min(82vh,760px)]"
             }`}
           >
             <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-accent-cyan/50 to-transparent z-20" />
@@ -1349,7 +1509,8 @@ export default function AIPlayground() {
               )}
             </AnimatePresence>
 
-            {/* Main column */}
+            {/* Main column + optional Workspace */}
+            <div className="flex-1 flex min-w-0 min-h-0">
             <div className="flex-1 flex flex-col min-w-0 min-h-0">
               {/* Header */}
               <div className="flex items-center justify-between gap-2 px-2.5 sm:px-3 py-2 border-b border-white/[0.06] bg-[#080810]/90 shrink-0">
@@ -1365,10 +1526,10 @@ export default function AIPlayground() {
                   >
                     <PanelLeft className="w-4 h-4" />
                   </button>
-                  <BudAILogo size="xs" animated={false} />
+                  <BudAILogo size="sm" animated />
                   <div className="min-w-0">
                     <div className="text-sm font-semibold text-white truncate flex items-center gap-1.5">
-                      BudAI
+                      Bud<span className="text-accent-cyan">AI</span>
                       <span
                         className={`text-[10px] font-mono px-1.5 py-0.5 rounded-md border ${
                           auth.isMember
@@ -1412,6 +1573,23 @@ export default function AIPlayground() {
                       <MessageSquarePlus className="w-4 h-4" />
                     </button>
                   )}
+                  <button
+                    type="button"
+                    onClick={exportThread}
+                    disabled={!messages.length}
+                    className="p-2 rounded-lg border border-white/[0.06] text-muted hover:text-white disabled:opacity-30"
+                    title={lang === "sv" ? "Exportera tråd (.md) · ⌘E" : "Export thread (.md) · ⌘E"}
+                  >
+                    <Download className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowShortcuts(true)}
+                    className="hidden sm:inline-flex p-2 rounded-lg border border-white/[0.06] text-muted hover:text-white"
+                    title={lang === "sv" ? "Genvägar · ⌘K" : "Shortcuts · ⌘K"}
+                  >
+                    <Command className="w-4 h-4" />
+                  </button>
                   {auth.isMember ? (
                     <button
                       type="button"
@@ -1441,79 +1619,76 @@ export default function AIPlayground() {
                 </div>
               </div>
 
-              {/* Mode strip */}
-              <div className="flex flex-wrap items-center gap-1 px-2.5 sm:px-3 py-1.5 border-b border-white/[0.05] bg-black/20 shrink-0">
-                {(["single", "dual", "concise"] as Mode[]).map((m) => (
-                  <button
-                    key={m}
-                    type="button"
-                    onClick={() => setMode(m)}
-                    className={`px-2.5 py-1 rounded-lg text-[11px] font-medium ${
-                      mode === m
-                        ? "bg-accent-cyan/15 text-accent-cyan border border-accent-cyan/25"
-                        : "text-muted border border-transparent hover:text-white"
-                    }`}
-                  >
-                    {m === "concise"
-                      ? lang === "sv"
-                        ? "Kort"
-                        : "Concise"
-                      : m === "dual"
-                        ? lang === "sv"
-                          ? "Dubbel"
-                          : "Dual"
-                        : lang === "sv"
-                          ? "Enkel"
-                          : "Single"}
-                  </button>
-                ))}
-                <div
-                  className="ml-1 flex p-0.5 rounded-full bg-black/40 border border-white/[0.08]"
-                  role="group"
-                  aria-label={lang === "sv" ? "Svarspråk" : "Answer language"}
-                  title={lang === "sv" ? "Svarspråk" : "Answer language"}
-                >
-                  {(["en", "sv"] as const).map((code) => (
+              {/* Intent + controls strip — ChatGPT/Claude/Perplexity-inspired, honest */}
+              <div className="flex flex-col gap-2 px-2.5 sm:px-3 py-2 border-b border-white/[0.06] bg-gradient-to-b from-black/35 to-black/15 shrink-0">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {(INTENT_PRESETS[lang] || INTENT_PRESETS.en).map((it) => (
                     <button
-                      key={code}
+                      key={it.id}
                       type="button"
-                      onClick={() => setAnswerLang(code)}
-                      className={`px-2 py-0.5 text-[10px] font-semibold rounded-full transition-all ${
-                        answerLang === code
-                          ? "bg-gradient-to-r from-accent-cyan to-accent-purple text-white"
-                          : "text-muted/70 hover:text-white"
+                      title={it.hint}
+                      onClick={() => {
+                        setIntentId(it.id);
+                        setMode(it.id === "dual" ? "dual" : mode === "concise" ? "concise" : "single");
+                      }}
+                      className={`px-2.5 py-1.5 rounded-full text-[11px] font-semibold border transition-all ${
+                        intentId === it.id
+                          ? "bg-gradient-to-r from-accent-cyan/20 to-accent-purple/20 border-accent-cyan/40 text-white shadow-[0_0_20px_rgba(0,229,255,0.12)]"
+                          : "border-white/[0.08] text-muted hover:text-white hover:border-white/20 bg-white/[0.02]"
                       }`}
                     >
-                      {code.toUpperCase()}
+                      {it.label}
                     </button>
                   ))}
+                  <div className="ml-auto flex items-center gap-1.5">
+                    <span className="hidden sm:inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-mono text-accent-cyan/80 border border-accent-cyan/20 bg-accent-cyan/5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-accent-green animate-pulse" />
+                      BudAI Core · v0.93
+                    </span>
+                    <div
+                      className="flex p-0.5 rounded-full bg-black/50 border border-white/[0.08]"
+                      role="group"
+                      aria-label={lang === "sv" ? "Svarspråk" : "Answer language"}
+                    >
+                      {(["en", "sv"] as const).map((code) => (
+                        <button
+                          key={code}
+                          type="button"
+                          onClick={() => setAnswerLang(code)}
+                          className={`px-2 py-0.5 text-[10px] font-bold rounded-full ${
+                            answerLang === code
+                              ? "bg-gradient-to-r from-accent-cyan to-accent-purple text-white"
+                              : "text-muted/70 hover:text-white"
+                          }`}
+                        >
+                          {code.toUpperCase()}
+                        </button>
+                      ))}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setMode((m) => (m === "concise" ? "single" : "concise"))}
+                      className={`px-2 py-1 rounded-lg text-[10px] font-medium border ${
+                        mode === "concise"
+                          ? "border-accent-purple/40 text-accent-purple bg-accent-purple/10"
+                          : "border-white/[0.06] text-muted hover:text-white"
+                      }`}
+                      title={lang === "sv" ? "Korta svar" : "Concise replies"}
+                    >
+                      {lang === "sv" ? "Kort" : "Short"}
+                    </button>
+                  </div>
                 </div>
-                {imageGenEnabled ? (
-                  <button
-                    type="button"
-                    onClick={() => setGenMode((g) => !g)}
-                    className={`ml-auto flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium border ${
-                      genMode
-                        ? "border-accent-purple/40 bg-accent-purple/15 text-accent-purple"
-                        : "border-transparent text-muted hover:text-white"
-                    }`}
-                  >
-                    <Wand2 className="w-3 h-3" />
-                    {lang === "sv" ? "Skapa bild" : "Create image"}
-                  </button>
-                ) : (
-                  <span
-                    className="ml-auto inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-medium text-muted/50 border border-white/[0.05] cursor-default"
-                    title={
-                      lang === "sv"
-                        ? "Bildgenerering kommer snart. Du kan bifoga bilder för analys."
-                        : "Image generation coming soon. You can attach images for analysis."
-                    }
-                  >
-                    <Wand2 className="w-3 h-3 opacity-40" />
-                    {lang === "sv" ? "Skapa bild · snart" : "Create image · soon"}
+                <div className="flex items-center gap-2 text-[10px] text-muted/50 px-0.5">
+                  <Globe2 className="w-3 h-3" />
+                  <span className="truncate">
+                    {(INTENT_PRESETS[lang] || INTENT_PRESETS.en).find((x) => x.id === intentId)?.hint ||
+                      (lang === "sv" ? "Välj läge ovan" : "Pick a mode above")}
                   </span>
-                )}
+                  <span className="ml-auto font-mono text-muted/40 hidden sm:inline">
+                    {lang === "sv" ? "⌘/ för fokus" : "⌘/ for tips"}
+                  </span>
+                </div>
               </div>
 
               {/* Messages / empty */}
@@ -1523,21 +1698,25 @@ export default function AIPlayground() {
                 style={{ WebkitOverflowScrolling: "touch" }}
               >
                 {isEmpty && (
-                  <div className="flex flex-col items-center justify-center min-h-[280px] sm:min-h-[340px] px-2">
-                    <div className="mb-5">
-                      <BudAILogo size="lg" animated />
+                  <div className="flex flex-col items-center justify-center min-h-[300px] sm:min-h-[380px] px-2 relative">
+                    <div className="absolute inset-0 pointer-events-none opacity-40">
+                      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-full bg-accent-cyan/10 blur-3xl" />
+                      <div className="absolute top-1/3 left-1/3 w-40 h-40 rounded-full bg-accent-purple/10 blur-3xl" />
                     </div>
-                    <h3 className="text-lg sm:text-xl font-semibold text-white mb-1 tracking-tight">
-                      {lang === "sv" ? "Börja med något verkligt" : "Start with something real"}
+                    <div className="mb-6 relative">
+                      <BudAILogo size="xl" animated />
+                    </div>
+                    <div className="inline-flex items-center gap-1.5 mb-3 px-2.5 py-1 rounded-full border border-accent-green/25 bg-accent-green/10 text-[10px] font-mono text-accent-green">
+                      <span className="w-1.5 h-1.5 rounded-full bg-accent-green animate-pulse" />
+                      {lang === "sv" ? "LIVE · BudAI Core" : "LIVE · BudAI Core"}
+                    </div>
+                    <h3 className="text-xl sm:text-2xl font-bold text-white mb-1.5 tracking-tight relative">
+                      {lang === "sv" ? "Vad ska vi få gjort?" : "What should we ship?"}
                     </h3>
                     <p className="text-sm text-muted mb-6 text-center max-w-md leading-relaxed">
                       {lang === "sv"
-                        ? imageGenEnabled
-                          ? "Text, bildanalys, bildskapande, röst och minne — i en yta."
-                          : "Text, bildanalys (bifoga), röst och minne — i en yta."
-                        : imageGenEnabled
-                          ? "Text, image analysis, image creation, voice, and memory — one surface."
-                          : "Text, image analysis (attach), voice, and memory — one surface."}
+                        ? "Text, vision, röst, minne — och Workspace för längre resultat."
+                        : "Text, vision, voice, memory — and Workspace for longer outputs."}
                     </p>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 w-full max-w-xl">
                       {caps.map((c) => (
@@ -1571,7 +1750,7 @@ export default function AIPlayground() {
                             }
                             void runPrompt(c.prompt);
                           }}
-                          className="text-left rounded-2xl border border-white/[0.09] bg-gradient-to-b from-white/[0.06] to-white/[0.02] hover:border-accent-cyan/40 hover:from-accent-cyan/[0.08] hover:to-accent-purple/[0.04] p-3.5 transition-all duration-200 group shadow-[0_0_0_0_rgba(0,229,255,0)] hover:shadow-[0_8px_28px_rgba(0,0,0,0.25)]"
+                          className="pg-suggest-chip text-left rounded-2xl border border-white/[0.09] bg-gradient-to-b from-white/[0.06] to-white/[0.02] hover:border-accent-cyan/40 hover:from-accent-cyan/[0.08] hover:to-accent-purple/[0.04] p-3.5 transition-all duration-200 group"
                         >
                           <div className="w-8 h-8 rounded-lg bg-accent-cyan/10 border border-accent-cyan/20 flex items-center justify-center text-accent-cyan mb-2.5 group-hover:scale-105 transition-transform">
                             {c.icon === "vision" && <Eye className="w-4 h-4" />}
@@ -1609,7 +1788,7 @@ export default function AIPlayground() {
                 {messages.map((msg) => (
                   <div
                     key={msg.id}
-                    className={`flex gap-2.5 ${msg.role === "user" ? "flex-row-reverse" : ""}`}
+                    className={`flex gap-2.5 pg-msg-enter ${msg.role === "user" ? "flex-row-reverse" : ""}`}
                   >
                     <div
                       className={`w-8 h-8 rounded-xl shrink-0 flex items-center justify-center ${
@@ -1621,7 +1800,7 @@ export default function AIPlayground() {
                       {msg.role === "user" ? (
                         <User className="w-4 h-4 text-white/70" />
                       ) : (
-                        <BudAILogo size="xs" animated={false} className="!w-full !h-full" />
+                        <BudAILogo size="xs" animated className="!w-full !h-full" />
                       )}
                     </div>
                     <div
@@ -1657,6 +1836,9 @@ export default function AIPlayground() {
                                   delete n[msg.id];
                                   return n;
                                 });
+                                if (isWorkspaceWorthy(opt.body)) {
+                                  openWorkspace(msg.id, opt.body);
+                                }
                               }}
                               className="text-left p-3.5 rounded-2xl border border-white/[0.1] bg-gradient-to-b from-white/[0.06] to-white/[0.02] hover:border-accent-cyan/40 hover:shadow-[0_8px_32px_rgba(0,229,255,0.12)] transition-all"
                             >
@@ -1705,7 +1887,17 @@ export default function AIPlayground() {
                       )}
 
                       {msg.role === "assistant" && !msg.error && !dualPick[msg.id] && (
-                        <div className="flex flex-wrap gap-2 opacity-70 hover:opacity-100 transition-opacity">
+                        <div className="flex flex-wrap gap-1.5 opacity-80 hover:opacity-100 transition-opacity">
+                          {isWorkspaceWorthy(msg.content) && (
+                            <button
+                              type="button"
+                              onClick={() => openWorkspace(msg.id, msg.content)}
+                              className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-lg border border-accent-cyan/25 bg-accent-cyan/10 text-accent-cyan hover:bg-accent-cyan/15"
+                            >
+                              <PanelRight className="w-3 h-3" />
+                              {lang === "sv" ? "Workspace" : "Workspace"}
+                            </button>
+                          )}
                           <button
                             type="button"
                             onClick={async () => {
@@ -1716,7 +1908,7 @@ export default function AIPlayground() {
                                 showToast("err", "Copy failed");
                               }
                             }}
-                            className="inline-flex items-center gap-1 text-[10px] text-muted hover:text-white"
+                            className="inline-flex items-center gap-1 text-[10px] text-muted hover:text-white px-1.5 py-1"
                           >
                             <Copy className="w-3 h-3" />
                             {lang === "sv" ? "Kopiera" : "Copy"}
@@ -1724,7 +1916,6 @@ export default function AIPlayground() {
                           <button
                             type="button"
                             onClick={() => {
-                              // regenerate: find preceding user message
                               const idx = messages.findIndex((m) => m.id === msg.id);
                               let userText = "";
                               for (let i = idx - 1; i >= 0; i--) {
@@ -1737,10 +1928,68 @@ export default function AIPlayground() {
                               setMessages((p) => p.filter((m) => m.id !== msg.id));
                               void runPrompt(userText);
                             }}
-                            className="inline-flex items-center gap-1 text-[10px] text-muted hover:text-white"
+                            className="inline-flex items-center gap-1 text-[10px] text-muted hover:text-white px-1.5 py-1"
                           >
                             <RefreshCw className="w-3 h-3" />
                             {lang === "sv" ? "Generera om" : "Regenerate"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const prompt =
+                                lang === "sv"
+                                  ? "Fortsätt på det senaste svaret — gå djupare och gör det mer konkret."
+                                  : "Continue from your last answer — go deeper and make it more concrete.";
+                              void runPrompt(prompt);
+                            }}
+                            className="inline-flex items-center gap-1 text-[10px] text-muted hover:text-white px-1.5 py-1"
+                          >
+                            <Sparkles className="w-3 h-3" />
+                            {lang === "sv" ? "Fortsätt" : "Continue"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              try {
+                                await navigator.clipboard.writeText(msg.content);
+                                showToast(
+                                  "ok",
+                                  lang === "sv" ? "Svar kopierat — klistra in var du vill" : "Reply copied — paste anywhere"
+                                );
+                              } catch {
+                                showToast("err", "Share failed");
+                              }
+                            }}
+                            className="inline-flex items-center gap-1 text-[10px] text-muted hover:text-white px-1.5 py-1"
+                          >
+                            <Share2 className="w-3 h-3" />
+                            {lang === "sv" ? "Dela" : "Share"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setFeedback((f) => ({ ...f, [msg.id]: "up" }));
+                              showToast("ok", lang === "sv" ? "Tack — sparat lokalt" : "Thanks — saved locally");
+                            }}
+                            className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-1 ${
+                              feedback[msg.id] === "up" ? "text-accent-green" : "text-muted hover:text-white"
+                            }`}
+                            title="Good"
+                          >
+                            <ThumbsUp className="w-3 h-3" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setFeedback((f) => ({ ...f, [msg.id]: "down" }));
+                              showToast("ok", lang === "sv" ? "Tack — vi tar det vidare" : "Thanks — noted");
+                            }}
+                            className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-1 ${
+                              feedback[msg.id] === "down" ? "text-red-300" : "text-muted hover:text-white"
+                            }`}
+                            title="Bad"
+                          >
+                            <ThumbsDown className="w-3 h-3" />
                           </button>
                         </div>
                       )}
@@ -1832,7 +2081,7 @@ export default function AIPlayground() {
               </div>
 
               {/* Composer */}
-              <div className="shrink-0 border-t border-white/[0.06] bg-gradient-to-b from-[#0a0a12] to-[#07070c] p-2.5 sm:p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+              <div className="shrink-0 border-t border-white/[0.08] pg-composer-shell p-2.5 sm:p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
                 {attach && (
                   <div className="mb-2 flex items-center gap-2">
                     <div className="relative inline-block">
@@ -1882,7 +2131,93 @@ export default function AIPlayground() {
                   </div>
                 )}
 
-                <form onSubmit={onSubmit} className="flex gap-1.5 items-end">
+                {toolsOpen && (
+                  <div className="mb-2 flex flex-wrap gap-1.5 p-2 rounded-xl border border-white/[0.07] bg-black/30">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        fileRef.current?.click();
+                        setToolsOpen(false);
+                      }}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] text-white/85 border border-white/[0.08] hover:border-accent-cyan/30 hover:bg-accent-cyan/10"
+                    >
+                      <ImagePlus className="w-3.5 h-3.5 text-accent-cyan" />
+                      {lang === "sv" ? "Bild" : "Image"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={toggleMic}
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] border ${
+                        listening
+                          ? "border-accent-green/40 bg-accent-green/10 text-accent-green"
+                          : "text-white/85 border-white/[0.08] hover:border-accent-green/30"
+                      }`}
+                    >
+                      <Mic className="w-3.5 h-3.5" />
+                      {lang === "sv" ? "Röst" : "Voice"}
+                    </button>
+                    <span
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] text-muted/50 border border-white/[0.05] cursor-default"
+                      title={lang === "sv" ? "PDF/dokument kommer snart" : "PDF/docs coming soon"}
+                    >
+                      <FileDown className="w-3.5 h-3.5 opacity-40" />
+                      {lang === "sv" ? "PDF · snart" : "PDF · soon"}
+                    </span>
+                    {imageGenEnabled ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setGenMode((g) => !g);
+                          setToolsOpen(false);
+                        }}
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] border ${
+                          genMode
+                            ? "border-accent-purple/40 bg-accent-purple/15 text-accent-purple"
+                            : "text-white/85 border-white/[0.08]"
+                        }`}
+                      >
+                        <Wand2 className="w-3.5 h-3.5" />
+                        {lang === "sv" ? "Skapa bild" : "Create image"}
+                      </button>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] text-muted/45 border border-white/[0.05]">
+                        <Wand2 className="w-3.5 h-3.5 opacity-40" />
+                        {lang === "sv" ? "Bildgen · snart" : "Image gen · soon"}
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                <form
+                  onSubmit={onSubmit}
+                  className={`flex gap-1.5 items-end rounded-2xl transition-colors ${
+                    dragOver ? "ring-2 ring-accent-cyan/40 bg-accent-cyan/[0.04]" : ""
+                  }`}
+                  onDragEnter={(e) => {
+                    e.preventDefault();
+                    setDragOver(true);
+                  }}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDragLeave={() => setDragOver(false)}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setDragOver(false);
+                    const f = e.dataTransfer.files?.[0];
+                    if (f && f.type.startsWith("image/")) {
+                      const dt = new DataTransfer();
+                      dt.items.add(f);
+                      if (fileRef.current) {
+                        fileRef.current.files = dt.files;
+                        void onFile({ target: fileRef.current } as unknown as React.ChangeEvent<HTMLInputElement>);
+                      }
+                    } else if (f) {
+                      showToast(
+                        "warn",
+                        lang === "sv" ? "Bara bilder just nu (PDF snart)." : "Images only for now (PDF soon)."
+                      );
+                    }
+                  }}
+                >
                   <input
                     ref={fileRef}
                     type="file"
@@ -1892,24 +2227,16 @@ export default function AIPlayground() {
                   />
                   <button
                     type="button"
-                    onClick={() => fileRef.current?.click()}
-                    className="shrink-0 h-11 w-10 rounded-xl border border-white/[0.08] text-muted hover:text-accent-cyan flex items-center justify-center"
-                    title={lang === "sv" ? "Bifoga bild (PDF kommer snart)" : "Attach image (PDF coming soon)"}
-                    aria-label={lang === "sv" ? "Bifoga bild" : "Attach image"}
-                  >
-                    <ImagePlus className="w-4 h-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={toggleMic}
+                    onClick={() => setToolsOpen((v) => !v)}
                     className={`shrink-0 h-11 w-10 rounded-xl border flex items-center justify-center ${
-                      listening
-                        ? "border-accent-green/40 bg-accent-green/10 text-accent-green"
-                        : "border-white/[0.08] text-muted hover:text-white"
+                      toolsOpen
+                        ? "border-accent-cyan/35 bg-accent-cyan/10 text-accent-cyan"
+                        : "border-white/[0.08] text-muted hover:text-accent-cyan"
                     }`}
-                    title="Voice"
+                    title={lang === "sv" ? "Verktyg" : "Tools"}
+                    aria-expanded={toolsOpen}
                   >
-                    {listening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                    <Plus className={`w-4 h-4 transition-transform ${toolsOpen ? "rotate-45" : ""}`} />
                   </button>
                   <textarea
                     ref={taRef}
@@ -1982,7 +2309,9 @@ export default function AIPlayground() {
                 </form>
                 <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-muted/40 px-0.5">
                   <span className="hidden sm:inline text-muted/35">
-                    {lang === "sv" ? "Enter skickar · Shift+Enter rad" : "Enter send · Shift+Enter newline"}
+                    {lang === "sv"
+                      ? "Enter skickar · Shift+Enter rad · lägen ovan styr ton"
+                      : "Enter send · Shift+Enter newline · modes steer tone"}
                   </span>
                   <span className="inline-flex items-center gap-1">
                     <Shield className="w-3 h-3" />
@@ -2000,9 +2329,148 @@ export default function AIPlayground() {
                 </div>
               </div>
             </div>
+
+              {/* BudAI Workspace — substantial outputs side panel */}
+              {workspace && (
+                <aside className="hidden lg:flex w-[min(42%,420px)] shrink-0 flex-col border-l border-white/[0.08] bg-[#07070e] min-h-0">
+                  <div className="flex items-center gap-2 px-3 py-2.5 border-b border-white/[0.06] shrink-0">
+                    <GripHorizontal className="w-3.5 h-3.5 text-muted/50" />
+                    <div className="min-w-0 flex-1">
+                      <div className="text-[10px] uppercase tracking-[0.14em] text-accent-cyan/80 font-medium">
+                        Workspace
+                      </div>
+                      <div className="text-xs text-white/90 font-semibold truncate">{workspace.title}</div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        try {
+                          await navigator.clipboard.writeText(workspace.body);
+                          showToast("ok", lang === "sv" ? "Kopierat" : "Copied");
+                        } catch {
+                          showToast("err", "Copy failed");
+                        }
+                      }}
+                      className="p-1.5 rounded-lg text-muted hover:text-white border border-transparent hover:border-white/10"
+                      title="Copy"
+                    >
+                      <Copy className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const blob = new Blob([workspace.body], { type: "text/markdown;charset=utf-8" });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement("a");
+                        a.href = url;
+                        a.download = `budai-workspace-${Date.now()}.md`;
+                        a.click();
+                        URL.revokeObjectURL(url);
+                      }}
+                      className="p-1.5 rounded-lg text-muted hover:text-white border border-transparent hover:border-white/10"
+                      title="Download"
+                    >
+                      <FileDown className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setWorkspace(null)}
+                      className="p-1.5 rounded-lg text-muted hover:text-white"
+                      aria-label="Close workspace"
+                    >
+                      <PanelRightClose className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                  <div className="flex-1 overflow-y-auto p-4 text-[13px] text-white/90 leading-relaxed workspace-scroll">
+                    {renderMarkdown(workspace.body)}
+                  </div>
+                  <div className="shrink-0 p-2.5 border-t border-white/[0.06] flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const improve =
+                          lang === "sv"
+                            ? "Förbättra workspace-resultatet: gör det skarpare, mer strukturerat och mer handlingsbart."
+                            : "Improve the workspace result: make it sharper, more structured, and more actionable.";
+                        void runPrompt(improve);
+                      }}
+                      disabled={busy}
+                      className="flex-1 text-[11px] font-medium py-2 rounded-xl border border-accent-cyan/25 bg-accent-cyan/10 text-accent-cyan hover:bg-accent-cyan/15 disabled:opacity-40"
+                    >
+                      {lang === "sv" ? "Förbättra" : "Improve"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setInput(workspace.body.slice(0, 2000));
+                        taRef.current?.focus();
+                      }}
+                      className="flex-1 text-[11px] font-medium py-2 rounded-xl border border-white/[0.08] text-muted hover:text-white"
+                    >
+                      {lang === "sv" ? "Redigera i chatt" : "Edit in chat"}
+                    </button>
+                  </div>
+                </aside>
+              )}
+            </div>
           </div>
         </ScrollReveal>
       </div>
+
+
+      {/* Mobile workspace sheet */}
+      <AnimatePresence>
+        {workspace && (
+          <motion.div
+            key="workspace-mobile-sheet"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[91] lg:hidden flex flex-col justify-end"
+          >
+            <button
+              type="button"
+              className="absolute inset-0 bg-black/65 backdrop-blur-sm"
+              aria-label="Close"
+              onClick={() => setWorkspace(null)}
+            />
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "40%" }}
+              transition={{ type: "spring", damping: 28, stiffness: 320 }}
+              className="relative max-h-[85vh] rounded-t-3xl border border-white/[0.1] bg-[#08080f] flex flex-col shadow-2xl"
+            >
+              <div className="flex items-center gap-2 px-4 py-3 border-b border-white/[0.06]">
+                <div className="min-w-0 flex-1">
+                  <div className="text-[10px] uppercase tracking-wider text-accent-cyan">Workspace</div>
+                  <div className="text-sm font-semibold text-white truncate">{workspace.title}</div>
+                </div>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText(workspace.body);
+                      showToast("ok", lang === "sv" ? "Kopierat" : "Copied");
+                    } catch {
+                      /* */
+                    }
+                  }}
+                  className="p-2 text-muted hover:text-white"
+                >
+                  <Copy className="w-4 h-4" />
+                </button>
+                <button type="button" onClick={() => setWorkspace(null)} className="p-2 text-muted hover:text-white">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto p-4 text-sm text-white/90">
+                {renderMarkdown(workspace.body)}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Mobile drawer */}
       <AnimatePresence>
@@ -2235,6 +2703,57 @@ export default function AIPlayground() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Keyboard shortcuts palette */}
+      <AnimatePresence>
+        {showShortcuts && (
+          <motion.div
+            className="fixed inset-0 z-[80] flex items-center justify-center p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowShortcuts(false)} />
+            <motion.div
+              initial={{ opacity: 0, y: 12, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 8, scale: 0.98 }}
+              className="relative w-full max-w-md rounded-2xl border border-white/10 bg-[#0c0c14] shadow-2xl p-5"
+            >
+              <div className="flex items-center gap-2 mb-4">
+                <Command className="w-4 h-4 text-accent-cyan" />
+                <h3 className="text-sm font-semibold text-white">
+                  {lang === "sv" ? "Tangentbordsgenvägar" : "Keyboard shortcuts"}
+                </h3>
+                <button type="button" onClick={() => setShowShortcuts(false)} className="ml-auto p-1 text-muted hover:text-white">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <ul className="space-y-2 text-[12px]">
+                {[
+                  { keys: "⌘ K", desc: lang === "sv" ? "Öppna denna palett" : "Open this palette" },
+                  { keys: "⌘ N", desc: lang === "sv" ? "Ny chatt" : "New chat" },
+                  { keys: "⌘ E", desc: lang === "sv" ? "Exportera tråd (.md)" : "Export thread (.md)" },
+                  { keys: "⌘ B", desc: lang === "sv" ? "Växla Workspace" : "Toggle Workspace" },
+                  { keys: "Esc", desc: lang === "sv" ? "Stäng paneler" : "Close panels" },
+                  { keys: "Enter", desc: lang === "sv" ? "Skicka meddelande" : "Send message" },
+                ].map((row) => (
+                  <li key={row.keys} className="flex items-center justify-between gap-3 py-1.5 border-b border-white/[0.04] last:border-0">
+                    <span className="text-muted">{row.desc}</span>
+                    <kbd className="font-mono text-[11px] px-2 py-0.5 rounded-md bg-white/[0.06] border border-white/10 text-white/90">{row.keys}</kbd>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-4 text-[11px] text-muted/60 leading-relaxed">
+                {lang === "sv"
+                  ? "Lägena Research / Skapa / Analys styr tonen i API-anropet — ingen fake-backend."
+                  : "Research / Create / Analyze modes steer tone in the API call — no fake backends."}
+              </p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
     </section>
   );
 }

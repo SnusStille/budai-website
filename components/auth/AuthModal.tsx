@@ -215,8 +215,15 @@ export default function AuthModal() {
             {err && (
               <div className="mt-3 rounded-xl border border-red-400/25 bg-red-400/10 px-3 py-2 text-xs text-red-100 flex gap-2">
                 <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-                <span>{err}</span>
+                <span className="leading-relaxed">{err}</span>
               </div>
+            )}
+            {err && /google/i.test(err) && (
+              <p className="mt-2 text-[10px] text-muted/60 text-center leading-relaxed">
+                {lang === "sv"
+                  ? "Kräver att Google-provider är påslagen i Supabase + OAuth-klient i Google Cloud (se AUTH_SETUP.md)."
+                  : "Requires Google provider enabled in Supabase + OAuth client in Google Cloud (see AUTH_SETUP.md)."}
+              </p>
             )}
 
             <p className="mt-4 text-[10px] text-muted/55 leading-relaxed text-center">

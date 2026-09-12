@@ -320,7 +320,7 @@ export default function Capabilities() {
 
                 <div className="flex items-center justify-between px-4 sm:px-5 py-3 border-b border-white/[0.06]">
                   <div className="flex items-center gap-2.5">
-                    <BudAILogo size="xs" animated={false} />
+                    <BudAILogo size="xs" animated />
                     <span className="text-xs font-mono text-muted">budai · {cap.id}</span>
                   </div>
                   <div className="flex items-center gap-2">

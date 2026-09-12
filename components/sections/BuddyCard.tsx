@@ -73,7 +73,7 @@ export default function BuddyCard({ className = "" }: { className?: string }) {
 
             <div className="relative flex items-start gap-3 p-4 pb-2">
               <div className="relative shrink-0">
-                <BudAILogo size="md" animated={false} />
+                <BudAILogo size="md" animated />
                 <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-accent-green border-2 border-[#0a0a12]" />
               </div>
               <div className="flex-1 min-w-0 pr-4">

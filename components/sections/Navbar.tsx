@@ -159,7 +159,7 @@ export default function Navbar() {
               }}
             >
               <span className="transition-transform group-active:scale-95 inline-flex">
-                <BudAILogo size="sm" animated={false} />
+                <BudAILogo size="sm" animated />
               </span>
               <div className="flex flex-col leading-none">
                 <span className="text-xl font-bold tracking-tight">

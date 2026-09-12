@@ -105,7 +105,7 @@ export default function LegalPage() {
             <ArrowLeft className="w-4 h-4" />
             {L === "sv" ? "Tillbaka till BudAI" : "Back to BudAI"}
           </Link>
-          <BudAILogo size="sm" animated={false} />
+          <BudAILogo size="sm" animated />
         </div>
 
         <motion.div

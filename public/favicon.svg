@@ -2,20 +2,34 @@
   <defs>
     <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#e8ffff"/>
-      <stop offset="45%" stop-color="#00e5ff"/>
-      <stop offset="100%" stop-color="#818cf8"/>
+      <stop offset="45%" stop-color="#22d3ee"/>
+      <stop offset="100%" stop-color="#a78bfa"/>
     </linearGradient>
-    <radialGradient id="c" cx="38%" cy="32%" r="65%">
-      <stop offset="0%" stop-color="#fff"/>
-      <stop offset="35%" stop-color="#a5f3fc"/>
-      <stop offset="75%" stop-color="#22d3ee"/>
+    <radialGradient id="c" cx="35%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="40%" stop-color="#22d3ee"/>
       <stop offset="100%" stop-color="#6366f1"/>
     </radialGradient>
   </defs>
-  <circle cx="32" cy="32" r="31" fill="#06070e"/>
-  <circle cx="32" cy="32" r="23" stroke="url(#g)" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="108 36" stroke-dashoffset="12" fill="none"/>
-  <circle cx="32" cy="32" r="10" fill="url(#c)"/>
-  <circle cx="28.5" cy="28.5" r="2.5" fill="#fff" opacity="0.55"/>
-  <circle cx="32" cy="9" r="2.6" fill="url(#g)"/>
-  <circle cx="32" cy="9" r="1.2" fill="#fff"/>
+  <circle cx="32" cy="32" r="31" fill="#05070e"/>
+  <circle cx="32" cy="32" r="22" fill="rgba(0,229,255,0.12)"/>
+  <g>
+    <animateTransform attributeName="transform" type="rotate" from="0 32 32" to="360 32 32" dur="10s" repeatCount="indefinite"/>
+    <circle cx="32" cy="32" r="25" fill="none" stroke="url(#g)" stroke-width="1.4" stroke-dasharray="4 6" stroke-linecap="round" opacity="0.55"/>
+  </g>
+  <circle cx="32" cy="32" r="21.5" fill="none" stroke="url(#g)" stroke-width="1.8" opacity="0.95"/>
+  <g>
+    <animateTransform attributeName="transform" type="rotate" from="360 32 32" to="0 32 32" dur="14s" repeatCount="indefinite"/>
+    <path d="M17 32c0-8.2 6.8-14.8 15-14.8" fill="none" stroke="#22d3ee" stroke-width="2.4" stroke-linecap="round"/>
+    <path d="M47 32c0 8.2-6.8 14.8-15 14.8" fill="none" stroke="#a78bfa" stroke-width="2.4" stroke-linecap="round"/>
+  </g>
+  <g>
+    <animateTransform attributeName="transform" type="rotate" from="0 32 32" to="360 32 32" dur="6s" repeatCount="indefinite"/>
+    <circle cx="32" cy="7.5" r="3" fill="url(#g)"/>
+    <circle cx="32" cy="7.5" r="1.35" fill="#fff"/>
+  </g>
+  <circle cx="32" cy="32" r="9" fill="url(#c)">
+    <animate attributeName="r" values="8.2;9.6;8.2" dur="1.8s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="28.8" cy="28.8" r="2.6" fill="#fff" opacity="0.6"/>
 </svg>
