@@ -763,7 +763,7 @@ export default function AdminPage() {
                 </h3>
                 <ul className="text-xs text-muted space-y-2 leading-relaxed">
                   <li className="flex justify-between gap-3 border-b border-white/[0.05] pb-2">
-                    <span>Auth (Google + email OTP) + guest</span>
+                    <span>Auth (email OTP + guest · Google on launch)</span>
                     <span className="text-accent-green font-mono">on</span>
                   </li>
                   <li className="flex justify-between gap-3 border-b border-white/[0.05] pb-2">

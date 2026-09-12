@@ -725,14 +725,7 @@ body {
 }
 
 
-/* Classic orb core pulse */
-.logo-core-pulse {
-  animation: logo-core-pulse 3s ease-in-out infinite;
-}
-@keyframes logo-core-pulse {
-  0%, 100% { transform: scale(1); filter: brightness(1); }
-  50% { transform: scale(1.14); filter: brightness(1.25); }
-}
+/* logo-core-pulse defined once below (Signal Core) */
 
 /* Status live signal */
 .status-wave {
@@ -813,6 +806,10 @@ h1, h2, h3 {
   animation: logo-core-pulse 1.8s ease-in-out infinite;
   transform-box: fill-box;
   transform-origin: center;
+}
+@keyframes logo-core-pulse {
+  0%, 100% { transform: scale(1); filter: brightness(1); }
+  50% { transform: scale(1.14); filter: brightness(1.25); }
 }
 @keyframes logo-orbit-2d {
   from { transform: rotate(0deg); }

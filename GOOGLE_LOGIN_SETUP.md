@@ -1,5 +1,9 @@
 # Google Login — exact setup for BudAI (stilledev.se)
 
+> **Status (product UI):** Google button is **disabled** with label **“Available on launch” / “Vid launch”**.  
+> Magic-link email remains the live sign-in path. Re-enable the button in `AuthModal` + restore `signInWithGoogle` in `AuthProvider` after the steps below are done.
+
+
 Email magic link already works in code.  
 **Google fails until you enable it in Supabase + Google Cloud.**  
 No Client ID/Secret can be invented in the repo.

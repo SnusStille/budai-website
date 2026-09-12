@@ -5,14 +5,15 @@ export function friendlyAuthError(msg: string, lang: "sv" | "en" = "en"): string
   const sv = lang === "sv";
 
   if (
+    m.includes("available on launch") ||
     m.includes("provider is not enabled") ||
     m.includes("unsupported provider") ||
     m.includes("google sign-in is currently unavailable") ||
     m.includes("google is not enabled")
   ) {
     return sv
-      ? "Google-inloggning är inte tillgänglig just nu. Använd magisk länk via e-post, eller försök senare."
-      : "Google sign-in is currently unavailable. Please use the magic-link email option, or try again later.";
+      ? "Google-inloggning kommer vid launch. Använd magisk länk via e-post just nu."
+      : "Google sign-in will be available on launch. Please use the email magic link for now.";
   }
   if (m.includes("popup") || m.includes("cancelled") || m.includes("canceled")) {
     return sv ? "Google-inloggningen avbröts." : "Google sign-in was cancelled.";

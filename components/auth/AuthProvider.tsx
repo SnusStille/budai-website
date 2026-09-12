@@ -267,41 +267,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signInWithGoogle = useCallback(async () => {
-    const supabase = createClient();
-    if (!supabase) return { error: "Sign-in is temporarily unavailable. Please try again later." };
-    const origin = getBrowserOrigin();
-    const redirectTo = getAuthCallbackUrl("/#playground");
-    try {
-      sessionStorage.setItem("budai-oauth-started", String(Date.now()));
-      sessionStorage.setItem("budai-oauth-origin", origin);
-    } catch {
-      /* */
-    }
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo,
-        queryParams: { prompt: "select_account" },
-        skipBrowserRedirect: false,
-      },
-    });
-    if (error) {
-      const m = error.message.toLowerCase();
-      if (m.includes("provider is not enabled") || m.includes("unsupported provider")) {
-        return {
-          error:
-            "Google sign-in is currently unavailable. Please use the magic-link email option, or try again later.",
-        };
-      }
-      if (m.includes("popup") || m.includes("cancelled") || m.includes("canceled")) {
-        return { error: "Google sign-in was cancelled." };
-      }
-      return {
-        error:
-          "Could not start Google sign-in. Please try email magic link, or try again in a moment.",
-      };
-    }
-    return {};
+    // Gated until launch: OAuth needs Supabase Google provider + Google Cloud client.
+    // UI shows "Available on launch" — this is a hard stop if anything still calls it.
+    return {
+      error:
+        "Google sign-in will be available on launch. Please use the email magic link for now.",
+    };
   }, []);
 
   const signInWithEmail = useCallback(async (email: string) => {
