@@ -22,16 +22,16 @@ export default function Hero() {
   const chips =
     lang === "sv"
       ? [
-          { icon: FileText, label: "Utkast & dokument", color: "text-accent-cyan" },
-          { icon: Zap, label: "Automatisering", color: "text-accent-green" },
+          { icon: FileText, label: "Privat · skriv & planera", color: "text-accent-cyan" },
+          { icon: Zap, label: "Företag · automatisera", color: "text-accent-green" },
           { icon: Languages, label: "EN · SV", color: "text-accent-purple" },
-          { icon: Shield, label: "Nordic-first", color: "text-accent-pink" },
+          { icon: Shield, label: "GDPR-minded", color: "text-accent-pink" },
         ]
       : [
-          { icon: FileText, label: "Drafts & docs", color: "text-accent-cyan" },
-          { icon: Zap, label: "Automation", color: "text-accent-green" },
+          { icon: FileText, label: "Personal · write & plan", color: "text-accent-cyan" },
+          { icon: Zap, label: "Business · automate", color: "text-accent-green" },
           { icon: Languages, label: "EN · SV", color: "text-accent-purple" },
-          { icon: Shield, label: "Nordic-first", color: "text-accent-pink" },
+          { icon: Shield, label: "GDPR-minded", color: "text-accent-pink" },
         ];
 
   const accent =
@@ -148,7 +148,7 @@ export default function Hero() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.55 }}
-          className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 mb-8"
+          className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 mb-6"
         >
           {chips.map((c) => (
             <span
@@ -160,6 +160,17 @@ export default function Hero() {
             </span>
           ))}
         </motion.div>
+
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.6 }}
+          className="text-[12px] sm:text-sm text-muted/70 max-w-xl mx-auto mb-8 leading-relaxed"
+        >
+          {lang === "sv"
+            ? "En yta för dig hemma och för teamet på jobbet — inte ännu ett generiskt chatbot-skal."
+            : "One surface for you at home and the team at work — not another generic chatbot shell."}
+        </motion.p>
 
         <motion.p
           initial={{ opacity: 0 }}

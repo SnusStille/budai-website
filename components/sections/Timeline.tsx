@@ -10,9 +10,9 @@ const stages = [
     icon: Code2,
     title: "Core Development",
     titleSv: "Kärnutveckling",
-    desc: "Building foundational AI architecture, neural networks, and core platform infrastructure.",
+    desc: "Core product foundation — playground, auth, waitlist, and Nordic-first UX.",
     descSv:
-      "Bygger grundläggande AI-arkitektur, neurala nätverk och plattformens kärninfrastruktur.",
+      "Produktgrund — playground, auth, väntelista och nordisk-first UX.",
     status: "completed" as const,
     date: "Q3 2025",
   },
@@ -40,9 +40,9 @@ const stages = [
     icon: Building2,
     title: "Enterprise Beta",
     titleSv: "Företagsbeta",
-    desc: "Expanded access for Swedish companies. Full feature set with enterprise security.",
+    desc: "Broader company access, stronger admin tools, and polished workspace features.",
     descSv:
-      "Utökad åtkomst för svenska företag. Full funktionsuppsättning med enterprise-säkerhet.",
+      "Bredare företagsåtkomst, starkare admin och mer polerad arbetsyta.",
     status: "upcoming" as const,
     date: "Q2 2026",
   },
@@ -74,8 +74,8 @@ export default function Timeline() {
           </h2>
           <p className="text-lg text-muted max-w-2xl mx-auto">
             {lang === "sv"
-              ? "Vår resa för att revolutionera hur svenska företag arbetar med AI."
-              : "Our journey to revolutionize how Swedish companies work with AI."}
+              ? "En ärlig roadmap för BudAI — från preview till bredare lansering."
+              : "An honest roadmap for BudAI — from preview to broader launch."}
           </p>
         </ScrollReveal>
 

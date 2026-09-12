@@ -1,150 +1,125 @@
-# BudAI · Final Ship Report — v4.2.1 (“Lumen + Playground WOW”)
+# BudAI · FINAL PRE-LAUNCH REPORT — v5.0.0
 
-**Date:** 2026-09-11  
-**Package:** `4.2.1`  
-**Product badge:** `v0.93 · 93%`  
-**Build:** `npm run lint` clean · `npm run build` green  
-**Live target:** https://stilledev.se
-
----
-
-## What changed in this pass (visible delta)
-
-
-### Logo — **Lumen** (full redesign)
-- Circle mark (not monogram): luminous core + three neural petals + open brand ring
-- Soft 2D glow / breathe only — no 3D, no stacked logos
-- New `favicon.svg` matching the mark
-
-### Playground WOW
-- **Inspirera / Surprise** — dice control next to send + empty-state CTA; picks a strong prompt and auto-runs
-- **Cinematic thinking** — pulse ring, shimmer card, neural bars while waiting
-- **Answer language EN|SV** pill on the mode strip (independent of UI language)
-- Stronger dual-pick cards + send glow
-
-### Brand & language
-- **Signal logo** (circle + core + notch) on all surfaces + `favicon.svg`
-- **English always default** — SV only if user saved `budai-lang=sv`
-- **Navbar language control** redesigned: EN-first pill, gradient active state (desktop + mobile)
-- **“Developed by”** pure white in navbar
-- Tab title remains clean: `Stilledev.se · BudAI`
-
-### Hero
-- **No rotating words** — static two-line headline + Sweden/Nordics accent
-- Single product mark via `AICore` (no stacked double logo)
-- Clear CTAs: Playground primary · Waitlist secondary
-- Subtle 10% early-access chip (not loud)
-
-### Playground (priority surface)
-- **6 capability cards** (gen card only when image API keyed):
-  1. See an image  
-  2. Speak  
-  3. Remember me  
-  4. Create  
-  5. Analyze  
-  6. **Plan my day** (new)
-- Stronger empty-state cards (icon tiles + blurbs)
-- Premium shell chrome / shadows
-- Single mode default · answer language SV|EN · honest image-gen soon/hide via `/api/features`
-- Dual pickable answers + markdown code blocks (prior ship, kept)
-
-### Terminal
-- Full **dual-pane redesign**: live shell + metrics side rail + signal bars
-- Honest footer (Claude · preview · Supabase · GDPR · v0.93)
-- Replay / copy chrome, LIVE badge, clock
-
-### Rest of site
-- **Loading screen** — orbital rings, clearer steps, Nordic tagline
-- **Vision** — belief pillars use `SpotlightCard`
-- **Status** — pulse on operational services
-- **Capabilities** — FAQ under cards; playground deep-link
-- Waitlist / Footer logo sizing polish
+**Date:** 2026-09-12  
+**Build:** `npm run lint` + `npm run build` (must pass)  
+**Live target:** https://stilledev.se  
+**Badge:** v0.93 · 93%
 
 ---
 
-## What did NOT change (architecture preserved)
-- Routes, APIs, Supabase auth, waitlist, admin gate, playground streaming
-- No fake image generation without `OPENAI_API_KEY`
-- Admin password never rendered on page
-- Soft 10% early access · code `BUDAI-EARLY-10`
+## Audit summary (PASS 1)
 
----
-
-## Env vars (Vercel / production)
-
-| Variable | Required | Notes |
+| Area | Finding | Action |
 |---|---|---|
-| `NEXT_PUBLIC_SITE_URL` | **Yes** | `https://stilledev.se` |
-| `NEXT_PUBLIC_SUPABASE_URL` | **Yes** | Project URL |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | **Yes** | Anon/public key |
-| `SUPABASE_SERVICE_ROLE_KEY` | **Yes for admin Chats** | Server only — never `NEXT_PUBLIC_` |
-| `ANTHROPIC_API_KEY` | **Yes for Playground** | Claude inference |
-| `ADMIN_PASSWORD` or app secret | Soft | Gate still uses known Stille secret in app flow |
-| `OPENAI_API_KEY` | Optional | Enables image gen; omit = Coming soon UI |
-| `OPENAI_IMAGE_MODEL` | Optional | e.g. `dall-e-3` if using OpenAI images |
+| Logo | Multiple prior marks; Lumen still complex at 16px | **Orbit** final mark + light/dark variants |
+| Auth errors | Raw Supabase strings possible | Human EN/SV messages |
+| html lang | Forced `sv` | Default `en` (matches product default) |
+| Hero story | Unclear audience | Individuals + business chips + line |
+| Capabilities | Weak audience framing | Two-audience strip |
+| Playground MD | Bold/code only | Lists, headings, quotes |
+| Image gen | Honest soon | Kept |
+| Voice | Implemented Web Speech | Kept + polished states |
+| PDF/files | Not backend-ready | Attach = images only; title says PDF soon |
+| Legal | EN-only, weak brand | Bilingual + product chrome |
+| Pricing | Missing | Intentional "announced before launch" |
+| Timeline | Over-hyped copy | Honest roadmap language |
+| Perf | Canvas density | Throttled nodes/cols/packets |
+| Buddy popup | Existed unused | Wired soft CTA |
+| Console spam | Dev logs always | Dev-only |
+| Fake features | Guarded | No fake image gen |
 
 ---
 
-## Supabase Dashboard (must-do for auth)
+## Completed changes
 
-1. **Site URL** = `https://stilledev.se` (not localhost)
-2. **Redirect URLs** allowlist both:
-   - `https://stilledev.se/auth/callback`
-   - `http://localhost:3000/auth/callback` (dev)
-3. **Google provider** (if used): enable in Supabase Auth  
-   - Google Cloud OAuth client → Authorized redirect URI =  
-     `https://YOUR_PROJECT.supabase.co/auth/v1/callback`  
-   - JS origins: app origin + Supabase
-4. Email templates / magic link will follow Site URL if redirect not allowlisted — fix Site URL first
+### Branding — **Orbit** (final)
+- Disc + luminous core + **open orbital arc** + single node
+- Not a letter monogram; not sparkle-generic
+- `variant="dark" | "light"` for surfaces
+- Matching `favicon.svg`
+- Wordmark helper `BudAIWordmark` available
 
----
+### Playground
+- Richer markdown (lists, headings, blockquotes, code)
+- Cinematic thinking (prior) + Inspirera/Surprise (prior)
+- Answer language EN|SV (prior)
+- Keyboard hint under composer
+- Attach labeled images-only / PDF coming soon
+- 6 capability cards + Plan my day
 
-## SQL to paste (if not already applied)
+### Auth
+- Google/email errors never dump provider jargon to users
+- SV localization of common failures
+- PKCE same-browser tip retained
 
-Run in Supabase SQL editor, in order if missing:
+### Landing
+- Clearer Nordic work-assistant positioning
+- Individuals vs business story
+- Honest roadmap + status future notes
+- Pricing: intentional waitlist note (no invented prices)
+- Soft BuddyCard CTA (10% + playground)
 
-1. `supabase/MIGRATION_v4_product.sql`
-2. `supabase/v5_playground_hardening.sql`
-3. `supabase/v6_admin_reads.sql`
+### Legal
+- SV/EN policies, product shell, honest preview disclaimer
 
-All additive — do not wipe existing tables/data.
+### Performance
+- AIEnvironment particle/code-rain density reduced
+- CursorGlow already mobile/reduced-motion safe
+- Dynamic imports for heavy sections retained
 
----
-
-## Admin
-- Path: `/admin`
-- Password: **never shown on page** (Stille-only). Session value remains the established secret.
-- **Chats** tab needs `SUPABASE_SERVICE_ROLE_KEY` + v6 indexes for conversation list.
-
----
-
-## Push checklist (you)
-
-1. Unzip / sync `BudAI-Launch.zip` into your git repo (or copy `budai-website` source)
-2. `git add` · commit · push to GitHub → Vercel auto-deploy (or connect repo)
-3. Set **all env vars** above on Vercel → Redeploy
-4. Supabase: Site URL + redirect allowlist + Google if needed
-5. Paste SQL v4→v6 if not applied
-6. Smoke test:
-   - Guest → Playground chat (EN default)
-   - Switch SV/EN pill
-   - Magic link / Google login (same browser for PKCE)
-   - Waitlist submit
-   - `/admin` → Chats tab
-   - Image attach (vision) works; Create image shows soon without OpenAI key
-7. Confirm production URL is **https://stilledev.se** (not sandbox)
+### SEO / a11y
+- Skip link → playground
+- Sitemap legal routes
+- Robots disallow `/admin`
+- Metadata domain stilledev.se
 
 ---
 
-## ZIP
-- Path: `/home/user/BudAI-Launch.zip`
-- Excludes: `node_modules`, `.next`, caches, secrets / real `.env`
-- Includes: source, config, SQL, `.env.example`, this report
+## Removed / avoided
+- No fake image generation
+- No fake PDF analysis
+- No invented pricing tables
+- No raw auth JSON to UI
+- Reduced over-hyped "revolutionize" roadmap tone
 
 ---
 
-## Honest limits
-- Image generation is **not** Claude — needs OpenAI (or other) key or stays disabled
-- Terminal is an **illustration**, not a live shell
-- Status metrics are **preview targets**, not a live SRE dashboard
-- Magic-link finishing in a different browser than start always fails PKCE — same browser required
+## Production checklist (YOU)
+
+1. Push GitHub → Vercel  
+2. Env:
+   - `NEXT_PUBLIC_SITE_URL=https://stilledev.se`
+   - `NEXT_PUBLIC_SUPABASE_URL` / `ANON_KEY`
+   - `SUPABASE_SERVICE_ROLE_KEY` (admin chats)
+   - `ANTHROPIC_API_KEY`
+   - Optional `OPENAI_API_KEY`
+   - Optional `NEXT_PUBLIC_ADMIN_PASSWORD`
+3. Supabase Site URL + redirect allowlist + Google provider if used  
+4. SQL v4 → v5 → v6 if not applied  
+5. Smoke: guest chat, inspire, dual, auth, waitlist, admin chats, legal pages  
+
+---
+
+## Remaining (honest — external / product)
+
+- Supabase Dashboard config (cannot be fixed in code alone)
+- Google provider enablement
+- Real image gen needs OpenAI key
+- PDF/docs multimodal — future backend
+- Long-term cloud memory expansion — structure exists for members
+- Final legal counsel review before scale
+- Optional: Vercel password-protect `/admin`
+
+---
+
+## Verification
+
+Run locally before push:
+
+```bash
+npm install
+npm run lint
+npm run build
+```
+
+Only ship if build is green.

@@ -100,13 +100,13 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
-      lang="sv"
+      lang="en"
       className={`${jakarta.variable} ${jetbrains.variable} font-sans`}
       suppressHydrationWarning
     >
       <body className="antialiased noise-overlay bg-background text-white">
         <a
-          href="#capabilities"
+          href="#playground"
           className="absolute left-3 top-3 z-[200] -translate-y-16 focus:translate-y-0 px-4 py-2 rounded-lg bg-accent-cyan text-black text-sm font-semibold transition-transform"
         >
           Skip to content

@@ -3,6 +3,7 @@
 import { useId, type CSSProperties } from "react";
 
 type Size = "xs" | "sm" | "md" | "lg" | "xl" | "hero";
+type Variant = "dark" | "light" | "auto";
 
 const SIZES: Record<Size, number> = {
   xs: 28,
@@ -14,11 +15,16 @@ const SIZES: Record<Size, number> = {
 };
 
 /**
- * BudAI mark — "Lumen"
+ * BudAI final mark — "Orbit"
  *
- * Professional product icon (not a letter monogram):
- * dark disc · luminous core · three soft neural petals · thin brand ring.
- * Reads clean at 16px favicon and hero scale. Motion is 2D glow only.
+ * Timeless product icon:
+ * - solid disc (app-icon ready)
+ * - single luminous core
+ * - one open orbital arc (unique silhouette, not a letter)
+ * - no sparkles, no monogram, no stacked marks
+ *
+ * Designed to stay legible at 16px favicon and premium at hero scale.
+ * Motion is optional 2D glow only.
  */
 export default function BudAILogo({
   size = "sm",
@@ -27,6 +33,7 @@ export default function BudAILogo({
   interactive = false,
   onClick,
   label = "BudAI",
+  variant = "dark",
 }: {
   size?: Size;
   className?: string;
@@ -34,11 +41,28 @@ export default function BudAILogo({
   interactive?: boolean;
   onClick?: () => void;
   label?: string;
+  /** dark = default site; light = for light surfaces / print */
+  variant?: Variant;
 }) {
   const uid = useId().replace(/:/g, "");
   const px = SIZES[size];
   const isHero = size === "hero" || size === "xl";
+  const light = variant === "light";
   const Tag = interactive || onClick ? "button" : "div";
+
+  const discBg = light
+    ? "radial-gradient(circle at 34% 28%, #ffffff 0%, #f1f5f9 48%, #e2e8f0 100%)"
+    : "radial-gradient(circle at 34% 28%, #152036 0%, #0a101c 45%, #06070e 100%)";
+
+  const discBorder = light ? "1px solid rgba(15,23,42,0.12)" : "1px solid rgba(255,255,255,0.14)";
+
+  const discShadow = light
+    ? isHero
+      ? "0 8px 32px rgba(15,23,42,0.12), inset 0 1px 0 rgba(255,255,255,0.9)"
+      : "0 2px 10px rgba(15,23,42,0.1), inset 0 1px 0 rgba(255,255,255,0.85)"
+    : isHero
+      ? "0 0 40px rgba(0,229,255,0.28), inset 0 1px 0 rgba(255,255,255,0.2)"
+      : "0 0 14px rgba(0,229,255,0.18), inset 0 1px 0 rgba(255,255,255,0.16)";
 
   return (
     <Tag
@@ -52,22 +76,22 @@ export default function BudAILogo({
       } ${className}`}
       style={{ width: px, height: px }}
     >
-      {animated && (
+      {animated && !light && (
         <>
           <span
             aria-hidden
-            className="absolute inset-[-26%] rounded-full pointer-events-none logo-glow-breathe"
+            className="absolute inset-[-24%] rounded-full pointer-events-none logo-glow-breathe"
             style={{
               background:
-                "radial-gradient(circle, rgba(0,229,255,0.45) 0%, rgba(139,92,246,0.18) 42%, transparent 68%)",
-              filter: `blur(${isHero ? 18 : 7}px)`,
-              opacity: isHero ? 0.9 : 0.55,
+                "radial-gradient(circle, rgba(0,229,255,0.42) 0%, rgba(99,102,241,0.14) 48%, transparent 70%)",
+              filter: `blur(${isHero ? 16 : 6}px)`,
+              opacity: isHero ? 0.88 : 0.5,
             }}
           />
           {isHero && (
             <span
               aria-hidden
-              className="absolute inset-[-8%] rounded-full pointer-events-none logo-pulse-ring border border-accent-cyan/25"
+              className="absolute inset-[-6%] rounded-full pointer-events-none logo-pulse-ring border border-accent-cyan/20"
             />
           )}
         </>
@@ -79,137 +103,105 @@ export default function BudAILogo({
         }`}
         style={
           {
-            background:
-              "radial-gradient(circle at 35% 28%, #152036 0%, #0a101c 42%, #06070e 72%, #05040c 100%)",
-            boxShadow: isHero
-              ? "0 0 40px rgba(0,229,255,0.28), 0 0 2px rgba(255,255,255,0.2), inset 0 1px 0 rgba(255,255,255,0.22)"
-              : "0 0 14px rgba(0,229,255,0.18), inset 0 1px 0 rgba(255,255,255,0.16)",
-            border: "1px solid rgba(255,255,255,0.14)",
+            background: discBg,
+            boxShadow: discShadow,
+            border: discBorder,
           } as CSSProperties
         }
       >
         <svg viewBox="0 0 64 64" className="absolute inset-0 w-full h-full" aria-hidden>
           <defs>
-            <linearGradient id={`lg-ring-${uid}`} x1="8%" y1="0%" x2="92%" y2="100%">
-              <stop offset="0%" stopColor="#f0ffff" />
-              <stop offset="35%" stopColor="#00e5ff" />
-              <stop offset="70%" stopColor="#7c3aed" />
-              <stop offset="100%" stopColor="#22d3ee" />
+            <linearGradient id={`or-${uid}`} x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor={light ? "#0891b2" : "#e8ffff"} />
+              <stop offset="45%" stopColor={light ? "#06b6d4" : "#00e5ff"} />
+              <stop offset="100%" stopColor={light ? "#6366f1" : "#818cf8"} />
             </linearGradient>
-            <linearGradient id={`lg-petal-${uid}`} x1="50%" y1="0%" x2="50%" y2="100%">
-              <stop offset="0%" stopColor="#e8ffff" stopOpacity="0.95" />
-              <stop offset="45%" stopColor="#00e5ff" stopOpacity="0.85" />
-              <stop offset="100%" stopColor="#8b5cf6" stopOpacity="0.55" />
-            </linearGradient>
-            <radialGradient id={`lg-core-${uid}`} cx="38%" cy="32%" r="68%">
+            <radialGradient id={`oc-${uid}`} cx="38%" cy="32%" r="65%">
               <stop offset="0%" stopColor="#ffffff" />
-              <stop offset="28%" stopColor="#a5f3fc" />
-              <stop offset="62%" stopColor="#22d3ee" />
-              <stop offset="100%" stopColor="#6366f1" />
+              <stop offset="35%" stopColor={light ? "#67e8f9" : "#a5f3fc"} />
+              <stop offset="75%" stopColor={light ? "#22d3ee" : "#22d3ee"} />
+              <stop offset="100%" stopColor={light ? "#4f46e5" : "#6366f1"} />
             </radialGradient>
-            <radialGradient id={`lg-soft-${uid}`} cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor="#00e5ff" stopOpacity="0.35" />
+            <radialGradient id={`ow-${uid}`} cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor="#00e5ff" stopOpacity={light ? "0.18" : "0.28"} />
               <stop offset="100%" stopColor="#00e5ff" stopOpacity="0" />
             </radialGradient>
-            <filter id={`lg-blur-${uid}`} x="-40%" y="-40%" width="180%" height="180%">
-              <feGaussianBlur stdDeviation="1.1" />
-            </filter>
           </defs>
 
-          {/* Soft inner wash */}
-          <circle cx="32" cy="32" r="22" fill={`url(#lg-soft-${uid})`} />
+          {/* Soft wash */}
+          <circle cx="32" cy="32" r="20" fill={`url(#ow-${uid})`} />
 
-          {/* Brand ring — slightly open gap at 7 o'clock for unique silhouette */}
+          {/* Open orbital arc — unique, readable at 16px */}
           <circle
             cx="32"
             cy="32"
-            r="26.5"
+            r="23"
             fill="none"
-            stroke={`url(#lg-ring-${uid})`}
-            strokeWidth="1.75"
+            stroke={`url(#or-${uid})`}
+            strokeWidth={isHero ? 2.25 : 2}
             strokeLinecap="round"
-            strokeDasharray="140 28"
-            strokeDashoffset="18"
-            opacity="0.9"
+            strokeDasharray="108 36"
+            strokeDashoffset="12"
+            opacity={light ? 0.95 : 0.92}
           />
+
+          {/* Secondary hairline ring */}
           <circle
             cx="32"
             cy="32"
-            r="26.5"
+            r="23"
             fill="none"
-            stroke="#ffffff"
-            strokeWidth="0.4"
-            opacity="0.18"
+            stroke={light ? "rgba(15,23,42,0.08)" : "rgba(255,255,255,0.12)"}
+            strokeWidth="0.5"
           />
 
-          {/* Three neural petals (bud opening) — unique, not a letter */}
-          <g
-            className={animated && isHero ? "logo-orbit-2d" : undefined}
-            style={
-              animated && isHero
-                ? ({
-                    transformOrigin: "32px 32px",
-                    animationDuration: "48s",
-                  } as CSSProperties)
-                : undefined
-            }
-          >
-            {/* Petal 1 — top */}
-            <path
-              d="M32 14
-                 C36.5 18.5 38 24 36.2 28.5
-                 C34.8 31.2 33.2 32.4 32 32.8
-                 C30.8 32.4 29.2 31.2 27.8 28.5
-                 C26 24 27.5 18.5 32 14Z"
-              fill={`url(#lg-petal-${uid})`}
-              opacity="0.88"
-            />
-            {/* Petal 2 — lower left */}
-            <path
-              d="M32 32.8
-                 C30.5 33.2 27.2 35.5 24.2 39.8
-                 C20.8 44.6 20.5 49.2 23.2 51
-                 C26.2 48.6 29.5 43.5 31.4 37.2
-                 C31.8 35.5 32 34 32 32.8Z"
-              fill={`url(#lg-petal-${uid})`}
-              opacity="0.72"
-              transform="rotate(0 32 32)"
-            />
-            {/* Petal 3 — lower right */}
-            <path
-              d="M32 32.8
-                 C33.5 33.2 36.8 35.5 39.8 39.8
-                 C43.2 44.6 43.5 49.2 40.8 51
-                 C37.8 48.6 34.5 43.5 32.6 37.2
-                 C32.2 35.5 32 34 32 32.8Z"
-              fill={`url(#lg-petal-${uid})`}
-              opacity="0.72"
-            />
-          </g>
-
-          {/* Luminous core */}
+          {/* Core */}
+          <circle cx="32" cy="32" r="9.5" fill={`url(#oc-${uid})`} />
           <circle
             cx="32"
-            cy="31.5"
-            r="7.2"
-            fill={`url(#lg-core-${uid})`}
-            filter={animated ? `url(#lg-blur-${uid})` : undefined}
-            opacity="0.55"
+            cy="32"
+            r="9.5"
+            fill="none"
+            stroke={light ? "rgba(15,23,42,0.12)" : "rgba(255,255,255,0.35)"}
+            strokeWidth="0.6"
           />
-          <circle cx="32" cy="31.5" r="6.1" fill={`url(#lg-core-${uid})`} />
-          <circle cx="32" cy="31.5" r="6.1" fill="none" stroke="#fff" strokeWidth="0.55" opacity="0.35" />
 
-          {/* Specular highlight */}
-          <circle cx="29.2" cy="28.6" r="2.1" fill="#fff" opacity="0.55" />
-          <circle cx="34.6" cy="33.8" r="1.1" fill="#fff" opacity="0.2" />
+          {/* Specular */}
+          <circle cx="28.5" cy="28.5" r="2.4" fill="#fff" opacity={light ? 0.7 : 0.55} />
 
-          {/* Micro nodes — constellation, readable only at larger sizes but harmless small */}
-          <circle cx="32" cy="11.5" r="1.35" fill="#fff" opacity="0.85" />
-          <circle cx="48.5" cy="40.5" r="1.1" fill="#a5f3fc" opacity="0.7" />
-          <circle cx="15.5" cy="40.5" r="1.1" fill="#c4b5fd" opacity="0.7" />
+          {/* Orbit node — single accent bead on the arc (12 o'clock-ish) */}
+          <circle cx="32" cy="9" r="2.4" fill={`url(#or-${uid})`} />
+          <circle cx="32" cy="9" r="1.1" fill="#fff" opacity="0.9" />
         </svg>
       </span>
     </Tag>
+  );
+}
+
+/** Wordmark lockup: symbol + BudAI text (navbar / footer) */
+export function BudAIWordmark({
+  size = "sm",
+  className = "",
+  animated = false,
+}: {
+  size?: Size;
+  className?: string;
+  animated?: boolean;
+}) {
+  const text =
+    size === "xs" || size === "sm"
+      ? "text-sm font-semibold tracking-tight"
+      : size === "md"
+        ? "text-base font-semibold tracking-tight"
+        : "text-lg font-bold tracking-tight";
+
+  return (
+    <span className={`inline-flex items-center gap-2 ${className}`}>
+      <BudAILogo size={size} animated={animated} />
+      <span className={`${text} text-white`}>
+        Bud<span className="text-accent-cyan">AI</span>
+      </span>
+    </span>
   );
 }
 

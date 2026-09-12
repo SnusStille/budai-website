@@ -14,6 +14,7 @@ import type { Session, User } from "@supabase/supabase-js";
 import { createClient, isAuthConfigured } from "@/lib/supabase/client";
 import { LIMITS, type AccessTier, dayKey, limitFor } from "@/lib/limits";
 import { getAuthCallbackUrl, getBrowserOrigin } from "@/lib/site";
+import { friendlyAuthError } from "@/lib/authErrors";
 
 type Usage = { messages: number; images: number; generations: number };
 
@@ -108,16 +109,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { status, reason } = readAuthQuery();
     if (!status) return;
     if (status === "error") {
-      setAuthFlash(
-        reason
-          ? decodeURIComponent(reason)
-          : "Sign-in failed. Try again in this browser."
+      const raw = reason ? decodeURIComponent(reason) : "";
+      const human = friendlyAuthError(
+        raw || "Sign-in failed. Try again in this browser.",
+        "en"
       );
+      setAuthFlash(human);
       setAuthOpen(true);
       setAuthReason(
-        reason
-          ? decodeURIComponent(reason)
-          : "Sign-in must complete in the same browser where you started."
+        human ||
+          "Sign-in must complete in the same browser where you started."
       );
     } else if (status === "ok") {
       setAuthFlash("signed-in");
@@ -267,7 +268,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInWithGoogle = useCallback(async () => {
     const supabase = createClient();
-    if (!supabase) return { error: "Auth is not configured on this server." };
+    if (!supabase) return { error: "Sign-in is temporarily unavailable. Please try again later." };
     const origin = getBrowserOrigin();
     const redirectTo = getAuthCallbackUrl("/#playground");
     try {
@@ -289,17 +290,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (m.includes("provider is not enabled") || m.includes("unsupported provider")) {
         return {
           error:
-            "Google is not enabled in Supabase yet. Open Supabase → Authentication → Providers → Google, add Client ID/Secret, then save. See AUTH_SETUP.md.",
+            "Google sign-in is currently unavailable. Please use the magic-link email option, or try again later.",
         };
       }
-      return { error: error.message };
+      if (m.includes("popup") || m.includes("cancelled") || m.includes("canceled")) {
+        return { error: "Google sign-in was cancelled." };
+      }
+      return {
+        error:
+          "Could not start Google sign-in. Please try email magic link, or try again in a moment.",
+      };
     }
     return {};
   }, []);
 
   const signInWithEmail = useCallback(async (email: string) => {
     const supabase = createClient();
-    if (!supabase) return { error: "Auth is not configured on this server." };
+    if (!supabase) return { error: "Sign-in is temporarily unavailable. Please try again later." };
     const clean = email.trim().toLowerCase();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clean)) {
       return { error: "Enter a valid email address." };
@@ -319,10 +326,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (m.includes("redirect") || m.includes("url")) {
         return {
           error:
-            "Redirect URL not allowed in Supabase. Set Site URL to https://stilledev.se and add /auth/callback to Redirect URLs (AUTH_SETUP.md).",
+            "Sign-in redirect is misconfigured. Please try again later, or contact support if this continues.",
         };
       }
-      return { error: error.message };
+      if (m.includes("rate") || m.includes("security")) {
+        return {
+          error: "Too many attempts. Please wait a minute and try again.",
+        };
+      }
+      return {
+        error: "Could not send the magic link. Check the email address and try again.",
+      };
     }
     return { ok: true };
   }, []);

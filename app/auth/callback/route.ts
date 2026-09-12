@@ -79,13 +79,17 @@ export async function GET(request: Request) {
     playgroundRedirect(origin, { auth: "error", reason: reason.slice(0, 300) });
 
   if (errorParam) {
-    return fail(errorDesc || errorParam || "Authentication cancelled");
+    return fail(
+      errorDesc || errorParam
+        ? "Sign-in was cancelled or denied. You can try again from the Playground."
+        : "Authentication cancelled"
+    );
   }
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!supabaseUrl || !supabaseKey || supabaseUrl.includes("YOUR_PROJECT")) {
-    return fail("Auth is not configured. Set NEXT_PUBLIC_SUPABASE_URL and ANON_KEY on Vercel.");
+    return fail("Sign-in is temporarily unavailable. Please try again later.");
   }
 
   const cookieStore = await cookies();
@@ -130,7 +134,9 @@ export async function GET(request: Request) {
             "Login must finish in the same browser where you clicked Sign in. Open https://stilledev.se and try again."
           );
         }
-        return fail(error.message);
+        return fail(
+          "Sign-in failed. Try again from the Playground, or use email magic link."
+        );
       }
       return response;
     }
@@ -145,7 +151,7 @@ export async function GET(request: Request) {
         return fail(
           error.message.toLowerCase().includes("expired")
             ? "Magic link expired. Request a new one from the Playground."
-            : error.message
+            : "Could not verify the magic link. Request a new one from the Playground."
         );
       }
       return response;

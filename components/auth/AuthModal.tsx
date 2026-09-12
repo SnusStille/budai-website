@@ -7,6 +7,7 @@ import BudAILogo from "@/components/ui/BudAILogo";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useLang } from "@/components/ui/LanguageContext";
 import { LIMITS } from "@/lib/limits";
+import { friendlyAuthError } from "@/lib/authErrors";
 
 export default function AuthModal() {
   const {
@@ -35,16 +36,16 @@ export default function AuthModal() {
 
   useEffect(() => {
     if (authFlash && authFlash !== "signed-in" && authOpen) {
-      setErr(authFlash);
+      setErr(friendlyAuthError(authFlash, lang));
     }
-  }, [authFlash, authOpen]);
+  }, [authFlash, authOpen, lang]);
 
   const onGoogle = async () => {
     setBusy(true);
     setErr(null);
     const r = await signInWithGoogle();
     if (r.error) {
-      setErr(r.error);
+      setErr(friendlyAuthError(r.error, lang));
       setBusy(false);
     }
     // OAuth redirects away — keep busy if no error
@@ -57,7 +58,7 @@ export default function AuthModal() {
     setErr(null);
     const r = await signInWithEmail(email);
     setBusy(false);
-    if (r.error) setErr(r.error);
+    if (r.error) setErr(friendlyAuthError(r.error, lang));
     else setSent(true);
   };
 

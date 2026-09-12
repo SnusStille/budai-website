@@ -46,7 +46,7 @@ export default function AIEnvironment() {
     }
 
     // Hex lattice nodes
-    const nodeCount = isMobile ? 12 : 28;
+    const nodeCount = isMobile ? 8 : 18;
     type Node = { x: number; y: number; vx: number; vy: number; r: number; hue: number; p: number; pulse: number };
     const nodes: Node[] = Array.from({ length: nodeCount }, () => ({
       x: Math.random() * W,
@@ -61,7 +61,7 @@ export default function AIEnvironment() {
 
     // Code rain columns — denser & brighter
     const glyphs = "01<>{}[]/=+*;:#λ∑→αβγδεζη01{}<>AI_CORE_RUN_async_await_fn";
-    const colCount = isMobile ? 6 : 12;
+    const colCount = isMobile ? 4 : 8;
     type Col = {
       x: number;
       y: number;
@@ -84,7 +84,7 @@ export default function AIEnvironment() {
 
     // Horizontal scan / data packets
     type Packet = { x: number; y: number; vx: number; w: number; hue: number };
-    const packets: Packet[] = Array.from({ length: isMobile ? 3 : 7 }, () => ({
+    const packets: Packet[] = Array.from({ length: isMobile ? 2 : 5 }, () => ({
       x: Math.random() * W,
       y: 80 + Math.random() * (H - 160),
       vx: 1.2 + Math.random() * 2.4,

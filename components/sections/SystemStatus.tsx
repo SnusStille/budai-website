@@ -174,6 +174,9 @@ export default function SystemStatus() {
               <span className="text-accent-cyan">
                 {progress}% {lang === "sv" ? "mot launch" : "to launch"}
               </span>
+              <span className="text-muted/50 hidden sm:inline">
+                · {lang === "sv" ? "agenter & prissättning senare" : "agents & pricing later"}
+              </span>
             </div>
           </div>
         </ScrollReveal>

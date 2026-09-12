@@ -27,7 +27,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
               transition: "opacity 0.28s ease",
               pointerEvents: loaded ? "auto" : "none",
             }}
-            aria-hidden={!loaded}
+            // Keep in accessibility tree; only visually hidden during intro
           >
             {children}
           </div>

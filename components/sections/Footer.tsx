@@ -23,6 +23,7 @@ const groups = (lang: string) => [
     links: [
       { label: "Stilledev", href: "https://stilledev.se", external: true },
       { label: lang === "sv" ? "Early access" : "Early access", href: "#waitlist" },
+      { label: lang === "sv" ? "Prissättning" : "Pricing", href: "#waitlist" },
       { label: lang === "sv" ? "Kontakt" : "Contact", href: "mailto:Stilleinc@hotmail.com" },
     ],
   },

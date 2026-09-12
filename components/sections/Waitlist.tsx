@@ -149,9 +149,28 @@ export default function Waitlist() {
       setTimeout(() => setConfetti(false), 4000);
     } catch (err: unknown) {
       console.error("Waitlist submit error:", err);
-      const anyErr = err as { message?: string; error_description?: string; details?: string };
-      const detail = anyErr?.message || anyErr?.error_description || anyErr?.details;
-      setErrorDetail(typeof detail === "string" ? detail : null);
+      const anyErr = err as { message?: string; code?: string; status?: number };
+      const msg = (anyErr?.message || "").toLowerCase();
+      // Human copy only — never dump PostgREST / schema noise
+      if (msg.includes("duplicate") || msg.includes("unique") || msg.includes("already")) {
+        setErrorDetail(
+          lang === "sv"
+            ? "Den e-postadressen finns redan på listan."
+            : "That email is already on the waitlist."
+        );
+      } else if (msg.includes("network") || msg.includes("fetch")) {
+        setErrorDetail(
+          lang === "sv"
+            ? "Nätverksfel — kontrollera anslutningen och försök igen."
+            : "Network error — check your connection and try again."
+        );
+      } else {
+        setErrorDetail(
+          lang === "sv"
+            ? "Kunde inte spara just nu. Försök igen om en stund."
+            : "Could not save right now. Please try again in a moment."
+        );
+      }
       setError(true);
     } finally {
       setLoading(false);
@@ -304,6 +323,11 @@ export default function Waitlist() {
                     exit={{ opacity: 0, y: -12 }}
                     className="relative z-10"
                   >
+                    <p className="text-[11px] text-muted/70 mb-4 leading-relaxed" data-pricing-soon-note>
+                      {lang === "sv"
+                        ? "Prissättning meddelas före full lansering. Early access låser 10 % (BUDAI-EARLY-10)."
+                        : "Pricing will be announced before full launch. Early access locks 10% (BUDAI-EARLY-10)."}
+                    </p>
                     <LayoutGroup id="account-type">
                       <div className="inline-flex p-1 rounded-xl bg-black/30 border border-white/[0.06] mb-6">
                         {(["individual", "company"] as const).map((opt) => (

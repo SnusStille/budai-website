@@ -198,6 +198,31 @@ export default function Capabilities() {
           </p>
         </ScrollReveal>
 
+        <ScrollReveal>
+          <div className="mb-8 grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-3xl mx-auto">
+            <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4 text-left">
+              <div className="text-[11px] uppercase tracking-wider text-accent-cyan mb-1 font-medium">
+                {lang === "sv" ? "Privatpersoner" : "Individuals"}
+              </div>
+              <p className="text-sm text-muted leading-relaxed">
+                {lang === "sv"
+                  ? "Skriv, planera, lär och organisera vardagen — utan att bli fast i verktygsdjungeln."
+                  : "Write, plan, learn, and organize everyday work — without drowning in tools."}
+              </p>
+            </div>
+            <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4 text-left">
+              <div className="text-[11px] uppercase tracking-wider text-accent-purple mb-1 font-medium">
+                {lang === "sv" ? "Företag" : "Businesses"}
+              </div>
+              <p className="text-sm text-muted leading-relaxed">
+                {lang === "sv"
+                  ? "Utkast, beslut, playbooks och supportflöden — samma yta för teamet."
+                  : "Drafts, decisions, playbooks, and support flows — one surface for the team."}
+              </p>
+            </div>
+          </div>
+        </ScrollReveal>
+
         {/* Product capability strip — memorable WOW */}
         <ScrollReveal>
           <div className="mb-10 md:mb-12 grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">

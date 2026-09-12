@@ -21,7 +21,7 @@ export const translations = {
       titleAccent: "Sverige",
       words: [],
       subtitle:
-        "BudAI hjälper dig skriva, tänka och fatta beslut snabbare — på svenska och engelska. Byggd i Sverige. Redo att prova i Playground.",
+        "AI-arbetsassistenten för privatpersoner och bolag i Norden. Skriv, planera, analysera och automatisera — på svenska och engelska. Testa live i Playground nu.",
       ctaPrimary: "Öppna Playground",
       ctaSecondary: "Gå med i väntelistan",
     },
@@ -37,7 +37,7 @@ export const translations = {
       title: "Prata med",
       titleHighlight: "BudAI",
       subtitle:
-        "Live assistent med minne, historik, bildanalys och röst — gästläge eller konto.",
+        "En riktig AI-yta: chatt, historik, minne, bildanalys och röst. Gästläge fritt — konto låser mer.",
       placeholder: "Skriv din fråga till BudAI…",
       online: "Online — Utvecklarförhandsvisning",
       thinking: "Tänker…",
@@ -151,7 +151,7 @@ export const translations = {
       title: "Talk to",
       titleHighlight: "BudAI",
       subtitle:
-        "Live assistant with memory, history, image analysis, and voice — guest mode or account.",
+        "A real AI surface: chat, history, memory, image analysis, and voice. Guest mode free — account unlocks more.",
       placeholder: "Message BudAI…",
       online: "Online — Developer Preview",
       thinking: "Thinking…",

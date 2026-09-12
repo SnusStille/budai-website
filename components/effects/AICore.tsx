@@ -73,7 +73,7 @@ export default function AICore({ isMobile = false }: { isMobile?: boolean }) {
         </div>
 
         <p className="mt-3 text-[10px] sm:text-[11px] text-muted/55 font-mono tracking-wide">
-          {lang === "sv" ? "tryck · neural core" : "tap · neural core"}
+          {lang === "sv" ? "tryck · produktinfo" : "tap · product info"}
         </p>
       </motion.div>
 

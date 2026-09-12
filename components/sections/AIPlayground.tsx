@@ -93,6 +93,93 @@ function renderInlineMd(text: string, keyPrefix: string): ReactNode[] {
   });
 }
 
+function renderTextBlock(text: string, keyPrefix: string): ReactNode {
+  const lines = text.split("\n");
+  const nodes: ReactNode[] = [];
+  let listBuf: { ordered: boolean; items: string[] } | null = null;
+
+  const flushList = () => {
+    if (!listBuf || !listBuf.items.length) {
+      listBuf = null;
+      return;
+    }
+    const Tag = listBuf.ordered ? "ol" : "ul";
+    const cls = listBuf.ordered
+      ? "list-decimal pl-5 my-2 space-y-1 text-white/90"
+      : "list-disc pl-5 my-2 space-y-1 text-white/90";
+    nodes.push(
+      <Tag key={`${keyPrefix}-list-${nodes.length}`} className={cls}>
+        {listBuf.items.map((it, i) => (
+          <li key={i} className="leading-relaxed">
+            {renderInlineMd(it, `${keyPrefix}-li-${i}`)}
+          </li>
+        ))}
+      </Tag>
+    );
+    listBuf = null;
+  };
+
+  for (let i = 0; i < lines.length; i++) {
+    const raw = lines[i];
+    const bullet = raw.match(/^\s*[-*•]\s+(.+)$/);
+    const numbered = raw.match(/^\s*(\d+)[.)]\s+(.+)$/);
+    const heading = raw.match(/^#{1,3}\s+(.+)$/);
+    const quote = raw.match(/^>\s?(.*)$/);
+
+    if (bullet) {
+      if (!listBuf || listBuf.ordered) {
+        flushList();
+        listBuf = { ordered: false, items: [] };
+      }
+      listBuf.items.push(bullet[1]);
+      continue;
+    }
+    if (numbered) {
+      if (!listBuf || !listBuf.ordered) {
+        flushList();
+        listBuf = { ordered: true, items: [] };
+      }
+      listBuf.items.push(numbered[2]);
+      continue;
+    }
+    flushList();
+
+    if (heading) {
+      nodes.push(
+        <div
+          key={`${keyPrefix}-h-${i}`}
+          className="font-semibold text-white mt-2 mb-1 tracking-tight"
+        >
+          {renderInlineMd(heading[1], `${keyPrefix}-h-${i}`)}
+        </div>
+      );
+      continue;
+    }
+    if (quote) {
+      nodes.push(
+        <div
+          key={`${keyPrefix}-q-${i}`}
+          className="border-l-2 border-accent-cyan/40 pl-3 my-1.5 text-muted italic"
+        >
+          {renderInlineMd(quote[1], `${keyPrefix}-q-${i}`)}
+        </div>
+      );
+      continue;
+    }
+    if (raw.trim() === "") {
+      nodes.push(<div key={`${keyPrefix}-sp-${i}`} className="h-2" />);
+      continue;
+    }
+    nodes.push(
+      <div key={`${keyPrefix}-p-${i}`} className="leading-relaxed">
+        {renderInlineMd(raw, `${keyPrefix}-p-${i}`)}
+      </div>
+    );
+  }
+  flushList();
+  return <div className="space-y-0.5">{nodes}</div>;
+}
+
 function renderMarkdown(text: string): ReactNode[] {
   const parts = text.split(/(```[\s\S]*?```)/g);
   return parts.map((block, bi) => {
@@ -102,12 +189,12 @@ function renderMarkdown(text: string): ReactNode[] {
       const langHint = nl > 0 ? inner.slice(0, nl).trim() : "";
       const code = nl > 0 ? inner.slice(nl + 1) : inner;
       return (
-        <div key={`code-${bi}`} className="my-2 rounded-xl overflow-hidden border border-white/10 bg-black/40">
+        <div key={`code-${bi}`} className="my-2.5 rounded-xl overflow-hidden border border-white/10 bg-black/50 shadow-inner">
           <div className="flex items-center justify-between px-3 py-1.5 border-b border-white/[0.06] bg-white/[0.03]">
             <span className="text-[10px] font-mono text-muted">{langHint || "code"}</span>
             <button
               type="button"
-              className="text-[10px] text-muted hover:text-accent-cyan"
+              className="text-[10px] text-muted hover:text-accent-cyan transition-colors"
               onClick={() => void navigator.clipboard.writeText(code)}
             >
               Copy
@@ -119,11 +206,7 @@ function renderMarkdown(text: string): ReactNode[] {
         </div>
       );
     }
-    return (
-      <span key={`txt-${bi}`} className="whitespace-pre-wrap">
-        {renderInlineMd(block, `b${bi}`)}
-      </span>
-    );
+    return <div key={`txt-${bi}`}>{renderTextBlock(block, `b${bi}`)}</div>;
   });
 }
 
@@ -1588,11 +1671,11 @@ export default function AIPlayground() {
                         </div>
                       ) : (
                         <div
-                          className={`px-3.5 py-2.5 rounded-2xl text-[13px] sm:text-sm whitespace-pre-wrap border leading-relaxed ${
+                          className={`px-3.5 py-2.5 rounded-2xl text-[13px] sm:text-sm border leading-relaxed ${
                             msg.role === "user"
-                              ? "bg-accent-cyan/10 border-accent-cyan/20 text-white"
+                              ? "bg-accent-cyan/10 border-accent-cyan/20 text-white whitespace-pre-wrap"
                               : msg.error
-                                ? "bg-red-500/10 border-red-400/25 text-red-100"
+                                ? "bg-red-500/10 border-red-400/25 text-red-100 whitespace-pre-wrap"
                                 : "bg-white/[0.04] border-white/[0.07] text-white/90"
                           }`}
                         >
@@ -1811,7 +1894,8 @@ export default function AIPlayground() {
                     type="button"
                     onClick={() => fileRef.current?.click()}
                     className="shrink-0 h-11 w-10 rounded-xl border border-white/[0.08] text-muted hover:text-accent-cyan flex items-center justify-center"
-                    title="Attach image"
+                    title={lang === "sv" ? "Bifoga bild (PDF kommer snart)" : "Attach image (PDF coming soon)"}
+                    aria-label={lang === "sv" ? "Bifoga bild" : "Attach image"}
                   >
                     <ImagePlus className="w-4 h-4" />
                   </button>
@@ -1897,6 +1981,9 @@ export default function AIPlayground() {
                   )}
                 </form>
                 <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-muted/40 px-0.5">
+                  <span className="hidden sm:inline text-muted/35">
+                    {lang === "sv" ? "Enter skickar · Shift+Enter rad" : "Enter send · Shift+Enter newline"}
+                  </span>
                   <span className="inline-flex items-center gap-1">
                     <Shield className="w-3 h-3" />
                     {auth.isGuest

@@ -39,7 +39,7 @@ import { WaitlistUser, AdminEvent } from "@/types";
 import { createClient, isAuthConfigured } from "@/lib/supabase/client";
 
 /**
- * Admin password: Daylightshere76 (or NEXT_PUBLIC_ADMIN_PASSWORD).
+ * Admin password: set NEXT_PUBLIC_ADMIN_PASSWORD (fallback only for local Stille).
  * NEVER show the password string in the UI.
  */
 const ADMIN_PASSWORD =

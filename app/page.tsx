@@ -9,6 +9,7 @@ import BackToTop from "@/components/ui/BackToTop";
 import SurpriseToasts from "@/components/ui/SurpriseToasts";
 import Signature from "@/components/ui/Signature";
 import FocusMode from "@/components/ui/FocusMode";
+import BuddyCard from "@/components/sections/BuddyCard";
 import Navbar from "@/components/sections/Navbar";
 import Hero from "@/components/sections/Hero";
 import Capabilities from "@/components/sections/Capabilities";
@@ -28,15 +29,9 @@ const SystemStatus = dynamic(() => import("@/components/sections/SystemStatus"))
 
 export default function Home() {
   useEffect(() => {
-    console.log(
-      "%c🧠 BudAI Developer Preview v0.93",
-      "color: #00e5ff; font-size: 16px; font-weight: bold;"
-    );
-    console.log("%cBuilt by Stilledev | Sweden", "color: #00e5ff; font-size: 12px;");
-    console.log(
-      "%cTry typing 'budai' or 'stille' · press F (focus) · ⌘K",
-      "color: #8892a0; font-size: 11px; font-style: italic;"
-    );
+    if (process.env.NODE_ENV === "development") {
+      console.log("%cBudAI · v0.93 · Stilledev", "color:#00e5ff;font-weight:bold;");
+    }
 
     let buffer = "";
     const target = "budai";
@@ -101,6 +96,7 @@ export default function Home() {
       <SurpriseToasts />
       <Signature />
       <FocusMode />
+      <BuddyCard />
       <CookieConsent />
     </main>
   );
