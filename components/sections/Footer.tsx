@@ -1,44 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Github, MessageSquare, Linkedin, Mail, ArrowUpRight, X } from "lucide-react";
-import BudAILogo, { StilledevLink, StilledevMark } from "@/components/ui/BudAILogo";
 import { motion, AnimatePresence } from "framer-motion";
+import { ArrowUp, ArrowUpRight, Github, Linkedin, Mail, MessageSquare, X } from "lucide-react";
+import BudAILogo, { StilledevLink } from "@/components/ui/BudAILogo";
 import { useLang } from "@/components/ui/LanguageContext";
 
-const groups = (lang: string) => [
-  {
-    title: lang === "sv" ? "Produkt" : "Product",
-    links: [
-      { label: lang === "sv" ? "Förmågor" : "Capabilities", href: "#capabilities" },
-      { label: "FAQ", href: "#faq" },
-      { label: "AI Playground", href: "#playground" },
-      { label: "Terminal", href: "#terminal" },
-      { label: "Roadmap", href: "#roadmap" },
-      { label: lang === "sv" ? "Systemstatus" : "System Status", href: "#status" },
-    ],
-  },
-  {
-    title: lang === "sv" ? "Företag" : "Company",
-    links: [
-      { label: "Stilledev", href: "https://stilledev.se", external: true },
-      { label: lang === "sv" ? "Early access" : "Early access", href: "#waitlist" },
-      { label: lang === "sv" ? "Prissättning" : "Pricing", href: "#waitlist" },
-      { label: lang === "sv" ? "Kontakt" : "Contact", href: "mailto:Stilleinc@hotmail.com" },
-    ],
-  },
-  {
-    title: "Legal",
-    links: [
-      { label: lang === "sv" ? "Integritetspolicy" : "Privacy Policy", href: "/legal/privacy" },
-      { label: lang === "sv" ? "Användarvillkor" : "Terms of Service", href: "/legal/terms" },
-      { label: lang === "sv" ? "Cookiepolicy" : "Cookie Policy", href: "/legal/cookies" },
-      { label: "GDPR", href: "/legal/gdpr" },
-    ],
-  },
-];
-
-const socials = [
+const SOCIALS = [
   { icon: Github, href: "https://github.com/SnusStille", label: "GitHub" },
   { icon: MessageSquare, href: "https://discord.com/users/353944097301594123", label: "Discord" },
   { icon: Linkedin, href: "https://www.linkedin.com/in/oliver-stille-8bb48a403/", label: "LinkedIn" },
@@ -47,93 +15,119 @@ const socials = [
 
 export default function Footer() {
   const { lang, t } = useLang();
+  const sv = lang === "sv";
   const [showLegal, setShowLegal] = useState<string | null>(null);
-  const groupsData = groups(lang);
+
+  const groups = [
+    {
+      title: t.footer.product,
+      links: [
+        { label: t.nav.playground, href: "#playground" },
+        { label: sv ? "Vad är BudAI?" : "What is BudAI?", href: "#budai" },
+        { label: "FAQ", href: "#faq" },
+        { label: t.nav.vision, href: "#vision" },
+        { label: t.nav.waitlist, href: "#waitlist" },
+      ],
+    },
+    {
+      title: t.footer.company,
+      links: [
+        { label: "Stilledev", href: "https://stilledev.se", external: true },
+        { label: t.footer.contact, href: "mailto:Stilleinc@hotmail.com" },
+        { label: t.footer.pricing, href: "#waitlist" },
+      ],
+    },
+    {
+      title: t.footer.legal,
+      links: [
+        { label: sv ? "Integritetspolicy" : "Privacy Policy", href: "/legal/privacy" },
+        { label: sv ? "Användarvillkor" : "Terms of Service", href: "/legal/terms" },
+        { label: sv ? "Cookiepolicy" : "Cookie Policy", href: "/legal/cookies" },
+        { label: "GDPR", href: "/legal/gdpr" },
+      ],
+    },
+  ];
 
   const legalContent: Record<string, { title: string; content: string[] }> = {
     privacy: {
-      title: lang === "sv" ? "Integritetspolicy" : "Privacy Policy",
+      title: sv ? "Integritetspolicy" : "Privacy Policy",
       content: [
-        lang === "sv"
-          ? "BudAI värnar om din integritet. Vi samlar endast in data som är nödvändig för att tillhandahålla våra tjänster. All personlig information behandlas i enlighet med GDPR och lagras säkert på servrar inom EU."
-          : "BudAI values your privacy. We only collect data necessary to provide our services. All personal information is processed in accordance with GDPR and stored securely on servers within the EU.",
-        lang === "sv"
+        sv
+          ? "BudAI värnar om din integritet. Vi samlar endast in data som är nödvändig för att tillhandahålla tjänsten — din e-post när du skriver upp dig på väntelistan, och dina konversationer om du väljer att skapa ett konto."
+          : "BudAI values your privacy. We only collect data necessary to provide the service — your email when you join the waitlist, and your conversations if you choose to create an account.",
+        sv
           ? "Vi delar aldrig din data med tredje part utan ditt uttryckliga samtycke. Du har rätt att begära radering av dina data när som helst genom att kontakta oss på Stilleinc@hotmail.com."
           : "We never share your data with third parties without your explicit consent. You have the right to request deletion of your data at any time by contacting us at Stilleinc@hotmail.com.",
       ],
     },
     terms: {
-      title: lang === "sv" ? "Användarvillkor" : "Terms of Service",
+      title: sv ? "Användarvillkor" : "Terms of Service",
       content: [
-        lang === "sv"
-          ? "Genom att använda BudAI godkänner du dessa villkor. Tjänsten tillhandahålls i befintligt skick och vi garanterar inte att den alltid är tillgänglig eller felfri."
-          : "By using BudAI, you agree to these terms. The service is provided as-is and we do not guarantee that it will always be available or error-free.",
-        lang === "sv"
+        sv
+          ? "Genom att använda BudAI godkänner du dessa villkor. Tjänsten är en utvecklarförhandsvisning och tillhandahålls i befintligt skick — vi garanterar inte att den alltid är tillgänglig eller felfri."
+          : "By using BudAI you accept these terms. The service is a developer preview provided as-is — we do not guarantee that it is always available or error-free.",
+        sv
           ? "Du får inte använda BudAI för olagliga aktiviteter eller på ett sätt som skadar vår infrastruktur. Vi förbehåller oss rätten att stänga av konton som bryter mot dessa villkor."
           : "You may not use BudAI for illegal activities or in a way that damages our infrastructure. We reserve the right to terminate accounts that violate these terms.",
       ],
     },
     cookies: {
-      title: lang === "sv" ? "Cookiepolicy" : "Cookie Policy",
+      title: sv ? "Cookiepolicy" : "Cookie Policy",
       content: [
-        lang === "sv"
-          ? "BudAI använder cookies för att förbättra din upplevelse och analysera trafik. Vi använder endast nödvändiga cookies och analytiska cookies med ditt samtycke."
-          : "BudAI uses cookies to enhance your experience and analyze traffic. We only use necessary cookies and analytical cookies with your consent.",
-        lang === "sv"
+        sv
+          ? "BudAI använder cookies för att hålla dig inloggad, komma ihåg ditt språkval och förstå hur sidan används. Analyscookies aktiveras endast med ditt samtycke."
+          : "BudAI uses cookies to keep you signed in, remember your language choice, and understand how the site is used. Analytics cookies are only enabled with your consent.",
+        sv
           ? "Du kan när som helst ändra dina cookie-inställningar eller återkalla ditt samtycke. Nödvändiga cookies kan inte inaktiveras eftersom de krävs för att webbplatsen ska fungera."
-          : "You can change your cookie settings or withdraw your consent at any time. Necessary cookies cannot be disabled as they are required for the website to function.",
+          : "You can change your cookie settings or withdraw consent at any time. Necessary cookies cannot be disabled since the site needs them to function.",
       ],
     },
     gdpr: {
       title: "GDPR",
       content: [
-        lang === "sv"
-          ? "BudAI följer EU:s dataskyddsförordning (GDPR). Som användare har du följande rättigheter: rätt till tillgång, rätt till rättelse, rätt till radering, rätt till begränsning av behandling, rätt till dataportabilitet, och rätt att göra invändningar."
-          : "BudAI complies with the EU General Data Protection Regulation (GDPR). As a user, you have the following rights: right of access, right to rectification, right to erasure, right to restriction of processing, right to data portability, and right to object.",
-        lang === "sv"
-          ? "Personuppgiftsansvarig: Stilledev AB. Kontakta oss på Stilleinc@hotmail.com för frågor om GDPR eller för att utöva dina rättigheter."
-          : "Data controller: Stilledev AB. Contact us at Stilleinc@hotmail.com for GDPR questions or to exercise your rights.",
+        sv
+          ? "BudAI följer EU:s dataskyddsförordning (GDPR). Som användare har du rätt till tillgång, rättelse, radering, begränsning av behandling, dataportabilitet och att göra invändningar."
+          : "BudAI complies with the EU General Data Protection Regulation (GDPR). As a user you have the right to access, rectification, erasure, restriction of processing, data portability, and to object.",
+        sv
+          ? "Personuppgiftsansvarig: Stilledev. Kontakta oss på Stilleinc@hotmail.com för frågor om GDPR eller för att utöva dina rättigheter."
+          : "Data controller: Stilledev. Contact us at Stilleinc@hotmail.com for GDPR questions or to exercise your rights.",
       ],
     },
   };
 
   return (
-    <footer className="relative border-t border-white/[0.04]">
-      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent-cyan/20 to-transparent" />
-      <div className="max-w-7xl mx-auto px-6 lg:px-8 py-14 md:py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 lg:gap-8">
-          <div className="lg:col-span-2">
-            <a href="#" className="flex items-center gap-2.5 mb-5 group">
+    <footer className="relative border-t border-white/[0.05]">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent-cyan/20 to-transparent" />
+      <div className="mx-auto max-w-7xl px-5 py-14 sm:px-6 lg:px-8 md:py-16">
+        <div className="grid grid-cols-2 gap-10 md:grid-cols-5 lg:gap-8">
+          <div className="col-span-2">
+            <a href="#playground" className="group mb-5 flex items-center gap-2.5">
               <BudAILogo size="md" animated />
-              <span className="text-xl font-bold tracking-tight">
+              <span className="text-xl font-bold tracking-tight text-white">
                 Bud<span className="text-accent-cyan">AI</span>
               </span>
             </a>
-            <p className="text-sm text-muted leading-relaxed max-w-sm mb-6">
-              {lang === "sv"
-                ? "En avancerad AI-plattform som hjälper svenska företag och privatpersoner att spara tid, automatisera uppgifter och förbättra arbetsflöden."
-                : "An advanced AI platform that helps Swedish companies and individuals save time, automate tasks, and improve workflows."}
-            </p>
-            <div className="flex items-center gap-2.5">
-              {socials.map((s) => (
+            <p className="mb-6 max-w-sm text-[13.5px] leading-relaxed text-muted">{t.footer.tagline}</p>
+            <div className="flex items-center gap-2">
+              {SOCIALS.map((s) => (
                 <a
                   key={s.label}
                   href={s.href}
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={s.label}
-                  className="w-9 h-9 rounded-lg bg-white/5 flex items-center justify-center text-muted hover:text-white hover:bg-white/10 hover:border-accent-cyan/20 border border-transparent transition-all"
+                  className="flex h-9 w-9 items-center justify-center rounded-lg border border-transparent bg-white/[0.05] text-muted transition-all hover:border-accent-cyan/25 hover:bg-white/[0.09] hover:text-white"
                 >
-                  <s.icon className="w-4 h-4" />
+                  <s.icon className="h-4 w-4" />
                 </a>
               ))}
             </div>
           </div>
 
-          {groupsData.map((g) => (
+          {groups.map((g) => (
             <div key={g.title}>
-              <h4 className="text-sm font-semibold text-white mb-4">{g.title}</h4>
-              <ul className="space-y-3">
+              <h4 className="mb-4 text-[13px] font-semibold text-white">{g.title}</h4>
+              <ul className="space-y-2.5">
                 {g.links.map((l) => (
                   <li key={l.label}>
                     <a
@@ -146,10 +140,10 @@ export default function Footer() {
                           setShowLegal(l.href.replace("/legal/", ""));
                         }
                       }}
-                      className="text-sm text-muted hover:text-white transition-colors inline-flex items-center gap-1 group"
+                      className="group inline-flex items-center gap-1 text-[13px] text-muted transition-colors hover:text-white"
                     >
                       {l.label}
-                      <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <ArrowUpRight className="h-3 w-3 opacity-0 transition-opacity group-hover:opacity-100" />
                     </a>
                   </li>
                 ))}
@@ -158,20 +152,28 @@ export default function Footer() {
           ))}
         </div>
 
-        <div className="mt-14 pt-8 border-t border-white/[0.04] flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-sm text-muted">{t.footer.rights}</p>
-          <p className="text-sm text-muted flex items-center gap-1.5">
-            {lang === "sv" ? "Utvecklad av" : "Developed by"}{" "}
-            <StilledevLink showMark />
-            <span className="text-muted/30">·</span>
-            <span className="text-xs">Sweden</span>
-          </p>
+        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-white/[0.05] pt-7 sm:flex-row">
+          <p className="text-[12.5px] text-muted/70">{t.footer.rights}</p>
+          <div className="flex items-center gap-4">
+            <p className="flex items-center gap-1.5 text-[12.5px] text-muted/70">
+              {t.nav.developedBy} <StilledevLink showMark />
+              <span className="text-muted/30">·</span>
+              <span className="text-[11.5px]">Sweden</span>
+            </p>
+            <a
+              href="#playground"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-white/[0.08] px-2.5 py-1.5 text-[11.5px] text-muted transition-colors hover:border-accent-cyan/30 hover:text-accent-cyan"
+            >
+              <ArrowUp className="h-3 w-3" />
+              {t.intro.backToPlayground}
+            </a>
+          </div>
         </div>
       </div>
 
       <AnimatePresence>
         {showLegal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-[98] flex items-center justify-center p-4">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -180,37 +182,38 @@ export default function Footer() {
               onClick={() => setShowLegal(null)}
             />
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              initial={{ opacity: 0, scale: 0.96, y: 16 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 16 }}
-              className="relative z-10 max-w-lg w-full rounded-2xl bg-[#0a0a14] border border-white/[0.08] p-6 shadow-2xl"
+              exit={{ opacity: 0, scale: 0.96, y: 12 }}
+              transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+              className="pg-scroll-thin relative z-10 max-h-[80vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-white/[0.09] bg-[#0a0a14] p-6 shadow-2xl"
               role="dialog"
               aria-modal="true"
               aria-labelledby="legal-title"
             >
               <button
-                className="absolute top-4 right-4 text-muted hover:text-white transition-colors"
+                className="absolute right-4 top-4 rounded-lg p-1 text-muted transition-colors hover:bg-white/[0.06] hover:text-white"
                 onClick={() => setShowLegal(null)}
-                aria-label="Close"
+                aria-label={sv ? "Stäng" : "Close"}
               >
-                <X className="w-5 h-5" />
+                <X className="h-5 w-5" />
               </button>
-              <h3 id="legal-title" className="text-xl font-bold text-white mb-4 pr-8">
+              <h3 id="legal-title" className="mb-4 pr-8 text-xl font-bold text-white">
                 {legalContent[showLegal]?.title}
               </h3>
               <div className="space-y-3">
                 {legalContent[showLegal]?.content.map((paragraph, i) => (
-                  <p key={i} className="text-sm text-muted leading-relaxed">
+                  <p key={i} className="text-[13.5px] leading-relaxed text-muted">
                     {paragraph}
                   </p>
                 ))}
               </div>
               <a
                 href={`/legal/${showLegal}`}
-                className="mt-5 inline-flex items-center gap-1 text-sm text-accent-cyan hover:text-white transition-colors"
+                className="mt-5 inline-flex items-center gap-1 text-[13px] text-accent-cyan transition-colors hover:text-white"
               >
-                {lang === "sv" ? "Läs fullständig sida" : "View full page"}
-                <ArrowUpRight className="w-3.5 h-3.5" />
+                {sv ? "Läs hela sidan" : "View the full page"}
+                <ArrowUpRight className="h-3.5 w-3.5" />
               </a>
             </motion.div>
           </div>

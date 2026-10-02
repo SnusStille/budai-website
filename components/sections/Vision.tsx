@@ -86,12 +86,13 @@ const PILLARS = [
 ];
 
 export default function Vision() {
-  const { lang } = useLang();
+  const { t, lang } = useLang();
+  const sv = lang === "sv";
   const [active, setActive] = useState(0);
   const stage = STAGES[active];
 
   return (
-    <section className="relative section-hairline py-20 sm:py-28 md:py-32 overflow-hidden">
+    <section id="vision" className="relative scroll-mt-24 overflow-hidden py-20 sm:py-24 md:py-28">
       {/* Ambient map glow */}
       <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[min(100vw,900px)] h-[500px] pointer-events-none">
         <div className="absolute inset-0 bg-accent-cyan/[0.04] rounded-full blur-[100px]" />
@@ -100,17 +101,12 @@ export default function Vision() {
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <ScrollReveal className="text-center mb-12 md:mb-16">
-          <span className="section-badge text-accent-green mb-4">
-            {lang === "sv" ? "Vår vision" : "Our vision"}
-          </span>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-[-0.03em] mb-5 text-white">
-            {lang === "sv" ? "AI-arbete med " : "AI work with "}
-            <span className="text-gradient">{lang === "sv" ? "svensk ryggrad" : "a Swedish spine"}</span>
+          <span className="section-badge mb-4 text-accent-green">{t.vision.badge}</span>
+          <h2 className="mb-4 text-3xl font-bold tracking-[-0.03em] text-white sm:text-4xl md:text-[3.1rem] md:leading-[1.08]">
+            {t.vision.title} <span className="text-gradient">{t.vision.titleHighlight}</span>
           </h2>
-          <p className="text-base sm:text-lg text-muted max-w-2xl mx-auto leading-relaxed">
-            {lang === "sv"
-              ? "BudAI är inte ytterligare ett generiskt AI-verktyg. Det är en övertygelse om hur arbete kan kännas — smartare, snabbare, mer mänskligt — från Sverige och ut."
-              : "BudAI is not another generic AI tool. It is a belief about how work can feel — smarter, faster, more human — from Sweden outward."}
+          <p className="mx-auto max-w-2xl text-[15px] leading-relaxed text-muted sm:text-[17px]">
+            {t.vision.subtitle}
           </p>
         </ScrollReveal>
 
@@ -123,7 +119,7 @@ export default function Vision() {
             <div className="flex flex-col lg:flex-row min-h-[320px]">
               <div className="lg:w-[42%] p-5 sm:p-7 border-b lg:border-b-0 lg:border-r border-white/[0.06] flex flex-col">
                 <div className="text-[11px] uppercase tracking-[0.18em] text-muted/70 mb-4 font-medium">
-                  {lang === "sv" ? "Resan" : "The path"}
+                  {t.vision.pathLabel}
                 </div>
 
                 {/* Node path */}
@@ -164,14 +160,14 @@ export default function Vision() {
                               on ? "text-accent-cyan" : "text-muted/50"
                             }`}
                           >
-                            {lang === "sv" ? s.region.sv : s.region.en}
+                            {sv ? s.region.sv : s.region.en}
                           </span>
                           <span
                             className={`block text-sm sm:text-base font-semibold tracking-tight ${
                               on ? "text-white" : "text-white/70"
                             }`}
                           >
-                            {lang === "sv" ? s.title.sv : s.title.en}
+                            {sv ? s.title.sv : s.title.en}
                           </span>
                         </span>
                       </button>
@@ -199,20 +195,20 @@ export default function Vision() {
                       <span className="w-1.5 h-1.5 rounded-full bg-accent-cyan" />
                       {active + 1} / {STAGES.length}
                       <ArrowRight className="w-3 h-3 opacity-50" />
-                      {lang === "sv" ? stage.region.sv : stage.region.en}
+                      {sv ? stage.region.sv : stage.region.en}
                     </div>
                     <h3 className="text-2xl sm:text-3xl font-bold text-white tracking-tight mb-3">
-                      {lang === "sv" ? stage.title.sv : stage.title.en}
+                      {sv ? stage.title.sv : stage.title.en}
                     </h3>
                     <p className="text-sm sm:text-base text-muted leading-relaxed mb-5">
-                      {lang === "sv" ? stage.body.sv : stage.body.en}
+                      {sv ? stage.body.sv : stage.body.en}
                     </p>
                     <div className="rounded-2xl border border-accent-cyan/20 bg-accent-cyan/[0.05] px-4 py-3">
                       <div className="text-[10px] uppercase tracking-wider text-accent-cyan/80 mb-1">
-                        {lang === "sv" ? "Vi tror" : "We believe"}
+                        {t.vision.weBelieve}
                       </div>
                       <p className="text-sm text-white/90 leading-relaxed">
-                        {lang === "sv" ? stage.belief.sv : stage.belief.en}
+                        {sv ? stage.belief.sv : stage.belief.en}
                       </p>
                     </div>
                   </motion.div>
@@ -247,10 +243,10 @@ export default function Vision() {
                     <p.icon className="w-4 h-4 text-accent-cyan" />
                   </div>
                   <div className="text-sm font-semibold text-white mb-1.5">
-                    {lang === "sv" ? p.k.sv : p.k.en}
+                    {sv ? p.k.sv : p.k.en}
                   </div>
                   <p className="text-xs sm:text-[13px] text-muted leading-relaxed">
-                    {lang === "sv" ? p.v.sv : p.v.en}
+                    {sv ? p.v.sv : p.v.en}
                   </p>
                 </div>
               </SpotlightCard>
@@ -260,10 +256,8 @@ export default function Vision() {
 
         <ScrollReveal>
           <div className="text-center max-w-3xl mx-auto">
-            <blockquote className="text-xl md:text-2xl lg:text-3xl font-light text-white/75 leading-relaxed tracking-tight">
-              {lang === "sv"
-                ? "”Vi bygger inte hype. Vi bygger arbetsyta som respekterar nordisk tillit — och skalas utan att tappa den.”"
-                : "“We are not building hype. We are building a work surface that respects Nordic trust — and scales without losing it.”"}
+            <blockquote className="text-xl font-light leading-relaxed tracking-tight text-white/75 md:text-2xl lg:text-[28px]">
+              {t.vision.quote}
             </blockquote>
             <div className="mt-8 flex items-center justify-center gap-3">
               <div className="w-12 h-12 rounded-full border border-white/15 bg-gradient-to-br from-accent-cyan/15 to-accent-purple/15 flex items-center justify-center shadow-[0_0_24px_rgba(0,229,255,0.15)]">
@@ -271,9 +265,7 @@ export default function Vision() {
               </div>
               <div className="text-left">
                 <div className="text-sm font-medium text-accent-cyan">Stilledev</div>
-                <div className="text-xs text-muted">
-                  {lang === "sv" ? "BudAI · Sverige" : "BudAI · Sweden"}
-                </div>
+                <div className="text-xs text-muted">{t.vision.quoteAuthor}</div>
               </div>
             </div>
           </div>

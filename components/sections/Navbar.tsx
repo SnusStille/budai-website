@@ -1,31 +1,25 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Globe, Command } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { useLang } from "@/components/ui/LanguageContext";
-import StockholmClock from "@/components/ui/StockholmClock";
 import BudAILogo from "@/components/ui/BudAILogo";
 
-const SECTION_IDS = [
-  "capabilities",
-  "playground",
-  "terminal",
-  "waitlist",
-  "roadmap",
-  "status",
-] as const;
+const SECTION_IDS = ["playground", "budai", "vision", "waitlist"] as const;
 
+/**
+ * Minimal product nav: Playground first, then the story, then the waitlist.
+ */
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [active, setActive] = useState("");
+  const [active, setActive] = useState<string>("playground");
   const { lang, setLang, t } = useLang();
-  const ratios = useRef<Record<string, number>>({});
-  const logoClicks = useRef<number[]>([]);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 40);
+    const onScroll = () => setScrolled(window.scrollY > 32);
+    onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
@@ -37,156 +31,114 @@ export default function Navbar() {
     };
   }, [mobileOpen]);
 
-  // Reliable scroll-spy: pick section with highest intersection ratio near viewport center
+  /* Scroll spy — deterministic: the section owning a line at 30% of the viewport wins.
+     Rects are cached and re-measured on resize / late mounts so scrolling never forces layout. */
   useEffect(() => {
-    const els = SECTION_IDS.map((id) => document.getElementById(id)).filter(
-      (el): el is HTMLElement => !!el
-    );
-    if (!els.length) {
-      // Sections may mount late (dynamic) — retry shortly
-      const t = setTimeout(() => setActive((a) => a), 400);
-      return () => clearTimeout(t);
-    }
+    let rects: { id: string; top: number; bottom: number }[] = [];
+    let raf = 0;
 
-    ratios.current = {};
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const e of entries) {
-          ratios.current[e.target.id] = e.isIntersecting ? e.intersectionRatio : 0;
-        }
-        let best = "";
-        let bestR = 0;
-        for (const id of SECTION_IDS) {
-          const r = ratios.current[id] ?? 0;
-          if (r > bestR) {
-            bestR = r;
-            best = id;
-          }
-        }
-        // Fallback: scroll position based if ratios all zero
-        if (bestR < 0.05) {
-          const mid = window.scrollY + window.innerHeight * 0.35;
-          let closest = "";
-          let dist = Infinity;
-          for (const id of SECTION_IDS) {
-            const el = document.getElementById(id);
-            if (!el) continue;
-            const d = Math.abs(el.offsetTop - mid);
-            if (d < dist) {
-              dist = d;
-              closest = id;
-            }
-          }
-          if (closest) setActive(closest);
-        } else if (best) {
-          setActive(best);
-        }
-      },
-      {
-        // Center-weighted band so only one section "owns" the indicator
-        rootMargin: "-35% 0px -50% 0px",
-        threshold: [0, 0.1, 0.2, 0.35, 0.5, 0.7, 1],
-      }
-    );
-
-    els.forEach((el) => observer.observe(el));
-
-    // Also update on scroll for edge cases (fast scroll / dynamic mount)
-    const onScroll = () => {
-      const mid = window.scrollY + window.innerHeight * 0.35;
-      let closest = "";
-      let dist = Infinity;
+    const measure = () => {
+      const next: { id: string; top: number; bottom: number }[] = [];
       for (const id of SECTION_IDS) {
         const el = document.getElementById(id);
         if (!el) continue;
-        const top = el.offsetTop;
-        const bottom = top + el.offsetHeight;
-        if (mid >= top - 80 && mid <= bottom + 40) {
-          const d = Math.abs(top - mid);
-          if (d < dist) {
-            dist = d;
-            closest = id;
-          }
-        }
+        const r = el.getBoundingClientRect();
+        next.push({ id, top: r.top + window.scrollY, bottom: r.bottom + window.scrollY });
       }
-      if (closest) setActive(closest);
+      if (next.length) rects = next;
     };
+
+    const pick = () => {
+      if (!rects.length) measure();
+      if (!rects.length) return;
+      const line = window.scrollY + window.innerHeight * 0.3;
+      let current = rects[0].id;
+      for (const r of rects) if (line >= r.top - 120) current = r.id;
+      if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4) {
+        current = rects[rects.length - 1].id;
+      }
+      setActive((prev) => (prev === current ? prev : current));
+    };
+
+    const onScroll = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        pick();
+      });
+    };
+    const onResize = () => {
+      measure();
+      pick();
+    };
+
+    measure();
+    pick();
     window.addEventListener("scroll", onScroll, { passive: true });
-    onScroll();
+    window.addEventListener("resize", onResize);
+    // The Playground is dynamically imported and changes height once it mounts.
+    const t1 = window.setTimeout(onResize, 700);
+    const t2 = window.setTimeout(onResize, 1800);
 
     return () => {
-      observer.disconnect();
       window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onResize);
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+      if (raf) cancelAnimationFrame(raf);
     };
-  }, [lang, mobileOpen]);
+  }, [lang]);
 
   const links = [
-    { label: t.nav.capabilities, href: "#capabilities", id: "capabilities" },
     { label: t.nav.playground, href: "#playground", id: "playground" },
-    { label: t.nav.terminal, href: "#terminal", id: "terminal" },
+    { label: t.nav.product, href: "#budai", id: "budai" },
+    { label: t.nav.vision, href: "#vision", id: "vision" },
     { label: t.nav.waitlist, href: "#waitlist", id: "waitlist" },
-    { label: t.nav.roadmap, href: "#roadmap", id: "roadmap" },
-    { label: t.nav.status, href: "#status", id: "status" },
   ];
 
   return (
     <>
       <motion.nav
-        initial={{ y: -80, opacity: 0 }}
+        initial={{ y: -70, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.6, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-400 ${
-          scrolled
-            ? "glass-strong shadow-lg shadow-black/30 border-b border-white/[0.07] backdrop-blur-xl"
-            : "bg-transparent"
+        transition={{ duration: 0.5, delay: 0.05, ease: [0.22, 1, 0.36, 1] }}
+        className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
+          scrolled || mobileOpen
+            ? "border-b border-white/[0.07] bg-[#04040a]/85 backdrop-blur-xl"
+            : "border-b border-transparent bg-transparent"
         }`}
       >
-        <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 lg:h-[4.5rem]">
-            <a
-              href="#"
-              className="flex items-center gap-2.5 group"
-              aria-label="BudAI home"
-              onClick={(e) => {
-                // Surprise #3 — triple-click logo within 1.2s
-                const now = Date.now();
-                logoClicks.current = [...logoClicks.current, now].filter((ts) => now - ts < 1200);
-                if (logoClicks.current.length >= 3) {
-                  e.preventDefault();
-                  logoClicks.current = [];
-                  window.dispatchEvent(new Event("budai:logo-secret"));
-                }
-              }}
-            >
-              <span className="transition-transform group-active:scale-95 inline-flex">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="flex h-16 items-center justify-between gap-4 lg:h-[4.25rem]">
+            <a href="#playground" className="group flex items-center gap-2.5" aria-label="BudAI">
+              <span className="inline-flex transition-transform group-active:scale-95">
                 <BudAILogo size="sm" animated />
               </span>
-              <div className="flex flex-col leading-none">
-                <span className="text-xl font-bold tracking-tight">
+              <span className="flex flex-col leading-none">
+                <span className="text-[19px] font-bold tracking-tight text-white">
                   Bud<span className="text-accent-cyan">AI</span>
                 </span>
-                <span className="text-[10px] tracking-wide">
-                  <span className="text-white font-medium">{t.nav.developedBy}</span>{" "}
-                  <span className="text-accent-cyan group-hover:text-white transition-colors">Stilledev</span>
+                <span className="mt-0.5 text-[10px] tracking-wide text-muted/70">
+                  {t.nav.developedBy} <span className="text-white/70">Stilledev</span>
                 </span>
-              </div>
+              </span>
             </a>
 
-            <div className="hidden lg:flex items-center gap-0.5">
+            <div className="hidden items-center gap-0.5 md:flex">
               {links.map((l) => {
                 const isActive = active === l.id;
                 return (
                   <a
-                    key={l.href}
+                    key={l.id}
                     href={l.href}
-                    className={`relative px-3.5 py-2 text-sm rounded-lg transition-colors ${
-                      isActive ? "text-white" : "text-muted hover:text-white hover:bg-white/5"
+                    className={`relative rounded-lg px-3 py-2 text-[13.5px] transition-colors ${
+                      isActive ? "text-white" : "text-muted hover:bg-white/[0.04] hover:text-white"
                     }`}
                   >
                     {l.label}
                     <span
-                      className={`absolute bottom-1 left-1/2 -translate-x-1/2 h-0.5 rounded-full bg-accent-cyan transition-all duration-300 ${
-                        isActive ? "w-5 opacity-100 shadow-[0_0_8px_rgba(0,229,255,0.6)]" : "w-0 opacity-0"
+                      className={`absolute bottom-1 left-1/2 h-0.5 -translate-x-1/2 rounded-full bg-accent-cyan transition-all duration-300 ${
+                        isActive ? "w-4 opacity-100" : "w-0 opacity-0"
                       }`}
                     />
                   </a>
@@ -194,12 +146,11 @@ export default function Navbar() {
               })}
             </div>
 
-            <div className="hidden lg:flex items-center gap-2.5">
-              <StockholmClock className="hidden xl:inline-flex" />
+            <div className="flex items-center gap-2">
               <div
-                className="flex items-center p-0.5 rounded-full bg-black/40 border border-white/[0.08] shadow-inner"
+                className="flex items-center rounded-full border border-white/[0.08] bg-black/40 p-0.5"
                 role="group"
-                aria-label="Language"
+                aria-label={t.nav.language}
               >
                 {(["en", "sv"] as const).map((code) => (
                   <button
@@ -207,43 +158,34 @@ export default function Navbar() {
                     type="button"
                     onClick={() => setLang(code)}
                     aria-pressed={lang === code}
-                    className={`relative min-w-[2.6rem] px-3 py-1.5 text-[11px] font-semibold tracking-wide rounded-full transition-all ${
+                    className={`rounded-full px-2.5 py-1 text-[10.5px] font-semibold tracking-wide transition-all ${
                       lang === code
-                        ? "bg-gradient-to-r from-accent-cyan to-accent-purple text-white shadow-[0_0_16px_rgba(0,229,255,0.25)]"
+                        ? "bg-gradient-to-r from-accent-cyan to-accent-purple text-white"
                         : "text-muted/70 hover:text-white"
                     }`}
                   >
-                    {code === "en" ? "EN" : "SV"}
+                    {code.toUpperCase()}
                   </button>
                 ))}
               </div>
 
-              <button
-                type="button"
-                onClick={() =>
-                  window.dispatchEvent(
-                    new KeyboardEvent("keydown", { key: "k", metaKey: true, bubbles: true })
-                  )
-                }
-                className="hidden xl:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-mono text-muted/60 hover:text-white border border-white/[0.06] hover:border-white/15 hover:bg-white/[0.04] transition-all"
-                aria-label="Open command palette"
+              <a
+                href="#waitlist"
+                className="btn-primary hidden !px-4 !py-2 text-[13px] sm:inline-flex lg:!px-5"
               >
-                <Command className="w-3 h-3" />K
-              </button>
-
-              <a href="#waitlist" className="btn-primary !px-5 !py-2.5 text-sm">
                 <span>{t.nav.requestAccess}</span>
               </a>
-            </div>
 
-            <button
-              onClick={() => setMobileOpen(!mobileOpen)}
-              className="lg:hidden p-2 text-white rounded-lg hover:bg-white/5 transition-colors"
-              aria-label={mobileOpen ? "Close menu" : "Open menu"}
-              aria-expanded={mobileOpen}
-            >
-              {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-            </button>
+              <button
+                type="button"
+                onClick={() => setMobileOpen((v) => !v)}
+                className="rounded-lg p-2 text-white transition-colors hover:bg-white/[0.06] md:hidden"
+                aria-label={mobileOpen ? t.nav.closeMenu : t.nav.openMenu}
+                aria-expanded={mobileOpen}
+              >
+                {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              </button>
+            </div>
           </div>
         </div>
       </motion.nav>
@@ -254,65 +196,44 @@ export default function Navbar() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-40 lg:hidden"
+            className="fixed inset-0 z-40 md:hidden"
           >
             <div
-              className="absolute inset-0 bg-background/98 backdrop-blur-2xl"
+              className="absolute inset-0 bg-background/95 backdrop-blur-2xl"
               onClick={() => setMobileOpen(false)}
             />
-            <div className="relative pt-24 px-6 flex flex-col gap-1 max-h-screen overflow-y-auto pb-10">
+            <div className="relative flex max-h-screen flex-col gap-1 overflow-y-auto px-5 pb-10 pt-24">
               {links.map((l, i) => (
                 <motion.a
-                  key={l.href}
+                  key={l.id}
                   href={l.href}
-                  initial={{ opacity: 0, x: -20 }}
+                  initial={{ opacity: 0, x: -16 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.04 }}
+                  transition={{ delay: 0.04 * i }}
                   onClick={() => setMobileOpen(false)}
-                  className={`px-4 py-3.5 text-lg rounded-xl transition-colors ${
+                  className={`rounded-xl px-4 py-3.5 text-[17px] transition-colors ${
                     active === l.id
-                      ? "text-white bg-white/5 border border-accent-cyan/20"
-                      : "text-white/80 hover:text-white hover:bg-white/5"
+                      ? "border border-accent-cyan/20 bg-white/[0.05] text-white"
+                      : "text-white/75 hover:bg-white/[0.04] hover:text-white"
                   }`}
                 >
                   {l.label}
                 </motion.a>
               ))}
 
-              <div className="flex items-center gap-3 mt-4 px-4">
-                <Globe className="w-4 h-4 text-muted" />
-                <div className="flex p-0.5 rounded-full bg-black/40 border border-white/[0.08]">
-                  <button
-                    type="button"
-                    onClick={() => setLang("en")}
-                    className={`px-4 py-2 text-sm font-semibold rounded-full ${
-                      lang === "en"
-                        ? "bg-gradient-to-r from-accent-cyan to-accent-purple text-white"
-                        : "text-muted"
-                    }`}
-                  >
-                    English
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setLang("sv")}
-                    className={`px-4 py-2 text-sm font-semibold rounded-full ${
-                      lang === "sv"
-                        ? "bg-gradient-to-r from-accent-cyan to-accent-purple text-white"
-                        : "text-muted"
-                    }`}
-                  >
-                    Svenska
-                  </button>
-                </div>
-              </div>
-
               <a
                 href="#waitlist"
                 onClick={() => setMobileOpen(false)}
-                className="mt-4 btn-primary !py-3.5 text-center"
+                className="btn-primary mt-4 !py-3.5 text-center"
               >
                 <span>{t.nav.requestAccess}</span>
+              </a>
+              <a
+                href="#playground"
+                onClick={() => setMobileOpen(false)}
+                className="mt-2 rounded-xl border border-white/[0.08] px-4 py-3 text-center text-[14px] text-white/80 transition-colors hover:border-accent-cyan/30 hover:text-white"
+              >
+                {t.intro.backToPlayground}
               </a>
             </div>
           </motion.div>

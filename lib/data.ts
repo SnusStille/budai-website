@@ -335,6 +335,14 @@ export async function deleteUser(id: string): Promise<void> {
   }
 }
 
+/**
+ * True when the waitlist is backed by a real Supabase project.
+ * The UI uses this so it never presents mock data as a real number.
+ */
+export function isWaitlistBackendReady(): boolean {
+  return isSupabaseReady();
+}
+
 export async function getWaitlistCount(): Promise<number> {
   const supabase = getSupabase();
   if (!supabase) return mockUsers.length;

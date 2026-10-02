@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import Providers from "@/components/Providers";
 import VercelAnalytics from "@/components/VercelAnalytics";
@@ -11,23 +11,26 @@ const jsonLd = {
   applicationCategory: "BusinessApplication",
   operatingSystem: "Web",
   description:
-    "AI work assistant for Swedish companies and individuals — write, automate, and think faster in Swedish and English.",
+    "Try BudAI live in your browser — the AI work assistant built in Sweden. Write, plan, analyze and automate in Swedish and English, then join the waitlist for early access.",
   url: process.env.NEXT_PUBLIC_SITE_URL || "https://stilledev.se",
   author: { "@type": "Organization", name: "Stilledev" },
   offers: { "@type": "Offer", price: "0", priceCurrency: "SEK", description: "Developer preview" },
 };
 
-const jakarta = Plus_Jakarta_Sans({
-  subsets: ["latin", "latin-ext"],
+/* Self-hosted variable fonts (SIL OFL — see app/fonts/LICENSE-*.txt).
+   Local files keep the build deterministic: no Google Fonts fetch at build time. */
+const jakarta = localFont({
+  src: [{ path: "./fonts/plus-jakarta-sans-latin.woff2", weight: "200 800", style: "normal" }],
   variable: "--font-jakarta",
   display: "swap",
-  weight: ["400", "500", "600", "700", "800"],
+  fallback: ["system-ui", "-apple-system", "Segoe UI", "Roboto", "sans-serif"],
 });
 
-const jetbrains = JetBrains_Mono({
-  subsets: ["latin", "latin-ext"],
+const jetbrains = localFont({
+  src: [{ path: "./fonts/jetbrains-mono-latin.woff2", weight: "100 800", style: "normal" }],
   variable: "--font-jetbrains",
   display: "swap",
+  fallback: ["ui-monospace", "SFMono-Regular", "Menlo", "Consolas", "monospace"],
 });
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://stilledev.se";
@@ -35,22 +38,22 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://stilledev.se";
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "Stilledev.se · BudAI",
+    default: "BudAI — try the AI work assistant | Stilledev",
     template: "%s · BudAI",
   },
   description:
-    "BudAI är AI-arbetsassistenten för Sverige — skriv, automatisera och tänk snabbare på svenska och engelska. Utvecklarförhandsvisning av Stilledev.",
+    "Testa BudAI direkt i webbläsaren — AI-arbetsassistenten byggd i Sverige. Skriv, planera, analysera och automatisera på svenska och engelska. Utvecklarförhandsvisning av Stilledev.",
   keywords: [
-    "AI",
+    "BudAI",
+    "AI playground",
+    "AI assistant",
+    "AI-assistent",
     "artificial intelligence",
     "Sweden",
     "Sverige",
     "business automation",
-    "digital assistant",
-    "Stilledev",
-    "BudAI",
-    "enterprise AI",
     "automatisering",
+    "Stilledev",
   ],
   authors: [{ name: "Stilledev" }],
   creator: "Stilledev",
@@ -62,9 +65,9 @@ export const metadata: Metadata = {
     alternateLocale: ["en_US"],
     url: siteUrl,
     siteName: "BudAI",
-    title: "BudAI — AI-arbete för Sverige",
+    title: "BudAI — testa AI-assistenten direkt",
     description:
-      "AI-arbetsassistent för svenska företag och privatpersoner. Skriv, automatisera och tänk snabbare — SV & EN.",
+      "AI-arbetsassistent för svenska företag och privatpersoner. Testa Playground live — skriv, automatisera och tänk snabbare på SV & EN.",
     images: [
       {
         url: "/og.png",
@@ -76,9 +79,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "BudAI — AI-arbete för Sverige",
+    title: "BudAI — testa AI-assistenten direkt",
     description:
-      "AI-arbetsassistent för svenska företag och privatpersoner. Skriv, automatisera och tänk snabbare — SV & EN.",
+      "AI-arbetsassistent byggd i Sverige. Testa Playground live — skriv, automatisera och tänk snabbare på SV & EN.",
     images: ["/og.png"],
   },
   icons: {
