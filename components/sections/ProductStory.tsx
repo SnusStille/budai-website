@@ -150,6 +150,12 @@ const FAQ = [
   },
 ];
 
+const GUIDES = [
+  { slug: "skriva-mejl", sv: "Skriv ett mejl", en: "Write an email" },
+  { slug: "analysera-text", sv: "Analysera en text", en: "Analyze a text" },
+  { slug: "tva-forslag", sv: "Två förslag att välja mellan", en: "Two options to choose from" },
+];
+
 const STEPS = [
   {
     id: "intent",
@@ -311,6 +317,8 @@ export default function ProductStory() {
           </div>
           <p className="t-lead max-w-md lg:text-right">{t.what.subtitle}</p>
         </ScrollReveal>
+
+        <div className="hairline mt-10 sm:mt-12" />
 
         {/* ── Who it is for ──────────────────────────────────────── */}
         <div className="mt-12 grid gap-4 md:grid-cols-2">
@@ -526,6 +534,25 @@ export default function ProductStory() {
                 <span className="text-[13.5px] text-white/75">{sv ? item.sv : item.en}</span>
               </div>
             ))}
+          </div>
+        </ScrollReveal>
+
+        {/* ── Guides: practical entry points, each one leads to the chat ── */}
+        <ScrollReveal className="mt-10">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="eyebrow">{sv ? "Guider" : "Playbooks"}</p>
+            <div className="flex flex-wrap gap-2">
+              {GUIDES.map((g) => (
+                <Link key={g.slug} href={`/playbooks/${g.slug}`} className="chip chip-hover">
+                  {sv ? g.sv : g.en}
+                  <ArrowUpRight className="h-3 w-3" />
+                </Link>
+              ))}
+              <Link href="/roadmap" className="chip chip-hover">
+                {sv ? "Läget just nu" : "Current status"}
+                <ArrowUpRight className="h-3 w-3" />
+              </Link>
+            </div>
           </div>
         </ScrollReveal>
       </div>

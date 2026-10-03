@@ -349,12 +349,6 @@ h5 {
     width: 100%;
     background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
   }
-  .hairline-v {
-    width: 1px;
-    align-self: stretch;
-    background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.12), transparent);
-  }
-
   /* Bottom fade for scroll areas */
   .mask-fade-b {
     mask-image: linear-gradient(180deg, #000 78%, transparent 100%);

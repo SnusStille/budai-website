@@ -13,8 +13,16 @@ const jsonLd = {
   description:
     "Try BudAI live in your browser — the AI work assistant built in Sweden. Write, plan, analyze and automate in Swedish and English, then join the waitlist for early access.",
   url: process.env.NEXT_PUBLIC_SITE_URL || "https://stilledev.se",
+  inLanguage: ["en", "sv"],
   author: { "@type": "Organization", name: "Stilledev" },
-  offers: { "@type": "Offer", price: "0", priceCurrency: "SEK", description: "Developer preview" },
+  publisher: { "@type": "Organization", name: "Stilledev" },
+  isAccessibleForFree: true,
+  offers: {
+    "@type": "Offer",
+    price: "0",
+    priceCurrency: "SEK",
+    description: "Developer preview — free while in preview",
+  },
 };
 
 /* Self-hosted variable fonts (SIL OFL — see app/fonts/LICENSE-*.txt).
@@ -61,28 +69,21 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
   openGraph: {
     type: "website",
-    locale: "sv_SE",
-    alternateLocale: ["en_US"],
+    locale: "en_US",
+    alternateLocale: ["sv_SE"],
     url: siteUrl,
     siteName: "BudAI",
-    title: "BudAI — testa AI-assistenten direkt",
+    title: "BudAI — try the AI work assistant live",
     description:
-      "AI-arbetsassistent för svenska företag och privatpersoner. Testa Playground live — skriv, automatisera och tänk snabbare på SV & EN.",
-    images: [
-      {
-        url: "/og.png",
-        width: 1200,
-        height: 630,
-        alt: "BudAI — AI work for Sweden",
-      },
-    ],
+      "The AI work assistant built in Sweden. Try the Playground instantly — no account needed. Developer preview by Stilledev.",
+    // Social card is generated in app/opengraph-image.tsx from the same tokens
+    // as the site, so it can never drift from the design.
   },
   twitter: {
     card: "summary_large_image",
-    title: "BudAI — testa AI-assistenten direkt",
+    title: "BudAI — try the AI work assistant live",
     description:
-      "AI-arbetsassistent byggd i Sverige. Testa Playground live — skriv, automatisera och tänk snabbare på SV & EN.",
-    images: ["/og.png"],
+      "Chat, draft, analyze and automate in Swedish and English. Live preview, no account needed.",
   },
   icons: {
     icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
