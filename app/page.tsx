@@ -8,7 +8,7 @@ import CookieConsent from "@/components/ui/CookieConsent";
 import BackToTop from "@/components/ui/BackToTop";
 import Navbar from "@/components/sections/Navbar";
 import PlaygroundIntro from "@/components/sections/PlaygroundIntro";
-import WhatIsBudAI from "@/components/sections/WhatIsBudAI";
+import ProductStory from "@/components/sections/ProductStory";
 import Vision from "@/components/sections/Vision";
 import Waitlist from "@/components/sections/Waitlist";
 import Footer from "@/components/sections/Footer";
@@ -20,7 +20,10 @@ const AIPlayground = dynamic(() => import("@/components/sections/AIPlayground"))
 /**
  * stilledev.se — one focused product story:
  *
- *   Playground (home)  →  What is BudAI  →  Vision  →  Waitlist  →  Footer
+ *   Playground (home)  →  What BudAI is  →  Vision  →  Waitlist  →  Footer
+ *
+ * Deep pages (playbooks, roadmap) hang off this story and always link back
+ * to #playground, so the chat stays one click away from anywhere.
  *
  * The chat is the hero. Everything below it exists to make a visitor
  * understand the product and join the waitlist.
@@ -57,7 +60,7 @@ export default function Home() {
           <div className="h-10 sm:h-12 lg:h-0" />
         </section>
 
-        <WhatIsBudAI />
+        <ProductStory />
         <Vision />
         <Waitlist />
         <Footer />

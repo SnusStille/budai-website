@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowUp, ArrowUpRight, Github, Linkedin, Mail, MessageSquare, X } from "lucide-react";
 import BudAILogo, { StilledevLink } from "@/components/ui/BudAILogo";
@@ -24,9 +25,10 @@ export default function Footer() {
       links: [
         { label: t.nav.playground, href: "#playground" },
         { label: sv ? "Vad är BudAI?" : "What is BudAI?", href: "#budai" },
-        { label: "FAQ", href: "#faq" },
         { label: t.nav.vision, href: "#vision" },
+        { label: "FAQ", href: "#faq" },
         { label: t.nav.waitlist, href: "#waitlist" },
+        { label: sv ? "Läget / Roadmap" : "Status / Roadmap", href: "/roadmap" },
       ],
     },
     {
@@ -96,19 +98,35 @@ export default function Footer() {
   };
 
   return (
-    <footer className="relative border-t border-white/[0.05]">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent-cyan/20 to-transparent" />
-      <div className="mx-auto max-w-7xl px-5 py-14 sm:px-6 lg:px-8 md:py-16">
-        <div className="grid grid-cols-2 gap-10 md:grid-cols-5 lg:gap-8">
-          <div className="col-span-2">
-            <a href="#playground" className="group mb-5 flex items-center gap-2.5">
+    <footer className="relative border-t border-white/[0.06]">
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent-cyan/20 to-transparent"
+      />
+
+      <div className="mx-auto w-full max-w-shell px-4 py-14 sm:px-6 md:py-20 lg:px-8">
+        <div className="grid gap-12 lg:grid-cols-12 lg:gap-10">
+          {/* ── Brand ───────────────────────────────────────────── */}
+          <div className="lg:col-span-4">
+            <a href="#playground" className="group inline-flex items-center gap-2.5" aria-label="BudAI">
               <BudAILogo size="md" animated />
               <span className="text-xl font-bold tracking-tight text-white">
                 Bud<span className="text-accent-cyan">AI</span>
               </span>
             </a>
-            <p className="mb-6 max-w-sm text-[13.5px] leading-relaxed text-muted">{t.footer.tagline}</p>
-            <div className="flex items-center gap-2">
+            <p className="mt-5 max-w-xs text-[13.5px] leading-relaxed text-muted">{t.footer.tagline}</p>
+
+            <div className="mt-6 flex flex-wrap items-center gap-2">
+              <a href="#playground" className="btn-ghost !px-4 !py-2.5 !text-[13px]">
+                {sv ? "Till Playground" : "Back to Playground"}
+                <ArrowUpRight className="h-3.5 w-3.5" />
+              </a>
+              <a href="#waitlist" className="btn-quiet !text-[13px]">
+                {t.nav.requestAccess}
+              </a>
+            </div>
+
+            <div className="mt-6 flex items-center gap-2">
               {SOCIALS.map((s) => (
                 <a
                   key={s.label}
@@ -116,7 +134,7 @@ export default function Footer() {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={s.label}
-                  className="flex h-9 w-9 items-center justify-center rounded-lg border border-transparent bg-white/[0.05] text-muted transition-all hover:border-accent-cyan/25 hover:bg-white/[0.09] hover:text-white"
+                  className="flex h-9 w-9 items-center justify-center rounded-[var(--r-sm)] border border-white/[0.07] bg-white/[0.025] text-muted transition-all duration-200 hover:border-accent-cyan/25 hover:bg-white/[0.06] hover:text-white"
                 >
                   <s.icon className="h-4 w-4" />
                 </a>
@@ -124,53 +142,82 @@ export default function Footer() {
             </div>
           </div>
 
-          {groups.map((g) => (
-            <div key={g.title}>
-              <h4 className="mb-4 text-[13px] font-semibold text-white">{g.title}</h4>
-              <ul className="space-y-2.5">
-                {g.links.map((l) => (
-                  <li key={l.label}>
-                    <a
-                      href={l.href}
-                      target={"external" in l && l.external ? "_blank" : undefined}
-                      rel={"external" in l && l.external ? "noopener noreferrer" : undefined}
-                      onClick={(e) => {
-                        if (l.href.startsWith("/legal/")) {
-                          e.preventDefault();
-                          setShowLegal(l.href.replace("/legal/", ""));
-                        }
-                      }}
-                      className="group inline-flex items-center gap-1 text-[13px] text-muted transition-colors hover:text-white"
-                    >
-                      {l.label}
-                      <ArrowUpRight className="h-3 w-3 opacity-0 transition-opacity group-hover:opacity-100" />
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+          {/* ── Links ───────────────────────────────────────────── */}
+          <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 lg:col-span-8">
+            {groups.map((g) => (
+              <div key={g.title}>
+                <h4 className="font-mono text-[10.5px] uppercase tracking-[0.16em] text-muted/60">{g.title}</h4>
+                <ul className="mt-4 space-y-2.5">
+                  {g.links.map((l) => {
+                    const isLegal = l.href.startsWith("/legal/");
+                    const isRoute = l.href.startsWith("/") && !isLegal;
+                    const className =
+                      "group inline-flex items-center gap-1 text-[13px] text-muted transition-colors hover:text-white";
+                    const inner = (
+                      <>
+                        {l.label}
+                        <ArrowUpRight className="h-3 w-3 opacity-0 transition-opacity group-hover:opacity-100" />
+                      </>
+                    );
+                    return (
+                      <li key={l.label}>
+                        {isRoute ? (
+                          <Link href={l.href} className={className}>
+                            {inner}
+                          </Link>
+                        ) : (
+                          <a
+                            href={l.href}
+                            target={"external" in l && l.external ? "_blank" : undefined}
+                            rel={"external" in l && l.external ? "noopener noreferrer" : undefined}
+                            onClick={(e) => {
+                              if (isLegal) {
+                                e.preventDefault();
+                                setShowLegal(l.href.replace("/legal/", ""));
+                              }
+                            }}
+                            className={className}
+                          >
+                            {inner}
+                          </a>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ))}
+          </div>
         </div>
 
-        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-white/[0.05] pt-7 sm:flex-row">
-          <p className="text-[12.5px] text-muted/70">{t.footer.rights}</p>
-          <div className="flex items-center gap-4">
-            <p className="flex items-center gap-1.5 text-[12.5px] text-muted/70">
-              {t.nav.developedBy} <StilledevLink showMark />
-              <span className="text-muted/30">·</span>
-              <span className="text-[11.5px]">Sweden</span>
-            </p>
-            <a
-              href="#playground"
-              className="inline-flex items-center gap-1.5 rounded-lg border border-white/[0.08] px-2.5 py-1.5 text-[11.5px] text-muted transition-colors hover:border-accent-cyan/30 hover:text-accent-cyan"
-            >
-              <ArrowUp className="h-3 w-3" />
-              {t.intro.backToPlayground}
-            </a>
+        {/* ── Bottom bar ────────────────────────────────────────── */}
+        <div className="mt-14 flex flex-col gap-5 border-t border-white/[0.06] pt-7">
+          <p className="flex items-start gap-2 text-[12px] leading-relaxed text-muted/60">
+            <span className="preview-tag mt-[1px] shrink-0">{t.nav.preview}</span>
+            {t.footer.previewNote}
+          </p>
+
+          <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+            <p className="text-[12.5px] text-muted/70">{t.footer.rights}</p>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+              <p className="flex items-center gap-1.5 text-[12.5px] text-muted/70">
+                {t.nav.developedBy} <StilledevLink showMark />
+                <span className="text-muted/30">·</span>
+                <span className="text-[11.5px]">Sweden</span>
+              </p>
+              <a
+                href="#playground"
+                className="inline-flex items-center gap-1.5 rounded-[var(--r-sm)] border border-white/[0.08] px-2.5 py-1.5 text-[11.5px] text-muted transition-colors hover:border-accent-cyan/30 hover:text-accent-cyan"
+              >
+                <ArrowUp className="h-3 w-3" />
+                {t.footer.backToTop}
+              </a>
+            </div>
           </div>
         </div>
       </div>
 
+      {/* ── Legal modal ─────────────────────────────────────────── */}
       <AnimatePresence>
         {showLegal && (
           <div className="fixed inset-0 z-[98] flex items-center justify-center p-4">
@@ -186,35 +233,36 @@ export default function Footer() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: 12 }}
               transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-              className="pg-scroll-thin relative z-10 max-h-[80vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-white/[0.09] bg-[#0a0a14] p-6 shadow-2xl"
+              className="card pg-scroll-thin relative z-10 max-h-[80vh] w-full max-w-lg overflow-y-auto p-6"
               role="dialog"
               aria-modal="true"
               aria-labelledby="legal-title"
             >
               <button
-                className="absolute right-4 top-4 rounded-lg p-1 text-muted transition-colors hover:bg-white/[0.06] hover:text-white"
+                type="button"
+                className="icon-btn absolute right-4 top-4"
                 onClick={() => setShowLegal(null)}
                 aria-label={sv ? "Stäng" : "Close"}
               >
-                <X className="h-5 w-5" />
+                <X className="h-4 w-4" />
               </button>
-              <h3 id="legal-title" className="mb-4 pr-8 text-xl font-bold text-white">
+              <h3 id="legal-title" className="pr-8 text-xl font-bold text-white">
                 {legalContent[showLegal]?.title}
               </h3>
-              <div className="space-y-3">
+              <div className="mt-4 space-y-3">
                 {legalContent[showLegal]?.content.map((paragraph, i) => (
                   <p key={i} className="text-[13.5px] leading-relaxed text-muted">
                     {paragraph}
                   </p>
                 ))}
               </div>
-              <a
+              <Link
                 href={`/legal/${showLegal}`}
-                className="mt-5 inline-flex items-center gap-1 text-[13px] text-accent-cyan transition-colors hover:text-white"
+                className="link-arrow mt-6 inline-flex text-[13px] text-accent-cyan"
               >
                 {sv ? "Läs hela sidan" : "View the full page"}
                 <ArrowUpRight className="h-3.5 w-3.5" />
-              </a>
+              </Link>
             </motion.div>
           </div>
         )}

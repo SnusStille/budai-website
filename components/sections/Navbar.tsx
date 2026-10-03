@@ -104,7 +104,7 @@ export default function Navbar() {
         transition={{ duration: 0.5, delay: 0.05, ease: [0.22, 1, 0.36, 1] }}
         className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
           scrolled || mobileOpen
-            ? "border-b border-white/[0.07] bg-[#04040a]/85 backdrop-blur-xl"
+            ? "border-b border-white/[0.07] bg-[#04040a]/85 shadow-[0_10px_40px_-24px_rgba(0,0,0,0.9)] backdrop-blur-xl"
             : "border-b border-transparent bg-transparent"
         }`}
       >
@@ -118,10 +118,11 @@ export default function Navbar() {
                 <span className="text-[19px] font-bold tracking-tight text-white">
                   Bud<span className="text-accent-cyan">AI</span>
                 </span>
-                <span className="mt-0.5 text-[10px] tracking-wide text-muted/70">
+                <span className="mt-0.5 flex items-center gap-1.5 text-[10px] tracking-wide text-muted/70">
                   {t.nav.developedBy} <span className="text-white/70">Stilledev</span>
                 </span>
               </span>
+              <span className="preview-tag ml-1 hidden lg:inline-flex">{t.nav.preview}</span>
             </a>
 
             <div className="hidden items-center gap-0.5 md:flex">
@@ -131,14 +132,14 @@ export default function Navbar() {
                   <a
                     key={l.id}
                     href={l.href}
-                    className={`relative rounded-lg px-3 py-2 text-[13.5px] transition-colors ${
-                      isActive ? "text-white" : "text-muted hover:bg-white/[0.04] hover:text-white"
+                    className={`relative px-3 py-2 text-[13px] transition-colors ${
+                      isActive ? "text-white" : "text-muted hover:text-white"
                     }`}
                   >
                     {l.label}
                     <span
-                      className={`absolute bottom-1 left-1/2 h-0.5 -translate-x-1/2 rounded-full bg-accent-cyan transition-all duration-300 ${
-                        isActive ? "w-4 opacity-100" : "w-0 opacity-0"
+                      className={`absolute inset-x-2 -bottom-[2px] h-px origin-left bg-gradient-to-r from-accent-cyan/80 to-accent-purple/50 transition-transform duration-300 ease-expo ${
+                        isActive ? "scale-x-100" : "scale-x-0"
                       }`}
                     />
                   </a>
@@ -235,6 +236,31 @@ export default function Navbar() {
               >
                 {t.intro.backToPlayground}
               </a>
+
+              <div className="mt-6 flex items-center justify-between gap-3 border-t border-white/[0.07] pt-5">
+                <span className="preview-tag">{t.nav.preview}</span>
+                <div
+                  className="flex items-center rounded-full border border-white/[0.08] bg-black/40 p-0.5"
+                  role="group"
+                  aria-label={t.nav.language}
+                >
+                  {(["en", "sv"] as const).map((code) => (
+                    <button
+                      key={code}
+                      type="button"
+                      onClick={() => setLang(code)}
+                      aria-pressed={lang === code}
+                      className={`rounded-full px-3 py-1 text-[10.5px] font-semibold tracking-wide transition-all ${
+                        lang === code
+                          ? "bg-gradient-to-r from-accent-cyan to-accent-purple text-white"
+                          : "text-muted/70 hover:text-white"
+                      }`}
+                    >
+                      {code.toUpperCase()}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           </motion.div>
         )}
