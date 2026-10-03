@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowUpRight, X, Tag } from "lucide-react";
+import { ArrowUpRight, X } from "lucide-react";
 import BudAILogo from "@/components/ui/BudAILogo";
 import { useLang } from "@/components/ui/LanguageContext";
 
@@ -88,13 +88,8 @@ export default function BuddyCard({ className = "" }: { className?: string }) {
               </div>
             </div>
 
-            <div className="px-4 pb-2">
-              <div className="inline-flex items-center gap-1.5 text-[10px] text-accent-green/90 font-medium">
-                <Tag className="w-3 h-3" />
-                {lang === "sv"
-                  ? "10 % early access under preview"
-                  : "10% early access during preview"}
-              </div>
+            <div className="px-4 pb-2 text-[10px] text-muted/70">
+              {lang === "sv" ? "Tidig produktförhandsvisning" : "Early product preview"}
             </div>
 
             <div className="px-4 pb-4">

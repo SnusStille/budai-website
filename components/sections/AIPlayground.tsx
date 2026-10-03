@@ -42,7 +42,6 @@ import {
   RefreshCw,
   Copy,
   ListTodo,
-  Dices,
   PanelRightClose,
   PanelRight,
   FileDown,
@@ -77,6 +76,7 @@ import {
   saveSettings,
 } from "@/lib/playground/localStore";
 import * as cloud from "@/lib/playground/cloudStore";
+import { consumePlaygroundPrefill, PLAYGROUND_PREFILL_EVENT } from "@/lib/playground/events";
 
 /* ─── helpers ─────────────────────────────────────────── */
 
@@ -297,14 +297,14 @@ function workspaceTitle(content: string, lang: "sv" | "en"): string {
 const INTENT_PRESETS = {
   sv: [
     { id: "chat", label: "Chatt", hint: "Vardaglig hjälp", prefix: "", mode: "single" as const },
-    { id: "research", label: "Research", hint: "Djupare + källor-stil", prefix: "Arbeta som research-assistent. Strukturera med: Sammanfattning, Nyckelpunkter, Antaganden, Nästa steg. Var konkret.\n\nFråga: ", mode: "single" as const },
+    { id: "research", label: "Research", hint: "Strukturerad utforskning", prefix: "Hjälp mig utforska frågan systematiskt. Strukturera med: Sammanfattning, Nyckelpunkter, Antaganden och Nästa steg. Var konkret och markera osäkerheter.\n\nFråga: ", mode: "single" as const },
     { id: "create", label: "Skapa", hint: "Text & pitch", prefix: "Skriv i skarp, publicerbar ton. Ge en färdig leverans (inte meta-råd).\n\nUppgift: ", mode: "single" as const },
     { id: "analyze", label: "Analys", hint: "Beslut & risk", prefix: "Analysera systematiskt. Använd rubriker, bullets och tydlig rekommendation.\n\nCase: ", mode: "single" as const },
     { id: "dual", label: "2 vinklar", hint: "Välj mellan svar", prefix: "", mode: "dual" as const },
   ],
   en: [
     { id: "chat", label: "Chat", hint: "Everyday help", prefix: "", mode: "single" as const },
-    { id: "research", label: "Research", hint: "Deeper structured", prefix: "Act as a research assistant. Structure with: Summary, Key points, Assumptions, Next steps. Be concrete.\n\nQuestion: ", mode: "single" as const },
+    { id: "research", label: "Research", hint: "Structured exploration", prefix: "Help me explore this question systematically. Structure with: Summary, Key points, Assumptions, and Next steps. Be concrete and flag uncertainty.\n\nQuestion: ", mode: "single" as const },
     { id: "create", label: "Create", hint: "Copy & drafts", prefix: "Write in a sharp, publishable voice. Deliver a finished piece (not meta-advice).\n\nTask: ", mode: "single" as const },
     { id: "analyze", label: "Analyze", hint: "Decisions & risk", prefix: "Analyze systematically. Use headings, bullets, and a clear recommendation.\n\nCase: ", mode: "single" as const },
     { id: "dual", label: "2 angles", hint: "Pick a reply", prefix: "", mode: "dual" as const },
@@ -314,124 +314,79 @@ const INTENT_PRESETS = {
 const CAPABILITY_CARDS = {
   sv: [
     {
-      icon: "vision" as const,
-      title: "Se en bild",
-      blurb: "Bifoga & analysera",
-      prompt: "Analysera den här bilden och berätta vad du ser — detaljerat.",
-      needsImage: true,
-    },
-    {
-      icon: "voice" as const,
-      title: "Prata in",
-      blurb: "Röst till text",
-      prompt: "",
-      voice: true,
-    },
-    {
-      icon: "memory" as const,
-      title: "Kom ihåg mig",
-      blurb: "Långtidsminne",
-      prompt: "Jag heter Alex och jobbar med produkt i Stockholm. Hjälp mig planera veckan.",
-    },
-    {
       icon: "create" as const,
-      title: "Skapa",
-      blurb: "Text & pitch",
-      prompt: "Skriv en kort, varm produktpitch för BudAI på svenska — tre meningar.",
-    },
-    {
-      icon: "analyze" as const,
-      title: "Analysera",
-      blurb: "Beslut & SWOT",
-      prompt: "Ge mig en ärlig SWOT för att rulla ut AI-assistenter i ett svenskt SME.",
+      title: "Skriv ett mejl",
+      blurb: "Tydligt · varmt",
+      prompt: "Skriv ett kort, vänligt mejl till en kund och be om feedback senast fredag.",
     },
     {
       icon: "plan" as const,
-      title: "Planera dagen",
-      blurb: "Fokusblock",
-      prompt:
-        "Jag har 6 timmar djupjobb idag, två möten och en deadline imorgon. Bygg en realistisk dagsplan med prioriteringar och buffertar.",
+      title: "Planera veckan",
+      blurb: "Fokus + pauser",
+      prompt: "Hjälp mig planera veckan. Jag har två möten, en viktig deadline och vill hinna med fokuserat arbete.",
     },
     {
-      icon: "gen" as const,
-      title: "Skapa bild",
-      blurb: "Kommer snart",
-      prompt: "Skapa en bild av en futuristisk stockholmsk skyline i skymning",
-      gen: true,
+      icon: "analyze" as const,
+      title: "Sammanfatta text",
+      blurb: "Från text till kärna",
+      prompt: "Sammanfatta mötesanteckningarna i tre punkter och plocka ut nästa steg: Vi lanserar ny onboarding i maj. Erik tar fram ett utkast på fredag. Testgruppen behöver två veckor. Budgeten är inte beslutad.",
+    },
+    {
+      icon: "create" as const,
+      title: "Översätt till engelska",
+      blurb: "Behåll rätt ton",
+      prompt: "Översätt till naturlig engelska med en varm, professionell ton: Tack för ett bra möte idag. Jag skickar över nästa steg innan fredag.",
+    },
+    {
+      icon: "analyze" as const,
+      title: "Brainstorma",
+      blurb: "Hitta nya vinklar",
+      prompt: "Ge mig fem kreativa men realistiska idéer för att göra måndagsmötet mer fokuserat. Lägg till en mening om hur vi kan testa varje idé.",
+    },
+    {
+      icon: "plan" as const,
+      title: "Förklara enkelt",
+      blurb: "Gör det begripligt",
+      prompt: "Förklara generativ AI enkelt för en kollega som inte jobbar med teknik. Använd en vardaglig jämförelse och håll det under 100 ord.",
     },
   ],
   en: [
     {
-      icon: "vision" as const,
-      title: "See an image",
-      blurb: "Attach & analyze",
-      prompt: "Analyze this image and tell me what you see — in detail.",
-      needsImage: true,
-    },
-    {
-      icon: "voice" as const,
-      title: "Speak",
-      blurb: "Voice to text",
-      prompt: "",
-      voice: true,
-    },
-    {
-      icon: "memory" as const,
-      title: "Remember me",
-      blurb: "Long-term memory",
-      prompt: "My name is Alex and I work in product in Stockholm. Help me plan the week.",
-    },
-    {
       icon: "create" as const,
-      title: "Create",
-      blurb: "Copy & pitch",
-      prompt: "Write a short, warm product pitch for BudAI in three sentences.",
-    },
-    {
-      icon: "analyze" as const,
-      title: "Analyze",
-      blurb: "Decisions & SWOT",
-      prompt: "Give me an honest SWOT for rolling out AI assistants in a Swedish SME.",
+      title: "Write an email",
+      blurb: "Clear · warm",
+      prompt: "Write a short, warm, clear email to a client asking for feedback by Friday.",
     },
     {
       icon: "plan" as const,
-      title: "Plan my day",
-      blurb: "Focus blocks",
-      prompt:
-        "I have 6 hours of deep work today, two meetings, and a deadline tomorrow. Build a realistic day plan with priorities and buffers.",
+      title: "Plan my week",
+      blurb: "Focus + breathing room",
+      prompt: "Help me plan my week. I have two meetings, an important deadline, and need time for focused work.",
     },
     {
-      icon: "gen" as const,
-      title: "Create image",
-      blurb: "Coming soon",
-      prompt: "Create an image of a futuristic Stockholm skyline at dusk",
-      gen: true,
+      icon: "analyze" as const,
+      title: "Summarize text",
+      blurb: "Find the main points",
+      prompt: "Summarize these meeting notes in three bullets and pull out next steps: We launch the new onboarding in May. Erik will draft it by Friday. The test group needs two weeks. The budget is not decided.",
     },
-  ],
-};
-
-
-
-const INSPIRE_PROMPTS = {
-  sv: [
-    "Skriv en skarp 5-punkts agenda för mitt första kundmöte om AI-assistenter — varm men proffsig.",
-    "Jag drunknar i mejl. Ge mig ett 20-minuters system för att rensa inboxen utan att missa det viktiga.",
-    "Omvandla den här idén till en one-pager: BudAI hjälper svenska SME att fatta snabbare beslut.",
-    "Ge mig tre ärliga invändningar en CFO har mot AI-verktyg — och hur jag bemöter varje.",
-    "Bygg en veckoplan: 3 deep-work-block, 2 möten, 1 review. Inkludera buffertar.",
-    "Skriv ett kort, respektfullt nej-mejl till en förfrågan jag inte kan ta just nu.",
-    "Förklara GDPR-minded AI för en icke-teknisk VD på 8 meningar.",
-    "Jag ska pitcha BudAI på 60 sekunder. Manus + pauser + en stark avslutning.",
-  ],
-  en: [
-    "Write a sharp 5-point agenda for my first client meeting about AI assistants — warm but professional.",
-    "I'm drowning in email. Give me a 20-minute system to clear the inbox without missing what matters.",
-    "Turn this idea into a one-pager: BudAI helps Swedish SMEs make faster decisions.",
-    "Give me three honest CFO objections to AI tools — and how I answer each.",
-    "Build a week plan: 3 deep-work blocks, 2 meetings, 1 review. Include buffers.",
-    "Write a short, respectful no-email to a request I can't take right now.",
-    "Explain GDPR-minded AI to a non-technical CEO in 8 sentences.",
-    "I need a 60-second BudAI pitch. Script + pauses + a strong close.",
+    {
+      icon: "create" as const,
+      title: "Translate to Swedish",
+      blurb: "Keep the right tone",
+      prompt: "Translate into natural Swedish with a warm, professional tone: Thanks for a great meeting today. I’ll send over the next steps before Friday.",
+    },
+    {
+      icon: "analyze" as const,
+      title: "Brainstorm",
+      blurb: "Explore fresh angles",
+      prompt: "Give me five creative but realistic ideas to make a Monday team meeting more focused. Add one sentence on how we could test each idea.",
+    },
+    {
+      icon: "plan" as const,
+      title: "Explain it simply",
+      blurb: "Make it easy to grasp",
+      prompt: "Explain generative AI simply to a colleague who does not work in tech. Use an everyday analogy and keep it under 100 words.",
+    },
   ],
 } as const;
 
@@ -450,7 +405,6 @@ export default function AIPlayground() {
   const [feedback, setFeedback] = useState<Record<string, "up" | "down" | undefined>>({});
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [answerLang, setAnswerLang] = useState<"sv" | "en">(lang);
-  const [inspireSpin, setInspireSpin] = useState(false);
   const [workspace, setWorkspace] = useState<{
     msgId: string;
     title: string;
@@ -501,14 +455,33 @@ export default function AIPlayground() {
 
   const busy = activity !== "idle" && activity !== "error" && activity !== "listening";
 
+  useEffect(() => {
+    const applyPrefill = (prompt: string) => {
+      setInput(prompt);
+      window.requestAnimationFrame(() => {
+        const field = taRef.current;
+        if (!field) return;
+        field.style.height = "auto";
+        field.style.height = `${Math.min(field.scrollHeight, 140)}px`;
+        field.focus({ preventScroll: true });
+      });
+    };
+    const onPrefill = (event: Event) => {
+      const prompt = (event as CustomEvent<{ prompt?: string }>).detail?.prompt;
+      if (prompt) {
+        consumePlaygroundPrefill();
+        applyPrefill(prompt);
+      }
+    };
+    window.addEventListener(PLAYGROUND_PREFILL_EVENT, onPrefill);
+    const pendingPrompt = consumePlaygroundPrefill();
+    if (pendingPrompt) applyPrefill(pendingPrompt);
+    return () => window.removeEventListener(PLAYGROUND_PREFILL_EVENT, onPrefill);
+  }, []);
+
   const showToast = useCallback((kind: "ok" | "warn" | "err", text: string) => {
     setToast({ kind, text });
     window.setTimeout(() => setToast(null), 4200);
-  }, []);
-
-  /* boot sidebar on desktop */
-  useEffect(() => {
-    if (window.innerWidth >= 1024) setSidebarOpen(true);
   }, []);
 
   /* Keep answer language aligned with site lang until user overrides */
@@ -931,8 +904,8 @@ export default function AIPlayground() {
       showToast(
         "warn",
         lang === "sv"
-          ? "Bildgenerering kommer snart — bifoga en bild för analys i stället."
-          : "Image generation coming soon — attach an image to analyze instead."
+          ? "Bildgenerering är inte aktiverad i den här förhandsvisningen — bifoga en bild för analys i stället."
+          : "Image generation is not enabled in this preview — attach an image to analyze it instead."
       );
       setGenMode(false);
       return;
@@ -1053,6 +1026,7 @@ export default function AIPlayground() {
         if (showShortcuts) { setShowShortcuts(false); return; }
         if (toolsOpen) { setToolsOpen(false); return; }
         if (workspace) { setWorkspace(null); return; }
+        if (expanded) { setExpanded(false); return; }
         if (mobileDrawer) { setMobileDrawer(false); return; }
         return;
       }
@@ -1090,20 +1064,8 @@ export default function AIPlayground() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showShortcuts, toolsOpen, workspace, mobileDrawer, messages, lang]);
+  }, [showShortcuts, toolsOpen, workspace, expanded, mobileDrawer, messages, lang]);
 
-  const runInspire = () => {
-    if (busy) return;
-    const pool = INSPIRE_PROMPTS[answerLang] || INSPIRE_PROMPTS.en;
-    const pick = pool[Math.floor(Math.random() * pool.length)];
-    setInspireSpin(true);
-    window.setTimeout(() => setInspireSpin(false), 600);
-    setInput(pick);
-    // Auto-send after a beat so it feels magical
-    window.setTimeout(() => {
-      void runPrompt(pick);
-    }, 280);
-  };
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -1318,10 +1280,7 @@ export default function AIPlayground() {
   }, [history, search]);
 
   const grouped = useMemo(() => groupByDate(filteredHistory, lang), [filteredHistory, lang]);
-  const caps = useMemo(
-    () => CAPABILITY_CARDS[lang].filter((c) => !("gen" in c && c.gen) || imageGenEnabled),
-    [lang, imageGenEnabled]
-  );
+  const caps = useMemo(() => CAPABILITY_CARDS[lang], [lang]);
   const isEmpty = messages.length === 0 && activity === "idle";
   const rem = auth.remaining.messages;
   const lim = auth.limits.messagesPerDay;
@@ -1469,13 +1428,13 @@ export default function AIPlayground() {
   return (
     <section
       id="playground"
-      className="relative section-hairline py-12 sm:py-20 md:py-24 overflow-hidden"
+      className="playground-section relative section-hairline py-12 sm:py-20 md:py-24 overflow-hidden"
     >
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(100vw,720px)] h-[min(100vw,720px)] bg-accent-purple/5 rounded-full blur-[140px] pointer-events-none" />
 
-      <div className="max-w-6xl mx-auto px-3 sm:px-6 lg:px-8 relative z-10">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 relative z-10">
         <ScrollReveal className="text-center mb-6 sm:mb-8">
-          <span className="section-badge text-accent-cyan mb-4">{t.playground.badge}</span>
+          <span className="section-badge playground-section-badge text-accent-cyan mb-4">{t.playground.badge}</span>
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight mb-3">
             {t.playground.title}{" "}
             <span className="text-gradient">{t.playground.titleHighlight}</span>
@@ -1485,11 +1444,7 @@ export default function AIPlayground() {
 
         <ScrollReveal>
           <div
-            className={`rounded-2xl sm:rounded-3xl overflow-hidden border border-white/[0.12] bg-[#05050a]/98 shadow-[0_0_100px_rgba(0,229,255,0.12),0_40px_80px_rgba(0,0,0,0.45)] flex ${
-              expanded
-                ? "fixed inset-0 sm:inset-3 z-[80] rounded-none sm:rounded-3xl"
-                : "min-h-[min(82vh,760px)]"
-            }`}
+            className={`pg-app-shell relative rounded-2xl sm:rounded-3xl overflow-hidden border border-white/[0.09] bg-[#080a10] shadow-[0_28px_80px_rgba(0,0,0,0.5)] flex ${expanded ? "pg-app-shell--expanded" : ""}`}
           >
             <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-accent-cyan/50 to-transparent z-20" />
 
@@ -1512,154 +1467,141 @@ export default function AIPlayground() {
             {/* Main column + optional Workspace */}
             <div className="flex-1 flex min-w-0 min-h-0">
             <div className="flex-1 flex flex-col min-w-0 min-h-0">
-              {/* Header */}
-              <div className="flex items-center justify-between gap-2 px-2.5 sm:px-3 py-2 border-b border-white/[0.06] bg-[#080810]/90 shrink-0">
-                <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+              {/* Product header */}
+              <div className="pg-app-header flex items-center justify-between gap-2 px-3 sm:px-4 py-2.5 shrink-0">
+                <div className="flex min-w-0 items-center gap-2.5">
                   <button
                     type="button"
                     onClick={() => {
                       if (window.innerWidth < 768) setMobileDrawer(true);
                       else setSidebarOpen((v) => !v);
                     }}
-                    className="p-2 rounded-lg border border-white/[0.06] text-muted hover:text-white"
-                    aria-label="Sidebar"
+                    className="pg-icon-button"
+                    aria-label={sidebarOpen
+                      ? lang === "sv" ? "Dölj konversationshistorik" : "Hide conversation history"
+                      : lang === "sv" ? "Visa konversationshistorik" : "Show conversation history"}
+                    title={lang === "sv" ? "Konversationshistorik" : "Conversation history"}
+                    aria-expanded={sidebarOpen || mobileDrawer}
                   >
-                    <PanelLeft className="w-4 h-4" />
+                    <PanelLeft className="h-4 w-4" />
                   </button>
                   <BudAILogo size="sm" animated />
                   <div className="min-w-0">
-                    <div className="text-sm font-semibold text-white truncate flex items-center gap-1.5">
-                      Bud<span className="text-accent-cyan">AI</span>
-                      <span
-                        className={`text-[10px] font-mono px-1.5 py-0.5 rounded-md border ${
-                          auth.isMember
-                            ? "text-accent-cyan border-accent-cyan/25 bg-accent-cyan/10"
-                            : "text-muted border-white/10"
-                        }`}
-                      >
-                        {auth.isMember
-                          ? lang === "sv"
-                            ? "konto"
-                            : "account"
-                          : lang === "sv"
-                            ? "gäst"
-                            : "guest"}
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold tracking-tight text-white">
+                        Bud<span className="text-accent-cyan">AI</span>
+                      </span>
+                      <span className="pg-app-preview-tag">
+                        {lang === "sv" ? "Preview" : "Preview"}
                       </span>
                       {temporary && (
-                        <span className="text-[10px] text-amber-200/90 border border-amber-400/25 px-1.5 py-0.5 rounded-md">
-                          {lang === "sv" ? "tillfällig" : "temp"}
+                        <span className="hidden sm:inline-flex rounded-full border border-amber-400/20 px-2 py-0.5 text-[10px] text-amber-100/80">
+                          {lang === "sv" ? "Tillfällig chatt" : "Temporary chat"}
                         </span>
                       )}
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-1">
+                <div className="flex shrink-0 items-center gap-1.5">
                   {busy ? (
                     <button
                       type="button"
                       onClick={stopAll}
-                      className="p-2 rounded-lg border border-red-500/25 text-red-300"
-                      title="Stop"
+                      className="pg-icon-button pg-stop-button"
+                      title={lang === "sv" ? "Stoppa svaret" : "Stop response"}
+                      aria-label={lang === "sv" ? "Stoppa svaret" : "Stop response"}
                     >
-                      <StopCircle className="w-4 h-4" />
+                      <StopCircle className="h-4 w-4" />
                     </button>
                   ) : (
                     <button
                       type="button"
                       onClick={() => void newChat()}
-                      className="p-2 rounded-lg border border-white/[0.06] text-muted hover:text-white"
+                      disabled={creatingChat}
+                      className="pg-icon-button"
                       title={lang === "sv" ? "Ny chatt" : "New chat"}
+                      aria-label={lang === "sv" ? "Starta ny chatt" : "Start a new chat"}
                     >
-                      <MessageSquarePlus className="w-4 h-4" />
+                      <MessageSquarePlus className="h-4 w-4" />
                     </button>
                   )}
                   <button
                     type="button"
                     onClick={exportThread}
                     disabled={!messages.length}
-                    className="p-2 rounded-lg border border-white/[0.06] text-muted hover:text-white disabled:opacity-30"
-                    title={lang === "sv" ? "Exportera tråd (.md) · ⌘E" : "Export thread (.md) · ⌘E"}
+                    className="pg-icon-button hidden sm:inline-flex"
+                    title={lang === "sv" ? "Exportera konversation" : "Export conversation"}
+                    aria-label={lang === "sv" ? "Exportera konversation" : "Export conversation"}
                   >
-                    <Download className="w-4 h-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowShortcuts(true)}
-                    className="hidden sm:inline-flex p-2 rounded-lg border border-white/[0.06] text-muted hover:text-white"
-                    title={lang === "sv" ? "Genvägar · ⌘K" : "Shortcuts · ⌘K"}
-                  >
-                    <Command className="w-4 h-4" />
+                    <Download className="h-4 w-4" />
                   </button>
                   {auth.isMember ? (
                     <button
                       type="button"
                       onClick={() => void auth.signOut()}
-                      className="p-2 rounded-lg border border-white/[0.06] text-muted hover:text-white"
-                      title="Sign out"
+                      className="pg-icon-button hidden sm:inline-flex"
+                      title={lang === "sv" ? "Logga ut" : "Sign out"}
+                      aria-label={lang === "sv" ? "Logga ut" : "Sign out"}
                     >
-                      <LogOut className="w-4 h-4" />
+                      <LogOut className="h-4 w-4" />
                     </button>
                   ) : (
                     <button
                       type="button"
                       onClick={() => auth.openAuth()}
-                      className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-accent-cyan/15 border border-accent-cyan/25 text-accent-cyan text-[11px] font-semibold"
+                      className="pg-signin-button"
                     >
-                      <LogIn className="w-3.5 h-3.5" />
-                      <span className="hidden sm:inline">{lang === "sv" ? "Logga in" : "Sign in"}</span>
+                      <LogIn className="h-3.5 w-3.5" />
+                      <span>{lang === "sv" ? "Logga in" : "Sign in"}</span>
                     </button>
                   )}
                   <button
                     type="button"
                     onClick={() => setExpanded((e) => !e)}
-                    className="p-2 rounded-lg border border-white/[0.06] text-muted hover:text-white hidden sm:inline-flex"
+                    className="pg-icon-button hidden sm:inline-flex"
+                    title={expanded
+                      ? lang === "sv" ? "Stäng helskärm" : "Exit expanded view"
+                      : lang === "sv" ? "Utöka Playground" : "Expand Playground"}
+                    aria-label={expanded
+                      ? lang === "sv" ? "Stäng helskärm" : "Exit expanded view"
+                      : lang === "sv" ? "Utöka Playground" : "Expand Playground"}
+                    aria-pressed={expanded}
                   >
-                    {expanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+                    {expanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
                   </button>
                 </div>
               </div>
 
-              {/* Intent + controls strip — ChatGPT/Claude/Perplexity-inspired, honest */}
-              <div className="flex flex-col gap-2 px-2.5 sm:px-3 py-2 border-b border-white/[0.06] bg-gradient-to-b from-black/35 to-black/15 shrink-0">
-                <div className="flex flex-wrap items-center gap-1.5">
-                  {(INTENT_PRESETS[lang] || INTENT_PRESETS.en).map((it) => (
-                    <button
-                      key={it.id}
-                      type="button"
-                      title={it.hint}
-                      onClick={() => {
-                        setIntentId(it.id);
-                        setMode(it.id === "dual" ? "dual" : mode === "concise" ? "concise" : "single");
-                      }}
-                      className={`px-2.5 py-1.5 rounded-full text-[11px] font-semibold border transition-all ${
-                        intentId === it.id
-                          ? "bg-gradient-to-r from-accent-cyan/20 to-accent-purple/20 border-accent-cyan/40 text-white shadow-[0_0_20px_rgba(0,229,255,0.12)]"
-                          : "border-white/[0.08] text-muted hover:text-white hover:border-white/20 bg-white/[0.02]"
-                      }`}
-                    >
-                      {it.label}
-                    </button>
-                  ))}
-                  <div className="ml-auto flex items-center gap-1.5">
-                    <span className="hidden sm:inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-mono text-accent-cyan/80 border border-accent-cyan/20 bg-accent-cyan/5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-accent-green animate-pulse" />
-                      BudAI Core · v0.93
-                    </span>
-                    <div
-                      className="flex p-0.5 rounded-full bg-black/50 border border-white/[0.08]"
-                      role="group"
-                      aria-label={lang === "sv" ? "Svarspråk" : "Answer language"}
-                    >
-                      {(["en", "sv"] as const).map((code) => (
+              {/* Response controls */}
+              <div className="pg-controls shrink-0">
+                <div className="pg-mode-row">
+                  <div className="pg-mode-list" role="group" aria-label={lang === "sv" ? "Svarsläge" : "Response style"}>
+                    {(INTENT_PRESETS[lang] || INTENT_PRESETS.en).map((it) => (
+                      <button
+                        key={it.id}
+                        type="button"
+                        title={it.hint}
+                        onClick={() => {
+                          setIntentId(it.id);
+                          setMode(it.id === "dual" ? "dual" : mode === "concise" ? "concise" : "single");
+                        }}
+                        className={`pg-mode-pill ${intentId === it.id ? "pg-mode-pill--active" : ""}`}
+                        aria-pressed={intentId === it.id}
+                      >
+                        {it.label}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="pg-control-actions">
+                    <div className="pg-language-toggle" role="group" aria-label={lang === "sv" ? "Svarspråk" : "Answer language"}>
+                      {(["sv", "en"] as const).map((code) => (
                         <button
                           key={code}
                           type="button"
                           onClick={() => setAnswerLang(code)}
-                          className={`px-2 py-0.5 text-[10px] font-bold rounded-full ${
-                            answerLang === code
-                              ? "bg-gradient-to-r from-accent-cyan to-accent-purple text-white"
-                              : "text-muted/70 hover:text-white"
-                          }`}
+                          className={answerLang === code ? "is-active" : ""}
+                          aria-pressed={answerLang === code}
+                          aria-label={code === "sv" ? "Svara på svenska" : "Reply in English"}
                         >
                           {code.toUpperCase()}
                         </button>
@@ -1668,25 +1610,18 @@ export default function AIPlayground() {
                     <button
                       type="button"
                       onClick={() => setMode((m) => (m === "concise" ? "single" : "concise"))}
-                      className={`px-2 py-1 rounded-lg text-[10px] font-medium border ${
-                        mode === "concise"
-                          ? "border-accent-purple/40 text-accent-purple bg-accent-purple/10"
-                          : "border-white/[0.06] text-muted hover:text-white"
-                      }`}
+                      className={`pg-short-toggle ${mode === "concise" ? "is-active" : ""}`}
                       title={lang === "sv" ? "Korta svar" : "Concise replies"}
+                      aria-pressed={mode === "concise"}
                     >
                       {lang === "sv" ? "Kort" : "Short"}
                     </button>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 text-[10px] text-muted/50 px-0.5">
-                  <Globe2 className="w-3 h-3" />
-                  <span className="truncate">
-                    {(INTENT_PRESETS[lang] || INTENT_PRESETS.en).find((x) => x.id === intentId)?.hint ||
-                      (lang === "sv" ? "Välj läge ovan" : "Pick a mode above")}
-                  </span>
-                  <span className="ml-auto font-mono text-muted/40 hidden sm:inline">
-                    {lang === "sv" ? "⌘/ för fokus" : "⌘/ for tips"}
+                <div className="pg-mode-caption">
+                  <span>{(INTENT_PRESETS[lang] || INTENT_PRESETS.en).find((x) => x.id === intentId)?.hint || (lang === "sv" ? "Välj svarsstil" : "Choose a response style")}</span>
+                  <span className="pg-preview-caption">
+                    {lang === "sv" ? "Förhandsvisning under utveckling" : "Preview in development"}
                   </span>
                 </div>
               </div>
@@ -1698,90 +1633,45 @@ export default function AIPlayground() {
                 style={{ WebkitOverflowScrolling: "touch" }}
               >
                 {isEmpty && (
-                  <div className="flex flex-col items-center justify-center min-h-[300px] sm:min-h-[380px] px-2 relative">
-                    <div className="absolute inset-0 pointer-events-none opacity-40">
-                      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-full bg-accent-cyan/10 blur-3xl" />
-                      <div className="absolute top-1/3 left-1/3 w-40 h-40 rounded-full bg-accent-purple/10 blur-3xl" />
+                  <div className="pg-empty-state relative flex flex-col items-center justify-center min-h-[300px] sm:min-h-[380px] px-1 sm:px-3 py-5">
+                    <div className="pg-empty-orb" aria-hidden="true" />
+                    <div className="relative mb-3 rounded-2xl border border-white/10 bg-white/[0.035] p-2 shadow-[0_12px_45px_rgba(0,0,0,0.26)]">
+                      <BudAILogo size="md" animated />
                     </div>
-                    <div className="mb-6 relative">
-                      <BudAILogo size="xl" animated />
-                    </div>
-                    <div className="inline-flex items-center gap-1.5 mb-3 px-2.5 py-1 rounded-full border border-accent-green/25 bg-accent-green/10 text-[10px] font-mono text-accent-green">
-                      <span className="w-1.5 h-1.5 rounded-full bg-accent-green animate-pulse" />
-                      {lang === "sv" ? "LIVE · BudAI Core" : "LIVE · BudAI Core"}
-                    </div>
-                    <h3 className="text-xl sm:text-2xl font-bold text-white mb-1.5 tracking-tight relative">
-                      {lang === "sv" ? "Vad ska vi få gjort?" : "What should we ship?"}
+                    <span className="pg-preview-label mb-2">
+                      <span className="pg-preview-dot" />
+                      {lang === "sv" ? "Tidig produktförhandsvisning" : "Early product preview"}
+                    </span>
+                    <h3 className="relative mb-1.5 text-center text-xl sm:text-2xl font-semibold tracking-tight text-white">
+                      {lang === "sv" ? "Vad vill du få gjort?" : "What would you like to get done?"}
                     </h3>
-                    <p className="text-sm text-muted mb-6 text-center max-w-md leading-relaxed">
+                    <p className="relative mb-5 max-w-md text-center text-xs sm:text-sm leading-relaxed text-muted">
                       {lang === "sv"
-                        ? "Text, vision, röst, minne — och Workspace för längre resultat."
-                        : "Text, vision, voice, memory — and Workspace for longer outputs."}
+                        ? "Välj en uppgift för att prova BudAI — eller skriv en egen fråga nedan."
+                        : "Choose a task to try BudAI, or write your own prompt below."}
                     </p>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 w-full max-w-xl">
+                    <div className="pg-quick-prompts relative grid w-full max-w-3xl grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-2.5">
                       {caps.map((c) => (
                         <button
                           key={c.title}
                           type="button"
-                          onClick={() => {
-                            if ("voice" in c && c.voice) {
-                              toggleMic();
-                              return;
-                            }
-                            if ("needsImage" in c && c.needsImage) {
-                              fileRef.current?.click();
-                              setInput(c.prompt);
-                              return;
-                            }
-                            if ("gen" in c && c.gen) {
-                              if (!imageGenEnabled) {
-                                showToast(
-                                  "warn",
-                                  lang === "sv"
-                                    ? "Bildgenerering kommer snart."
-                                    : "Image generation coming soon."
-                                );
-                                return;
-                              }
-                              setGenMode(true);
-                              setInput(c.prompt);
-                              taRef.current?.focus();
-                              return;
-                            }
-                            void runPrompt(c.prompt);
-                          }}
-                          className="pg-suggest-chip text-left rounded-2xl border border-white/[0.09] bg-gradient-to-b from-white/[0.06] to-white/[0.02] hover:border-accent-cyan/40 hover:from-accent-cyan/[0.08] hover:to-accent-purple/[0.04] p-3.5 transition-all duration-200 group"
+                          onClick={() => void runPrompt(c.prompt)}
+                          disabled={busy}
+                          aria-label={`${c.title}: ${c.blurb}`}
+                          className="pg-suggest-chip group flex min-h-[76px] items-center gap-2.5 rounded-xl border border-white/[0.09] bg-white/[0.025] px-2.5 py-2.5 text-left transition-colors hover:border-accent-cyan/35 hover:bg-accent-cyan/[0.055] disabled:opacity-40 sm:min-h-[82px] sm:gap-3 sm:px-3.5"
                         >
-                          <div className="w-8 h-8 rounded-lg bg-accent-cyan/10 border border-accent-cyan/20 flex items-center justify-center text-accent-cyan mb-2.5 group-hover:scale-105 transition-transform">
-                            {c.icon === "vision" && <Eye className="w-4 h-4" />}
-                            {c.icon === "gen" && <Wand2 className="w-4 h-4" />}
-                            {c.icon === "voice" && <Mic className="w-4 h-4" />}
-                            {c.icon === "memory" && <BrainCircuit className="w-4 h-4" />}
-                            {c.icon === "create" && <Sparkles className="w-4 h-4" />}
-                            {c.icon === "analyze" && <Shield className="w-4 h-4" />}
-                            {c.icon === "plan" && <ListTodo className="w-4 h-4" />}
-                          </div>
-                          <div className="text-[13px] font-semibold text-white/90">{c.title}</div>
-                          {"blurb" in c && c.blurb ? (
-                            <div className="text-[10px] text-muted mt-0.5">{c.blurb}</div>
-                          ) : null}
+                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-accent-cyan/15 bg-accent-cyan/[0.08] text-accent-cyan transition-colors group-hover:border-accent-cyan/30 group-hover:bg-accent-cyan/10">
+                            {c.icon === "create" && <Sparkles className="h-4 w-4" />}
+                            {c.icon === "analyze" && <Shield className="h-4 w-4" />}
+                            {c.icon === "plan" && <ListTodo className="h-4 w-4" />}
+                          </span>
+                          <span className="min-w-0">
+                            <span className="block text-[11px] font-semibold leading-snug text-white/90 sm:text-xs">{c.title}</span>
+                            <span className="mt-0.5 block text-[10px] leading-snug text-muted/75">{c.blurb}</span>
+                          </span>
                         </button>
                       ))}
                     </div>
-                    <button
-                      type="button"
-                      onClick={runInspire}
-                      disabled={busy}
-                      className="mt-5 group inline-flex items-center gap-2 px-4 py-2.5 rounded-full border border-accent-cyan/25 bg-gradient-to-r from-accent-cyan/10 to-accent-purple/10 hover:from-accent-cyan/20 hover:to-accent-purple/20 text-sm text-white/90 transition-all shadow-[0_0_30px_rgba(0,229,255,0.08)]"
-                    >
-                      <Dices className="w-4 h-4 text-accent-cyan group-hover:rotate-12 transition-transform" />
-                      <span className="font-medium">
-                        {lang === "sv" ? "Inspirera mig" : "Surprise me"}
-                      </span>
-                      <span className="text-[10px] text-muted font-mono hidden sm:inline">
-                        {lang === "sv" ? "slumpad stark prompt" : "random strong prompt"}
-                      </span>
-                    </button>
                   </div>
                 )}
 
@@ -2068,10 +1958,10 @@ export default function AIPlayground() {
                               </span>
                             ))}
                           </div>
-                          <p className="text-[10px] text-muted/70 font-mono">
+                          <p className="text-[10px] leading-relaxed text-muted/65">
                             {lang === "sv"
-                              ? "BudAI Core · v0.93 · nordic path"
-                              : "BudAI Core · v0.93 · nordic path"}
+                              ? "Förhandsvisning under utveckling · kontrollera viktiga uppgifter."
+                              : "Preview in development · verify important details."}
                           </p>
                         </div>
                       )}
@@ -2104,7 +1994,7 @@ export default function AIPlayground() {
                     </div>
                     <div className="text-[11px] text-muted">
                       <div className="text-white/80 truncate max-w-[160px]">{attach.name}</div>
-                      <div>{(attach.size / 1024).toFixed(0)} KB · ready</div>
+                      <div>{(attach.size / 1024).toFixed(0)} KB · {lang === "sv" ? "redo" : "ready"}</div>
                       <button
                         type="button"
                         className="text-accent-cyan hover:underline"
@@ -2140,6 +2030,7 @@ export default function AIPlayground() {
                         setToolsOpen(false);
                       }}
                       className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] text-white/85 border border-white/[0.08] hover:border-accent-cyan/30 hover:bg-accent-cyan/10"
+                      aria-label={lang === "sv" ? "Bifoga en bild" : "Attach an image"}
                     >
                       <ImagePlus className="w-3.5 h-3.5 text-accent-cyan" />
                       {lang === "sv" ? "Bild" : "Image"}
@@ -2152,17 +2043,12 @@ export default function AIPlayground() {
                           ? "border-accent-green/40 bg-accent-green/10 text-accent-green"
                           : "text-white/85 border-white/[0.08] hover:border-accent-green/30"
                       }`}
+                      aria-pressed={listening}
+                      aria-label={lang === "sv" ? (listening ? "Sluta lyssna" : "Börja prata") : (listening ? "Stop listening" : "Start speaking")}
                     >
                       <Mic className="w-3.5 h-3.5" />
                       {lang === "sv" ? "Röst" : "Voice"}
                     </button>
-                    <span
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] text-muted/50 border border-white/[0.05] cursor-default"
-                      title={lang === "sv" ? "PDF/dokument kommer snart" : "PDF/docs coming soon"}
-                    >
-                      <FileDown className="w-3.5 h-3.5 opacity-40" />
-                      {lang === "sv" ? "PDF · snart" : "PDF · soon"}
-                    </span>
                     {imageGenEnabled ? (
                       <button
                         type="button"
@@ -2175,16 +2061,12 @@ export default function AIPlayground() {
                             ? "border-accent-purple/40 bg-accent-purple/15 text-accent-purple"
                             : "text-white/85 border-white/[0.08]"
                         }`}
+                        aria-pressed={genMode}
                       >
                         <Wand2 className="w-3.5 h-3.5" />
                         {lang === "sv" ? "Skapa bild" : "Create image"}
                       </button>
-                    ) : (
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] text-muted/45 border border-white/[0.05]">
-                        <Wand2 className="w-3.5 h-3.5 opacity-40" />
-                        {lang === "sv" ? "Bildgen · snart" : "Image gen · soon"}
-                      </span>
-                    )}
+                    ) : null}
                   </div>
                 )}
 
@@ -2213,7 +2095,7 @@ export default function AIPlayground() {
                     } else if (f) {
                       showToast(
                         "warn",
-                        lang === "sv" ? "Bara bilder just nu (PDF snart)." : "Images only for now (PDF soon)."
+                        lang === "sv" ? "Endast bilder stöds i den här förhandsvisningen." : "Only image attachments are supported in this preview."
                       );
                     }
                   }}
@@ -2234,6 +2116,7 @@ export default function AIPlayground() {
                         : "border-white/[0.08] text-muted hover:text-accent-cyan"
                     }`}
                     title={lang === "sv" ? "Verktyg" : "Tools"}
+                    aria-label={lang === "sv" ? "Öppna verktyg" : "Open tools"}
                     aria-expanded={toolsOpen}
                   >
                     <Plus className={`w-4 h-4 transition-transform ${toolsOpen ? "rotate-45" : ""}`} />
@@ -2241,6 +2124,7 @@ export default function AIPlayground() {
                   <textarea
                     ref={taRef}
                     value={input}
+                    aria-label={lang === "sv" ? "Skriv ett meddelande till BudAI" : "Write a message to BudAI"}
                     onChange={(e) => {
                       setInput(e.target.value);
                       autoResize();
@@ -2268,32 +2152,17 @@ export default function AIPlayground() {
                         ? lang === "sv"
                           ? "Beskriv bilden…"
                           : "Describe the image…"
-                        : lang === "sv"
-                          ? "Skriv till BudAI…"
-                          : "Message BudAI…"
+                        : t.playground.placeholder
                     }
                     disabled={busy}
                     className="flex-1 px-3.5 py-2.5 rounded-2xl bg-white/[0.04] border border-white/[0.09] text-sm text-white placeholder:text-muted/60 focus:outline-none focus:border-accent-cyan/40 resize-none min-h-[44px] max-h-[140px]"
                   />
-                  <button
-                    type="button"
-                    onClick={runInspire}
-                    disabled={busy}
-                    title={lang === "sv" ? "Inspirera — överraskningsprompt" : "Surprise — random strong prompt"}
-                    className={`shrink-0 h-11 px-2.5 sm:px-3 rounded-2xl border flex items-center gap-1.5 text-[11px] font-semibold transition-all ${
-                      inspireSpin
-                        ? "border-accent-purple/50 bg-accent-purple/20 text-accent-purple"
-                        : "border-white/[0.1] bg-white/[0.03] text-muted hover:text-accent-cyan hover:border-accent-cyan/30"
-                    } disabled:opacity-40`}
-                  >
-                    <Dices className={`w-3.5 h-3.5 ${inspireSpin ? "animate-spin" : ""}`} />
-                    <span className="hidden sm:inline">{lang === "sv" ? "Inspirera" : "Surprise"}</span>
-                  </button>
                   {busy ? (
                     <button
                       type="button"
                       onClick={stopAll}
-                      className="shrink-0 h-11 px-3.5 rounded-2xl border border-red-400/30 text-red-200"
+                      className="pg-send-button pg-stop-button shrink-0 h-11 px-3.5 rounded-2xl border border-red-400/30 text-red-200"
+                      aria-label={lang === "sv" ? "Stoppa svaret" : "Stop response"}
                     >
                       <StopCircle className="w-4 h-4" />
                     </button>
@@ -2301,31 +2170,23 @@ export default function AIPlayground() {
                     <button
                       type="submit"
                       disabled={(!input.trim() && !attach) || busy}
-                      className="shrink-0 h-11 px-3.5 sm:px-4 rounded-2xl bg-gradient-to-r from-accent-cyan to-accent-purple text-white disabled:opacity-40 flex items-center shadow-[0_0_20px_rgba(0,229,255,0.25)] hover:shadow-[0_0_28px_rgba(0,229,255,0.4)] transition-shadow"
+                      className="pg-send-button shrink-0 h-11 px-3.5 sm:px-4 rounded-2xl bg-gradient-to-r from-accent-cyan to-accent-purple text-white disabled:opacity-40 flex items-center shadow-[0_0_20px_rgba(0,229,255,0.25)] hover:shadow-[0_0_28px_rgba(0,229,255,0.4)] transition-shadow"
+                      aria-label={lang === "sv" ? "Skicka meddelande" : "Send message"}
                     >
                       <Send className="w-4 h-4" />
                     </button>
                   )}
                 </form>
-                <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-muted/40 px-0.5">
-                  <span className="hidden sm:inline text-muted/35">
+                <div className="pg-composer-meta">
+                  <span className="pg-preview-usage">
+                    <Shield className="h-3 w-3 shrink-0" />
                     {lang === "sv"
-                      ? "Enter skickar · Shift+Enter rad · lägen ovan styr ton"
-                      : "Enter send · Shift+Enter newline · modes steer tone"}
+                      ? `${rem} av ${lim} meddelanden kvar idag`
+                      : `${rem} of ${lim} messages left today`}
                   </span>
-                  <span className="inline-flex items-center gap-1">
-                    <Shield className="w-3 h-3" />
-                    {auth.isGuest
-                      ? lang === "sv"
-                        ? "Gästgräns"
-                        : "Guest limits"
-                      : lang === "sv"
-                        ? "Kontoläge"
-                        : "Account"}
+                  <span className="pg-enter-hint">
+                    {lang === "sv" ? "Enter skickar · Shift+Enter ny rad" : "Enter sends · Shift+Enter for a new line"}
                   </span>
-                  {auth.displayName && (
-                    <span className="truncate max-w-[140px]">{auth.displayName}</span>
-                  )}
                 </div>
               </div>
             </div>

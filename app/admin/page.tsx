@@ -14,7 +14,6 @@ import {
   Mail,
   Users,
   Building2,
-  Tag,
   Copy,
   Check,
   LayoutDashboard,
@@ -32,7 +31,6 @@ import AdminLayout from "@/components/admin/AdminLayout";
 import StatsCards from "@/components/admin/StatsCards";
 import UserTable from "@/components/admin/UserTable";
 import ActivityChart from "@/components/admin/ActivityChart";
-import SystemTerminal from "@/components/admin/SystemTerminal";
 import BudAILogo, { StilledevMark } from "@/components/ui/BudAILogo";
 import { getWaitlistUsers, getWaitlistStats, updateUserStatus, getAdminEvents, logAdminEvent } from "@/lib/data";
 import { WaitlistUser, AdminEvent } from "@/types";
@@ -62,7 +60,7 @@ export default function AdminPage() {
   const [events, setEvents] = useState<AdminEvent[]>([]);
   const [inviteSubject, setInviteSubject] = useState("You're in — BudAI early access");
   const [inviteBody, setInviteBody] = useState(
-    ["Hi {name},", "", "Welcome to BudAI early access. Your code: BUDAI-EARLY-10 (10% off at launch).", "", "— Stilledev"].join("\n")
+    ["Hi {name},", "", "Thanks for joining the BudAI early-access waitlist. We’ll share updates when there is more to try.", "", "— Stilledev"].join("\n")
   );
   const [inviteCopied, setInviteCopied] = useState(false);
   const [platform, setPlatform] = useState<{
@@ -423,8 +421,7 @@ export default function AdminPage() {
               </div>
               <p className="text-muted text-sm inline-flex items-center gap-1.5 flex-wrap">
                 <StilledevMark size={14} />
-                Stilledev ops · waitlist · early access ·{" "}
-                <span className="font-mono text-accent-cyan/80">v0.93</span>
+                Stilledev ops · waitlist · early-access preview
               </p>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
@@ -565,9 +562,6 @@ export default function AdminPage() {
                   <Download className="w-4 h-4 text-muted" /> Export CSV
                 </button>
                 <div className="pt-2 border-t border-white/[0.06] text-[11px] text-muted space-y-1">
-                  <div className="flex items-center gap-1.5">
-                    <Tag className="w-3 h-3 text-accent-green" /> Codes issued: {stats.withDiscount}
-                  </div>
                   <div className="flex items-center gap-1.5">
                     <Building2 className="w-3 h-3 text-accent-cyan" /> Companies: {stats.companies}
                   </div>
@@ -737,7 +731,7 @@ export default function AdminPage() {
                 { icon: Globe, label: "Site", value: "stilledev.se", note: "Public marketing" },
                 { icon: MessageSquare, label: "Playground", value: "Product AI", note: "Auth · memory · vision" },
                 { icon: Database, label: "Waitlist", value: String(users.length), note: "Signups" },
-                { icon: Activity, label: "Preview", value: "v0.93 · 93%", note: "Toward launch" },
+                { icon: Activity, label: "Preview", value: "In development", note: "No launch date announced" },
                 { icon: Users, label: "Profiles", value: platform.profiles == null ? "—" : String(platform.profiles), note: "Auth users" },
                 { icon: Cpu, label: "Conversations", value: platform.conversations == null ? "—" : String(platform.conversations), note: "Cloud threads" },
                 { icon: Sparkles, label: "Memories", value: platform.memories == null ? "—" : String(platform.memories), note: "Active facts" },
@@ -763,7 +757,7 @@ export default function AdminPage() {
                 </h3>
                 <ul className="text-xs text-muted space-y-2 leading-relaxed">
                   <li className="flex justify-between gap-3 border-b border-white/[0.05] pb-2">
-                    <span>Auth (email OTP + guest · Google on launch)</span>
+                    <span>Auth (email OTP + guest · Google OAuth not enabled)</span>
                     <span className="text-accent-green font-mono">on</span>
                   </li>
                   <li className="flex justify-between gap-3 border-b border-white/[0.05] pb-2">
@@ -849,12 +843,10 @@ export default function AdminPage() {
                 ))}
               </div>
             </div>
-            <SystemTerminal />
             <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5 space-y-4">
               <h3 className="text-sm font-semibold text-white">Ops checklist</h3>
               <ul className="text-xs text-muted space-y-2 list-disc pl-4 leading-relaxed">
                 <li>Run <code className="font-mono text-white/70">supabase/schema.sql</code> + required <code className="font-mono text-white/70">MIGRATION_v4_product.sql</code></li>
-                <li>Discount default: <code className="font-mono text-accent-green/80">BUDAI-EARLY-10</code></li>
                 <li>Playground needs <code className="font-mono text-white/70">ANTHROPIC_API_KEY</code></li>
                 <li>Tighten RLS before scale — service role for admin mutations</li>
                 <li>Optional: Vercel password protect <code className="font-mono">/admin</code></li>

@@ -2,13 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Activity, Cpu, Shield, X, Zap, Server, ArrowRight, Tag, Info } from "lucide-react";
+import { Activity, Cpu, Shield, X, Zap, Server, ArrowRight, Info } from "lucide-react";
 import BudAILogo from "@/components/ui/BudAILogo";
 import { useLang } from "@/components/ui/LanguageContext";
 
 /**
  * Hero logo stage — single BudAILogo, soft ambient motion only.
- * Click → Neural Core sheet (honest preview info).
+ * Click → BudAI preview sheet (honest preview info).
  */
 export default function AICore({ isMobile = false }: { isMobile?: boolean }) {
   const { lang } = useLang();
@@ -29,16 +29,11 @@ export default function AICore({ isMobile = false }: { isMobile?: boolean }) {
   }, [open]);
 
   const rows = [
-    { icon: Server, label: lang === "sv" ? "Fokus" : "Focus", value: lang === "sv" ? "Sverige · Norden" : "Sweden · Nordics" },
-    { icon: Cpu, label: lang === "sv" ? "Motor" : "Engine", value: "BudAI Core v0.93" },
-    { icon: Activity, label: lang === "sv" ? "Demo" : "Demo", value: lang === "sv" ? "Live Playground" : "Live Playground" },
-    { icon: Zap, label: lang === "sv" ? "Läge" : "Mode", value: lang === "sv" ? "Developer Preview" : "Developer Preview" },
-    { icon: Shield, label: lang === "sv" ? "Integritet" : "Privacy", value: lang === "sv" ? "GDPR-minded · TLS" : "GDPR-minded · TLS" },
-    {
-      icon: Tag,
-      label: "Early access",
-      value: "BUDAI-EARLY-10 · 10%",
-    },
+    { icon: Server, label: lang === "sv" ? "Utvecklad i" : "Built in", value: lang === "sv" ? "Sverige" : "Sweden" },
+    { icon: Cpu, label: lang === "sv" ? "Hjälper dig att" : "For", value: lang === "sv" ? "Skriva · tänka · skapa" : "Write · think · create" },
+    { icon: Activity, label: lang === "sv" ? "Prova" : "Try", value: "Interactive Playground" },
+    { icon: Zap, label: lang === "sv" ? "Läge" : "Stage", value: lang === "sv" ? "Tidig produktförhandsvisning" : "Early product preview" },
+    { icon: Shield, label: lang === "sv" ? "Data" : "Data", value: lang === "sv" ? "Innehåll du själv delar" : "Content you choose to share" },
   ];
 
   const dim = isMobile ? 160 : 212;
@@ -82,7 +77,7 @@ export default function AICore({ isMobile = false }: { isMobile?: boolean }) {
         </div>
 
         <p className="mt-4 text-[11px] sm:text-xs text-accent-cyan/70 font-mono tracking-wide animate-pulse">
-          {lang === "sv" ? "● live · tryck för info" : "● live · tap for info"}
+          {lang === "sv" ? "Tidig förhandsvisning · tryck för info" : "Early preview · tap for details"}
         </p>
       </motion.div>
 
@@ -116,12 +111,12 @@ export default function AICore({ isMobile = false }: { isMobile?: boolean }) {
                 <div className="flex items-center gap-3">
                   <BudAILogo size="md" animated />
                   <div>
-                    <div className="text-sm font-semibold text-white">Neural Core</div>
+                    <div className="text-sm font-semibold text-white">BudAI preview</div>
                     <div className="text-[11px] text-muted font-mono flex items-center gap-1.5">
                       <span className="relative flex h-1.5 w-1.5">
                         <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-accent-green" />
                       </span>
-                      {lang === "sv" ? "Preview · v0.93" : "Preview · v0.93"}
+                      {lang === "sv" ? "Tidig förhandsvisning" : "Early preview"}
                     </div>
                   </div>
                 </div>
@@ -139,8 +134,8 @@ export default function AICore({ isMobile = false }: { isMobile?: boolean }) {
                 <Info className="w-3.5 h-3.5 text-accent-cyan shrink-0 mt-0.5" />
                 <p className="text-[11px] text-muted leading-relaxed">
                   {lang === "sv"
-                    ? "Översikt för utvecklarförhandsvisningen — inte live produktionsmetrik. Testa den riktiga motorn i Playground."
-                    : "Developer preview overview — not live production metrics. Try the real engine in Playground."}
+                    ? "BudAI utvecklas fortfarande. Prova uppgifterna som finns i Playground och gå med i väntelistan för uppdateringar."
+                    : "BudAI is still in development. Try the tasks available in the Playground and join the waitlist for updates."}
                 </p>
               </div>
 

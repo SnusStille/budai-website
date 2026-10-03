@@ -7,9 +7,7 @@ import {
   Clock,
   Shield,
   Building2,
-  Tag,
   User,
-  Star,
 } from "lucide-react";
 import { WaitlistUser } from "@/types";
 import AnimatedCounter from "@/components/ui/AnimatedCounter";
@@ -66,24 +64,10 @@ export default function StatsCards({ users }: { users: WaitlistUser[] }) {
       color: "text-accent-pink",
       bg: "bg-accent-pink/10",
     },
-    {
-      label: "10% codes",
-      value: statsData.withDiscount,
-      icon: Tag,
-      color: "text-accent-green",
-      bg: "bg-accent-green/10",
-    },
-    {
-      label: "Priority ≥70",
-      value: statsData.highPriority,
-      icon: Star,
-      color: "text-accent-yellow",
-      bg: "bg-accent-yellow/10",
-    },
   ];
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8 gap-3">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
       {stats.map((stat, i) => (
         <motion.div
           key={stat.label}

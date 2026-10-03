@@ -267,11 +267,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signInWithGoogle = useCallback(async () => {
-    // Gated until launch: OAuth needs Supabase Google provider + Google Cloud client.
-    // UI shows "Available on launch" — this is a hard stop if anything still calls it.
+    // Google OAuth is not configured for this preview; email magic links remain available.
     return {
       error:
-        "Google sign-in will be available on launch. Please use the email magic link for now.",
+        "Google sign-in is not enabled in this preview. Please use the email magic link.",
     };
   }, []);
 
