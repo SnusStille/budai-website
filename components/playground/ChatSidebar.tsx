@@ -10,6 +10,7 @@ import {
   Pencil,
   Plus,
   Search,
+  Sparkles,
   Trash2,
   X,
 } from "lucide-react";
@@ -33,6 +34,7 @@ type Props = {
   onOpenMemory: () => void;
   remaining: number;
   limit: number;
+  onUpgrade?: () => void;
   onClose?: () => void;
 };
 
@@ -55,6 +57,7 @@ export default function ChatSidebar({
   onOpenMemory,
   remaining,
   limit,
+  onUpgrade,
   onClose,
 }: Props) {
   const sv = lang === "sv";
@@ -81,10 +84,11 @@ export default function ChatSidebar({
             type="button"
             disabled={creatingChat}
             onClick={onNewChat}
-            className="inline-flex h-9 flex-1 items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-accent-cyan/90 to-accent-purple/90 text-[12.5px] font-semibold text-white transition-all hover:brightness-110 active:scale-[0.98] disabled:opacity-50"
+            className="inline-flex h-9 flex-1 items-center justify-center gap-1.5 rounded-[var(--r-sm)] border border-white/[0.1] bg-white/[0.045] text-[12.5px] font-semibold text-white transition-all hover:border-accent-cyan/30 hover:bg-accent-cyan/[0.09] active:scale-[0.98] disabled:opacity-50"
           >
-            <Plus className="h-3.5 w-3.5" />
+            <Plus className="h-3.5 w-3.5 text-accent-cyan" />
             {sv ? "Ny chatt" : "New chat"}
+            <span className="kbd ml-1 hidden !h-4 !min-w-[1.15rem] !text-[9px] lg:inline-flex">⌘N</span>
           </button>
           {onClose && (
             <button
@@ -116,7 +120,7 @@ export default function ChatSidebar({
             value={search}
             onChange={(e) => onSearch(e.target.value)}
             placeholder={sv ? "Sök i historik…" : "Search chats…"}
-            className="h-8 w-full rounded-lg border border-white/[0.07] bg-white/[0.03] pl-8 pr-2 text-[12px] text-white placeholder:text-muted/50 focus:border-accent-cyan/30 focus:outline-none"
+            className="h-8 w-full rounded-[var(--r-xs)] border border-white/[0.07] bg-white/[0.03] pl-8 pr-2 text-[12px] text-white transition-colors placeholder:text-muted/50 focus:border-accent-cyan/35 focus:bg-white/[0.05] focus:outline-none"
           />
         </div>
       </div>
@@ -140,7 +144,7 @@ export default function ChatSidebar({
 
         {groups.map((g) => (
           <div key={g.label}>
-            <div className="mb-1.5 px-2 text-[10px] font-medium uppercase tracking-[0.12em] text-muted/45">
+            <div className="mb-1.5 px-2 font-mono text-[9.5px] uppercase tracking-[0.14em] text-muted/45">
               {g.label}
             </div>
             <div className="space-y-0.5">
@@ -273,12 +277,41 @@ export default function ChatSidebar({
             {!memoryEnabled && <EyeOff className="h-3 w-3 text-muted/60" />}
           </button>
         )}
-        <div className="flex items-center justify-between px-2 py-1 text-[10.5px] text-muted/45">
-          <span>{isMember ? (sv ? "Konto" : "Account") : sv ? "Gäst" : "Guest"}</span>
-          <span className="font-mono tabular-nums">
-            {remaining}/{limit} {sv ? "meddelanden idag" : "messages today"}
-          </span>
+        <div className="px-2 py-1.5">
+          <div className="flex items-center justify-between text-[10.5px] text-muted/50">
+            <span className="font-mono uppercase tracking-[0.12em]">
+              {isMember ? (sv ? "konto" : "account") : sv ? "gäst" : "guest"}
+            </span>
+            <span className="font-mono tabular-nums">
+              {remaining}/{limit} {sv ? "idag" : "today"}
+            </span>
+          </div>
+          <div
+            className={`meter mt-2 ${
+              limit > 0 && remaining / limit < 0.15 ? "meter-danger" : limit > 0 && remaining / limit < 0.4 ? "meter-warn" : ""
+            }`}
+          >
+            <span style={{ width: `${limit > 0 ? Math.min(100, Math.round(((limit - remaining) / limit) * 100)) : 0}%` }} />
+          </div>
         </div>
+
+        {!isMember && onUpgrade && (
+          <button
+            type="button"
+            onClick={onUpgrade}
+            className="group flex w-full items-center gap-2.5 rounded-[var(--r-sm)] border border-accent-cyan/20 bg-accent-cyan/[0.055] px-2.5 py-2.5 text-left transition-colors hover:border-accent-cyan/40 hover:bg-accent-cyan/[0.1]"
+          >
+            <Sparkles className="h-3.5 w-3.5 shrink-0 text-accent-cyan" />
+            <span className="min-w-0">
+              <span className="block text-[11.5px] font-medium text-white">
+                {sv ? "Lås upp mer" : "Unlock more"}
+              </span>
+              <span className="block truncate text-[10.5px] text-muted/70">
+                {sv ? "Historik, minne och bilder" : "History, memory and images"}
+              </span>
+            </span>
+          </button>
+        )}
       </div>
     </div>
   );

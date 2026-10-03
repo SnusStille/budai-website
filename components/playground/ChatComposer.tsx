@@ -191,11 +191,7 @@ export default function ChatComposer({
           onDragOver={(e) => e.preventDefault()}
           onDragLeave={onDragLeave}
           onDrop={onDrop}
-          className={`rounded-2xl border bg-white/[0.035] transition-all duration-200 focus-within:border-accent-cyan/35 focus-within:bg-white/[0.05] focus-within:shadow-[0_0_0_3px_rgba(0,229,255,0.07)] ${
-            dragOver
-              ? "border-accent-cyan/50 bg-accent-cyan/[0.05]"
-              : "border-white/[0.1]"
-          }`}
+          className={`input-shell ${dragOver ? "input-shell-drag" : ""}`}
         >
           <input
             ref={fileRef}
@@ -316,7 +312,7 @@ export default function ChatComposer({
                   onClick={onStop}
                   title={sv ? "Stoppa" : "Stop generating"}
                   aria-label={sv ? "Stoppa" : "Stop generating"}
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-red-400/30 bg-red-500/10 text-red-200 transition-colors hover:bg-red-500/20"
+                  className="group inline-flex h-9 w-9 items-center justify-center rounded-[var(--r-sm)] border border-red-400/30 bg-red-500/10 text-red-200 transition-colors hover:border-red-400/50 hover:bg-red-500/20"
                 >
                   <StopCircle className="h-4 w-4" />
                 </button>
@@ -326,7 +322,7 @@ export default function ChatComposer({
                   disabled={!canSend && !attach}
                   title={sv ? "Skicka" : "Send"}
                   aria-label={sv ? "Skicka" : "Send"}
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-accent-cyan to-accent-purple text-white shadow-[0_6px_20px_-6px_rgba(0,229,255,0.6)] transition-all duration-200 hover:brightness-110 active:scale-95 disabled:from-white/[0.08] disabled:to-white/[0.08] disabled:text-muted/50 disabled:shadow-none"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-[var(--r-sm)] bg-gradient-to-br from-[#6ef2ff] via-accent-cyan to-[#9d7bff] text-[#04121a] shadow-[0_8px_24px_-10px_rgba(0,229,255,0.85),inset_0_1px_0_rgba(255,255,255,0.45)] transition-all duration-200 hover:brightness-105 active:scale-95 disabled:bg-none disabled:bg-white/[0.07] disabled:text-muted/50 disabled:shadow-none"
                 >
                   <Send className="h-4 w-4" />
                 </button>
@@ -335,11 +331,22 @@ export default function ChatComposer({
           </div>
         </form>
 
-        <p className="mt-2 hidden text-[11px] text-muted/45 sm:block">
-          {sv
-            ? "Enter skickar · Shift + Enter ny rad · lägena ovan styr hur BudAI svarar"
-            : "Enter sends · Shift + Enter for a new line · the modes above steer how BudAI answers"}
-        </p>
+        <div className="mt-2.5 hidden items-center gap-3 text-[11px] text-muted/45 sm:flex">
+          <span className="flex items-center gap-1.5">
+            <span className="kbd">↵</span>
+            {sv ? "skickar" : "sends"}
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="kbd">⇧</span>
+            <span className="kbd">↵</span>
+            {sv ? "ny rad" : "new line"}
+          </span>
+          <span className="ml-auto flex items-center gap-1.5">
+            <span className="kbd">⌘</span>
+            <span className="kbd">K</span>
+            {sv ? "genvägar" : "shortcuts"}
+          </span>
+        </div>
       </div>
     </div>
   );

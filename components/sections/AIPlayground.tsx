@@ -1043,12 +1043,13 @@ export default function AIPlayground() {
       }}
       remaining={rem}
       limit={lim}
+      onUpgrade={auth.isGuest ? () => auth.openAuth(sv ? "Lås upp mer BudAI" : "Unlock more BudAI") : undefined}
       onClose={() => setMobileDrawer(false)}
     />
   );
 
   const shellBase =
-    "flex overflow-hidden border border-white/[0.1] bg-[#06060c]/95 shadow-[0_40px_120px_-40px_rgba(0,0,0,0.9),0_0_120px_-60px_rgba(0,229,255,0.5)]";
+    "flex overflow-hidden border border-white/[0.09] bg-[#06060c]/95 shadow-[0_50px_140px_-50px_rgba(0,0,0,0.95),0_0_140px_-70px_rgba(0,229,255,0.6)]";
   const shellClass = expanded
     ? `${shellBase} fixed inset-0 z-[80] sm:inset-4 sm:rounded-3xl`
     : `${shellBase} relative h-[calc(100svh-9rem)] max-h-[720px] min-h-[520px] rounded-[22px] sm:h-[calc(100svh-14rem)] sm:max-h-[820px] sm:min-h-[560px] sm:rounded-[26px] lg:h-[calc(100svh-24rem)] lg:max-h-[880px]`;
@@ -1099,10 +1100,16 @@ export default function AIPlayground() {
                   Bud<span className="text-accent-cyan">AI</span>
                 </span>
 
-                <span className="ml-0.5 hidden items-center gap-1.5 rounded-full border border-accent-green/20 bg-accent-green/[0.07] px-2 py-[3px] text-[10.5px] font-medium text-accent-green/90 sm:inline-flex">
-                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent-green" />
-                  Live preview
+                <span className="preview-tag ml-0.5 hidden sm:inline-flex">
+                  <span className="status-dot !h-[5px] !w-[5px]" />
+                  {sv ? "live förhandsvisning" : "live preview"}
                 </span>
+
+                {!temporary && (
+                  <span className="fig hidden lg:inline-flex">
+                    {sv ? "modell: claude" : "model: claude"}
+                  </span>
+                )}
 
                 {temporary && (
                   <span className="rounded-full border border-amber-400/25 px-2 py-[3px] text-[10.5px] text-amber-200/90">

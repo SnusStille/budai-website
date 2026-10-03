@@ -94,7 +94,7 @@ export default function ChatMessageRow({
             <img src={msg.imageUrl} alt="" className="h-auto w-full" />
           </button>
         )}
-        <div className="max-w-[88%] whitespace-pre-wrap rounded-2xl rounded-br-md border border-accent-cyan/[0.16] bg-accent-cyan/[0.08] px-4 py-2.5 text-[14.5px] leading-[1.65] text-white sm:max-w-[75%]">
+        <div className="max-w-[88%] whitespace-pre-wrap rounded-[18px] rounded-br-[7px] border border-accent-cyan/[0.16] bg-accent-cyan/[0.075] px-4 py-2.5 text-[14.5px] leading-[1.65] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] sm:max-w-[75%]">
           {msg.content}
         </div>
       </div>
@@ -106,8 +106,8 @@ export default function ChatMessageRow({
 
   return (
     <div className="pg-msg-enter group flex gap-3">
-      <div className="relative mt-0.5 h-7 w-7 shrink-0 rounded-[10px] bg-gradient-to-br from-accent-cyan/85 to-accent-purple/85 p-[1.5px]">
-        <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-[8.5px] bg-[#08080f]">
+      <div className="relative mt-0.5 h-7 w-7 shrink-0 rounded-[9px] bg-gradient-to-br from-accent-cyan/80 to-accent-purple/70 p-[1.5px] shadow-[0_6px_18px_-10px_rgba(0,229,255,0.9)]">
+        <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-[7.5px] bg-[#08080f]">
           <BudAILogo size="xs" animated className="!h-[18px] !w-[18px]" />
         </div>
       </div>
@@ -172,7 +172,7 @@ export default function ChatMessageRow({
             </div>
           </div>
         ) : (
-          <div className="text-[14.5px] text-white/88">{renderMarkdown(msg.content)}</div>
+          <div className="text-[14.5px] leading-[1.7] text-white/88">{renderMarkdown(msg.content)}</div>
         )}
 
         {msg.generated && msg.imageUrl && (
@@ -194,7 +194,7 @@ export default function ChatMessageRow({
 
         {showActions && (
           <div
-            className={`mt-1.5 flex flex-wrap items-center gap-0.5 transition-opacity duration-200 ${
+            className={`mt-2 flex flex-wrap items-center gap-0.5 border-t border-white/[0.05] pt-1.5 transition-opacity duration-200 ${
               isLastAssistant ? "opacity-100" : "opacity-60 md:opacity-0 md:group-hover:opacity-100"
             }`}
           >
