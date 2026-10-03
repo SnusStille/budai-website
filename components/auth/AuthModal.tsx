@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import Link from "next/link";
 import { X, Sparkles, Shield, AlertTriangle, CheckCircle2 } from "lucide-react";
 import BudAILogo from "@/components/ui/BudAILogo";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -204,7 +205,7 @@ export default function AuthModal() {
                   <button
                     type="submit"
                     disabled={busy || !configured}
-                    className="w-full py-3 rounded-xl bg-gradient-to-r from-accent-cyan to-accent-purple text-sm font-semibold text-white disabled:opacity-40"
+                    className="w-full py-3 rounded-full bg-white text-zinc-950 text-sm font-semibold disabled:opacity-40 hover:bg-zinc-100"
                   >
                     {lang === "sv" ? "Skicka magisk länk" : "Send magic link"}
                   </button>
@@ -234,6 +235,17 @@ export default function AuthModal() {
             >
               {lang === "sv" ? "Fortsätt som gäst" : "Continue as guest"}
             </button>
+            <Link
+              href="/waitlist"
+              onClick={() => {
+                clearAuthFlash();
+                closeAuth();
+              }}
+              className="mt-3 flex items-center justify-center gap-1.5 text-[11px] text-white/40 hover:text-white"
+            >
+              {lang === "sv" ? "Väntelista" : "Waitlist"}
+              <span className="text-accent-cyan/90">10%</span>
+            </Link>
 
             <p className="mt-4 flex items-start gap-2 text-[10px] text-muted/60 leading-relaxed">
               <Shield className="w-3 h-3 shrink-0 mt-0.5 text-accent-cyan/70" />

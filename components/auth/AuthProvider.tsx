@@ -13,7 +13,7 @@ import {
 import type { Session, User } from "@supabase/supabase-js";
 import { createClient, isAuthConfigured } from "@/lib/supabase/client";
 import { LIMITS, type AccessTier, dayKey, limitFor } from "@/lib/limits";
-import { getAuthCallbackUrl, getBrowserOrigin } from "@/lib/site";
+import { getAuthCallbackUrl } from "@/lib/site";
 import { friendlyAuthError } from "@/lib/authErrors";
 
 type Usage = { messages: number; images: number; generations: number };
@@ -81,9 +81,9 @@ function scrubAuthQuery() {
     const u = new URL(window.location.href);
     u.searchParams.delete("auth");
     u.searchParams.delete("reason");
-    // keep hash playground
-    if (!u.hash || u.hash === "#") u.hash = "playground";
-    window.history.replaceState({}, "", `${u.pathname}${u.search}${u.hash}`);
+    if (u.hash === "#playground") u.hash = "";
+    const path = u.pathname.startsWith("/playground") ? u.pathname : "/playground";
+    window.history.replaceState({}, "", `${path}${u.search}${u.hash}`);
   } catch {
     /* */
   }
@@ -284,7 +284,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     // CRITICAL: emailRedirectTo must be on Supabase Redirect allowlist.
     // If not, Supabase falls back to Dashboard Site URL (often localhost) → ERR_CONNECTION_REFUSED.
-    const emailRedirectTo = getAuthCallbackUrl("/#playground");
+    const emailRedirectTo = getAuthCallbackUrl("/playground");
     const { error } = await supabase.auth.signInWithOtp({
       email: clean,
       options: {

@@ -21,15 +21,14 @@ export default function AuthHashHandler() {
 
     const clean = () => {
       const u = new URL(window.location.href);
-      u.hash = "playground";
-      // strip auth-related search if any
-      window.history.replaceState({}, "", `${u.pathname}${u.search}#playground`);
+      u.hash = "";
+      window.history.replaceState({}, "", `/playground${u.search}`);
     };
 
     if (error) {
       clean();
       window.location.replace(
-        `/?auth=error&reason=${encodeURIComponent(error)}#playground`
+        `/playground?auth=error&reason=${encodeURIComponent(error)}`
       );
       return;
     }
@@ -48,10 +47,10 @@ export default function AuthHashHandler() {
         clean();
         if (setErr) {
           window.location.replace(
-            `/?auth=error&reason=${encodeURIComponent(setErr.message)}#playground`
+            `/playground?auth=error&reason=${encodeURIComponent(setErr.message)}`
           );
         } else {
-          window.location.replace(`/?auth=ok#playground`);
+          window.location.replace(`/playground?auth=ok`);
         }
       } catch (e) {
         clean();

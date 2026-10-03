@@ -13,6 +13,7 @@ import {
 const HIST_KEY = "budai-pg-history-v2";
 const MEM_KEY = "budai-pg-memory-v2"; // guests: unused for cloud memory
 const SETTINGS_KEY = "budai-pg-settings-v1";
+const DRAFT_KEY = "budai-pg-draft-v1";
 const MAX_GUEST_CONVOS = 5;
 
 function safeParse<T>(raw: string | null, fallback: T): T {
@@ -41,6 +42,30 @@ export function saveSettings(s: PgSettings) {
   if (typeof window === "undefined") return;
   try {
     localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
+  } catch {
+    /* */
+  }
+}
+
+function draftKey(convoId: string | null) {
+  return convoId || "_new";
+}
+
+export function loadDraft(convoId: string | null): string {
+  if (typeof window === "undefined") return "";
+  const map = safeParse<Record<string, string>>(sessionStorage.getItem(DRAFT_KEY), {});
+  return map[draftKey(convoId)] || "";
+}
+
+export function saveDraft(convoId: string | null, text: string) {
+  if (typeof window === "undefined") return;
+  try {
+    const map = safeParse<Record<string, string>>(sessionStorage.getItem(DRAFT_KEY), {});
+    const k = draftKey(convoId);
+    const next = text.trim() ? text.slice(0, 8000) : "";
+    if (!next) delete map[k];
+    else map[k] = next;
+    sessionStorage.setItem(DRAFT_KEY, JSON.stringify(map));
   } catch {
     /* */
   }
@@ -82,6 +107,12 @@ export function deleteLocalConversation(id: string) {
   saveLocalConversations(loadLocalConversations().filter((c) => c.id !== id));
 }
 
+export function pinLocalConversation(id: string, pinned: boolean) {
+  const existing = loadLocalConversations().find((c) => c.id === id);
+  if (!existing) return;
+  persistLocalMessages(id, existing.messages, { title: existing.title, pinned });
+}
+
 export function createLocalDraft(temporary = false): Conversation {
   const now = Date.now();
   return {
@@ -97,7 +128,7 @@ export function createLocalDraft(temporary = false): Conversation {
 export function persistLocalMessages(
   id: string | null,
   messages: ChatMessage[],
-  opts?: { temporary?: boolean; title?: string }
+  opts?: { temporary?: boolean; title?: string; pinned?: boolean }
 ): Conversation {
   const existing = id ? loadLocalConversations().find((c) => c.id === id) : null;
   const cid = existing?.id || id || newId("local");
@@ -111,6 +142,7 @@ export function persistLocalMessages(
     updatedAt: Date.now(),
     messages,
     temporary: opts?.temporary ?? existing?.temporary ?? false,
+    pinned: opts?.pinned ?? existing?.pinned ?? false,
   };
   if (!convo.temporary && messages.length > 0) {
     upsertLocalConversation(convo);

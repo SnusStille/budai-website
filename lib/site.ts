@@ -43,9 +43,9 @@ export function getBrowserOrigin(): string {
 }
 
 /** Full OAuth / magic-link callback URL for the current environment. */
-export function getAuthCallbackUrl(nextPath = "/#playground"): string {
+export function getAuthCallbackUrl(nextPath = "/playground"): string {
   const origin = getBrowserOrigin();
-  const next = encodeURIComponent(nextPath.startsWith("/") ? nextPath : "/#playground");
+  const next = encodeURIComponent(nextPath.startsWith("/") ? nextPath : "/playground");
   return `${origin}/auth/callback?next=${next}`;
 }
 

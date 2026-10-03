@@ -6,6 +6,8 @@ import { ArrowLeft, Shield, FileText, Cookie, Scale } from "lucide-react";
 import Link from "next/link";
 import BudAILogo from "@/components/ui/BudAILogo";
 import { useLang } from "@/components/ui/LanguageContext";
+import SiteNav from "@/components/layout/SiteNav";
+import SiteFooter from "@/components/layout/SiteFooter";
 
 type Page = {
   title: { en: string; sv: string };
@@ -95,12 +97,14 @@ export default function LegalPage() {
   const L = lang === "sv" ? "sv" : "en";
 
   return (
-    <main className="min-h-screen bg-background text-white pt-20 pb-16 px-4 sm:px-6">
+    <div className="min-h-screen bg-background text-white flex flex-col">
+      <SiteNav />
+      <main className="flex-1 pt-10 pb-16 px-4 sm:px-6">
       <div className="max-w-2xl mx-auto">
         <div className="flex items-center justify-between gap-3 mb-8">
           <Link
             href="/"
-            className="inline-flex items-center gap-2 text-sm text-muted hover:text-white transition-colors"
+            className="inline-flex items-center gap-2 text-sm text-white/45 hover:text-white transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
             {L === "sv" ? "Tillbaka till BudAI" : "Back to BudAI"}
@@ -139,6 +143,8 @@ export default function LegalPage() {
           </p>
         </motion.div>
       </div>
-    </main>
+      </main>
+      <SiteFooter />
+    </div>
   );
 }

@@ -66,7 +66,7 @@ export default function CookieConsent() {
                 <button
                   type="button"
                   onClick={() => save("accepted")}
-                  className="px-3 py-1.5 text-[11px] font-semibold rounded-lg bg-gradient-to-r from-accent-cyan to-accent-purple text-white"
+                  className="px-3 py-1.5 text-[11px] font-semibold rounded-full bg-white text-zinc-950"
                 >
                   {t.cookie.accept}
                 </button>

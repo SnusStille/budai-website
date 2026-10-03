@@ -115,6 +115,25 @@ export async function deleteConversation(id: string) {
   await sb.from("conversations").delete().eq("id", id).eq("user_id", user.id);
 }
 
+export async function pinConversation(id: string, pinned: boolean) {
+  const { sb, user } = await getUser();
+  if (!sb || !user) return false;
+  const { error } = await sb
+    .from("conversations")
+    .update({ pinned })
+    .eq("id", id)
+    .eq("user_id", user.id);
+  return !error;
+}
+
+/** Used when the user edits a past message — drop trailing turns, then re-sync. */
+export async function overwriteMessages(conversationId: string, messages: ChatMessage[]) {
+  const { sb, user } = await getUser();
+  if (!sb || !user) return { ok: false as const };
+  await sb.from("messages").delete().eq("conversation_id", conversationId);
+  return syncMessages(conversationId, messages);
+}
+
 /**
  * Sync messages: append-only for new ids; update title from first user msg.
  * Avoids full wipe which caused races with New Chat.

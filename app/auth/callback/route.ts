@@ -53,7 +53,7 @@ function safeAppOrigin(request: Request): string {
 
 function playgroundRedirect(origin: string, params: Record<string, string>) {
   const q = new URLSearchParams(params);
-  return NextResponse.redirect(`${origin}/?${q.toString()}#playground`);
+  return NextResponse.redirect(`${origin}/playground?${q.toString()}`);
 }
 
 export async function GET(request: Request) {
