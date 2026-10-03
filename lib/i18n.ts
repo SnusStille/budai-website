@@ -3,10 +3,18 @@
 export type Lang = "sv" | "en";
 
 /**
- * Copy for the focused product site:
+ * All narrative copy for the focused product site:
  * Playground (home) → What is BudAI → Vision → Waitlist.
+ *
  * Playground-internal micro copy lives in the playground components
- * (it is UI-state heavy), everything narrative lives here.
+ * (it is UI-state heavy), everything else lives here.
+ *
+ * `sv` and `en` must keep identical keys — `useTranslation` returns a union,
+ * so a missing key is a type error.
+ *
+ * Rule for this site: nothing invented. No fake users, no fake counters,
+ * no promised dates. The roadmap describes what the code does today,
+ * what is being refined, and what we are exploring.
  */
 export const translations = {
   sv: {
@@ -20,6 +28,7 @@ export const translations = {
       openMenu: "Öppna meny",
       closeMenu: "Stäng meny",
       language: "Språk",
+      preview: "Preview",
     },
     intro: {
       badge: "Utvecklarförhandsvisning",
@@ -33,6 +42,16 @@ export const translations = {
       trustPrivacy: "GDPR-tänk",
       scrollHint: "Scrolla för att förstå BudAI",
       backToPlayground: "Tillbaka till Playground",
+      buildLabel: "build",
+      liveLabel: "Fungerar i den här förhandsvisningen",
+      liveItems: [
+        "Chatt på svenska & engelska",
+        "Röst och bildanalys",
+        "Historik, export och Workspace",
+        "Minne för inloggade medlemmar",
+      ],
+      honestNote:
+        "Förhandsvisning: svaren kan bli fel och gränserna är medvetet låga. I gästläget sparas dina konversationer endast i din egen webbläsare.",
     },
     playground: {
       badge: "AI Playground",
@@ -62,6 +81,34 @@ export const translations = {
       stageLive: "live produkt · inte en mock",
       openPlayground: "Testa i Playground",
       faqTitle: "Vanliga frågor",
+      flowTitle: "Så byggs ett svar",
+      flowBody:
+        "Samma pipeline oavsett om du skriver ett mejl, analyserar en text eller ber om två förslag att välja mellan.",
+      flow1Title: "Förstår uppsåtet",
+      flow1Body:
+        "BudAI läser din text, ditt språk och din kontext — och väljer läge: ett svar, ett utkast eller två alternativ.",
+      flow2Title: "Arbetar i klartext",
+      flow2Body:
+        "Svaret strömmas in medan det skrivs, med rubriker, listor och kod i rätt format — så att du ser arbetet, inte bara resultatet.",
+      flow3Title: "Lämnar över till dig",
+      flow3Body:
+        "Kopiera, fortsätt, gör om — eller öppna svaret i Workspace där långa utkast blir ett dokument du jobbar vidare i.",
+      limitsTitle: "Riktiga gränser",
+      limitsBody:
+        "Förhandsvisningen är begränsad med flit, så att den håller för alla som testar. Det här är exakt vad som gäller:",
+      limitsGuest: "Gäst",
+      limitsMember: "Medlem",
+      limitsDaily: "meddelanden / dag",
+      limitsImages: "bilder",
+      limitsGenerations: "genereringar",
+      limitsHistory: "sparade konversationer",
+      limitsMemory: "Långtidsminne",
+      limitsMemoryGuest: "Avstängt — allt stannar i din webbläsare",
+      limitsMemoryMember: "På — BudAI kommer ihåg dina preferenser",
+      limitsReset: "Gränserna nollställs varje dag (UTC).",
+      previewTitle: "Riktig produkt — visad som en förhandsvisning",
+      previewBody:
+        "Det du testar här är samma kod som ska lanseras: riktig modell, riktig väntelista, riktiga gränser. Det som saknas är puts, inte påhitt.",
     },
     vision: {
       badge: "Vår vision",
@@ -71,6 +118,41 @@ export const translations = {
         "BudAI är inte ytterligare ett generiskt AI-verktyg. Det är en övertygelse om hur arbete kan kännas — smartare, snabbare, mer mänskligt — från Sverige och ut.",
       pathLabel: "Resan",
       weBelieve: "Vi tror",
+      manifestoTitle: "Arbete ska inte börja med en tom prompt",
+      manifestoBody:
+        "De flesta AI-verktyg låter dig prata med en modell. Vi bygger en arbetsyta: den känner igen språket du skriver på, minns hur du vill ha det, och lämnar över något du faktiskt kan använda — ett mejl, ett beslut, ett dokument.",
+      b1Title: "Byggt för hur vi arbetar",
+      b1Body:
+        "Arbete är inte en chattrad. Det är utkast, beslut, uppföljning och språk som ska hålla. BudAI börjar i flödet — inte bredvid det.",
+      b2Title: "Framtiden för digitalt arbete",
+      b2Body:
+        "Nästa steg är inte fler verktyg. Det är en assistent som förstår sammanhanget, talar ditt språk och gör det tunga jobbet innan du ens bett om det.",
+      b3Title: "Tillit är en funktion",
+      b3Body:
+        "Nordisk tillit byggs med transparens: tydliga gränser, inga påhittade siffror, svar du kan granska och en ärlig bild av vad som är klart.",
+      roadmapTitle: "Vad som är live i den här förhandsvisningen",
+      roadmapBody:
+        "Vi visar hellre det som fungerar än det vi lovar. Så här ser läget ut just nu:",
+      roadmapLive: "Live nu",
+      roadmapWip: "På gång",
+      roadmapNext: "Utforskar vi",
+      liveItems: [
+        "Chatt med riktig modell på svenska och engelska",
+        "Två svarsförslag att välja mellan",
+        "Röst och bildanalys",
+        "Historik, export och Workspace",
+        "Väntelista med early access och referral",
+      ],
+      wipItems: [
+        "Minne som följer med mellan konversationer",
+        "Fler språk, tonlägen och mallar",
+        "Delade ytor för team",
+      ],
+      nextItems: [
+        "Integration mot kalender, mejl och dokument",
+        "Arbete i kalkylark och rapporter",
+        "Fördjupning för svenska verksamheter",
+      ],
       quote:
         "”Vi bygger inte hype. Vi bygger en arbetsyta som respekterar nordisk tillit — och skalas utan att tappa den.”",
       quoteAuthor: "BudAI · Sverige",
@@ -116,6 +198,18 @@ export const translations = {
       tryPlayground: "Testa BudAI medan du väntar",
       errorMsg: "Något gick fel — prova igen om en stund?",
       emailInvalid: "Fyll i en giltig e-postadress.",
+      stepsTitle: "Så går det till",
+      step1Title: "Du skriver upp dig",
+      step1Body:
+        "Namn och e-post räcker. Företag lägger till bransch och storlek så att vi kan prioritera rätt våg.",
+      step2Title: "Vi öppnar i vågor",
+      step2Body:
+        "Accessen släpps i omgångar. Din kod BUDAI-EARLY-10 låses direkt och gäller vid lansering.",
+      step3Title: "Du får nyckeln",
+      step3Body:
+        "Ett mejl med din inbjudan — plus en länk du kan dela, där referral sparas i din anmälan.",
+      formTitle: "Be om access",
+      formNote: "Tar ungefär 20 sekunder. Ingen betalning, inget kort.",
     },
     footer: {
       tagline:
@@ -127,6 +221,9 @@ export const translations = {
       pricing: "Prissättning",
       rights: "© 2026 BudAI av Stilledev. Alla rättigheter förbehållna.",
       built: "Byggt med passion i Sverige",
+      previewNote:
+        "Den här sajten är en förhandsvisning av BudAI. Funktioner, gränser och texter kan ändras innan lansering.",
+      backToTop: "Till toppen",
     },
     cookie: {
       title: "Vi använder cookies",
@@ -147,6 +244,7 @@ export const translations = {
       openMenu: "Open menu",
       closeMenu: "Close menu",
       language: "Language",
+      preview: "Preview",
     },
     intro: {
       badge: "Developer preview",
@@ -160,6 +258,16 @@ export const translations = {
       trustPrivacy: "GDPR-minded",
       scrollHint: "Scroll to understand BudAI",
       backToPlayground: "Back to Playground",
+      buildLabel: "build",
+      liveLabel: "Working in this preview",
+      liveItems: [
+        "Chat in Swedish & English",
+        "Voice and image analysis",
+        "History, export and Workspace",
+        "Memory for signed-in members",
+      ],
+      honestNote:
+        "Preview: answers can be wrong and the limits are deliberately low. In guest mode your conversations stay in your own browser.",
     },
     playground: {
       badge: "AI Playground",
@@ -189,6 +297,34 @@ export const translations = {
       stageLive: "live product · not a mock",
       openPlayground: "Try it in the Playground",
       faqTitle: "Common questions",
+      flowTitle: "How an answer is built",
+      flowBody:
+        "The same pipeline whether you write an email, analyze a document, or ask for two options to choose from.",
+      flow1Title: "Reads the intent",
+      flow1Body:
+        "BudAI reads your text, your language and your context — then picks a mode: one answer, one draft, or two options.",
+      flow2Title: "Works in the open",
+      flow2Body:
+        "The reply streams in as it is written, with headings, lists and code formatted properly — so you see the work, not just the result.",
+      flow3Title: "Hands it back to you",
+      flow3Body:
+        "Copy, continue, redo — or open the answer in Workspace, where a long draft becomes a document you can keep working in.",
+      limitsTitle: "Real limits",
+      limitsBody:
+        "The preview is limited on purpose, so it holds up for everyone who tries it. This is exactly what applies:",
+      limitsGuest: "Guest",
+      limitsMember: "Member",
+      limitsDaily: "messages / day",
+      limitsImages: "images",
+      limitsGenerations: "generations",
+      limitsHistory: "saved conversations",
+      limitsMemory: "Long-term memory",
+      limitsMemoryGuest: "Off — everything stays in your browser",
+      limitsMemoryMember: "On — BudAI remembers your preferences",
+      limitsReset: "Limits reset every day (UTC).",
+      previewTitle: "A real product, shown as a preview",
+      previewBody:
+        "What you test here is the same code that will launch: a real model, a real waitlist, real limits. What is missing is polish — not invention.",
     },
     vision: {
       badge: "Our vision",
@@ -198,6 +334,41 @@ export const translations = {
         "BudAI is not another generic AI tool. It is a belief about how work can feel — smarter, faster, more human — from Sweden outward.",
       pathLabel: "The path",
       weBelieve: "We believe",
+      manifestoTitle: "Work should not start with an empty prompt",
+      manifestoBody:
+        "Most AI tools let you talk to a model. We are building a work surface: it recognizes the language you write in, remembers how you like things, and hands back something you can actually use — an email, a decision, a document.",
+      b1Title: "Built for the way we work",
+      b1Body:
+        "Work is not a chat thread. It is drafts, decisions, follow-ups and language that has to hold. BudAI starts inside the flow — not next to it.",
+      b2Title: "The future of digital work",
+      b2Body:
+        "The next step is not more tools. It is an assistant that understands the context, speaks your language, and does the heavy lifting before you ask.",
+      b3Title: "Trust is a feature",
+      b3Body:
+        "Nordic trust is built on transparency: clear limits, no invented numbers, answers you can inspect and an honest picture of what is ready.",
+      roadmapTitle: "What is live in this preview",
+      roadmapBody:
+        "We would rather show what works than promise what does not. Here is where things stand:",
+      roadmapLive: "Live now",
+      roadmapWip: "In progress",
+      roadmapNext: "Exploring",
+      liveItems: [
+        "Chat with a real model in Swedish and English",
+        "Two answer options to choose between",
+        "Voice and image analysis",
+        "History, export and Workspace",
+        "Waitlist with early access and referrals",
+      ],
+      wipItems: [
+        "Memory that follows you between conversations",
+        "More languages, tones and templates",
+        "Shared surfaces for teams",
+      ],
+      nextItems: [
+        "Integrations with calendar, email and documents",
+        "Work in spreadsheets and reports",
+        "Depth for Swedish businesses",
+      ],
       quote:
         "“We are not building hype. We are building a work surface that respects Nordic trust — and scales without losing it.”",
       quoteAuthor: "BudAI · Sweden",
@@ -243,6 +414,18 @@ export const translations = {
       tryPlayground: "Try BudAI while you wait",
       errorMsg: "Something went wrong — try again in a moment?",
       emailInvalid: "Please enter a valid email address.",
+      stepsTitle: "How it works",
+      step1Title: "You sign up",
+      step1Body:
+        "Name and email is enough. Companies add industry and size so we can prioritize the right wave.",
+      step2Title: "We open in waves",
+      step2Body:
+        "Access is released in rounds. Your code BUDAI-EARLY-10 locks immediately and applies at launch.",
+      step3Title: "You get the key",
+      step3Body:
+        "An email with your invite — plus a link you can share, where referrals are saved with your signup.",
+      formTitle: "Request access",
+      formNote: "Takes about 20 seconds. No payment, no card.",
     },
     footer: {
       tagline:
@@ -254,6 +437,9 @@ export const translations = {
       pricing: "Pricing",
       rights: "© 2026 BudAI by Stilledev. All rights reserved.",
       built: "Built with passion in Sweden",
+      previewNote:
+        "This site is a preview of BudAI. Features, limits and copy may change before launch.",
+      backToTop: "Back to top",
     },
     cookie: {
       title: "We use cookies",
