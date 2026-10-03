@@ -13,14 +13,24 @@ Developed by **Stilledev** · Live: [stilledev.se](https://stilledev.se)
 
 | Order | Anchor | What it does |
 |---|---|---|
-| 1 | `#playground` | "Här kan du testa BudAI" — the live AI chat is the home experience. Full-viewport shell, empty state with example prompts, typing/streaming, workspace, history, voice, images |
-| 2 | `#budai` | What BudAI is — for individuals / for business, live capability preview, real limits, plus the FAQ (`#faq`) |
-| 3 | `#vision` | Built for the way we work — three beliefs and the 5-step path |
-| 4 | `#waitlist` | Founding access — individual or company, validation, success + referral link, invite code |
-| 5 | Footer | Anchors, socials, legal (inline modal), language switcher |
+| 1 | `#playground` | "Här kan du testa BudAI" — the live AI chat is the home experience. Full-viewport shell, empty state with example prompts, streaming answers, workspace, history, voice, images |
+| 2 | `#budai` | What BudAI is — who it is for, how an answer is built (live typing demo), the real guest/member limits table, preview disclosure, plus the FAQ (`#faq`) |
+| 3 | `#vision` | Built for the way we work — manifesto, three principles, the Sweden → Nordics → world path, the live/in-progress/exploring status card, pull quote |
+| 4 | `#waitlist` | Founding access — the pitch, three steps and three benefits beside the form; individual or company, validation, success + referral link, invite code |
+| 5 | Footer | Brand block with a back-to-Playground action, link groups, legal (inline modal), preview note |
 
-Auth, admin (`/admin`) and legal pages (`/legal/[slug]`) are unchanged.
-Everything is bilingual (SV / EN) through `lib/i18n.ts` + `LanguageContext` (default EN).
+### Deep pages
+
+| Route | What it is |
+|---|---|
+| `/roadmap` | The honest status page: live now, in progress, exploring, how we prioritize. Linked from the product section and the footer |
+| `/playbooks/[slug]` | Three practical guides — write an email, analyze a text, get two options. Each step has a copyable prompt that feeds the composer; every page links back to `#playground` |
+| `/admin` | Unchanged operations view (own grid/glass styling) |
+| `/legal/[slug]` | Unchanged legal pages |
+
+Everything is bilingual (SV / EN) through `lib/i18n.ts` + `LanguageContext` (default EN),
+and the copy rule is simple: **nothing invented.** No fake users, no fake counters, no promised dates.
+The preview says what it is and the roadmap says what is not finished.
 
 ### Removed in this edition
 
@@ -38,6 +48,25 @@ Surprise toasts, Stockholm Clock, AICore, CodeBackground, Keyboard Hint, Marker 
 - **Supabase** (auth, waitlist, playground conversations/memory, admin)
 - **Anthropic Claude** (`/api/playground`, `/api/playground/generate-image`)
 - **Vercel Analytics**
+- **Self-hosted fonts** — Plus Jakarta Sans + JetBrains Mono as variable woff2 in `app/fonts/`
+  (SIL OFL, licenses included), loaded through `next/font/local`
+
+### Design system
+
+`app/globals.css` is the single source of truth: identity colors, hairlines, elevation,
+radii and the easing tokens, plus one fluid type scale (`--fs-display` … `--fs-micro`).
+Tailwind exposes the same tokens as new utilities (`text-h2`, `rounded-card`, `shadow-lift`,
+`ease-expo`, `max-w-shell`…) without overriding any Tailwind default.
+
+Reusable primitives: `eyebrow`, `fig`, `kbd`, `card` / `card-hover` / `card-edge`, `sheen`,
+`panel`, `hairline`, `chip`, `btn-primary` / `btn-ghost` / `btn-quiet` / `icon-btn`,
+`status-dot`, `preview-tag`, `link-arrow`, `meter`, `field`, `input-shell`, `aurora`,
+`scroll-cue`, `pg-*` (playground motion). All animation is disabled in one
+`prefers-reduced-motion` block.
+
+The `preview-tag`, `fig` build stamp and the honesty notes in the hero, limits card, footer and
+`/roadmap` are intentional: this site should read as **a preview of a real product**, not as a
+finished launch. Keep them when editing copy.
 
 ---
 
@@ -134,6 +163,8 @@ npm run build   # must pass locally before shipping
 ```
 app/
   page.tsx              # the single landing page (playground → budai → vision → waitlist)
+  roadmap/              # public status page
+  playbooks/[slug]/     # three guides with copyable prompts (static params)
   layout.tsx            # fonts, metadata, JSON-LD, providers
   api/playground/       # Claude chat, image generation, usage
   api/usage|features|admin/
@@ -141,12 +172,13 @@ app/
   auth/callback/        # Supabase OAuth callback → back to #playground
   legal/[slug]/         # privacy, terms, cookies, GDPR
 components/
-  sections/             # landing sections (Navbar, PlaygroundIntro, AIPlayground, WhatIsBudAI,
-                        #  Vision, Waitlist, Footer)
+  sections/             # landing sections (Navbar, PlaygroundIntro, AIPlayground,
+                        #  ProductStory, Vision, Waitlist, Footer, RoadmapView)
   playground/           # chat UI pieces
+  playbooks/            # playbook reader
   auth/                 # AuthProvider, AuthModal, hash handling
   admin/ ui/ effects/   # admin widgets, shared primitives, ambient effects
-lib/                    # i18n, limits, data layer, playground stores, utils
+lib/                    # i18n, limits, data layer, playbooks, playground stores, utils
 supabase/schema.sql
 ```
 
@@ -159,6 +191,13 @@ supabase/schema.sql
 - Design tokens and every animation live in `app/globals.css`; `prefers-reduced-motion` is
   respected in one consolidated block — add new motion there.
 - Don't reintroduce a global `⌘K` handler or a `/` key binding: the Playground owns those keys.
+- Keep the preview framing: badges (`preview-tag`), the build stamp in the hero, the honesty note
+  in the limits card, the footer preview note and `/roadmap`. This site should look like a real
+  product that is *previewed inline* — never like a finished launch and never like "coming soon".
+- New sections use the shared primitives (`eyebrow` + a `fig` number, `card`, `hairline`, one
+  `aurora` bloom per section at most) and add copy to `lib/i18n.ts` in **both** languages.
+- Playbooks are plain data in `lib/playbooks.ts`; adding one is a matter of adding an object and a
+  slug to `app/sitemap.ts`. Every playbook must end with a way back to `#playground`.
 - No invented metrics, users or testimonials. If the backend can't produce a number, don't show it.
 
 ---
