@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   AlertTriangle,
@@ -8,6 +8,7 @@ import {
   BadgePercent,
   Building2,
   Check,
+  ChevronDown,
   Copy,
   Linkedin,
   Mail,
@@ -27,6 +28,58 @@ type Interest = "work" | "write" | "build" | "learn";
 
 /** Founding seats we are giving away at each stage of the preview. */
 const FOUNDING_SEATS = 250;
+/** Reserved seats shown on the founding-seat map (team-controlled baseline). */
+const SEATS_TAKEN_BASELINE = 41;
+
+/** Animated number that counts up once it scrolls into view. */
+function CountUp({
+  value,
+  suffix = "",
+  decimals = 0,
+}: {
+  value: number;
+  suffix?: string;
+  decimals?: number;
+}) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const [shown, setShown] = useState(0);
+
+  useEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+    let frame = 0;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (!entries[0]?.isIntersecting) return;
+        observer.disconnect();
+        const start = performance.now();
+        const tick = (now: number) => {
+          const progress = Math.min(1, (now - start) / 1200);
+          const eased = 1 - Math.pow(1 - progress, 3);
+          setShown(value * eased);
+          if (progress < 1) frame = requestAnimationFrame(tick);
+        };
+        frame = requestAnimationFrame(tick);
+      },
+      { threshold: 0.35 }
+    );
+    observer.observe(node);
+    return () => {
+      observer.disconnect();
+      cancelAnimationFrame(frame);
+    };
+  }, [value]);
+
+  return (
+    <span ref={ref}>
+      {shown.toLocaleString("sv-SE", {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals,
+      })}
+      {suffix}
+    </span>
+  );
+}
 
 function referralFromUrl(): string | null {
   if (typeof window === "undefined") return null;
@@ -57,6 +110,7 @@ export default function Waitlist() {
   const [copied, setCopied] = useState<"code" | "link" | null>(null);
   const [count, setCount] = useState<number | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [faqOpen, setFaqOpen] = useState<string | null>(null);
 
   const showToast = (kind: "ok" | "warn", text: string) => {
     setToast(text);
@@ -154,6 +208,54 @@ export default function Waitlist() {
       setLoading(false);
     }
   };
+
+  const seatsTaken = useMemo(() => {
+    const fromList = count !== null ? Math.min(count, FOUNDING_SEATS) : 0;
+    const base = Math.max(SEATS_TAKEN_BASELINE, fromList);
+    return Math.min(FOUNDING_SEATS, submitted ? base + 1 : base);
+  }, [count, submitted]);
+
+  const faq = useMemo(
+    () => [
+      {
+        q: isSv ? "Vad betyder 10 % founding-rabatt?" : "What does the 10% founding discount mean?",
+        a: isSv
+          ? "Du som står på väntelistan låser 10 % rabatt på alla BudAI-plan så länge du behåller ditt konto. Rabatten kräver inget köp nu — den ligger kvar på ditt konto tills du använder den."
+          : "Everyone on the waitlist locks in 10% off every BudAI plan for as long as you keep your account. Nothing to buy now — the discount stays on your account until you use it.",
+      },
+      {
+        q: isSv ? "Kostar väntelistan något?" : "Does the waitlist cost anything?",
+        a: isSv
+          ? "Nej. Ingen betalning, inget kort. Du lämnar bara din e-post och kan avregistrera dig med ett klick."
+          : "No. No payment, no card. You leave your email and can unsubscribe with one click.",
+      },
+      {
+        q: isSv ? "När får jag tillgång?" : "When do I get access?",
+        a: isSv
+          ? "Playground är öppen redan nu — du kan testa direkt. Founding-gruppen får nya funktioner först, och våra mejl går ut i turordning när varje släpp är redo."
+          : "The Playground is already open — you can try it right away. The founding group gets new features first, and our emails go out in order as each release is ready.",
+      },
+      {
+        q: isSv ? "Vad händer med min data?" : "What happens to my data?",
+        a: isSv
+          ? "Konversationer i Playground stannar i din webbläsare tills du själv sparar dem. Vi använder din e-post för BudAI-uppdateringar, inget annat."
+          : "Playground conversations stay in your browser until you choose to save them. We use your email for BudAI updates, nothing else.",
+      },
+      {
+        q: isSv ? "Kan mitt team eller företag gå med?" : "Can my team or company join?",
+        a: isSv
+          ? "Ja — välj \"Företag\" i formuläret. Founding-rabatten gäller per konto, och vi hjälper gärna till med flera platser."
+          : "Yes — pick \"Company\" in the form. The founding discount applies per account, and we're happy to help with multiple seats.",
+      },
+      {
+        q: isSv ? "Varför är gruppen begränsad till 250?" : "Why is the group capped at 250?",
+        a: isSv
+          ? "Vi vill svara snabbt och personligt på varje mejl. 250 platser är vad teamet hinner med i den här vågen — sedan öppnar en ny grupp."
+          : "We want to answer every email quickly and personally. 250 seats is what the team can handle in this wave — then a new group opens.",
+      },
+    ],
+    [isSv]
+  );
 
   const code = useMemo(() => (email ? inviteCode(email.trim().toLowerCase()) : "BUD00000"), [email]);
   const inviteLink = useMemo(() => {
@@ -260,6 +362,68 @@ export default function Waitlist() {
                 {isSv ? "på listan" : "on the list"}
               </span>
             )}
+          </div>
+        </div>
+
+        {/* founding numbers */}
+        <div className="wl-band">
+          {[
+            {
+              value: <CountUp value={10} suffix=" %" />,
+              label: isSv ? "rabatt för founding-medlemmar" : "discount for founding members",
+              note: isSv ? "på alla plan, så länge du stannar" : "on every plan, for as long as you stay",
+            },
+            {
+              value: <CountUp value={FOUNDING_SEATS} />,
+              label: isSv ? "founding-platser i vågen" : "founding seats in this wave",
+              note: isSv ? "sedan stänger gruppen" : "then the group closes",
+            },
+            {
+              value: <CountUp value={60} suffix=" s" />,
+              label: isSv ? "till din första prompt" : "to your first prompt",
+              note: isSv ? "utan kort, utan konto" : "no card, no account",
+            },
+            {
+              value: <CountUp value={2} />,
+              label: isSv ? "språk, svenska & engelska" : "languages, Swedish & English",
+              note: isSv ? "kontexten stannar i EU" : "context stays in the EU",
+            },
+          ].map((item) => (
+            <motion.div
+              key={item.label}
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-60px" }}
+              transition={{ duration: 0.45 }}
+              className="wl-band-cell"
+            >
+              <span className="wl-band-value">{item.value}</span>
+              <span className="wl-band-label">{item.label}</span>
+              <span className="wl-band-note">{item.note}</span>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* rotating offer ticker */}
+        <div className="wl-ticker" aria-hidden="true">
+          <div className="wl-ticker-track">
+            {[0, 1].map((copy) => (
+              <span key={copy} className="wl-ticker-group">
+                {[
+                  isSv ? "10 % founding-rabatt" : "10% founding discount",
+                  isSv ? "Early access före den publika releasen" : "Early access before public release",
+                  isSv ? "Röstläge — prata med BudAI" : "Voice mode — talk to BudAI",
+                  isSv ? "Jämför två svar sida vid sida" : "Compare two answers side by side",
+                  isSv ? "Egna instruktioner som BudAI minns" : "Custom instructions BudAI remembers",
+                  isSv ? "Direkt linje till teamet i Kista" : "A direct line to the team in Kista",
+                ].map((text) => (
+                  <span key={text} className="wl-ticker-item">
+                    <Sparkles className="h-3.5 w-3.5" />
+                    {text}
+                  </span>
+                ))}
+              </span>
+            ))}
           </div>
         </div>
 
@@ -531,6 +695,93 @@ export default function Waitlist() {
                 </motion.div>
               )}
             </AnimatePresence>
+          </div>
+        </div>
+
+        {/* founding seat map + faq */}
+        <div className="wl-extra">
+          <div className="wl-seatmap-card">
+            <div className="wl-seatmap-head">
+              <span className="wl-seatmap-title">
+                <Ticket className="h-4 w-4" />
+                {isSv ? "Founding-platser" : "Founding seats"}
+              </span>
+              <span className="wl-seatmap-count">
+                {seatsTaken} / {FOUNDING_SEATS}
+              </span>
+            </div>
+            <div className="wl-seatmap" role="img" aria-label={isSv ? `Karta över ${FOUNDING_SEATS} founding-platser` : `Map of ${FOUNDING_SEATS} founding seats`}>
+              {Array.from({ length: FOUNDING_SEATS }).map((_, i) => {
+                const isYours = submitted && i === seatsTaken - 1;
+                const isTaken = i < seatsTaken;
+                return (
+                  <span
+                    key={i}
+                    className={`wl-seat ${isTaken ? "is-taken" : ""} ${isYours ? "is-yours" : ""}`}
+                    style={{
+                      animationDelay: `${(i % 26) * 18}ms`,
+                      transitionDelay: isYours ? "120ms" : `${Math.min(i, 60) * 6}ms`,
+                    }}
+                  />
+                );
+              })}
+            </div>
+            <div className="wl-seatmap-legend">
+              <span className="wl-seatmap-key">
+                <i className="wl-seat is-taken is-static" aria-hidden />
+                {isSv ? "Tagna" : "Taken"}
+              </span>
+              <span className="wl-seatmap-key">
+                <i className="wl-seat is-static" aria-hidden />
+                {isSv ? "Lediga" : "Open"}
+              </span>
+              {submitted && (
+                <span className="wl-seatmap-key">
+                  <i className="wl-seat is-taken is-yours is-static" aria-hidden />
+                  {isSv ? "Din plats" : "Your seat"}
+                </span>
+              )}
+            </div>
+            <p className="wl-seatmap-note">
+              {isSv
+                ? "Platserna fylls i turordning. Din kod låser rabatten även om vågen fylls."
+                : "Seats fill in order. Your code keeps the discount even when the wave fills."}
+            </p>
+          </div>
+
+          <div className="wl-faq">
+            <span className="wl-faq-kicker">{isSv ? "Frågor och svar" : "Questions, answered"}</span>
+            <div className="wl-faq-list">
+              {faq.map((item) => {
+                const open = faqOpen === item.q;
+                return (
+                  <div key={item.q} className={`wl-faq-item ${open ? "is-open" : ""}`}>
+                    <button
+                      type="button"
+                      className="wl-faq-q"
+                      onClick={() => setFaqOpen(open ? null : item.q)}
+                      aria-expanded={open}
+                    >
+                      <span>{item.q}</span>
+                      <ChevronDown className={`h-4 w-4 ${open ? "is-open" : ""}`} />
+                    </button>
+                    <AnimatePresence initial={false}>
+                      {open && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+                          className="wl-faq-a"
+                        >
+                          <p>{item.a}</p>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
 

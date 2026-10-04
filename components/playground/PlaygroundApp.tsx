@@ -19,6 +19,7 @@ import {
   Image as ImageIcon,
   Keyboard,
   Layers,
+  Link2,
   LogIn,
   LogOut,
   Maximize2,
@@ -53,6 +54,7 @@ import {
   type PgSettings,
   type StyleId,
 } from "@/lib/playground/types";
+import { shareUrl } from "@/lib/playground/share";
 import {
   EFFORT_OPTIONS,
   GREETINGS,
@@ -1268,6 +1270,37 @@ export default function PlaygroundApp() {
     [lang, runPrompt]
   );
 
+  const shareThread = useCallback(() => {
+    if (!messages.length) {
+      showToast("err", isSv ? "Inget att dela ännu" : "Nothing to share yet");
+      return;
+    }
+    const title = history.find((c) => c.id === convoId)?.title || (isSv ? "BudAI-chatt" : "BudAI chat");
+    const url = shareUrl(messages, title);
+    if (url.length > 7200) {
+      showToast(
+        "warn",
+        isSv
+          ? "Konversationen är lång — länken blev stor. Kopierar den ändå."
+          : "This conversation is long — the link got big. Copying it anyway."
+      );
+    }
+    void navigator.clipboard
+      .writeText(url)
+      .then(() => {
+        showToast("ok", isSv ? "Delningslänk kopierad" : "Share link copied");
+        playSound("success");
+      })
+      .catch(() => {
+        showToast("err", isSv ? "Kunde inte kopiera länken" : "Could not copy the link");
+      });
+    if (typeof navigator !== "undefined" && navigator.share) {
+      navigator.share({ title, url }).catch(() => {
+        /* the user dismissed the share sheet */
+      });
+    }
+  }, [convoId, history, isSv, messages, showToast]);
+
   const exportThread = useCallback(
     (format: "md" | "json" = "md") => {
       if (!messages.length) {
@@ -1416,6 +1449,14 @@ export default function PlaygroundApp() {
     () => [
       { id: "new", group: isSv ? "Chatt" : "Chat", label: isSv ? "Ny chatt" : "New chat", hint: "⌘N", icon: <MessageSquarePlus className="h-3.5 w-3.5" />, run: () => void newChat() },
       { id: "library", group: isSv ? "Chatt" : "Chat", label: isSv ? "Promptbibliotek" : "Prompt library", icon: <SquareLibrary className="h-3.5 w-3.5" />, run: () => setLibraryOpen(true) },
+      {
+        id: "share-link",
+        group: isSv ? "Chatt" : "Chat",
+        label: isSv ? "Dela som länk" : "Share as a link",
+        hint: isSv ? "Skrivskyddad kopia, inget konto krävs" : "Read-only copy, no account needed",
+        icon: <Link2 className="h-3.5 w-3.5" />,
+        run: () => shareThread(),
+      },
       { id: "export-md", group: isSv ? "Chatt" : "Chat", label: isSv ? "Exportera som Markdown" : "Export as Markdown", hint: "⌘E", icon: <Download className="h-3.5 w-3.5" />, run: () => exportThread("md") },
       { id: "export-json", group: isSv ? "Chatt" : "Chat", label: isSv ? "Exportera som JSON" : "Export as JSON", icon: <Download className="h-3.5 w-3.5" />, run: () => exportThread("json") },
       {
@@ -1599,6 +1640,16 @@ export default function PlaygroundApp() {
             aria-label={isSv ? "Galleri" : "Gallery"}
           >
             <ImageIcon className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={shareThread}
+            disabled={!messages.length}
+            className="pgx-icon-btn hidden sm:inline-flex"
+            title={isSv ? "Dela konversation (länk)" : "Share conversation (link)"}
+            aria-label={isSv ? "Dela konversation" : "Share conversation"}
+          >
+            <Link2 className="h-4 w-4" />
           </button>
           <button
             type="button"

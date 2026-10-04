@@ -108,7 +108,10 @@ export default function Footer() {
             <h2 className="footer-heading">{isSv ? "Information" : "Information"}</h2>
             <ul className="footer-link-list">
               <li>
-                <a href="/legal/privacy">{isSv ? "Integritetspolicy" : "Privacy policy"}</a>
+                <a href="/logo" className="footer-link">
+              Logo Lab
+            </a>
+            <a href="/legal/privacy">{isSv ? "Integritetspolicy" : "Privacy policy"}</a>
               </li>
               <li>
                 <a href="/legal/terms">{isSv ? "Användarvillkor" : "Terms of service"}</a>

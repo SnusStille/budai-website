@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, Command, Globe2, Menu, X } from "lucide-react";
-import BudAILogo, { BudAIWordmark } from "@/components/ui/BudAILogo";
+import { BudAIWordmark } from "@/components/ui/BudAILogo";
+import LiveMark from "@/components/logo/LiveMark";
 import { useLang } from "@/components/ui/LanguageContext";
 
 export default function Navbar() {
@@ -76,7 +77,7 @@ export default function Navbar() {
       >
         <div className="site-nav-inner">
           <a href="#home" className="site-brand" aria-label="BudAI home">
-            <BudAILogo size="sm" animated={scrolled} motion="idle" />
+            <LiveMark px={58} />
             <span className="site-brand-word">
               Bud<span>AI</span>
             </span>
