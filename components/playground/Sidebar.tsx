@@ -2,8 +2,6 @@
 
 import { useState } from "react";
 import {
-  BarChart3,
-  BrainCircuit,
   Check,
   Clock,
   LogIn,
@@ -42,12 +40,6 @@ type Props = {
   creating: boolean;
   isMember: boolean;
   isGuest: boolean;
-  remaining: number;
-  limit: number;
-  memoryCount: number;
-  memoryEnabled: boolean;
-  onOpenMemory: () => void;
-  onOpenStats: () => void;
   onOpenSettings: () => void;
   onSignIn: () => void;
   onSignOut: () => void;
@@ -72,12 +64,6 @@ export default function Sidebar({
   creating,
   isMember,
   isGuest,
-  remaining,
-  limit,
-  memoryCount,
-  memoryEnabled,
-  onOpenMemory,
-  onOpenStats,
   onOpenSettings,
   onSignIn,
   onSignOut,
@@ -88,8 +74,6 @@ export default function Sidebar({
   const isSv = lang === "sv";
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameVal, setRenameVal] = useState("");
-
-  const usedRatio = limit > 0 ? Math.max(0, Math.min(1, 1 - remaining / limit)) : 0;
 
   return (
     <div className="pgx-sidebar flex h-full min-h-0 flex-col">
@@ -239,26 +223,6 @@ export default function Sidebar({
       </div>
 
       <div className="pgx-sidebar-foot">
-        <button type="button" onClick={onOpenStats} className="pgx-foot-row">
-          <BarChart3 className="h-3.5 w-3.5 text-accent-cyan" />
-          <span>{isSv ? "Insikter" : "Insights"}</span>
-          <span className="pgx-foot-meter" aria-hidden>
-            <span className="pgx-foot-meter-fill" style={{ width: `${Math.round(usedRatio * 100)}%` }} />
-          </span>
-          <span className="pgx-foot-value">
-            {remaining}/{limit}
-          </span>
-        </button>
-
-        {isMember && (
-          <button type="button" onClick={onOpenMemory} className="pgx-foot-row">
-            <BrainCircuit className="h-3.5 w-3.5 text-accent-purple" />
-            <span>{isSv ? "Minne" : "Memory"}</span>
-            {!memoryEnabled && <span className="pgx-foot-badge">{isSv ? "av" : "off"}</span>}
-            <span className="pgx-foot-value">{memoryCount}</span>
-          </button>
-        )}
-
         <button type="button" onClick={onOpenSettings} className="pgx-foot-row">
           <Settings2 className="h-3.5 w-3.5 text-white/50" />
           <span>{isSv ? "Inställningar" : "Preferences"}</span>
@@ -281,7 +245,7 @@ export default function Sidebar({
             <span className="min-w-0 flex-1 text-left">
               <span className="block text-[12px] font-medium">{isSv ? "Logga in gratis" : "Sign in free"}</span>
               <span className="block text-[10px] text-white/45">
-                {isSv ? "Minne, historik i molnet, fler meddelanden" : "Memory, cloud history, more messages"}
+                {isSv ? "Historik i molnet och fler meddelanden" : "Cloud history and more messages"}
               </span>
             </span>
           </button>

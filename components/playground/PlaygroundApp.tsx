@@ -11,9 +11,8 @@ import {
 import { AnimatePresence, motion } from "framer-motion";
 import {
   AudioLines,
-  BarChart3,
-  BrainCircuit,
   Command,
+  Compass,
   Download,
   GalleryHorizontalEnd,
   Image as ImageIcon,
@@ -24,6 +23,7 @@ import {
   LogOut,
   Maximize2,
   MessageSquarePlus,
+  MoreHorizontal,
   Minimize2,
   PanelLeft,
   PanelRight,
@@ -82,6 +82,7 @@ import * as cloud from "@/lib/playground/cloudStore";
 import { consumePlaygroundPrefill, PLAYGROUND_PREFILL_EVENT } from "@/lib/playground/events";
 import { playSound, setSoundEnabled } from "@/lib/playground/sound";
 import VoiceMode from "./VoiceMode";
+import PlaygroundTour, { TOUR_KEY } from "./Tour";
 import Composer from "./Composer";
 import Sidebar, { type HistoryItem } from "./Sidebar";
 import MessageList, { type DualOption } from "./MessageList";
@@ -89,13 +90,11 @@ import {
   CommandPalette,
   GalleryPanel,
   InspectorPanel,
-  MemoryPanel,
   NotesPanel,
   PromptLibrary,
   Portal,
   SettingsPanel,
   ShortcutsModal,
-  StatsPanel,
   type PaletteAction,
 } from "./Panels";
 
@@ -157,7 +156,7 @@ function groupHistory(items: HistoryItem[], lang: Lang) {
 }
 
 export default function PlaygroundApp() {
-  const { lang } = useLang();
+  const { lang, setLang } = useLang();
   const auth = useAuth();
   const isSv = lang === "sv";
 
@@ -223,11 +222,11 @@ export default function PlaygroundApp() {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
-  const [memoryOpen, setMemoryOpen] = useState(false);
-  const [statsOpen, setStatsOpen] = useState(false);
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [notesOpen, setNotesOpen] = useState(false);
+  const [tourOpen, setTourOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [notes, setNotes] = useState<NoteItem[]>([]);
   const [search, setSearch] = useState("");
   const [creating, setCreating] = useState(false);
@@ -1327,6 +1326,29 @@ export default function PlaygroundApp() {
     [convoId, history, isSv, messages, showToast]
   );
 
+  // first visit: offer the tour once the shell has settled
+  useEffect(() => {
+    if (!settingsLoaded) return;
+    let seen = true;
+    try {
+      seen = Boolean(window.localStorage.getItem(TOUR_KEY));
+    } catch {
+      seen = true;
+    }
+    if (seen) return;
+    const timer = window.setTimeout(() => setTourOpen(true), 1500);
+    return () => window.clearTimeout(timer);
+  }, [settingsLoaded]);
+
+  const closeTour = useCallback(() => {
+    setTourOpen(false);
+    try {
+      window.localStorage.setItem(TOUR_KEY, String(Date.now()));
+    } catch {
+      /* storage unavailable */
+    }
+  }, []);
+
   const addNote = useCallback(
     (text: string, source?: string) => {
       const trimmed = text.trim();
@@ -1359,6 +1381,7 @@ export default function PlaygroundApp() {
       const mod = event.metaKey || event.ctrlKey;
 
       if (event.key === "Escape") {
+        setMenuOpen(false);
         if (lightbox) return setLightbox(null);
         if (paletteOpen) return setPaletteOpen(false);
         if (shortcutsOpen) return setShortcutsOpen(false);
@@ -1435,16 +1458,6 @@ export default function PlaygroundApp() {
     return found;
   }, [auth.isMember, convoId, messages, search]);
 
-  const contextTokens = useMemo(
-    () => messages.reduce((sum, m) => sum + estimateTokens(m.content), 0),
-    [messages]
-  );
-  const contextWindow = 200_000;
-  const contextRatio = Math.min(1, contextTokens / contextWindow);
-  const lastAnswerMs = useMemo(
-    () => [...messages].reverse().find((m) => m.role === "assistant" && m.ms)?.ms,
-    [messages]
-  );
   const paletteActions: PaletteAction[] = useMemo(
     () => [
       { id: "new", group: isSv ? "Chatt" : "Chat", label: isSv ? "Ny chatt" : "New chat", hint: "⌘N", icon: <MessageSquarePlus className="h-3.5 w-3.5" />, run: () => void newChat() },
@@ -1484,10 +1497,8 @@ export default function PlaygroundApp() {
         run: () => setNotesOpen(true),
       },
       { id: "gallery", group: isSv ? "Visa" : "View", label: isSv ? "Galleri" : "Gallery", icon: <GalleryHorizontalEnd className="h-3.5 w-3.5" />, run: () => setGalleryOpen(true) },
-      { id: "stats", group: isSv ? "Visa" : "View", label: isSv ? "Insikter" : "Insights", icon: <BarChart3 className="h-3.5 w-3.5" />, run: () => setStatsOpen(true) },
       { id: "panel", group: isSv ? "Visa" : "View", label: isSv ? "Växla panel" : "Toggle panel", hint: "⌘B", icon: <PanelRight className="h-3.5 w-3.5" />, run: () => setInspector((prev) => prev || { title: "Panel", body: messages.at(-1)?.content || "" }) },
       { id: "expand", group: isSv ? "Visa" : "View", label: isSv ? "Helskärm" : "Full screen", hint: "⌘J", icon: <Maximize2 className="h-3.5 w-3.5" />, run: () => setExpanded((v) => !v) },
-      { id: "memory", group: isSv ? "Inställningar" : "Settings", label: isSv ? "Minne" : "Memory", icon: <BrainCircuit className="h-3.5 w-3.5" />, run: () => setMemoryOpen(true) },
       { id: "settings", group: isSv ? "Inställningar" : "Settings", label: isSv ? "Inställningar" : "Preferences", icon: <Settings2 className="h-3.5 w-3.5" />, run: () => setSettingsOpen(true) },
       { id: "shortcuts", group: isSv ? "Inställningar" : "Settings", label: isSv ? "Tangentbord" : "Keyboard shortcuts", hint: "⌘/", icon: <Keyboard className="h-3.5 w-3.5" />, run: () => setShortcutsOpen(true) },
       ...(auth.isMember
@@ -1592,140 +1603,219 @@ export default function PlaygroundApp() {
         </div>
 
         <div className="flex shrink-0 items-center gap-1.5">
-          <button
-            type="button"
-            onClick={() => setPaletteOpen(true)}
-            className="pgx-command-hint hidden md:inline-flex"
-            title={isSv ? "Kommandopalett" : "Command palette"}
-          >
-            <Command className="h-3.5 w-3.5" />
-            <span>{isSv ? "Kommandon" : "Commands"}</span>
-            <kbd>⌘K</kbd>
-          </button>
+          <span className={`pgx-state-pill ${busy ? "is-busy" : ""}`} role="status" aria-live="polite">
+            <span className="pgx-state-dot" aria-hidden />
+            <span className="hidden sm:inline">
+              {busy
+                ? activity === "typing"
+                  ? isSv
+                    ? "Svarar"
+                    : "Answering"
+                  : isSv
+                  ? "Arbetar"
+                  : "Working"
+                : isSv
+                ? "Redo"
+                : "Ready"}
+            </span>
+          </span>
+
+          <span className="pgx-lang-switch" role="group" aria-label={isSv ? "Språk" : "Language"}>
+            <button
+              type="button"
+              onClick={() => setLang("sv")}
+              className={lang === "sv" ? "is-active" : ""}
+              aria-pressed={lang === "sv"}
+            >
+              SV
+            </button>
+            <button
+              type="button"
+              onClick={() => setLang("en")}
+              className={lang === "en" ? "is-active" : ""}
+              aria-pressed={lang === "en"}
+            >
+              EN
+            </button>
+          </span>
+
           <button
             type="button"
             onClick={() => void newChat()}
-            className="pgx-icon-btn"
+            className="pgx-new-chat"
             title={isSv ? "Ny chatt" : "New chat"}
             aria-label={isSv ? "Ny chatt" : "New chat"}
           >
             <MessageSquarePlus className="h-4 w-4" />
+            <span className="hidden md:inline">{isSv ? "Ny chatt" : "New chat"}</span>
           </button>
+
           <button
             type="button"
             onClick={() => setInspector((prev) => (prev ? null : { title: isSv ? "Senaste svaret" : "Latest answer", body: [...messages].reverse().find((m) => m.role === "assistant")?.content || "" }))}
             className={`pgx-icon-btn hidden sm:inline-flex ${inspector ? "is-active" : ""}`}
-            title={isSv ? "Panel" : "Panel"}
+            title={isSv ? "Visa panel" : "Show panel"}
             aria-label={isSv ? "Växla panel" : "Toggle panel"}
           >
             <PanelRight className="h-4 w-4" />
           </button>
-          <button
-            type="button"
-            onClick={() => {
-              setVoiceOpen(true);
-              playSound("open");
-            }}
-            className="pgx-icon-btn hidden sm:inline-flex"
-            title={isSv ? "Röstläge" : "Voice mode"}
-            aria-label={isSv ? "Röstläge" : "Voice mode"}
-          >
-            <AudioLines className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            onClick={() => setGalleryOpen(true)}
-            className="pgx-icon-btn hidden sm:inline-flex"
-            title={isSv ? "Galleri" : "Gallery"}
-            aria-label={isSv ? "Galleri" : "Gallery"}
-          >
-            <ImageIcon className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            onClick={shareThread}
-            disabled={!messages.length}
-            className="pgx-icon-btn hidden sm:inline-flex"
-            title={isSv ? "Dela konversation (länk)" : "Share conversation (link)"}
-            aria-label={isSv ? "Dela konversation" : "Share conversation"}
-          >
-            <Link2 className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            onClick={() => exportThread("md")}
-            disabled={!messages.length}
-            className="pgx-icon-btn hidden sm:inline-flex"
-            title={isSv ? "Exportera konversation (⌘E)" : "Export conversation (⌘E)"}
-            aria-label={isSv ? "Exportera konversation" : "Export conversation"}
-          >
-            <Download className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            onClick={() => setExpanded((v) => !v)}
-            className="pgx-icon-btn hidden sm:inline-flex"
-            title={expanded ? (isSv ? "Stäng helskärm" : "Exit full screen") : isSv ? "Helskärm" : "Full screen"}
-            aria-label={isSv ? "Helskärm" : "Full screen"}
-          >
-            {expanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-          </button>
-          {auth.isMember ? (
-            <button type="button" onClick={() => void auth.signOut()} className="pgx-icon-btn" title={isSv ? "Logga ut" : "Sign out"}>
-              <LogOut className="h-4 w-4" />
-            </button>
-          ) : (
-            <button type="button" onClick={() => auth.openAuth()} className="pgx-signin-chip">
-              <LogIn className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">{isSv ? "Logga in" : "Sign in"}</span>
-            </button>
-          )}
-        </div>
-      </div>
 
-      {/* live status rail */}
-      <div className="pgx-status-rail">
-        <span className={`pgx-status-item ${busy ? "pgx-status-live" : ""}`}>
-          {busy ? <span className="pgx-status-dot" /> : <span className="h-1.5 w-1.5 rounded-full bg-white/25" />}
-          {busy
-            ? activity === "typing"
-              ? isSv
-                ? "Strömmar svar…"
-                : "Streaming…"
-              : isSv
-                ? "Arbetar…"
-                : "Working…"
-            : isSv
-              ? "Redo"
-              : "Ready"}
-        </span>
-        <span className="pgx-status-item">
-          <Sparkles className="h-3 w-3" />
-          {PERSONAS.find((p) => p.id === (settings.persona || "core"))?.label[lang]}
-        </span>
-        <span className="pgx-status-item">
-          {isSv ? "Djup" : "Depth"}: {EFFORT_OPTIONS.find((e) => e.id === (settings.effort || "balanced"))?.label[lang]}
-        </span>
-        <span className="pgx-status-item">
-          {isSv ? "Stil" : "Style"}: {STYLE_OPTIONS.find((x) => x.id === (settings.style || "balanced"))?.label[lang]}
-        </span>
-        <span className="pgx-status-item">
-          {estimateTokens(messages.map((m) => m.content).join(" "))} tok
-        </span>
-        <span className="pgx-status-item">
-          <span>{isSv ? "Kontext" : "Context"}</span>
-          <span className="pgx-status-meter" aria-hidden>
-            <span style={{ width: `${Math.max(2, contextRatio * 100)}%` }} />
-          </span>
-        </span>
-        {lastAnswerMs ? (
-          <span className="pgx-status-item">
-            {(lastAnswerMs / 1000).toFixed(1)}s {isSv ? "senaste svar" : "last reply"}
-          </span>
-        ) : null}
-        <span className="pgx-status-item ml-auto">
-          {auth.isMember ? (isSv ? "Konto" : "Account") : isSv ? "Gäst" : "Guest"}
-        </span>
+          <div className="pgx-menu-wrap">
+            <button
+              type="button"
+              onClick={() => setMenuOpen((v) => !v)}
+              className={`pgx-icon-btn ${menuOpen ? "is-active" : ""}`}
+              aria-haspopup="menu"
+              aria-expanded={menuOpen}
+              title={isSv ? "Mer" : "More"}
+              aria-label={isSv ? "Mer" : "More"}
+            >
+              <MoreHorizontal className="h-4 w-4" />
+            </button>
+            <AnimatePresence>
+              {menuOpen && (
+                <>
+                  <button type="button" className="pgx-menu-scrim" aria-label={isSv ? "Stäng" : "Close"} onClick={() => setMenuOpen(false)} />
+                  <motion.div
+                    initial={{ opacity: 0, y: -6, scale: 0.98 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -4, scale: 0.99 }}
+                    transition={{ duration: 0.16, ease: [0.22, 1, 0.36, 1] }}
+                    className="pgx-menu"
+                    role="menu"
+                  >
+                    {[
+                      {
+                        id: "voice",
+                        icon: <AudioLines className="h-3.5 w-3.5" />,
+                        label: isSv ? "Röstläge" : "Voice mode",
+                        run: () => {
+                          setVoiceOpen(true);
+                          playSound("open");
+                        },
+                      },
+                      {
+                        id: "commands",
+                        icon: <Command className="h-3.5 w-3.5" />,
+                        label: isSv ? "Kommandon" : "Commands",
+                        hint: "⌘K",
+                        run: () => setPaletteOpen(true),
+                      },
+                      {
+                        id: "share",
+                        icon: <Link2 className="h-3.5 w-3.5" />,
+                        label: isSv ? "Dela som länk" : "Share as a link",
+                        disabled: !messages.length,
+                        run: shareThread,
+                      },
+                      {
+                        id: "export",
+                        icon: <Download className="h-3.5 w-3.5" />,
+                        label: isSv ? "Exportera (Markdown)" : "Export (Markdown)",
+                        hint: "⌘E",
+                        disabled: !messages.length,
+                        run: () => exportThread("md"),
+                      },
+                      {
+                        id: "gallery",
+                        icon: <ImageIcon className="h-3.5 w-3.5" />,
+                        label: isSv ? "Bilder" : "Images",
+                        run: () => setGalleryOpen(true),
+                      },
+                      {
+                        id: "notes",
+                        icon: <StickyNote className="h-3.5 w-3.5" />,
+                        label: isSv ? "Anteckningar" : "Notes",
+                        run: () => setNotesOpen(true),
+                      },
+                      {
+                        id: "library",
+                        icon: <SquareLibrary className="h-3.5 w-3.5" />,
+                        label: isSv ? "Promptbibliotek" : "Prompt library",
+                        run: () => setLibraryOpen(true),
+                      },
+                      {
+                        id: "tour",
+                        icon: <Compass className="h-3.5 w-3.5" />,
+                        label: isSv ? "Rundtur" : "Quick tour",
+                        run: () => setTourOpen(true),
+                      },
+                      {
+                        id: "settings",
+                        icon: <Settings2 className="h-3.5 w-3.5" />,
+                        label: isSv ? "Inställningar" : "Preferences",
+                        run: () => setSettingsOpen(true),
+                      },
+                      {
+                        id: "shortcuts",
+                        icon: <Keyboard className="h-3.5 w-3.5" />,
+                        label: isSv ? "Tangentbord" : "Keyboard shortcuts",
+                        hint: "⇧/",
+                        run: () => setShortcutsOpen(true),
+                      },
+                      {
+                        id: "fullscreen",
+                        icon: expanded ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />,
+                        label: expanded ? (isSv ? "Stäng helskärm" : "Exit full screen") : isSv ? "Helskärm" : "Full screen",
+                        run: () => setExpanded((v) => !v),
+                      },
+                    ].map((item) => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        role="menuitem"
+                        disabled={item.disabled}
+                        onClick={() => {
+                          setMenuOpen(false);
+                          item.run();
+                        }}
+                        className="pgx-menu-item"
+                      >
+                        <span className="pgx-menu-icon">{item.icon}</span>
+                        <span className="flex-1 text-left">{item.label}</span>
+                        {item.hint && <kbd className="pgx-menu-kbd">{item.hint}</kbd>}
+                      </button>
+                    ))}
+
+                    <div className="pgx-menu-sep" aria-hidden />
+
+                    {auth.isMember ? (
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={() => {
+                          setMenuOpen(false);
+                          void auth.signOut();
+                        }}
+                        className="pgx-menu-item"
+                      >
+                        <span className="pgx-menu-icon">
+                          <LogOut className="h-3.5 w-3.5" />
+                        </span>
+                        <span className="flex-1 text-left">{isSv ? "Logga ut" : "Sign out"}</span>
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={() => {
+                          setMenuOpen(false);
+                          auth.openAuth();
+                        }}
+                        className="pgx-menu-item is-strong"
+                      >
+                        <span className="pgx-menu-icon">
+                          <LogIn className="h-3.5 w-3.5" />
+                        </span>
+                        <span className="flex-1 text-left">{isSv ? "Logga in (frivilligt)" : "Sign in (optional)"}</span>
+                      </button>
+                    )}
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
       </div>
 
       {/* body */}
@@ -1755,12 +1845,6 @@ export default function PlaygroundApp() {
                 creating={creating}
                 isMember={auth.isMember}
                 isGuest={auth.isGuest}
-                remaining={auth.remaining.messages}
-                limit={auth.limits.messagesPerDay}
-                memoryCount={memory.length}
-                memoryEnabled={memoryEnabled}
-                onOpenMemory={() => setMemoryOpen(true)}
-                onOpenStats={() => setStatsOpen(true)}
                 onOpenSettings={() => setSettingsOpen(true)}
                 onSignIn={() => auth.openAuth()}
                 onSignOut={() => void auth.signOut()}
@@ -1960,18 +2044,6 @@ export default function PlaygroundApp() {
                 creating={creating}
                 isMember={auth.isMember}
                 isGuest={auth.isGuest}
-                remaining={auth.remaining.messages}
-                limit={auth.limits.messagesPerDay}
-                memoryCount={memory.length}
-                memoryEnabled={memoryEnabled}
-                onOpenMemory={() => {
-                  setMemoryOpen(true);
-                  setDrawerOpen(false);
-                }}
-                onOpenStats={() => {
-                  setStatsOpen(true);
-                  setDrawerOpen(false);
-                }}
                 onOpenSettings={() => {
                   setSettingsOpen(true);
                   setDrawerOpen(false);
@@ -1989,6 +2061,7 @@ export default function PlaygroundApp() {
       </Portal>
 
       {/* modals */}
+      <PlaygroundTour open={tourOpen} onClose={closeTour} lang={lang} />
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} actions={paletteActions} lang={lang} />
       <ShortcutsModal open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} lang={lang} />
       <PromptLibrary
@@ -2000,28 +2073,6 @@ export default function PlaygroundApp() {
         }}
         lang={lang}
       />
-      <MemoryPanel
-        open={memoryOpen}
-        onClose={() => setMemoryOpen(false)}
-        lang={lang}
-        items={memory}
-        enabled={memoryEnabled}
-        onToggle={(value) => {
-          setMemoryEnabled(value);
-          if (auth.isMember) void cloud.setMemoryEnabled(value);
-        }}
-        onAdd={(text) => {
-          if (!auth.isMember) {
-            auth.openAuth(isSv ? "Minne kräver ett konto" : "Memory needs an account");
-            return;
-          }
-          void cloud.addManualMemory(text).then(() => void reloadHistory());
-        }}
-        onUpdate={(id, text) => void cloud.updateMemory(id, text).then(() => void reloadHistory())}
-        onDelete={(id) => void cloud.deleteMemory(id).then(() => void reloadHistory())}
-        onClear={() => void cloud.clearMemories().then(() => void reloadHistory())}
-      />
-      <StatsPanel open={statsOpen} onClose={() => setStatsOpen(false)} lang={lang} messages={messages} />
       <NotesPanel
         open={notesOpen}
         onClose={() => setNotesOpen(false)}
