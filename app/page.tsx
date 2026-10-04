@@ -7,6 +7,7 @@ import Capabilities from "@/components/sections/Capabilities";
 import Waitlist from "@/components/sections/Waitlist";
 import Footer from "@/components/sections/Footer";
 import CookieConsent from "@/components/ui/CookieConsent";
+import BackToTop from "@/components/ui/BackToTop";
 
 const AIPlayground = dynamic(() => import("@/components/sections/AIPlayground"));
 
@@ -22,6 +23,7 @@ export default function Home() {
         <Waitlist />
         <Footer />
       </div>
+      <BackToTop />
       <CookieConsent />
     </main>
   );

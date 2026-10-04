@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   BarChart3,
@@ -38,6 +39,14 @@ type Lang = "sv" | "en";
 
 /* ── shell ───────────────────────────────────────────────── */
 
+/** Modals live on document.body so no ancestor transform or overflow can clip them. */
+export function Portal({ children }: { children: ReactNode }) {
+  const [ready, setReady] = useState(false);
+  useEffect(() => setReady(true), []);
+  if (!ready || typeof document === "undefined") return null;
+  return createPortal(children, document.body);
+}
+
 function Modal({
   open,
   onClose,
@@ -65,41 +74,43 @@ function Modal({
   }, [open, onClose]);
 
   return (
-    <AnimatePresence>
-      {open && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.16 }}
-          className="pgx-modal-layer"
-          role="dialog"
-          aria-modal="true"
-          aria-label={title}
-        >
-          <button type="button" className="pgx-modal-backdrop" onClick={onClose} aria-label="close" />
+    <Portal>
+      <AnimatePresence>
+        {open && (
           <motion.div
-            initial={{ opacity: 0, y: 14, scale: 0.985 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 10, scale: 0.99 }}
-            transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-            className={`pgx-modal ${wide ? "is-wide" : ""}`}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.16 }}
+            className="pgx-modal-layer"
+            role="dialog"
+            aria-modal="true"
+            aria-label={title}
           >
-            <div className="pgx-modal-head">
-              <span className="pgx-modal-title">
-                {icon}
-                {title}
-              </span>
-              <button type="button" onClick={onClose} className="pgx-icon-btn" aria-label="close">
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-            <div className="pgx-modal-body">{children}</div>
-            {footer && <div className="pgx-modal-foot">{footer}</div>}
+            <button type="button" className="pgx-modal-backdrop" onClick={onClose} aria-label="close" />
+            <motion.div
+              initial={{ opacity: 0, y: 14, scale: 0.985 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 10, scale: 0.99 }}
+              transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+              className={`pgx-modal ${wide ? "is-wide" : ""}`}
+            >
+              <div className="pgx-modal-head">
+                <span className="pgx-modal-title">
+                  {icon}
+                  {title}
+                </span>
+                <button type="button" onClick={onClose} className="pgx-icon-btn" aria-label="close">
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+              <div className="pgx-modal-body">{children}</div>
+              {footer && <div className="pgx-modal-foot">{footer}</div>}
+            </motion.div>
           </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+        )}
+      </AnimatePresence>
+    </Portal>
   );
 }
 

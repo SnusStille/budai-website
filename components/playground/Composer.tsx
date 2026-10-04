@@ -10,9 +10,11 @@ import {
   Library,
   Mic,
   Paperclip,
-  Square,
+  SplitSquareHorizontal,
   Sparkles,
+  Square,
   X,
+  Wand2,
   Zap,
 } from "lucide-react";
 import type { AttachmentDraft, EffortId, PersonaId, StyleId } from "@/lib/playground/types";
@@ -35,6 +37,10 @@ type Props = {
   onToggleMic: () => void;
   genMode: boolean;
   onToggleGen: () => void;
+  compare: boolean;
+  onToggleCompare: () => void;
+  onImprove: () => void;
+  improving: boolean;
   imageGenEnabled: boolean;
   placeholder: string;
   persona: PersonaId;
@@ -62,6 +68,10 @@ export default function Composer({
   onToggleMic,
   genMode,
   onToggleGen,
+  compare,
+  onToggleCompare,
+  onImprove,
+  improving,
   imageGenEnabled,
   placeholder,
   persona,
@@ -333,6 +343,30 @@ export default function Composer({
             </button>
 
             <span className="pgx-tool-divider" aria-hidden />
+
+            <button
+              type="button"
+              onClick={onImprove}
+              disabled={improving || !value.trim()}
+              className={`pgx-pill ${improving ? "is-busy" : ""}`}
+              title={isSv ? "Förbättra din prompt med AI" : "Improve your prompt with AI"}
+            >
+              <Wand2 className={`h-3.5 w-3.5 ${improving ? "pgx-spin" : ""}`} />
+              <span className="pgx-pill-text">{improving ? (isSv ? "Förbättrar…" : "Improving…") : isSv ? "Förbättra" : "Improve"}</span>
+            </button>
+            <button
+              type="button"
+              onClick={onToggleCompare}
+              className={`pgx-tool ${compare ? "is-active" : ""}`}
+              title={
+                isSv
+                  ? "Jämför två svarsförslag sida vid sida"
+                  : "Compare two answer options side by side"
+              }
+              aria-pressed={compare}
+            >
+              <SplitSquareHorizontal className="h-4 w-4" />
+            </button>
 
             <button
               type="button"

@@ -27,7 +27,7 @@ export const metadata: Metadata = {
     template: "%s · BudAI",
   },
   description:
-    "Meet BudAI, an AI work assistant in early preview. Write, think, create, and move everyday work forward in Swedish and English. Built in Sweden by Stilledev.",
+    "Meet BudAI, an AI work assistant in early preview. Try the live Playground with streaming answers, six personas and memory — in Swedish and English. Built in Sweden by Stilledev.",
   keywords: [
     "AI",
     "artificial intelligence",
@@ -51,24 +51,15 @@ export const metadata: Metadata = {
     alternateLocale: ["en_US"],
     url: siteUrl,
     siteName: "BudAI",
-    title: "BudAI — AI work assistant in early preview",
+    title: "BudAI — the Playground is live",
     description:
-      "Try BudAI’s interactive Playground. An AI work assistant in early preview, built in Sweden for Swedish and English workdays.",
-    images: [
-      {
-        url: "/og.png",
-        width: 1200,
-        height: 630,
-        alt: "BudAI — AI work for Sweden",
-      },
-    ],
+      "Try BudAI’s interactive Playground: streaming answers, personas, memory and a prompt library. Early preview, built in Sweden — join the waitlist for 10% founding access.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "BudAI — AI work assistant in early preview",
+    title: "BudAI — the Playground is live",
     description:
-      "Try BudAI’s interactive Playground. An AI work assistant in early preview, built in Sweden for Swedish and English workdays.",
-    images: ["/og.png"],
+      "Try BudAI’s interactive Playground: streaming answers, personas, memory and a prompt library. Early preview, built in Sweden — join the waitlist for 10% founding access.",
   },
   icons: {
     icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],

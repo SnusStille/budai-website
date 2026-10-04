@@ -27,6 +27,7 @@ import {
   PanelRight,
   Settings2,
   Sparkles,
+  SplitSquareHorizontal,
   SquareLibrary,
   X,
 } from "lucide-react";
@@ -75,6 +76,7 @@ import {
   InspectorPanel,
   MemoryPanel,
   PromptLibrary,
+  Portal,
   SettingsPanel,
   ShortcutsModal,
   StatsPanel,
@@ -184,6 +186,7 @@ export default function PlaygroundApp() {
   const [elapsedMs, setElapsedMs] = useState(0);
   const [temporary, setTemporary] = useState(false);
   const [genMode, setGenMode] = useState(false);
+  const [compare, setCompare] = useState(false);
   const [imageGenEnabled, setImageGenEnabled] = useState(false);
   const [dualPick, setDualPick] = useState<Record<string, DualOption[] | undefined>>({});
   const [memory, setMemory] = useState<MemoryItem[]>([]);
@@ -209,6 +212,8 @@ export default function PlaygroundApp() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [creating, setCreating] = useState(false);
+  const [tipOpen, setTipOpen] = useState(false);
+  const [improving, setImproving] = useState(false);
 
   const abortRef = useRef<AbortController | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -249,6 +254,25 @@ export default function PlaygroundApp() {
     return name ? `${base}, ${name}` : base;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lang, auth.displayName]);
+
+  /* first-visit tips */
+  useEffect(() => {
+    try {
+      const seen = window.localStorage.getItem("budai.pg.tips.v1");
+      if (!seen) setTipOpen(true);
+    } catch {
+      /* storage blocked */
+    }
+  }, []);
+
+  const dismissTips = useCallback(() => {
+    setTipOpen(false);
+    try {
+      window.localStorage.setItem("budai.pg.tips.v1", "1");
+    } catch {
+      /* storage blocked */
+    }
+  }, []);
 
   /* feature flag */
   useEffect(() => {
@@ -638,7 +662,7 @@ export default function PlaygroundApp() {
       try {
         const headers = await authHeaders();
 
-        if (settings.stream !== false) {
+        if (settings.stream !== false && !compare) {
           const response = await fetch("/api/playground", {
             method: "POST",
             headers,
@@ -646,7 +670,8 @@ export default function PlaygroundApp() {
             body: JSON.stringify({
               messages: apiMessages,
               lang: settings.answerLang || lang,
-              stream: true,
+              stream: !compare,
+              dual: compare,
               persona: settings.persona,
               style: settings.style,
               effort: settings.effort,
@@ -706,7 +731,7 @@ export default function PlaygroundApp() {
           return;
         }
 
-        /* non-streaming fallback */
+        /* non-streaming path — used for compare mode and when streaming is off */
         const response = await fetch("/api/playground", {
           method: "POST",
           headers,
@@ -717,7 +742,7 @@ export default function PlaygroundApp() {
             persona: settings.persona,
             style: settings.style,
             effort: settings.effort,
-            dual: false,
+            dual: compare,
             context: contextBlock(),
             guest: auth.isGuest ? auth.guestKey : undefined,
             imageBase64: image?.b64,
@@ -733,7 +758,23 @@ export default function PlaygroundApp() {
           return;
         }
         setActivity("idle");
-        finishAnswer(promptId, data.reply || "…", { memory: data.memory });
+        if (data.dual && Array.isArray(data.replies) && data.replies.length >= 2) {
+          const answerId = newId("m");
+          setDualPick((prev) => ({ ...prev, [answerId]: data.replies }));
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: answerId,
+              role: "assistant",
+              content: data.replies[0].body,
+              ts: Date.now(),
+              promptId,
+              model: "compare",
+            },
+          ]);
+        } else {
+          finishAnswer(promptId, data.reply || "…", { memory: data.memory });
+        }
         playSound("receive");
       } catch (error) {
         window.clearInterval(timer);
@@ -900,6 +941,44 @@ export default function PlaygroundApp() {
   useEffect(() => {
     runImageGenRef.current = runImageGen;
   }, [runImageGen]);
+
+  /* ── prompt improvement (one-shot rewrite of the draft) ── */
+  const improvePrompt = useCallback(async () => {
+    const draft = input.trim();
+    if (!draft || improving) return;
+    setImproving(true);
+    try {
+      const headers = await authHeaders();
+      const instruction = isSv
+        ? `Förbättra följande prompt så att den blir tydligare och mer användbar för en AI-assistent. Lägg till relevant kontext, mål och önskat format. Svara med ENDAST den förbättrade prompten, ingen förklaring.\n\nPrompt: ${draft}`
+        : `Improve the following prompt so it is clearer and more useful for an AI assistant. Add relevant context, the goal, and the desired format. Reply with ONLY the improved prompt, no explanation.\n\nPrompt: ${draft}`;
+      const response = await fetch("/api/playground", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          messages: [{ role: "user", content: instruction }],
+          lang: settings.answerLang || lang,
+          persona: "core",
+          style: "concise",
+          effort: "quick",
+        }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data.reply) {
+        showToast(
+          "warn",
+          isSv ? "Kunde inte förbättra just nu — försök igen." : "Couldn't improve it right now — try again."
+        );
+        return;
+      }
+      setInput(String(data.reply).replace(/^["'`\s]+|["'`\s]+$/g, "").slice(0, 1200));
+      showToast("ok", isSv ? "Prompten är vässad — granska och skicka" : "Prompt sharpened — review and send");
+    } catch {
+      showToast("err", isSv ? "Nätverksfel." : "Network error.");
+    } finally {
+      setImproving(false);
+    }
+  }, [authHeaders, improving, input, isSv, lang, settings.answerLang, showToast]);
 
   /* ── files ── */
   const ingestFile = useCallback(
@@ -1212,6 +1291,14 @@ export default function PlaygroundApp() {
       { id: "library", group: isSv ? "Chatt" : "Chat", label: isSv ? "Promptbibliotek" : "Prompt library", icon: <SquareLibrary className="h-3.5 w-3.5" />, run: () => setLibraryOpen(true) },
       { id: "export-md", group: isSv ? "Chatt" : "Chat", label: isSv ? "Exportera som Markdown" : "Export as Markdown", hint: "⌘E", icon: <Download className="h-3.5 w-3.5" />, run: () => exportThread("md") },
       { id: "export-json", group: isSv ? "Chatt" : "Chat", label: isSv ? "Exportera som JSON" : "Export as JSON", icon: <Download className="h-3.5 w-3.5" />, run: () => exportThread("json") },
+      {
+        id: "compare",
+        group: isSv ? "Chatt" : "Chat",
+        label: isSv ? (compare ? "Stäng av jämförelse" : "Jämför två svar") : compare ? "Turn off compare" : "Compare two answers",
+        hint: isSv ? "Två förslag sida vid sida" : "Two options side by side",
+        icon: <SplitSquareHorizontal className="h-3.5 w-3.5" />,
+        run: () => setCompare((v) => !v),
+      },
       { id: "gallery", group: isSv ? "Visa" : "View", label: isSv ? "Galleri" : "Gallery", icon: <GalleryHorizontalEnd className="h-3.5 w-3.5" />, run: () => setGalleryOpen(true) },
       { id: "stats", group: isSv ? "Visa" : "View", label: isSv ? "Insikter" : "Insights", icon: <BarChart3 className="h-3.5 w-3.5" />, run: () => setStatsOpen(true) },
       { id: "panel", group: isSv ? "Visa" : "View", label: isSv ? "Växla panel" : "Toggle panel", hint: "⌘B", icon: <PanelRight className="h-3.5 w-3.5" />, run: () => setInspector((prev) => prev || { title: "Panel", body: messages.at(-1)?.content || "" }) },
@@ -1224,7 +1311,7 @@ export default function PlaygroundApp() {
         : [{ id: "signin", group: isSv ? "Konto" : "Account", label: isSv ? "Logga in" : "Sign in", icon: <LogIn className="h-3.5 w-3.5" />, run: () => auth.openAuth() }]),
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [auth, exportThread, isSv, messages, newChat]
+    [auth, compare, exportThread, isSv, messages, newChat]
   );
 
   const libraryPrompts = useMemo(
@@ -1325,6 +1412,16 @@ export default function PlaygroundApp() {
           </button>
           <button
             type="button"
+            onClick={() => exportThread("md")}
+            disabled={!messages.length}
+            className="pgx-icon-btn hidden sm:inline-flex"
+            title={isSv ? "Exportera konversation (⌘E)" : "Export conversation (⌘E)"}
+            aria-label={isSv ? "Exportera konversation" : "Export conversation"}
+          >
+            <Download className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
             onClick={() => setExpanded((v) => !v)}
             className="pgx-icon-btn hidden sm:inline-flex"
             title={expanded ? (isSv ? "Stäng helskärm" : "Exit full screen") : isSv ? "Helskärm" : "Full screen"}
@@ -1389,6 +1486,33 @@ export default function PlaygroundApp() {
 
         <div className="pgx-main">
           <div id="pgx-input-anchor" />
+          <AnimatePresence>
+            {tipOpen && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="pgx-tips-wrap"
+              >
+                <div className="pgx-tips">
+                  <span className="pgx-tips-mark">
+                    <Sparkles className="h-3.5 w-3.5" />
+                  </span>
+                  <div className="pgx-tips-copy">
+                    <strong>{isSv ? "Snabbtips" : "Quick tips"}</strong>
+                    <span>
+                      {isSv
+                        ? "⌘K öppnar kommandon · / i fältet ger genvägar · bifoga en fil eller bild · ⌘N startar en ny chatt"
+                        : "⌘K opens commands · / in the field gives shortcuts · attach a file or image · ⌘N starts a new chat"}
+                    </span>
+                  </div>
+                  <button type="button" onClick={dismissTips} className="pgx-mini-btn" aria-label={isSv ? "Stäng tips" : "Dismiss tips"}>
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
           <MessageList
             lang={lang}
             messages={messages}
@@ -1473,6 +1597,22 @@ export default function PlaygroundApp() {
             onToggleMic={toggleMic}
             genMode={genMode}
             onToggleGen={() => setGenMode((v) => !v)}
+            compare={compare}
+            onImprove={() => void improvePrompt()}
+            improving={improving}
+            onToggleCompare={() => {
+              setCompare((v) => !v);
+              showToast(
+                "ok",
+                compare
+                  ? isSv
+                    ? "Jämförelse av — en kolumn igen"
+                    : "Compare off — single column again"
+                  : isSv
+                    ? "Jämförelse på — du får två förslag att välja mellan"
+                    : "Compare on — you'll get two options to pick from"
+              );
+            }}
             imageGenEnabled={imageGenEnabled}
             placeholder={placeholder}
             persona={settings.persona || "core"}
@@ -1497,6 +1637,7 @@ export default function PlaygroundApp() {
       </div>
 
       {/* mobile drawer */}
+      <Portal>
       <AnimatePresence>
         {drawerOpen && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="pgx-drawer-layer">
@@ -1549,6 +1690,7 @@ export default function PlaygroundApp() {
           </motion.div>
         )}
       </AnimatePresence>
+      </Portal>
 
       {/* modals */}
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} actions={paletteActions} lang={lang} />
@@ -1610,6 +1752,7 @@ export default function PlaygroundApp() {
       />
 
       {/* lightbox */}
+      <Portal>
       <AnimatePresence>
         {lightbox && (
           <motion.div
@@ -1631,6 +1774,7 @@ export default function PlaygroundApp() {
           </motion.div>
         )}
       </AnimatePresence>
+      </Portal>
 
       {/* toast */}
       <AnimatePresence>

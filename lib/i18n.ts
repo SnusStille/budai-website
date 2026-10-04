@@ -20,7 +20,7 @@ export const translations = {
       subtitle:
         "BudAI är en AI-arbetsassistent för att skriva, tänka, skapa och komma vidare i vardagens uppgifter — på svenska och engelska. Testa förhandsvisningen och hjälp oss forma det som kommer härnäst.",
       ctaPrimary: "Testa BudAI",
-      ctaSecondary: "Gå med i väntelistan",
+      ctaSecondary: "Lås 10 % early access",
     },
     capabilities: {
       badge: "Vad är BudAI?",
@@ -34,7 +34,7 @@ export const translations = {
       title: "Testa",
       titleHighlight: "BudAI",
       subtitle:
-        "Välj ett exempel eller ställ en egen fråga. Börja utan konto — BudAI är fortfarande under utveckling.",
+        "Ett komplett arbetsbord: strömmande svar, roller, promptbibliotek, minne, röst och bilder. Börja utan konto.",
       placeholder: "Skriv till BudAI…",
       online: "Tidig förhandsvisning",
       thinking: "Tänker…",
@@ -116,7 +116,7 @@ export const translations = {
       subtitle:
         "BudAI is an AI work assistant for writing, thinking, creating, and moving everyday work forward — in Swedish and English. Try the preview and help shape what comes next.",
       ctaPrimary: "Try BudAI",
-      ctaSecondary: "Join the waitlist",
+      ctaSecondary: "Lock in 10% early access",
     },
     capabilities: {
       badge: "What is BudAI?",
@@ -130,7 +130,7 @@ export const translations = {
       title: "Try",
       titleHighlight: "BudAI",
       subtitle:
-        "Choose an example or ask your own question. Start without an account — BudAI is still in development.",
+        "A full workbench: streaming answers, personas, a prompt library, memory, voice and images. Start without an account.",
       placeholder: "Message BudAI…",
       online: "Early preview",
       thinking: "Thinking…",

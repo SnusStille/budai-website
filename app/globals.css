@@ -5467,11 +5467,15 @@ button.budai-logo:focus-visible {
 }
 .hero-float-note--left {
   left: -1.4rem;
-  top: 38%;
+  right: auto;
+  top: 34%;
+  bottom: auto;
 }
 .hero-float-note--right {
   right: -1.6rem;
-  top: 62%;
+  left: auto;
+  top: 58%;
+  bottom: auto;
 }
 .hero-feature-strip {
   margin-top: 3.5rem;
@@ -5768,4 +5772,53 @@ button.budai-logo:focus-visible {
   border-color: rgba(135, 233, 223, 0.4);
   color: #fff;
   transform: translateY(-2px);
+}
+
+/* playground first-visit tips */
+.pgx-tips-wrap {
+  overflow: hidden;
+}
+.pgx-tips {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0.6rem 0.75rem 0;
+  border-radius: 0.9rem;
+  border: 1px solid rgba(135, 233, 223, 0.2);
+  background: linear-gradient(120deg, rgba(135, 233, 223, 0.09), rgba(185, 168, 246, 0.07));
+  padding: 0.55rem 0.7rem;
+}
+.pgx-tips-mark {
+  display: flex;
+  height: 1.7rem;
+  width: 1.7rem;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.55rem;
+  background: rgba(135, 233, 223, 0.14);
+  color: #87e9df;
+}
+.pgx-tips-copy {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.pgx-tips-copy strong {
+  font-size: 12px;
+  color: #fff;
+}
+.pgx-tips-copy span {
+  font-size: 11px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.pgx-pill.is-busy {
+  border-color: rgba(135, 233, 223, 0.35);
+  color: #87e9df;
+}
+.pgx-spin {
+  animation: pgx-spin 0.9s linear infinite;
 }
