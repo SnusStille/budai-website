@@ -1,3 +1,4 @@
+import { visibleStreamText } from "@/lib/playground/stream";
 import Anthropic from "@anthropic-ai/sdk";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
@@ -39,7 +40,9 @@ async function resolveUser(req: NextRequest) {
 function adminSb() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
   const key =
-    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+    process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    "";
   if (!url || !key || url.includes("YOUR_PROJECT")) return null;
   return createClient(url, key);
 }
@@ -49,7 +52,7 @@ const SYSTEM_PROMPT = (
   dual: boolean,
   concise: boolean,
   extra?: string,
-  hasImage?: boolean
+  hasImage?: boolean,
 ) => {
   const langLine =
     lang === "sv"
@@ -111,7 +114,10 @@ function parseDual(text: string) {
   return { replies };
 }
 
-function stripMemoryTag(text: string): { clean: string; memory: string | null } {
+function stripMemoryTag(text: string): {
+  clean: string;
+  memory: string | null;
+} {
   const m = text.match(/\[\[MEMORY:\s*([\s\S]*?)\]\]/i);
   if (!m) return { clean: text.trim(), memory: null };
   const memory = m[1].trim().slice(0, 240);
@@ -120,16 +126,23 @@ function stripMemoryTag(text: string): { clean: string; memory: string | null } 
 }
 
 export async function POST(req: NextRequest) {
-  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  const ip =
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
   if (isRateLimited(ip)) {
-    return NextResponse.json({ error: "Rate limit reached. Try again later." }, { status: 429 });
+    return NextResponse.json(
+      { error: "Rate limit reached. Try again later." },
+      { status: 429 },
+    );
   }
 
   const anthropic = getClient();
   if (!anthropic) {
     return NextResponse.json(
-      { error: "Playground is not configured. Set ANTHROPIC_API_KEY.", reply: null },
-      { status: 503 }
+      {
+        error: "BudAI is temporarily unavailable. Please try again later.",
+        reply: null,
+      },
+      { status: 503 },
     );
   }
 
@@ -140,14 +153,16 @@ export async function POST(req: NextRequest) {
     const concise = body?.concise === true;
     const dual = concise ? false : body?.dual === true;
     const contextBlock = typeof body?.context === "string" ? body.context : "";
-    const imageBase64 = typeof body?.imageBase64 === "string" ? body.imageBase64 : null;
+    const imageBase64 =
+      typeof body?.imageBase64 === "string" ? body.imageBase64 : null;
     const imageMediaType =
       body?.imageMediaType === "image/png" ||
       body?.imageMediaType === "image/gif" ||
       body?.imageMediaType === "image/webp"
         ? body.imageMediaType
         : "image/jpeg";
-    const guestKey = typeof body?.guest === "string" ? body.guest.slice(0, 80) : null;
+    const guestKey =
+      typeof body?.guest === "string" ? body.guest.slice(0, 80) : null;
     const temporary = body?.temporary === true;
 
     const user = await resolveUser(req);
@@ -158,7 +173,7 @@ export async function POST(req: NextRequest) {
     if (imageBase64 && tier === "guest") {
       return NextResponse.json(
         { error: "Image analysis requires a free account.", code: "auth" },
-        { status: 403 }
+        { status: 403 },
       );
     }
     if (sb) {
@@ -174,8 +189,12 @@ export async function POST(req: NextRequest) {
           const used = full?.messages ?? 0;
           if (used >= limitFor(tier, "messages")) {
             return NextResponse.json(
-              { error: "Daily message limit reached. Sign in unlocks higher limits.", code: "limit" },
-              { status: 429 }
+              {
+                error:
+                  "Daily message limit reached. Sign in unlocks higher limits.",
+                code: "limit",
+              },
+              { status: 429 },
             );
           }
           if (imageBase64) {
@@ -183,7 +202,7 @@ export async function POST(req: NextRequest) {
             if (imgUsed >= limitFor(tier, "images")) {
               return NextResponse.json(
                 { error: "Daily image analysis limit reached.", code: "limit" },
-                { status: 429 }
+                { status: 429 },
               );
             }
           }
@@ -205,10 +224,11 @@ export async function POST(req: NextRequest) {
           if (used >= limitFor("guest", "messages")) {
             return NextResponse.json(
               {
-                error: "Guest daily limit reached. Sign in for more messages, memory, and images.",
+                error:
+                  "Guest daily limit reached. Sign in for more messages, memory, and images.",
                 code: "limit",
               },
-              { status: 429 }
+              { status: 429 },
             );
           }
           await sb.from("usage_guest_daily").upsert({
@@ -247,7 +267,12 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "Invalid message" }, { status: 400 });
       }
       const isLast = i === recent.length - 1;
-      if (m.role === "user" && isLast && imageBase64 && imageBase64.length < 6_000_000) {
+      if (
+        m.role === "user" &&
+        isLast &&
+        imageBase64 &&
+        imageBase64.length < 6_000_000
+      ) {
         messages.push({
           role: "user",
           content: [
@@ -272,6 +297,90 @@ export async function POST(req: NextRequest) {
     }
 
     const model = process.env.ANTHROPIC_MODEL || "claude-sonnet-4-20250514";
+
+    if (body.stream === true && !dual) {
+      const encoder = new TextEncoder();
+      const upstream = anthropic.messages.stream(
+        {
+          model,
+          max_tokens: concise ? 500 : 1200,
+          system: SYSTEM_PROMPT(
+            lang,
+            false,
+            concise,
+            contextBlock,
+            !!imageBase64,
+          ),
+          messages: messages as Anthropic.MessageParam[],
+        },
+        { signal: req.signal },
+      );
+      const stream = new ReadableStream({
+        async start(controller) {
+          let full = "";
+          const emit = (data: object) =>
+            controller.enqueue(encoder.encode(JSON.stringify(data) + "\n"));
+          try {
+            for await (const event of upstream) {
+              if (
+                event.type === "content_block_delta" &&
+                event.delta.type === "text_delta"
+              ) {
+                full += event.delta.text;
+                emit({ text: visibleStreamText(full) });
+              }
+            }
+            const { memory } = stripMemoryTag(full);
+            const clean = visibleStreamText(full).trim();
+            let saved = false;
+            if (memory && user && sb && !temporary && !req.signal.aborted) {
+              const { data: profile } = await sb
+                .from("profiles")
+                .select("memory_enabled")
+                .eq("id", user.id)
+                .maybeSingle();
+              if (profile?.memory_enabled === true) {
+                const { error } = await sb
+                  .from("memories")
+                  .insert({
+                    user_id: user.id,
+                    content: memory,
+                    category: "general",
+                    source: "auto",
+                    confidence: 0.75,
+                  });
+                saved = !error;
+              }
+            }
+            emit({ done: true, text: clean, memory: saved });
+            controller.close();
+          } catch {
+            if (!req.signal.aborted) {
+              try {
+                emit({
+                  error: "The connection was interrupted. Please try again.",
+                });
+                controller.close();
+              } catch {
+                /* consumer cancelled */
+              }
+            }
+          } finally {
+            upstream.abort();
+          }
+        },
+        cancel() {
+          upstream.abort();
+        },
+      });
+      return new Response(stream, {
+        headers: {
+          "Content-Type": "application/x-ndjson",
+          "Cache-Control": "no-cache, no-transform",
+          "X-Accel-Buffering": "no",
+        },
+      });
+    }
 
     const response = await anthropic.messages.create({
       model,

@@ -3,8 +3,17 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Search, ArrowRight, Sparkles, Terminal as TerminalIcon, Users, Map,
-  Activity, Cpu, Languages, MessageCircle, CornerDownLeft,
+  Search,
+  ArrowRight,
+  Sparkles,
+  Terminal as TerminalIcon,
+  Users,
+  Map,
+  Activity,
+  Cpu,
+  Languages,
+  MessageCircle,
+  CornerDownLeft,
 } from "lucide-react";
 import { useLang } from "@/components/ui/LanguageContext";
 
@@ -39,12 +48,27 @@ export default function CommandPalette() {
 
   const commands: CommandItem[] = useMemo(
     () => [
-      { id: "capabilities", label: "Go to Capabilities", icon: Sparkles, action: () => goTo("capabilities"), keywords: "features what budai does" },
-      { id: "playground", label: "Try the Playground", icon: MessageCircle, action: () => goTo("playground"), keywords: "chat demo try ai" },
-      { id: "terminal", label: "Watch the Terminal", icon: TerminalIcon, action: () => goTo("terminal"), keywords: "code live activity" },
-      { id: "roadmap", label: "View Roadmap", icon: Map, action: () => goTo("roadmap"), keywords: "timeline plan future" },
-      { id: "status", label: "Check System Status", icon: Activity, action: () => goTo("status"), keywords: "uptime health services" },
-      { id: "waitlist", label: "Join the Waitlist", icon: Users, action: () => goTo("waitlist"), keywords: "signup access request join" },
+      {
+        id: "capabilities",
+        label: "Go to Capabilities",
+        icon: Sparkles,
+        action: () => goTo("capabilities"),
+        keywords: "features what budai does",
+      },
+      {
+        id: "playground",
+        label: "Try the Playground",
+        icon: MessageCircle,
+        action: () => goTo("playground"),
+        keywords: "chat demo try ai",
+      },
+      {
+        id: "waitlist",
+        label: "Join the Waitlist",
+        icon: Users,
+        action: () => goTo("waitlist"),
+        keywords: "signup access request join",
+      },
       {
         id: "lang",
         label: lang === "sv" ? "Switch to English" : "Byt till svenska",
@@ -60,25 +84,33 @@ export default function CommandPalette() {
         label: "Message Stilledev on Discord",
         icon: Cpu,
         action: () => {
-          window.open("https://discord.com/users/353944097301594123", "_blank", "noopener,noreferrer");
+          window.open(
+            "https://discord.com/users/353944097301594123",
+            "_blank",
+            "noopener,noreferrer",
+          );
           setOpen(false);
         },
         keywords: "developer contact discord stilledev",
       },
     ],
-    [lang, setLang]
+    [lang, setLang],
   );
 
   const filtered = useMemo(() => {
     if (!query.trim()) return commands;
     const q = query.toLowerCase();
-    return commands.filter((c) => c.label.toLowerCase().includes(q) || c.keywords?.includes(q));
+    return commands.filter(
+      (c) => c.label.toLowerCase().includes(q) || c.keywords?.includes(q),
+    );
   }, [query, commands]);
 
   // Global ⌘K / Ctrl+K listener, plus "/" as a quick alternative — Esc closes.
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      const isTypingTarget = ["INPUT", "TEXTAREA"].includes((e.target as HTMLElement)?.tagName);
+      const isTypingTarget = ["INPUT", "TEXTAREA"].includes(
+        (e.target as HTMLElement)?.tagName,
+      );
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
         setOpen((v) => !v);
@@ -142,10 +174,16 @@ export default function CommandPalette() {
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   onKeyDown={onInputKeyDown}
-                  placeholder={lang === "sv" ? "Vart vill du gå?" : "Where do you want to go?"}
+                  placeholder={
+                    lang === "sv"
+                      ? "Vart vill du gå?"
+                      : "Where do you want to go?"
+                  }
                   className="flex-1 bg-transparent text-white text-sm placeholder:text-muted focus:outline-none"
                 />
-                <kbd className="text-[10px] text-muted/60 px-1.5 py-0.5 rounded border border-white/10">ESC</kbd>
+                <kbd className="text-[10px] text-muted/60 px-1.5 py-0.5 rounded border border-white/10">
+                  ESC
+                </kbd>
               </div>
 
               <div className="max-h-[50vh] overflow-y-auto py-2">
@@ -160,12 +198,18 @@ export default function CommandPalette() {
                       onClick={cmd.action}
                       onMouseEnter={() => setActiveIndex(i)}
                       className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${
-                        i === activeIndex ? "bg-accent-cyan/10 text-white" : "text-muted hover:text-white"
+                        i === activeIndex
+                          ? "bg-accent-cyan/10 text-white"
+                          : "text-muted hover:text-white"
                       }`}
                     >
-                      <cmd.icon className={`w-4 h-4 shrink-0 ${i === activeIndex ? "text-accent-cyan" : "text-muted"}`} />
+                      <cmd.icon
+                        className={`w-4 h-4 shrink-0 ${i === activeIndex ? "text-accent-cyan" : "text-muted"}`}
+                      />
                       <span className="flex-1 text-left">{cmd.label}</span>
-                      {i === activeIndex && <ArrowRight className="w-3.5 h-3.5 text-accent-cyan" />}
+                      {i === activeIndex && (
+                        <ArrowRight className="w-3.5 h-3.5 text-accent-cyan" />
+                      )}
                     </button>
                   ))
                 )}
@@ -173,8 +217,12 @@ export default function CommandPalette() {
 
               <div className="flex items-center gap-4 px-4 py-2.5 border-t border-white/[0.06] text-[11px] text-muted/50">
                 <span className="flex items-center gap-1">
-                  <span className="px-1.5 py-0.5 rounded border border-white/10">↑</span>
-                  <span className="px-1.5 py-0.5 rounded border border-white/10">↓</span>
+                  <span className="px-1.5 py-0.5 rounded border border-white/10">
+                    ↑
+                  </span>
+                  <span className="px-1.5 py-0.5 rounded border border-white/10">
+                    ↓
+                  </span>
                   {lang === "sv" ? "navigera" : "navigate"}
                 </span>
                 <span className="flex items-center gap-1">

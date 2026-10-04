@@ -39,7 +39,8 @@ export default function CookieConsent() {
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 24, opacity: 0 }}
           transition={{ duration: 0.3 }}
-          className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[55] w-[calc(100%-1.5rem)] max-w-md"
+          style={{ x: "-50%" }}
+          className="fixed bottom-4 left-1/2 z-[55] w-[calc(100%-1.5rem)] max-w-md"
           role="dialog"
           aria-label={t.cookie.title}
         >
@@ -49,7 +50,9 @@ export default function CookieConsent() {
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between gap-2">
-                <p className="text-xs font-semibold text-white">{t.cookie.title}</p>
+                <p className="text-xs font-semibold text-white">
+                  {t.cookie.title}
+                </p>
                 <button
                   type="button"
                   onClick={() => save("declined")}

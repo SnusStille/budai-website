@@ -53,7 +53,6 @@ import {
   Globe2,
   Command,
 } from "lucide-react";
-import ScrollReveal from "@/components/ui/ScrollReveal";
 import BudAILogo from "@/components/ui/BudAILogo";
 import { useLang } from "@/components/ui/LanguageContext";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -85,7 +84,10 @@ function renderInlineMd(text: string, keyPrefix: string): ReactNode[] {
   return text.split(pattern).map((part, i) => {
     if (part.startsWith("**") && part.endsWith("**"))
       return (
-        <strong key={`${keyPrefix}-b-${i}`} className="text-white font-semibold">
+        <strong
+          key={`${keyPrefix}-b-${i}`}
+          className="text-white font-semibold"
+        >
           {part.slice(2, -2)}
         </strong>
       );
@@ -123,7 +125,7 @@ function renderTextBlock(text: string, keyPrefix: string): ReactNode {
             {renderInlineMd(it, `${keyPrefix}-li-${i}`)}
           </li>
         ))}
-      </Tag>
+      </Tag>,
     );
     listBuf = null;
   };
@@ -160,7 +162,7 @@ function renderTextBlock(text: string, keyPrefix: string): ReactNode {
           className="font-semibold text-white mt-2 mb-1 tracking-tight"
         >
           {renderInlineMd(heading[1], `${keyPrefix}-h-${i}`)}
-        </div>
+        </div>,
       );
       continue;
     }
@@ -171,7 +173,7 @@ function renderTextBlock(text: string, keyPrefix: string): ReactNode {
           className="border-l-2 border-accent-cyan/40 pl-3 my-1.5 text-muted italic"
         >
           {renderInlineMd(quote[1], `${keyPrefix}-q-${i}`)}
-        </div>
+        </div>,
       );
       continue;
     }
@@ -182,40 +184,73 @@ function renderTextBlock(text: string, keyPrefix: string): ReactNode {
     nodes.push(
       <div key={`${keyPrefix}-p-${i}`} className="leading-relaxed">
         {renderInlineMd(raw, `${keyPrefix}-p-${i}`)}
-      </div>
+      </div>,
     );
   }
   flushList();
   return <div className="space-y-0.5">{nodes}</div>;
 }
 
+function CodeBlock({ code, language }: { code: string; language: string }) {
+  const { lang } = useLang();
+  const [state, setState] = useState<"idle" | "copied" | "error">("idle");
+  useEffect(() => {
+    if (state === "idle") return;
+    const timer = setTimeout(() => setState("idle"), 2500);
+    return () => clearTimeout(timer);
+  }, [state]);
+  return (
+    <div className="my-3 rounded-xl overflow-hidden border border-white/10 bg-black/30">
+      <div className="flex items-center justify-between px-4 py-2 border-b border-white/10">
+        <span className="text-xs font-mono text-muted">
+          {language || "code"}
+        </span>
+        <button
+          type="button"
+          className="text-xs text-muted hover:text-white p-1"
+          onClick={async () => {
+            try {
+              await navigator.clipboard.writeText(code);
+              setState("copied");
+            } catch {
+              setState("error");
+            }
+          }}
+        >
+          {state === "copied"
+            ? lang === "sv"
+              ? "Kopierat ✓"
+              : "Copied ✓"
+            : state === "error"
+              ? lang === "sv"
+                ? "Markera och kopiera"
+                : "Select and copy"
+              : lang === "sv"
+                ? "Kopiera kod"
+                : "Copy code"}
+        </button>
+      </div>
+      <pre className="p-4 overflow-x-auto text-xs leading-relaxed">
+        <code>{code}</code>
+      </pre>
+    </div>
+  );
+}
+
 function renderMarkdown(text: string): ReactNode[] {
-  const parts = text.split(/(```[\s\S]*?```)/g);
-  return parts.map((block, bi) => {
-    if (block.startsWith("```") && block.endsWith("```")) {
-      const inner = block.slice(3, -3);
-      const nl = inner.indexOf("\n");
-      const langHint = nl > 0 ? inner.slice(0, nl).trim() : "";
-      const code = nl > 0 ? inner.slice(nl + 1) : inner;
+  // Splitting fences also renders an unfinished code block while streaming.
+  return text.split("```").map((block, i) => {
+    if (i % 2) {
+      const nl = block.indexOf("\n");
       return (
-        <div key={`code-${bi}`} className="my-2.5 rounded-xl overflow-hidden border border-white/10 bg-black/50 shadow-inner">
-          <div className="flex items-center justify-between px-3 py-1.5 border-b border-white/[0.06] bg-white/[0.03]">
-            <span className="text-[10px] font-mono text-muted">{langHint || "code"}</span>
-            <button
-              type="button"
-              className="text-[10px] text-muted hover:text-accent-cyan transition-colors"
-              onClick={() => void navigator.clipboard.writeText(code)}
-            >
-              Copy
-            </button>
-          </div>
-          <pre className="p-3 overflow-x-auto text-[12px] font-mono text-white/85 leading-relaxed">
-            <code>{code}</code>
-          </pre>
-        </div>
+        <CodeBlock
+          key={i}
+          language={nl >= 0 ? block.slice(0, nl).trim() : ""}
+          code={nl >= 0 ? block.slice(nl + 1) : block}
+        />
       );
     }
-    return <div key={`txt-${bi}`}>{renderTextBlock(block, `b${bi}`)}</div>;
+    return <div key={i}>{renderTextBlock(block, `b${i}`)}</div>;
   });
 }
 
@@ -250,16 +285,23 @@ function activityLabel(a: AiActivity, lang: "sv" | "en"): string {
 
 function groupByDate(
   items: Pick<Conversation, "id" | "title" | "updatedAt">[],
-  lang: "sv" | "en"
+  lang: "sv" | "en",
 ) {
   const now = new Date();
-  const startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const startToday = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+  ).getTime();
   const startYday = startToday - 86400000;
   const startWeek = startToday - 7 * 86400000;
   const buckets: { label: string; items: typeof items }[] = [
     { label: lang === "sv" ? "Idag" : "Today", items: [] },
     { label: lang === "sv" ? "Igår" : "Yesterday", items: [] },
-    { label: lang === "sv" ? "Senaste 7 dagarna" : "Previous 7 days", items: [] },
+    {
+      label: lang === "sv" ? "Senaste 7 dagarna" : "Previous 7 days",
+      items: [],
+    },
     { label: lang === "sv" ? "Äldre" : "Older", items: [] },
   ];
   for (const c of items) {
@@ -270,7 +312,6 @@ function groupByDate(
   }
   return buckets.filter((b) => b.items.length);
 }
-
 
 function isWorkspaceWorthy(content: string): boolean {
   if (!content || content.length < 280) return false;
@@ -293,124 +334,88 @@ function workspaceTitle(content: string, lang: "sv" | "en"): string {
   return first + (content.length > 48 ? "…" : "");
 }
 
-
 const INTENT_PRESETS = {
   sv: [
-    { id: "chat", label: "Chatt", hint: "Vardaglig hjälp", prefix: "", mode: "single" as const },
-    { id: "research", label: "Research", hint: "Djupare + källor-stil", prefix: "Arbeta som research-assistent. Strukturera med: Sammanfattning, Nyckelpunkter, Antaganden, Nästa steg. Var konkret.\n\nFråga: ", mode: "single" as const },
-    { id: "create", label: "Skapa", hint: "Text & pitch", prefix: "Skriv i skarp, publicerbar ton. Ge en färdig leverans (inte meta-råd).\n\nUppgift: ", mode: "single" as const },
-    { id: "analyze", label: "Analys", hint: "Beslut & risk", prefix: "Analysera systematiskt. Använd rubriker, bullets och tydlig rekommendation.\n\nCase: ", mode: "single" as const },
-    { id: "dual", label: "2 vinklar", hint: "Välj mellan svar", prefix: "", mode: "dual" as const },
+    {
+      id: "chat",
+      label: "Chatt",
+      hint: "Vardaglig hjälp",
+      prefix: "",
+      mode: "single" as const,
+    },
+    {
+      id: "research",
+      label: "Research",
+      hint: "Djupare + källor-stil",
+      prefix:
+        "Arbeta som research-assistent. Strukturera med: Sammanfattning, Nyckelpunkter, Antaganden, Nästa steg. Var konkret.\n\nFråga: ",
+      mode: "single" as const,
+    },
+    {
+      id: "create",
+      label: "Skapa",
+      hint: "Text & pitch",
+      prefix:
+        "Skriv i skarp, publicerbar ton. Ge en färdig leverans (inte meta-råd).\n\nUppgift: ",
+      mode: "single" as const,
+    },
+    {
+      id: "analyze",
+      label: "Analys",
+      hint: "Beslut & risk",
+      prefix:
+        "Analysera systematiskt. Använd rubriker, bullets och tydlig rekommendation.\n\nCase: ",
+      mode: "single" as const,
+    },
+    {
+      id: "dual",
+      label: "2 vinklar",
+      hint: "Välj mellan svar",
+      prefix: "",
+      mode: "dual" as const,
+    },
   ],
   en: [
-    { id: "chat", label: "Chat", hint: "Everyday help", prefix: "", mode: "single" as const },
-    { id: "research", label: "Research", hint: "Deeper structured", prefix: "Act as a research assistant. Structure with: Summary, Key points, Assumptions, Next steps. Be concrete.\n\nQuestion: ", mode: "single" as const },
-    { id: "create", label: "Create", hint: "Copy & drafts", prefix: "Write in a sharp, publishable voice. Deliver a finished piece (not meta-advice).\n\nTask: ", mode: "single" as const },
-    { id: "analyze", label: "Analyze", hint: "Decisions & risk", prefix: "Analyze systematically. Use headings, bullets, and a clear recommendation.\n\nCase: ", mode: "single" as const },
-    { id: "dual", label: "2 angles", hint: "Pick a reply", prefix: "", mode: "dual" as const },
+    {
+      id: "chat",
+      label: "Chat",
+      hint: "Everyday help",
+      prefix: "",
+      mode: "single" as const,
+    },
+    {
+      id: "research",
+      label: "Research",
+      hint: "Deeper structured",
+      prefix:
+        "Act as a research assistant. Structure with: Summary, Key points, Assumptions, Next steps. Be concrete.\n\nQuestion: ",
+      mode: "single" as const,
+    },
+    {
+      id: "create",
+      label: "Create",
+      hint: "Copy & drafts",
+      prefix:
+        "Write in a sharp, publishable voice. Deliver a finished piece (not meta-advice).\n\nTask: ",
+      mode: "single" as const,
+    },
+    {
+      id: "analyze",
+      label: "Analyze",
+      hint: "Decisions & risk",
+      prefix:
+        "Analyze systematically. Use headings, bullets, and a clear recommendation.\n\nCase: ",
+      mode: "single" as const,
+    },
+    {
+      id: "dual",
+      label: "2 angles",
+      hint: "Pick a reply",
+      prefix: "",
+      mode: "dual" as const,
+    },
   ],
 } as const;
-
-const CAPABILITY_CARDS = {
-  sv: [
-    {
-      icon: "vision" as const,
-      title: "Se en bild",
-      blurb: "Bifoga & analysera",
-      prompt: "Analysera den här bilden och berätta vad du ser — detaljerat.",
-      needsImage: true,
-    },
-    {
-      icon: "voice" as const,
-      title: "Prata in",
-      blurb: "Röst till text",
-      prompt: "",
-      voice: true,
-    },
-    {
-      icon: "memory" as const,
-      title: "Kom ihåg mig",
-      blurb: "Långtidsminne",
-      prompt: "Jag heter Alex och jobbar med produkt i Stockholm. Hjälp mig planera veckan.",
-    },
-    {
-      icon: "create" as const,
-      title: "Skapa",
-      blurb: "Text & pitch",
-      prompt: "Skriv en kort, varm produktpitch för BudAI på svenska — tre meningar.",
-    },
-    {
-      icon: "analyze" as const,
-      title: "Analysera",
-      blurb: "Beslut & SWOT",
-      prompt: "Ge mig en ärlig SWOT för att rulla ut AI-assistenter i ett svenskt SME.",
-    },
-    {
-      icon: "plan" as const,
-      title: "Planera dagen",
-      blurb: "Fokusblock",
-      prompt:
-        "Jag har 6 timmar djupjobb idag, två möten och en deadline imorgon. Bygg en realistisk dagsplan med prioriteringar och buffertar.",
-    },
-    {
-      icon: "gen" as const,
-      title: "Skapa bild",
-      blurb: "Kommer snart",
-      prompt: "Skapa en bild av en futuristisk stockholmsk skyline i skymning",
-      gen: true,
-    },
-  ],
-  en: [
-    {
-      icon: "vision" as const,
-      title: "See an image",
-      blurb: "Attach & analyze",
-      prompt: "Analyze this image and tell me what you see — in detail.",
-      needsImage: true,
-    },
-    {
-      icon: "voice" as const,
-      title: "Speak",
-      blurb: "Voice to text",
-      prompt: "",
-      voice: true,
-    },
-    {
-      icon: "memory" as const,
-      title: "Remember me",
-      blurb: "Long-term memory",
-      prompt: "My name is Alex and I work in product in Stockholm. Help me plan the week.",
-    },
-    {
-      icon: "create" as const,
-      title: "Create",
-      blurb: "Copy & pitch",
-      prompt: "Write a short, warm product pitch for BudAI in three sentences.",
-    },
-    {
-      icon: "analyze" as const,
-      title: "Analyze",
-      blurb: "Decisions & SWOT",
-      prompt: "Give me an honest SWOT for rolling out AI assistants in a Swedish SME.",
-    },
-    {
-      icon: "plan" as const,
-      title: "Plan my day",
-      blurb: "Focus blocks",
-      prompt:
-        "I have 6 hours of deep work today, two meetings, and a deadline tomorrow. Build a realistic day plan with priorities and buffers.",
-    },
-    {
-      icon: "gen" as const,
-      title: "Create image",
-      blurb: "Coming soon",
-      prompt: "Create an image of a futuristic Stockholm skyline at dusk",
-      gen: true,
-    },
-  ],
-};
-
-
 
 const INSPIRE_PROMPTS = {
   sv: [
@@ -447,7 +452,9 @@ export default function AIPlayground() {
   const [typingText, setTypingText] = useState("");
   const [mode, setMode] = useState<Mode>("single");
   const [intentId, setIntentId] = useState<string>("chat");
-  const [feedback, setFeedback] = useState<Record<string, "up" | "down" | undefined>>({});
+  const [feedback, setFeedback] = useState<
+    Record<string, "up" | "down" | undefined>
+  >({});
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [answerLang, setAnswerLang] = useState<"sv" | "en">(lang);
   const [inspireSpin, setInspireSpin] = useState(false);
@@ -462,20 +469,26 @@ export default function AIPlayground() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [mobileDrawer, setMobileDrawer] = useState(false);
   const [history, setHistory] = useState<
-    Pick<Conversation, "id" | "title" | "updatedAt" | "createdAt" | "temporary" | "pinned">[]
+    Pick<
+      Conversation,
+      "id" | "title" | "updatedAt" | "createdAt" | "temporary" | "pinned"
+    >[]
   >([]);
   const [convoId, setConvoId] = useState<string | null>(null);
   const [creatingChat, setCreatingChat] = useState(false);
   const [memory, setMemory] = useState<MemoryItem[]>([]);
   const [memoryOpen, setMemoryOpen] = useState(false);
-  const [memoryEnabled, setMemoryEnabled] = useState(true);
+  const [memoryEnabled, setMemoryEnabled] = useState(false);
   const [temporary, setTemporary] = useState(false);
   const [attach, setAttach] = useState<AttachmentDraft | null>(null);
   const [listening, setListening] = useState(false);
   const [genMode, setGenMode] = useState(false);
   const [imageGenEnabled, setImageGenEnabled] = useState(false);
   const [lightbox, setLightbox] = useState<string | null>(null);
-  const [toast, setToast] = useState<{ kind: "ok" | "warn" | "err"; text: string } | null>(null);
+  const [toast, setToast] = useState<{
+    kind: "ok" | "warn" | "err";
+    text: string;
+  } | null>(null);
   const [search, setSearch] = useState("");
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameVal, setRenameVal] = useState("");
@@ -493,23 +506,39 @@ export default function AIPlayground() {
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef(false);
+  const followRef = useRef(true);
+  const requestRef = useRef<AbortController | null>(null);
+  const requestId = useRef(0);
+  const sendingRef = useRef(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const recogRef = useRef<{ stop: () => void } | null>(null);
   const persistTimer = useRef(0);
   const taRef = useRef<HTMLTextAreaElement>(null);
   const bootRef = useRef(false);
 
-  const busy = activity !== "idle" && activity !== "error" && activity !== "listening";
+  const busy =
+    activity !== "idle" && activity !== "error" && activity !== "listening";
 
   const showToast = useCallback((kind: "ok" | "warn" | "err", text: string) => {
     setToast({ kind, text });
     window.setTimeout(() => setToast(null), 4200);
   }, []);
 
-  /* boot sidebar on desktop */
   useEffect(() => {
-    if (window.innerWidth >= 1024) setSidebarOpen(true);
-  }, []);
+    if (!expanded) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, [expanded]);
+  useEffect(
+    () => () => {
+      requestRef.current?.abort();
+      recogRef.current?.stop();
+    },
+    [],
+  );
 
   /* Keep answer language aligned with site lang until user overrides */
   useEffect(() => {
@@ -559,7 +588,7 @@ export default function AIPlayground() {
           createdAt: c.createdAt,
           temporary: c.temporary,
           pinned: c.pinned,
-        }))
+        })),
       );
       setMemory([]);
     }
@@ -580,6 +609,11 @@ export default function AIPlayground() {
   useEffect(() => {
     if (prevMember.current !== auth.isMember) {
       prevMember.current = auth.isMember;
+      requestId.current++;
+      sendingRef.current = false;
+      requestRef.current?.abort();
+      setActivity("idle");
+      setTypingText("");
       setMessages([]);
       setConvoId(null);
       setTemporary(false);
@@ -588,7 +622,7 @@ export default function AIPlayground() {
   }, [auth.isMember, reloadSidebar]);
 
   useEffect(() => {
-    if (scrollRef.current) {
+    if (scrollRef.current && followRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages, typingText, activity]);
@@ -610,9 +644,12 @@ export default function AIPlayground() {
             : "Kräver konto eller högre gräns."
           : kind === "messages"
             ? "Daily limit reached. Sign in for more."
-            : "Needs an account or higher limit."
+            : "Needs an account or higher limit.",
       );
-      if (auth.isGuest) auth.openAuth(lang === "sv" ? "Lås upp mer BudAI" : "Unlock more BudAI");
+      if (auth.isGuest)
+        auth.openAuth(
+          lang === "sv" ? "Lås upp mer BudAI" : "Unlock more BudAI",
+        );
       return false;
     }
     return true;
@@ -624,7 +661,10 @@ export default function AIPlayground() {
       await fetch("/api/usage", {
         method: "POST",
         headers,
-        body: JSON.stringify({ kind, guest: auth.isGuest ? auth.guestKey : undefined }),
+        body: JSON.stringify({
+          kind,
+          guest: auth.isGuest ? auth.guestKey : undefined,
+        }),
       });
       auth.bumpUsage(kind);
     } catch {
@@ -641,9 +681,14 @@ export default function AIPlayground() {
       return id;
     }
     if (auth.isMember) {
-      const id = await cloud.createConversation(lang === "sv" ? "Ny chatt" : "New chat");
+      const id = await cloud.createConversation(
+        lang === "sv" ? "Ny chatt" : "New chat",
+      );
       if (!id) {
-        showToast("err", lang === "sv" ? "Kunde inte skapa chatt" : "Could not create chat");
+        showToast(
+          "err",
+          lang === "sv" ? "Kunde inte skapa chatt" : "Could not create chat",
+        );
         return null;
       }
       setConvoId(id);
@@ -673,11 +718,11 @@ export default function AIPlayground() {
           createdAt: c.createdAt,
           temporary: c.temporary,
           pinned: c.pinned,
-        }))
+        })),
       );
       return convo.id;
     },
-    [auth.isMember, temporary, reloadSidebar]
+    [auth.isMember, temporary, reloadSidebar],
   );
 
   // Debounced persist after messages change
@@ -685,12 +730,22 @@ export default function AIPlayground() {
     if (!messages.length || !convoId) return;
     window.clearTimeout(persistTimer.current);
     persistTimer.current = window.setTimeout(() => {
-      void persistMessages(messages, convoId);
+      void persistMessages(messages, convoId).catch(() =>
+        showToast(
+          "warn",
+          lang === "sv"
+            ? "Kunde inte spara chatten. Exportera den för att behålla en kopia."
+            : "Could not save this chat. Export it to keep a copy.",
+        ),
+      );
     }, 600);
     return () => window.clearTimeout(persistTimer.current);
-  }, [messages, convoId, persistMessages]);
+  }, [messages, convoId, persistMessages, showToast, lang]);
 
-  const typeResponse = async (fullText: string, extra?: Partial<ChatMessage>) => {
+  const typeResponse = async (
+    fullText: string,
+    extra?: Partial<ChatMessage>,
+  ) => {
     setActivity("typing");
     setTypingText("");
     abortRef.current = false;
@@ -729,23 +784,19 @@ export default function AIPlayground() {
         ...extra,
       },
     ]);
-    if (isWorkspaceWorthy(fullText) && typeof window !== "undefined" && window.innerWidth >= 1024) {
-      setWorkspace({
-        msgId: mid,
-        title: workspaceTitle(fullText, lang),
-        body: fullText,
-      });
-    }
     return true;
   };
 
   const contextBlock = () => {
-    if (!auth.isMember || !memoryEnabled || temporary || !memory.length) return "";
+    if (!auth.isMember || !memoryEnabled || temporary || !memory.length)
+      return "";
     return memoryToPromptBlock(memory, lang);
   };
 
   const stopAll = () => {
     abortRef.current = true;
+    requestRef.current?.abort();
+    sendingRef.current = false;
     setActivity("idle");
     setTypingText("");
     if (recogRef.current) {
@@ -758,7 +809,10 @@ export default function AIPlayground() {
     }
   };
 
-  const pushError = (text: string, retry?: { text: string; image?: AttachmentDraft | null; gen?: boolean }) => {
+  const pushError = (
+    text: string,
+    retry?: { text: string; image?: AttachmentDraft | null; gen?: boolean },
+  ) => {
     setActivity("idle");
     setMessages((prev) => [
       ...prev,
@@ -773,12 +827,20 @@ export default function AIPlayground() {
     if (retry) setLastFailed(retry);
   };
 
-  const runPrompt = async (text: string, opts?: { image?: AttachmentDraft | null; forceGen?: boolean }) => {
+  const runPrompt = async (
+    text: string,
+    opts?: {
+      image?: AttachmentDraft | null;
+      forceGen?: boolean;
+      history?: ChatMessage[];
+    },
+  ) => {
     const trimmed = text.trim();
     if (!trimmed || busy) return;
 
     const wantGen =
-      imageGenEnabled && (opts?.forceGen || genMode || looksLikeImageGen(trimmed));
+      imageGenEnabled &&
+      (opts?.forceGen || genMode || looksLikeImageGen(trimmed));
     if (wantGen && !opts?.image) {
       setGenMode(false);
       return runImageGen(trimmed);
@@ -792,13 +854,36 @@ export default function AIPlayground() {
 
     const img = opts?.image !== undefined ? opts.image : attach;
     if (img && auth.isGuest) {
-      auth.openAuth(lang === "sv" ? "Bildanalys kräver konto" : "Image analysis needs an account");
+      auth.openAuth(
+        lang === "sv"
+          ? "Bildanalys kräver konto"
+          : "Image analysis needs an account",
+      );
       return;
     }
     if (img && !checkQuota("images")) return;
 
-    const cid = await ensureConversation();
-    if (!cid && auth.isMember) return;
+    if (sendingRef.current) return;
+    sendingRef.current = true;
+    const runId = ++requestId.current;
+    let cid: string | null;
+    try {
+      cid = await ensureConversation();
+    } catch {
+      sendingRef.current = false;
+      showToast(
+        "err",
+        lang === "sv"
+          ? "Kunde inte öppna chatten. Försök igen."
+          : "Could not open the conversation. Please try again.",
+      );
+      return;
+    }
+    if (runId !== requestId.current) return;
+    if (!cid && auth.isMember) {
+      sendingRef.current = false;
+      return;
+    }
 
     const userMsg: ChatMessage = {
       id: newId("m"),
@@ -807,7 +892,7 @@ export default function AIPlayground() {
       ts: Date.now(),
       imageUrl: img?.preview,
     };
-    const nextList = [...messages, userMsg];
+    const nextList = [...(opts?.history ?? messages), userMsg];
     setMessages(nextList);
     setInput("");
     setAttach(null);
@@ -815,24 +900,32 @@ export default function AIPlayground() {
     abortRef.current = false;
     setActivity(img ? "reading_image" : "thinking");
 
-    await bumpServer("messages");
-    if (img) await bumpServer("images");
+    auth.bumpUsage("messages");
+    if (img) auth.bumpUsage("images");
+    followRef.current = true;
 
     // Build API history from nextList
     const apiHistory = nextList
       .filter((m) => !m.error)
       .map((m) => ({
-        role: (m.role === "user" ? "user" : "assistant") as "user" | "assistant",
+        role: (m.role === "user" ? "user" : "assistant") as
+          "user" | "assistant",
         content: m.content,
       }));
 
+    let streamed = "";
+    let requestTimeout: number | undefined;
     try {
       const headers = await authHeaders();
       const controller = new AbortController();
-      const timeout = window.setTimeout(() => controller.abort(), 90_000);
+      if (abortRef.current || runId !== requestId.current) return;
+      requestRef.current = controller;
+      requestTimeout = window.setTimeout(() => controller.abort(), 90_000);
 
       const intent =
-        (INTENT_PRESETS[lang] || INTENT_PRESETS.en).find((x) => x.id === intentId) || INTENT_PRESETS.en[0];
+        (INTENT_PRESETS[lang] || INTENT_PRESETS.en).find(
+          (x) => x.id === intentId,
+        ) || INTENT_PRESETS.en[0];
       const apiMessages = apiHistory.map((m, i, arr) => {
         if (i === arr.length - 1 && m.role === "user" && intent.prefix) {
           return { ...m, content: intent.prefix + m.content };
@@ -845,6 +938,7 @@ export default function AIPlayground() {
         headers,
         signal: controller.signal,
         body: JSON.stringify({
+          stream: true,
           messages: apiMessages,
           lang: answerLang,
           dual: mode === "dual" || intent.id === "dual",
@@ -856,7 +950,58 @@ export default function AIPlayground() {
           temporary: temporary || !memoryEnabled,
         }),
       });
-      window.clearTimeout(timeout);
+      if (abortRef.current || runId !== requestId.current) return;
+      if (
+        res.ok &&
+        res.headers.get("content-type")?.includes("application/x-ndjson") &&
+        res.body
+      ) {
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+        let done = false;
+        setActivity("typing");
+        try {
+          while (true) {
+            const chunk = await reader.read();
+            if (runId !== requestId.current) return;
+            if (chunk.done) break;
+            buffer += decoder.decode(chunk.value, { stream: true });
+            const lines = buffer.split("\n");
+            buffer = lines.pop() || "";
+            for (const line of lines) {
+              if (!line.trim()) continue;
+              const event = JSON.parse(line);
+              if (event.error) throw new Error(event.error);
+              if (typeof event.text === "string") {
+                streamed = event.text;
+                setTypingText(streamed);
+              }
+              if (event.done) {
+                done = true;
+                if (event.memory) void reloadSidebar();
+              }
+            }
+          }
+          if (!done) throw new Error("Stream interrupted");
+          if (runId !== requestId.current) return;
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: newId("m"),
+              role: "assistant",
+              content: streamed || "…",
+              ts: Date.now(),
+            },
+          ]);
+          setTypingText("");
+          setActivity("idle");
+          return;
+        } finally {
+          reader.releaseLock();
+        }
+      }
+      if (abortRef.current || runId !== requestId.current) return;
 
       const data = await res.json().catch(() => ({}));
 
@@ -872,8 +1017,10 @@ export default function AIPlayground() {
       }
       if (res.status === 401) {
         pushError(
-          lang === "sv" ? "Sessionen gick ut. Logga in igen." : "Session expired. Sign in again.",
-          { text: trimmed, image: img }
+          lang === "sv"
+            ? "Sessionen gick ut. Logga in igen."
+            : "Session expired. Sign in again.",
+          { text: trimmed, image: img },
         );
         auth.openAuth();
         return;
@@ -881,8 +1028,10 @@ export default function AIPlayground() {
       if (!res.ok) {
         pushError(
           data.error ||
-            (lang === "sv" ? "Något gick fel. Försök igen." : "Something went wrong. Try again."),
-          { text: trimmed, image: img }
+            (lang === "sv"
+              ? "Något gick fel. Försök igen."
+              : "Something went wrong. Try again."),
+          { text: trimmed, image: img },
         );
         return;
       }
@@ -910,17 +1059,34 @@ export default function AIPlayground() {
         await typeResponse(data.reply || "…");
       }
     } catch (e) {
-      const aborted = e instanceof Error && e.name === "AbortError";
+      if (runId !== requestId.current) return;
+      setTypingText("");
+      if (streamed)
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: newId("m"),
+            role: "assistant",
+            content: streamed,
+            ts: Date.now(),
+          },
+        ]);
+      if (abortRef.current) {
+        setActivity("idle");
+        return;
+      }
       pushError(
-        aborted
-          ? lang === "sv"
-            ? "Timeout — försök igen."
-            : "Timed out — try again."
-          : lang === "sv"
-            ? "Nätverksfel. Kontrollera anslutningen."
-            : "Network error. Check your connection.",
-        { text: trimmed, image: img }
+        lang === "sv"
+          ? "Svaret avbröts. Försök igen — din fråga finns kvar."
+          : "The response was interrupted. Try again — your question is still here.",
+        { text: trimmed, image: img },
       );
+    } finally {
+      window.clearTimeout(requestTimeout);
+      if (runId === requestId.current) {
+        requestRef.current = null;
+        sendingRef.current = false;
+      }
     }
   };
 
@@ -932,13 +1098,17 @@ export default function AIPlayground() {
         "warn",
         lang === "sv"
           ? "Bildgenerering kommer snart — bifoga en bild för analys i stället."
-          : "Image generation coming soon — attach an image to analyze instead."
+          : "Image generation coming soon — attach an image to analyze instead.",
       );
       setGenMode(false);
       return;
     }
     if (auth.isGuest) {
-      auth.openAuth(lang === "sv" ? "Bildgenerering kräver konto" : "Image generation needs an account");
+      auth.openAuth(
+        lang === "sv"
+          ? "Bildgenerering kräver konto"
+          : "Image generation needs an account",
+      );
       return;
     }
     if (!checkQuota("generations")) return;
@@ -968,14 +1138,15 @@ export default function AIPlayground() {
         await typeResponse(
           lang === "sv"
             ? "Bildgenerering är inte aktiverad här ännu (OPENAI_API_KEY saknas). Text-chatten fungerar."
-            : "Image generation isn’t enabled here yet (OPENAI_API_KEY missing). Text chat still works."
+            : "Image generation isn’t enabled here yet (OPENAI_API_KEY missing). Text chat still works.",
         );
         return;
       }
       if (!res.ok) {
         pushError(
-          data.error || (lang === "sv" ? "Kunde inte generera." : "Could not generate."),
-          { text: trimmed, gen: true }
+          data.error ||
+            (lang === "sv" ? "Kunde inte generera." : "Could not generate."),
+          { text: trimmed, gen: true },
         );
         if (data.code === "auth") auth.openAuth();
         return;
@@ -986,10 +1157,13 @@ export default function AIPlayground() {
           ? `data:image/png;base64,${data.imageBase64}`
           : null;
       if (!url) {
-        pushError(lang === "sv" ? "Ingen bild returnerades." : "No image returned.", {
-          text: trimmed,
-          gen: true,
-        });
+        pushError(
+          lang === "sv" ? "Ingen bild returnerades." : "No image returned.",
+          {
+            text: trimmed,
+            gen: true,
+          },
+        );
         return;
       }
       setActivity("idle");
@@ -1008,18 +1182,24 @@ export default function AIPlayground() {
         },
       ]);
     } catch {
-      pushError(lang === "sv" ? "Nätverksfel." : "Network error.", { text: trimmed, gen: true });
+      pushError(lang === "sv" ? "Nätverksfel." : "Network error.", {
+        text: trimmed,
+        gen: true,
+      });
     }
   };
 
-
   const exportThread = () => {
     if (!messages.length) {
-      showToast("err", lang === "sv" ? "Ingen tråd att exportera" : "No thread to export");
+      showToast(
+        "err",
+        lang === "sv" ? "Ingen tråd att exportera" : "No thread to export",
+      );
       return;
     }
     const lines = messages.map((m) => {
-      const who = m.role === "user" ? "You" : m.role === "assistant" ? "BudAI" : m.role;
+      const who =
+        m.role === "user" ? "You" : m.role === "assistant" ? "BudAI" : m.role;
       return `## ${who}\n${m.content}\n`;
     });
     const threadTitle =
@@ -1030,10 +1210,18 @@ export default function AIPlayground() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `budai-${threadTitle.toLowerCase().replace(/[^a-z0-9]+/gi, "-").slice(0, 40) || "chat"}.md`;
+    a.download = `budai-${
+      threadTitle
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/gi, "-")
+        .slice(0, 40) || "chat"
+    }.md`;
     a.click();
     URL.revokeObjectURL(url);
-    showToast("ok", lang === "sv" ? "Tråd exporterad (.md)" : "Thread exported (.md)");
+    showToast(
+      "ok",
+      lang === "sv" ? "Tråd exporterad (.md)" : "Thread exported (.md)",
+    );
   };
 
   const openWorkspace = (msgId: string, content: string) => {
@@ -1044,19 +1232,37 @@ export default function AIPlayground() {
     });
   };
 
-
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement)?.tagName;
-      const inField = tag === "INPUT" || tag === "TEXTAREA" || (e.target as HTMLElement)?.isContentEditable;
+      const inField =
+        tag === "INPUT" ||
+        tag === "TEXTAREA" ||
+        (e.target as HTMLElement)?.isContentEditable;
       if (e.key === "Escape") {
-        if (showShortcuts) { setShowShortcuts(false); return; }
-        if (toolsOpen) { setToolsOpen(false); return; }
-        if (workspace) { setWorkspace(null); return; }
-        if (mobileDrawer) { setMobileDrawer(false); return; }
+        if (showShortcuts) {
+          setShowShortcuts(false);
+          return;
+        }
+        if (toolsOpen) {
+          setToolsOpen(false);
+          return;
+        }
+        if (workspace) {
+          setWorkspace(null);
+          return;
+        }
+        if (mobileDrawer) {
+          setMobileDrawer(false);
+          return;
+        }
+        if (expanded) {
+          setExpanded(false);
+          return;
+        }
         return;
       }
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+      if ((e.metaKey || e.ctrlKey) && e.key === "/") {
         e.preventDefault();
         setShowShortcuts((s) => !s);
         return;
@@ -1080,17 +1286,31 @@ export default function AIPlayground() {
         e.preventDefault();
         setWorkspace((w) => {
           if (w) return null;
-          const last = [...messages].reverse().find((m) => m.role === "assistant" && m.content);
+          const last = [...messages]
+            .reverse()
+            .find((m) => m.role === "assistant" && m.content);
           if (!last) return null;
-          return { msgId: last.id, title: workspaceTitle(last.content, lang), body: last.content };
+          return {
+            msgId: last.id,
+            title: workspaceTitle(last.content, lang),
+            body: last.content,
+          };
         });
         return;
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showShortcuts, toolsOpen, workspace, mobileDrawer, messages, lang]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    showShortcuts,
+    toolsOpen,
+    workspace,
+    mobileDrawer,
+    messages,
+    lang,
+    expanded,
+  ]);
 
   const runInspire = () => {
     if (busy) return;
@@ -1109,7 +1329,11 @@ export default function AIPlayground() {
     e.preventDefault();
     if (!input.trim() && !attach) return;
     if (genMode && imageGenEnabled) void runImageGen(input || "image");
-    else void runPrompt(input || (attach ? (lang === "sv" ? "Vad ser du?" : "What do you see?") : ""));
+    else
+      void runPrompt(
+        input ||
+          (attach ? (lang === "sv" ? "Vad ser du?" : "What do you see?") : ""),
+      );
   };
 
   const onFile = async (e: ChangeEvent<HTMLInputElement>) => {
@@ -1117,7 +1341,10 @@ export default function AIPlayground() {
     e.target.value = "";
     if (!f) return;
     if (!f.type.startsWith("image/")) {
-      showToast("warn", lang === "sv" ? "Endast bilder just nu" : "Images only for now");
+      showToast(
+        "warn",
+        lang === "sv" ? "Endast bilder just nu" : "Images only for now",
+      );
       return;
     }
     if (f.size > 4 * 1024 * 1024) {
@@ -1125,12 +1352,17 @@ export default function AIPlayground() {
       return;
     }
     if (auth.isGuest) {
-      auth.openAuth(lang === "sv" ? "Bifoga bild med konto" : "Attach images with an account");
+      auth.openAuth(
+        lang === "sv"
+          ? "Bifoga bild med konto"
+          : "Attach images with an account",
+      );
       return;
     }
     try {
       const { b64, media } = await fileToBase64(f);
-      if (attach?.preview?.startsWith("blob:")) URL.revokeObjectURL(attach.preview);
+      if (attach?.preview?.startsWith("blob:"))
+        URL.revokeObjectURL(attach.preview);
       setAttach({
         id: newId("a"),
         kind: "image",
@@ -1141,7 +1373,10 @@ export default function AIPlayground() {
         size: f.size,
       });
     } catch {
-      showToast("err", lang === "sv" ? "Kunde inte läsa filen" : "Could not read file");
+      showToast(
+        "err",
+        lang === "sv" ? "Kunde inte läsa filen" : "Could not read file",
+      );
     }
   };
 
@@ -1151,7 +1386,11 @@ export default function AIPlayground() {
         lang: string;
         interimResults: boolean;
         continuous: boolean;
-        onresult: ((ev: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null;
+        onresult:
+          | ((ev: {
+              results: ArrayLike<ArrayLike<{ transcript: string }>>;
+            }) => void)
+          | null;
         onerror: ((ev: { error?: string }) => void) | null;
         onend: (() => void) | null;
         start: () => void;
@@ -1161,7 +1400,11 @@ export default function AIPlayground() {
         lang: string;
         interimResults: boolean;
         continuous: boolean;
-        onresult: ((ev: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null;
+        onresult:
+          | ((ev: {
+              results: ArrayLike<ArrayLike<{ transcript: string }>>;
+            }) => void)
+          | null;
         onerror: ((ev: { error?: string }) => void) | null;
         onend: (() => void) | null;
         start: () => void;
@@ -1174,7 +1417,7 @@ export default function AIPlayground() {
         "warn",
         lang === "sv"
           ? "Röst stöds inte i den här webbläsaren (prova Chrome)."
-          : "Voice not supported in this browser (try Chrome)."
+          : "Voice not supported in this browser (try Chrome).",
       );
       return;
     }
@@ -1204,10 +1447,17 @@ export default function AIPlayground() {
         if (err === "not-allowed") {
           showToast(
             "err",
-            lang === "sv" ? "Mikrofon nekad i webbläsaren." : "Microphone permission denied."
+            lang === "sv"
+              ? "Mikrofon nekad i webbläsaren."
+              : "Microphone permission denied.",
           );
         } else if (err && err !== "aborted") {
-          showToast("warn", lang === "sv" ? "Röstfel — försök igen." : "Voice error — try again.");
+          showToast(
+            "warn",
+            lang === "sv"
+              ? "Röstfel — försök igen."
+              : "Voice error — try again.",
+          );
         }
       };
       r.onend = () => {
@@ -1219,7 +1469,12 @@ export default function AIPlayground() {
       setActivity("listening");
       r.start();
     } catch {
-      showToast("err", lang === "sv" ? "Kunde inte starta mikrofon." : "Could not start microphone.");
+      showToast(
+        "err",
+        lang === "sv"
+          ? "Kunde inte starta mikrofon."
+          : "Could not start microphone.",
+      );
     }
   };
 
@@ -1227,6 +1482,10 @@ export default function AIPlayground() {
     if (creatingChat) return;
     setCreatingChat(true);
     stopAll();
+    requestId.current++;
+    window.clearTimeout(persistTimer.current);
+    if (messages.length && convoId)
+      await persistMessages(messages, convoId).catch(() => {});
     setAttach(null);
     setGenMode(false);
     setInput("");
@@ -1239,9 +1498,14 @@ export default function AIPlayground() {
 
     try {
       if (auth.isMember && !opts?.temporary) {
-        const id = await cloud.createConversation(lang === "sv" ? "Ny chatt" : "New chat");
+        const id = await cloud.createConversation(
+          lang === "sv" ? "Ny chatt" : "New chat",
+        );
         if (!id) {
-          showToast("err", lang === "sv" ? "Kunde inte skapa chatt" : "Could not create chat");
+          showToast(
+            "err",
+            lang === "sv" ? "Kunde inte skapa chatt" : "Could not create chat",
+          );
           setCreatingChat(false);
           return;
         }
@@ -1262,6 +1526,10 @@ export default function AIPlayground() {
 
   const loadConvo = async (id: string) => {
     stopAll();
+    requestId.current++;
+    window.clearTimeout(persistTimer.current);
+    if (messages.length && convoId)
+      await persistMessages(messages, convoId).catch(() => {});
     setDualPick({});
     setLastFailed(null);
     setWorkspace(null);
@@ -1269,7 +1537,10 @@ export default function AIPlayground() {
     if (auth.isMember) {
       const c = await cloud.loadConversation(id);
       if (!c) {
-        showToast("err", lang === "sv" ? "Kunde inte ladda chatt" : "Could not load chat");
+        showToast(
+          "err",
+          lang === "sv" ? "Kunde inte ladda chatt" : "Could not load chat",
+        );
         return;
       }
       setConvoId(c.id);
@@ -1317,10 +1588,9 @@ export default function AIPlayground() {
     return history.filter((c) => c.title.toLowerCase().includes(q));
   }, [history, search]);
 
-  const grouped = useMemo(() => groupByDate(filteredHistory, lang), [filteredHistory, lang]);
-  const caps = useMemo(
-    () => CAPABILITY_CARDS[lang].filter((c) => !("gen" in c && c.gen) || imageGenEnabled),
-    [lang, imageGenEnabled]
+  const grouped = useMemo(
+    () => groupByDate(filteredHistory, lang),
+    [filteredHistory, lang],
   );
   const isEmpty = messages.length === 0 && activity === "idle";
   const rem = auth.remaining.messages;
@@ -1382,7 +1652,9 @@ export default function AIPlayground() {
         )}
         {grouped.map((g) => (
           <div key={g.label}>
-            <div className="text-[10px] uppercase tracking-wider text-muted/50 px-2 mb-1">{g.label}</div>
+            <div className="text-[10px] uppercase tracking-wider text-muted/50 px-2 mb-1">
+              {g.label}
+            </div>
             <div className="space-y-0.5">
               {g.items.map((c) => (
                 <div
@@ -1418,7 +1690,9 @@ export default function AIPlayground() {
                         onClick={() => void loadConvo(c.id)}
                         className="flex-1 min-w-0 text-left px-1"
                       >
-                        <div className="text-[12px] text-white/85 truncate">{c.title}</div>
+                        <div className="text-[12px] text-white/85 truncate">
+                          {c.title}
+                        </div>
                       </button>
                       <button
                         type="button"
@@ -1455,7 +1729,9 @@ export default function AIPlayground() {
           >
             <BrainCircuit className="w-3.5 h-3.5 text-accent-purple" />
             {lang === "sv" ? "Minne" : "Memory"}
-            <span className="ml-auto font-mono text-accent-purple">{memory.length}</span>
+            <span className="ml-auto font-mono text-accent-purple">
+              {memory.length}
+            </span>
             {!memoryEnabled && <EyeOff className="w-3 h-3 text-muted" />}
           </button>
         )}
@@ -1473,44 +1749,36 @@ export default function AIPlayground() {
     >
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(100vw,720px)] h-[min(100vw,720px)] bg-accent-purple/5 rounded-full blur-[140px] pointer-events-none" />
 
-      <div className="max-w-6xl mx-auto px-3 sm:px-6 lg:px-8 relative z-10">
-        <ScrollReveal className="text-center mb-6 sm:mb-8">
-          <span className="section-badge text-accent-cyan mb-4">{t.playground.badge}</span>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight mb-3">
-            {t.playground.title}{" "}
-            <span className="text-gradient">{t.playground.titleHighlight}</span>
+      <div className="site-width relative z-10">
+        <div className="pg-section-head">
+          <h2>
+            <span>01 /</span> Playground <span>PREVIEW</span>
           </h2>
-          <p className="text-sm sm:text-base text-muted max-w-2xl mx-auto">{t.playground.subtitle}</p>
-        </ScrollReveal>
+          <p>
+            {lang === "sv"
+              ? "En liten inblick. Riktig AI."
+              : "A little preview. Real intelligence."}
+          </p>
+        </div>
+        <div className={`pg-shell ${expanded ? "pg-expanded" : ""}`}>
+          {/* Desktop sidebar */}
+          <AnimatePresence initial={false}>
+            {sidebarOpen && (
+              <motion.aside
+                initial={{ width: 0, opacity: 0 }}
+                animate={{ width: 240, opacity: 1 }}
+                exit={{ width: 0, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="hidden md:flex flex-col border-r border-white/[0.06] bg-[#08080f] shrink-0 overflow-hidden"
+                style={{ maxWidth: 240 }}
+              >
+                {SidebarBody}
+              </motion.aside>
+            )}
+          </AnimatePresence>
 
-        <ScrollReveal>
-          <div
-            className={`rounded-2xl sm:rounded-3xl overflow-hidden border border-white/[0.12] bg-[#05050a]/98 shadow-[0_0_100px_rgba(0,229,255,0.12),0_40px_80px_rgba(0,0,0,0.45)] flex ${
-              expanded
-                ? "fixed inset-0 sm:inset-3 z-[80] rounded-none sm:rounded-3xl"
-                : "min-h-[min(82vh,760px)]"
-            }`}
-          >
-            <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-accent-cyan/50 to-transparent z-20" />
-
-            {/* Desktop sidebar */}
-            <AnimatePresence initial={false}>
-              {sidebarOpen && (
-                <motion.aside
-                  initial={{ width: 0, opacity: 0 }}
-                  animate={{ width: 240, opacity: 1 }}
-                  exit={{ width: 0, opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="hidden md:flex flex-col border-r border-white/[0.06] bg-[#08080f] shrink-0 overflow-hidden"
-                  style={{ maxWidth: 240 }}
-                >
-                  {SidebarBody}
-                </motion.aside>
-              )}
-            </AnimatePresence>
-
-            {/* Main column + optional Workspace */}
-            <div className="flex-1 flex min-w-0 min-h-0">
+          {/* Main column + optional Workspace */}
+          <div className="flex-1 flex min-w-0 min-h-0">
             <div className="flex-1 flex flex-col min-w-0 min-h-0">
               {/* Header */}
               <div className="flex items-center justify-between gap-2 px-2.5 sm:px-3 py-2 border-b border-white/[0.06] bg-[#080810]/90 shrink-0">
@@ -1558,6 +1826,9 @@ export default function AIPlayground() {
                     <button
                       type="button"
                       onClick={stopAll}
+                      aria-label={
+                        lang === "sv" ? "Stoppa svar" : "Stop response"
+                      }
                       className="p-2 rounded-lg border border-red-500/25 text-red-300"
                       title="Stop"
                     >
@@ -1578,7 +1849,11 @@ export default function AIPlayground() {
                     onClick={exportThread}
                     disabled={!messages.length}
                     className="p-2 rounded-lg border border-white/[0.06] text-muted hover:text-white disabled:opacity-30"
-                    title={lang === "sv" ? "Exportera tråd (.md) · ⌘E" : "Export thread (.md) · ⌘E"}
+                    title={
+                      lang === "sv"
+                        ? "Exportera tråd (.md) · ⌘E"
+                        : "Export thread (.md) · ⌘E"
+                    }
                   >
                     <Download className="w-4 h-4" />
                   </button>
@@ -1586,7 +1861,7 @@ export default function AIPlayground() {
                     type="button"
                     onClick={() => setShowShortcuts(true)}
                     className="hidden sm:inline-flex p-2 rounded-lg border border-white/[0.06] text-muted hover:text-white"
-                    title={lang === "sv" ? "Genvägar · ⌘K" : "Shortcuts · ⌘K"}
+                    title={lang === "sv" ? "Genvägar · ⌘/" : "Shortcuts · ⌘/"}
                   >
                     <Command className="w-4 h-4" />
                   </button>
@@ -1606,182 +1881,215 @@ export default function AIPlayground() {
                       className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-accent-cyan/15 border border-accent-cyan/25 text-accent-cyan text-[11px] font-semibold"
                     >
                       <LogIn className="w-3.5 h-3.5" />
-                      <span className="hidden sm:inline">{lang === "sv" ? "Logga in" : "Sign in"}</span>
+                      <span className="hidden sm:inline">
+                        {lang === "sv" ? "Logga in" : "Sign in"}
+                      </span>
                     </button>
                   )}
                   <button
                     type="button"
+                    aria-label={
+                      expanded ? "Exit fullscreen" : "Open fullscreen"
+                    }
                     onClick={() => setExpanded((e) => !e)}
-                    className="p-2 rounded-lg border border-white/[0.06] text-muted hover:text-white hidden sm:inline-flex"
+                    className="p-2 rounded-lg border border-white/[0.06] text-muted hover:text-white inline-flex"
                   >
-                    {expanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+                    {expanded ? (
+                      <Minimize2 className="w-4 h-4" />
+                    ) : (
+                      <Maximize2 className="w-4 h-4" />
+                    )}
                   </button>
                 </div>
               </div>
 
-              {/* Intent + controls strip — ChatGPT/Claude/Perplexity-inspired, honest */}
-              <div className="flex flex-col gap-2 px-2.5 sm:px-3 py-2 border-b border-white/[0.06] bg-gradient-to-b from-black/35 to-black/15 shrink-0">
-                <div className="flex flex-wrap items-center gap-1.5">
-                  {(INTENT_PRESETS[lang] || INTENT_PRESETS.en).map((it) => (
-                    <button
-                      key={it.id}
-                      type="button"
-                      title={it.hint}
-                      onClick={() => {
-                        setIntentId(it.id);
-                        setMode(it.id === "dual" ? "dual" : mode === "concise" ? "concise" : "single");
-                      }}
-                      className={`px-2.5 py-1.5 rounded-full text-[11px] font-semibold border transition-all ${
-                        intentId === it.id
-                          ? "bg-gradient-to-r from-accent-cyan/20 to-accent-purple/20 border-accent-cyan/40 text-white shadow-[0_0_20px_rgba(0,229,255,0.12)]"
-                          : "border-white/[0.08] text-muted hover:text-white hover:border-white/20 bg-white/[0.02]"
-                      }`}
-                    >
-                      {it.label}
-                    </button>
-                  ))}
-                  <div className="ml-auto flex items-center gap-1.5">
-                    <span className="hidden sm:inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-mono text-accent-cyan/80 border border-accent-cyan/20 bg-accent-cyan/5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-accent-green animate-pulse" />
-                      BudAI Core · v0.93
-                    </span>
-                    <div
-                      className="flex p-0.5 rounded-full bg-black/50 border border-white/[0.08]"
-                      role="group"
-                      aria-label={lang === "sv" ? "Svarspråk" : "Answer language"}
-                    >
-                      {(["en", "sv"] as const).map((code) => (
+              {toolsOpen && (
+                <>
+                  {/* Intent + controls strip — ChatGPT/Claude/Perplexity-inspired, honest */}
+                  <div className="pg-tools-strip flex flex-col gap-2 px-2.5 sm:px-3 py-2 border-b border-white/[0.06] bg-gradient-to-b from-black/35 to-black/15 shrink-0">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {(INTENT_PRESETS[lang] || INTENT_PRESETS.en).map((it) => (
                         <button
-                          key={code}
+                          key={it.id}
                           type="button"
-                          onClick={() => setAnswerLang(code)}
-                          className={`px-2 py-0.5 text-[10px] font-bold rounded-full ${
-                            answerLang === code
-                              ? "bg-gradient-to-r from-accent-cyan to-accent-purple text-white"
-                              : "text-muted/70 hover:text-white"
+                          title={it.hint}
+                          onClick={() => {
+                            setIntentId(it.id);
+                            setMode(
+                              it.id === "dual"
+                                ? "dual"
+                                : mode === "concise"
+                                  ? "concise"
+                                  : "single",
+                            );
+                          }}
+                          className={`px-2.5 py-1.5 rounded-full text-[11px] font-semibold border transition-all ${
+                            intentId === it.id
+                              ? "bg-gradient-to-r from-accent-cyan/20 to-accent-purple/20 border-accent-cyan/40 text-white shadow-[0_0_20px_rgba(0,229,255,0.12)]"
+                              : "border-white/[0.08] text-muted hover:text-white hover:border-white/20 bg-white/[0.02]"
                           }`}
                         >
-                          {code.toUpperCase()}
+                          {it.label}
                         </button>
                       ))}
+                      <div className="ml-auto flex items-center gap-1.5">
+                        <div
+                          className="flex p-0.5 rounded-full bg-black/50 border border-white/[0.08]"
+                          role="group"
+                          aria-label={
+                            lang === "sv" ? "Svarspråk" : "Answer language"
+                          }
+                        >
+                          {(["en", "sv"] as const).map((code) => (
+                            <button
+                              key={code}
+                              type="button"
+                              onClick={() => setAnswerLang(code)}
+                              className={`px-2 py-0.5 text-[10px] font-bold rounded-full ${
+                                answerLang === code
+                                  ? "bg-gradient-to-r from-accent-cyan to-accent-purple text-white"
+                                  : "text-muted/70 hover:text-white"
+                              }`}
+                            >
+                              {code.toUpperCase()}
+                            </button>
+                          ))}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setMode((m) =>
+                              m === "concise" ? "single" : "concise",
+                            )
+                          }
+                          className={`px-2 py-1 rounded-lg text-[10px] font-medium border ${
+                            mode === "concise"
+                              ? "border-accent-purple/40 text-accent-purple bg-accent-purple/10"
+                              : "border-white/[0.06] text-muted hover:text-white"
+                          }`}
+                          title={
+                            lang === "sv" ? "Korta svar" : "Concise replies"
+                          }
+                        >
+                          {lang === "sv" ? "Kort" : "Short"}
+                        </button>
+                      </div>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => setMode((m) => (m === "concise" ? "single" : "concise"))}
-                      className={`px-2 py-1 rounded-lg text-[10px] font-medium border ${
-                        mode === "concise"
-                          ? "border-accent-purple/40 text-accent-purple bg-accent-purple/10"
-                          : "border-white/[0.06] text-muted hover:text-white"
-                      }`}
-                      title={lang === "sv" ? "Korta svar" : "Concise replies"}
-                    >
-                      {lang === "sv" ? "Kort" : "Short"}
-                    </button>
+                    <div className="flex items-center gap-2 text-[10px] text-muted/50 px-0.5">
+                      <Globe2 className="w-3 h-3" />
+                      <span className="truncate">
+                        {(INTENT_PRESETS[lang] || INTENT_PRESETS.en).find(
+                          (x) => x.id === intentId,
+                        )?.hint ||
+                          (lang === "sv"
+                            ? "Välj läge ovan"
+                            : "Pick a mode above")}
+                      </span>
+                      <span className="ml-auto font-mono text-muted/40 hidden sm:inline">
+                        {lang === "sv" ? "⌘/ för fokus" : "⌘/ for tips"}
+                      </span>
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-center gap-2 text-[10px] text-muted/50 px-0.5">
-                  <Globe2 className="w-3 h-3" />
-                  <span className="truncate">
-                    {(INTENT_PRESETS[lang] || INTENT_PRESETS.en).find((x) => x.id === intentId)?.hint ||
-                      (lang === "sv" ? "Välj läge ovan" : "Pick a mode above")}
-                  </span>
-                  <span className="ml-auto font-mono text-muted/40 hidden sm:inline">
-                    {lang === "sv" ? "⌘/ för fokus" : "⌘/ for tips"}
-                  </span>
-                </div>
-              </div>
-
+                </>
+              )}
+              <span className="sr-only" role="status">
+                {busy
+                  ? activityLabel(activity, lang)
+                  : lang === "sv"
+                    ? "Redo"
+                    : "Ready"}
+              </span>
               {/* Messages / empty */}
               <div
                 ref={scrollRef}
-                className="flex-1 overflow-y-auto p-3 sm:p-5 space-y-4 min-h-0"
+                onScroll={(e) => {
+                  const el = e.currentTarget;
+                  followRef.current =
+                    el.scrollHeight - el.scrollTop - el.clientHeight < 90;
+                }}
+                className="pg-scroll flex-1 overflow-y-auto p-3 sm:p-5 space-y-4 min-h-0"
                 style={{ WebkitOverflowScrolling: "touch" }}
               >
                 {isEmpty && (
-                  <div className="flex flex-col items-center justify-center min-h-[300px] sm:min-h-[380px] px-2 relative">
-                    <div className="absolute inset-0 pointer-events-none opacity-40">
-                      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-full bg-accent-cyan/10 blur-3xl" />
-                      <div className="absolute top-1/3 left-1/3 w-40 h-40 rounded-full bg-accent-purple/10 blur-3xl" />
-                    </div>
-                    <div className="mb-6 relative">
-                      <BudAILogo size="xl" animated />
-                    </div>
-                    <div className="inline-flex items-center gap-1.5 mb-3 px-2.5 py-1 rounded-full border border-accent-green/25 bg-accent-green/10 text-[10px] font-mono text-accent-green">
-                      <span className="w-1.5 h-1.5 rounded-full bg-accent-green animate-pulse" />
-                      {lang === "sv" ? "LIVE · BudAI Core" : "LIVE · BudAI Core"}
-                    </div>
-                    <h3 className="text-xl sm:text-2xl font-bold text-white mb-1.5 tracking-tight relative">
-                      {lang === "sv" ? "Vad ska vi få gjort?" : "What should we ship?"}
-                    </h3>
-                    <p className="text-sm text-muted mb-6 text-center max-w-md leading-relaxed">
+                  <div className="pg-empty">
+                    <BudAILogo size="lg" animated />
+                    <h3>
                       {lang === "sv"
-                        ? "Text, vision, röst, minne — och Workspace för längre resultat."
-                        : "Text, vision, voice, memory — and Workspace for longer outputs."}
+                        ? "Vad vill du få gjort?"
+                        : "What’s on your mind?"}
+                    </h3>
+                    <p>
+                      {lang === "sv"
+                        ? "En idé, en fråga eller början på något bra."
+                        : "An idea, a question, or the start of something good."}
                     </p>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 w-full max-w-xl">
-                      {caps.map((c) => (
-                        <button
-                          key={c.title}
-                          type="button"
-                          onClick={() => {
-                            if ("voice" in c && c.voice) {
-                              toggleMic();
-                              return;
-                            }
-                            if ("needsImage" in c && c.needsImage) {
-                              fileRef.current?.click();
-                              setInput(c.prompt);
-                              return;
-                            }
-                            if ("gen" in c && c.gen) {
-                              if (!imageGenEnabled) {
-                                showToast(
-                                  "warn",
-                                  lang === "sv"
-                                    ? "Bildgenerering kommer snart."
-                                    : "Image generation coming soon."
-                                );
-                                return;
-                              }
-                              setGenMode(true);
-                              setInput(c.prompt);
-                              taRef.current?.focus();
-                              return;
-                            }
-                            void runPrompt(c.prompt);
-                          }}
-                          className="pg-suggest-chip text-left rounded-2xl border border-white/[0.09] bg-gradient-to-b from-white/[0.06] to-white/[0.02] hover:border-accent-cyan/40 hover:from-accent-cyan/[0.08] hover:to-accent-purple/[0.04] p-3.5 transition-all duration-200 group"
-                        >
-                          <div className="w-8 h-8 rounded-lg bg-accent-cyan/10 border border-accent-cyan/20 flex items-center justify-center text-accent-cyan mb-2.5 group-hover:scale-105 transition-transform">
-                            {c.icon === "vision" && <Eye className="w-4 h-4" />}
-                            {c.icon === "gen" && <Wand2 className="w-4 h-4" />}
-                            {c.icon === "voice" && <Mic className="w-4 h-4" />}
-                            {c.icon === "memory" && <BrainCircuit className="w-4 h-4" />}
-                            {c.icon === "create" && <Sparkles className="w-4 h-4" />}
-                            {c.icon === "analyze" && <Shield className="w-4 h-4" />}
-                            {c.icon === "plan" && <ListTodo className="w-4 h-4" />}
-                          </div>
-                          <div className="text-[13px] font-semibold text-white/90">{c.title}</div>
-                          {"blurb" in c && c.blurb ? (
-                            <div className="text-[10px] text-muted mt-0.5">{c.blurb}</div>
-                          ) : null}
-                        </button>
-                      ))}
+                    <div className="pg-suggestions">
+                      {(lang === "sv"
+                        ? [
+                            [
+                              "Skriv ett mejl",
+                              "Hitta rätt ord",
+                              "Hjälp mig skriva ett tydligt och vänligt mejl. Fråga mig först om mottagare och syfte.",
+                            ],
+                            [
+                              "Tänk tillsammans",
+                              "Gör en idé tydligare",
+                              "Hjälp mig tänka igenom en idé. Ställ tre bra frågor innan du ger förslag.",
+                            ],
+                            [
+                              "Analysera en bild",
+                              "Se det viktiga",
+                              "Analysera den här bilden och sammanfatta de viktigaste detaljerna.",
+                            ],
+                            [
+                              "Planera min vecka",
+                              "Skapa plats för fokus",
+                              "Hjälp mig planera en realistisk arbetsvecka. Fråga om mina prioriteringar och möten först.",
+                            ],
+                          ]
+                        : [
+                            [
+                              "Draft an email",
+                              "Find the right words",
+                              "Help me write a clear, friendly email. First ask who it is for and what I want to say.",
+                            ],
+                            [
+                              "Think it through",
+                              "Bring clarity to an idea",
+                              "Help me think through an idea. Ask three useful questions before suggesting a direction.",
+                            ],
+                            [
+                              "Analyze an image",
+                              "See the bigger picture",
+                              "Analyze this image and summarize the most important details.",
+                            ],
+                            [
+                              "Plan my week",
+                              "Make room for focus",
+                              "Help me build a realistic week plan. First ask about my priorities and meetings.",
+                            ],
+                          ]
+                      ).map(([title, hint, prompt], i) => {
+                        const Icon = [Pencil, Sparkles, Eye, ListTodo][i];
+                        return (
+                          <button
+                            type="button"
+                            key={title}
+                            onClick={() => {
+                              setInput(prompt);
+                              if (i === 2) fileRef.current?.click();
+                              else taRef.current?.focus();
+                            }}
+                          >
+                            <Icon />
+                            <span>
+                              <strong>{title}</strong>
+                              <small>{hint}</small>
+                            </span>
+                          </button>
+                        );
+                      })}
                     </div>
-                    <button
-                      type="button"
-                      onClick={runInspire}
-                      disabled={busy}
-                      className="mt-5 group inline-flex items-center gap-2 px-4 py-2.5 rounded-full border border-accent-cyan/25 bg-gradient-to-r from-accent-cyan/10 to-accent-purple/10 hover:from-accent-cyan/20 hover:to-accent-purple/20 text-sm text-white/90 transition-all shadow-[0_0_30px_rgba(0,229,255,0.08)]"
-                    >
-                      <Dices className="w-4 h-4 text-accent-cyan group-hover:rotate-12 transition-transform" />
-                      <span className="font-medium">
-                        {lang === "sv" ? "Inspirera mig" : "Surprise me"}
-                      </span>
-                      <span className="text-[10px] text-muted font-mono hidden sm:inline">
-                        {lang === "sv" ? "slumpad stark prompt" : "random strong prompt"}
-                      </span>
-                    </button>
                   </div>
                 )}
 
@@ -1794,13 +2102,17 @@ export default function AIPlayground() {
                       className={`w-8 h-8 rounded-xl shrink-0 flex items-center justify-center ${
                         msg.role === "user"
                           ? "bg-white/10"
-                          : "bg-gradient-to-br from-accent-cyan/80 to-accent-purple/80 p-1.5"
+                          : "bg-white/[0.03] p-1"
                       }`}
                     >
                       {msg.role === "user" ? (
                         <User className="w-4 h-4 text-white/70" />
                       ) : (
-                        <BudAILogo size="xs" animated className="!w-full !h-full" />
+                        <BudAILogo
+                          size="xs"
+                          animated
+                          className="!w-full !h-full"
+                        />
                       )}
                     </div>
                     <div
@@ -1815,7 +2127,11 @@ export default function AIPlayground() {
                           className="block overflow-hidden rounded-xl border border-white/10 max-w-[min(100%,280px)] shadow-lg"
                         >
                           {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={msg.imageUrl} alt="" className="w-full h-auto" />
+                          <img
+                            src={msg.imageUrl}
+                            alt=""
+                            className="w-full h-auto"
+                          />
                         </button>
                       )}
 
@@ -1828,8 +2144,10 @@ export default function AIPlayground() {
                               onClick={() => {
                                 setMessages((p) =>
                                   p.map((m) =>
-                                    m.id === msg.id ? { ...m, content: opt.body } : m
-                                  )
+                                    m.id === msg.id
+                                      ? { ...m, content: opt.body }
+                                      : m,
+                                  ),
                                 );
                                 setDualPick((d) => {
                                   const n = { ...d };
@@ -1875,9 +2193,22 @@ export default function AIPlayground() {
                             const f = lastFailed;
                             setLastFailed(null);
                             // remove last error bubble
-                            setMessages((p) => p.filter((m) => m.id !== msg.id));
+                            setMessages((p) =>
+                              p.filter((m) => m.id !== msg.id),
+                            );
                             if (f.gen) void runImageGen(f.text);
-                            else void runPrompt(f.text, { image: f.image });
+                            else {
+                              const lastUser = messages
+                                .map((m) => m.role)
+                                .lastIndexOf("user");
+                              void runPrompt(f.text, {
+                                image: f.image,
+                                history: messages.slice(
+                                  0,
+                                  Math.max(0, lastUser),
+                                ),
+                              });
+                            }
                           }}
                           className="inline-flex items-center gap-1.5 text-[11px] text-accent-cyan hover:text-white"
                         >
@@ -1886,113 +2217,152 @@ export default function AIPlayground() {
                         </button>
                       )}
 
-                      {msg.role === "assistant" && !msg.error && !dualPick[msg.id] && (
-                        <div className="flex flex-wrap gap-1.5 opacity-80 hover:opacity-100 transition-opacity">
-                          {isWorkspaceWorthy(msg.content) && (
+                      {msg.role === "assistant" &&
+                        !msg.error &&
+                        !dualPick[msg.id] && (
+                          <div className="flex flex-wrap gap-1.5 opacity-80 hover:opacity-100 transition-opacity">
+                            {isWorkspaceWorthy(msg.content) && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  openWorkspace(msg.id, msg.content)
+                                }
+                                className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-lg border border-accent-cyan/25 bg-accent-cyan/10 text-accent-cyan hover:bg-accent-cyan/15"
+                              >
+                                <PanelRight className="w-3 h-3" />
+                                {lang === "sv" ? "Workspace" : "Workspace"}
+                              </button>
+                            )}
                             <button
                               type="button"
-                              onClick={() => openWorkspace(msg.id, msg.content)}
-                              className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-lg border border-accent-cyan/25 bg-accent-cyan/10 text-accent-cyan hover:bg-accent-cyan/15"
-                            >
-                              <PanelRight className="w-3 h-3" />
-                              {lang === "sv" ? "Workspace" : "Workspace"}
-                            </button>
-                          )}
-                          <button
-                            type="button"
-                            onClick={async () => {
-                              try {
-                                await navigator.clipboard.writeText(msg.content);
-                                showToast("ok", lang === "sv" ? "Kopierat" : "Copied");
-                              } catch {
-                                showToast("err", "Copy failed");
-                              }
-                            }}
-                            className="inline-flex items-center gap-1 text-[10px] text-muted hover:text-white px-1.5 py-1"
-                          >
-                            <Copy className="w-3 h-3" />
-                            {lang === "sv" ? "Kopiera" : "Copy"}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const idx = messages.findIndex((m) => m.id === msg.id);
-                              let userText = "";
-                              for (let i = idx - 1; i >= 0; i--) {
-                                if (messages[i].role === "user") {
-                                  userText = messages[i].content;
-                                  break;
+                              onClick={async () => {
+                                try {
+                                  await navigator.clipboard.writeText(
+                                    msg.content,
+                                  );
+                                  showToast(
+                                    "ok",
+                                    lang === "sv" ? "Kopierat" : "Copied",
+                                  );
+                                } catch {
+                                  showToast("err", "Copy failed");
                                 }
-                              }
-                              if (!userText) return;
-                              setMessages((p) => p.filter((m) => m.id !== msg.id));
-                              void runPrompt(userText);
-                            }}
-                            className="inline-flex items-center gap-1 text-[10px] text-muted hover:text-white px-1.5 py-1"
-                          >
-                            <RefreshCw className="w-3 h-3" />
-                            {lang === "sv" ? "Generera om" : "Regenerate"}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const prompt =
-                                lang === "sv"
-                                  ? "Fortsätt på det senaste svaret — gå djupare och gör det mer konkret."
-                                  : "Continue from your last answer — go deeper and make it more concrete.";
-                              void runPrompt(prompt);
-                            }}
-                            className="inline-flex items-center gap-1 text-[10px] text-muted hover:text-white px-1.5 py-1"
-                          >
-                            <Sparkles className="w-3 h-3" />
-                            {lang === "sv" ? "Fortsätt" : "Continue"}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={async () => {
-                              try {
-                                await navigator.clipboard.writeText(msg.content);
+                              }}
+                              className="inline-flex items-center gap-1 text-[10px] text-muted hover:text-white px-1.5 py-1"
+                            >
+                              <Copy className="w-3 h-3" />
+                              {lang === "sv" ? "Kopiera" : "Copy"}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const idx = messages.findIndex(
+                                  (m) => m.id === msg.id,
+                                );
+                                for (let i = idx - 1; i >= 0; i--) {
+                                  if (messages[i].role === "user") {
+                                    if (messages[i].imageUrl) {
+                                      showToast(
+                                        "warn",
+                                        lang === "sv"
+                                          ? "Bifoga bilden igen för att göra en ny analys."
+                                          : "Please attach the image again for a new analysis.",
+                                      );
+                                      return;
+                                    }
+                                    void runPrompt(messages[i].content, {
+                                      history: messages.slice(0, i),
+                                    });
+                                    break;
+                                  }
+                                }
+                              }}
+                              className="inline-flex items-center gap-1 text-[10px] text-muted hover:text-white px-1.5 py-1"
+                            >
+                              <RefreshCw className="w-3 h-3" />
+                              {lang === "sv" ? "Generera om" : "Regenerate"}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const prompt =
+                                  lang === "sv"
+                                    ? "Fortsätt på det senaste svaret — gå djupare och gör det mer konkret."
+                                    : "Continue from your last answer — go deeper and make it more concrete.";
+                                void runPrompt(prompt);
+                              }}
+                              className="inline-flex items-center gap-1 text-[10px] text-muted hover:text-white px-1.5 py-1"
+                            >
+                              <Sparkles className="w-3 h-3" />
+                              {lang === "sv" ? "Fortsätt" : "Continue"}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                try {
+                                  await navigator.clipboard.writeText(
+                                    msg.content,
+                                  );
+                                  showToast(
+                                    "ok",
+                                    lang === "sv"
+                                      ? "Svar kopierat — klistra in var du vill"
+                                      : "Reply copied — paste anywhere",
+                                  );
+                                } catch {
+                                  showToast("err", "Share failed");
+                                }
+                              }}
+                              className="inline-flex items-center gap-1 text-[10px] text-muted hover:text-white px-1.5 py-1"
+                            >
+                              <Share2 className="w-3 h-3" />
+                              {lang === "sv" ? "Dela" : "Share"}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setFeedback((f) => ({ ...f, [msg.id]: "up" }));
                                 showToast(
                                   "ok",
-                                  lang === "sv" ? "Svar kopierat — klistra in var du vill" : "Reply copied — paste anywhere"
+                                  lang === "sv"
+                                    ? "Tack — sparat lokalt"
+                                    : "Thanks — saved locally",
                                 );
-                              } catch {
-                                showToast("err", "Share failed");
-                              }
-                            }}
-                            className="inline-flex items-center gap-1 text-[10px] text-muted hover:text-white px-1.5 py-1"
-                          >
-                            <Share2 className="w-3 h-3" />
-                            {lang === "sv" ? "Dela" : "Share"}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setFeedback((f) => ({ ...f, [msg.id]: "up" }));
-                              showToast("ok", lang === "sv" ? "Tack — sparat lokalt" : "Thanks — saved locally");
-                            }}
-                            className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-1 ${
-                              feedback[msg.id] === "up" ? "text-accent-green" : "text-muted hover:text-white"
-                            }`}
-                            title="Good"
-                          >
-                            <ThumbsUp className="w-3 h-3" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setFeedback((f) => ({ ...f, [msg.id]: "down" }));
-                              showToast("ok", lang === "sv" ? "Tack — vi tar det vidare" : "Thanks — noted");
-                            }}
-                            className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-1 ${
-                              feedback[msg.id] === "down" ? "text-red-300" : "text-muted hover:text-white"
-                            }`}
-                            title="Bad"
-                          >
-                            <ThumbsDown className="w-3 h-3" />
-                          </button>
-                        </div>
-                      )}
+                              }}
+                              className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-1 ${
+                                feedback[msg.id] === "up"
+                                  ? "text-accent-green"
+                                  : "text-muted hover:text-white"
+                              }`}
+                              title="Good"
+                            >
+                              <ThumbsUp className="w-3 h-3" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setFeedback((f) => ({
+                                  ...f,
+                                  [msg.id]: "down",
+                                }));
+                                showToast(
+                                  "ok",
+                                  lang === "sv"
+                                    ? "Tack — vi tar det vidare"
+                                    : "Thanks — noted",
+                                );
+                              }}
+                              className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-1 ${
+                                feedback[msg.id] === "down"
+                                  ? "text-red-300"
+                                  : "text-muted hover:text-white"
+                              }`}
+                              title="Bad"
+                            >
+                              <ThumbsDown className="w-3 h-3" />
+                            </button>
+                          </div>
+                        )}
 
                       {msg.generated && msg.imageUrl && (
                         <div className="flex flex-wrap gap-2">
@@ -2009,7 +2379,7 @@ export default function AIPlayground() {
                               void runImageGen(
                                 lang === "sv"
                                   ? `Variation av: ${messages.find((m) => m.role === "user" && m.ts <= msg.ts)?.content || "bilden"}`
-                                  : `Variation of: ${messages.find((m) => m.role === "user" && m.ts <= msg.ts)?.content || "the image"}`
+                                  : `Variation of: ${messages.find((m) => m.role === "user" && m.ts <= msg.ts)?.content || "the image"}`,
                               )
                             }
                             className="inline-flex items-center gap-1 text-[10px] text-muted hover:text-white"
@@ -2028,7 +2398,11 @@ export default function AIPlayground() {
                   <div className="flex gap-2.5">
                     <div className="relative w-9 h-9 rounded-xl bg-gradient-to-br from-accent-cyan/90 to-accent-purple/90 p-[2px] shrink-0 shadow-[0_0_24px_rgba(0,229,255,0.35)]">
                       <div className="w-full h-full rounded-[10px] bg-[#0a0a12] flex items-center justify-center overflow-hidden">
-                        <BudAILogo size="xs" animated className="!w-[22px] !h-[22px]" />
+                        <BudAILogo
+                          size="xs"
+                          animated
+                          className="!w-[22px] !h-[22px]"
+                        />
                       </div>
                       {busy && !typingText && (
                         <span className="absolute -inset-1 rounded-xl border border-accent-cyan/30 logo-pulse-ring pointer-events-none" />
@@ -2070,8 +2444,8 @@ export default function AIPlayground() {
                           </div>
                           <p className="text-[10px] text-muted/70 font-mono">
                             {lang === "sv"
-                              ? "BudAI Core · v0.93 · nordic path"
-                              : "BudAI Core · v0.93 · nordic path"}
+                              ? "BudAI · developed by stilledev"
+                              : "BudAI · developed by stilledev"}
                           </p>
                         </div>
                       )}
@@ -2081,7 +2455,7 @@ export default function AIPlayground() {
               </div>
 
               {/* Composer */}
-              <div className="shrink-0 border-t border-white/[0.08] pg-composer-shell p-2.5 sm:p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+              <div className="pg-composer shrink-0">
                 {attach && (
                   <div className="mb-2 flex items-center gap-2">
                     <div className="relative inline-block">
@@ -2094,7 +2468,8 @@ export default function AIPlayground() {
                       <button
                         type="button"
                         onClick={() => {
-                          if (attach.preview.startsWith("blob:")) URL.revokeObjectURL(attach.preview);
+                          if (attach.preview.startsWith("blob:"))
+                            URL.revokeObjectURL(attach.preview);
                           setAttach(null);
                         }}
                         className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-black border border-white/20 flex items-center justify-center"
@@ -2103,7 +2478,9 @@ export default function AIPlayground() {
                       </button>
                     </div>
                     <div className="text-[11px] text-muted">
-                      <div className="text-white/80 truncate max-w-[160px]">{attach.name}</div>
+                      <div className="text-white/80 truncate max-w-[160px]">
+                        {attach.name}
+                      </div>
                       <div>{(attach.size / 1024).toFixed(0)} KB · ready</div>
                       <button
                         type="button"
@@ -2127,7 +2504,9 @@ export default function AIPlayground() {
                 {listening && (
                   <div className="mb-2 text-[11px] text-accent-green flex items-center gap-1.5 px-1">
                     <span className="w-2 h-2 rounded-full bg-accent-green animate-pulse" />
-                    {lang === "sv" ? "Lyssnar — prata nu" : "Listening — speak now"}
+                    {lang === "sv"
+                      ? "Lyssnar — prata nu"
+                      : "Listening — speak now"}
                   </div>
                 )}
 
@@ -2158,7 +2537,11 @@ export default function AIPlayground() {
                     </button>
                     <span
                       className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] text-muted/50 border border-white/[0.05] cursor-default"
-                      title={lang === "sv" ? "PDF/dokument kommer snart" : "PDF/docs coming soon"}
+                      title={
+                        lang === "sv"
+                          ? "PDF/dokument kommer snart"
+                          : "PDF/docs coming soon"
+                      }
                     >
                       <FileDown className="w-3.5 h-3.5 opacity-40" />
                       {lang === "sv" ? "PDF · snart" : "PDF · soon"}
@@ -2191,7 +2574,9 @@ export default function AIPlayground() {
                 <form
                   onSubmit={onSubmit}
                   className={`flex gap-1.5 items-end rounded-2xl transition-colors ${
-                    dragOver ? "ring-2 ring-accent-cyan/40 bg-accent-cyan/[0.04]" : ""
+                    dragOver
+                      ? "ring-2 ring-accent-cyan/40 bg-accent-cyan/[0.04]"
+                      : ""
                   }`}
                   onDragEnter={(e) => {
                     e.preventDefault();
@@ -2208,12 +2593,16 @@ export default function AIPlayground() {
                       dt.items.add(f);
                       if (fileRef.current) {
                         fileRef.current.files = dt.files;
-                        void onFile({ target: fileRef.current } as unknown as React.ChangeEvent<HTMLInputElement>);
+                        void onFile({
+                          target: fileRef.current,
+                        } as unknown as React.ChangeEvent<HTMLInputElement>);
                       }
                     } else if (f) {
                       showToast(
                         "warn",
-                        lang === "sv" ? "Bara bilder just nu (PDF snart)." : "Images only for now (PDF soon)."
+                        lang === "sv"
+                          ? "Bara bilder just nu (PDF snart)."
+                          : "Images only for now (PDF soon).",
                       );
                     }
                   }}
@@ -2236,20 +2625,32 @@ export default function AIPlayground() {
                     title={lang === "sv" ? "Verktyg" : "Tools"}
                     aria-expanded={toolsOpen}
                   >
-                    <Plus className={`w-4 h-4 transition-transform ${toolsOpen ? "rotate-45" : ""}`} />
+                    <Plus
+                      className={`w-4 h-4 transition-transform ${toolsOpen ? "rotate-45" : ""}`}
+                    />
                   </button>
                   <textarea
                     ref={taRef}
+                    aria-label={
+                      lang === "sv" ? "Meddelande till BudAI" : "Message BudAI"
+                    }
+                    maxLength={3500}
                     value={input}
                     onChange={(e) => {
                       setInput(e.target.value);
                       autoResize();
                     }}
                     onKeyDown={(e) => {
-                      if (e.key === "Enter" && !e.shiftKey) {
+                      if (
+                        e.key === "Enter" &&
+                        !e.shiftKey &&
+                        !e.nativeEvent.isComposing &&
+                        window.matchMedia("(pointer: fine)").matches
+                      ) {
                         e.preventDefault();
                         if ((input.trim() || attach) && !busy) {
-                          if (genMode && imageGenEnabled) void runImageGen(input);
+                          if (genMode && imageGenEnabled)
+                            void runImageGen(input);
                           else
                             void runPrompt(
                               input ||
@@ -2257,7 +2658,7 @@ export default function AIPlayground() {
                                   ? lang === "sv"
                                     ? "Vad ser du?"
                                     : "What do you see?"
-                                  : "")
+                                  : ""),
                             );
                         }
                       }
@@ -2275,24 +2676,13 @@ export default function AIPlayground() {
                     disabled={busy}
                     className="flex-1 px-3.5 py-2.5 rounded-2xl bg-white/[0.04] border border-white/[0.09] text-sm text-white placeholder:text-muted/60 focus:outline-none focus:border-accent-cyan/40 resize-none min-h-[44px] max-h-[140px]"
                   />
-                  <button
-                    type="button"
-                    onClick={runInspire}
-                    disabled={busy}
-                    title={lang === "sv" ? "Inspirera — överraskningsprompt" : "Surprise — random strong prompt"}
-                    className={`shrink-0 h-11 px-2.5 sm:px-3 rounded-2xl border flex items-center gap-1.5 text-[11px] font-semibold transition-all ${
-                      inspireSpin
-                        ? "border-accent-purple/50 bg-accent-purple/20 text-accent-purple"
-                        : "border-white/[0.1] bg-white/[0.03] text-muted hover:text-accent-cyan hover:border-accent-cyan/30"
-                    } disabled:opacity-40`}
-                  >
-                    <Dices className={`w-3.5 h-3.5 ${inspireSpin ? "animate-spin" : ""}`} />
-                    <span className="hidden sm:inline">{lang === "sv" ? "Inspirera" : "Surprise"}</span>
-                  </button>
                   {busy ? (
                     <button
                       type="button"
                       onClick={stopAll}
+                      aria-label={
+                        lang === "sv" ? "Stoppa svar" : "Stop response"
+                      }
                       className="shrink-0 h-11 px-3.5 rounded-2xl border border-red-400/30 text-red-200"
                     >
                       <StopCircle className="w-4 h-4" />
@@ -2300,8 +2690,11 @@ export default function AIPlayground() {
                   ) : (
                     <button
                       type="submit"
+                      aria-label={
+                        lang === "sv" ? "Skicka meddelande" : "Send message"
+                      }
                       disabled={(!input.trim() && !attach) || busy}
-                      className="shrink-0 h-11 px-3.5 sm:px-4 rounded-2xl bg-gradient-to-r from-accent-cyan to-accent-purple text-white disabled:opacity-40 flex items-center shadow-[0_0_20px_rgba(0,229,255,0.25)] hover:shadow-[0_0_28px_rgba(0,229,255,0.4)] transition-shadow"
+                      className="pg-send shrink-0 h-11 px-3.5 sm:px-4 rounded-2xl bg-gradient-to-r from-accent-cyan to-accent-purple text-white disabled:opacity-40 flex items-center shadow-[0_0_20px_rgba(0,229,255,0.25)] hover:shadow-[0_0_28px_rgba(0,229,255,0.4)] transition-shadow"
                     >
                       <Send className="w-4 h-4" />
                     </button>
@@ -2310,8 +2703,8 @@ export default function AIPlayground() {
                 <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-muted/40 px-0.5">
                   <span className="hidden sm:inline text-muted/35">
                     {lang === "sv"
-                      ? "Enter skickar · Shift+Enter rad · lägen ovan styr ton"
-                      : "Enter send · Shift+Enter newline · modes steer tone"}
+                      ? "Enter skickar · Shift+Enter för ny rad"
+                      : "Enter to send · Shift+Enter for a new line"}
                   </span>
                   <span className="inline-flex items-center gap-1">
                     <Shield className="w-3 h-3" />
@@ -2324,99 +2717,108 @@ export default function AIPlayground() {
                         : "Account"}
                   </span>
                   {auth.displayName && (
-                    <span className="truncate max-w-[140px]">{auth.displayName}</span>
+                    <span className="truncate max-w-[140px]">
+                      {auth.displayName}
+                    </span>
                   )}
                 </div>
               </div>
             </div>
 
-              {/* BudAI Workspace — substantial outputs side panel */}
-              {workspace && (
-                <aside className="hidden lg:flex w-[min(42%,420px)] shrink-0 flex-col border-l border-white/[0.08] bg-[#07070e] min-h-0">
-                  <div className="flex items-center gap-2 px-3 py-2.5 border-b border-white/[0.06] shrink-0">
-                    <GripHorizontal className="w-3.5 h-3.5 text-muted/50" />
-                    <div className="min-w-0 flex-1">
-                      <div className="text-[10px] uppercase tracking-[0.14em] text-accent-cyan/80 font-medium">
-                        Workspace
-                      </div>
-                      <div className="text-xs text-white/90 font-semibold truncate">{workspace.title}</div>
+            {/* BudAI Workspace — substantial outputs side panel */}
+            {workspace && (
+              <aside className="hidden lg:flex w-[min(42%,420px)] shrink-0 flex-col border-l border-white/[0.08] bg-[#07070e] min-h-0">
+                <div className="flex items-center gap-2 px-3 py-2.5 border-b border-white/[0.06] shrink-0">
+                  <GripHorizontal className="w-3.5 h-3.5 text-muted/50" />
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[10px] uppercase tracking-[0.14em] text-accent-cyan/80 font-medium">
+                      Workspace
                     </div>
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        try {
-                          await navigator.clipboard.writeText(workspace.body);
-                          showToast("ok", lang === "sv" ? "Kopierat" : "Copied");
-                        } catch {
-                          showToast("err", "Copy failed");
-                        }
-                      }}
-                      className="p-1.5 rounded-lg text-muted hover:text-white border border-transparent hover:border-white/10"
-                      title="Copy"
-                    >
-                      <Copy className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const blob = new Blob([workspace.body], { type: "text/markdown;charset=utf-8" });
-                        const url = URL.createObjectURL(blob);
-                        const a = document.createElement("a");
-                        a.href = url;
-                        a.download = `budai-workspace-${Date.now()}.md`;
-                        a.click();
-                        URL.revokeObjectURL(url);
-                      }}
-                      className="p-1.5 rounded-lg text-muted hover:text-white border border-transparent hover:border-white/10"
-                      title="Download"
-                    >
-                      <FileDown className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setWorkspace(null)}
-                      className="p-1.5 rounded-lg text-muted hover:text-white"
-                      aria-label="Close workspace"
-                    >
-                      <PanelRightClose className="w-3.5 h-3.5" />
-                    </button>
+                    <div className="text-xs text-white/90 font-semibold truncate">
+                      {workspace.title}
+                    </div>
                   </div>
-                  <div className="flex-1 overflow-y-auto p-4 text-[13px] text-white/90 leading-relaxed workspace-scroll">
-                    {renderMarkdown(workspace.body)}
-                  </div>
-                  <div className="shrink-0 p-2.5 border-t border-white/[0.06] flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const improve =
-                          lang === "sv"
-                            ? "Förbättra workspace-resultatet: gör det skarpare, mer strukturerat och mer handlingsbart."
-                            : "Improve the workspace result: make it sharper, more structured, and more actionable.";
-                        void runPrompt(improve);
-                      }}
-                      disabled={busy}
-                      className="flex-1 text-[11px] font-medium py-2 rounded-xl border border-accent-cyan/25 bg-accent-cyan/10 text-accent-cyan hover:bg-accent-cyan/15 disabled:opacity-40"
-                    >
-                      {lang === "sv" ? "Förbättra" : "Improve"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setInput(workspace.body.slice(0, 2000));
-                        taRef.current?.focus();
-                      }}
-                      className="flex-1 text-[11px] font-medium py-2 rounded-xl border border-white/[0.08] text-muted hover:text-white"
-                    >
-                      {lang === "sv" ? "Redigera i chatt" : "Edit in chat"}
-                    </button>
-                  </div>
-                </aside>
-              )}
-            </div>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        await navigator.clipboard.writeText(workspace.body);
+                        showToast("ok", lang === "sv" ? "Kopierat" : "Copied");
+                      } catch {
+                        showToast("err", "Copy failed");
+                      }
+                    }}
+                    className="p-1.5 rounded-lg text-muted hover:text-white border border-transparent hover:border-white/10"
+                    title="Copy"
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const blob = new Blob([workspace.body], {
+                        type: "text/markdown;charset=utf-8",
+                      });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      a.href = url;
+                      a.download = `budai-workspace-${Date.now()}.md`;
+                      a.click();
+                      URL.revokeObjectURL(url);
+                    }}
+                    className="p-1.5 rounded-lg text-muted hover:text-white border border-transparent hover:border-white/10"
+                    title="Download"
+                  >
+                    <FileDown className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setWorkspace(null)}
+                    className="p-1.5 rounded-lg text-muted hover:text-white"
+                    aria-label="Close workspace"
+                  >
+                    <PanelRightClose className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                <div className="flex-1 overflow-y-auto p-4 text-[13px] text-white/90 leading-relaxed workspace-scroll">
+                  {renderMarkdown(workspace.body)}
+                </div>
+                <div className="shrink-0 p-2.5 border-t border-white/[0.06] flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const improve =
+                        lang === "sv"
+                          ? "Förbättra workspace-resultatet: gör det skarpare, mer strukturerat och mer handlingsbart."
+                          : "Improve the workspace result: make it sharper, more structured, and more actionable.";
+                      void runPrompt(improve);
+                    }}
+                    disabled={busy}
+                    className="flex-1 text-[11px] font-medium py-2 rounded-xl border border-accent-cyan/25 bg-accent-cyan/10 text-accent-cyan hover:bg-accent-cyan/15 disabled:opacity-40"
+                  >
+                    {lang === "sv" ? "Förbättra" : "Improve"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setInput(workspace.body.slice(0, 2000));
+                      taRef.current?.focus();
+                    }}
+                    className="flex-1 text-[11px] font-medium py-2 rounded-xl border border-white/[0.08] text-muted hover:text-white"
+                  >
+                    {lang === "sv" ? "Redigera i chatt" : "Edit in chat"}
+                  </button>
+                </div>
+              </aside>
+            )}
           </div>
-        </ScrollReveal>
+        </div>
+        <p className="pg-bottom-note">
+          {lang === "sv"
+            ? "BudAI kan göra fel. Kontrollera viktiga uppgifter. Bildanalys och minne kräver konto."
+            : "BudAI can make mistakes. Check important details. Image analysis and memory require an account."}
+        </p>
       </div>
-
 
       {/* Mobile workspace sheet */}
       <AnimatePresence>
@@ -2443,8 +2845,12 @@ export default function AIPlayground() {
             >
               <div className="flex items-center gap-2 px-4 py-3 border-b border-white/[0.06]">
                 <div className="min-w-0 flex-1">
-                  <div className="text-[10px] uppercase tracking-wider text-accent-cyan">Workspace</div>
-                  <div className="text-sm font-semibold text-white truncate">{workspace.title}</div>
+                  <div className="text-[10px] uppercase tracking-wider text-accent-cyan">
+                    Workspace
+                  </div>
+                  <div className="text-sm font-semibold text-white truncate">
+                    {workspace.title}
+                  </div>
                 </div>
                 <button
                   type="button"
@@ -2460,7 +2866,11 @@ export default function AIPlayground() {
                 >
                   <Copy className="w-4 h-4" />
                 </button>
-                <button type="button" onClick={() => setWorkspace(null)} className="p-2 text-muted hover:text-white">
+                <button
+                  type="button"
+                  onClick={() => setWorkspace(null)}
+                  className="p-2 text-muted hover:text-white"
+                >
                   <X className="w-4 h-4" />
                 </button>
               </div>
@@ -2496,7 +2906,11 @@ export default function AIPlayground() {
             >
               <div className="flex items-center justify-between p-3 border-b border-white/[0.06]">
                 <span className="text-sm font-semibold text-white">BudAI</span>
-                <button type="button" onClick={() => setMobileDrawer(false)} className="p-2 text-muted">
+                <button
+                  type="button"
+                  onClick={() => setMobileDrawer(false)}
+                  className="p-2 text-muted"
+                >
                   <X className="w-4 h-4" />
                 </button>
               </div>
@@ -2554,10 +2968,16 @@ export default function AIPlayground() {
                 className="mb-4 w-full flex items-center justify-between px-3 py-2.5 rounded-xl border border-white/[0.08] bg-white/[0.03] text-sm"
               >
                 <span className="text-white/85 flex items-center gap-2">
-                  {memoryEnabled ? <Eye className="w-4 h-4 text-accent-cyan" /> : <EyeOff className="w-4 h-4" />}
+                  {memoryEnabled ? (
+                    <Eye className="w-4 h-4 text-accent-cyan" />
+                  ) : (
+                    <EyeOff className="w-4 h-4" />
+                  )}
                   {lang === "sv" ? "Autominnes" : "Auto-memory"}
                 </span>
-                <span className={`font-mono text-xs ${memoryEnabled ? "text-accent-green" : "text-muted"}`}>
+                <span
+                  className={`font-mono text-xs ${memoryEnabled ? "text-accent-green" : "text-muted"}`}
+                >
                   {memoryEnabled ? "ON" : "OFF"}
                 </span>
               </button>
@@ -2565,7 +2985,9 @@ export default function AIPlayground() {
               <div className="space-y-2 mb-3">
                 {memory.length === 0 && (
                   <p className="text-sm text-muted/60 text-center py-8">
-                    {lang === "sv" ? "Inget sparat ännu." : "Nothing saved yet."}
+                    {lang === "sv"
+                      ? "Inget sparat ännu."
+                      : "Nothing saved yet."}
                   </p>
                 )}
                 {memory.map((m) => (
@@ -2577,10 +2999,12 @@ export default function AIPlayground() {
                       <form
                         onSubmit={(e) => {
                           e.preventDefault();
-                          void cloud.updateMemory(m.id, editMemText).then(() => {
-                            setEditingMem(null);
-                            void reloadSidebar();
-                          });
+                          void cloud
+                            .updateMemory(m.id, editMemText)
+                            .then(() => {
+                              setEditingMem(null);
+                              void reloadSidebar();
+                            });
                         }}
                         className="space-y-2"
                       >
@@ -2591,7 +3015,10 @@ export default function AIPlayground() {
                           className="w-full px-2 py-1.5 rounded-lg bg-black/30 border border-white/10 text-sm text-white"
                         />
                         <div className="flex gap-2">
-                          <button type="submit" className="text-xs text-accent-cyan">
+                          <button
+                            type="submit"
+                            className="text-xs text-accent-cyan"
+                          >
                             {lang === "sv" ? "Spara" : "Save"}
                           </button>
                           <button
@@ -2605,7 +3032,9 @@ export default function AIPlayground() {
                       </form>
                     ) : (
                       <div className="flex gap-2">
-                        <span className="text-sm text-white/85 flex-1 leading-relaxed">{m.text}</span>
+                        <span className="text-sm text-white/85 flex-1 leading-relaxed">
+                          {m.text}
+                        </span>
                         <button
                           type="button"
                           className="text-muted hover:text-white p-1"
@@ -2619,7 +3048,11 @@ export default function AIPlayground() {
                         <button
                           type="button"
                           className="text-muted hover:text-red-300 p-1"
-                          onClick={() => void cloud.deleteMemory(m.id).then(() => reloadSidebar())}
+                          onClick={() =>
+                            void cloud
+                              .deleteMemory(m.id)
+                              .then(() => reloadSidebar())
+                          }
                         >
                           <Trash2 className="w-3 h-3" />
                         </button>
@@ -2635,7 +3068,13 @@ export default function AIPlayground() {
                 <button
                   type="button"
                   onClick={() => {
-                    if (confirm(lang === "sv" ? "Rensa allt minne?" : "Clear all memory?")) {
+                    if (
+                      confirm(
+                        lang === "sv"
+                          ? "Rensa allt minne?"
+                          : "Clear all memory?",
+                      )
+                    ) {
                       void cloud.clearMemories().then(() => reloadSidebar());
                     }
                   }}
@@ -2713,7 +3152,10 @@ export default function AIPlayground() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowShortcuts(false)} />
+            <div
+              className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+              onClick={() => setShowShortcuts(false)}
+            />
             <motion.div
               initial={{ opacity: 0, y: 12, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -2723,37 +3165,69 @@ export default function AIPlayground() {
               <div className="flex items-center gap-2 mb-4">
                 <Command className="w-4 h-4 text-accent-cyan" />
                 <h3 className="text-sm font-semibold text-white">
-                  {lang === "sv" ? "Tangentbordsgenvägar" : "Keyboard shortcuts"}
+                  {lang === "sv"
+                    ? "Tangentbordsgenvägar"
+                    : "Keyboard shortcuts"}
                 </h3>
-                <button type="button" onClick={() => setShowShortcuts(false)} className="ml-auto p-1 text-muted hover:text-white">
+                <button
+                  type="button"
+                  onClick={() => setShowShortcuts(false)}
+                  className="ml-auto p-1 text-muted hover:text-white"
+                >
                   <X className="w-4 h-4" />
                 </button>
               </div>
               <ul className="space-y-2 text-[12px]">
                 {[
-                  { keys: "⌘ K", desc: lang === "sv" ? "Öppna denna palett" : "Open this palette" },
-                  { keys: "⌘ N", desc: lang === "sv" ? "Ny chatt" : "New chat" },
-                  { keys: "⌘ E", desc: lang === "sv" ? "Exportera tråd (.md)" : "Export thread (.md)" },
-                  { keys: "⌘ B", desc: lang === "sv" ? "Växla Workspace" : "Toggle Workspace" },
-                  { keys: "Esc", desc: lang === "sv" ? "Stäng paneler" : "Close panels" },
-                  { keys: "Enter", desc: lang === "sv" ? "Skicka meddelande" : "Send message" },
+                  {
+                    keys: "⌘ /",
+                    desc: lang === "sv" ? "Visa genvägar" : "Show shortcuts",
+                  },
+                  {
+                    keys: "⌘ N",
+                    desc: lang === "sv" ? "Ny chatt" : "New chat",
+                  },
+                  {
+                    keys: "⌘ E",
+                    desc:
+                      lang === "sv"
+                        ? "Exportera tråd (.md)"
+                        : "Export thread (.md)",
+                  },
+                  {
+                    keys: "⌘ B",
+                    desc:
+                      lang === "sv" ? "Växla Workspace" : "Toggle Workspace",
+                  },
+                  {
+                    keys: "Esc",
+                    desc: lang === "sv" ? "Stäng paneler" : "Close panels",
+                  },
+                  {
+                    keys: "Enter",
+                    desc: lang === "sv" ? "Skicka meddelande" : "Send message",
+                  },
                 ].map((row) => (
-                  <li key={row.keys} className="flex items-center justify-between gap-3 py-1.5 border-b border-white/[0.04] last:border-0">
+                  <li
+                    key={row.keys}
+                    className="flex items-center justify-between gap-3 py-1.5 border-b border-white/[0.04] last:border-0"
+                  >
                     <span className="text-muted">{row.desc}</span>
-                    <kbd className="font-mono text-[11px] px-2 py-0.5 rounded-md bg-white/[0.06] border border-white/10 text-white/90">{row.keys}</kbd>
+                    <kbd className="font-mono text-[11px] px-2 py-0.5 rounded-md bg-white/[0.06] border border-white/10 text-white/90">
+                      {row.keys}
+                    </kbd>
                   </li>
                 ))}
               </ul>
               <p className="mt-4 text-[11px] text-muted/60 leading-relaxed">
                 {lang === "sv"
-                  ? "Lägena Research / Skapa / Analys styr tonen i API-anropet — ingen fake-backend."
-                  : "Research / Create / Analyze modes steer tone in the API call — no fake backends."}
+                  ? "Använd + vid meddelandefältet för att välja läge, bifoga en bild eller använda rösten."
+                  : "Use + beside the message field to choose a mode, attach an image, or use your voice."}
               </p>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
-
     </section>
   );
 }

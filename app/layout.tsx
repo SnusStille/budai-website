@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import Providers from "@/components/Providers";
 import VercelAnalytics from "@/components/VercelAnalytics";
@@ -14,20 +14,25 @@ const jsonLd = {
     "AI work assistant for Swedish companies and individuals — write, automate, and think faster in Swedish and English.",
   url: process.env.NEXT_PUBLIC_SITE_URL || "https://stilledev.se",
   author: { "@type": "Organization", name: "Stilledev" },
-  offers: { "@type": "Offer", price: "0", priceCurrency: "SEK", description: "Developer preview" },
+  offers: {
+    "@type": "Offer",
+    price: "0",
+    priceCurrency: "SEK",
+    description: "Developer preview",
+  },
 };
 
-const jakarta = Plus_Jakarta_Sans({
-  subsets: ["latin", "latin-ext"],
+const jakarta = localFont({
+  src: "../public/fonts/plus-jakarta-sans-latin-wght-normal.woff2",
   variable: "--font-jakarta",
   display: "swap",
-  weight: ["400", "500", "600", "700", "800"],
+  weight: "400 800",
 });
-
-const jetbrains = JetBrains_Mono({
-  subsets: ["latin", "latin-ext"],
+const jetbrains = localFont({
+  src: "../public/fonts/jetbrains-mono-latin-wght-normal.woff2",
   variable: "--font-jetbrains",
   display: "swap",
+  weight: "400 700",
 });
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://stilledev.se";
@@ -97,7 +102,11 @@ export const viewport: Viewport = {
   maximumScale: 5,
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html
       lang="en"

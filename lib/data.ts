@@ -214,15 +214,7 @@ export async function addWaitlistUser(
 
   const supabase = getSupabase();
   if (!supabase) {
-    const newUser: WaitlistUser = {
-      id: String(Date.now()),
-      ...payload,
-      created_at: new Date().toISOString(),
-      access_status: "pending",
-      last_contacted_at: null,
-    };
-    mockUsers.unshift(newUser);
-    return new Promise((resolve) => setTimeout(() => resolve(newUser), 500));
+    throw new Error("Waitlist is temporarily unavailable");
   }
 
   const { data, error } = await supabase
