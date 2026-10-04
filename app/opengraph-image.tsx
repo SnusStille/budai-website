@@ -39,23 +39,41 @@ export default function OpengraphImage() {
                 background: "rgba(135,233,223,0.07)",
               }}
             >
-              <svg width="52" height="52" viewBox="0 0 64 64">
-                <path
-                  d="M32 5.2 L55.4 18.6 V45.4 L32 58.8 L8.6 45.4 V18.6 Z"
-                  fill="rgba(135,233,223,0.06)"
-                  stroke="#87e9df"
-                  strokeWidth="2.6"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="M45.2 32 L38.6 43.4 H25.4 L18.8 32 L25.4 20.6 H38.6 Z"
-                  fill="none"
-                  stroke="#b9a8f6"
-                  strokeWidth="1.6"
-                  strokeLinejoin="round"
-                />
-                <circle cx="32" cy="32" r="7.4" fill="#d9fffa" />
-                <circle cx="29.2" cy="29.4" r="2.3" fill="#ffffff" />
+              <svg width="60" height="60" viewBox="0 0 64 64">
+                {/* BudAI Lattice — six spokes, an outer ring, one bright core */}
+                <circle cx="32" cy="32" r="27" fill="none" stroke="rgba(255,255,255,0.16)" strokeWidth="0.9" />
+                {[
+                  [50, 32],
+                  [41, 47.6],
+                  [23, 47.6],
+                  [14, 32],
+                  [23, 16.4],
+                  [41, 16.4],
+                ].map(([x, y], index) => (
+                  <line
+                    key={`s-${index}`}
+                    x1="32"
+                    y1="32"
+                    x2={x}
+                    y2={y}
+                    stroke="#87e9df"
+                    strokeWidth="1.7"
+                    strokeLinecap="round"
+                  />
+                ))}
+                {[
+                  [50, 32, "#87e9df"],
+                  [41, 47.6, "#b9a8f6"],
+                  [23, 47.6, "#87e9df"],
+                  [14, 32, "#b9a8f6"],
+                  [23, 16.4, "#87e9df"],
+                  [41, 16.4, "#b9a8f6"],
+                ].map(([x, y, fill], index) => (
+                  <circle key={`n-${index}`} cx={Number(x)} cy={Number(y)} r="2.9" fill={String(fill)} />
+                ))}
+                <circle cx="32" cy="32" r="13.4" fill="none" stroke="rgba(135,233,223,0.3)" strokeWidth="1" />
+                <circle cx="32" cy="32" r="8" fill="#d9fffa" />
+                <circle cx="29.4" cy="29.4" r="2.6" fill="#ffffff" />
               </svg>
             </div>
             <div style={{ display: "flex", flexDirection: "column" }}>

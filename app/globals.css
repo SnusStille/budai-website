@@ -7374,3 +7374,110 @@ button.budai-logo:focus-visible {
   color: rgba(255, 255, 255, 0.5);
 }
 .share-empty .share-cta { margin-top: 1.5rem; }
+
+/* ── Lattice mark: spokes fire outward, nodes breathe, ring turns ── */
+
+.budai-lat-spoke {
+  stroke-dasharray: 19 19;
+  stroke-dashoffset: 19;
+  animation: budai-lat-fire calc(2.8s / max(var(--logo-tempo), 0.001)) ease-in-out infinite;
+}
+.budai-lat-node {
+  transform-origin: center;
+  animation: budai-lat-breathe calc(2.8s / max(var(--logo-tempo), 0.001)) ease-in-out infinite;
+}
+.budai-lat-sat {
+  animation: budai-lat-blink calc(3.6s / max(var(--logo-tempo), 0.001)) ease-in-out infinite;
+}
+.budai-lat-ring {
+  transform-origin: center;
+  animation: budai-lat-turn calc(34s / max(var(--logo-tempo), 0.001)) linear infinite;
+  stroke-dasharray: 6 3;
+}
+.budai-lat-links {
+  animation: budai-lat-hum calc(5.2s / max(var(--logo-tempo), 0.001)) ease-in-out infinite;
+}
+.budai-logo[data-motion="static"] .budai-lat-spoke,
+.budai-logo[data-motion="static"] .budai-lat-node,
+.budai-logo[data-motion="static"] .budai-lat-sat,
+.budai-logo[data-motion="static"] .budai-lat-ring,
+.budai-logo[data-motion="static"] .budai-lat-links {
+  animation: none;
+  stroke-dashoffset: 0;
+}
+
+.budai-logo[data-boot="on"] .budai-lat-spoke {
+  animation:
+    budai-lat-assemble 0.75s cubic-bezier(0.22, 1, 0.36, 1) both,
+    budai-lat-fire calc(2.8s / max(var(--logo-tempo), 0.001)) ease-in-out infinite 0.75s;
+}
+.budai-logo[data-boot="on"] .budai-lat-node {
+  animation:
+    budai-boot-core 0.9s cubic-bezier(0.22, 1, 0.36, 1) both,
+    budai-lat-breathe calc(2.8s / max(var(--logo-tempo), 0.001)) ease-in-out infinite 0.9s;
+}
+.budai-logo[data-boot="on"] .budai-lat-sat {
+  animation:
+    budai-lat-assemble 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.12s both,
+    budai-lat-blink calc(3.6s / max(var(--logo-tempo), 0.001)) ease-in-out infinite 1s;
+}
+.budai-logo[data-boot="on"] .budai-lat-ring {
+  animation:
+    budai-boot-gem 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.05s both,
+    budai-lat-turn calc(34s / max(var(--logo-tempo), 0.001)) linear infinite 0.85s;
+}
+.budai-logo[data-boot="on"] .budai-lat-links {
+  animation:
+    budai-lat-assemble 1s cubic-bezier(0.22, 1, 0.36, 1) 0.18s both,
+    budai-lat-hum calc(5.2s / max(var(--logo-tempo), 0.001)) ease-in-out infinite 1.1s;
+}
+
+@keyframes budai-lat-fire {
+  0% { stroke-dashoffset: 19; opacity: 0.15; }
+  38% { stroke-dashoffset: 0; opacity: 1; }
+  72% { stroke-dashoffset: 0; opacity: 0.75; }
+  100% { stroke-dashoffset: -19; opacity: 0.12; }
+}
+@keyframes budai-lat-breathe {
+  0%, 100% { transform: scale(0.86); opacity: 0.8; }
+  50% { transform: scale(1.12); opacity: 1; }
+}
+@keyframes budai-lat-blink {
+  0%, 100% { opacity: 0.22; }
+  50% { opacity: 0.85; }
+}
+@keyframes budai-lat-turn {
+  to { transform: rotate(360deg); }
+}
+@keyframes budai-lat-hum {
+  0%, 100% { opacity: 0.28; }
+  50% { opacity: 0.7; }
+}
+@keyframes budai-lat-assemble {
+  from { opacity: 0; transform: scale(0.4); }
+  to { opacity: 1; transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .budai-lat-spoke,
+  .budai-lat-node,
+  .budai-lat-sat,
+  .budai-lat-ring,
+  .budai-lat-links {
+    animation: none !important;
+    stroke-dashoffset: 0;
+  }
+}
+
+.lab-winner {
+  margin-left: 0.4rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(62, 224, 205, 0.45);
+  background: rgba(62, 224, 205, 0.14);
+  padding: 0.05rem 0.45rem;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #b7fff4;
+  vertical-align: middle;
+}

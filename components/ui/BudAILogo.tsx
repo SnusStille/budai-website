@@ -3,11 +3,13 @@
 import { useId, type CSSProperties } from "react";
 
 /* ────────────────────────────────────────────────────────────────
-   BudAI · "Prism Core" — the mark
+   BudAI · "Lattice" — the mark
    ────────────────────────────────────────────────────────────────
-   One gem-cut prism (hexagonal aperture), one living core, three
-   orbital rings turning in real 3D, satellites riding them, and a
-   light sheen sweeping the glass. Built from CSS 3D transforms +
+   A node lattice: six spokes firing outward from a bright core, a
+   ring of twelve satellites, and three orbital shells turning in real
+   3D around it with a light sheen sweeping the glass. Chosen in the
+   Logo Lab (see /logo) and now the mark everywhere — navbar, footer,
+   favicon, OG card, loading screens. Built from CSS transforms +
    inline SVG so it stays vector-crisp from 16px favicon to a hero
    stage, with zero external assets and zero layout shift.
 
@@ -27,6 +29,28 @@ const SIZES: Record<LogoSize, number> = {
   xl: 140,
   hero: 260,
 };
+
+/* lattice geometry in the 64×64 viewBox — one source of truth for every size */
+const LATTICE_SPOKES: [number, number][] = Array.from({ length: 6 }, (_, i) => {
+  const angle = (Math.PI / 3) * i;
+  return [
+    Number((32 + 18 * Math.cos(angle)).toFixed(2)),
+    Number((32 + 18 * Math.sin(angle)).toFixed(2)),
+  ];
+});
+
+const LATTICE_OUTER: [number, number][] = Array.from({ length: 12 }, (_, i) => {
+  const angle = (Math.PI / 6) * i;
+  return [
+    Number((32 + 27 * Math.cos(angle)).toFixed(2)),
+    Number((32 + 27 * Math.sin(angle)).toFixed(2)),
+  ];
+});
+
+const LATTICE_LINKS: [number, number, number, number][] = LATTICE_OUTER.map(([ox, oy], i) => {
+  const [ix, iy] = LATTICE_SPOKES[i % 6];
+  return [ox, oy, ix, iy];
+});
 
 type LogoProps = {
   size?: LogoSize;
@@ -98,7 +122,7 @@ export default function BudAILogo({
         </span>
       )}
 
-      {/* the gem — real volume: two extruded back faces, glass front, sweeping rim light */}
+      {/* the mark — a live lattice: six spokes, an outer ring of nodes, one bright core */}
       <svg viewBox="0 0 64 64" className="budai-gem" fill="none" aria-hidden>
         <defs>
           <linearGradient id={`bud-frame-${uid}`} x1="6" y1="4" x2="58" y2="60" gradientUnits="userSpaceOnUse">
@@ -143,64 +167,82 @@ export default function BudAILogo({
           </filter>
         </defs>
 
-        {/* extruded volume — two back plates give the prism real thickness */}
+        {/* extruded volume — a back plate gives the mark real thickness */}
         {rich && (
           <g className="budai-depth">
-            <path
-              d="M32 7.4 L56.6 21.6 V47.2 L32 61.4 L7.4 47.2 V21.6 Z"
-              fill={`url(#bud-depth-${uid})`}
-              opacity={light ? 0.5 : 0.9}
-            />
-            <path
-              d="M32 5.9 L55.9 19.8 V45.8 L32 59.7 L8.1 45.8 V19.8 Z"
-              fill={`url(#bud-depth-${uid})`}
-              opacity={light ? 0.75 : 1}
-            />
+            <circle cx="34" cy="32" r="27" fill={`url(#bud-depth-${uid})`} opacity={light ? 0.28 : 0.5} />
+            <circle cx="32.8" cy="32" r="27" fill={`url(#bud-depth-${uid})`} opacity={light ? 0.45 : 0.85} />
           </g>
         )}
 
-        {/* the glass front */}
-        <path
-          className="budai-frame"
-          d="M32 5.1 L55.3 18.5 V45.5 L32 58.9 L8.7 45.5 V18.5 Z"
-          fill={`url(#bud-glass-${uid})`}
-          stroke={`url(#bud-frame-${uid})`}
-          strokeWidth={rich ? 2.1 : 2.4}
-          strokeLinejoin="round"
-        />
-
-        {/* rim light sweeping the silhouette */}
-        {rich && (
-          <path
-            className="budai-rim"
-            d="M32 5.1 L55.3 18.5 V45.5 L32 58.9 L8.7 45.5 V18.5 Z"
-            stroke={light ? "#0e7490" : "#e8fffd"}
-            strokeWidth="1.1"
-            strokeLinecap="round"
-            fill="none"
-            opacity="0.75"
+        {/* outer ring of nodes — the lattice reaches wider than the spokes */}
+        {!tiny && (
+          <circle
+            className="budai-lat-ring"
+            cx="32"
+            cy="32"
+            r="27"
+            stroke={light ? "rgba(15,23,42,0.18)" : "rgba(255,255,255,0.16)"}
+            strokeWidth="0.9"
+            style={{ transformOrigin: "32px 32px" }}
           />
         )}
 
-        {/* inner counter-rotated facet ring */}
-        <path
-          className={animated ? "budai-facet" : undefined}
-          d="M45.5 32 L38.9 43.4 H25.1 L18.5 32 L25.1 20.6 H38.9 Z"
-          stroke={`url(#bud-edge-${uid})`}
-          strokeWidth="1.25"
-          strokeLinejoin="round"
-          opacity="0.92"
-        />
-
-        {/* facet cuts — skipped when tiny so the silhouette stays clean */}
+        {/* links from the outer ring in to the six inner nodes */}
         {!tiny && (
-          <g className="budai-cuts" stroke={`url(#bud-edge-${uid})`} strokeWidth="0.6" opacity="0.5">
-            <path d="M32 5.1 L32 20.6" />
-            <path d="M55.3 18.5 L38.9 20.6" />
-            <path d="M55.3 45.5 L38.9 43.4" />
-            <path d="M32 58.9 L32 43.4" />
-            <path d="M8.7 45.5 L25.1 43.4" />
-            <path d="M8.7 18.5 L25.1 20.6" />
+          <g className="budai-lat-links" stroke={`url(#bud-edge-${uid})`} strokeWidth="0.7" opacity="0.55">
+            {LATTICE_LINKS.map(([ox, oy, ix, iy], index) => (
+              <line key={`l-${index}`} x1={ox} y1={oy} x2={ix} y2={iy} />
+            ))}
+          </g>
+        )}
+
+        {/* six spokes — the signal travelling out from the core */}
+        <g className="budai-lat-spokes">
+          {LATTICE_SPOKES.map(([x, y], index) => (
+            <line
+              key={`s-${index}`}
+              className={animated ? "budai-lat-spoke" : undefined}
+              x1="32"
+              y1="32"
+              x2={x}
+              y2={y}
+              stroke={`url(#bud-edge-${uid})`}
+              strokeWidth={rich ? 1.35 : 1.6}
+              strokeLinecap="round"
+              style={{ animationDelay: `${(index * 0.16).toFixed(2)}s` }}
+            />
+          ))}
+        </g>
+
+        {/* the six heart nodes */}
+        <g filter={rich ? `url(#bud-glow-${uid})` : undefined}>
+          {LATTICE_SPOKES.map(([x, y], index) => (
+            <circle
+              key={`n-${index}`}
+              className={animated ? "budai-lat-node" : undefined}
+              cx={x}
+              cy={y}
+              r={rich ? 2.5 : 2.2}
+              fill={index % 2 ? `url(#bud-frame-${uid})` : `url(#bud-core-${uid})`}
+              style={{ animationDelay: `${(index * 0.22).toFixed(2)}s` }}
+            />
+          ))}
+        </g>
+
+        {/* outer satellites, held back so the core stays the hero */}
+        {!tiny && (
+          <g className="budai-lat-outer" fill="#ffffff" opacity={light ? 0.5 : 0.6}>
+            {LATTICE_OUTER.map(([x, y], index) => (
+              <circle
+                key={`o-${index}`}
+                className={animated ? "budai-lat-sat" : undefined}
+                cx={x}
+                cy={y}
+                r="1.35"
+                style={{ animationDelay: `${(index * 0.13).toFixed(2)}s` }}
+              />
+            ))}
           </g>
         )}
 
@@ -212,14 +254,14 @@ export default function BudAILogo({
           className={animated ? "budai-core" : undefined}
           cx="32"
           cy="32"
-          r={tiny ? 7.4 : 8.4}
+          r={tiny ? 4.6 : 5.1}
           fill={`url(#bud-core-${uid})`}
           filter={rich ? `url(#bud-glow-${uid})` : undefined}
           style={{ transformOrigin: "32px 32px" }}
         />
-        <circle cx="32" cy="32" r={tiny ? 7.4 : 8.4} stroke="#ffffff" strokeOpacity={light ? 0.5 : 0.4} strokeWidth="0.7" />
+        <circle cx="32" cy="32" r={tiny ? 4.6 : 5.1} stroke="#ffffff" strokeOpacity={light ? 0.5 : 0.4} strokeWidth="0.7" />
         {/* specular */}
-        <circle cx={28.6} cy={28.8} r={rich ? 2.6 : 2.2} fill="#ffffff" opacity={light ? 0.9 : 0.68} />
+        <circle cx={30} cy={30.2} r={rich ? 1.7 : 1.4} fill="#ffffff" opacity={light ? 0.9 : 0.68} />
 
         {/* scanner arc — only in the full scene */}
         {rich && (
@@ -234,14 +276,14 @@ export default function BudAILogo({
           </g>
         )}
 
-        {/* ambient occlusion under the glass */}
+        {/* ambient occlusion under the lattice */}
         {rich && (
           <ellipse
             className="budai-ao"
             cx="32"
-            cy="52"
-            rx="15"
-            ry="3.4"
+            cy="55.5"
+            rx="14"
+            ry="3.2"
             fill={light ? "rgba(15,23,42,0.14)" : "rgba(0,0,0,0.5)"}
             filter={`url(#bud-soft-${uid})`}
           />

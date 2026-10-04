@@ -136,3 +136,34 @@ default everywhere until a candidate wins.
 > Nothing replaces Prism Core v2 until it is beaten. Vote in the lab (and tell me
 > in the chat) and the winner goes everywhere: favicon, navbar, footer, OG card,
 > loading screen.
+
+
+---
+
+# Round 4 — the Lattice mark ships everywhere
+
+Chosen in the Logo Lab and promoted to production:
+
+- **`components/ui/BudAILogo.tsx`** now draws the Lattice: six spokes firing
+  outward from a glowing core, six heart nodes, twelve satellites on an outer
+  ring, three orbital shells turning around it, the boot assembly and the rim
+  sheen kept from the previous mark. `LATTICE_SPOKES` / `LATTICE_OUTER` /
+  `LATTICE_LINKS` derive every coordinate in the 64×64 viewBox from one source,
+  so no size ever drifts.
+- **`public/favicon.svg`** redrawn as an animated Lattice (self-contained —
+  gradients, dash drawing and the turning ring are all inline), which also feeds
+  the PWA manifest icon.
+- **`app/opengraph-image.tsx`** carries the simplified six-node Lattice (satori
+  gets the ring, spokes, nodes and core, without the twelve outer satellites, so
+  the mark still reads at 60px).
+- Because the navbar, footer, hero stage, loading screen, auth modal, legal pages
+  and admin all render `BudAILogo`, they switched together — no per-file edits.
+- **`/logo`** keeps the whole candidate list for future re-votes. Lattice is
+  badged “Vald”; the other five stay available as challengers, with the
+  “test in the navigation” switch (`budai.logo.live`) still working for any of
+  them in your browser only.
+
+CSS lives in `app/globals.css` under `budai-lat-*`: `budai-lat-fire` (spoke draw),
+`budai-lat-breathe` (node pulse), `budai-lat-blink` (satellites), `budai-lat-turn`
+(ring), `budai-lat-hum` (links), plus a one-shot `budai-lat-assemble` on boot and
+a full `prefers-reduced-motion` fallback.

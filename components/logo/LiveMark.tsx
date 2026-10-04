@@ -7,8 +7,8 @@ import { LOGO_CANDIDATES } from "@/components/logo/candidates";
 export const LIVE_LOGO_KEY = "budai.logo.live";
 
 /**
- * The mark used in the navigation. Defaults to the shipped BudAI Prism Core —
- * unless a Logo Lab candidate has been switched on for a live trial, in which
+ * The mark used in the navigation. Defaults to the shipped BudAI Lattice mark —
+ * unless a Logo Lab challenger has been switched on for a live trial, in which
  * case that candidate is drawn instead (identical SVG source, zero drift).
  */
 export default function LiveMark({ px = 58 }: { px?: number }) {
@@ -38,7 +38,7 @@ export default function LiveMark({ px = 58 }: { px?: number }) {
   return (
     <span
       className="live-mark"
-      aria-label={`BudAI — ${candidate.name}`}
+      aria-label={`BudAI — ${candidate.name} (Logo Lab trial)`}
       dangerouslySetInnerHTML={{ __html: candidate.build(px, "dark") }}
     />
   );

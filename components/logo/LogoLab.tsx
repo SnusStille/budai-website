@@ -166,14 +166,14 @@ export default function LogoLab() {
             {isSv ? "Logo Lab" : "Logo Lab"}
           </span>
           <h1 className="lab-title">
-            {isSv ? "Ett nytt märke — bara om det är " : "A new mark — only if it is "}
-            <span className="lab-title-em">{isSv ? "bättre" : "better"}</span>
-            {isSv ? "." : " than the one we ship."}
+            {isSv ? "Lattice är vald — " : "Lattice is in — "}
+            <span className="lab-title-em">{isSv ? "märket" : "the mark"}</span>
+            {isSv ? " som sitter överallt nu." : " that now runs everywhere."}
           </h1>
           <p className="lab-lede">
             {isSv
-              ? "Sex kandidater sida vid sida mot nuvarande Prism Core. Testa dem i rätt storlek, på rätt bakgrund, med rörelse på och av. Rösta på den du vill ha i headern — då byter vi överallt."
-              : "Six candidates side by side against the shipped Prism Core. Test them at real sizes, on real backgrounds, with motion on and off. Vote for the one you want in the header — then we change it everywhere."}
+              ? "Lattice valdes i labbet och sitter nu i favicon, navbar, footer, OG-bild och alla laddningsskärmar. Här ligger hela kandidatlistan kvar — jämför, testa i rätt storlek och rösta om du vill byta igen."
+              : "Lattice won the lab and now ships in the favicon, navbar, footer, OG card and every loading screen. The full candidate list stays here — compare, test at real sizes, and vote if you ever want to switch again."}
           </p>
           <p className="lab-note">
             {isSv
@@ -185,19 +185,19 @@ export default function LogoLab() {
         {/* ── baseline vs selected ── */}
         <section className="lab-compare">
           <div className="lab-compare-card">
-            <div className="lab-compare-tag">{isSv ? "I bruk idag" : "In use today"}</div>
+            <div className="lab-compare-tag">{isSv ? "I bruk överallt" : "Shipping everywhere"}</div>
             <div className="lab-compare-stage is-baseline" style={{ background: currentBackdrop.css }}>
               <BudAILogo size="xl" animated />
             </div>
             <div className="lab-compare-meta">
-              <strong>Prism Core v2</strong>
-              <span>{isSv ? "Header, footer, favicon, OG-bild" : "Header, footer, favicon, OG card"}</span>
+              <strong>Lattice — vald logga</strong>
+              <span>{isSv ? "Favicon, navbar, footer, OG-bild, laddningsskärmar" : "Favicon, navbar, footer, OG card, loading screens"}</span>
             </div>
           </div>
 
           <div className="lab-compare-card">
             <div className="lab-compare-tag">
-              {isSv ? "Utmanare" : "Challenger"} · {candidate.name}
+              {candidate.id === "lattice" ? (isSv ? "Vald — i bruk" : "Chosen — in use") : isSv ? "Utmanare" : "Challenger"} · {candidate.name}
             </div>
             <div
               ref={stageRef}
@@ -359,6 +359,7 @@ export default function LogoLab() {
                 <div className="lab-card-body">
                   <strong>
                     {item.name}
+                    {item.id === "lattice" && <span className="lab-winner">{isSv ? "Vald" : "Chosen"}</span>}
                     {vote === item.id && <Check className="ml-1 inline h-3.5 w-3.5 text-emerald-300" />}
                   </strong>
                   <small>{item.tag[lang]}</small>
@@ -416,8 +417,8 @@ export default function LogoLab() {
 
         <p className="lab-footnote">
           {isSv
-            ? "Prism Core v2 ligger kvar överallt tills en kandidat vinner — då byts favicon, header, footer, OG-bild och alla laddningsskärmar i samma veva."
-            : "Prism Core v2 stays everywhere until a candidate wins — then favicon, header, footer, OG card and every loading screen change together."}
+            ? "Lattice är märket i produktion. Vill du byta igen röstar du här — då byts favicon, navbar, footer, OG-bild och alla laddningsskärmar i samma veva."
+            : "Lattice is the production mark. Want to switch again? Vote here — favicon, navbar, footer, OG card and every loading screen change together."}
         </p>
       </div>
 
