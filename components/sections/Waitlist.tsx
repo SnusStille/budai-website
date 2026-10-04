@@ -9,6 +9,7 @@ import {
   Building2,
   Check,
   Copy,
+  Linkedin,
   Mail,
   MapPin,
   Send,
@@ -23,6 +24,9 @@ import { addWaitlistUser, getWaitlistCount } from "@/lib/data";
 import { useLang } from "@/components/ui/LanguageContext";
 
 type Interest = "work" | "write" | "build" | "learn";
+
+/** Founding seats we are giving away at each stage of the preview. */
+const FOUNDING_SEATS = 250;
 
 function referralFromUrl(): string | null {
   if (typeof window === "undefined") return null;
@@ -52,6 +56,12 @@ export default function Waitlist() {
   const [error, setError] = useState("");
   const [copied, setCopied] = useState<"code" | "link" | null>(null);
   const [count, setCount] = useState<number | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+
+  const showToast = (kind: "ok" | "warn", text: string) => {
+    setToast(text);
+    window.setTimeout(() => setToast(null), 3200);
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -129,7 +139,12 @@ export default function Waitlist() {
       const err = submissionError as { message?: string; code?: string };
       const message = (err.message || "").toLowerCase();
       if (err.code === "23505" || message.includes("duplicate") || message.includes("unique") || message.includes("already")) {
-        setError(isSv ? "Den e-postadressen finns redan på väntelistan." : "That email is already on the waitlist.");
+        // Already on the list — show the same personal code instead of an error.
+        setSubmitted(true);
+        showToast(
+          "ok",
+          isSv ? "Du står redan på listan — här är din kod." : "You're already on the list — here's your code."
+        );
       } else if (message.includes("network") || message.includes("fetch")) {
         setError(isSv ? "Nätverksfel. Kontrollera anslutningen och försök igen." : "Network error. Check your connection and try again.");
       } else {
@@ -145,6 +160,30 @@ export default function Waitlist() {
     if (typeof window === "undefined") return "";
     return `${window.location.origin}${window.location.pathname}?ref=${code}#waitlist`;
   }, [code]);
+
+  const shareText = useMemo(
+    () =>
+      isSv
+        ? `BudAI är i tidig förhandsvisning — de första 10 % får early access och founding-rabatt. Jag är med, gå med du också:`
+        : `BudAI is in early preview — the first 10% get early access and a founding discount. I'm in, join me:`,
+    [isSv]
+  );
+
+  const shareTargets = useMemo(() => {
+    const url = inviteLink;
+    const encodedText = encodeURIComponent(`${shareText} `);
+    const encodedUrl = encodeURIComponent(url);
+    return [
+      { id: "x", label: "X", href: `https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}` },
+      {
+        id: "linkedin",
+        label: "LinkedIn",
+        href: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`,
+      },
+      { id: "whatsapp", label: "WhatsApp", href: `https://wa.me/?text=${encodedText}${encodedUrl}` },
+      { id: "mail", label: isSv ? "Mejl" : "Email", href: `mailto:?subject=BudAI&body=${encodedText}${encodedUrl}` },
+    ];
+  }, [inviteLink, shareText]);
 
   const copy = async (value: string, kind: "code" | "link") => {
     try {
@@ -178,6 +217,29 @@ export default function Waitlist() {
               ? "BudAI är i tidig förhandsvisning. Gå med på väntelistan och lås upp 10 % founding-rabatt, tidig tillgång till nya släpp och en direkt linje till oss som bygger."
               : "BudAI is in early preview. Join the waitlist to unlock a 10% founding discount, early access to new releases, and a direct line to the people building it."}
           </p>
+          <div className="wl-progress">
+            <div className="wl-progress-head">
+              <span className="wl-progress-label">
+                <BadgePercent className="h-3.5 w-3.5" />
+                {isSv ? "Founding-platser i den här vågen" : "Founding seats in this wave"}
+              </span>
+              <span className="wl-progress-value">
+                {count !== null ? Math.min(count, FOUNDING_SEATS).toLocaleString("sv-SE") : "—"} / {FOUNDING_SEATS}
+              </span>
+            </div>
+            <div className="wl-progress-track" aria-hidden>
+              <span
+                className="wl-progress-fill"
+                style={{ width: `${count ? Math.min(100, Math.max(4, (count / FOUNDING_SEATS) * 100)) : 4}%` }}
+              />
+            </div>
+            <p className="wl-progress-note">
+              {isSv
+                ? "När vågen är full går nästa grupp in — koden och rabatten stannar hos dig."
+                : "When this wave fills, the next group moves in — your code and discount stay yours."}
+            </p>
+          </div>
+
           <div className="mt-6 flex flex-wrap items-center justify-center gap-2.5">
             <span className="wl-stat">
               <strong>10 %</strong>
@@ -438,6 +500,24 @@ export default function Waitlist() {
                     </button>
                   </div>
 
+                  <div className="wl-share">
+                    <span className="wl-share-label">{isSv ? "Dela BudAI" : "Share BudAI"}</span>
+                    <div className="wl-share-row">
+                      {shareTargets.map((target) => (
+                        <a
+                          key={target.id}
+                          href={target.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="wl-share-btn"
+                        >
+                          {target.id === "linkedin" ? <Linkedin className="h-3.5 w-3.5" /> : <Share2 className="h-3.5 w-3.5" />}
+                          {target.label}
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+
                   <a href="#playground" className="wl-secondary">
                     <span>{isSv ? "Testa Playground medan du väntar" : "Try the Playground while you wait"}</span>
                     <ArrowRight className="h-4 w-4" />
@@ -454,6 +534,49 @@ export default function Waitlist() {
           </div>
         </div>
 
+        {/* what happens next */}
+        <div className="wl-next">
+          <span className="wl-next-kicker">{isSv ? "Så går det till" : "What happens next"}</span>
+          <div className="wl-next-grid">
+            {[
+              {
+                step: "01",
+                title: isSv ? "Du är med direkt" : "You're in right away",
+                text: isSv
+                  ? "Din plats och ditt founding-kod sparas direkt — ingen väntan på bekräftelse."
+                  : "Your spot and founding code are saved instantly — no waiting for a confirmation.",
+              },
+              {
+                step: "02",
+                title: isSv ? "Playground direkt" : "Playground right away",
+                text: isSv
+                  ? "Du kan testa hela Playground redan nu, utan konto och utan kostnad."
+                  : "You can try the whole Playground today, with no account and no cost.",
+              },
+              {
+                step: "03",
+                title: isSv ? "Inbjudan till nya släpp" : "Invites to new releases",
+                text: isSv
+                  ? "Vi mejlar när nya funktioner öppnar — först till founding-gruppen."
+                  : "We email when new features open — the founding group goes first.",
+              },
+            ].map((item) => (
+              <motion.div
+                key={item.step}
+                initial={{ opacity: 0, y: 14 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-60px" }}
+                transition={{ duration: 0.4 }}
+                className="wl-next-card"
+              >
+                <span className="wl-next-step">{item.step}</span>
+                <strong>{item.title}</strong>
+                <small>{item.text}</small>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+
         {/* bottom strip */}
         <div className="wl-strip">
           <span className="wl-strip-item">
@@ -467,6 +590,20 @@ export default function Waitlist() {
           </span>
         </div>
       </div>
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 12 }}
+            className="wl-toast"
+            role="status"
+          >
+            <Check className="h-3.5 w-3.5" />
+            {toast}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   );
 }

@@ -11,6 +11,15 @@
       <stop offset="52%" stop-color="#c9f9ff" stop-opacity="0.95"/>
       <stop offset="100%" stop-color="#87e9df" stop-opacity="0.6"/>
     </linearGradient>
+    <linearGradient id="glass" x1="18" y1="10" x2="46" y2="56" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#9ff3ea" stop-opacity="0.20"/>
+      <stop offset="46%" stop-color="#0d1a2b" stop-opacity="0.85"/>
+      <stop offset="100%" stop-color="#070c16" stop-opacity="0.95"/>
+    </linearGradient>
+    <linearGradient id="depth" x1="20" y1="14" x2="46" y2="58" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#16233a"/>
+      <stop offset="100%" stop-color="#080c14"/>
+    </linearGradient>
     <radialGradient id="c" cx="34%" cy="28%" r="74%">
       <stop offset="0%" stop-color="#ffffff"/>
       <stop offset="24%" stop-color="#eafffd"/>
@@ -31,17 +40,19 @@
   </defs>
 
   <rect width="64" height="64" rx="15" fill="#070a0f"/>
-
-  <!-- ambient bloom -->
   <circle cx="32" cy="32" r="24" fill="url(#glow)"/>
 
-  <!-- outer prism -->
-  <path d="M32 5.2 L55.4 18.6 V45.4 L32 58.8 L8.6 45.4 V18.6 Z"
-        fill="rgba(135,233,223,0.045)" stroke="url(#f)" stroke-width="2.7" stroke-linejoin="round"/>
+  <!-- extruded volume -->
+  <path d="M32 7.4 L56.6 21.6 V47.2 L32 61.4 L7.4 47.2 V21.6 Z" fill="url(#depth)" opacity="0.9"/>
+  <path d="M32 5.9 L55.9 19.8 V45.8 L32 59.7 L8.1 45.8 V19.8 Z" fill="url(#depth)"/>
+
+  <!-- glass front -->
+  <path d="M32 5.1 L55.3 18.5 V45.5 L32 58.9 L8.7 45.5 V18.5 Z"
+        fill="url(#glass)" stroke="url(#f)" stroke-width="2.7" stroke-linejoin="round"/>
 
   <!-- inner facet ring -->
   <path d="M45.2 32 L38.6 43.4 H25.4 L18.8 32 L25.4 20.6 H38.6 Z"
-        fill="rgba(135,233,223,0.05)" stroke="url(#e)" stroke-width="1.5" stroke-linejoin="round"/>
+        fill="none" stroke="url(#e)" stroke-width="1.5" stroke-linejoin="round"/>
 
   <!-- scanner arc -->
   <path d="M32 16.9 A15.1 15.1 0 0 1 47.1 32" fill="none" stroke="#c9f9ff" stroke-opacity="0.55"

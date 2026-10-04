@@ -5,6 +5,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowDown,
   Check,
+  ChevronLeft,
+  ChevronRight,
   Copy,
   CornerDownRight,
   Download,
@@ -24,7 +26,7 @@ import {
 import BudAILogo from "@/components/ui/BudAILogo";
 import Markdown from "./Markdown";
 import type { AiActivity, ChatMessage } from "@/lib/playground/types";
-import { FOLLOW_UPS, SPARKS, THINKING_STEPS } from "@/lib/playground/prompts";
+import { FOLLOW_UPS, SPARKS, THINKING_STEPS, TRANSFORMS, type Transform } from "@/lib/playground/prompts";
 
 type Lang = "sv" | "en";
 
@@ -45,6 +47,8 @@ type Props = {
   onOpenWorkspace: (message: ChatMessage) => void;
   onLightbox: (url: string) => void;
   onImageVariation: (message: ChatMessage) => void;
+  onTransform: (message: ChatMessage, transform: Transform) => void;
+  onVariant: (message: ChatMessage, index: number) => void;
   onSuggestion: (text: string) => void;
   onSurprise: () => void;
   onOpenLibrary: () => void;
@@ -85,6 +89,8 @@ export default function MessageList({
   onOpenWorkspace,
   onLightbox,
   onImageVariation,
+  onTransform,
+  onVariant,
   onSuggestion,
   onSurprise,
   onOpenLibrary,
@@ -210,6 +216,29 @@ export default function MessageList({
                     {typeof message.ms === "number" && message.ms > 0 && (
                       <span className="pgx-msg-model">{(message.ms / 1000).toFixed(1)}s</span>
                     )}
+                    {message.variants && message.variants.length > 1 && (
+                      <span className="pgx-variants">
+                        <button
+                          type="button"
+                          onClick={() => onVariant(message, (message.variantIndex ?? 0) - 1)}
+                          disabled={(message.variantIndex ?? 0) <= 0}
+                          aria-label={isSv ? "Föregående version" : "Previous version"}
+                        >
+                          <ChevronLeft className="h-3 w-3" />
+                        </button>
+                        <span>
+                          {(message.variantIndex ?? 0) + 1}/{message.variants.length}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => onVariant(message, (message.variantIndex ?? 0) + 1)}
+                          disabled={(message.variantIndex ?? 0) >= message.variants.length - 1}
+                          aria-label={isSv ? "Nästa version" : "Next version"}
+                        >
+                          <ChevronRight className="h-3 w-3" />
+                        </button>
+                      </span>
+                    )}
                   </div>
 
                   {message.imageUrl && (
@@ -288,6 +317,22 @@ export default function MessageList({
                         onImageVariation={onImageVariation}
                       />
                     )
+                  )}
+
+                  {lastAssistant?.id === message.id && !busy && !options && !message.error && (
+                    <div className="pgx-transforms">
+                      {TRANSFORMS.map((transform) => (
+                        <button
+                          key={transform.id}
+                          type="button"
+                          onClick={() => onTransform(message, transform)}
+                          className="pgx-transform"
+                        >
+                          <span aria-hidden>{transform.glyph}</span>
+                          {transform.label[lang]}
+                        </button>
+                      ))}
+                    </div>
                   )}
 
                   {lastAssistant?.id === message.id && !busy && !options && !message.error && (

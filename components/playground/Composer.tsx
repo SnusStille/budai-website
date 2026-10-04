@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowUp,
   AtSign,
+  AudioLines,
   Command,
   Image as ImageIcon,
   Library,
@@ -41,6 +42,8 @@ type Props = {
   onToggleCompare: () => void;
   onImprove: () => void;
   improving: boolean;
+  onRecall: () => string;
+  onOpenVoice: () => void;
   imageGenEnabled: boolean;
   placeholder: string;
   persona: PersonaId;
@@ -72,6 +75,8 @@ export default function Composer({
   onToggleCompare,
   onImprove,
   improving,
+  onRecall,
+  onOpenVoice,
   imageGenEnabled,
   placeholder,
   persona,
@@ -149,6 +154,14 @@ export default function Composer({
   };
 
   const onKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key === "ArrowUp" && !value && menu === "none") {
+      const recalled = onRecall();
+      if (recalled) {
+        event.preventDefault();
+        onChange(recalled);
+        return;
+      }
+    }
     if (menu === "slash" && slashMatches.length) {
       if (event.key === "ArrowDown") {
         event.preventDefault();
@@ -453,6 +466,15 @@ export default function Composer({
               aria-label="Command palette"
             >
               <AtSign className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={onOpenVoice}
+              className="pgx-tool"
+              title={isSv ? "Röstläge — prata fritt med BudAI" : "Voice mode — hands-free with BudAI"}
+              aria-label={isSv ? "Öppna röstläge" : "Open voice mode"}
+            >
+              <AudioLines className="h-4 w-4" />
             </button>
             <button
               type="button"

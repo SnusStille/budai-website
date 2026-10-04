@@ -10,6 +10,7 @@ import {
 } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
+  AudioLines,
   BarChart3,
   BrainCircuit,
   Command,
@@ -25,6 +26,7 @@ import {
   Minimize2,
   PanelLeft,
   PanelRight,
+  Pencil,
   Settings2,
   Sparkles,
   SplitSquareHorizontal,
@@ -56,6 +58,8 @@ import {
   PERSONAS,
   PLACEHOLDERS,
   SPARKS,
+  TRANSFORMS,
+  type Transform,
 } from "@/lib/playground/prompts";
 import {
   deleteLocalConversation,
@@ -67,6 +71,7 @@ import {
 import * as cloud from "@/lib/playground/cloudStore";
 import { consumePlaygroundPrefill, PLAYGROUND_PREFILL_EVENT } from "@/lib/playground/events";
 import { playSound, setSoundEnabled } from "@/lib/playground/sound";
+import VoiceMode from "./VoiceMode";
 import Composer from "./Composer";
 import Sidebar, { type HistoryItem } from "./Sidebar";
 import MessageList, { type DualOption } from "./MessageList";
@@ -214,12 +219,19 @@ export default function PlaygroundApp() {
   const [creating, setCreating] = useState(false);
   const [tipOpen, setTipOpen] = useState(false);
   const [improving, setImproving] = useState(false);
+  const [voiceOpen, setVoiceOpen] = useState(false);
+  const [voiceReply, setVoiceReply] = useState<{ id: string; text: string } | null>(null);
+  const [voiceTts, setVoiceTts] = useState(true);
+  const [renamingTitle, setRenamingTitle] = useState(false);
+  const [titleDraft, setTitleDraft] = useState("");
 
   const abortRef = useRef<AbortController | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const recogRef = useRef<{ stop: () => void } | null>(null);
   const persistTimer = useRef(0);
   const bootRef = useRef(false);
+  const pendingVariants = useRef<{ id: string; variants: string[] } | null>(null);
+  const lastPromptRef = useRef<string>("");
   const placeholderRef = useRef(PLACEHOLDERS[lang][0]);
 
   const busy = activity !== "idle" && activity !== "error" && activity !== "listening";
@@ -570,12 +582,36 @@ export default function PlaygroundApp() {
       }));
 
   const contextBlock = useCallback(() => {
-    if (!auth.isMember || !memoryEnabled || temporary || !memory.length) return "";
-    return memoryToPromptBlock(memory, lang);
-  }, [auth.isMember, memory, memoryEnabled, temporary, lang]);
+    const parts: string[] = [];
+    const instructions = (settings.customInstructions || "").trim();
+    if (instructions) {
+      parts.push(
+        (isSv ? "[Användarens egna instruktioner]\n" : "[User's custom instructions]\n") + instructions
+      );
+    }
+    if (auth.isMember && memoryEnabled && !temporary && memory.length) {
+      parts.push(memoryToPromptBlock(memory, lang));
+    }
+    return parts.join("\n\n");
+  }, [auth.isMember, isSv, lang, memory, memoryEnabled, settings.customInstructions, temporary]);
 
   const finishAnswer = useCallback(
     (promptId: string, content: string, meta?: { ms?: number; model?: string; memory?: string | null }) => {
+      const pending = pendingVariants.current;
+      pendingVariants.current = null;
+      if (pending) {
+        const variants = [...pending.variants, content];
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === pending.id
+              ? { ...m, variants, variantIndex: variants.length - 1, content, ms: meta?.ms, model: meta?.model }
+              : m
+          )
+        );
+        setVoiceReply({ id: `${pending.id}-${variants.length}`, text: content });
+        playSound("receive");
+        return;
+      }
       const message: ChatMessage = {
         id: newId("m"),
         role: "assistant",
@@ -587,6 +623,7 @@ export default function PlaygroundApp() {
         tokens: estimateTokens(content),
       };
       setMessages((prev) => [...prev, message]);
+      setVoiceReply({ id: message.id, text: content });
       if (meta?.memory && auth.isMember && !temporary) {
         showToast("ok", isSv ? "BudAI sparade ett minne" : "BudAI saved a memory");
         void reloadHistory();
@@ -628,6 +665,7 @@ export default function PlaygroundApp() {
         imageUrl: image?.preview,
       };
 
+      lastPromptRef.current = text;
       const base = options?.history ?? messages;
       const nextList = [...base, userMessage];
       setMessages(nextList);
@@ -1186,6 +1224,38 @@ export default function PlaygroundApp() {
     setMessages((prev) => prev.filter((m) => m.id !== id));
   }, []);
 
+  /** Regenerate keeps the old answers as switchable variants. */
+  const regenerateVariant = useCallback(
+    (message: ChatMessage) => {
+      const index = messages.findIndex((m) => m.id === message.id);
+      const promptMessage = [...messages.slice(0, index)].reverse().find((m) => m.role === "user");
+      if (!promptMessage) return;
+      const existing = message.variants?.length ? message.variants : [message.content];
+      pendingVariants.current = { id: message.id, variants: existing };
+      const trimmed = [...messages.slice(0, index), message];
+      setMessages(trimmed);
+      void runPrompt(promptMessage.content, { history: trimmed.slice(0, -1) });
+    },
+    [messages, runPrompt]
+  );
+
+  const switchVariant = useCallback((message: ChatMessage, index: number) => {
+    setMessages((prev) =>
+      prev.map((m) => {
+        if (m.id !== message.id || !m.variants) return m;
+        const clamped = Math.max(0, Math.min(m.variants.length - 1, index));
+        return { ...m, variantIndex: clamped, content: m.variants[clamped] };
+      })
+    );
+  }, []);
+
+  const applyTransform = useCallback(
+    (message: ChatMessage, transform: Transform) => {
+      void runPrompt(transform.build(message.content, lang));
+    },
+    [lang, runPrompt]
+  );
+
   const exportThread = useCallback(
     (format: "md" | "json" = "md") => {
       if (!messages.length) {
@@ -1285,12 +1355,53 @@ export default function PlaygroundApp() {
 
   /* ── derived ── */
   const grouped = useMemo(() => groupHistory(history, lang), [history, lang]);
+
+  /* search also inside message content — locally we can read the full thread list */
+  const snippets = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    const found: Record<string, string> = {};
+    if (!query) return found;
+    const scan = (id: string, list: ChatMessage[] | undefined) => {
+      if (!list || found[id]) return;
+      const hit = list.find((m) => m.content.toLowerCase().includes(query));
+      if (hit) {
+        const index = hit.content.toLowerCase().indexOf(query);
+        const start = Math.max(0, index - 28);
+        found[id] = `…${hit.content.slice(start, start + 82).replace(/\s+/g, " ")}…`;
+      }
+    };
+    if (!auth.isMember) {
+      loadLocalConversations().forEach((convo) => scan(convo.id, convo.messages));
+    } else {
+      scan(convoId || "", messages);
+    }
+    return found;
+  }, [auth.isMember, convoId, messages, search]);
+
+  const contextTokens = useMemo(
+    () => messages.reduce((sum, m) => sum + estimateTokens(m.content), 0),
+    [messages]
+  );
+  const contextWindow = 200_000;
+  const contextRatio = Math.min(1, contextTokens / contextWindow);
+  const lastAnswerMs = useMemo(
+    () => [...messages].reverse().find((m) => m.role === "assistant" && m.ms)?.ms,
+    [messages]
+  );
   const paletteActions: PaletteAction[] = useMemo(
     () => [
       { id: "new", group: isSv ? "Chatt" : "Chat", label: isSv ? "Ny chatt" : "New chat", hint: "⌘N", icon: <MessageSquarePlus className="h-3.5 w-3.5" />, run: () => void newChat() },
       { id: "library", group: isSv ? "Chatt" : "Chat", label: isSv ? "Promptbibliotek" : "Prompt library", icon: <SquareLibrary className="h-3.5 w-3.5" />, run: () => setLibraryOpen(true) },
       { id: "export-md", group: isSv ? "Chatt" : "Chat", label: isSv ? "Exportera som Markdown" : "Export as Markdown", hint: "⌘E", icon: <Download className="h-3.5 w-3.5" />, run: () => exportThread("md") },
       { id: "export-json", group: isSv ? "Chatt" : "Chat", label: isSv ? "Exportera som JSON" : "Export as JSON", icon: <Download className="h-3.5 w-3.5" />, run: () => exportThread("json") },
+      {
+        id: "voice",
+        group: isSv ? "Chatt" : "Chat",
+        label: isSv ? "Röstläge" : "Voice mode",
+        hint: isSv ? "Prata fritt med BudAI" : "Talk hands-free with BudAI",
+        icon: <AudioLines className="h-3.5 w-3.5" />,
+        run: () => setVoiceOpen(true),
+      },
       {
         id: "compare",
         group: isSv ? "Chatt" : "Chat",
@@ -1366,9 +1477,44 @@ export default function PlaygroundApp() {
               <span className="text-[13px] font-semibold tracking-tight text-white">
                 Bud<span className="text-accent-cyan">AI</span>
               </span>
-              <span className="pgx-tag">{isSv ? "Förhandsvisning" : "Preview"}</span>
               {temporary && <span className="pgx-tag pgx-tag--warn">{isSv ? "Tillfällig" : "Temporary"}</span>}
             </div>
+            {renamingTitle ? (
+              <form
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  if (convoId && titleDraft.trim()) void renameConversation(convoId, titleDraft.trim());
+                  setRenamingTitle(false);
+                }}
+              >
+                <input
+                  autoFocus
+                  value={titleDraft}
+                  onChange={(event) => setTitleDraft(event.target.value)}
+                  onBlur={() => setRenamingTitle(false)}
+                  className="pgx-title-input"
+                  maxLength={80}
+                />
+              </form>
+            ) : (
+              <button
+                type="button"
+                className="pgx-title-button"
+                disabled={!convoId}
+                onClick={() => {
+                  const current = history.find((c) => c.id === convoId)?.title || "";
+                  setTitleDraft(current);
+                  setRenamingTitle(true);
+                }}
+                title={isSv ? "Byt namn på chatten" : "Rename this chat"}
+              >
+                <span className="truncate">
+                  {history.find((c) => c.id === convoId)?.title ||
+                    (isSv ? "Ny chatt" : "New chat")}
+                </span>
+                <Pencil className="h-3 w-3 shrink-0 opacity-50" />
+              </button>
+            )}
           </div>
         </div>
 
@@ -1400,6 +1546,18 @@ export default function PlaygroundApp() {
             aria-label={isSv ? "Växla panel" : "Toggle panel"}
           >
             <PanelRight className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setVoiceOpen(true);
+              playSound("open");
+            }}
+            className="pgx-icon-btn hidden sm:inline-flex"
+            title={isSv ? "Röstläge" : "Voice mode"}
+            aria-label={isSv ? "Röstläge" : "Voice mode"}
+          >
+            <AudioLines className="h-4 w-4" />
           </button>
           <button
             type="button"
@@ -1442,6 +1600,48 @@ export default function PlaygroundApp() {
         </div>
       </div>
 
+      {/* live status rail */}
+      <div className="pgx-status-rail">
+        <span className={`pgx-status-item ${busy ? "pgx-status-live" : ""}`}>
+          {busy ? <span className="pgx-status-dot" /> : <span className="h-1.5 w-1.5 rounded-full bg-white/25" />}
+          {busy
+            ? activity === "typing"
+              ? isSv
+                ? "Strömmar svar…"
+                : "Streaming…"
+              : isSv
+                ? "Arbetar…"
+                : "Working…"
+            : isSv
+              ? "Redo"
+              : "Ready"}
+        </span>
+        <span className="pgx-status-item">
+          <Sparkles className="h-3 w-3" />
+          {PERSONAS.find((p) => p.id === (settings.persona || "core"))?.label[lang]}
+        </span>
+        <span className="pgx-status-item">
+          {isSv ? "Djup" : "Depth"}: {settings.effort || "balanced"}
+        </span>
+        <span className="pgx-status-item">
+          {estimateTokens(messages.map((m) => m.content).join(" "))} tok
+        </span>
+        <span className="pgx-status-item">
+          <span>{isSv ? "Kontext" : "Context"}</span>
+          <span className="pgx-status-meter" aria-hidden>
+            <span style={{ width: `${Math.max(2, contextRatio * 100)}%` }} />
+          </span>
+        </span>
+        {lastAnswerMs ? (
+          <span className="pgx-status-item">
+            {(lastAnswerMs / 1000).toFixed(1)}s {isSv ? "senaste svar" : "last reply"}
+          </span>
+        ) : null}
+        <span className="pgx-status-item ml-auto">
+          {auth.isMember ? (isSv ? "Konto" : "Account") : isSv ? "Gäst" : "Guest"}
+        </span>
+      </div>
+
       {/* body */}
       <div className="pgx-body">
         <AnimatePresence initial={false}>
@@ -1479,6 +1679,7 @@ export default function PlaygroundApp() {
                 onSignIn={() => auth.openAuth()}
                 onSignOut={() => void auth.signOut()}
                 userName={auth.displayName}
+                snippets={snippets}
               />
             </motion.aside>
           )}
@@ -1527,7 +1728,9 @@ export default function PlaygroundApp() {
               if (option.body.length > 380) setInspector({ title: option.title, body: option.body });
               playSound("tick");
             }}
-            onRegenerate={regenerate}
+            onRegenerate={regenerateVariant}
+            onTransform={applyTransform}
+            onVariant={switchVariant}
             onEdit={editMessage}
             onBranch={(message) => void branchFrom(message)}
             onCopy={(text) => void copyText(text)}
@@ -1624,6 +1827,11 @@ export default function PlaygroundApp() {
             onOpenLibrary={() => setLibraryOpen(true)}
             onOpenPalette={() => setPaletteOpen(true)}
             dragOver={dragOver}
+            onRecall={() => lastPromptRef.current}
+            onOpenVoice={() => {
+              setVoiceOpen(true);
+              playSound("open");
+            }}
           />
         </div>
 
@@ -1685,6 +1893,7 @@ export default function PlaygroundApp() {
                 onSignOut={() => void auth.signOut()}
                 onClose={() => setDrawerOpen(false)}
                 userName={auth.displayName}
+                snippets={snippets}
               />
             </motion.div>
           </motion.div>
@@ -1749,6 +1958,8 @@ export default function PlaygroundApp() {
         onStyle={(style) => patch({ style: style as StyleId })}
         onEffort={(effort) => patch({ effort: effort as EffortId })}
         onAnswerLang={(answerLang) => patch({ answerLang })}
+        customInstructions={settings.customInstructions || ""}
+        onCustomInstructions={(customInstructions) => patch({ customInstructions })}
       />
 
       {/* lightbox */}
@@ -1791,6 +2002,22 @@ export default function PlaygroundApp() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <VoiceMode
+        open={voiceOpen}
+        onClose={() => setVoiceOpen(false)}
+        lang={lang}
+        persona={PERSONAS.find((p) => p.id === (settings.persona || "core")) || PERSONAS[0]}
+        onAsk={(text) => {
+          setVoiceReply(null);
+          void runPrompt(text);
+        }}
+        reply={voiceReply}
+        thinking={busy}
+        onSpoken={() => setVoiceReply(null)}
+        ttsEnabled={voiceTts}
+        onToggleTts={() => setVoiceTts((v) => !v)}
+      />
 
       {/* persona ribbon — quick switch, always visible */}
       <div className="pgx-persona-bar">

@@ -53,6 +53,8 @@ type Props = {
   onSignOut: () => void;
   onClose?: () => void;
   userName?: string | null;
+  /** conversation id → matching snippet from the search */
+  snippets?: Record<string, string>;
 };
 
 export default function Sidebar({
@@ -81,6 +83,7 @@ export default function Sidebar({
   onSignOut,
   onClose,
   userName,
+  snippets = {},
 }: Props) {
   const isSv = lang === "sv";
   const [renamingId, setRenamingId] = useState<string | null>(null);
@@ -141,6 +144,11 @@ export default function Sidebar({
                   ? "Inga chattar ännu. Starta en ny och se den dyka upp här."
                   : "No chats yet. Start one and it shows up here."}
             </p>
+            {search && (
+              <p className="px-3 text-[11px] text-white/30">
+                {isSv ? "Söker även inuti dina meddelanden." : "Search also looks inside your messages."}
+              </p>
+            )}
           </div>
         )}
 
@@ -184,6 +192,9 @@ export default function Sidebar({
                             {item.pinned && <Pin className="h-3 w-3 shrink-0 text-accent-cyan" />}
                             <span className="truncate text-[12.5px] text-white/85">{item.title}</span>
                           </span>
+                          {snippets[item.id] && (
+                            <span className="pgx-history-snippet">{snippets[item.id]}</span>
+                          )}
                         </button>
                         <span className="pgx-history-actions">
                           <button

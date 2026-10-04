@@ -626,6 +626,8 @@ export function SettingsPanel({
   onStyle,
   onEffort,
   onAnswerLang,
+  customInstructions,
+  onCustomInstructions,
 }: {
   open: boolean;
   onClose: () => void;
@@ -648,6 +650,8 @@ export function SettingsPanel({
   onStyle: (value: string) => void;
   onEffort: (value: string) => void;
   onAnswerLang: (value: Lang) => void;
+  customInstructions: string;
+  onCustomInstructions: (value: string) => void;
 }) {
   const isSv = lang === "sv";
   return (
@@ -726,6 +730,30 @@ export function SettingsPanel({
         </div>
       </div>
 
+      <div className="pgx-settings-section">
+        <span className="pgx-settings-label">
+          <Sparkles className="h-3.5 w-3.5" />
+          {isSv ? "Egna instruktioner" : "Custom instructions"}
+        </span>
+        <textarea
+          value={customInstructions}
+          onChange={(event) => onCustomInstructions(event.target.value.slice(0, 800))}
+          rows={3}
+          placeholder={
+            isSv
+              ? "T.ex. Jag jobbar på ett svenskt bolag, svara kort och undvik jargong."
+              : "E.g. I work at a Swedish company, keep answers short and skip jargon."
+          }
+          className="pgx-inline-input"
+          style={{ minHeight: "4.5rem", resize: "vertical", lineHeight: 1.55 }}
+        />
+        <span className="pgx-stat-hint">
+          {isSv
+            ? "Sparas bara på den här enheten och skickas som kontext i varje svar."
+            : "Saved only on this device and sent as context with every reply."}
+        </span>
+      </div>
+
       <div className="pgx-settings-toggles">
         <Toggle lang={lang} icon={<Sparkles className="h-3.5 w-3.5" />} label={isSv ? "Strömmande svar" : "Streaming answers"} value={stream} onChange={onStream} />
         <Toggle lang={lang} icon={<Volume2 className="h-3.5 w-3.5" />} label={isSv ? "Ljud" : "Sound"} value={sound} onChange={onSound} />
@@ -775,6 +803,42 @@ function Toggle({
 
 /* ── workspace / inspector ───────────────────────────────── */
 
+function extractPreviewSource(body: string): { html: string; kind: "html" | "svg" | null } {
+  const fences: RegExpExecArray[] = [];
+  const pattern = /```(\w*)\n([\s\S]*?)```/g;
+  let match: RegExpExecArray | null = pattern.exec(body);
+  while (match) {
+    fences.push(match);
+    match = pattern.exec(body);
+  }
+  if (!fences.length) return { html: "", kind: null };
+
+  const svgFence = fences.find((f) => /svg/i.test(f[1] || "") || /^\s*<svg/i.test(f[2] || ""));
+  if (svgFence) {
+    return {
+      html: `<!doctype html><html><body style="margin:0;display:grid;place-items:center;height:100vh;background:#0b0f17">${svgFence[2]}</body></html>`,
+      kind: "svg",
+    };
+  }
+
+  const htmlFence = fences.find((f) => /html/i.test(f[1] || "") || /<\/?(div|section|body|html|h1|p|button)\b/i.test(f[2] || ""));
+  const cssFence = fences.find((f) => /css/i.test(f[1] || ""));
+  const jsFence = fences.find((f) => /(js|javascript|ts|tsx)/i.test(f[1] || ""));
+
+  if (htmlFence || cssFence) {
+    return {
+      html: `<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>body{font-family:ui-sans-serif,system-ui,-apple-system,sans-serif;color:#0b0f17;background:#fff;padding:16px;margin:0}${cssFence?.[2] || ""}</style>
+</head><body>${htmlFence?.[2] || ""}
+<script>${jsFence?.[2] || ""}<\/script>
+</body></html>`,
+      kind: "html",
+    };
+  }
+  return { html: "", kind: null };
+}
+
 export function InspectorPanel({
   open,
   lang,
@@ -790,9 +854,22 @@ export function InspectorPanel({
 }) {
   const isSv = lang === "sv";
   const [copied, setCopied] = useState(false);
+  const [tab, setTab] = useState<"content" | "preview">("content");
   const words = body.trim() ? body.trim().split(/\s+/).length : 0;
+  const preview = useMemo(() => extractPreviewSource(body), [body]);
+
+  useEffect(() => {
+    setTab("content");
+  }, [title, body]);
 
   if (!open) return null;
+
+  const openInTab = () => {
+    const blob = new Blob([preview.html], { type: "text/html;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    window.open(url, "_blank", "noopener");
+    window.setTimeout(() => URL.revokeObjectURL(url), 20000);
+  };
 
   const download = () => {
     const blob = new Blob([body], { type: "text/markdown;charset=utf-8" });
@@ -815,8 +892,39 @@ export function InspectorPanel({
           <X className="h-4 w-4" />
         </button>
       </div>
+      {preview.kind && (
+        <div className="pgx-inspector-tabs">
+          <button type="button" onClick={() => setTab("content")} className={tab === "content" ? "is-active" : ""}>
+            {isSv ? "Innehåll" : "Content"}
+          </button>
+          <button type="button" onClick={() => setTab("preview")} className={tab === "preview" ? "is-active" : ""}>
+            {isSv ? "Förhandsvisning" : "Preview"}
+          </button>
+        </div>
+      )}
       <div className="pgx-inspector-body">
-        <Markdown text={body} />
+        {tab === "preview" && preview.kind ? (
+          <div className="pgx-preview-wrap">
+            <div className="pgx-preview-bar">
+              <span>
+                {isSv
+                  ? "Körs i en sandlåda i din webbläsare — inget skickas någonstans."
+                  : "Runs sandboxed in your browser — nothing is sent anywhere."}
+              </span>
+              <button type="button" className="pgx-text-btn" onClick={openInTab}>
+                {isSv ? "Öppna i ny flik" : "Open in new tab"}
+              </button>
+            </div>
+            <iframe
+              title="preview"
+              className="pgx-preview-frame"
+              sandbox="allow-scripts allow-forms allow-modals allow-popups"
+              srcDoc={preview.html}
+            />
+          </div>
+        ) : (
+          <Markdown text={body} />
+        )}
       </div>
       <div className="pgx-inspector-foot">
         <span>{words} {isSv ? "ord" : "words"}</span>

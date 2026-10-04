@@ -5,10 +5,12 @@ import { motion, useReducedMotion } from "framer-motion";
 import {
   ArrowRight,
   ArrowUpRight,
+  AudioLines,
   BrainCircuit,
   Command,
   Languages,
   Sparkles,
+  SplitSquareHorizontal,
   Wand2,
 } from "lucide-react";
 import BudAILogo, { StilledevLink } from "@/components/ui/BudAILogo";
@@ -76,11 +78,13 @@ export default function Hero() {
         { label: "Skriv ett mejl", prompt: "Skriv ett kort, varmt och tydligt mejl till en kund och be om feedback senast fredag." },
         { label: "Planera veckan", prompt: "Hjälp mig planera veckan. Jag har två möten, en viktig deadline och vill hinna med fokuserat arbete." },
         { label: "Förklara enkelt", prompt: "Förklara generativ AI enkelt för en kollega som inte jobbar med teknik." },
+        { label: "Röstläge: prata fritt", prompt: "Hej BudAI — hjälp mig få ordning på dagen. Vad bör jag fokusera på först?" },
       ]
     : [
         { label: "Write an email", prompt: "Write a short, warm, clear email to a client asking for feedback by Friday." },
         { label: "Plan my week", prompt: "Help me plan my week. I have two meetings, an important deadline, and need time for focused work." },
         { label: "Explain it simply", prompt: "Explain generative AI simply to a colleague who does not work in tech." },
+        { label: "Voice mode: try it", prompt: "Hey BudAI — help me get my day in order. What should I focus on first?" },
       ];
 
   /* pause the demo when the hero is off screen or motion is reduced */
@@ -180,7 +184,7 @@ export default function Hero() {
               <span className="hero-proof-separator" aria-hidden="true" />
               <span>{isSv ? "Testa utan konto" : "Try it without an account"}</span>
               <span className="hero-proof-separator" aria-hidden="true" />
-              <span>{isSv ? "Strömmande svar live" : "Live streaming answers"}</span>
+              <span>{isSv ? "Röstläge & strömmande svar" : "Voice mode & streaming answers"}</span>
             </div>
 
             <p className="mt-6 text-xs text-white/38">
@@ -308,9 +312,11 @@ export default function Hero() {
         >
           {[
             { icon: <Sparkles className="h-4 w-4" />, label: isSv ? "Strömmande svar" : "Streaming answers", value: isSv ? "token för token" : "token by token" },
-            { icon: <BrainCircuit className="h-4 w-4" />, label: isSv ? "Roller" : "Personas", value: isSv ? "6 specialister" : "6 specialists" },
+            { icon: <AudioLines className="h-4 w-4" />, label: isSv ? "Röstläge" : "Voice mode", value: isSv ? "prata fritt" : "hands-free" },
+            { icon: <BrainCircuit className="h-4 w-4" />, label: isSv ? "Roller & minne" : "Personas & memory", value: isSv ? "6 specialister" : "6 specialists" },
+            { icon: <SplitSquareHorizontal className="h-4 w-4" />, label: isSv ? "Jämför svar" : "Compare answers", value: isSv ? "A/B sida vid sida" : "A/B side by side" },
             { icon: <Languages className="h-4 w-4" />, label: isSv ? "Språk" : "Languages", value: "SV / EN" },
-            { icon: <Wand2 className="h-4 w-4" />, label: isSv ? "Verktyg" : "Tools", value: isSv ? "röst · bild · fil" : "voice · image · file" },
+            { icon: <Wand2 className="h-4 w-4" />, label: isSv ? "Verktyg" : "Tools", value: isSv ? "bild · fil · kod" : "image · file · code" },
           ].map((item) => (
             <div key={item.label} className="hero-feature">
               <span className="hero-feature-icon">{item.icon}</span>

@@ -66,6 +66,7 @@ export default function BudAILogo({
       aria-label={clickable ? label : undefined}
       aria-hidden={clickable ? undefined : true}
       data-motion={animated ? motion : "static"}
+      data-boot={animated && rich ? "on" : "off"}
       className={`budai-logo ${rich ? "budai-logo--rich" : ""} ${
         tiny ? "budai-logo--tiny" : ""
       } ${light ? "budai-logo--light" : ""} ${mono ? "budai-logo--mono" : ""} ${
@@ -97,7 +98,7 @@ export default function BudAILogo({
         </span>
       )}
 
-      {/* the gem */}
+      {/* the gem — real volume: two extruded back faces, glass front, sweeping rim light */}
       <svg viewBox="0 0 64 64" className="budai-gem" fill="none" aria-hidden>
         <defs>
           <linearGradient id={`bud-frame-${uid}`} x1="6" y1="4" x2="58" y2="60" gradientUnits="userSpaceOnUse">
@@ -109,6 +110,15 @@ export default function BudAILogo({
             <stop offset="0%" stopColor={light ? "#7c3aed" : "#b9a8f6"} stopOpacity="0.15" />
             <stop offset="52%" stopColor={light ? "#0891b2" : "#87e9df"} stopOpacity="0.95" />
             <stop offset="100%" stopColor={light ? "#38bdf8" : "#c9f9ff"} stopOpacity="0.2" />
+          </linearGradient>
+          <linearGradient id={`bud-glass-${uid}`} x1="18" y1="10" x2="46" y2="56" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stopColor={light ? "#ffffff" : "#9ff3ea"} stopOpacity={light ? 0.9 : 0.18} />
+            <stop offset="46%" stopColor={light ? "#e0f2fe" : "#0d1a2b"} stopOpacity={light ? 0.75 : 0.85} />
+            <stop offset="100%" stopColor={light ? "#eef2ff" : "#070c16"} stopOpacity={light ? 0.85 : 0.95} />
+          </linearGradient>
+          <linearGradient id={`bud-depth-${uid}`} x1="20" y1="14" x2="46" y2="58" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stopColor={light ? "#94a3b8" : "#16233a"} />
+            <stop offset="100%" stopColor={light ? "#64748b" : "#080c14"} />
           </linearGradient>
           <radialGradient id={`bud-core-${uid}`} cx="36%" cy="30%" r="72%">
             <stop offset="0%" stopColor="#ffffff" />
@@ -128,16 +138,49 @@ export default function BudAILogo({
               <feMergeNode in="SourceGraphic" />
             </feMerge>
           </filter>
+          <filter id={`bud-soft-${uid}`} x="-40%" y="-40%" width="180%" height="180%">
+            <feGaussianBlur stdDeviation="0.7" />
+          </filter>
         </defs>
 
-        {/* outer prism — pointy-top hexagon, rounded corners */}
+        {/* extruded volume — two back plates give the prism real thickness */}
+        {rich && (
+          <g className="budai-depth">
+            <path
+              d="M32 7.4 L56.6 21.6 V47.2 L32 61.4 L7.4 47.2 V21.6 Z"
+              fill={`url(#bud-depth-${uid})`}
+              opacity={light ? 0.5 : 0.9}
+            />
+            <path
+              d="M32 5.9 L55.9 19.8 V45.8 L32 59.7 L8.1 45.8 V19.8 Z"
+              fill={`url(#bud-depth-${uid})`}
+              opacity={light ? 0.75 : 1}
+            />
+          </g>
+        )}
+
+        {/* the glass front */}
         <path
           className="budai-frame"
           d="M32 5.1 L55.3 18.5 V45.5 L32 58.9 L8.7 45.5 V18.5 Z"
+          fill={`url(#bud-glass-${uid})`}
           stroke={`url(#bud-frame-${uid})`}
           strokeWidth={rich ? 2.1 : 2.4}
           strokeLinejoin="round"
         />
+
+        {/* rim light sweeping the silhouette */}
+        {rich && (
+          <path
+            className="budai-rim"
+            d="M32 5.1 L55.3 18.5 V45.5 L32 58.9 L8.7 45.5 V18.5 Z"
+            stroke={light ? "#0e7490" : "#e8fffd"}
+            strokeWidth="1.1"
+            strokeLinecap="round"
+            fill="none"
+            opacity="0.75"
+          />
+        )}
 
         {/* inner counter-rotated facet ring */}
         <path
@@ -189,6 +232,19 @@ export default function BudAILogo({
               filter={`url(#bud-glow-${uid})`}
             />
           </g>
+        )}
+
+        {/* ambient occlusion under the glass */}
+        {rich && (
+          <ellipse
+            className="budai-ao"
+            cx="32"
+            cy="52"
+            rx="15"
+            ry="3.4"
+            fill={light ? "rgba(15,23,42,0.14)" : "rgba(0,0,0,0.5)"}
+            filter={`url(#bud-soft-${uid})`}
+          />
         )}
       </svg>
 

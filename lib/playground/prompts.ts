@@ -424,6 +424,93 @@ export const FOLLOW_UPS: { id: string; label: Record<Lang, string>; prompt: Reco
   },
 ];
 
+/* ── One-click transforms on an answer ───────────────────── */
+
+export type Transform = {
+  id: string;
+  label: Record<Lang, string>;
+  glyph: string;
+  build: (text: string, lang: Lang) => string;
+};
+
+export const TRANSFORMS: Transform[] = [
+  {
+    id: "simplify",
+    label: { sv: "Förenkla", en: "Simplify" },
+    glyph: "◇",
+    build: (text, lang) =>
+      lang === "sv"
+        ? `Skriv om svaret nedan så enkelt som möjligt, som för en nyfiken nybörjare. Behåll alla viktiga poänger.\n\n${text}`
+        : `Rewrite the answer below as simply as possible, for a curious beginner. Keep every important point.\n\n${text}`,
+  },
+  {
+    id: "bullets",
+    label: { sv: "Punktlista", en: "Bullet list" },
+    glyph: "≡",
+    build: (text, lang) =>
+      lang === "sv"
+        ? `Gör om svaret nedan till en tydlig punktlista med max 7 punkter och en avslutande nästa-steg-rad.\n\n${text}`
+        : `Turn the answer below into a clear bullet list of at most 7 points plus one next-step line.\n\n${text}`,
+  },
+  {
+    id: "translate",
+    label: { sv: "Översätt", en: "Translate" },
+    glyph: "⇄",
+    build: (text, lang) =>
+      lang === "sv"
+        ? `Översätt svaret nedan till naturlig engelska med samma ton. Svara med endast översättningen.\n\n${text}`
+        : `Translate the answer below into natural Swedish with the same tone. Reply with the translation only.\n\n${text}`,
+  },
+  {
+    id: "shorter",
+    label: { sv: "Kortare", en: "Shorter" },
+    glyph: "⤡",
+    build: (text, lang) =>
+      lang === "sv"
+        ? `Korta ned svaret nedan till ungefär hälften utan att tappa innebörd.\n\n${text}`
+        : `Cut the answer below to roughly half its length without losing meaning.\n\n${text}`,
+  },
+  {
+    id: "actionable",
+    label: { sv: "Gör den konkret", en: "Make it actionable" },
+    glyph: "☑",
+    build: (text, lang) =>
+      lang === "sv"
+        ? `Omvandla svaret nedan till konkreta handlingar: vad ska göras, i vilken ordning och hur det följs upp.\n\n${text}`
+        : `Turn the answer below into concrete actions: what to do, in what order, and how to follow up.\n\n${text}`,
+  },
+];
+
+/* ── Voice conversation mode ─────────────────────────────── */
+
+export const VOICE_STATES: Record<Lang, Record<"idle" | "listening" | "thinking" | "speaking", string>> = {
+  sv: {
+    idle: "Tryck för att prata",
+    listening: "Lyssnar…",
+    thinking: "Tänker…",
+    speaking: "BudAI svarar",
+  },
+  en: {
+    idle: "Tap to talk",
+    listening: "Listening…",
+    thinking: "Thinking…",
+    speaking: "BudAI is speaking",
+  },
+};
+
+export const VOICE_TIPS: Record<Lang, string[]> = {
+  sv: [
+    "Fråga något och avbryt bara genom att börja prata igen.",
+    "Röstsvar läses upp automatiskt — stäng av när du vill tyst.",
+    "Perfekt för promenaden, bilen eller när händerna är upptagna.",
+  ],
+  en: [
+    "Ask anything and interrupt simply by speaking again.",
+    "Replies are read aloud automatically — turn it off any time.",
+    "Made for walks, the car, or when your hands are full.",
+  ],
+};
+
 /** Rotating prompt sparks for the empty state. */
 export const SPARKS: Record<Lang, string[]> = {
   sv: [

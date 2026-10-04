@@ -23,6 +23,9 @@ export type ChatMessage = {
   promptId?: string;
   /** sibling branch index when the same prompt has several answers */
   branch?: number;
+  /** alternate takes of the same answer (regenerate keeps them) */
+  variants?: string[];
+  variantIndex?: number;
 };
 
 export type Conversation = {
@@ -87,6 +90,8 @@ export type PgSettings = {
   showTimestamps?: boolean;
   reduceEffects?: boolean;
   userName?: string;
+  /** device-local custom instructions, sent as context on every turn */
+  customInstructions?: string;
 };
 
 export function newId(prefix = "c") {
