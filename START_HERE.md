@@ -1,7 +1,8 @@
-# START HERE — BudAI website (Lattice build)
+# START HERE — BudAI website (v2 polish)
 
-This zip is the full source of the BudAI site as of the **Lattice** release:
-new logo everywhere, Playground 2.3, Waitlist v3 and the Logo Lab.
+This zip is the full source of the BudAI site after the **V2 polish**: the new
+**B-mark** identity, a rebuilt intro screen, a living background, a simpler
+Playground, a shorter About and a sharper 10% waitlist.
 
 Everything runs on Next.js 14. Nothing is generated or hidden — clone, install,
 run.
@@ -39,26 +40,29 @@ Copy `.env.example` → `.env.local` and fill in what you need:
 
 ## 3. Where the new work lives
 
-**Logo — "Lattice"** (chosen in the lab, now shipped)
-- `components/ui/BudAILogo.tsx` — the mark: six spokes, node ring, orbital
-  shells, boot sequence. `LATTICE_*` constants hold every coordinate.
+**Brand — the B-mark**
+- `components/ui/BudAILogo.tsx` — stem + two bowls + orbiting node; the three
+  strokes draw themselves on mount, the node speeds up while BudAI thinks.
 - `public/favicon.svg` — standalone animated version (also the PWA icon).
-- `app/opengraph-image.tsx` — simplified six-node mark on the social card.
+- `app/opengraph-image.tsx` — the B-mark and the new "Try BudAI right now" card.
+- `components/effects/IntroScreen.tsx` + `components/effects/introScript.ts` —
+  the flash-free intro, gated by an inline script before first paint.
+- `components/effects/SiteAmbient.tsx` — the living backdrop (pure CSS).
 - `components/logo/candidates.ts` + `components/logo/LogoLab.tsx` +
   `app/logo/page.tsx` — the lab with all six candidates, SVG/PNG download,
   shortlist, vote and "test in the navigation" (`budai.logo.live`).
 - `components/logo/LiveMark.tsx` — what the navbar renders.
 
-**Playground 2.3** (`components/playground/`)
+**Playground** (`components/playground/`)
 - `PlaygroundApp.tsx` — orchestrator: streaming, personas, compare, voice,
-  variants, transforms, notes, share, status rail, palettes.
+  variants, transforms, notes, share links, palettes, overflow menu.
 - `MessageList.tsx` — variant switcher (v1/v2/v3), transform chips, and the
   **text-selection toolbar** (explain / translate / improve / expand / save note).
 - `Composer.tsx` — slash commands, attachments, "Improve" pill, voice button.
 - `VoiceMode.tsx` — hands-free dialog: continuous speech recognition, mic level
   orb, auto TTS.
-- `Panels.tsx` — inspector (sandboxed live preview of HTML/CSS/SVG), memory,
-  prompt library, gallery, notes, command palette, shortcuts.
+- `Panels.tsx` — inspector (sandboxed live preview of HTML/CSS/SVG), prompt
+  library, gallery, notes, command palette, shortcuts.
 - `Tour.tsx` — first-visit guided tour (replay: ⌘K → "Rundtur").
 - `lib/playground/share.ts` — conversation → base64url link,
   rendered read-only at `/playground/share`.
@@ -66,11 +70,16 @@ Copy `.env.example` → `.env.local` and fill in what you need:
 
 **Site**
 - `components/ui/SitePalette.tsx` — ⌘K palette for the whole site.
-- `components/sections/Waitlist.tsx` — 10% founding offer: count-up band, offer
-  ticker, 250-seat map (your seat lights up after joining), FAQ.
-- `components/sections/AIPlayground.tsx` — the "powers belt": seven cards that
-  drop a demo prompt into the composer.
-- `PLAYGROUND_V2.md` — full changelog of every round (v2 → v2.3 → Lattice).
+- `components/sections/Waitlist.tsx` — "Get early access to BudAI." with a gold
+  **10% off at launch** pill, a seat bar that lights up your seat after you join,
+  and the `BUDAI-EARLY-10` code in the success state.
+- `components/sections/AIPlayground.tsx` — a small header and the full app; no
+  feature wall between the visitor and the product.
+- `components/sections/Hero.tsx` — mark, wordmark, one line, two buttons and four
+  prompt starters that prefill the composer.
+- `components/sections/AboutBudAI.tsx` — four short answers: what, why, vision,
+  where we are now.
+- `PLAYGROUND_V2.md` — full changelog, newest round last (V2 polish).
 
 ## 4. Keyboard map
 

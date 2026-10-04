@@ -8,21 +8,25 @@ Developed by **Stilledev** · Live: [stilledev.se](https://stilledev.se)
 
 ---
 
-## What's new in this build
+## What's new in this build (V2 polish)
 
-- **New mark — “Lattice”**: six spokes firing out of a bright core, a ring of
-  satellites and three orbital shells. Shipped in the navbar, footer, hero,
-  loading screens, favicon and the OG card. The lab at **`/logo`** keeps all six
-  candidates (download SVG/PNG, shortlist, vote, try one live in the navbar).
-- **Playground 2.3**: text-selection tools (explain / translate / improve /
-  expand), saved notes with Markdown export, shareable read-only conversations
-  (`/playground/share`, no server involved), voice mode, answer variants,
-  compare-two-answers, live preview of HTML/CSS/SVG, custom instructions,
-  a guided first-visit tour and a ⌘K palette.
-- **Waitlist v3**: the 10% founding offer front and centre — count-up stats,
-  offer ticker, a 250-seat founding map that lights up your seat, and an FAQ.
-- **Site-wide ⌘K palette** plus a “powers belt” on the landing page that drops a
-  demo prompt into the composer.
+- **New brand — the B-mark**: one letterform, two arcs and a node in orbit, with
+  a subtle draw-on animation. Shipped in the navbar, footer, hero, intro screen,
+  favicon and the OG card. The lab at **`/logo`** keeps every challenger
+  (download SVG/PNG, shortlist, vote, try one live in the navbar).
+- **Intro screen back**: mark, `INITIALIZING BUDAI… → READY`, skippable, shown
+  once per session and never for `prefers-reduced-motion`. Unhidden before the
+  first paint, so it never flashes in over the page.
+- **Living background**: three slow aurora fields, a drifting grid and a faint
+  grain film — pure CSS, all behind the content, all paused for reduced motion.
+- **Home is a gateway**: mark, one line, two buttons, four prompt starters — then
+  the Playground. No feature wall.
+- **Playground, simplified**: status pill, `SV | EN`, New chat, panel toggle and
+  one overflow menu instead of eleven icon buttons. Memory and the fake-metrics
+  Insights panel are gone from the public UI, so “balanced” no longer shows twice.
+- **About BudAI**: four short answers — what, why, vision, where we are now.
+- **Waitlist**: “Get early access to BudAI.” with a gold **10% off at launch**
+  pill, a seat bar, and the `BUDAI-EARLY-10` code on success.
 
 New to the repo? Read **`START_HERE.md`** first — it covers install, env vars,
 where every new file lives and the keyboard map. Full changelog in
