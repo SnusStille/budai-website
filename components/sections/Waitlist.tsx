@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   AlertTriangle,
@@ -26,60 +26,12 @@ import { useLang } from "@/components/ui/LanguageContext";
 
 type Interest = "work" | "write" | "build" | "learn";
 
+/** The launch discount code given to everyone on the waitlist. */
+const DISCOUNT_CODE = "BUDAI-EARLY-10";
 /** Founding seats we are giving away at each stage of the preview. */
 const FOUNDING_SEATS = 250;
-/** Reserved seats shown on the founding-seat map (team-controlled baseline). */
+/** Reserved seats shown on the founding-seat bar (team-controlled baseline). */
 const SEATS_TAKEN_BASELINE = 41;
-
-/** Animated number that counts up once it scrolls into view. */
-function CountUp({
-  value,
-  suffix = "",
-  decimals = 0,
-}: {
-  value: number;
-  suffix?: string;
-  decimals?: number;
-}) {
-  const ref = useRef<HTMLSpanElement>(null);
-  const [shown, setShown] = useState(0);
-
-  useEffect(() => {
-    const node = ref.current;
-    if (!node) return;
-    let frame = 0;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (!entries[0]?.isIntersecting) return;
-        observer.disconnect();
-        const start = performance.now();
-        const tick = (now: number) => {
-          const progress = Math.min(1, (now - start) / 1200);
-          const eased = 1 - Math.pow(1 - progress, 3);
-          setShown(value * eased);
-          if (progress < 1) frame = requestAnimationFrame(tick);
-        };
-        frame = requestAnimationFrame(tick);
-      },
-      { threshold: 0.35 }
-    );
-    observer.observe(node);
-    return () => {
-      observer.disconnect();
-      cancelAnimationFrame(frame);
-    };
-  }, [value]);
-
-  return (
-    <span ref={ref}>
-      {shown.toLocaleString("sv-SE", {
-        minimumFractionDigits: decimals,
-        maximumFractionDigits: decimals,
-      })}
-      {suffix}
-    </span>
-  );
-}
 
 function referralFromUrl(): string | null {
   if (typeof window === "undefined") return null;
@@ -180,7 +132,7 @@ export default function Waitlist() {
         industry: null,
         employees: null,
         interest,
-        discount_code: "FOUNDING10",
+        discount_code: DISCOUNT_CODE,
         notes: null,
         source: referralFromUrl() ? `referral:${referralFromUrl()}` : "landing",
         priority: null,
@@ -247,12 +199,6 @@ export default function Waitlist() {
           ? "Ja — välj \"Företag\" i formuläret. Founding-rabatten gäller per konto, och vi hjälper gärna till med flera platser."
           : "Yes — pick \"Company\" in the form. The founding discount applies per account, and we're happy to help with multiple seats.",
       },
-      {
-        q: isSv ? "Varför är gruppen begränsad till 250?" : "Why is the group capped at 250?",
-        a: isSv
-          ? "Vi vill svara snabbt och personligt på varje mejl. 250 platser är vad teamet hinner med i den här vågen — sedan öppnar en ny grupp."
-          : "We want to answer every email quickly and personally. 250 seats is what the team can handle in this wave — then a new group opens.",
-      },
     ],
     [isSv]
   );
@@ -285,7 +231,7 @@ export default function Waitlist() {
       { id: "whatsapp", label: "WhatsApp", href: `https://wa.me/?text=${encodedText}${encodedUrl}` },
       { id: "mail", label: isSv ? "Mejl" : "Email", href: `mailto:?subject=BudAI&body=${encodedText}${encodedUrl}` },
     ];
-  }, [inviteLink, shareText]);
+  }, [inviteLink, shareText, isSv]);
 
   const copy = async (value: string, kind: "code" | "link") => {
     try {
@@ -307,17 +253,19 @@ export default function Waitlist() {
         <div className="mx-auto max-w-3xl text-center">
           <span className="wl-kicker">
             <Sparkles className="h-3.5 w-3.5" />
-            {isSv ? "Founding members" : "Founding members"}
+            {isSv ? "Early access" : "Early access"}
           </span>
           <h2 className="wl-title mt-5">
-            {isSv ? "De första " : "The first "}
-            <span className="wl-percent">10 %</span>
-            {isSv ? " får early access." : " get early access."}
+            {isSv ? "Få early access till BudAI." : "Get early access to BudAI."}
           </h2>
+          <p className="wl-offer">
+            <BadgePercent className="h-4 w-4" />
+            {isSv ? "10 % rabatt vid launch" : "10% off at launch"}
+          </p>
           <p className="mx-auto mt-5 max-w-2xl text-sm leading-relaxed text-white/60 sm:text-base sm:leading-8">
             {isSv
-              ? "BudAI är i tidig förhandsvisning. Gå med på väntelistan och lås upp 10 % founding-rabatt, tidig tillgång till nya släpp och en direkt linje till oss som bygger."
-              : "BudAI is in early preview. Join the waitlist to unlock a 10% founding discount, early access to new releases, and a direct line to the people building it."}
+              ? "Tidig tillgång till nya släpp, en direkt linje till oss som bygger — och 10 % rabatt när BudAI lanserar betalda planer. Inget kort, ingen kostnad."
+              : "Early access to new releases, a direct line to the people building it — and 10% off when BudAI launches paid plans. No card, no cost."}
           </p>
           <div className="wl-progress">
             <div className="wl-progress-head">
@@ -362,68 +310,6 @@ export default function Waitlist() {
                 {isSv ? "på listan" : "on the list"}
               </span>
             )}
-          </div>
-        </div>
-
-        {/* founding numbers */}
-        <div className="wl-band">
-          {[
-            {
-              value: <CountUp value={10} suffix=" %" />,
-              label: isSv ? "rabatt för founding-medlemmar" : "discount for founding members",
-              note: isSv ? "på alla plan, så länge du stannar" : "on every plan, for as long as you stay",
-            },
-            {
-              value: <CountUp value={FOUNDING_SEATS} />,
-              label: isSv ? "founding-platser i vågen" : "founding seats in this wave",
-              note: isSv ? "sedan stänger gruppen" : "then the group closes",
-            },
-            {
-              value: <CountUp value={60} suffix=" s" />,
-              label: isSv ? "till din första prompt" : "to your first prompt",
-              note: isSv ? "utan kort, utan konto" : "no card, no account",
-            },
-            {
-              value: <CountUp value={2} />,
-              label: isSv ? "språk, svenska & engelska" : "languages, Swedish & English",
-              note: isSv ? "kontexten stannar i EU" : "context stays in the EU",
-            },
-          ].map((item) => (
-            <motion.div
-              key={item.label}
-              initial={{ opacity: 0, y: 16 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-60px" }}
-              transition={{ duration: 0.45 }}
-              className="wl-band-cell"
-            >
-              <span className="wl-band-value">{item.value}</span>
-              <span className="wl-band-label">{item.label}</span>
-              <span className="wl-band-note">{item.note}</span>
-            </motion.div>
-          ))}
-        </div>
-
-        {/* rotating offer ticker */}
-        <div className="wl-ticker" aria-hidden="true">
-          <div className="wl-ticker-track">
-            {[0, 1].map((copy) => (
-              <span key={copy} className="wl-ticker-group">
-                {[
-                  isSv ? "10 % founding-rabatt" : "10% founding discount",
-                  isSv ? "Early access före den publika releasen" : "Early access before public release",
-                  isSv ? "Röstläge — prata med BudAI" : "Voice mode — talk to BudAI",
-                  isSv ? "Jämför två svar sida vid sida" : "Compare two answers side by side",
-                  isSv ? "Egna instruktioner som BudAI minns" : "Custom instructions BudAI remembers",
-                  isSv ? "Direkt linje till teamet i Kista" : "A direct line to the team in Kista",
-                ].map((text) => (
-                  <span key={text} className="wl-ticker-item">
-                    <Sparkles className="h-3.5 w-3.5" />
-                    {text}
-                  </span>
-                ))}
-              </span>
-            ))}
           </div>
         </div>
 
@@ -635,7 +521,11 @@ export default function Waitlist() {
                   <p>
                     {isSv ? "Vi sparade platsen för " : "We saved the spot for "}
                     <strong>{email.trim().toLowerCase()}</strong>
-                    {isSv ? " — 10 % är låst till ditt konto." : " — 10% is locked to your account."}
+                    {isSv ? " — din 10 % launch-rabatt är reserverad." : " — your 10% launch discount is reserved."}
+                  </p>
+                  <p className="wl-success-code-note">
+                    {isSv ? "Koden gäller när BudAI släpper betalda planer: " : "Your code applies when BudAI launches paid plans: "}
+                    <strong>{DISCOUNT_CODE}</strong>
                   </p>
 
                   <div className="wl-code">
@@ -710,42 +600,23 @@ export default function Waitlist() {
                 {seatsTaken} / {FOUNDING_SEATS}
               </span>
             </div>
-            <div className="wl-seatmap" role="img" aria-label={isSv ? `Karta över ${FOUNDING_SEATS} founding-platser` : `Map of ${FOUNDING_SEATS} founding seats`}>
-              {Array.from({ length: FOUNDING_SEATS }).map((_, i) => {
-                const isYours = submitted && i === seatsTaken - 1;
-                const isTaken = i < seatsTaken;
-                return (
-                  <span
-                    key={i}
-                    className={`wl-seat ${isTaken ? "is-taken" : ""} ${isYours ? "is-yours" : ""}`}
-                    style={{
-                      animationDelay: `${(i % 26) * 18}ms`,
-                      transitionDelay: isYours ? "120ms" : `${Math.min(i, 60) * 6}ms`,
-                    }}
-                  />
-                );
-              })}
-            </div>
-            <div className="wl-seatmap-legend">
-              <span className="wl-seatmap-key">
-                <i className="wl-seat is-taken is-static" aria-hidden />
-                {isSv ? "Tagna" : "Taken"}
-              </span>
-              <span className="wl-seatmap-key">
-                <i className="wl-seat is-static" aria-hidden />
-                {isSv ? "Lediga" : "Open"}
-              </span>
+            <div className="wl-seatbar" role="img" aria-label={isSv ? `${seatsTaken} av ${FOUNDING_SEATS} founding-platser tagna` : `${seatsTaken} of ${FOUNDING_SEATS} founding seats taken`}>
+              <span
+                className="wl-seatbar-fill"
+                style={{ width: `${Math.round((seatsTaken / FOUNDING_SEATS) * 100)}%` }}
+              />
               {submitted && (
-                <span className="wl-seatmap-key">
-                  <i className="wl-seat is-taken is-yours is-static" aria-hidden />
-                  {isSv ? "Din plats" : "Your seat"}
-                </span>
+                <span
+                  className="wl-seatbar-you"
+                  style={{ left: `${Math.min(99, Math.round((seatsTaken / FOUNDING_SEATS) * 100))}%` }}
+                  title={isSv ? "Du" : "You"}
+                />
               )}
             </div>
             <p className="wl-seatmap-note">
               {isSv
-                ? "Platserna fylls i turordning. Din kod låser rabatten även om vågen fylls."
-                : "Seats fill in order. Your code keeps the discount even when the wave fills."}
+                ? `${FOUNDING_SEATS - seatsTaken} platser kvar i den här vågen. Din kod låser rabatten även om vågen fylls.`
+                : `${FOUNDING_SEATS - seatsTaken} seats left in this wave. Your code keeps the discount even when the wave fills.`}
             </p>
           </div>
 

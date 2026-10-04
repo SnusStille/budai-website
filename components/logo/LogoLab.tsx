@@ -166,14 +166,14 @@ export default function LogoLab() {
             {isSv ? "Logo Lab" : "Logo Lab"}
           </span>
           <h1 className="lab-title">
-            {isSv ? "Lattice är vald — " : "Lattice is in — "}
-            <span className="lab-title-em">{isSv ? "märket" : "the mark"}</span>
+            {isSv ? "B-märket är valt — " : "The B-mark is in — "}
+            <span className="lab-title-em">{isSv ? "identiteten" : "the identity"}</span>
             {isSv ? " som sitter överallt nu." : " that now runs everywhere."}
           </h1>
           <p className="lab-lede">
             {isSv
-              ? "Lattice valdes i labbet och sitter nu i favicon, navbar, footer, OG-bild och alla laddningsskärmar. Här ligger hela kandidatlistan kvar — jämför, testa i rätt storlek och rösta om du vill byta igen."
-              : "Lattice won the lab and now ships in the favicon, navbar, footer, OG card and every loading screen. The full candidate list stays here — compare, test at real sizes, and vote if you ever want to switch again."}
+              ? "B-märket valdes i labbet och sitter nu i favicon, navbar, footer, OG-bild, intro-skärm och alla laddningsskärmar. Hela kandidatlistan ligger kvar här — jämför, testa i rätt storlek och rösta om du vill byta igen."
+              : "The B-mark won the lab and now ships in the favicon, navbar, footer, OG card, intro screen and every loading screen. The full candidate list stays here — compare, test at real sizes, and vote if you ever want to switch again."}
           </p>
           <p className="lab-note">
             {isSv
@@ -190,14 +190,14 @@ export default function LogoLab() {
               <BudAILogo size="xl" animated />
             </div>
             <div className="lab-compare-meta">
-              <strong>Lattice — vald logga</strong>
+              <strong>B-mark — vald logga</strong>
               <span>{isSv ? "Favicon, navbar, footer, OG-bild, laddningsskärmar" : "Favicon, navbar, footer, OG card, loading screens"}</span>
             </div>
           </div>
 
           <div className="lab-compare-card">
             <div className="lab-compare-tag">
-              {candidate.id === "lattice" ? (isSv ? "Vald — i bruk" : "Chosen — in use") : isSv ? "Utmanare" : "Challenger"} · {candidate.name}
+              {candidate.id === "b-mark" ? (isSv ? "Vald — i bruk" : "Chosen — in use") : isSv ? "Utmanare" : "Challenger"} · {candidate.name}
             </div>
             <div
               ref={stageRef}
@@ -359,7 +359,7 @@ export default function LogoLab() {
                 <div className="lab-card-body">
                   <strong>
                     {item.name}
-                    {item.id === "lattice" && <span className="lab-winner">{isSv ? "Vald" : "Chosen"}</span>}
+                    {item.id === "b-mark" && <span className="lab-winner">{isSv ? "Vald" : "Chosen"}</span>}
                     {vote === item.id && <Check className="ml-1 inline h-3.5 w-3.5 text-emerald-300" />}
                   </strong>
                   <small>{item.tag[lang]}</small>
@@ -417,8 +417,8 @@ export default function LogoLab() {
 
         <p className="lab-footnote">
           {isSv
-            ? "Lattice är märket i produktion. Vill du byta igen röstar du här — då byts favicon, navbar, footer, OG-bild och alla laddningsskärmar i samma veva."
-            : "Lattice is the production mark. Want to switch again? Vote here — favicon, navbar, footer, OG card and every loading screen change together."}
+            ? "B-märket är märket i produktion. Vill du byta igen röstar du här — då byts favicon, navbar, footer, OG-bild och alla laddningsskärmar i samma veva."
+            : "The B-mark is the production mark. Want to switch again? Vote here — favicon, navbar, footer, OG card and every loading screen change together."}
         </p>
       </div>
 

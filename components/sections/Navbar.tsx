@@ -81,7 +81,6 @@ export default function Navbar() {
             <span className="site-brand-word">
               Bud<span>AI</span>
             </span>
-            <span className="site-brand-by">by Stilledev</span>
           </a>
 
           <nav className="site-nav-links" aria-label={isSv ? "Huvudmeny" : "Main navigation"}>

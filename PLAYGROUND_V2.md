@@ -167,3 +167,106 @@ CSS lives in `app/globals.css` under `budai-lat-*`: `budai-lat-fire` (spoke draw
 `budai-lat-breathe` (node pulse), `budai-lat-blink` (satellites), `budai-lat-turn`
 (ring), `budai-lat-hum` (links), plus a one-shot `budai-lat-assemble` on boot and
 a full `prefers-reduced-motion` fallback.
+
+
+---
+
+# Round 5 — V2 polish (stability → Playground → design → brand)
+
+## 1. Bugs, dead code and duplicated UI
+
+- **Memory gone from the public UI.** The row in the Playground sidebar, its
+  palette command and the whole `MemoryPanel` were removed, along with the
+  memory line in the signed-out invite ("Memory, cloud history…") and every
+  mention in the marketing copy, metadata and OG card. The cloud memory plumbing
+  stays in `lib/playground/cloudStore.ts` for the account backend, but nothing
+  public advertises or renders it any more.
+- **“Balanced” no longer appears twice.** The status rail printed style *and*
+  depth labels on top of the settings panel. The rail is gone; the only place
+  settings live now is the preferences panel and the ⌘K palette.
+- **Insights (fake metrics) removed** — words, tokens, estimated cost, “avg
+  response”, the usage meter in the sidebar and the `/api/usage`-driven numbers
+  are no longer surfaced in the Playground.
+- **23 dead files deleted**: `sections/Terminal`, `SystemStatus`, `Timeline`,
+  `Vision`, `BuddyCard`, `effects/AICore`, `AIEnvironment`, `CursorGlow`,
+  `CodeBackground`, `ui/Confetti`, `FocusMode`, `KeyboardHint`, `Magnetic`,
+  `MarkerUnderline`, `ScrollProgress`, `SectionDots`, `Signature`,
+  `StockholmClock`, `SurpriseToasts`, `ui/CommandPalette`, `hooks/*`,
+  `lib/productStore.ts`, `lib/playgroundStore.ts`.
+- **6 stale report docs deleted** and the unused CSS blocks for all of the above
+  (status rail, stat tiles, memory panel, powers belt, ticker, seat map) removed
+  from `globals.css`.
+- `npm run lint` → **no warnings, no errors**.
+
+## 2. New brand — the B-mark
+
+One letterform: a stem, a cyan upper bowl, a violet lower bowl, and a node in a
+slow orbit around the counter. Built in `components/ui/BudAILogo.tsx`, drawn
+from one source of truth (`B_STEM_X`, `B_TOP`, `B_BOTTOM`, `B_JOIN`), inline SVG
+plus CSS only.
+
+- Movement: the three strokes **draw themselves** on mount, the node orbits
+  (9s idle / 3.4s thinking / 1.9s alert), the core breathes, and a rim light
+  sweeps the letterform at larger sizes.
+- Reads at 16px (favicon) and at 260px (hero stage), works in one colour
+  (`variant="mono"`), light and dark variants included.
+- Shipped in the navbar, footer, hero, intro screen, loading states, auth modal,
+  legal pages, admin, `public/favicon.svg` (standalone, animated) and the OG card.
+- `/logo` keeps the whole lab: every previous challenger (Lattice, Prism Core v3,
+  Aperture, Orbital, Waveform, Monogram) plus the B-mark, with size, backdrop,
+  plate, motion, download (SVG/PNG), shortlist, vote and “try it in the navbar”.
+
+## 3. The living background is back
+
+`components/effects/SiteAmbient.tsx` + `ambient-*` CSS: three slow aurora
+fields, a drifting grid with a radial mask, a faint animated grain film and a
+vignette. Pure CSS layers, `will-change` limited to the auroras, all of it
+paused for `prefers-reduced-motion`, and everything behind the content.
+
+## 4. Intro screen (back, better)
+
+`components/effects/IntroScreen.tsx`. The overlay ships in the markup, hidden by
+CSS; a tiny inline script in `<head>` unhides it *before the first paint* for a
+fresh session on `/`, so there is no flash of content behind it and no hydration
+mismatch. It prints the mark, `INITIALIZING BUDAI… → READY`, a 1.2s progress
+line, a skip button — and a 4.5s failsafe that removes the overlay even if the
+app never hydrates. Returning visitors (and anyone with reduced motion) never
+see it.
+
+## 5. Home is a gateway into the Playground
+
+Hero = mark, wordmark, one line, two buttons (“Open the Playground” / “10% off
+at launch”), and four prompt starters that prefill the composer. The sixteen-card
+feature belt is gone; the Playground now follows immediately, with a small
+header instead of a marketing block.
+
+## 6. About BudAI (four answers)
+
+What is BudAI · Why does it exist · What is the vision · Where are we now.
+Four cards, one closing line, one link into the Playground. No roadmap, no
+statistics, no feature list.
+
+## 7. Playground header, simplified
+
+Status pill (`Ready / Answering / Working`), `SV | EN` switch, **New chat**,
+inspector toggle and one overflow menu that holds voice mode, ⌘K, share, export,
+images, notes, prompt library, tour, preferences, shortcuts, full screen and
+sign-in/out. Eleven icon buttons became four controls — and sign-in is labelled
+optional, because everything works without an account.
+
+## 8. Waitlist
+
+The hero says *“Get early access to BudAI.”* with a gold **10% off at launch**
+pill; the seat bar shows the wave filling and lights up your own seat when you
+join; the success state says the discount is reserved and prints the code
+(`BUDAI-EARLY-10`). The marquee, the count-up band and the 250-square seat map
+are gone.
+
+## 9. Performance & mobile
+
+- Home first-load JS: **217 kB** (was 223 kB) and the page shrank with the dead
+  components gone.
+- Playground fills the phone viewport with `100svh` (no composer behind the
+  keyboard), persona bar scrolls horizontally instead of wrapping, no horizontal
+  page scroll from any decoration.
+- All motion respects `prefers-reduced-motion`.

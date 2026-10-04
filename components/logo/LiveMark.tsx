@@ -7,7 +7,7 @@ import { LOGO_CANDIDATES } from "@/components/logo/candidates";
 export const LIVE_LOGO_KEY = "budai.logo.live";
 
 /**
- * The mark used in the navigation. Defaults to the shipped BudAI Lattice mark —
+ * The mark used in the navigation. Defaults to the shipped BudAI B-mark —
  * unless a Logo Lab challenger has been switched on for a live trial, in which
  * case that candidate is drawn instead (identical SVG source, zero drift).
  */

@@ -50,6 +50,37 @@ const CYAN = "#3ee0cd";
 const VIOLET = "#9a86ff";
 const INK = "#05070c";
 
+/* ── 0. B-mark (in use) ───────────────────────────────────────── */
+const bMark: LogoCandidate = {
+  id: "b-mark",
+  name: "B-mark",
+  tag: { sv: "I bruk — vald i labbet", en: "In use — chosen in the lab" },
+  note: {
+    sv: "Skeppat märke: ett geometriskt B där övre bågen är cyan och nedre violett, med en nod i omloppsbana runt mitten. Läser i 16 px och i 260 px.",
+    en: "The shipped mark: a geometric B with a cyan upper bowl and violet lower bowl, and one node orbiting the counter. Reads at 16px and at 260px.",
+  },
+  build: (size, tone) => {
+    const p = plate(tone);
+    const stroke = tone === "dark" ? "#eafffc" : INK;
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="${size}" height="${size}" role="img" aria-label="BudAI B-mark">
+  <defs>
+    ${plateDefs(tone)}
+    <linearGradient id="bmG" x1="14" y1="8" x2="50" y2="56" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#8ef0e2"/><stop offset="0.46" stop-color="#3ee0cd"/><stop offset="1" stop-color="#9a86ff"/>
+    </linearGradient>
+    <style>@keyframes bmDraw{from{stroke-dashoffset:140}to{stroke-dashoffset:0}}@keyframes bmOrbit{to{transform:rotate(360deg)}}@keyframes bmBreath{0%,100%{opacity:.75;transform:scale(.94)}50%{opacity:1;transform:scale(1.06)}}</style>
+  </defs>
+  <rect x="4" y="4" width="56" height="56" rx="14" fill="${p.fill}" stroke="${p.stroke}"/>
+  <ellipse cx="33" cy="32" rx="24" ry="22" fill="none" stroke="url(#bmG)" stroke-width="0.7" stroke-dasharray="32 112" opacity="0.5"/>
+  <path d="M21 13 V51" stroke="${stroke}" stroke-width="6.2" stroke-linecap="round" fill="none" stroke-dasharray="140" style="animation:bmDraw .9s cubic-bezier(.22,1,.36,1) both"/>
+  <path d="M21 13 H32.5 a11.5 11.5 0 0 1 0 23 H21" stroke="url(#bmG)" stroke-width="6.2" stroke-linecap="round" fill="none" stroke-dasharray="140" style="animation:bmDraw 1s cubic-bezier(.22,1,.36,1) .12s both"/>
+  <path d="M21 32 H32.5 a11.5 11.5 0 0 1 0 23 H21" stroke="url(#bmG)" stroke-width="6.2" stroke-linecap="round" opacity="0.92" fill="none" stroke-dasharray="140" style="animation:bmDraw 1s cubic-bezier(.22,1,.36,1) .24s both"/>
+  <circle cx="33" cy="32" r="3.2" fill="#e8fffd" style="transform-origin:33px 32px;animation:bmBreath 3.6s ease-in-out infinite"/>
+  <g style="transform-origin:33px 32px;animation:bmOrbit 9s linear infinite"><circle cx="57" cy="26" r="3" fill="#8ef0e2"/></g>
+</svg>`;
+  },
+};
+
 /* ── 1. Prism Core v3 ─────────────────────────────────────────── */
 const prismV3: LogoCandidate = {
   id: "prism-v3",
@@ -295,6 +326,7 @@ const monogram: LogoCandidate = {
 };
 
 export const LOGO_CANDIDATES: LogoCandidate[] = [
+  bMark,
   prismV3,
   aperture,
   orbital,

@@ -48,9 +48,9 @@ const STEPS: Step[] = [
     title: { sv: "Panelerna runt omkring", en: "The panels around it" },
     text: {
       sv: "Till vänster: konversationer och projekt. Till höger: promptbibliotek, minne, anteckningar, galleri och en inspector som kör HTML, CSS och SVG live.",
-      en: "On the left: conversations and projects. On the right: prompt library, memory, notes, gallery, and an inspector that runs HTML, CSS and SVG live.",
+      en: "On the left: conversations and projects. On the right: prompt library, notes, gallery, and an inspector that runs HTML, CSS and SVG live.",
     },
-    chips: { sv: ["Bibliotek", "Minne", "Anteckningar", "Live-preview"], en: ["Library", "Memory", "Notes", "Live preview"] },
+    chips: { sv: ["Bibliotek", "Anteckningar", "Live-preview"], en: ["Library", "Notes", "Live preview"] },
   },
   {
     glyph: "⌘",

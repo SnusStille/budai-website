@@ -7776,6 +7776,9 @@ button.budai-logo:focus-visible {
 /* ── intro screen ── */
 
 .intro-screen {
+  display: none;
+}
+html[data-intro="on"] .intro-screen {
   position: fixed;
   inset: 0;
   z-index: 120;
@@ -7869,6 +7872,13 @@ button.budai-logo:focus-visible {
 }
 .intro-skip:hover { color: rgba(255, 255, 255, 0.8); }
 
+html[data-intro="on"] .intro-screen {
+  animation: intro-in 0.28s ease-out;
+}
+@keyframes intro-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
 @keyframes intro-drift {
   0% { transform: translate3d(-1.5%, -1%, 0) scale(1); opacity: 0.85; }
   100% { transform: translate3d(1.5%, 1.5%, 0) scale(1.06); opacity: 1; }
@@ -8137,3 +8147,120 @@ button.budai-logo:focus-visible {
   transition: gap 0.18s ease;
 }
 .about-link:hover { gap: 0.6rem; }
+
+/* ── waitlist v4: one clear 10% statement + a simple seat bar ── */
+
+.wl-seatbar {
+  position: relative;
+  margin-top: 1.1rem;
+  height: 8px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.07);
+  overflow: visible;
+}
+.wl-seatbar-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, #3ee0cd, #9a86ff);
+  box-shadow: 0 0 18px rgba(62, 224, 205, 0.3);
+  transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.wl-seatbar-you {
+  position: absolute;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  border-radius: 9999px;
+  background: #fff;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.25), 0 0 18px rgba(255, 255, 255, 0.6);
+  animation: wl-seatbar-pop 1.6s ease-in-out infinite;
+}
+@keyframes wl-seatbar-pop {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .wl-seatbar-you { animation: none; }
+  .wl-seatbar-fill { transition: none; }
+}
+
+.wl-offer {
+  margin: 1.1rem auto 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(241, 217, 143, 0.38);
+  background: rgba(241, 217, 143, 0.1);
+  padding: 0.45rem 1rem;
+  font-size: 13.5px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #f6e2a8;
+}
+.wl-success-code-note {
+  margin-top: 0.6rem;
+  font-size: 12.5px;
+  color: rgba(255, 255, 255, 0.55);
+}
+.wl-success-code-note strong {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  letter-spacing: 0.04em;
+  color: #ffeec9;
+}
+
+/* ── mobile pass: the Playground fills the phone, nothing scrolls sideways ── */
+
+@media (max-width: 640px) {
+  .pgx-shell {
+    height: calc(100svh - 1.5rem);
+    min-height: 460px;
+    border-radius: 1.1rem;
+  }
+  .pgx-header {
+    gap: 0.5rem;
+    padding-inline: 0.6rem;
+  }
+  .pgx-composer {
+    padding-inline: 0.6rem;
+  }
+  .pgx-bubble {
+    max-width: 100%;
+  }
+  .hero-title {
+    font-size: clamp(2.3rem, 13vw, 3rem);
+  }
+  .about-grid,
+  .lab-grid {
+    grid-template-columns: 1fr;
+  }
+  .wl-band,
+  .wl-extra {
+    grid-template-columns: 1fr;
+  }
+  .intro-wordmark { font-size: 1.6rem; }
+}
+
+@media (max-width: 420px) {
+  .pgx-persona-bar {
+    gap: 0.35rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .pgx-persona-bar::-webkit-scrollbar { display: none; }
+  .hero-starter {
+    font-size: 11.5px;
+    padding: 0.38rem 0.7rem;
+  }
+}
+
+/* never allow horizontal scroll from wide decorations */
+.ambient-root,
+.intro-screen,
+.lab-page,
+.share-page {
+  max-width: 100vw;
+  overflow-x: hidden;
+}

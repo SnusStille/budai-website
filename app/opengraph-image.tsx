@@ -39,41 +39,21 @@ export default function OpengraphImage() {
                 background: "rgba(135,233,223,0.07)",
               }}
             >
-              <svg width="60" height="60" viewBox="0 0 64 64">
-                {/* BudAI Lattice — six spokes, an outer ring, one bright core */}
-                <circle cx="32" cy="32" r="27" fill="none" stroke="rgba(255,255,255,0.16)" strokeWidth="0.9" />
-                {[
-                  [50, 32],
-                  [41, 47.6],
-                  [23, 47.6],
-                  [14, 32],
-                  [23, 16.4],
-                  [41, 16.4],
-                ].map(([x, y], index) => (
-                  <line
-                    key={`s-${index}`}
-                    x1="32"
-                    y1="32"
-                    x2={x}
-                    y2={y}
-                    stroke="#87e9df"
-                    strokeWidth="1.7"
-                    strokeLinecap="round"
-                  />
-                ))}
-                {[
-                  [50, 32, "#87e9df"],
-                  [41, 47.6, "#b9a8f6"],
-                  [23, 47.6, "#87e9df"],
-                  [14, 32, "#b9a8f6"],
-                  [23, 16.4, "#87e9df"],
-                  [41, 16.4, "#b9a8f6"],
-                ].map(([x, y, fill], index) => (
-                  <circle key={`n-${index}`} cx={Number(x)} cy={Number(y)} r="2.9" fill={String(fill)} />
-                ))}
-                <circle cx="32" cy="32" r="13.4" fill="none" stroke="rgba(135,233,223,0.3)" strokeWidth="1" />
-                <circle cx="32" cy="32" r="8" fill="#d9fffa" />
-                <circle cx="29.4" cy="29.4" r="2.6" fill="#ffffff" />
+              <svg width="58" height="58" viewBox="0 0 64 64">
+                {/* BudAI B-mark — one letterform, two arcs, one node */}
+                <defs>
+                  <linearGradient id="ogB" x1="14" y1="8" x2="50" y2="56" gradientUnits="userSpaceOnUse">
+                    <stop offset="0" stopColor="#8ef0e2" />
+                    <stop offset="0.46" stopColor="#3ee0cd" />
+                    <stop offset="1" stopColor="#9a86ff" />
+                  </linearGradient>
+                </defs>
+                <ellipse cx="33" cy="32" rx="26" ry="24" fill="none" stroke="url(#ogB)" strokeWidth="0.9" strokeDasharray="34 118" opacity="0.55" />
+                <path d="M21 13 V51" stroke="#eafffc" strokeWidth="6.2" strokeLinecap="round" fill="none" />
+                <path d="M21 13 H32.5 a11.5 11.5 0 0 1 0 23 H21" stroke="url(#ogB)" strokeWidth="6.2" strokeLinecap="round" fill="none" />
+                <path d="M21 32 H32.5 a11.5 11.5 0 0 1 0 23 H21" stroke="url(#ogB)" strokeWidth="6.2" strokeLinecap="round" opacity="0.9" fill="none" />
+                <circle cx="33" cy="32" r="3.2" fill="#e8fffd" />
+                <circle cx="59" cy="26" r="3" fill="#8ef0e2" />
               </svg>
             </div>
             <div style={{ display: "flex", flexDirection: "column" }}>
@@ -97,31 +77,26 @@ export default function OpengraphImage() {
               color: "#f1d98f",
             }}
           >
-            10% off for founding members
+            10% off at launch
           </div>
         </div>
 
         {/* headline */}
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
           <span style={{ fontSize: 66, fontWeight: 700, color: "#ffffff", lineHeight: 1.06, letterSpacing: -2 }}>
-            Talk to it. Compare it. Ship with it.
+            Try BudAI right now.
           </span>
           <span style={{ fontSize: 50, fontWeight: 700, color: "#87e9df", lineHeight: 1.06, letterSpacing: -2 }}>
-            Voice mode, answer variants, shareable chats.
+            An AI work assistant for Swedish and English.
           </span>
           <span style={{ fontSize: 26, color: "rgba(255,255,255,0.55)", marginTop: 2 }}>
-            An AI work assistant for Swedish and English workdays — early preview.
+            Early preview — the Playground is open, no account needed.
           </span>
         </div>
 
         {/* footer chips */}
         <div style={{ display: "flex", gap: 14 }}>
-          {[
-            "Live streaming replies",
-            "Voice mode, hands-free",
-            "Compare two answers",
-            "Save notes and share links",
-          ].map((chip) => (
+          {["Live Playground", "Swedish + English", "No account needed"].map((chip) => (
             <span
               key={chip}
               style={{

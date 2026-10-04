@@ -4,7 +4,7 @@ import LogoLab from "@/components/logo/LogoLab";
 export const metadata: Metadata = {
   title: "Logo Lab · BudAI",
   description:
-    "Six animated logo candidates for BudAI, tested side by side against the shipped Prism Core mark. Download SVG, vote, and try one live in the navigation.",
+    "Every BudAI logo candidate in one place, tested side by side against the shipped B-mark. Download SVG or PNG, vote, and try one live in the navigation.",
   robots: { index: false, follow: false },
 };
 

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "@fontsource-variable/plus-jakarta-sans";
 import "@fontsource-variable/jetbrains-mono";
 import "./globals.css";
+import INTRO_SCRIPT from "@/components/effects/introScript";
 import Providers from "@/components/Providers";
 import VercelAnalytics from "@/components/VercelAnalytics";
 
@@ -27,7 +28,7 @@ export const metadata: Metadata = {
     template: "%s · BudAI",
   },
   description:
-    "Meet BudAI, an AI work assistant in early preview. Try the live Playground with streaming answers, six personas and memory — in Swedish and English. Built in Sweden by Stilledev.",
+    "Meet BudAI, an AI work assistant in early preview. Try the live Playground — streaming answers in Swedish and English, no account needed. Built in Sweden by Stilledev.",
   keywords: [
     "AI",
     "artificial intelligence",
@@ -53,13 +54,13 @@ export const metadata: Metadata = {
     siteName: "BudAI",
     title: "BudAI — the Playground is live",
     description:
-      "Try BudAI’s interactive Playground: streaming answers, personas, memory and a prompt library. Early preview, built in Sweden — join the waitlist for 10% founding access.",
+      "Try BudAI right now: an AI work assistant for Swedish and English workdays. Early preview, built in Sweden — join the waitlist for 10% off at launch.",
   },
   twitter: {
     card: "summary_large_image",
     title: "BudAI — the Playground is live",
     description:
-      "Try BudAI’s interactive Playground: streaming answers, personas, memory and a prompt library. Early preview, built in Sweden — join the waitlist for 10% founding access.",
+      "Try BudAI right now: an AI work assistant for Swedish and English workdays. Early preview, built in Sweden — join the waitlist for 10% off at launch.",
   },
   icons: {
     icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
@@ -84,6 +85,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       className="font-sans"
       suppressHydrationWarning
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: INTRO_SCRIPT }} />
+      </head>
       <body className="antialiased noise-overlay bg-background text-white">
         <script
           type="application/ld+json"

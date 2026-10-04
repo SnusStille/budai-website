@@ -10,7 +10,7 @@ import { useId, type CSSProperties } from "react";
    violet, and a single node rides a thin orbit around the counter —
    the AI signal. Nothing else. It reads at 16px, it reads at 260px,
    and it works in one flat colour. Chosen in the Logo Lab (see
-   /logo); the Lattice and the other challengers stay there.
+   /logo); every other challenger stays there.
    Built from inline SVG + CSS so it stays vector-crisp from favicon
    to hero stage, with zero external assets and zero layout shift.
 
