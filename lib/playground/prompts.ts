@@ -481,6 +481,54 @@ export const TRANSFORMS: Transform[] = [
   },
 ];
 
+/* ── Selection actions (highlight text inside an answer) ─── */
+
+export type SelectionAction = {
+  id: string;
+  label: Record<Lang, string>;
+  glyph: string;
+  build: (selection: string, lang: Lang) => string;
+};
+
+export const SELECTION_ACTIONS: SelectionAction[] = [
+  {
+    id: "explain",
+    label: { sv: "Förklara", en: "Explain" },
+    glyph: "◇",
+    build: (text, lang) =>
+      lang === "sv"
+        ? `Förklara det här kort och tydligt, som för en nyfiken nybörjare:\n\n"${text}"`
+        : `Explain this briefly and clearly, for a curious beginner:\n\n"${text}"`,
+  },
+  {
+    id: "translate",
+    label: { sv: "Översätt", en: "Translate" },
+    glyph: "⇄",
+    build: (text, lang) =>
+      lang === "sv"
+        ? `Översätt till naturlig engelska med samma ton:\n\n"${text}"`
+        : `Translate into natural Swedish with the same tone:\n\n"${text}"`,
+  },
+  {
+    id: "improve",
+    label: { sv: "Förbättra text", en: "Improve writing" },
+    glyph: "✎",
+    build: (text, lang) =>
+      lang === "sv"
+        ? `Förbättra den här texten — tydligare, kortare och varmare — och visa före/efter:\n\n"${text}"`
+        : `Improve this text — clearer, shorter, warmer — and show before/after:\n\n"${text}"`,
+  },
+  {
+    id: "expand",
+    label: { sv: "Utveckla", en: "Expand" },
+    glyph: "✚",
+    build: (text, lang) =>
+      lang === "sv"
+        ? `Utveckla det här till ett par konkreta stycken med exempel:\n\n"${text}"`
+        : `Expand this into a few concrete paragraphs with examples:\n\n"${text}"`,
+  },
+];
+
 /* ── Voice conversation mode ─────────────────────────────── */
 
 export const VOICE_STATES: Record<Lang, Record<"idle" | "listening" | "thinking" | "speaking", string>> = {

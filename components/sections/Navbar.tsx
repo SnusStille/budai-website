@@ -97,10 +97,16 @@ export default function Navbar() {
           </nav>
 
           <div className="site-nav-actions">
-            <span className="nav-kbd-hint hidden xl:inline-flex" aria-hidden>
+            <button
+              type="button"
+              onClick={() => window.dispatchEvent(new Event("budai:palette"))}
+              className="nav-kbd-hint hidden xl:inline-flex"
+              title={isSv ? "Snabbkommandon (⌘K)" : "Quick actions (⌘K)"}
+              aria-label={isSv ? "Öppna snabbkommandon" : "Open quick actions"}
+            >
               <Command className="h-3 w-3" />
               <span className="font-mono text-[10px]">⌘K</span>
-            </span>
+            </button>
             <div className="language-switch" role="group" aria-label={isSv ? "Välj språk" : "Choose language"}>
               {(["en", "sv"] as const).map((code) => (
                 <button key={code} type="button" aria-pressed={lang === code} onClick={() => setLang(code)}>

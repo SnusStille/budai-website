@@ -16,6 +16,7 @@ export type { PgSettings };
 const HIST_KEY = "budai-pg-history-v2";
 const MEM_KEY = "budai-pg-memory-v2"; // guests: unused for cloud memory
 const SETTINGS_KEY = "budai-pg-settings-v1";
+const NOTES_KEY = "budai-pg-notes-v1";
 const MAX_GUEST_CONVOS = 5;
 
 function safeParse<T>(raw: string | null, fallback: T): T {
@@ -37,6 +38,53 @@ export function saveSettings(s: PgSettings) {
   if (typeof window === "undefined") return;
   try {
     localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
+  } catch {
+    /* */
+  }
+}
+
+/* ── saved notes — snippets you keep from answers ───────── */
+
+export type NoteItem = {
+  id: string;
+  text: string;
+  createdAt: number;
+  source?: string;
+};
+
+export function loadNotes(): NoteItem[] {
+  if (typeof window === "undefined") return [];
+  return safeParse<NoteItem[]>(localStorage.getItem(NOTES_KEY), []).filter(
+    (n) => n && typeof n.text === "string"
+  );
+}
+
+export function saveNote(text: string, source?: string): NoteItem {
+  const note: NoteItem = { id: newId("n"), text: text.slice(0, 4000), createdAt: Date.now(), source };
+  const next = [note, ...loadNotes()].slice(0, 200);
+  if (typeof window !== "undefined") {
+    try {
+      localStorage.setItem(NOTES_KEY, JSON.stringify(next));
+    } catch {
+      /* full or blocked */
+    }
+  }
+  return note;
+}
+
+export function deleteNote(id: string) {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(NOTES_KEY, JSON.stringify(loadNotes().filter((n) => n.id !== id)));
+  } catch {
+    /* */
+  }
+}
+
+export function clearNotes() {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(NOTES_KEY, "[]");
   } catch {
     /* */
   }

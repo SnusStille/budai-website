@@ -30,6 +30,7 @@ import {
   Settings2,
   Sparkles,
   SplitSquareHorizontal,
+  StickyNote,
   SquareLibrary,
   X,
 } from "lucide-react";
@@ -53,17 +54,24 @@ import {
   type StyleId,
 } from "@/lib/playground/types";
 import {
+  EFFORT_OPTIONS,
   GREETINGS,
   LIBRARY_PROMPTS,
   PERSONAS,
   PLACEHOLDERS,
   SPARKS,
+  STYLE_OPTIONS,
   TRANSFORMS,
   type Transform,
 } from "@/lib/playground/prompts";
 import {
+  clearNotes,
   deleteLocalConversation,
+  deleteNote,
   loadLocalConversations,
+  loadNotes,
+  saveNote,
+  type NoteItem,
   loadSettings,
   persistLocalMessages,
   saveSettings,
@@ -80,6 +88,7 @@ import {
   GalleryPanel,
   InspectorPanel,
   MemoryPanel,
+  NotesPanel,
   PromptLibrary,
   Portal,
   SettingsPanel,
@@ -166,6 +175,7 @@ export default function PlaygroundApp() {
 
   useEffect(() => {
     setSettings((prev) => ({ ...prev, ...loadSettings() }));
+    setNotes(loadNotes());
     setSettingsLoaded(true);
   }, []);
 
@@ -215,6 +225,8 @@ export default function PlaygroundApp() {
   const [statsOpen, setStatsOpen] = useState(false);
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [notesOpen, setNotesOpen] = useState(false);
+  const [notes, setNotes] = useState<NoteItem[]>([]);
   const [search, setSearch] = useState("");
   const [creating, setCreating] = useState(false);
   const [tipOpen, setTipOpen] = useState(false);
@@ -1282,6 +1294,18 @@ export default function PlaygroundApp() {
     [convoId, history, isSv, messages, showToast]
   );
 
+  const addNote = useCallback(
+    (text: string, source?: string) => {
+      const trimmed = text.trim();
+      if (!trimmed) return;
+      saveNote(trimmed, source);
+      setNotes(loadNotes());
+      showToast("ok", isSv ? "Sparat i anteckningar" : "Saved to notes");
+      playSound("success");
+    },
+    [isSv, showToast]
+  );
+
   const copyText = useCallback(
     async (text: string) => {
       try {
@@ -1409,6 +1433,14 @@ export default function PlaygroundApp() {
         hint: isSv ? "Två förslag sida vid sida" : "Two options side by side",
         icon: <SplitSquareHorizontal className="h-3.5 w-3.5" />,
         run: () => setCompare((v) => !v),
+      },
+      {
+        id: "notes",
+        group: isSv ? "Visa" : "View",
+        label: isSv ? "Anteckningar" : "Notes",
+        hint: isSv ? "Sparade utdrag från svar" : "Snippets saved from answers",
+        icon: <StickyNote className="h-3.5 w-3.5" />,
+        run: () => setNotesOpen(true),
       },
       { id: "gallery", group: isSv ? "Visa" : "View", label: isSv ? "Galleri" : "Gallery", icon: <GalleryHorizontalEnd className="h-3.5 w-3.5" />, run: () => setGalleryOpen(true) },
       { id: "stats", group: isSv ? "Visa" : "View", label: isSv ? "Insikter" : "Insights", icon: <BarChart3 className="h-3.5 w-3.5" />, run: () => setStatsOpen(true) },
@@ -1621,7 +1653,10 @@ export default function PlaygroundApp() {
           {PERSONAS.find((p) => p.id === (settings.persona || "core"))?.label[lang]}
         </span>
         <span className="pgx-status-item">
-          {isSv ? "Djup" : "Depth"}: {settings.effort || "balanced"}
+          {isSv ? "Djup" : "Depth"}: {EFFORT_OPTIONS.find((e) => e.id === (settings.effort || "balanced"))?.label[lang]}
+        </span>
+        <span className="pgx-status-item">
+          {isSv ? "Stil" : "Style"}: {STYLE_OPTIONS.find((x) => x.id === (settings.style || "balanced"))?.label[lang]}
         </span>
         <span className="pgx-status-item">
           {estimateTokens(messages.map((m) => m.content).join(" "))} tok
@@ -1731,6 +1766,7 @@ export default function PlaygroundApp() {
             onRegenerate={regenerateVariant}
             onTransform={applyTransform}
             onVariant={switchVariant}
+            onSaveNote={addNote}
             onEdit={editMessage}
             onBranch={(message) => void branchFrom(message)}
             onCopy={(text) => void copyText(text)}
@@ -1935,6 +1971,20 @@ export default function PlaygroundApp() {
         onClear={() => void cloud.clearMemories().then(() => void reloadHistory())}
       />
       <StatsPanel open={statsOpen} onClose={() => setStatsOpen(false)} lang={lang} messages={messages} />
+      <NotesPanel
+        open={notesOpen}
+        onClose={() => setNotesOpen(false)}
+        lang={lang}
+        notes={notes}
+        onDelete={(id) => {
+          deleteNote(id);
+          setNotes(loadNotes());
+        }}
+        onClear={() => {
+          clearNotes();
+          setNotes([]);
+        }}
+      />
       <GalleryPanel open={galleryOpen} onClose={() => setGalleryOpen(false)} lang={lang} messages={messages} onLightbox={setLightbox} />
       <SettingsPanel
         open={settingsOpen}
@@ -2035,6 +2085,14 @@ export default function PlaygroundApp() {
           </button>
         ))}
         <span className="pgx-persona-spacer" />
+        <button
+          type="button"
+          onClick={() => setNotesOpen(true)}
+          className="pgx-persona-chip is-ghost"
+          title={isSv ? "Anteckningar" : "Notes"}
+        >
+          <StickyNote className="h-3.5 w-3.5" />
+        </button>
         <button type="button" onClick={() => setShortcutsOpen(true)} className="pgx-persona-chip is-ghost" title={isSv ? "Tangentbord" : "Keyboard"}>
           <Keyboard className="h-3.5 w-3.5" />
         </button>

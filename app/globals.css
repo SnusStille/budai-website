@@ -6483,3 +6483,126 @@ button.budai-logo:focus-visible {
 .wl-toast svg {
   color: #a8e2b7;
 }
+
+/* selection action bar */
+.pgx-selection-bar {
+  position: fixed;
+  z-index: 200;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  transform: translate(-50%, -100%);
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(10, 13, 20, 0.96);
+  padding: 0.25rem 0.35rem;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(16px);
+  animation: pgx-rise 0.16s ease-out;
+}
+.pgx-selection-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border-radius: 9999px;
+  padding: 0.3rem 0.6rem;
+  font-size: 11.5px;
+  color: rgba(255, 255, 255, 0.72);
+  transition: all 0.16s ease;
+}
+.pgx-selection-btn:hover {
+  background: rgba(135, 233, 223, 0.14);
+  color: #fff;
+}
+.pgx-selection-sep {
+  width: 1px;
+  height: 1rem;
+  margin: 0 0.15rem;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* notes panel */
+.pgx-note-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.pgx-note {
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.02);
+  padding: 0.75rem 0.85rem;
+}
+.pgx-note-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.32);
+}
+.pgx-note-source {
+  border-radius: 9999px;
+  background: rgba(185, 168, 246, 0.12);
+  padding: 0 0.4rem;
+  color: rgba(185, 168, 246, 0.9);
+}
+.pgx-note-text {
+  margin-top: 0.4rem;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.82);
+  white-space: pre-wrap;
+}
+.pgx-note-actions {
+  margin-top: 0.45rem;
+  display: flex;
+  gap: 0.3rem;
+}
+
+/* ── playground v2.2 design polish ── */
+
+.pgx-shell::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background-image:
+    radial-gradient(circle at 18% 12%, rgba(135, 233, 223, 0.05), transparent 42%),
+    radial-gradient(circle at 82% 78%, rgba(185, 168, 246, 0.055), transparent 45%);
+  animation: pgx-aurora 22s ease-in-out infinite alternate;
+}
+.pgx-header,
+.pgx-status-rail,
+.pgx-body,
+.pgx-persona-bar {
+  position: relative;
+  z-index: 2;
+}
+.pgx-avatar {
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+}
+.pgx-bubble {
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.22);
+}
+.pgx-msg.is-ai .pgx-bubble {
+  border-left: 1px solid color-mix(in srgb, var(--pgx-a1) 22%, transparent);
+}
+.pgx-scroll {
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.014), transparent 12%);
+}
+.pgx-persona-chip.is-active {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--persona-accent, var(--pgx-a1)) 22%, transparent),
+    0 10px 26px color-mix(in srgb, var(--persona-accent, var(--pgx-a1)) 14%, transparent);
+}
+
+@keyframes pgx-aurora {
+  0% { opacity: 0.75; transform: translate3d(0, 0, 0) scale(1); }
+  100% { opacity: 1; transform: translate3d(-2%, 1.5%, 0) scale(1.04); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pgx-shell::after { animation: none; }
+}

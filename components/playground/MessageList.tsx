@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowDown,
+  BookmarkPlus,
   Check,
   ChevronLeft,
   ChevronRight,
@@ -26,7 +28,15 @@ import {
 import BudAILogo from "@/components/ui/BudAILogo";
 import Markdown from "./Markdown";
 import type { AiActivity, ChatMessage } from "@/lib/playground/types";
-import { FOLLOW_UPS, SPARKS, THINKING_STEPS, TRANSFORMS, type Transform } from "@/lib/playground/prompts";
+import {
+  FOLLOW_UPS,
+  SELECTION_ACTIONS,
+  SPARKS,
+  THINKING_STEPS,
+  TRANSFORMS,
+  type SelectionAction,
+  type Transform,
+} from "@/lib/playground/prompts";
 
 type Lang = "sv" | "en";
 
@@ -49,6 +59,7 @@ type Props = {
   onImageVariation: (message: ChatMessage) => void;
   onTransform: (message: ChatMessage, transform: Transform) => void;
   onVariant: (message: ChatMessage, index: number) => void;
+  onSaveNote: (text: string, source?: string) => void;
   onSuggestion: (text: string) => void;
   onSurprise: () => void;
   onOpenLibrary: () => void;
@@ -91,6 +102,7 @@ export default function MessageList({
   onImageVariation,
   onTransform,
   onVariant,
+  onSaveNote,
   onSuggestion,
   onSurprise,
   onOpenLibrary,
@@ -129,6 +141,45 @@ export default function MessageList({
     setAtBottom(true);
   };
 
+  const [selection, setSelection] = useState<{ text: string; x: number; y: number } | null>(null);
+
+  useEffect(() => {
+    if (!selection) return;
+    const clear = () => setSelection(null);
+    window.addEventListener("scroll", clear, true);
+    window.addEventListener("resize", clear);
+    return () => {
+      window.removeEventListener("scroll", clear, true);
+      window.removeEventListener("resize", clear);
+    };
+  }, [selection]);
+
+  const captureSelection = () => {
+    const active = window.getSelection();
+    const text = active?.toString().trim() || "";
+    if (!active || text.length < 4 || active.rangeCount === 0) {
+      setSelection(null);
+      return;
+    }
+    const rect = active.getRangeAt(0).getBoundingClientRect();
+    if (!rect || (!rect.width && !rect.height)) {
+      setSelection(null);
+      return;
+    }
+    setSelection({
+      text: text.slice(0, 1500),
+      x: Math.min(Math.max(rect.left + rect.width / 2, 130), window.innerWidth - 130),
+      y: Math.max(rect.top - 8, 60),
+    });
+  };
+
+  const runSelectionAction = (action: SelectionAction) => {
+    if (!selection) return;
+    onSuggestion(action.build(selection.text, lang));
+    window.getSelection()?.removeAllRanges();
+    setSelection(null);
+  };
+
   const empty = messages.length === 0 && activity === "idle";
   const lastAssistant = [...messages].reverse().find((m) => m.role === "assistant" && !m.error);
 
@@ -138,7 +189,12 @@ export default function MessageList({
 
   return (
     <div className="relative min-h-0 flex-1">
-      <div ref={scrollRef} onScroll={onScroll} className="pgx-scroll h-full overflow-y-auto px-3 pb-6 pt-4 sm:px-6">
+      <div
+        ref={scrollRef}
+        onScroll={onScroll}
+        onMouseUp={captureSelection}
+        className="pgx-scroll h-full overflow-y-auto px-3 pb-6 pt-4 sm:px-6"
+      >
         {empty && (
           <div className="pgx-welcome mx-auto flex max-w-3xl flex-col items-center pt-4 text-center sm:pt-8">
             <div className={`pgx-welcome-orb ${reduceEffects ? "" : "is-live"}`}>
@@ -315,6 +371,7 @@ export default function MessageList({
                         onOpenWorkspace={onOpenWorkspace}
                         onDeleteMessage={onDeleteMessage}
                         onImageVariation={onImageVariation}
+                        onSaveNote={onSaveNote}
                       />
                     )
                   )}
@@ -391,6 +448,38 @@ export default function MessageList({
         </div>
       </div>
 
+      {typeof document !== "undefined" && selection && (
+        createPortal(
+          <div
+            className="pgx-selection-bar"
+            style={{ left: selection.x, top: selection.y }}
+            role="toolbar"
+            aria-label={isSv ? "Åtgärder för markerad text" : "Actions for the selected text"}
+          >
+            {SELECTION_ACTIONS.map((action) => (
+              <button key={action.id} type="button" onClick={() => runSelectionAction(action)} className="pgx-selection-btn">
+                <span aria-hidden>{action.glyph}</span>
+                {action.label[lang]}
+              </button>
+            ))}
+            <span className="pgx-selection-sep" aria-hidden />
+            <button
+              type="button"
+              onClick={() => {
+                onSaveNote(selection.text, isSv ? "markerad text" : "selected text");
+                window.getSelection()?.removeAllRanges();
+                setSelection(null);
+              }}
+              className="pgx-selection-btn"
+              title={isSv ? "Spara som anteckning" : "Save as note"}
+            >
+              <BookmarkPlus className="h-3.5 w-3.5" />
+            </button>
+          </div>,
+          document.body
+        )
+      )}
+
       <AnimatePresence>
         {!atBottom && messages.length > 0 && (
           <motion.button
@@ -463,6 +552,7 @@ function MessageActions({
   onOpenWorkspace,
   onDeleteMessage,
   onImageVariation,
+  onSaveNote,
 }: {
   lang: Lang;
   message: ChatMessage;
@@ -475,6 +565,7 @@ function MessageActions({
   onOpenWorkspace: (message: ChatMessage) => void;
   onDeleteMessage: (id: string) => void;
   onImageVariation: (message: ChatMessage) => void;
+  onSaveNote: (text: string, source?: string) => void;
 }) {
   const isSv = lang === "sv";
   const [copied, setCopied] = useState(false);
@@ -505,6 +596,18 @@ function MessageActions({
         label={isSv ? "Dåligt svar" : "Bad answer"}
         active={message.rating === "down"}
         onClick={() => onRate(message.id, "down")}
+      />
+      <ActionButton
+        icon={<BookmarkPlus className="h-3.5 w-3.5" />}
+        label={isSv ? "Spara till anteckningar" : "Save to notes"}
+        onClick={() =>
+          onSaveNote(
+            message.content,
+            message.promptId
+              ? `BudAI · ${message.model || "preview"}`
+              : "BudAI"
+          )
+        }
       />
       <ActionButton
         icon={speaking ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}

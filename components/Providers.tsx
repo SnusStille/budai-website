@@ -6,6 +6,7 @@ import { ToastProvider } from "@/components/ui/ToastStack";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import AuthModal from "@/components/auth/AuthModal";
 import AuthHashHandler from "@/components/auth/AuthHashHandler";
+import SitePalette from "@/components/ui/SitePalette";
 
 function LocalizedSkipLink() {
   const { lang } = useLang();
@@ -26,6 +27,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
             <AuthHashHandler />
             {children}
             <AuthModal />
+            <SitePalette />
           </ToastProvider>
         </AuthProvider>
       </LangProvider>

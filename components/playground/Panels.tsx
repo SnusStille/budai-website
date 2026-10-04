@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   BarChart3,
+  BookmarkPlus,
   BrainCircuit,
   Check,
   Command,
@@ -466,6 +467,121 @@ export function MemoryPanel({
           </div>
         ))}
       </div>
+    </Modal>
+  );
+}
+
+/* ── notes ───────────────────────────────────────────────── */
+
+export type NoteItem = {
+  id: string;
+  text: string;
+  createdAt: number;
+  source?: string;
+};
+
+export function NotesPanel({
+  open,
+  onClose,
+  lang,
+  notes,
+  onDelete,
+  onClear,
+}: {
+  open: boolean;
+  onClose: () => void;
+  lang: Lang;
+  notes: NoteItem[];
+  onDelete: (id: string) => void;
+  onClear: () => void;
+}) {
+  const isSv = lang === "sv";
+  const [query, setQuery] = useState("");
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return q ? notes.filter((n) => n.text.toLowerCase().includes(q)) : notes;
+  }, [notes, query]);
+
+  const exportNotes = () => {
+    const body = notes
+      .map((n) => `## ${new Date(n.createdAt).toLocaleString()}${n.source ? ` · ${n.source}` : ""}\n\n${n.text}\n`)
+      .join("\n");
+    const blob = new Blob([`# BudAI · ${isSv ? "Anteckningar" : "Notes"}\n\n${body}`], {
+      type: "text/markdown;charset=utf-8",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "budai-notes.md";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      title={isSv ? "Anteckningar" : "Notes"}
+      icon={<BookmarkPlus className="h-4 w-4" />}
+      wide
+      footer={
+        <div className="pgx-modal-foot-row">
+          <span className="text-[11px] text-white/45">
+            {isSv ? `${notes.length} sparade utdrag` : `${notes.length} saved snippets`}
+          </span>
+          <span className="flex items-center gap-1.5">
+            <button type="button" className="pgx-text-btn" onClick={exportNotes} disabled={!notes.length}>
+              <Download className="h-3.5 w-3.5" />
+              .md
+            </button>
+            {notes.length > 0 && (
+              <button type="button" className="pgx-text-btn is-danger" onClick={onClear}>
+                <Trash2 className="h-3.5 w-3.5" />
+                {isSv ? "Rensa" : "Clear"}
+              </button>
+            )}
+          </span>
+        </div>
+      }
+    >
+      {notes.length > 6 && (
+        <div className="pgx-palette-search is-inline mb-3">
+          <Search className="h-3.5 w-3.5" />
+          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={isSv ? "Sök i anteckningar…" : "Search notes…"} />
+        </div>
+      )}
+      {notes.length === 0 ? (
+        <p className="pgx-empty-note">
+          {isSv
+            ? "Inga anteckningar ännu. Markera text i ett svar och spara den — eller tryck på bokmärket."
+            : "No notes yet. Highlight text in an answer and save it — or press the bookmark icon."}
+        </p>
+      ) : (
+        <div className="pgx-note-list">
+          {filtered.map((note) => (
+            <div key={note.id} className="pgx-note">
+              <div className="pgx-note-meta">
+                <span>{new Date(note.createdAt).toLocaleString()}</span>
+                {note.source && <span className="pgx-note-source">{note.source}</span>}
+              </div>
+              <p className="pgx-note-text">{note.text}</p>
+              <div className="pgx-note-actions">
+                <button
+                  type="button"
+                  className="pgx-text-btn"
+                  onClick={() => void navigator.clipboard.writeText(note.text)}
+                >
+                  <Copy className="h-3.5 w-3.5" />
+                  {isSv ? "Kopiera" : "Copy"}
+                </button>
+                <button type="button" className="pgx-text-btn is-danger" onClick={() => onDelete(note.id)}>
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </Modal>
   );
 }
