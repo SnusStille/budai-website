@@ -20,7 +20,7 @@ export default function OpengraphImage() {
           background: "#070a0f",
           backgroundImage:
             "radial-gradient(circle at 12% 0%, rgba(135,233,223,0.20), transparent 55%), radial-gradient(circle at 92% 100%, rgba(185,168,246,0.22), transparent 58%)",
-          padding: "72px 80px",
+          padding: "58px 72px",
           fontFamily: "sans-serif",
         }}
       >
@@ -73,40 +73,45 @@ export default function OpengraphImage() {
               borderRadius: 999,
               border: "1px solid rgba(241,217,143,0.4)",
               background: "rgba(241,217,143,0.1)",
-              padding: "12px 22px",
-              fontSize: 24,
+              padding: "10px 20px",
+              fontSize: 23,
               fontWeight: 700,
               color: "#f1d98f",
             }}
           >
-            10% founding access
+            10% off for founding members
           </div>
         </div>
 
         {/* headline */}
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-          <span style={{ fontSize: 74, fontWeight: 700, color: "#ffffff", lineHeight: 1.06, letterSpacing: -2 }}>
-            Try the Playground.
+          <span style={{ fontSize: 66, fontWeight: 700, color: "#ffffff", lineHeight: 1.06, letterSpacing: -2 }}>
+            Talk to it. Compare it. Ship with it.
           </span>
-          <span style={{ fontSize: 60, fontWeight: 700, color: "#87e9df", lineHeight: 1.06, letterSpacing: -2 }}>
-            Streaming answers, six personas, memory.
+          <span style={{ fontSize: 50, fontWeight: 700, color: "#87e9df", lineHeight: 1.06, letterSpacing: -2 }}>
+            Voice mode, answer variants, shareable chats.
           </span>
-          <span style={{ fontSize: 28, color: "rgba(255,255,255,0.55)", marginTop: 6 }}>
+          <span style={{ fontSize: 26, color: "rgba(255,255,255,0.55)", marginTop: 2 }}>
             An AI work assistant for Swedish and English workdays — early preview.
           </span>
         </div>
 
         {/* footer chips */}
         <div style={{ display: "flex", gap: 14 }}>
-          {["Live streaming replies", "Voice · image · files", "Command palette", "Works without an account"].map((chip) => (
+          {[
+            "Live streaming replies",
+            "Voice mode, hands-free",
+            "Compare two answers",
+            "Save notes and share links",
+          ].map((chip) => (
             <span
               key={chip}
               style={{
                 borderRadius: 999,
                 border: "1px solid rgba(255,255,255,0.12)",
                 background: "rgba(255,255,255,0.04)",
-                padding: "12px 20px",
-                fontSize: 22,
+                padding: "10px 18px",
+                fontSize: 20,
                 color: "rgba(255,255,255,0.62)",
               }}
             >
