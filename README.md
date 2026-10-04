@@ -8,6 +8,28 @@ Developed by **Stilledev** · Live: [stilledev.se](https://stilledev.se)
 
 ---
 
+## What's new in this build
+
+- **New mark — “Lattice”**: six spokes firing out of a bright core, a ring of
+  satellites and three orbital shells. Shipped in the navbar, footer, hero,
+  loading screens, favicon and the OG card. The lab at **`/logo`** keeps all six
+  candidates (download SVG/PNG, shortlist, vote, try one live in the navbar).
+- **Playground 2.3**: text-selection tools (explain / translate / improve /
+  expand), saved notes with Markdown export, shareable read-only conversations
+  (`/playground/share`, no server involved), voice mode, answer variants,
+  compare-two-answers, live preview of HTML/CSS/SVG, custom instructions,
+  a guided first-visit tour and a ⌘K palette.
+- **Waitlist v3**: the 10% founding offer front and centre — count-up stats,
+  offer ticker, a 250-seat founding map that lights up your seat, and an FAQ.
+- **Site-wide ⌘K palette** plus a “powers belt” on the landing page that drops a
+  demo prompt into the composer.
+
+New to the repo? Read **`START_HERE.md`** first — it covers install, env vars,
+where every new file lives and the keyboard map. Full changelog in
+**`PLAYGROUND_V2.md`**.
+
+---
+
 ## Stack
 
 - **Next.js 14** (App Router) + TypeScript
