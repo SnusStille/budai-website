@@ -16,7 +16,7 @@ export default function AboutPage() {
       <SiteAmbient />
       <Navbar />
       <div className="relative z-10">
-        <AboutBudAI />
+        <AboutBudAI headingLevel="h1" />
         <Footer />
       </div>
     </main>

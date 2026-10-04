@@ -16,7 +16,7 @@ export default function WaitlistPage() {
       <SiteAmbient />
       <Navbar />
       <div className="relative z-10">
-        <Waitlist />
+        <Waitlist headingLevel="h1" />
         <Footer />
       </div>
     </main>

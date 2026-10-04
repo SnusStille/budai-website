@@ -5,7 +5,8 @@ import { ArrowRight, CircleDot, Compass, Flag, HelpCircle } from "lucide-react";
 import { useLang } from "@/components/ui/LanguageContext";
 
 /** About BudAI — four short answers, nothing more. */
-export default function AboutBudAI() {
+export default function AboutBudAI({ headingLevel = "h2" }: { headingLevel?: "h1" | "h2" } = {}) {
+  const Heading = headingLevel;
   const { lang } = useLang();
   const isSv = lang === "sv";
 
@@ -49,9 +50,9 @@ export default function AboutBudAI() {
       <div className="relative z-10 mx-auto max-w-[76rem] px-5 py-20 sm:px-8 sm:py-24 lg:px-10">
         <div className="about-head">
           <span className="about-kicker">{isSv ? "Om BudAI" : "About BudAI"}</span>
-          <h2 className="about-title">
+          <Heading className="about-title">
             {isSv ? "Kort sagt." : "In short."}
-          </h2>
+          </Heading>
         </div>
 
         <div className="about-grid">

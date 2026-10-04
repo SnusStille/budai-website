@@ -48,7 +48,8 @@ function inviteCode(email: string): string {
   return `BUD${String(hash).padStart(5, "0")}`;
 }
 
-export default function Waitlist() {
+export default function Waitlist({ headingLevel = "h2" }: { headingLevel?: "h1" | "h2" } = {}) {
+  const Heading = headingLevel;
   const { lang } = useLang();
   const isSv = lang === "sv";
 
@@ -255,9 +256,9 @@ export default function Waitlist() {
             <Sparkles className="h-3.5 w-3.5" />
             {isSv ? "Early access" : "Early access"}
           </span>
-          <h2 className="wl-title mt-5">
+          <Heading className="wl-title mt-5">
             {isSv ? "Få early access till BudAI." : "Get early access to BudAI."}
-          </h2>
+          </Heading>
           <p className="wl-offer">
             <BadgePercent className="h-4 w-4" />
             {isSv ? "10 % rabatt vid launch" : "10% off at launch"}
