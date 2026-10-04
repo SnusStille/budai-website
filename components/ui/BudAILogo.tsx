@@ -3,15 +3,16 @@
 import { useId, type CSSProperties } from "react";
 
 /* ────────────────────────────────────────────────────────────────
-   BudAI · "Lattice" — the mark
+   BudAI · "B-mark" — the mark
    ────────────────────────────────────────────────────────────────
-   A node lattice: six spokes firing outward from a bright core, a
-   ring of twelve satellites, and three orbital shells turning in real
-   3D around it with a light sheen sweeping the glass. Chosen in the
-   Logo Lab (see /logo) and now the mark everywhere — navbar, footer,
-   favicon, OG card, loading screens. Built from CSS transforms +
-   inline SVG so it stays vector-crisp from 16px favicon to a hero
-   stage, with zero external assets and zero layout shift.
+   One letterform, built from a stem and two arcs, with the light of
+   the product running through it: the upper bowl is cyan, the lower
+   violet, and a single node rides a thin orbit around the counter —
+   the AI signal. Nothing else. It reads at 16px, it reads at 260px,
+   and it works in one flat colour. Chosen in the Logo Lab (see
+   /logo); the Lattice and the other challengers stay there.
+   Built from inline SVG + CSS so it stays vector-crisp from favicon
+   to hero stage, with zero external assets and zero layout shift.
 
    Motion is throttled by a single variable (--logo-tempo) so the
    mark can idle, think, or flare without re-rendering a frame of JS.
@@ -30,27 +31,13 @@ const SIZES: Record<LogoSize, number> = {
   hero: 260,
 };
 
-/* lattice geometry in the 64×64 viewBox — one source of truth for every size */
-const LATTICE_SPOKES: [number, number][] = Array.from({ length: 6 }, (_, i) => {
-  const angle = (Math.PI / 3) * i;
-  return [
-    Number((32 + 18 * Math.cos(angle)).toFixed(2)),
-    Number((32 + 18 * Math.sin(angle)).toFixed(2)),
-  ];
-});
-
-const LATTICE_OUTER: [number, number][] = Array.from({ length: 12 }, (_, i) => {
-  const angle = (Math.PI / 6) * i;
-  return [
-    Number((32 + 27 * Math.cos(angle)).toFixed(2)),
-    Number((32 + 27 * Math.sin(angle)).toFixed(2)),
-  ];
-});
-
-const LATTICE_LINKS: [number, number, number, number][] = LATTICE_OUTER.map(([ox, oy], i) => {
-  const [ix, iy] = LATTICE_SPOKES[i % 6];
-  return [ox, oy, ix, iy];
-});
+/* the two bowls of the mark, in the 64×64 viewBox — one source of truth */
+const B_STEM_X = 21;
+const B_TOP = 13;
+const B_BOTTOM = 51;
+const B_JOIN = 32;
+const B_UPPER_R = 11.5;
+const B_LOWER_R = 11.5;
 
 type LogoProps = {
   size?: LogoSize;
@@ -106,57 +93,26 @@ export default function BudAILogo({
       {/* ambient bloom */}
       {!mono && <span className="budai-halo" aria-hidden />}
 
-      {/* 3D orbital field */}
-      {rich && (
-        <span className="budai-scene" aria-hidden>
-          <span className="budai-orbit budai-orbit--a">
-            <span className="budai-bead budai-bead--a" />
-          </span>
-          <span className="budai-orbit budai-orbit--b">
-            <span className="budai-bead budai-bead--b" />
-          </span>
-          <span className="budai-orbit budai-orbit--c">
-            <span className="budai-bead budai-bead--c" />
-          </span>
-          <span className="budai-axis" />
-        </span>
-      )}
-
-      {/* the mark — a live lattice: six spokes, an outer ring of nodes, one bright core */}
+      {/* the mark — one B, two arcs, one node in orbit */}
       <svg viewBox="0 0 64 64" className="budai-gem" fill="none" aria-hidden>
         <defs>
-          <linearGradient id={`bud-frame-${uid}`} x1="6" y1="4" x2="58" y2="60" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stopColor={light ? "#0e7490" : "#d9fffa"} />
-            <stop offset="38%" stopColor={light ? "#0891b2" : "#87e9df"} />
-            <stop offset="100%" stopColor={light ? "#4338ca" : "#b9a8f6"} />
+          <linearGradient id={`bud-frame-${uid}`} x1="14" y1="8" x2="50" y2="56" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stopColor={light ? "#0e7490" : "#8ef0e2"} />
+            <stop offset="46%" stopColor={light ? "#0d9488" : "#3ee0cd"} />
+            <stop offset="100%" stopColor={light ? "#4338ca" : "#9a86ff"} />
           </linearGradient>
-          <linearGradient id={`bud-edge-${uid}`} x1="12" y1="52" x2="52" y2="12" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stopColor={light ? "#7c3aed" : "#b9a8f6"} stopOpacity="0.15" />
-            <stop offset="52%" stopColor={light ? "#0891b2" : "#87e9df"} stopOpacity="0.95" />
-            <stop offset="100%" stopColor={light ? "#38bdf8" : "#c9f9ff"} stopOpacity="0.2" />
+          <linearGradient id={`bud-stem-${uid}`} x1="21" y1="13" x2="21" y2="51" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stopColor={light ? "#0f172a" : "#ffffff"} />
+            <stop offset="55%" stopColor={light ? "#1e293b" : "#e8fffd"} />
+            <stop offset="100%" stopColor={light ? "#312e81" : "#c9c2ff"} />
           </linearGradient>
-          <linearGradient id={`bud-glass-${uid}`} x1="18" y1="10" x2="46" y2="56" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stopColor={light ? "#ffffff" : "#9ff3ea"} stopOpacity={light ? 0.9 : 0.18} />
-            <stop offset="46%" stopColor={light ? "#e0f2fe" : "#0d1a2b"} stopOpacity={light ? 0.75 : 0.85} />
-            <stop offset="100%" stopColor={light ? "#eef2ff" : "#070c16"} stopOpacity={light ? 0.85 : 0.95} />
-          </linearGradient>
-          <linearGradient id={`bud-depth-${uid}`} x1="20" y1="14" x2="46" y2="58" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stopColor={light ? "#94a3b8" : "#16233a"} />
-            <stop offset="100%" stopColor={light ? "#64748b" : "#080c14"} />
-          </linearGradient>
-          <radialGradient id={`bud-core-${uid}`} cx="36%" cy="30%" r="72%">
+          <radialGradient id={`bud-node-${uid}`} cx="40%" cy="36%" r="70%">
             <stop offset="0%" stopColor="#ffffff" />
-            <stop offset="26%" stopColor={light ? "#7dd3fc" : "#e8fffd"} />
-            <stop offset="62%" stopColor={light ? "#0ea5e9" : "#87e9df"} />
-            <stop offset="100%" stopColor={light ? "#4338ca" : "#7c6bf0"} />
+            <stop offset="55%" stopColor={light ? "#22d3ee" : "#9df6ea"} />
+            <stop offset="100%" stopColor={light ? "#0e7490" : "#3ee0cd"} />
           </radialGradient>
-          <radialGradient id={`bud-iris-${uid}`} cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#ffffff" stopOpacity="0" />
-            <stop offset="72%" stopColor="#87e9df" stopOpacity="0" />
-            <stop offset="100%" stopColor="#87e9df" stopOpacity="0.55" />
-          </radialGradient>
-          <filter id={`bud-glow-${uid}`} x="-70%" y="-70%" width="240%" height="240%">
-            <feGaussianBlur stdDeviation="1.7" result="b" />
+          <filter id={`bud-glow-${uid}`} x="-80%" y="-80%" width="260%" height="260%">
+            <feGaussianBlur stdDeviation="2.1" result="b" />
             <feMerge>
               <feMergeNode in="b" />
               <feMergeNode in="SourceGraphic" />
@@ -167,124 +123,81 @@ export default function BudAILogo({
           </filter>
         </defs>
 
-        {/* extruded volume — a back plate gives the mark real thickness */}
-        {rich && (
-          <g className="budai-depth">
-            <circle cx="34" cy="32" r="27" fill={`url(#bud-depth-${uid})`} opacity={light ? 0.28 : 0.5} />
-            <circle cx="32.8" cy="32" r="27" fill={`url(#bud-depth-${uid})`} opacity={light ? 0.45 : 0.85} />
+        {/* orbit — slides in as the mark thinks, gone when it is tiny */}
+        {!tiny && (
+          <g className="budai-orbit-arc">
+            <ellipse
+              className={animated ? "budai-b-ring" : undefined}
+              cx="33"
+              cy="32"
+              rx="26"
+              ry="24"
+              stroke={`url(#bud-frame-${uid})`}
+              strokeWidth="0.7"
+              strokeDasharray="34 118"
+              opacity="0.5"
+              style={{ transformOrigin: "33px 32px" }}
+            />
+            <circle
+              className={animated ? "budai-b-node" : undefined}
+              cx="59"
+              cy="26"
+              r={rich ? 3.1 : 2.6}
+              fill={`url(#bud-node-${uid})`}
+              filter={rich ? `url(#bud-glow-${uid})` : undefined}
+            />
           </g>
         )}
 
-        {/* outer ring of nodes — the lattice reaches wider than the spokes */}
+        {/* the stem — the spine of the letter */}
+        <path
+          className={animated ? "budai-b-stem" : undefined}
+          d={`M${B_STEM_X} ${B_TOP} V${B_BOTTOM}`}
+          stroke={`url(#bud-stem-${uid})`}
+          strokeWidth="6.2"
+          strokeLinecap="round"
+        />
+
+        {/* upper bowl — cyan light */}
+        <path
+          className={animated ? "budai-b-bowl" : undefined}
+          d={`M${B_STEM_X} ${B_TOP} H${B_STEM_X + 11.5} a${B_UPPER_R} ${B_UPPER_R} 0 0 1 0 ${B_UPPER_R * 2} H${B_STEM_X}`}
+          stroke={`url(#bud-frame-${uid})`}
+          strokeWidth="6.2"
+          strokeLinecap="round"
+        />
+
+        {/* lower bowl — violet light */}
+        <path
+          className={animated ? "budai-b-bowl budai-b-bowl--lower" : undefined}
+          d={`M${B_STEM_X} ${B_JOIN} H${B_STEM_X + 11.5} a${B_LOWER_R} ${B_LOWER_R} 0 0 1 0 ${B_LOWER_R * 2} H${B_STEM_X}`}
+          stroke={`url(#bud-frame-${uid})`}
+          strokeWidth="6.2"
+          strokeLinecap="round"
+          opacity="0.92"
+        />
+
+        {/* the core glint sits where the two bowls meet */}
         {!tiny && (
           <circle
-            className="budai-lat-ring"
-            cx="32"
-            cy="32"
-            r="27"
-            stroke={light ? "rgba(15,23,42,0.18)" : "rgba(255,255,255,0.16)"}
-            strokeWidth="0.9"
-            style={{ transformOrigin: "32px 32px" }}
+            className={animated ? "budai-b-core" : undefined}
+            cx={B_STEM_X + 12}
+            cy={B_JOIN}
+            r={rich ? 3.4 : 2.8}
+            fill={`url(#bud-node-${uid})`}
+            filter={rich ? `url(#bud-glow-${uid})` : undefined}
           />
         )}
 
-        {/* links from the outer ring in to the six inner nodes */}
-        {!tiny && (
-          <g className="budai-lat-links" stroke={`url(#bud-edge-${uid})`} strokeWidth="0.7" opacity="0.55">
-            {LATTICE_LINKS.map(([ox, oy, ix, iy], index) => (
-              <line key={`l-${index}`} x1={ox} y1={oy} x2={ix} y2={iy} />
-            ))}
-          </g>
-        )}
-
-        {/* six spokes — the signal travelling out from the core */}
-        <g className="budai-lat-spokes">
-          {LATTICE_SPOKES.map(([x, y], index) => (
-            <line
-              key={`s-${index}`}
-              className={animated ? "budai-lat-spoke" : undefined}
-              x1="32"
-              y1="32"
-              x2={x}
-              y2={y}
-              stroke={`url(#bud-edge-${uid})`}
-              strokeWidth={rich ? 1.35 : 1.6}
-              strokeLinecap="round"
-              style={{ animationDelay: `${(index * 0.16).toFixed(2)}s` }}
-            />
-          ))}
-        </g>
-
-        {/* the six heart nodes */}
-        <g filter={rich ? `url(#bud-glow-${uid})` : undefined}>
-          {LATTICE_SPOKES.map(([x, y], index) => (
-            <circle
-              key={`n-${index}`}
-              className={animated ? "budai-lat-node" : undefined}
-              cx={x}
-              cy={y}
-              r={rich ? 2.5 : 2.2}
-              fill={index % 2 ? `url(#bud-frame-${uid})` : `url(#bud-core-${uid})`}
-              style={{ animationDelay: `${(index * 0.22).toFixed(2)}s` }}
-            />
-          ))}
-        </g>
-
-        {/* outer satellites, held back so the core stays the hero */}
-        {!tiny && (
-          <g className="budai-lat-outer" fill="#ffffff" opacity={light ? 0.5 : 0.6}>
-            {LATTICE_OUTER.map(([x, y], index) => (
-              <circle
-                key={`o-${index}`}
-                className={animated ? "budai-lat-sat" : undefined}
-                cx={x}
-                cy={y}
-                r="1.35"
-                style={{ animationDelay: `${(index * 0.13).toFixed(2)}s` }}
-              />
-            ))}
-          </g>
-        )}
-
-        {/* iris halo behind the core */}
-        {!tiny && <circle cx="32" cy="32" r="13.4" fill={`url(#bud-iris-${uid})`} className="budai-iris" />}
-
-        {/* the core */}
-        <circle
-          className={animated ? "budai-core" : undefined}
-          cx="32"
-          cy="32"
-          r={tiny ? 4.6 : 5.1}
-          fill={`url(#bud-core-${uid})`}
-          filter={rich ? `url(#bud-glow-${uid})` : undefined}
-          style={{ transformOrigin: "32px 32px" }}
-        />
-        <circle cx="32" cy="32" r={tiny ? 4.6 : 5.1} stroke="#ffffff" strokeOpacity={light ? 0.5 : 0.4} strokeWidth="0.7" />
-        {/* specular */}
-        <circle cx={30} cy={30.2} r={rich ? 1.7 : 1.4} fill="#ffffff" opacity={light ? 0.9 : 0.68} />
-
-        {/* scanner arc — only in the full scene */}
-        {rich && (
-          <g className="budai-scanner" style={{ transformOrigin: "32px 32px" }}>
-            <path
-              d="M32 16.6 A15.4 15.4 0 0 1 47.4 32"
-              stroke={`url(#bud-edge-${uid})`}
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              filter={`url(#bud-glow-${uid})`}
-            />
-          </g>
-        )}
-
-        {/* ambient occlusion under the lattice */}
+        {/* ground shadow, only where there is room */}
         {rich && (
           <ellipse
             className="budai-ao"
-            cx="32"
-            cy="55.5"
+            cx="30"
+            cy="56.5"
             rx="14"
-            ry="3.2"
-            fill={light ? "rgba(15,23,42,0.14)" : "rgba(0,0,0,0.5)"}
+            ry="2.6"
+            fill={light ? "rgba(15,23,42,0.14)" : "rgba(0,0,0,0.45)"}
             filter={`url(#bud-soft-${uid})`}
           />
         )}
