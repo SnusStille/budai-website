@@ -157,7 +157,7 @@ function groupHistory(items: HistoryItem[], lang: Lang) {
 }
 
 export default function PlaygroundApp() {
-  const { lang, setLang } = useLang();
+  const { lang } = useLang();
   const auth = useAuth();
   const isSv = lang === "sv";
 
@@ -208,7 +208,11 @@ export default function PlaygroundApp() {
   const [dualPick, setDualPick] = useState<Record<string, DualOption[] | undefined>>({});
   const [memory, setMemory] = useState<MemoryItem[]>([]);
   const [memoryEnabled, setMemoryEnabled] = useState(true);
-  const [lastFailed, setLastFailed] = useState<{ prompt: string; image?: AttachmentDraft | null } | null>(null);
+  const [lastFailed, setLastFailed] = useState<{
+    prompt: string;
+    image?: AttachmentDraft | null;
+    retryable?: boolean;
+  } | null>(null);
   const [speakingId, setSpeakingId] = useState<string | null>(null);
   const [listening, setListening] = useState(false);
   const [lightbox, setLightbox] = useState<string | null>(null);
@@ -216,7 +220,7 @@ export default function PlaygroundApp() {
   const [dragOver, setDragOver] = useState(false);
 
   /* ── ui state ── */
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [inspector, setInspector] = useState<{ title: string; body: string } | null>(null);
   const [expanded, setExpanded] = useState(false);
@@ -872,10 +876,11 @@ export default function PlaygroundApp() {
       if (status === 503) {
         pushError(
           isSv
-            ? "Playground-motorn är inte kopplad i den här miljön (ANTHROPIC_API_KEY saknas). Gränssnittet fungerar — lägg till nyckeln för riktiga svar."
-            : "The Playground engine isn't wired up in this environment (ANTHROPIC_API_KEY missing). The interface works — add the key for live answers.",
+            ? "BudAI kan inte svara just nu — den här förhandsvisningen körs utan sin live-motor. Allt annat fungerar, och din text finns kvar."
+            : "BudAI can't answer right now — this preview is running without its live engine. Everything else works, and your text is still here.",
           prompt,
-          image
+          image,
+          false
         );
         return;
       }
@@ -895,15 +900,18 @@ export default function PlaygroundApp() {
     [auth, isSv]
   );
 
-  const pushError = useCallback((text: string, prompt: string, image?: AttachmentDraft | null) => {
-    setActivity("idle");
-    setMessages((prev) => [
-      ...prev,
-      { id: newId("e"), role: "assistant", content: text, ts: Date.now(), error: true },
-    ]);
-    setLastFailed({ prompt, image });
-    playSound("error");
-  }, []);
+  const pushError = useCallback(
+    (text: string, prompt: string, image?: AttachmentDraft | null, retryable = true) => {
+      setActivity("idle");
+      setMessages((prev) => [
+        ...prev,
+        { id: newId("e"), role: "assistant", content: text, ts: Date.now(), error: true },
+      ]);
+      setLastFailed({ prompt, image, retryable });
+      playSound("error");
+    },
+    []
+  );
 
   /* image generation */
   const runImageGen = useCallback(
@@ -1542,14 +1550,12 @@ export default function PlaygroundApp() {
           >
             <PanelLeft className="h-4 w-4" />
           </button>
-          <BudAILogo size="sm" animated motion={busy ? "thinking" : "idle"} />
           <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <span className="text-[13px] font-semibold tracking-tight text-white">
-                Bud<span className="text-accent-cyan">AI</span>
-              </span>
-              {temporary && <span className="pgx-tag pgx-tag--warn">{isSv ? "Tillfällig" : "Temporary"}</span>}
-            </div>
+            {temporary && (
+              <div className="flex items-center gap-2">
+                <span className="pgx-tag pgx-tag--warn">{isSv ? "Tillfällig" : "Temporary"}</span>
+              </div>
+            )}
             {renamingTitle ? (
               <form
                 onSubmit={(event) => {
@@ -1605,25 +1611,6 @@ export default function PlaygroundApp() {
                 ? "Redo"
                 : "Ready"}
             </span>
-          </span>
-
-          <span className="pgx-lang-switch" role="group" aria-label={isSv ? "Språk" : "Language"}>
-            <button
-              type="button"
-              onClick={() => setLang("sv")}
-              className={lang === "sv" ? "is-active" : ""}
-              aria-pressed={lang === "sv"}
-            >
-              SV
-            </button>
-            <button
-              type="button"
-              onClick={() => setLang("en")}
-              className={lang === "en" ? "is-active" : ""}
-              aria-pressed={lang === "en"}
-            >
-              EN
-            </button>
           </span>
 
           <button
@@ -1924,19 +1911,21 @@ export default function PlaygroundApp() {
               <span className="min-w-0 flex-1 truncate text-[12px] text-white/60">
                 {isSv ? "Det gick inte att slutföra." : "That didn't complete."}
               </span>
-              <button
-                type="button"
-                className="pgx-text-btn"
-                onClick={() => {
-                  const failed = lastFailed;
-                  setLastFailed(null);
-                  setMessages((prev) => prev.filter((m) => !m.error));
-                  if (failed) void runPrompt(failed.prompt, { image: failed.image });
-                }}
-              >
-                <Sparkles className="h-3.5 w-3.5" />
-                {isSv ? "Försök igen" : "Try again"}
-              </button>
+              {lastFailed.retryable !== false && (
+                <button
+                  type="button"
+                  className="pgx-text-btn"
+                  onClick={() => {
+                    const failed = lastFailed;
+                    setLastFailed(null);
+                    setMessages((prev) => prev.filter((m) => !m.error));
+                    if (failed) void runPrompt(failed.prompt, { image: failed.image });
+                  }}
+                >
+                  <Sparkles className="h-3.5 w-3.5" />
+                  {isSv ? "Försök igen" : "Try again"}
+                </button>
+              )}
               <button type="button" className="pgx-text-btn" onClick={() => setLastFailed(null)}>
                 <X className="h-3.5 w-3.5" />
               </button>

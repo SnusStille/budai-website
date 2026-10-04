@@ -6,12 +6,26 @@ import Footer from "@/components/sections/Footer";
 import CookieConsent from "@/components/ui/CookieConsent";
 import BackToTop from "@/components/ui/BackToTop";
 import SiteAmbient from "@/components/effects/SiteAmbient";
+import BudAILogo from "@/components/ui/BudAILogo";
 
 /**
  * BudAI — the Playground IS the home page.
  * No marketing hero, no gateway: you land straight in the product.
  */
-const PlaygroundApp = dynamic(() => import("@/components/playground/PlaygroundApp"));
+const PlaygroundApp = dynamic(() => import("@/components/playground/PlaygroundApp"), {
+  // the product is the page — give it a quiet, branded moment while the
+  // module streams in instead of an empty rectangle
+  loading: () => (
+    <div className="pgx-boot" role="status" aria-live="polite" aria-label="Loading the Playground">
+      <span className="pgx-boot-mark">
+        <BudAILogo size="xl" animated boot />
+      </span>
+      <span className="pgx-boot-line" aria-hidden>
+        <span />
+      </span>
+    </div>
+  ),
+});
 
 export default function Home() {
   return (

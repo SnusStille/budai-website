@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "prune:css": "node scripts/prune-css.js"
+    "prune:css": "node scripts/prune-css.js",
+    "dedupe:css": "node scripts/dedupe-css.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",
