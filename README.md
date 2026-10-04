@@ -1,38 +1,60 @@
-# BudAI Website — Launch Edition
+# BudAI Website — Preview
 
-The official developer preview website for **BudAI** — the AI work assistant for Sweden. Write, automate, and think faster in Swedish and English.
-
-> "BudAI is not another AI tool. BudAI is the future of digital work for Sweden."
+**BudAI** is an AI work assistant for Swedish and English — and this is its site.
+`stilledev.se` opens straight into the **Playground**: no marketing gateway, no
+account required, the product is the front page.
 
 Developed by **Stilledev** · Live: [stilledev.se](https://stilledev.se)
 
 ---
 
-## What's new in this build (V2 polish)
+## What this build is
 
-- **New brand — the B-mark**: one letterform, two arcs and a node in orbit, with
-  a subtle draw-on animation. Shipped in the navbar, footer, hero, intro screen,
-  favicon and the OG card. The lab at **`/logo`** keeps every challenger
-  (download SVG/PNG, shortlist, vote, try one live in the navbar).
-- **Intro screen back**: mark, `INITIALIZING BUDAI… → READY`, skippable, shown
-  once per session and never for `prefers-reduced-motion`. Unhidden before the
-  first paint, so it never flashes in over the page.
-- **Living background**: three slow aurora fields, a drifting grid and a faint
-  grain film — pure CSS, all behind the content, all paused for reduced motion.
-- **Home is a gateway**: mark, one line, two buttons, four prompt starters — then
-  the Playground. No feature wall.
-- **Playground, simplified**: status pill, `SV | EN`, New chat, panel toggle and
-  one overflow menu instead of eleven icon buttons. Memory and the fake-metrics
-  Insights panel are gone from the public UI, so “balanced” no longer shows twice.
-- **About BudAI**: four short answers — what, why, vision, where we are now.
-- **Waitlist**: “Get early access to BudAI.” with a gold **10% off at launch**
-  pill, a seat bar, and the `BUDAI-EARLY-10` code on success.
+- **The Playground is home.** `/` renders the product itself; `/playground`
+  permanently redirects there so old links keep working.
+- **The mark — "Signal B"**: one unbroken line that rises from a base node, folds
+  into the two bowls of a B and opens at the top like a bud. Four nodes are the
+  network; a light travels the line while BudAI is generating. It reads as a B
+  down to 16px. Judge it at **`/logo`** — every size, state, surface and
+  placement on one page.
+- **Alive by construction**: the navbar mark and the ambient background both
+  listen to a single `budai:brain` event that the Playground emits while a
+  response streams, so the whole site leans in when the AI works.
+- **Living background**: three slow aurora fields, a drifting grid, a handful of
+  code fragments BudAI actually speaks (`const response = await budai.generate()`),
+  a sparse node sketch and a faint grain film. Pure CSS, behind everything,
+  trimmed on mobile, paused for `prefers-reduced-motion`.
+- **Empty Playground**: "What are you working on?" / "Ask BudAI anything." and
+  exactly four starters — write, explain, brainstorm, plan.
+- **Waitlist**: "Be first to use BudAI." with a clearly visible 10% launch
+  discount, a reserved code on success, and no fake numbers — the counter only
+  appears when there is real data behind it.
+- **About**: three answers (what, why, where we are now) and a way back into the
+  product.
 
-New to the repo? Read **`START_HERE.md`** first — it covers install, env vars,
-where every new file lives and the keyboard map. Full changelog in
-**`PLAYGROUND_V2.md`**.
+## Quality gate
 
----
+```
+npm run lint     # 0 warnings
+npm run build    # 20 routes, all static where they can be
+npx tsc --noEmit # clean
+npm run prune:css  # safe dead-CSS removal (postcss)
+```
+
+## Routes
+
+| Route | What it is |
+| --- | --- |
+| `/` | The Playground — the product, and the front page |
+| `/about` | What BudAI is, why, and where it is now |
+| `/waitlist` | Early access + the 10% launch discount |
+| `/logo` | Logo Lab: the mark in every size, state and surface |
+| `/playground` | Redirects to `/` |
+| `/playground/share` | Shared conversation view |
+| `/admin` | Internal waitlist admin (Supabase) |
+| `/legal/*` | Privacy, terms, cookies, GDPR |
+| `/opengraph-image` | Social card, drawn from the same tokens as the site |
+
 
 ## Stack
 

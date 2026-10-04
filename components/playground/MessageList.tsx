@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowDown,
+  ArrowRight,
   BookmarkPlus,
   Check,
   ChevronLeft,
@@ -31,7 +32,6 @@ import type { AiActivity, ChatMessage } from "@/lib/playground/types";
 import {
   FOLLOW_UPS,
   SELECTION_ACTIONS,
-  SPARKS,
   THINKING_STEPS,
   TRANSFORMS,
   type SelectionAction,
@@ -63,7 +63,6 @@ type Props = {
   onSuggestion: (text: string) => void;
   onSurprise: () => void;
   onOpenLibrary: () => void;
-  greeting: string;
   userInitial: string;
   prompts: { id: string; title: string; body: string; icon: string }[];
   busy: boolean;
@@ -106,7 +105,6 @@ export default function MessageList({
   onSuggestion,
   onSurprise,
   onOpenLibrary,
-  greeting,
   userInitial,
   prompts,
   busy,
@@ -200,16 +198,14 @@ export default function MessageList({
             <div className={`pgx-welcome-orb ${reduceEffects ? "" : "is-live"}`}>
               <BudAILogo size="lg" motion="idle" animated={!reduceEffects} />
             </div>
-            <h2 className="mt-4 text-2xl font-semibold tracking-tight text-white sm:text-[28px]">
-              {greeting}
+            <h2 className="pgx-welcome-title mt-5 text-[26px] font-semibold tracking-tight text-white sm:text-[32px]">
+              {isSv ? "Vad jobbar du med?" : "What are you working on?"}
             </h2>
-            <p className="mt-2 max-w-lg text-[13px] leading-relaxed text-white/55 sm:text-sm">
-              {isSv
-                ? "Ställ en fråga, klistra in text eller välj ett uppdrag. BudAI är en tidig förhandsvisning — testa fritt."
-                : "Ask anything, paste text, or pick a task. BudAI is an early preview — explore freely."}
+            <p className="pgx-welcome-sub mt-2.5 max-w-md text-[13px] leading-relaxed text-white/50 sm:text-[14.5px]">
+              {isSv ? "Fråga BudAI vad som helst." : "Ask BudAI anything."}
             </p>
 
-            <div className="pgx-welcome-cards mt-6 grid w-full grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="pgx-welcome-cards mt-7 grid w-full grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
               {prompts.slice(0, 6).map((prompt, index) => (
                 <motion.button
                   key={prompt.id}
@@ -221,11 +217,10 @@ export default function MessageList({
                   className="pgx-welcome-card group text-left"
                 >
                   <span className="pgx-welcome-card-icon">{prompt.icon}</span>
-                  <span className="min-w-0">
-                    <span className="block text-[12.5px] font-semibold text-white/92">{prompt.title}</span>
-                    <span className="mt-0.5 line-clamp-2 block text-[11px] leading-snug text-white/45">
-                      {prompt.body}
-                    </span>
+                  <span className="pgx-welcome-card-title">{prompt.title}</span>
+                  <span className="pgx-welcome-card-hint line-clamp-2">{prompt.body}</span>
+                  <span className="pgx-welcome-card-go" aria-hidden>
+                    <ArrowRight className="h-3.5 w-3.5" />
                   </span>
                 </motion.button>
               ))}
@@ -240,9 +235,6 @@ export default function MessageList({
                 <Wand2 className="h-3.5 w-3.5" />
                 {isSv ? "Promptbibliotek" : "Prompt library"}
               </button>
-              <span className="pgx-welcome-spark hidden sm:inline">
-                {SPARKS[lang][0]}
-              </span>
             </div>
           </div>
         )}

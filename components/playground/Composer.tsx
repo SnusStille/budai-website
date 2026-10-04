@@ -18,9 +18,9 @@ import {
   Wand2,
   Zap,
 } from "lucide-react";
-import type { AttachmentDraft, EffortId, PersonaId, StyleId } from "@/lib/playground/types";
+import type { AttachmentDraft, PersonaId, StyleId } from "@/lib/playground/types";
 import { estimateTokens } from "@/lib/playground/types";
-import { EFFORT_OPTIONS, PERSONAS, SLASH_COMMANDS, STYLE_OPTIONS } from "@/lib/playground/prompts";
+import { PERSONAS, SLASH_COMMANDS, STYLE_OPTIONS } from "@/lib/playground/prompts";
 
 type Lang = "sv" | "en";
 
@@ -48,10 +48,8 @@ type Props = {
   placeholder: string;
   persona: PersonaId;
   style: StyleId;
-  effort: EffortId;
   onPersona: (persona: PersonaId) => void;
   onStyle: (style: StyleId) => void;
-  onEffort: (effort: EffortId) => void;
   onOpenLibrary: () => void;
   onOpenPalette: () => void;
   dragOver: boolean;
@@ -81,16 +79,14 @@ export default function Composer({
   placeholder,
   persona,
   style,
-  effort,
   onPersona,
   onStyle,
-  onEffort,
   onOpenLibrary,
   onOpenPalette,
   dragOver,
 }: Props) {
   const taRef = useRef<HTMLTextAreaElement>(null);
-  const [menu, setMenu] = useState<"none" | "slash" | "style" | "persona" | "effort">("none");
+  const [menu, setMenu] = useState<"none" | "slash" | "style" | "persona">("none");
   const [menuIndex, setMenuIndex] = useState(0);
   const isSv = lang === "sv";
 
@@ -401,15 +397,6 @@ export default function Composer({
                 {STYLE_OPTIONS.find((s) => s.id === style)?.label[lang]}
               </span>
             </button>
-            <button
-              type="button"
-              onClick={() => setMenu((m) => (m === "effort" ? "none" : "effort"))}
-              className={`pgx-pill ${menu === "effort" ? "is-open" : ""}`}
-              title={isSv ? "Djup" : "Depth"}
-            >
-              <Zap className="h-3.5 w-3.5" />
-              <span className="pgx-pill-text">{EFFORT_OPTIONS.find((e) => e.id === effort)?.label[lang]}</span>
-            </button>
 
             <AnimatePresence>
               {menu === "persona" && (
@@ -435,17 +422,6 @@ export default function Composer({
                   activeId={style}
                   onSelect={(id) => {
                     onStyle(id as StyleId);
-                    setMenu("none");
-                  }}
-                  onClose={() => setMenu("none")}
-                />
-              )}
-              {menu === "effort" && (
-                <OptionMenu
-                  items={EFFORT_OPTIONS.map((e) => ({ id: e.id, label: e.label[lang], hint: e.hint[lang] }))}
-                  activeId={effort}
-                  onSelect={(id) => {
-                    onEffort(id as EffortId);
                     setMenu("none");
                   }}
                   onClose={() => setMenu("none")}

@@ -8,14 +8,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     {
       url: siteUrl,
       lastModified: now,
-      changeFrequency: "weekly",
+      changeFrequency: "daily",
       priority: 1,
-    },
-    {
-      url: `${siteUrl}/playground`,
-      lastModified: now,
-      changeFrequency: "weekly",
-      priority: 0.9,
     },
     {
       url: `${siteUrl}/about`,

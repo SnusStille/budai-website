@@ -1,146 +1,91 @@
 "use client";
 
-import { usePathname } from "next/navigation";
-import { ArrowRight, ArrowUp, BadgePercent, Sparkles } from "lucide-react";
-import BudAILogo, { StilledevLink, StilledevMark } from "@/components/ui/BudAILogo";
+import Link from "next/link";
+import { BadgePercent, Github } from "lucide-react";
+import BudAILogo, { StilledevMark } from "@/components/ui/BudAILogo";
 import { useLang } from "@/components/ui/LanguageContext";
 
+/** Quiet footer: who we are, where to go, and the launch offer. */
 export default function Footer() {
   const { lang } = useLang();
-  const pathname = usePathname();
   const isSv = lang === "sv";
-  const onHome = pathname === "/";
-  const hrefFor = (anchor: string) => (onHome ? anchor : "/" + anchor);
 
   return (
     <footer className="site-footer relative overflow-hidden">
       <div className="footer-glow" aria-hidden />
-      <div className="relative z-10 mx-auto max-w-7xl px-5 pb-10 pt-16 sm:px-8 lg:px-10">
-        {/* closing CTA */}
-        <div className="footer-cta">
-          <div className="min-w-0">
-            <span className="footer-cta-kicker">
-              <BadgePercent className="h-3.5 w-3.5" />
-              {isSv ? "Founding members" : "Founding members"}
+      <div className="relative z-10 mx-auto max-w-6xl px-5 py-12 sm:px-8">
+        <div className="footer-top-row">
+          <Link href="/" className="inline-flex items-center gap-3" aria-label="BudAI — home">
+            <BudAILogo size="sm" animated />
+            <span className="footer-wordmark">
+              Bud<span>AI</span>
             </span>
-            <h2>
-              {isSv ? "Testa BudAI i dag — och lås " : "Try BudAI today — and lock in "}
-              <span className="text-gradient">10 %</span>
-              {isSv ? " för framtiden." : " for the future."}
-            </h2>
-            <p>
-              {isSv
-                ? "Playground är öppen utan konto. Väntelistan ger dig early access och founding-rabatten."
-                : "The Playground is open without an account. The waitlist gives you early access and the founding discount."}
-            </p>
-          </div>
-          <div className="footer-cta-actions">
-            <a href={hrefFor("#playground")} className="button-primary group">
-              <span>{isSv ? "Öppna Playground" : "Open the Playground"}</span>
-              <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
-            </a>
-            <a href={hrefFor("#waitlist")} className="button-secondary">
-              <Sparkles className="h-4 w-4" />
-              <span>{isSv ? "Gå med i väntelistan" : "Join the waitlist"}</span>
-            </a>
+          </Link>
+          <span className="footer-status">
+            <span className="footer-status-dot" aria-hidden />
+            {isSv ? "Tidig förhandsvisning" : "Early preview"}
+          </span>
+        </div>
+
+        <p className="footer-lede">
+          {isSv
+            ? "En AI-arbetsassistent för svenska och engelska arbetsdagar. Under uppbyggnad — öppen att testa redan nu."
+            : "An AI work assistant for Swedish and English workdays. Being built in the open — ready to try today."}
+        </p>
+
+        <div className="footer-columns">
+          <nav aria-label={isSv ? "Sidor" : "Pages"}>
+            <span className="footer-heading">{isSv ? "Sidor" : "Pages"}</span>
+            <Link href="/">Playground</Link>
+            <Link href="/about">{isSv ? "Om BudAI" : "About BudAI"}</Link>
+            <Link href="/waitlist">{isSv ? "Väntelista" : "Waitlist"}</Link>
+            <Link href="/logo">Logo Lab</Link>
+          </nav>
+
+          <nav aria-label={isSv ? "Juridik" : "Legal"}>
+            <span className="footer-heading">{isSv ? "Juridik" : "Legal"}</span>
+            <Link href="/legal/privacy">{isSv ? "Integritet" : "Privacy"}</Link>
+            <Link href="/legal/terms">{isSv ? "Villkor" : "Terms"}</Link>
+            <Link href="/legal/cookies">Cookies</Link>
+            <Link href="/legal/gdpr">GDPR</Link>
+          </nav>
+
+          <div className="footer-offer">
+            <span className="footer-heading">{isSv ? "Erbjudande" : "Offer"}</span>
+            <span className="footer-offer-chip">
+              <BadgePercent className="h-3.5 w-3.5" />
+              <strong>10%</strong>
+              {isSv ? "vid lansering" : "off at launch"}
+            </span>
+            <Link href="/waitlist" className="footer-offer-link">
+              {isSv ? "Säkra din plats" : "Reserve your spot"}
+            </Link>
           </div>
         </div>
 
-        <div className="grid gap-10 pt-14 sm:grid-cols-2 lg:grid-cols-[1.4fr_0.7fr_0.7fr_0.7fr] lg:gap-12">
-          <div>
-            <a href="/" className="inline-flex items-center gap-3" aria-label="BudAI home">
-              <BudAILogo size="sm" animated motion="idle" />
-              <span className="text-lg font-semibold tracking-tight text-white">
-                Bud<span className="text-[var(--cyan)]">AI</span>
-              </span>
-            </a>
-            <p className="mt-4 max-w-sm text-sm leading-6 text-white/48">
-              {isSv
-                ? "En AI-arbetsassistent i tidig förhandsvisning. Byggd i Sverige av Stilledev."
-                : "An AI work assistant in early preview. Built in Sweden by Stilledev."}
-            </p>
-            <div className="footer-status">
-              <span className="footer-status-dot" aria-hidden />
-              <span>{isSv ? "Preview igång" : "Preview live"}</span>
-              <span className="footer-status-sep" aria-hidden />
-              <span>v5.3</span>
-            </div>
-          </div>
+        <div className="footer-bottom">
+          <a
+            href="https://github.com/SnusStille/budai-website"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="footer-dev"
+          >
+            <span className="footer-dev-mark">
+              <StilledevMark size={18} />
+            </span>
+            <span>
+              <span className="footer-dev-label">{isSv ? "Utvecklad av" : "Developed by"}</span>
+              <span className="footer-dev-name">Stilledev</span>
+            </span>
+          </a>
 
-          <div>
-            <h2 className="footer-heading">{isSv ? "Utforska" : "Explore"}</h2>
-            <ul className="footer-link-list">
-              <li>
-                <a href={hrefFor("#playground")}>Playground</a>
-              </li>
-              <li>
-                <a href={hrefFor("#about")}>{isSv ? "Om BudAI" : "About BudAI"}</a>
-              </li>
-              <li>
-                <a href={hrefFor("#waitlist")}>{isSv ? "Early access" : "Early access"}</a>
-              </li>
-              <li>
-                <a href="https://stilledev.se" target="_blank" rel="noopener noreferrer">
-                  Stilledev
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <h2 className="footer-heading">{isSv ? "Genvägar" : "Shortcuts"}</h2>
-            <ul className="footer-link-list">
-              <li>
-                <span className="footer-kbd">
-                  <kbd>⌘K</kbd> {isSv ? "Kommandon" : "Commands"}
-                </span>
-              </li>
-              <li>
-                <span className="footer-kbd">
-                  <kbd>⌘N</kbd> {isSv ? "Ny chatt" : "New chat"}
-                </span>
-              </li>
-              <li>
-                <span className="footer-kbd">
-                  <kbd>/</kbd> {isSv ? "Kommandon i fältet" : "Commands in the field"}
-                </span>
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <h2 className="footer-heading">{isSv ? "Information" : "Information"}</h2>
-            <ul className="footer-link-list">
-              <li>
-                <a href="/logo" className="footer-link">
-              Logo Lab
-            </a>
-            <a href="/legal/privacy">{isSv ? "Integritetspolicy" : "Privacy policy"}</a>
-              </li>
-              <li>
-                <a href="/legal/terms">{isSv ? "Användarvillkor" : "Terms of service"}</a>
-              </li>
-              <li>
-                <a href="/legal/cookies">{isSv ? "Cookiepolicy" : "Cookie policy"}</a>
-              </li>
-              <li>
-                <a href="mailto:Stilleinc@hotmail.com">{isSv ? "Kontakta oss" : "Contact"}</a>
-              </li>
-            </ul>
-          </div>
-        </div>
-
-        <div className="footer-bottom mt-12 flex flex-col gap-3 border-t border-white/[0.07] pt-5 sm:flex-row sm:items-center sm:justify-between">
-          <p className="flex items-center gap-2">
-            <StilledevMark size={16} />
-            © 2026 BudAI · {isSv ? "av " : "by "}
-            <StilledevLink className="!text-white/60 hover:!text-white" />
-          </p>
-          <div className="flex items-center gap-4">
-            <p>{isSv ? "Preview först. Vi bygger vidare." : "Preview first. Still building."}</p>
-            <a href={hrefFor("#home")} className="footer-top" aria-label={isSv ? "Till toppen" : "Back to top"}>
-              <ArrowUp className="h-3.5 w-3.5" />
-            </a>
+          <div className="footer-meta">
+            <span>© {new Date().getFullYear()} BudAI</span>
+            <span className="footer-meta-sep" aria-hidden />
+            <span className="inline-flex items-center gap-1.5">
+              <Github className="h-3.5 w-3.5" />
+              {isSv ? "Byggd i Kista, Stockholm" : "Built in Kista, Stockholm"}
+            </span>
           </div>
         </div>
       </div>

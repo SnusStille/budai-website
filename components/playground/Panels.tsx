@@ -27,7 +27,6 @@ import Markdown from "./Markdown";
 import type { AccentId, ChatMessage } from "@/lib/playground/types";
 import {
   ACCENTS,
-  EFFORT_OPTIONS,
   LIBRARY_CATEGORIES,
   LIBRARY_PROMPTS,
   PERSONAS,
@@ -493,7 +492,6 @@ export function SettingsPanel({
   reduceEffects,
   persona,
   style,
-  effort,
   answerLang,
   onAccent,
   onSound,
@@ -502,7 +500,6 @@ export function SettingsPanel({
   onReduceEffects,
   onPersona,
   onStyle,
-  onEffort,
   onAnswerLang,
   customInstructions,
   onCustomInstructions,
@@ -517,7 +514,6 @@ export function SettingsPanel({
   reduceEffects: boolean;
   persona: string;
   style: string;
-  effort: string;
   answerLang: Lang;
   onAccent: (accent: AccentId) => void;
   onSound: (value: boolean) => void;
@@ -526,7 +522,6 @@ export function SettingsPanel({
   onReduceEffects: (value: boolean) => void;
   onPersona: (value: string) => void;
   onStyle: (value: string) => void;
-  onEffort: (value: string) => void;
   onAnswerLang: (value: Lang) => void;
   customInstructions: string;
   onCustomInstructions: (value: string) => void;
@@ -578,20 +573,6 @@ export function SettingsPanel({
           {STYLE_OPTIONS.map((s) => (
             <button key={s.id} type="button" onClick={() => onStyle(s.id)} className={`pgx-chip ${s.id === style ? "is-active" : ""}`}>
               {s.label[lang]}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="pgx-settings-section">
-        <span className="pgx-settings-label">
-          <Gauge className="h-3.5 w-3.5" />
-          {isSv ? "Djup" : "Depth"}
-        </span>
-        <div className="pgx-chip-row">
-          {EFFORT_OPTIONS.map((e) => (
-            <button key={e.id} type="button" onClick={() => onEffort(e.id)} className={`pgx-chip ${e.id === effort ? "is-active" : ""}`}>
-              {e.label[lang]}
             </button>
           ))}
         </div>

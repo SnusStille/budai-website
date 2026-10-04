@@ -15,7 +15,7 @@ export default function AboutPage() {
     <main id="main-content" className="site-page relative min-h-screen overflow-x-clip bg-background text-white">
       <SiteAmbient />
       <Navbar />
-      <div className="relative z-10">
+      <div className="relative z-10 pt-[70px] lg:pt-[76px]">
         <AboutBudAI headingLevel="h1" />
         <Footer />
       </div>

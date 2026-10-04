@@ -1,33 +1,31 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, Command, Globe2, Menu, X } from "lucide-react";
-import { BudAIWordmark } from "@/components/ui/BudAILogo";
 import LiveMark from "@/components/logo/LiveMark";
 import { useLang } from "@/components/ui/LanguageContext";
 
+/** Minimal nav: the product, who we are, and how to get in early. Nothing else. */
 export default function Navbar() {
-  const { lang, setLang, t } = useLang();
+  const { lang, setLang } = useLang();
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [active, setActive] = useState<string>("home");
   const [mobileOpen, setMobileOpen] = useState(false);
   const isSv = lang === "sv";
-  const onHome = pathname === "/";
 
-  // Anchors only resolve on the home page — everywhere else they become routes.
   const links = [
-    { label: t.nav.playground, href: onHome ? "#playground" : "/playground", id: "playground" },
-    { label: isSv ? "Om BudAI" : "About BudAI", href: onHome ? "#about" : "/about", id: "about" },
-    { label: t.nav.waitlist, href: onHome ? "#waitlist" : "/waitlist", id: "waitlist" },
+    { label: "Playground", href: "/" },
+    { label: isSv ? "Om BudAI" : "About", href: "/about" },
+    { label: isSv ? "Väntelista" : "Waitlist", href: "/waitlist" },
   ];
 
   useEffect(() => {
     const onScroll = () => {
-      setScrolled(window.scrollY > 18);
+      setScrolled(window.scrollY > 12);
       const height = document.documentElement.scrollHeight - window.innerHeight;
       setProgress(height > 0 ? Math.min(1, Math.max(0, window.scrollY / height)) : 0);
     };
@@ -41,164 +39,118 @@ export default function Navbar() {
   }, [pathname]);
 
   useEffect(() => {
-    if (!onHome) return;
-    const ids = ["home", "playground", "about", "waitlist"];
-    const sections = ids
-      .map((id) => document.getElementById(id))
-      .filter((node): node is HTMLElement => Boolean(node));
-    if (!sections.length || typeof IntersectionObserver === "undefined") return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visibleEntry = entries
-          .filter((entry) => entry.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-        if (visibleEntry?.target?.id) setActive(visibleEntry.target.id);
-      },
-      { rootMargin: "-45% 0px -45% 0px", threshold: [0, 0.2, 0.5, 1] }
-    );
-    sections.forEach((section) => observer.observe(section));
-    return () => observer.disconnect();
-  }, [onHome]);
-
-  useEffect(() => {
-    if (!mobileOpen) return;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setMobileOpen(false);
-    };
-    window.addEventListener("keydown", onKeyDown);
+    document.body.style.overflow = mobileOpen ? "hidden" : "";
     return () => {
-      document.body.style.overflow = previousOverflow;
-      window.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = "";
     };
   }, [mobileOpen]);
 
-  const closeMenu = () => setMobileOpen(false);
-
   return (
-    <>
-      <motion.header
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-        className={`site-nav ${scrolled ? "site-nav--scrolled" : ""}`}
-      >
-        <div className="site-nav-inner">
-          <a href="/" className="site-brand" aria-label="BudAI home">
-            <LiveMark px={58} />
-            <span className="site-brand-word">
-              Bud<span>AI</span>
-            </span>
-          </a>
+    <header className={`site-nav ${scrolled ? "site-nav--scrolled" : ""}`}>
+      <div className="site-nav-inner">
+        <Link href="/" className="site-brand" aria-label="BudAI — home">
+          <LiveMark size="sm" />
+          <span className="site-brand-word">
+            Bud<span>AI</span>
+          </span>
+          <span className="site-brand-tag">{isSv ? "PREVIEW" : "PREVIEW"}</span>
+        </Link>
 
-          <nav className="site-nav-links" aria-label={isSv ? "Huvudmeny" : "Main navigation"}>
-            {links.map((link) => (
-              <a
+        <nav className="site-nav-links" aria-label={isSv ? "Huvudmeny" : "Main navigation"}>
+          {links.map((link) => {
+            const active = link.href === "/" ? pathname === "/" : pathname.startsWith(link.href);
+            return (
+              <Link
                 key={link.href}
                 href={link.href}
-                className={active === link.id ? "is-active" : ""}
-                aria-current={active === link.id ? "true" : undefined}
+                className={active ? "is-active" : ""}
+                aria-current={active ? "page" : undefined}
               >
                 {link.label}
-              </a>
-            ))}
-          </nav>
+              </Link>
+            );
+          })}
+        </nav>
 
-          <div className="site-nav-actions">
-            <button
-              type="button"
-              onClick={() => window.dispatchEvent(new Event("budai:palette"))}
-              className="nav-kbd-hint hidden xl:inline-flex"
-              title={isSv ? "Snabbkommandon (⌘K)" : "Quick actions (⌘K)"}
-              aria-label={isSv ? "Öppna snabbkommandon" : "Open quick actions"}
-            >
-              <Command className="h-3 w-3" />
-              <span className="font-mono text-[10px]">⌘K</span>
-            </button>
-            <div className="language-switch" role="group" aria-label={isSv ? "Välj språk" : "Choose language"}>
-              {(["en", "sv"] as const).map((code) => (
-                <button key={code} type="button" aria-pressed={lang === code} onClick={() => setLang(code)}>
-                  {code.toUpperCase()}
-                </button>
-              ))}
-            </div>
-            <a href={onHome ? "#waitlist" : "/waitlist"} className="nav-cta">
-              <span>{t.nav.requestAccess}</span>
-              <span className="nav-cta-badge">10%</span>
-              <ArrowRight className="h-3.5 w-3.5" />
-            </a>
-            <button
-              type="button"
-              onClick={() => setMobileOpen((open) => !open)}
-              className="mobile-menu-button"
-              aria-label={mobileOpen ? (isSv ? "Stäng meny" : "Close menu") : isSv ? "Öppna meny" : "Open menu"}
-              aria-expanded={mobileOpen}
-              aria-controls="mobile-navigation"
-            >
-              {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </button>
+        <div className="site-nav-actions">
+          <button
+            type="button"
+            onClick={() => window.dispatchEvent(new Event("budai:palette"))}
+            className="nav-kbd-hint hidden xl:inline-flex"
+            title={isSv ? "Snabbkommandon (⌘K)" : "Quick actions (⌘K)"}
+            aria-label={isSv ? "Öppna snabbkommandon" : "Open quick actions"}
+          >
+            <Command className="h-3 w-3" />
+            <span className="font-mono text-[10px]">⌘K</span>
+          </button>
+
+          <div className="language-switch" role="group" aria-label={isSv ? "Välj språk" : "Choose language"}>
+            {(["en", "sv"] as const).map((code) => (
+              <button key={code} type="button" aria-pressed={lang === code} onClick={() => setLang(code)}>
+                {code.toUpperCase()}
+              </button>
+            ))}
           </div>
+
+          <Link href="/waitlist" className="nav-cta hidden sm:inline-flex">
+            <span>{isSv ? "Early access" : "Early access"}</span>
+            <span className="nav-cta-badge">10%</span>
+            <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
+
+          <button
+            type="button"
+            onClick={() => setMobileOpen((open) => !open)}
+            className="mobile-menu-button lg:hidden"
+            aria-label={mobileOpen ? (isSv ? "Stäng meny" : "Close menu") : isSv ? "Öppna meny" : "Open menu"}
+            aria-expanded={mobileOpen}
+          >
+            {mobileOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+          </button>
         </div>
-        <span className="nav-progress" aria-hidden>
-          <span className="nav-progress-fill" style={{ transform: `scaleX(${progress})` }} />
-        </span>
-      </motion.header>
+      </div>
+
+      <span className="site-nav-progress" aria-hidden>
+        <span style={{ transform: `scaleX(${progress})` }} />
+      </span>
 
       <AnimatePresence>
         {mobileOpen && (
-          <motion.div
-            className="mobile-nav-overlay"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+          <motion.nav
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.18 }}
+            className="site-nav-mobile"
+            aria-label={isSv ? "Mobilmeny" : "Mobile menu"}
           >
+            {links.map((link) => (
+              <Link key={link.href} href={link.href} className="mobile-nav-link" onClick={() => setMobileOpen(false)}>
+                {link.label}
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            ))}
             <button
               type="button"
-              className="mobile-nav-backdrop"
-              onClick={closeMenu}
-              aria-label={isSv ? "Stäng meny" : "Close menu"}
-            />
-            <motion.nav
-              id="mobile-navigation"
-              aria-label={isSv ? "Mobilmeny" : "Mobile navigation"}
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.18 }}
-              className="mobile-nav-panel"
+              onClick={() => {
+                setMobileOpen(false);
+                setLang(lang === "sv" ? "en" : "sv");
+              }}
+              className="mobile-nav-link"
             >
-              <div className="mobile-nav-brand">
-                <BudAIWordmark size="sm" variant="dark" />
-              </div>
-              <div className="mobile-nav-title">
-                <span>{isSv ? "Upptäck BudAI" : "Explore BudAI"}</span>
+              <span className="inline-flex items-center gap-2">
                 <Globe2 className="h-4 w-4" />
-              </div>
-              {links.map((link) => (
-                <a key={link.href} href={link.href} onClick={closeMenu} className="mobile-nav-link">
-                  {link.label}
-                  <ArrowRight className="h-4 w-4" />
-                </a>
-              ))}
-              <div className="mobile-language-row">
-                <span>{isSv ? "Språk" : "Language"}</span>
-                <div className="language-switch" role="group" aria-label={isSv ? "Välj språk" : "Choose language"}>
-                  {(["en", "sv"] as const).map((code) => (
-                    <button key={code} type="button" aria-pressed={lang === code} onClick={() => setLang(code)}>
-                      {code.toUpperCase()}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <a href={onHome ? "#waitlist" : "/waitlist"} onClick={closeMenu} className="button-primary mobile-nav-cta">
-                <span>{isSv ? "Gå med — lås 10 %" : "Join — lock in 10%"}</span>
-                <ArrowRight className="h-4 w-4" />
-              </a>
-            </motion.nav>
-          </motion.div>
+                {lang === "sv" ? "English" : "Svenska"}
+              </span>
+              <span className="font-mono text-[11px] uppercase text-white/40">{lang}</span>
+            </button>
+            <Link href="/waitlist" className="button-primary mobile-nav-cta" onClick={() => setMobileOpen(false)}>
+              {isSv ? "Early access — 10 %" : "Early access — 10%"}
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </motion.nav>
         )}
       </AnimatePresence>
-    </>
+    </header>
   );
 }

@@ -1,10 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowRight, CircleDot, Compass, Flag, HelpCircle } from "lucide-react";
+import { ArrowRight, CircleDot, Flag, HelpCircle, Sparkles } from "lucide-react";
 import { useLang } from "@/components/ui/LanguageContext";
 
-/** About BudAI — four short answers, nothing more. */
+/** About BudAI — three short answers, nothing more. */
 export default function AboutBudAI({ headingLevel = "h2" }: { headingLevel?: "h1" | "h2" } = {}) {
   const Heading = headingLevel;
   const { lang } = useLang();
@@ -22,26 +23,19 @@ export default function AboutBudAI({ headingLevel = "h2" }: { headingLevel?: "h1
     {
       id: "why",
       icon: <Flag className="h-4 w-4" />,
+      kicker: isSv ? "Varför BudAI?" : "Why BudAI?",
       body: isSv
-        ? "De flesta AI-verktyg känns engelska först och svenska i efterhand. Vi tycker att svenska arbetsdagar förtjänar ett verktyg som förstår dem från början."
-        : "Most AI tools feel English first and Swedish as an afterthought. We think Swedish workdays deserve a tool that understands them from the start.",
-      kicker: isSv ? "Varför finns den?" : "Why does it exist?",
-    },
-    {
-      id: "vision",
-      icon: <Compass className="h-4 w-4" />,
-      kicker: isSv ? "Vad är visionen?" : "What is the vision?",
-      body: isSv
-        ? "Ett verktyg du faktiskt öppnar varje dag: snabbt, tydligt och på ditt språk — utan att kännas som ännu ett system att lära sig."
-        : "A tool you actually open every day: fast, clear and in your language — without feeling like yet another system to learn.",
+        ? "De flesta AI-verktyg känns engelska först och svenska i efterhand. Vi tycker att svenska arbetsdagar förtjänar ett verktyg som förstår dem från början — utan att kännas som ännu ett system att lära sig."
+        : "Most AI tools feel English first and Swedish as an afterthought. We think Swedish workdays deserve a tool that understands them from the start — without feeling like yet another system to learn.",
     },
     {
       id: "now",
       icon: <CircleDot className="h-4 w-4" />,
       kicker: isSv ? "Var är vi nu?" : "Where are we now?",
+      badge: isSv ? "Förhandsvisning" : "Preview",
       body: isSv
-        ? "I tidig förhandsvisning. Playground är öppen för alla, funktioner läggs till löpande, och de första 10 % får early access och founding-rabatt."
-        : "Early preview. The Playground is open to everyone, features land continuously, and the first 10% get early access and a founding discount.",
+        ? "I tidig förhandsvisning. Playground är öppen för alla redan nu, funktioner läggs till löpande — och väntelistan ger dig 10 % rabatt vid lansering."
+        : "In early preview. The Playground is open to everyone today, features land continuously — and the waitlist reserves 10% off at launch.",
     },
   ];
 
@@ -66,7 +60,10 @@ export default function AboutBudAI({ headingLevel = "h2" }: { headingLevel?: "h1
               className="about-block"
             >
               <span className="about-block-icon">{block.icon}</span>
-              <h3>{block.kicker}</h3>
+              <h3>
+                {block.kicker}
+                {"badge" in block && block.badge ? <span className="about-block-badge">{block.badge}</span> : null}
+              </h3>
               <p>{block.body}</p>
             </motion.article>
           ))}
@@ -78,10 +75,16 @@ export default function AboutBudAI({ headingLevel = "h2" }: { headingLevel?: "h1
               ? "BudAI är under utveckling. Vi lovar inget vi inte kan hålla — men du kan testa allt som redan fungerar."
               : "BudAI is in development. We won't promise what we can't hold — but everything that already works is yours to try."}
           </p>
-          <a href="#playground" className="about-link">
-            {isSv ? "Till Playground" : "Go to the Playground"}
-            <ArrowRight className="h-3.5 w-3.5" />
-          </a>
+          <div className="about-cta-row">
+            <Link href="/" className="about-link">
+              {isSv ? "Till Playground" : "Go to the Playground"}
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+            <Link href="/waitlist" className="about-link about-link--muted">
+              <Sparkles className="h-3.5 w-3.5" />
+              {isSv ? "Gå med i väntelistan" : "Join the waitlist"}
+            </Link>
+          </div>
         </div>
       </div>
     </section>

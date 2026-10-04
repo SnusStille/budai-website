@@ -69,12 +69,8 @@ export default function IntroScreen() {
 
       <div className="intro-center">
         <div className="intro-mark">
-          <BudAILogo size="xl" animated />
+          <BudAILogo size="xl" animated boot />
         </div>
-
-        <p className="intro-wordmark" aria-hidden="true">
-          Bud<span>AI</span>
-        </p>
 
         <p className="intro-status">
           <span className={`intro-status-dot ${phase === "ready" ? "is-ready" : ""}`} aria-hidden />

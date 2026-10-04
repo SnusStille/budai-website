@@ -60,7 +60,7 @@ export const PERSONAS: Persona[] = [
 /* ── Response styles ─────────────────────────────────────── */
 
 export const STYLE_OPTIONS: { id: StyleId; label: Record<Lang, string>; hint: Record<Lang, string> }[] = [
-  { id: "balanced", label: { sv: "Balanserad", en: "Balanced" }, hint: { sv: "Lagom djup", en: "Even depth" } },
+  { id: "balanced", label: { sv: "Naturlig", en: "Natural" }, hint: { sv: "BudAIs vanliga ton", en: "BudAI's default voice" } },
   { id: "concise", label: { sv: "Kort", en: "Short" }, hint: { sv: "Svar i 60–110 ord", en: "60–110 words" } },
   { id: "creative", label: { sv: "Kreativ", en: "Creative" }, hint: { sv: "Lekfull och bildrik", en: "Playful, vivid" } },
   { id: "precise", label: { sv: "Exakt", en: "Precise" }, hint: { sv: "Fakta och osäkerhet", en: "Facts & uncertainty" } },
@@ -581,10 +581,52 @@ export const SPARKS: Record<Lang, string[]> = {
   ],
 };
 
-export const GREETINGS: Record<Lang, string[]> = {
-  sv: ["Hej", "Välkommen tillbaka", "Redo att bygga något", "Dags att få saker gjorda"],
-  en: ["Hey", "Welcome back", "Ready to build something", "Time to get things done"],
-};
+/**
+ * The four starters on the empty Playground.
+ * Deliberately four, not sixteen: write, explain, brainstorm, plan.
+ */
+export const STARTERS: LibraryPrompt[] = [
+  {
+    id: "write",
+    category: "write",
+    icon: "✎",
+    title: { sv: "Skriv", en: "Write" },
+    body: {
+      sv: "Skriv ett kort och tydligt utkast till ett mejl där jag tackar nej till ett möte och föreslår ett kortare samtal i stället.",
+      en: "Write a short, clear draft of an email declining a meeting and proposing a shorter call instead.",
+    },
+  },
+  {
+    id: "explain",
+    category: "think",
+    icon: "◇",
+    title: { sv: "Förklara", en: "Explain" },
+    body: {
+      sv: "Förklara skillnaden mellan en språkmodell och en vanlig sökmotor, som om jag vore ny på området. Använd ett vardagligt exempel.",
+      en: "Explain the difference between a language model and a regular search engine, as if I were new to it. Use one everyday example.",
+    },
+  },
+  {
+    id: "brainstorm",
+    category: "play",
+    icon: "✳",
+    title: { sv: "Brainstorma", en: "Brainstorm" },
+    body: {
+      sv: "Ge mig åtta idéer på namn till ett litet svenskt AI-verktyg för mötesanteckningar. Kort lista, en rad per idé.",
+      en: "Give me eight possible names for a small Swedish AI tool for meeting notes. Short list, one line each.",
+    },
+  },
+  {
+    id: "plan",
+    category: "work",
+    icon: "◷",
+    title: { sv: "Planera", en: "Plan" },
+    body: {
+      sv: "Lägg upp en plan för min arbetsdag i morgon: tre prioriterade uppgifter, två möten och en timme fokustid. Håll den kort.",
+      en: "Lay out a plan for my workday tomorrow: three priorities, two meetings and one hour of focus time. Keep it short.",
+    },
+  },
+];
 
 export const PLACEHOLDERS: Record<Lang, string[]> = {
   sv: [

@@ -1,45 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import BudAILogo from "@/components/ui/BudAILogo";
-import { LOGO_CANDIDATES } from "@/components/logo/candidates";
-
-export const LIVE_LOGO_KEY = "budai.logo.live";
+import BudAILogo, { type LogoSize } from "@/components/ui/BudAILogo";
+import { onBrainActivity } from "@/lib/logo/activity";
 
 /**
- * The mark used in the navigation. Defaults to the shipped BudAI B-mark —
- * unless a Logo Lab challenger has been switched on for a live trial, in which
- * case that candidate is drawn instead (identical SVG source, zero drift).
+ * The mark as it appears in the chrome. It listens for the Playground's
+ * "BudAI is working" signal and shifts into its thinking state — so the logo
+ * itself reacts while the AI generates, anywhere on the site.
  */
-export default function LiveMark({ px = 58 }: { px?: number }) {
-  const [liveId, setLiveId] = useState<string | null>(null);
+export default function LiveMark({ size = "sm" }: { size?: LogoSize }) {
+  const [busy, setBusy] = useState(false);
 
-  useEffect(() => {
-    const read = () => {
-      try {
-        const stored = window.localStorage.getItem(LIVE_LOGO_KEY);
-        setLiveId(stored && LOGO_CANDIDATES.some((c) => c.id === stored) ? stored : null);
-      } catch {
-        setLiveId(null);
-      }
-    };
-    read();
-    window.addEventListener("storage", read);
-    window.addEventListener("budai:logo", read);
-    return () => {
-      window.removeEventListener("storage", read);
-      window.removeEventListener("budai:logo", read);
-    };
-  }, []);
+  useEffect(() => onBrainActivity(setBusy), []);
 
-  const candidate = liveId ? LOGO_CANDIDATES.find((c) => c.id === liveId) : null;
-  if (!candidate) return <BudAILogo size="sm" animated motion="idle" />;
-
-  return (
-    <span
-      className="live-mark"
-      aria-label={`BudAI — ${candidate.name} (Logo Lab trial)`}
-      dangerouslySetInnerHTML={{ __html: candidate.build(px, "dark") }}
-    />
-  );
+  return <BudAILogo size={size} animated motion={busy ? "thinking" : "idle"} interactive />
+;
 }

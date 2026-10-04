@@ -3,7 +3,7 @@ import { ImageResponse } from "next/og";
 /* Generated social card — drawn from the same tokens as the site so it can't drift. */
 
 export const runtime = "edge";
-export const alt = "BudAI — AI work assistant in early preview, built in Sweden";
+export const alt = "BudAI — an AI work assistant for Swedish and English, in early preview";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -39,21 +39,27 @@ export default function OpengraphImage() {
                 background: "rgba(135,233,223,0.07)",
               }}
             >
-              <svg width="58" height="58" viewBox="0 0 64 64">
-                {/* BudAI B-mark — one letterform, two arcs, one node */}
+              <svg width="62" height="62" viewBox="0 0 48 48">
+                {/* BudAI mark — one unbroken line that becomes a B and opens like a bud */}
                 <defs>
-                  <linearGradient id="ogB" x1="14" y1="8" x2="50" y2="56" gradientUnits="userSpaceOnUse">
-                    <stop offset="0" stopColor="#8ef0e2" />
-                    <stop offset="0.46" stopColor="#3ee0cd" />
-                    <stop offset="1" stopColor="#9a86ff" />
+                  <linearGradient id="ogB" x1="6" y1="44" x2="42" y2="4" gradientUnits="userSpaceOnUse">
+                    <stop offset="0" stopColor="#22d3ee" />
+                    <stop offset="0.52" stopColor="#818cf8" />
+                    <stop offset="1" stopColor="#f0abfc" />
                   </linearGradient>
                 </defs>
-                <ellipse cx="33" cy="32" rx="26" ry="24" fill="none" stroke="url(#ogB)" strokeWidth="0.9" strokeDasharray="34 118" opacity="0.55" />
-                <path d="M21 13 V51" stroke="#eafffc" strokeWidth="6.2" strokeLinecap="round" fill="none" />
-                <path d="M21 13 H32.5 a11.5 11.5 0 0 1 0 23 H21" stroke="url(#ogB)" strokeWidth="6.2" strokeLinecap="round" fill="none" />
-                <path d="M21 32 H32.5 a11.5 11.5 0 0 1 0 23 H21" stroke="url(#ogB)" strokeWidth="6.2" strokeLinecap="round" opacity="0.9" fill="none" />
-                <circle cx="33" cy="32" r="3.2" fill="#e8fffd" />
-                <circle cx="59" cy="26" r="3" fill="#8ef0e2" />
+                <path
+                  d="M16 40 V10 C23.2 8 29 11.2 29.8 16.4 C30.6 21.6 26.4 24.6 20 25 C28.2 25.4 33 29 33 33.8 C33 38 28 40.2 22.4 40"
+                  fill="none"
+                  stroke="url(#ogB)"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <circle cx="16" cy="10" r="2.1" fill="#e0e7ff" />
+                <circle cx="20" cy="25" r="1.75" fill="#e0e7ff" />
+                <circle cx="22.4" cy="40" r="1.75" fill="#e0e7ff" />
+                <circle cx="16" cy="40" r="1.75" fill="#e0e7ff" />
               </svg>
             </div>
             <div style={{ display: "flex", flexDirection: "column" }}>
@@ -84,19 +90,19 @@ export default function OpengraphImage() {
         {/* headline */}
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
           <span style={{ fontSize: 66, fontWeight: 700, color: "#ffffff", lineHeight: 1.06, letterSpacing: -2 }}>
-            Try BudAI right now.
+            Ask BudAI anything.
           </span>
           <span style={{ fontSize: 50, fontWeight: 700, color: "#87e9df", lineHeight: 1.06, letterSpacing: -2 }}>
             An AI work assistant for Swedish and English.
           </span>
           <span style={{ fontSize: 26, color: "rgba(255,255,255,0.55)", marginTop: 2 }}>
-            Early preview — the Playground is open, no account needed.
+            Early preview — the Playground is home, no account needed.
           </span>
         </div>
 
         {/* footer chips */}
         <div style={{ display: "flex", gap: 14 }}>
-          {["Live Playground", "Swedish + English", "No account needed"].map((chip) => (
+          {["Open Playground", "Swedish + English", "No account needed"].map((chip) => (
             <span
               key={chip}
               style={{

@@ -1,80 +1,100 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
+import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
-import {
-  AlertTriangle,
-  ArrowRight,
-  BadgePercent,
-  Building2,
-  Check,
-  ChevronDown,
-  Copy,
-  Linkedin,
-  Mail,
-  MapPin,
-  Send,
-  Share2,
-  Sparkles,
-  Ticket,
-  User,
-  Users,
-  Zap,
-} from "lucide-react";
+import { AlertTriangle, ArrowRight, BadgePercent, Check, Copy, Mail, Sparkles } from "lucide-react";
+import BudAILogo from "@/components/ui/BudAILogo";
 import { addWaitlistUser, getWaitlistCount } from "@/lib/data";
 import { useLang } from "@/components/ui/LanguageContext";
+import type { Lang } from "@/lib/i18n";
 
-type Interest = "work" | "write" | "build" | "learn";
-
-/** The launch discount code given to everyone on the waitlist. */
+/** The launch discount reserved for everyone on the list. */
 const DISCOUNT_CODE = "BUDAI-EARLY-10";
-/** Founding seats we are giving away at each stage of the preview. */
-const FOUNDING_SEATS = 250;
-/** Reserved seats shown on the founding-seat bar (team-controlled baseline). */
-const SEATS_TAKEN_BASELINE = 41;
 
-function referralFromUrl(): string | null {
-  if (typeof window === "undefined") return null;
-  const ref = new URLSearchParams(window.location.search).get("ref");
-  return ref ? ref.slice(0, 60) : null;
-}
-
-function inviteCode(email: string): string {
-  let hash = 0;
-  const input = `${email}|budai`;
-  for (let i = 0; i < input.length; i++) {
-    hash = (hash * 31 + input.charCodeAt(i)) % 99991;
-  }
-  return `BUD${String(hash).padStart(5, "0")}`;
-}
+const copy = {
+  sv: {
+    badge: "Tidig åtkomst",
+    title: "Bli först att använda BudAI.",
+    lede: "Gå med i listan för tidig åtkomst och få 10 % rabatt när BudAI lanseras.",
+    email: "din@epost.se",
+    emailLabel: "E-postadress",
+    submit: "Gå med i väntelistan",
+    discount: "10 % rabatt vid lansering",
+    noSpam: "Ingen spam. Bara uppdateringar om BudAI.",
+    countPrefix: "med i listan",
+    successTitle: "Du är med.",
+    successNote: "Din rabatt på 10 % vid lansering är reserverad.",
+    codeLabel: "Din kod",
+    copyCode: "Kopiera kod",
+    copied: "Kopierad",
+    nextTitle: "Vad händer nu?",
+    nextBody:
+      "Vi bygger BudAI i öppenhet och släpper in fler i taget. Du får ett mejl när din plats är redo — ingen betalning, inget kort.",
+    backToPlayground: "Till Playground",
+    errorInvalid: "Kontrollera e-postadressen och försök igen.",
+    errorGeneric: "Något gick fel. Försök igen om en liten stund.",
+    perksTitle: "Det här får du",
+    perks: [
+      { title: "Tidig åtkomst", body: "Du släpps in innan den publika lanseringen." },
+      { title: "10 % vid lansering", body: "Koden reserveras åt dig, utan kort eller betalning nu." },
+      { title: "Byggd med dig", body: "Du kan tycka till om det som byggs härnäst." },
+    ],
+    statusTitle: "Just nu i förhandsvisning",
+    statusBody: "BudAI är i tidig förhandsvisning. Playground är öppen — väntelistan ger dig rabatt och tidig åtkomst.",
+    openPlayground: "Öppna Playground",
+  },
+  en: {
+    badge: "Early access",
+    title: "Be first to use BudAI.",
+    lede: "Join the early access list and get 10% off when BudAI launches.",
+    email: "you@company.com",
+    emailLabel: "Email address",
+    submit: "Join the waitlist",
+    discount: "10% launch discount",
+    noSpam: "No spam. Just BudAI updates.",
+    countPrefix: "on the list",
+    successTitle: "You're in.",
+    successNote: "Your 10% launch discount is reserved.",
+    codeLabel: "Your code",
+    copyCode: "Copy code",
+    copied: "Copied",
+    nextTitle: "What happens next?",
+    nextBody:
+      "We are building BudAI in the open and let people in a few at a time. You get an email when your spot is ready — no payment, no card.",
+    backToPlayground: "Back to the Playground",
+    errorInvalid: "Check the email address and try again.",
+    errorGeneric: "Something went wrong. Try again in a moment.",
+    perksTitle: "What you'll get",
+    perks: [
+      { title: "Early access", body: "You get in before the public launch." },
+      { title: "10% off at launch", body: "The code is reserved for you — no card, no payment now." },
+      { title: "Built with you", body: "You get a say in what we build next." },
+    ],
+    statusTitle: "Currently in preview",
+    statusBody: "BudAI is in early preview. The Playground is open — the waitlist gives you the discount and early access.",
+    openPlayground: "Open the Playground",
+  },
+} as const;
 
 export default function Waitlist({ headingLevel = "h2" }: { headingLevel?: "h1" | "h2" } = {}) {
   const Heading = headingLevel;
   const { lang } = useLang();
-  const isSv = lang === "sv";
+  const t = copy[lang === "sv" ? "sv" : "en"];
 
-  const [accountType, setAccountType] = useState<"individual" | "company">("individual");
-  const [interest, setInterest] = useState<Interest>("work");
-  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
+  const [done, setDone] = useState(false);
   const [error, setError] = useState("");
-  const [copied, setCopied] = useState<"code" | "link" | null>(null);
   const [count, setCount] = useState<number | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
-  const [faqOpen, setFaqOpen] = useState<string | null>(null);
-
-  const showToast = (kind: "ok" | "warn", text: string) => {
-    setToast(text);
-    window.setTimeout(() => setToast(null), 3200);
-  };
+  const [copied, setCopied] = useState<"code" | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     getWaitlistCount()
       .then((value) => {
-        if (!cancelled) setCount(value);
+        // only ever show a number we actually have
+        if (!cancelled) setCount(value > 0 ? value : null);
       })
       .catch(() => {
         if (!cancelled) setCount(null);
@@ -84,649 +104,236 @@ export default function Waitlist({ headingLevel = "h2" }: { headingLevel?: "h1" 
     };
   }, []);
 
-  const perks = isSv
-    ? [
-        { icon: <BadgePercent className="h-4 w-4" />, title: "10 % founding-rabatt", text: "För dig som går med nu, när BudAI lanserar betalda planer." },
-        { icon: <Ticket className="h-4 w-4" />, title: "Early access", text: "Inbjudan till nya preview-släpp före alla andra i listan." },
-        { icon: <Zap className="h-4 w-4" />, title: "Nya funktioner först", text: "Playground-uppdateringar och experiment innan de blir publika." },
-        { icon: <Users className="h-4 w-4" />, title: "Direktlinje till teamet", text: "Din feedback går rakt in i roadmappen — inte in i ett tomrum." },
-      ]
-    : [
-        { icon: <BadgePercent className="h-4 w-4" />, title: "10% founding discount", text: "For everyone joining now, when BudAI ships paid plans." },
-        { icon: <Ticket className="h-4 w-4" />, title: "Early access", text: "An invite to new preview releases ahead of the rest of the list." },
-        { icon: <Zap className="h-4 w-4" />, title: "New features first", text: "Playground updates and experiments before they go public." },
-        { icon: <Users className="h-4 w-4" />, title: "A direct line to the team", text: "Your feedback lands on the roadmap — not in a void." },
-      ];
-
-  const interestOptions: { id: Interest; label: string }[] = useMemo(
-    () =>
-      isSv
-        ? [
-            { id: "work", label: "Jobbet & vardagen" },
-            { id: "write", label: "Skriva & innehåll" },
-            { id: "build", label: "Utveckling & kod" },
-            { id: "learn", label: "Lära & utforska" },
-          ]
-        : [
-            { id: "work", label: "Work & everyday tasks" },
-            { id: "write", label: "Writing & content" },
-            { id: "build", label: "Building & code" },
-            { id: "learn", label: "Learning & exploring" },
-          ],
-    [isSv]
-  );
-
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const submit = async (event: React.FormEvent) => {
     event.preventDefault();
-    const cleanEmail = email.trim().toLowerCase();
-    if (!cleanEmail) return;
-
-    setLoading(true);
+    if (loading) return;
+    const value = email.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+      setError(t.errorInvalid);
+      return;
+    }
     setError("");
-
+    setLoading(true);
     try {
       await addWaitlistUser({
-        name: name.trim() || cleanEmail.split("@")[0],
-        email: cleanEmail,
-        account_type: accountType,
+        name: "",
+        email: value,
+        account_type: "individual",
         company: null,
         industry: null,
         employees: null,
-        interest,
+        interest: "early-access",
         discount_code: DISCOUNT_CODE,
         notes: null,
-        source: referralFromUrl() ? `referral:${referralFromUrl()}` : "landing",
+        source: "waitlist-page",
         priority: null,
         last_contacted_at: null,
-        tags: [accountType, "early-access", "founding-10", interest],
+        tags: ["early-access"],
       });
-      setSubmitted(true);
-      setCount((value) => (value === null ? value : value + 1));
-    } catch (submissionError: unknown) {
-      const err = submissionError as { message?: string; code?: string };
-      const message = (err.message || "").toLowerCase();
-      if (err.code === "23505" || message.includes("duplicate") || message.includes("unique") || message.includes("already")) {
-        // Already on the list — show the same personal code instead of an error.
-        setSubmitted(true);
-        showToast(
-          "ok",
-          isSv ? "Du står redan på listan — här är din kod." : "You're already on the list — here's your code."
-        );
-      } else if (message.includes("network") || message.includes("fetch")) {
-        setError(isSv ? "Nätverksfel. Kontrollera anslutningen och försök igen." : "Network error. Check your connection and try again.");
-      } else {
-        setError(isSv ? "Det gick inte att spara just nu. Försök igen om en stund." : "We couldn't save this right now. Please try again shortly.");
-      }
+      setDone(true);
+      setCount((current) => (current === null ? null : current + 1));
+    } catch {
+      setError(t.errorGeneric);
     } finally {
       setLoading(false);
     }
   };
 
-  const seatsTaken = useMemo(() => {
-    const fromList = count !== null ? Math.min(count, FOUNDING_SEATS) : 0;
-    const base = Math.max(SEATS_TAKEN_BASELINE, fromList);
-    return Math.min(FOUNDING_SEATS, submitted ? base + 1 : base);
-  }, [count, submitted]);
-
-  const faq = useMemo(
-    () => [
-      {
-        q: isSv ? "Vad betyder 10 % founding-rabatt?" : "What does the 10% founding discount mean?",
-        a: isSv
-          ? "Du som står på väntelistan låser 10 % rabatt på alla BudAI-plan så länge du behåller ditt konto. Rabatten kräver inget köp nu — den ligger kvar på ditt konto tills du använder den."
-          : "Everyone on the waitlist locks in 10% off every BudAI plan for as long as you keep your account. Nothing to buy now — the discount stays on your account until you use it.",
-      },
-      {
-        q: isSv ? "Kostar väntelistan något?" : "Does the waitlist cost anything?",
-        a: isSv
-          ? "Nej. Ingen betalning, inget kort. Du lämnar bara din e-post och kan avregistrera dig med ett klick."
-          : "No. No payment, no card. You leave your email and can unsubscribe with one click.",
-      },
-      {
-        q: isSv ? "När får jag tillgång?" : "When do I get access?",
-        a: isSv
-          ? "Playground är öppen redan nu — du kan testa direkt. Founding-gruppen får nya funktioner först, och våra mejl går ut i turordning när varje släpp är redo."
-          : "The Playground is already open — you can try it right away. The founding group gets new features first, and our emails go out in order as each release is ready.",
-      },
-      {
-        q: isSv ? "Vad händer med min data?" : "What happens to my data?",
-        a: isSv
-          ? "Konversationer i Playground stannar i din webbläsare tills du själv sparar dem. Vi använder din e-post för BudAI-uppdateringar, inget annat."
-          : "Playground conversations stay in your browser until you choose to save them. We use your email for BudAI updates, nothing else.",
-      },
-      {
-        q: isSv ? "Kan mitt team eller företag gå med?" : "Can my team or company join?",
-        a: isSv
-          ? "Ja — välj \"Företag\" i formuläret. Founding-rabatten gäller per konto, och vi hjälper gärna till med flera platser."
-          : "Yes — pick \"Company\" in the form. The founding discount applies per account, and we're happy to help with multiple seats.",
-      },
-    ],
-    [isSv]
-  );
-
-  const code = useMemo(() => (email ? inviteCode(email.trim().toLowerCase()) : "BUD00000"), [email]);
-  const inviteLink = useMemo(() => {
-    if (typeof window === "undefined") return "";
-    return `${window.location.origin}${window.location.pathname}?ref=${code}#waitlist`;
-  }, [code]);
-
-  const shareText = useMemo(
-    () =>
-      isSv
-        ? `BudAI är i tidig förhandsvisning — de första 10 % får early access och founding-rabatt. Jag är med, gå med du också:`
-        : `BudAI is in early preview — the first 10% get early access and a founding discount. I'm in, join me:`,
-    [isSv]
-  );
-
-  const shareTargets = useMemo(() => {
-    const url = inviteLink;
-    const encodedText = encodeURIComponent(`${shareText} `);
-    const encodedUrl = encodeURIComponent(url);
-    return [
-      { id: "x", label: "X", href: `https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}` },
-      {
-        id: "linkedin",
-        label: "LinkedIn",
-        href: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`,
-      },
-      { id: "whatsapp", label: "WhatsApp", href: `https://wa.me/?text=${encodedText}${encodedUrl}` },
-      { id: "mail", label: isSv ? "Mejl" : "Email", href: `mailto:?subject=BudAI&body=${encodedText}${encodedUrl}` },
-    ];
-  }, [inviteLink, shareText, isSv]);
-
-  const copy = async (value: string, kind: "code" | "link") => {
+  const copyCode = () => {
     try {
-      await navigator.clipboard.writeText(value);
-      setCopied(kind);
-      window.setTimeout(() => setCopied(null), 1800);
+      void navigator.clipboard.writeText(DISCOUNT_CODE);
+      setCopied("code");
+      window.setTimeout(() => setCopied(null), 2200);
     } catch {
-      /* clipboard unavailable */
+      setCopied(null);
     }
   };
 
   return (
-    <section id="waitlist" className="wl-section relative scroll-mt-24 overflow-hidden">
-      <div className="wl-glow wl-glow--a" aria-hidden="true" />
-      <div className="wl-glow wl-glow--b" aria-hidden="true" />
-      <div className="wl-grid-overlay" aria-hidden="true" />
+    <section className="wl-section px-4 py-14 sm:px-6 sm:py-20" id="waitlist">
+      <span className="wl-glow wl-glow--a" aria-hidden />
+      <span className="wl-glow wl-glow--b" aria-hidden />
 
-      <div className="relative z-10 mx-auto max-w-[80rem] px-5 py-20 sm:px-8 sm:py-24 lg:px-10 lg:py-28">
-        <div className="mx-auto max-w-3xl text-center">
-          <span className="wl-kicker">
-            <Sparkles className="h-3.5 w-3.5" />
-            {isSv ? "Early access" : "Early access"}
+      <div className="relative mx-auto grid w-full max-w-5xl items-center gap-10 lg:grid-cols-[1.05fr_.95fr] lg:gap-14">
+        {/* ── the ask ───────────────────────────────────────────── */}
+        <div>
+          <span className="wl-badge">
+            <Sparkles className="h-3 w-3" />
+            {t.badge}
           </span>
-          <Heading className="wl-title mt-5">
-            {isSv ? "Få early access till BudAI." : "Get early access to BudAI."}
-          </Heading>
-          <p className="wl-offer">
-            <BadgePercent className="h-4 w-4" />
-            {isSv ? "10 % rabatt vid launch" : "10% off at launch"}
-          </p>
-          <p className="mx-auto mt-5 max-w-2xl text-sm leading-relaxed text-white/60 sm:text-base sm:leading-8">
-            {isSv
-              ? "Tidig tillgång till nya släpp, en direkt linje till oss som bygger — och 10 % rabatt när BudAI lanserar betalda planer. Inget kort, ingen kostnad."
-              : "Early access to new releases, a direct line to the people building it — and 10% off when BudAI launches paid plans. No card, no cost."}
-          </p>
-          <div className="wl-progress">
-            <div className="wl-progress-head">
-              <span className="wl-progress-label">
-                <BadgePercent className="h-3.5 w-3.5" />
-                {isSv ? "Founding-platser i den här vågen" : "Founding seats in this wave"}
-              </span>
-              <span className="wl-progress-value">
-                {count !== null ? Math.min(count, FOUNDING_SEATS).toLocaleString("sv-SE") : "—"} / {FOUNDING_SEATS}
-              </span>
-            </div>
-            <div className="wl-progress-track" aria-hidden>
-              <span
-                className="wl-progress-fill"
-                style={{ width: `${count ? Math.min(100, Math.max(4, (count / FOUNDING_SEATS) * 100)) : 4}%` }}
-              />
-            </div>
-            <p className="wl-progress-note">
-              {isSv
-                ? "När vågen är full går nästa grupp in — koden och rabatten stannar hos dig."
-                : "When this wave fills, the next group moves in — your code and discount stay yours."}
-            </p>
-          </div>
 
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-2.5">
-            <span className="wl-stat">
-              <strong>10 %</strong>
-              {isSv ? "founding-rabatt" : "founding discount"}
-            </span>
-            <span className="wl-stat">
-              <strong>{isSv ? "0 kr" : "Free"}</strong>
-              {isSv ? "att gå med" : "to join"}
-            </span>
-            <span className="wl-stat">
-              <strong>SV / EN</strong>
-              {isSv ? "två språk" : "two languages"}
-            </span>
-            {count !== null && count > 0 && (
-              <span className="wl-stat wl-stat--live">
-                <span className="wl-stat-dot" aria-hidden />
-                <strong>{count}</strong>
-                {isSv ? "på listan" : "on the list"}
-              </span>
-            )}
-          </div>
-        </div>
+          <Heading className="wl-title mt-5">{t.title}</Heading>
+          <p className="mt-4 max-w-md text-[15px] leading-relaxed text-white/55">{t.lede}</p>
 
-        <div className="mt-14 grid gap-10 lg:grid-cols-[1fr_1.02fr] lg:items-start lg:gap-14">
-          {/* perks */}
-          <div className="wl-perks">
-            <div className="wl-perk-grid">
-              {perks.map((perk, index) => (
+          <div className="mt-7">
+            <AnimatePresence mode="wait">
+              {done ? (
                 <motion.div
-                  key={perk.title}
-                  initial={{ opacity: 0, y: 14 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: "-60px" }}
-                  transition={{ duration: 0.4, delay: index * 0.06 }}
-                  className="wl-perk"
-                >
-                  <span className="wl-perk-icon">{perk.icon}</span>
-                  <span>
-                    <strong>{perk.title}</strong>
-                    <small>{perk.text}</small>
-                  </span>
-                </motion.div>
-              ))}
-            </div>
-
-            <div className="wl-note">
-              <span className="wl-note-mark">
-                <MapPin className="h-3.5 w-3.5" />
-              </span>
-              <p>
-                {isSv
-                  ? "Byggt i Sverige av Stilledev. BudAI är fortfarande under utveckling — vi lovar inget vi inte kan hålla."
-                  : "Built in Sweden by Stilledev. BudAI is still in development — we won't promise what we can't hold."}
-              </p>
-            </div>
-
-            <ul className="wl-fineprint">
-              <li>
-                <Check className="h-3.5 w-3.5" />
-                {isSv ? "Ingen betalning, inget kort." : "No payment, no card."}
-              </li>
-              <li>
-                <Check className="h-3.5 w-3.5" />
-                {isSv ? "Avregistrera när du vill." : "Leave whenever you want."}
-              </li>
-              <li>
-                <Check className="h-3.5 w-3.5" />
-                {isSv
-                  ? "E-post används bara för BudAI-uppdateringar."
-                  : "Email is only used for BudAI updates."}
-              </li>
-            </ul>
-          </div>
-
-          {/* form / success */}
-          <div className="wl-card">
-            <div className="wl-card-line" aria-hidden="true" />
-            <AnimatePresence mode="wait" initial={false}>
-              {!submitted ? (
-                <motion.div
-                  key="form"
+                  key="done"
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.24 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.35 }}
+                  className="wl-card"
                 >
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <div className="wl-card-kicker">{isSv ? "Säkra din plats" : "Secure your spot"}</div>
-                      <h3 className="wl-card-title">
-                        {isSv ? "Lås upp 10 % för alltid." : "Unlock 10% for good."}
-                      </h3>
-                      <p className="wl-card-sub">
-                        {isSv ? "Det tar under en minut." : "Takes under a minute."}
-                      </p>
-                    </div>
-                    <span className="wl-badge" aria-hidden>
-                      <BadgePercent className="h-5 w-5" />
-                    </span>
+                  <span className="wl-success-icon" aria-hidden>
+                    <motion.span
+                      initial={{ scale: 0.4, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ type: "spring", stiffness: 320, damping: 18 }}
+                      className="flex items-center justify-center"
+                    >
+                      <Check className="h-5 w-5" />
+                    </motion.span>
+                  </span>
+                  <h3 className="wl-card-title">{t.successTitle}</h3>
+                  <p className="wl-card-sub">{t.successNote}</p>
+
+                  <div className="wl-code mt-5">
+                    <span className="wl-code-label">{t.codeLabel}</span>
+                    <code className="wl-code-value">{DISCOUNT_CODE}</code>
+                    <button type="button" onClick={copyCode} className="wl-code-copy">
+                      {copied === "code" ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                      {copied === "code" ? t.copied : t.copyCode}
+                    </button>
                   </div>
 
-                  <form onSubmit={handleSubmit} className="mt-7 space-y-5">
-                    <fieldset>
-                      <legend className="wl-label">{isSv ? "Jag utforskar BudAI för" : "I'm exploring BudAI for"}</legend>
-                      <div className="wl-switch" role="group">
-                        <button
-                          type="button"
-                          aria-pressed={accountType === "individual"}
-                          onClick={() => setAccountType("individual")}
-                          className={accountType === "individual" ? "is-selected" : ""}
-                        >
-                          <User className="h-4 w-4" />
-                          {isSv ? "Mig själv" : "Myself"}
-                        </button>
-                        <button
-                          type="button"
-                          aria-pressed={accountType === "company"}
-                          onClick={() => setAccountType("company")}
-                          className={accountType === "company" ? "is-selected" : ""}
-                        >
-                          <Building2 className="h-4 w-4" />
-                          {isSv ? "Mitt team" : "My team"}
-                        </button>
-                      </div>
-                    </fieldset>
-
-                    <fieldset>
-                      <legend className="wl-label">{isSv ? "Mest intresserad av" : "Most interested in"}</legend>
-                      <div className="wl-chip-row">
-                        {interestOptions.map((option) => (
-                          <button
-                            key={option.id}
-                            type="button"
-                            aria-pressed={interest === option.id}
-                            onClick={() => setInterest(option.id)}
-                            className={`wl-chip ${interest === option.id ? "is-selected" : ""}`}
-                          >
-                            {option.label}
-                          </button>
-                        ))}
-                      </div>
-                    </fieldset>
-
-                    <div className="grid gap-4 sm:grid-cols-[0.8fr_1.2fr]">
-                      <div>
-                        <label htmlFor="wl-name" className="wl-label">
-                          {isSv ? "Namn" : "Name"} <span>{isSv ? "(valfritt)" : "(optional)"}</span>
-                        </label>
-                        <input
-                          id="wl-name"
-                          type="text"
-                          value={name}
-                          onChange={(event) => setName(event.target.value)}
-                          autoComplete="name"
-                          maxLength={100}
-                          placeholder={isSv ? "Ditt namn" : "Your name"}
-                          className="wl-input"
-                        />
-                      </div>
-                      <div>
-                        <label htmlFor="wl-email" className="wl-label">
-                          {isSv ? "E-post" : "Email"}
-                        </label>
-                        <div className="relative">
-                          <Mail className="wl-input-icon" aria-hidden="true" />
-                          <input
-                            id="wl-email"
-                            type="email"
-                            value={email}
-                            onChange={(event) => setEmail(event.target.value)}
-                            autoComplete="email"
-                            required
-                            maxLength={254}
-                            placeholder={isSv ? "du@exempel.se" : "you@example.com"}
-                            className="wl-input wl-input--email"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    {error && (
-                      <div className="wl-error" role="alert">
-                        <AlertTriangle className="h-4 w-4 shrink-0" />
-                        <span>{error}</span>
-                      </div>
-                    )}
-
-                    <button type="submit" disabled={loading} className="wl-submit group">
-                      <span>
-                        {loading
-                          ? isSv
-                            ? "Skickar…"
-                            : "Joining…"
-                          : isSv
-                            ? "Gå med och lås 10 %"
-                            : "Join and lock in 10%"}
+                  <p className="wl-success-note">{t.nextBody}</p>
+                  <Link href="/" className="wl-invite-link mt-4 inline-flex items-center gap-1.5">
+                    {t.backToPlayground}
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </Link>
+                </motion.div>
+              ) : (
+                <motion.form
+                  key="form"
+                  onSubmit={submit}
+                  initial={false}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.25 }}
+                >
+                  <div className="flex flex-col gap-2 sm:flex-row">
+                    <label className="wl-input w-full">
+                      <span className="sr-only">{t.emailLabel}</span>
+                      <span className="wl-input-icon" aria-hidden>
+                        <Mail className="h-4 w-4" />
                       </span>
+                      <input
+                        type="email"
+                        inputMode="email"
+                        autoComplete="email"
+                        required
+                        value={email}
+                        onChange={(event) => {
+                          setEmail(event.target.value);
+                          if (error) setError("");
+                        }}
+                        placeholder={t.email}
+                        aria-label={t.emailLabel}
+                        aria-invalid={Boolean(error)}
+                        className="w-full bg-transparent text-[14px] text-white outline-none placeholder:text-white/32"
+                      />
+                    </label>
+                    <button type="submit" disabled={loading} className="wl-submit sm:w-auto sm:px-6">
                       {loading ? (
                         <span className="wl-spinner" aria-hidden />
                       ) : (
-                        <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
+                        <>
+                          {t.submit}
+                          <ArrowRight className="h-4 w-4" />
+                        </>
                       )}
                     </button>
+                  </div>
 
-                    <p className="wl-legal">
-                      {isSv ? "Genom att gå med godkänner du vår " : "By joining you accept our "}
-                      <a href="/legal/privacy">{isSv ? "integritetspolicy" : "privacy policy"}</a>.
-                    </p>
-                  </form>
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="success"
-                  initial={{ opacity: 0, scale: 0.985 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.34, ease: [0.22, 1, 0.36, 1] }}
-                  className="wl-success"
-                  role="status"
-                  aria-live="polite"
+                  <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
+                    <span className="wl-chip wl-chip--discount">
+                      <BadgePercent className="h-3.5 w-3.5" />
+                      <strong>{t.discount}</strong>
+                    </span>
+                    {count !== null && (
+                      <span className="wl-stat wl-stat--live">
+                        <span className="wl-stat-dot" aria-hidden />
+                        <strong>{count.toLocaleString(lang === "sv" ? "sv-SE" : "en-GB")}</strong> {t.countPrefix}
+                      </span>
+                    )}
+                  </div>
+
+                  <p className="mt-3 text-[12px] text-white/38">{t.noSpam}</p>
+                </motion.form>
+              )}
+            </AnimatePresence>
+
+            <AnimatePresence>
+              {error && (
+                <motion.p
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  className="wl-error mt-3"
+                  role="alert"
                 >
-                  <div className="wl-success-icon">
-                    <Check className="h-6 w-6" strokeWidth={2.6} />
-                  </div>
-                  <span className="wl-kicker wl-kicker--mint">
-                    <Sparkles className="h-3.5 w-3.5" />
-                    {isSv ? "Du är med" : "You're in"}
-                  </span>
-                  <h3>{isSv ? "Välkommen som founding member." : "Welcome, founding member."}</h3>
-                  <p>
-                    {isSv ? "Vi sparade platsen för " : "We saved the spot for "}
-                    <strong>{email.trim().toLowerCase()}</strong>
-                    {isSv ? " — din 10 % launch-rabatt är reserverad." : " — your 10% launch discount is reserved."}
-                  </p>
-                  <p className="wl-success-code-note">
-                    {isSv ? "Koden gäller när BudAI släpper betalda planer: " : "Your code applies when BudAI launches paid plans: "}
-                    <strong>{DISCOUNT_CODE}</strong>
-                  </p>
-
-                  <div className="wl-code">
-                    <span className="wl-code-label">{isSv ? "Din founding-kod" : "Your founding code"}</span>
-                    <span className="wl-code-value">{code}</span>
-                    <button
-                      type="button"
-                      onClick={() => void copy(code, "code")}
-                      className="wl-code-copy"
-                      aria-label={isSv ? "Kopiera kod" : "Copy code"}
-                    >
-                      {copied === "code" ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                      {copied === "code" ? (isSv ? "Kopierad" : "Copied") : isSv ? "Kopiera" : "Copy"}
-                    </button>
-                  </div>
-
-                  <div className="wl-invite">
-                    <div className="min-w-0">
-                      <div className="wl-invite-title">
-                        {isSv ? "Bjud in en vän — båda flyttar fram" : "Invite a friend — you both move up"}
-                      </div>
-                      <div className="wl-invite-link">{inviteLink || "…"}</div>
-                    </div>
-                    <button type="button" onClick={() => void copy(inviteLink, "link")} className="wl-invite-btn">
-                      {copied === "link" ? <Check className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}
-                    </button>
-                  </div>
-
-                  <div className="wl-share">
-                    <span className="wl-share-label">{isSv ? "Dela BudAI" : "Share BudAI"}</span>
-                    <div className="wl-share-row">
-                      {shareTargets.map((target) => (
-                        <a
-                          key={target.id}
-                          href={target.href}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="wl-share-btn"
-                        >
-                          {target.id === "linkedin" ? <Linkedin className="h-3.5 w-3.5" /> : <Share2 className="h-3.5 w-3.5" />}
-                          {target.label}
-                        </a>
-                      ))}
-                    </div>
-                  </div>
-
-                  <a href="#playground" className="wl-secondary">
-                    <span>{isSv ? "Testa Playground medan du väntar" : "Try the Playground while you wait"}</span>
-                    <ArrowRight className="h-4 w-4" />
-                  </a>
-
-                  <p className="wl-success-note">
-                    {isSv
-                      ? "BudAI är fortfarande under utveckling. Vi hör av oss när nästa släpp är redo."
-                      : "BudAI is still in development. We'll be in touch when the next release is ready."}
-                  </p>
-                </motion.div>
+                  <AlertTriangle className="h-3.5 w-3.5" />
+                  {error}
+                </motion.p>
               )}
             </AnimatePresence>
           </div>
         </div>
 
-        {/* founding seat map + faq */}
-        <div className="wl-extra">
-          <div className="wl-seatmap-card">
-            <div className="wl-seatmap-head">
-              <span className="wl-seatmap-title">
-                <Ticket className="h-4 w-4" />
-                {isSv ? "Founding-platser" : "Founding seats"}
-              </span>
-              <span className="wl-seatmap-count">
-                {seatsTaken} / {FOUNDING_SEATS}
-              </span>
-            </div>
-            <div className="wl-seatbar" role="img" aria-label={isSv ? `${seatsTaken} av ${FOUNDING_SEATS} founding-platser tagna` : `${seatsTaken} of ${FOUNDING_SEATS} founding seats taken`}>
-              <span
-                className="wl-seatbar-fill"
-                style={{ width: `${Math.round((seatsTaken / FOUNDING_SEATS) * 100)}%` }}
-              />
-              {submitted && (
-                <span
-                  className="wl-seatbar-you"
-                  style={{ left: `${Math.min(99, Math.round((seatsTaken / FOUNDING_SEATS) * 100))}%` }}
-                  title={isSv ? "Du" : "You"}
-                />
-              )}
-            </div>
-            <p className="wl-seatmap-note">
-              {isSv
-                ? `${FOUNDING_SEATS - seatsTaken} platser kvar i den här vågen. Din kod låser rabatten även om vågen fylls.`
-                : `${FOUNDING_SEATS - seatsTaken} seats left in this wave. Your code keeps the discount even when the wave fills.`}
-            </p>
-          </div>
-
-          <div className="wl-faq">
-            <span className="wl-faq-kicker">{isSv ? "Frågor och svar" : "Questions, answered"}</span>
-            <div className="wl-faq-list">
-              {faq.map((item) => {
-                const open = faqOpen === item.q;
-                return (
-                  <div key={item.q} className={`wl-faq-item ${open ? "is-open" : ""}`}>
-                    <button
-                      type="button"
-                      className="wl-faq-q"
-                      onClick={() => setFaqOpen(open ? null : item.q)}
-                      aria-expanded={open}
-                    >
-                      <span>{item.q}</span>
-                      <ChevronDown className={`h-4 w-4 ${open ? "is-open" : ""}`} />
-                    </button>
-                    <AnimatePresence initial={false}>
-                      {open && (
-                        <motion.div
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: "auto", opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
-                          className="wl-faq-a"
-                        >
-                          <p>{item.a}</p>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-
-        {/* what happens next */}
-        <div className="wl-next">
-          <span className="wl-next-kicker">{isSv ? "Så går det till" : "What happens next"}</span>
-          <div className="wl-next-grid">
-            {[
-              {
-                step: "01",
-                title: isSv ? "Du är med direkt" : "You're in right away",
-                text: isSv
-                  ? "Din plats och ditt founding-kod sparas direkt — ingen väntan på bekräftelse."
-                  : "Your spot and founding code are saved instantly — no waiting for a confirmation.",
-              },
-              {
-                step: "02",
-                title: isSv ? "Playground direkt" : "Playground right away",
-                text: isSv
-                  ? "Du kan testa hela Playground redan nu, utan konto och utan kostnad."
-                  : "You can try the whole Playground today, with no account and no cost.",
-              },
-              {
-                step: "03",
-                title: isSv ? "Inbjudan till nya släpp" : "Invites to new releases",
-                text: isSv
-                  ? "Vi mejlar när nya funktioner öppnar — först till founding-gruppen."
-                  : "We email when new features open — the founding group goes first.",
-              },
-            ].map((item) => (
-              <motion.div
-                key={item.step}
-                initial={{ opacity: 0, y: 14 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-60px" }}
-                transition={{ duration: 0.4 }}
-                className="wl-next-card"
-              >
-                <span className="wl-next-step">{item.step}</span>
-                <strong>{item.title}</strong>
-                <small>{item.text}</small>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-
-        {/* bottom strip */}
-        <div className="wl-strip">
-          <span className="wl-strip-item">
-            <Send className="h-3.5 w-3.5" />
-            {isSv ? "Ett mejl när något är redo — inget brus." : "One email when something is ready — no noise."}
+        {/* ── the product, exactly as it looks ──────────────────── */}
+        <div className="wl-card wl-preview" aria-hidden>
+          <span className="wl-preview-bar">
+            <BudAILogo size="sm" animated />
+            <span className="wl-preview-word">
+              Bud<span>AI</span>
+            </span>
+            <span className="wl-preview-tag">PREVIEW</span>
           </span>
-          <span className="wl-strip-divider" aria-hidden />
-          <span className="wl-strip-item">
-            <Zap className="h-3.5 w-3.5" />
-            {isSv ? "Byggt i Kista, Stockholm." : "Built in Kista, Stockholm."}
-          </span>
+          <div className="wl-preview-body">
+            <p className="wl-preview-q">{lang === "sv" ? "Vad jobbar du med?" : "What are you working on?"}</p>
+            <p className="wl-preview-a">{lang === "sv" ? "Fråga BudAI vad som helst." : "Ask BudAI anything."}</p>
+            <div className="wl-preview-rows">
+              {(lang === "sv"
+                ? ["Skriv", "Förklara", "Brainstorma", "Planera"]
+                : ["Write", "Explain", "Brainstorm", "Plan"]
+              ).map((row) => (
+                <span key={row} className="wl-preview-row">
+                  {row}
+                </span>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
-      <AnimatePresence>
-        {toast && (
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 12 }}
-            className="wl-toast"
-            role="status"
-          >
-            <Check className="h-3.5 w-3.5" />
-            {toast}
-          </motion.div>
-        )}
-      </AnimatePresence>
+
+      {/* ── what you actually get ─────────────────────────────── */}
+      <div className="relative mx-auto mt-14 w-full max-w-5xl">
+        <h3 className="text-[13px] font-semibold uppercase tracking-[0.16em] text-white/42">{t.perksTitle}</h3>
+        <div className="wl-perk-grid mt-4">
+          {t.perks.map((perk, index) => (
+            <div key={perk.title} className="wl-perk">
+              <span className="wl-perk-icon" aria-hidden>
+                {index + 1}
+              </span>
+              <strong>{perk.title}</strong>
+              <span>{perk.body}</span>
+            </div>
+          ))}
+        </div>
+
+        <div className="wl-strip mt-8">
+          <span className="wl-strip-item">
+            <span className="wl-kicker wl-kicker--mint">{t.statusTitle}</span>
+            <span className="text-white/48">{t.statusBody}</span>
+          </span>
+          <span className="wl-strip-divider" aria-hidden />
+          <Link href="/" className="wl-invite-btn">
+            {t.openPlayground}
+            <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
+        </div>
+      </div>
     </section>
   );
 }

@@ -81,9 +81,16 @@ export default function SitePalette() {
 
   const goTo = (href: string) => {
     setOpen(false);
-    const node = document.querySelector(href);
-    if (node) node.scrollIntoView({ behavior: "smooth", block: "start" });
-    else window.location.href = href;
+    if (href.startsWith("#")) {
+      const node = document.querySelector(href);
+      if (node) {
+        node.scrollIntoView({ behavior: "smooth", block: "start" });
+        return;
+      }
+      window.location.href = "/";
+      return;
+    }
+    window.location.href = href;
   };
 
   const actions: PaletteAction[] = useMemo(() => {
@@ -94,7 +101,7 @@ export default function SitePalette() {
         label: "Playground",
         hint: isSv ? "Testa BudAI live" : "Try BudAI live",
         icon: <Sparkles className="h-3.5 w-3.5" />,
-        run: () => goTo("#playground"),
+        run: () => goTo("/"),
       },
       {
         id: "about",
@@ -102,7 +109,7 @@ export default function SitePalette() {
         label: isSv ? "Om BudAI" : "About BudAI",
         hint: isSv ? "Vad BudAI gör" : "What BudAI does",
         icon: <Layers className="h-3.5 w-3.5" />,
-        run: () => goTo("#about"),
+        run: () => goTo("/about"),
       },
       {
         id: "waitlist",
@@ -110,7 +117,7 @@ export default function SitePalette() {
         label: isSv ? "Väntelista — 10 %" : "Waitlist — 10%",
         hint: isSv ? "Founding-rabatt och early access" : "Founding discount and early access",
         icon: <Sparkles className="h-3.5 w-3.5" />,
-        run: () => goTo("#waitlist"),
+        run: () => goTo("/waitlist"),
       },
       {
         id: "home",
@@ -129,7 +136,7 @@ export default function SitePalette() {
       icon: <Wand2 className="h-3.5 w-3.5" />,
       run: () => {
         prefillPlayground(item.prompt);
-        window.setTimeout(() => goTo("#playground"), 60);
+        window.setTimeout(() => goTo("/"), 60);
       },
     }));
 

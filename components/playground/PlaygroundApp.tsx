@@ -36,6 +36,7 @@ import {
   X,
 } from "lucide-react";
 import BudAILogo from "@/components/ui/BudAILogo";
+import { emitBrainActivity } from "@/lib/logo/activity";
 import { useLang } from "@/components/ui/LanguageContext";
 import { useAuth } from "@/components/auth/AuthProvider";
 import {
@@ -57,11 +58,11 @@ import {
 import { shareUrl } from "@/lib/playground/share";
 import {
   EFFORT_OPTIONS,
-  GREETINGS,
   LIBRARY_PROMPTS,
   PERSONAS,
   PLACEHOLDERS,
   SPARKS,
+  STARTERS,
   STYLE_OPTIONS,
   TRANSFORMS,
   type Transform,
@@ -249,6 +250,11 @@ export default function PlaygroundApp() {
 
   const busy = activity !== "idle" && activity !== "error" && activity !== "listening";
 
+  // tell the whole site (navbar mark, ambient) that BudAI is generating
+  useEffect(() => {
+    emitBrainActivity(busy);
+  }, [busy]);
+
   const showToast = useCallback((kind: "ok" | "warn" | "err", text: string) => {
     setToast({ kind, text });
     window.setTimeout(() => setToast(null), 4200);
@@ -271,14 +277,6 @@ export default function PlaygroundApp() {
     }, 9000);
     return () => window.clearInterval(id);
   }, [lang]);
-
-  /* greeting */
-  const greeting = useMemo(() => {
-    const name = auth.displayName?.split(" ")[0];
-    const base = GREETINGS[lang][Math.floor(Math.random() * GREETINGS[lang].length)];
-    return name ? `${base}, ${name}` : base;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lang, auth.displayName]);
 
   /* first-visit tips */
   useEffect(() => {
@@ -1497,8 +1495,9 @@ export default function PlaygroundApp() {
     [auth, compare, exportThread, isSv, messages, newChat]
   );
 
+  /* four starters — the only suggestions on the empty Playground */
   const libraryPrompts = useMemo(
-    () => LIBRARY_PROMPTS.slice(0, 6).map((p) => ({ id: p.id, title: p.title[lang], body: p.body[lang], icon: p.icon })),
+    () => STARTERS.map((p) => ({ id: p.id, title: p.title[lang], body: p.body[lang], icon: p.icon })),
     [lang]
   );
 
@@ -1908,7 +1907,6 @@ export default function PlaygroundApp() {
             onSuggestion={(text) => void runPrompt(text)}
             onSurprise={surprise}
             onOpenLibrary={() => setLibraryOpen(true)}
-            greeting={greeting}
             userInitial={(auth.displayName || "Du").slice(0, 1).toUpperCase()}
             prompts={libraryPrompts}
             busy={busy}
@@ -1979,11 +1977,9 @@ export default function PlaygroundApp() {
             placeholder={placeholder}
             persona={settings.persona || "core"}
             style={settings.style || "balanced"}
-            effort={settings.effort || "balanced"}
             onPersona={(persona: PersonaId) => patch({ persona })}
             onStyle={(style: StyleId) => patch({ style })}
-            onEffort={(effort: EffortId) => patch({ effort })}
-            onOpenLibrary={() => setLibraryOpen(true)}
+                onOpenLibrary={() => setLibraryOpen(true)}
             onOpenPalette={() => setPaletteOpen(true)}
             dragOver={dragOver}
             onRecall={() => lastPromptRef.current}
@@ -2087,7 +2083,6 @@ export default function PlaygroundApp() {
         reduceEffects={settings.reduceEffects === true}
         persona={settings.persona || "core"}
         style={settings.style || "balanced"}
-        effort={settings.effort || "balanced"}
         answerLang={(settings.answerLang || lang) as Lang}
         onAccent={(accent) => patch({ accent })}
         onSound={(sound) => patch({ sound })}
@@ -2096,7 +2091,6 @@ export default function PlaygroundApp() {
         onReduceEffects={(reduceEffects) => patch({ reduceEffects })}
         onPersona={(persona) => patch({ persona: persona as PersonaId })}
         onStyle={(style) => patch({ style: style as StyleId })}
-        onEffort={(effort) => patch({ effort: effort as EffortId })}
         onAnswerLang={(answerLang) => patch({ answerLang })}
         customInstructions={settings.customInstructions || ""}
         onCustomInstructions={(customInstructions) => patch({ customInstructions })}
