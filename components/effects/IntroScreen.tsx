@@ -72,9 +72,9 @@ export default function IntroScreen() {
           <BudAILogo size="xl" animated />
         </div>
 
-        <h1 className="intro-wordmark">
+        <p className="intro-wordmark" aria-hidden="true">
           Bud<span>AI</span>
-        </h1>
+        </p>
 
         <p className="intro-status">
           <span className={`intro-status-dot ${phase === "ready" ? "is-ready" : ""}`} aria-hidden />

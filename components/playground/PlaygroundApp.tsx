@@ -1189,18 +1189,6 @@ export default function PlaygroundApp() {
   }, []);
 
   /* ── message actions ── */
-  const regenerate = useCallback(
-    (message: ChatMessage) => {
-      const index = messages.findIndex((m) => m.id === message.id);
-      const promptMessage = [...messages.slice(0, index)].reverse().find((m) => m.role === "user");
-      if (!promptMessage) return;
-      const trimmed = messages.slice(0, index);
-      setMessages(trimmed);
-      void runPrompt(promptMessage.content, { history: trimmed.slice(0, -1) });
-    },
-    [messages, runPrompt]
-  );
-
   const editMessage = useCallback(
     (message: ChatMessage) => {
       const index = messages.findIndex((m) => m.id === message.id);

@@ -481,6 +481,7 @@ export default function Composer({
               onClick={onToggleMic}
               className={`pgx-tool ${listening ? "is-live" : ""}`}
               title={isSv ? "Röstinmatning" : "Voice input"}
+              aria-label={isSv ? "Röstinmatning" : "Voice input"}
               aria-pressed={listening}
             >
               {listening ? <span className="pgx-mic-wave" aria-hidden /> : <Mic className="h-4 w-4" />}

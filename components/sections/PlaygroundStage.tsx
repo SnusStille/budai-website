@@ -10,6 +10,7 @@ export default function PlaygroundStage() {
   return (
     <section id="playground" className="pgx-section relative scroll-mt-24 overflow-hidden">
       <div className="relative z-10 mx-auto max-w-[86rem] px-3 pb-14 pt-6 sm:px-6 lg:px-8">
+        <h1 className="sr-only">BudAI Playground</h1>
         <ScrollReveal>
           <PlaygroundApp />
         </ScrollReveal>
