@@ -38,7 +38,22 @@ Copy `.env.example` → `.env.local` and fill in what you need:
 | `NEXT_PUBLIC_SITE_URL` | OG/metadata base URL | falls back to localhost |
 | `NEXT_PUBLIC_ADMIN_PASSWORD` | `/admin` gate | admin stays locked |
 
-## 3. Where the new work lives
+## 3. Routes
+
+| Route | What it is |
+| --- | --- |
+| `/` | The product first: Hero → Playground → short intro → Waitlist → Footer |
+| `/playground` | The Playground on its own route (same app, full attention) |
+| `/about` | Four short answers: what, why, vision, where we are now |
+| `/waitlist` | The 10% launch offer and email capture (`BUDAI-EARLY-10`) |
+| `/logo` | Logo Lab — all candidates, downloads, vote, live trial (noindex) |
+| `/playground/share` | Read-only shared conversation (transcript lives in the link) |
+| `/legal/*` | Privacy, terms, cookies, GDPR |
+| `/admin` | Waitlist control centre (password gated) |
+
+Navigation and footer links resolve correctly from every route.
+
+## 4. Where the new work lives
 
 **Brand — the B-mark**
 - `components/ui/BudAILogo.tsx` — stem + two bowls + orbiting node; the three
@@ -81,7 +96,7 @@ Copy `.env.example` → `.env.local` and fill in what you need:
   where we are now.
 - `PLAYGROUND_V2.md` — full changelog, newest round last (V2 polish).
 
-## 4. Keyboard map
+## 5. Keyboard map
 
 | Keys | Action |
 | --- | --- |
@@ -93,7 +108,7 @@ Copy `.env.example` → `.env.local` and fill in what you need:
 | `↑` in empty composer | recall the previous prompt |
 | `Esc` | close panels, voice mode, tour |
 
-## 5. Known preview limits
+## 6. Known preview limits
 
 - The local preview has no AI key by default, so live generation is off until
   you add `ANTHROPIC_API_KEY`.

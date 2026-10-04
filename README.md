@@ -92,10 +92,11 @@ Without `ANTHROPIC_API_KEY` the playground returns a graceful offline message.
 ## Scripts
 
 ```bash
-npm run dev      # development server
-npm run build    # production build
-npm run start    # serve production build
-npm run lint     # ESLint (next/core-web-vitals)
+npm run dev        # development server
+npm run build      # production build
+npm run start      # serve production build
+npm run lint       # ESLint (next/core-web-vitals)
+npm run prune:css  # optional: drop CSS rules no source file references
 ```
 
 ---
@@ -116,16 +117,25 @@ npm run build   # must pass locally before shipping
 ## Project Structure
 
 ```
-app/                  # Next.js App Router pages + API
+app/                  # Next.js App Router
+  page.tsx            #   /          Playground front and centre, then intro + waitlist
+  playground/         #   /playground  the Playground on its own route
+  about/              #   /about       four short answers
+  waitlist/           #   /waitlist    10% offer + email capture
+  logo/               #   /logo        Logo Lab (noindex)
+  playground/share/   #   /playground/share  read-only shared conversation
   api/playground/     # Claude-backed playground endpoint
   admin/              # Waitlist control center
   legal/[slug]/       # Privacy, terms, cookies, GDPR
 components/
-  sections/           # Landing page sections
-  effects/            # Canvas / motion effects
+  playground/         # Composer, MessageList, Panels, Sidebar, VoiceMode, Tour
+  sections/           # Hero, AIPlayground, AboutBudAI, Waitlist, Navbar, Footer
+  logo/               # LiveMark, LogoLab, candidates
+  effects/            # SiteAmbient, IntroScreen (boot), LoadingScreen
   ui/                 # Shared UI primitives
   admin/              # Admin dashboard widgets
-lib/                  # data layer, i18n, utils
+lib/                  # data layer, i18n, playground stores
+scripts/              # prune-css.js
 supabase/             # SQL schema
 ```
 
@@ -133,15 +143,16 @@ supabase/             # SQL schema
 
 ## Features
 
+- **Playground first** — the home page opens with the product, not a pitch deck
 - Bilingual UI (SV / EN)
-- Interactive AI Playground with conversation memory
-- Live terminal visualization
-- Founding-member waitlist (individual + company)
-- System status dashboard
+- Streaming answers, personas, compare, voice mode, answer variants
+- Saved notes, shareable read-only conversations, live HTML/CSS/SVG preview
+- **No account needed** to try it; an account adds cloud history and memory
+- Waitlist with the **10% at launch** offer (`BUDAI-EARLY-10`)
 - Admin panel (`/admin`)
-- Command palette (⌘K)
-- SEO: metadata, sitemap, robots
-- Accessibility: reduced-motion, focus rings, aria labels
+- Command palette (⌘K), guided first-visit tour
+- SEO: metadata, OG image, sitemap, robots
+- Accessibility: single h1 per page, reduced-motion, focus rings, aria labels
 
 ---
 

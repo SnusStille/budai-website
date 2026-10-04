@@ -270,3 +270,44 @@ are gone.
   keyboard), persona bar scrolls horizontally instead of wrapping, no horizontal
   page scroll from any decoration.
 - All motion respects `prefers-reduced-motion`.
+
+---
+
+# Round 5 — V2 polish verification pass
+
+The V2 polish landed in stages: dead code and duplicated UI first, then the
+Playground-first home, then the waitlist. This pass closed the gaps that only
+show up when you check every route and every claim.
+
+## Routes and navigation
+
+- **`/about`, `/playground` and `/waitlist` are real routes** — before this pass
+  they existed only as anchors on the home page, so a direct link or a refresh
+  on a subpage gave a 404. `/playground` renders the same app without the
+  marketing around it.
+- **Navbar, footer and the skip link are route-aware.** `#playground` inside a
+  `<a href>` only resolves on the home page; off-home those links now point at
+  the route instead, and the skip link targets `#main-content` everywhere else.
+- **`app/sitemap.ts`** lists the new pages with sensible priorities.
+
+## Accessibility
+
+- Exactly **one `<h1>` per page**: the boot overlay's wordmark is decorative
+  (it is a `<p aria-hidden>` now) and `/playground` carries a screen-reader-only
+  `h1`.
+- The composer's voice-input button got an explicit `aria-label` to match the
+  rest of the icon buttons.
+
+## CSS
+
+- 350 dead rules removed with a real CSS parser (`npm run prune:css`), never by
+  regex or brace counting. The first attempt at this used a naive parser and
+  silently orphaned declarations — the script is now kept in `scripts/` so the
+  same mistake cannot be repeated, and a verification step confirms that **no
+  class used anywhere in the source lost its styling**.
+
+## Housekeeping
+
+- Removed a dead `regenerate()` callback (superseded by `regenerateVariant`).
+- `README.md` / `START_HERE.md` describe the current routes, scripts and
+  features; the zip is regenerated from the verified commit.
