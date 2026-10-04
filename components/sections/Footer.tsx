@@ -1,12 +1,16 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { ArrowRight, ArrowUp, BadgePercent, Sparkles } from "lucide-react";
 import BudAILogo, { StilledevLink, StilledevMark } from "@/components/ui/BudAILogo";
 import { useLang } from "@/components/ui/LanguageContext";
 
 export default function Footer() {
   const { lang } = useLang();
+  const pathname = usePathname();
   const isSv = lang === "sv";
+  const onHome = pathname === "/";
+  const hrefFor = (anchor: string) => (onHome ? anchor : "/" + anchor);
 
   return (
     <footer className="site-footer relative overflow-hidden">
@@ -31,11 +35,11 @@ export default function Footer() {
             </p>
           </div>
           <div className="footer-cta-actions">
-            <a href="#playground" className="button-primary group">
+            <a href={hrefFor("#playground")} className="button-primary group">
               <span>{isSv ? "Öppna Playground" : "Open the Playground"}</span>
               <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
             </a>
-            <a href="#waitlist" className="button-secondary">
+            <a href={hrefFor("#waitlist")} className="button-secondary">
               <Sparkles className="h-4 w-4" />
               <span>{isSv ? "Gå med i väntelistan" : "Join the waitlist"}</span>
             </a>
@@ -44,7 +48,7 @@ export default function Footer() {
 
         <div className="grid gap-10 pt-14 sm:grid-cols-2 lg:grid-cols-[1.4fr_0.7fr_0.7fr_0.7fr] lg:gap-12">
           <div>
-            <a href="#home" className="inline-flex items-center gap-3" aria-label="BudAI home">
+            <a href="/" className="inline-flex items-center gap-3" aria-label="BudAI home">
               <BudAILogo size="sm" animated motion="idle" />
               <span className="text-lg font-semibold tracking-tight text-white">
                 Bud<span className="text-[var(--cyan)]">AI</span>
@@ -67,13 +71,13 @@ export default function Footer() {
             <h2 className="footer-heading">{isSv ? "Utforska" : "Explore"}</h2>
             <ul className="footer-link-list">
               <li>
-                <a href="#playground">Playground</a>
+                <a href={hrefFor("#playground")}>Playground</a>
               </li>
               <li>
-                <a href="#about">{isSv ? "Om BudAI" : "About BudAI"}</a>
+                <a href={hrefFor("#about")}>{isSv ? "Om BudAI" : "About BudAI"}</a>
               </li>
               <li>
-                <a href="#waitlist">{isSv ? "Early access" : "Early access"}</a>
+                <a href={hrefFor("#waitlist")}>{isSv ? "Early access" : "Early access"}</a>
               </li>
               <li>
                 <a href="https://stilledev.se" target="_blank" rel="noopener noreferrer">
@@ -134,7 +138,7 @@ export default function Footer() {
           </p>
           <div className="flex items-center gap-4">
             <p>{isSv ? "Preview först. Vi bygger vidare." : "Preview first. Still building."}</p>
-            <a href="#home" className="footer-top" aria-label={isSv ? "Till toppen" : "Back to top"}>
+            <a href={hrefFor("#home")} className="footer-top" aria-label={isSv ? "Till toppen" : "Back to top"}>
               <ArrowUp className="h-3.5 w-3.5" />
             </a>
           </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { MotionConfig } from "framer-motion";
 import { LangProvider, useLang } from "@/components/ui/LanguageContext";
 import { ToastProvider } from "@/components/ui/ToastStack";
@@ -11,9 +12,11 @@ import IntroScreen from "@/components/effects/IntroScreen";
 
 function LocalizedSkipLink() {
   const { lang } = useLang();
+  const pathname = usePathname();
+  const onHome = pathname === "/";
   return (
-    <a href="#playground" className="skip-link">
-      {lang === "sv" ? "Hoppa till Playground" : "Skip to the Playground"}
+    <a href={onHome ? "#playground" : "#main-content"} className="skip-link">
+      {lang === "sv" ? "Hoppa till innehållet" : "Skip to content"}
     </a>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, Command, Globe2, Menu, X } from "lucide-react";
 import { BudAIWordmark } from "@/components/ui/BudAILogo";
@@ -9,16 +10,19 @@ import { useLang } from "@/components/ui/LanguageContext";
 
 export default function Navbar() {
   const { lang, setLang, t } = useLang();
+  const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [progress, setProgress] = useState(0);
   const [active, setActive] = useState<string>("home");
   const [mobileOpen, setMobileOpen] = useState(false);
   const isSv = lang === "sv";
+  const onHome = pathname === "/";
 
+  // Anchors only resolve on the home page — everywhere else they become routes.
   const links = [
-    { label: t.nav.playground, href: "#playground", id: "playground" },
-    { label: isSv ? "Om BudAI" : "About BudAI", href: "#about", id: "about" },
-    { label: t.nav.waitlist, href: "#waitlist", id: "waitlist" },
+    { label: t.nav.playground, href: onHome ? "#playground" : "/playground", id: "playground" },
+    { label: isSv ? "Om BudAI" : "About BudAI", href: onHome ? "#about" : "/about", id: "about" },
+    { label: t.nav.waitlist, href: onHome ? "#waitlist" : "/waitlist", id: "waitlist" },
   ];
 
   useEffect(() => {
@@ -33,6 +37,11 @@ export default function Navbar() {
   }, []);
 
   useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!onHome) return;
     const ids = ["home", "playground", "about", "waitlist"];
     const sections = ids
       .map((id) => document.getElementById(id))
@@ -49,7 +58,7 @@ export default function Navbar() {
     );
     sections.forEach((section) => observer.observe(section));
     return () => observer.disconnect();
-  }, []);
+  }, [onHome]);
 
   useEffect(() => {
     if (!mobileOpen) return;
@@ -76,7 +85,7 @@ export default function Navbar() {
         className={`site-nav ${scrolled ? "site-nav--scrolled" : ""}`}
       >
         <div className="site-nav-inner">
-          <a href="#home" className="site-brand" aria-label="BudAI home">
+          <a href="/" className="site-brand" aria-label="BudAI home">
             <LiveMark px={58} />
             <span className="site-brand-word">
               Bud<span>AI</span>
@@ -114,7 +123,7 @@ export default function Navbar() {
                 </button>
               ))}
             </div>
-            <a href="#waitlist" className="nav-cta">
+            <a href={onHome ? "#waitlist" : "/waitlist"} className="nav-cta">
               <span>{t.nav.requestAccess}</span>
               <span className="nav-cta-badge">10%</span>
               <ArrowRight className="h-3.5 w-3.5" />
@@ -182,7 +191,7 @@ export default function Navbar() {
                   ))}
                 </div>
               </div>
-              <a href="#waitlist" onClick={closeMenu} className="button-primary mobile-nav-cta">
+              <a href={onHome ? "#waitlist" : "/waitlist"} onClick={closeMenu} className="button-primary mobile-nav-cta">
                 <span>{isSv ? "Gå med — lås 10 %" : "Join — lock in 10%"}</span>
                 <ArrowRight className="h-4 w-4" />
               </a>
