@@ -98,7 +98,7 @@ export default function OpengraphImage() {
 
         {/* footer chips */}
         <div style={{ display: "flex", gap: 14 }}>
-          {["Live streaming replies", "Voice · image · files", "⌘K command palette", "Works without an account"].map((chip) => (
+          {["Live streaming replies", "Voice · image · files", "Command palette", "Works without an account"].map((chip) => (
             <span
               key={chip}
               style={{
