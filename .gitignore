@@ -24,6 +24,3 @@ npm-debug.log*
 
 # keep dependency install result out of source control
 node_modules
-
-# downloadable build artifact (served from /public, not committed)
-public/budai-website-lattice.zip
