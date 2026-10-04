@@ -1,115 +1,63 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
+import { useEffect, useMemo, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import {
-  Mail,
-  ArrowRight,
-  Check,
-  Sparkles,
-  Users,
-  Clock,
-  Crown,
-  Zap,
-  Building2,
-  User,
-  Briefcase,
   AlertTriangle,
-  Tag,
+  ArrowRight,
+  BadgePercent,
+  Building2,
+  Check,
   Copy,
-  Shield,
-  Gift,
+  Mail,
+  MapPin,
+  Send,
+  Share2,
+  Sparkles,
+  Ticket,
+  User,
+  Users,
+  Zap,
 } from "lucide-react";
-import ScrollReveal from "@/components/ui/ScrollReveal";
-import Magnetic from "@/components/ui/Magnetic";
-import Confetti from "@/components/ui/Confetti";
 import { addWaitlistUser, getWaitlistCount } from "@/lib/data";
 import { useLang } from "@/components/ui/LanguageContext";
 
-const industriesEn = [
-  "Technology",
-  "Finance",
-  "Healthcare",
-  "Retail",
-  "Manufacturing",
-  "Education",
-  "Media",
-  "Energy",
-  "Logistics",
-  "Construction",
-  "Other",
-];
-const industriesSv = [
-  "Teknik",
-  "Finans",
-  "Vård & hälsa",
-  "Detaljhandel",
-  "Tillverkning",
-  "Utbildning",
-  "Media",
-  "Energi",
-  "Logistik",
-  "Bygg",
-  "Annat",
-];
-const employeeRanges = ["1-10", "10-50", "50-200", "200-1000", "1000+"];
-const interestsEn = [
-  "Automation",
-  "Data analysis",
-  "Customer support",
-  "Marketing content",
-  "Document generation",
-  "Workflow optimization",
-  "Problem solving",
-  "Other",
-];
-const interestsSv = [
-  "Automatisering",
-  "Dataanalys",
-  "Kundsupport",
-  "Marknadsinnehåll",
-  "Dokumentgenerering",
-  "Arbetsflöden",
-  "Problemlösning",
-  "Annat",
-];
+type Interest = "work" | "write" | "build" | "learn";
 
-const initialForm = {
-  name: "",
-  email: "",
-  company: "",
-  industry: "",
-  employees: "",
-  interest: "",
-};
+function referralFromUrl(): string | null {
+  if (typeof window === "undefined") return null;
+  const ref = new URLSearchParams(window.location.search).get("ref");
+  return ref ? ref.slice(0, 60) : null;
+}
+
+function inviteCode(email: string): string {
+  let hash = 0;
+  const input = `${email}|budai`;
+  for (let i = 0; i < input.length; i++) {
+    hash = (hash * 31 + input.charCodeAt(i)) % 99991;
+  }
+  return `BUD${String(hash).padStart(5, "0")}`;
+}
 
 export default function Waitlist() {
-  const { t, lang } = useLang();
-  const [accountType, setAccountType] = useState<"individual" | "company">("individual");
-  const [form, setForm] = useState(initialForm);
-  const [submitted, setSubmitted] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [confetti, setConfetti] = useState(false);
-  const [count, setCount] = useState<number | null>(null);
-  const [error, setError] = useState(false);
-  const [errorDetail, setErrorDetail] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
-  const [referral, setReferral] = useState("");
+  const { lang } = useLang();
+  const isSv = lang === "sv";
 
-  useEffect(() => {
-    try {
-      const q = new URLSearchParams(window.location.search).get("ref");
-      if (q) setReferral(q.slice(0, 64));
-    } catch {
-      /* ignore */
-    }
-  }, []);
+  const [accountType, setAccountType] = useState<"individual" | "company">("individual");
+  const [interest, setInterest] = useState<Interest>("work");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState("");
+  const [copied, setCopied] = useState<"code" | "link" | null>(null);
+  const [count, setCount] = useState<number | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     getWaitlistCount()
-      .then((n) => {
-        if (!cancelled) setCount(n);
+      .then((value) => {
+        if (!cancelled) setCount(value);
       })
       .catch(() => {
         if (!cancelled) setCount(null);
@@ -117,491 +65,406 @@ export default function Waitlist() {
     return () => {
       cancelled = true;
     };
-  }, [submitted]);
+  }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!form.email.includes("@")) return;
+  const perks = isSv
+    ? [
+        { icon: <BadgePercent className="h-4 w-4" />, title: "10 % founding-rabatt", text: "För dig som går med nu, när BudAI lanserar betalda planer." },
+        { icon: <Ticket className="h-4 w-4" />, title: "Early access", text: "Inbjudan till nya preview-släpp före alla andra i listan." },
+        { icon: <Zap className="h-4 w-4" />, title: "Nya funktioner först", text: "Playground-uppdateringar och experiment innan de blir publika." },
+        { icon: <Users className="h-4 w-4" />, title: "Direktlinje till teamet", text: "Din feedback går rakt in i roadmappen — inte in i ett tomrum." },
+      ]
+    : [
+        { icon: <BadgePercent className="h-4 w-4" />, title: "10% founding discount", text: "For everyone joining now, when BudAI ships paid plans." },
+        { icon: <Ticket className="h-4 w-4" />, title: "Early access", text: "An invite to new preview releases ahead of the rest of the list." },
+        { icon: <Zap className="h-4 w-4" />, title: "New features first", text: "Playground updates and experiments before they go public." },
+        { icon: <Users className="h-4 w-4" />, title: "A direct line to the team", text: "Your feedback lands on the roadmap — not in a void." },
+      ];
+
+  const interestOptions: { id: Interest; label: string }[] = useMemo(
+    () =>
+      isSv
+        ? [
+            { id: "work", label: "Jobbet & vardagen" },
+            { id: "write", label: "Skriva & innehåll" },
+            { id: "build", label: "Utveckling & kod" },
+            { id: "learn", label: "Lära & utforska" },
+          ]
+        : [
+            { id: "work", label: "Work & everyday tasks" },
+            { id: "write", label: "Writing & content" },
+            { id: "build", label: "Building & code" },
+            { id: "learn", label: "Learning & exploring" },
+          ],
+    [isSv]
+  );
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail) return;
+
     setLoading(true);
-    setError(false);
-    setErrorDetail(null);
+    setError("");
+
     try {
-      const refNote = referral.trim()
-        ? `referral:${referral.trim().slice(0, 64)}`
-        : null;
       await addWaitlistUser({
-        name: form.name,
-        email: form.email,
-        interest: form.interest,
+        name: name.trim() || cleanEmail.split("@")[0],
+        email: cleanEmail,
         account_type: accountType,
-        company: accountType === "company" ? form.company : null,
-        industry: accountType === "company" ? form.industry : null,
-        employees: accountType === "company" ? form.employees : null,
-        discount_code: "BUDAI-EARLY-10",
-        notes: refNote,
-        source: referral.trim() ? "referral" : "landing",
-        priority: accountType === "company" ? 60 : 45,
+        company: null,
+        industry: null,
+        employees: null,
+        interest,
+        discount_code: "FOUNDING10",
+        notes: null,
+        source: referralFromUrl() ? `referral:${referralFromUrl()}` : "landing",
+        priority: null,
         last_contacted_at: null,
-        tags: accountType === "company" ? ["company"] : ["individual"],
+        tags: [accountType, "early-access", "founding-10", interest],
       });
       setSubmitted(true);
-      setConfetti(true);
-      setTimeout(() => setConfetti(false), 4000);
-    } catch (err: unknown) {
-      console.error("Waitlist submit error:", err);
-      const anyErr = err as { message?: string; code?: string; status?: number };
-      const msg = (anyErr?.message || "").toLowerCase();
-      // Human copy only — never dump PostgREST / schema noise
-      if (msg.includes("duplicate") || msg.includes("unique") || msg.includes("already")) {
-        setErrorDetail(
-          lang === "sv"
-            ? "Den e-postadressen finns redan på listan."
-            : "That email is already on the waitlist."
-        );
-      } else if (msg.includes("network") || msg.includes("fetch")) {
-        setErrorDetail(
-          lang === "sv"
-            ? "Nätverksfel — kontrollera anslutningen och försök igen."
-            : "Network error — check your connection and try again."
-        );
+      setCount((value) => (value === null ? value : value + 1));
+    } catch (submissionError: unknown) {
+      const err = submissionError as { message?: string; code?: string };
+      const message = (err.message || "").toLowerCase();
+      if (err.code === "23505" || message.includes("duplicate") || message.includes("unique") || message.includes("already")) {
+        setError(isSv ? "Den e-postadressen finns redan på väntelistan." : "That email is already on the waitlist.");
+      } else if (message.includes("network") || message.includes("fetch")) {
+        setError(isSv ? "Nätverksfel. Kontrollera anslutningen och försök igen." : "Network error. Check your connection and try again.");
       } else {
-        setErrorDetail(
-          lang === "sv"
-            ? "Kunde inte spara just nu. Försök igen om en stund."
-            : "Could not save right now. Please try again in a moment."
-        );
+        setError(isSv ? "Det gick inte att spara just nu. Försök igen om en stund." : "We couldn't save this right now. Please try again shortly.");
       }
-      setError(true);
     } finally {
       setLoading(false);
     }
   };
 
-  const copyCode = async () => {
+  const code = useMemo(() => (email ? inviteCode(email.trim().toLowerCase()) : "BUD00000"), [email]);
+  const inviteLink = useMemo(() => {
+    if (typeof window === "undefined") return "";
+    return `${window.location.origin}${window.location.pathname}?ref=${code}#waitlist`;
+  }, [code]);
+
+  const copy = async (value: string, kind: "code" | "link") => {
     try {
-      await navigator.clipboard.writeText("BUDAI-EARLY-10");
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1600);
+      await navigator.clipboard.writeText(value);
+      setCopied(kind);
+      window.setTimeout(() => setCopied(null), 1800);
     } catch {
-      /* ignore */
+      /* clipboard unavailable */
     }
   };
 
-  const inputClass =
-    "w-full pl-11 pr-4 py-3.5 rounded-xl bg-white/[0.04] border border-white/[0.1] text-white placeholder:text-muted focus:outline-none focus:border-accent-cyan/40 focus:shadow-[0_0_0_3px_rgba(0,229,255,0.08)] text-sm transition-shadow";
-
   return (
-    <section id="waitlist" className="relative section-hairline py-24 md:py-32 overflow-hidden">
-      <Confetti active={confetti} />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-accent-purple/[0.07] rounded-full blur-[180px] pointer-events-none" />
-      <div className="absolute top-1/4 right-0 w-[300px] h-[300px] bg-accent-cyan/[0.05] rounded-full blur-[100px] pointer-events-none" />
+    <section id="waitlist" className="wl-section relative scroll-mt-24 overflow-hidden">
+      <div className="wl-glow wl-glow--a" aria-hidden="true" />
+      <div className="wl-glow wl-glow--b" aria-hidden="true" />
+      <div className="wl-grid-overlay" aria-hidden="true" />
 
-      <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        <ScrollReveal className="text-center mb-10 md:mb-12">
-          <div className="flex flex-wrap items-center justify-center gap-2 mb-4">
-            <span className="section-badge text-accent-purple">{t.waitlist.badge}</span>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium tracking-wide bg-accent-green/[0.08] text-accent-green/90 border border-accent-green/20">
-              <Gift className="w-3 h-3" />
-              {t.waitlist.discountBadge}
-            </span>
-          </div>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-5 text-white">
-            {t.waitlist.title}{" "}
-            <span className="text-gradient">{t.waitlist.titleHighlight}</span>
+      <div className="relative z-10 mx-auto max-w-[80rem] px-5 py-20 sm:px-8 sm:py-24 lg:px-10 lg:py-28">
+        <div className="mx-auto max-w-3xl text-center">
+          <span className="wl-kicker">
+            <Sparkles className="h-3.5 w-3.5" />
+            {isSv ? "Founding members" : "Founding members"}
+          </span>
+          <h2 className="wl-title mt-5">
+            {isSv ? "De första " : "The first "}
+            <span className="wl-percent">10 %</span>
+            {isSv ? " får early access." : " get early access."}
           </h2>
-          <p className="text-base sm:text-lg text-muted max-w-2xl mx-auto leading-relaxed">
-            {t.waitlist.subtitle}
+          <p className="mx-auto mt-5 max-w-2xl text-sm leading-relaxed text-white/60 sm:text-base sm:leading-8">
+            {isSv
+              ? "BudAI är i tidig förhandsvisning. Gå med på väntelistan och lås upp 10 % founding-rabatt, tidig tillgång till nya släpp och en direkt linje till oss som bygger."
+              : "BudAI is in early preview. Join the waitlist to unlock a 10% founding discount, early access to new releases, and a direct line to the people building it."}
           </p>
-        </ScrollReveal>
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-2.5">
+            <span className="wl-stat">
+              <strong>10 %</strong>
+              {isSv ? "founding-rabatt" : "founding discount"}
+            </span>
+            <span className="wl-stat">
+              <strong>{isSv ? "0 kr" : "Free"}</strong>
+              {isSv ? "att gå med" : "to join"}
+            </span>
+            <span className="wl-stat">
+              <strong>SV / EN</strong>
+              {isSv ? "två språk" : "two languages"}
+            </span>
+            {count !== null && count > 0 && (
+              <span className="wl-stat wl-stat--live">
+                <span className="wl-stat-dot" aria-hidden />
+                <strong>{count}</strong>
+                {isSv ? "på listan" : "on the list"}
+              </span>
+            )}
+          </div>
+        </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 lg:gap-6 items-start">
-          {/* Perks column */}
-          <ScrollReveal className="lg:col-span-2 order-2 lg:order-1">
-            <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5 sm:p-6 space-y-4 h-full">
-              <h3 className="text-sm font-semibold text-white flex items-center gap-2">
-                <Crown className="w-4 h-4 text-accent-purple" />
-                {lang === "sv" ? "Founding-förmåner" : "Founding benefits"}
-              </h3>
-              <ul className="space-y-3">
-                {[
-                  {
-                    icon: Tag,
-                    title: lang === "sv" ? "10% early-access" : "10% early-access",
-                    body:
-                      lang === "sv"
-                        ? "Kod BUDAI-EARLY-10 låses vid anmälan."
-                        : "Code BUDAI-EARLY-10 locks on signup.",
-                    color: "text-accent-green",
-                  },
-                  {
-                    icon: Zap,
-                    title: t.waitlist.prioritySupport,
-                    body:
-                      lang === "sv"
-                        ? "Direktlinje till teamet under preview."
-                        : "Direct line to the team during preview.",
-                    color: "text-accent-cyan",
-                  },
-                  {
-                    icon: Sparkles,
-                    title: t.waitlist.exclusiveFeatures,
-                    body:
-                      lang === "sv"
-                        ? "Tidig tillgång till nya förmågor."
-                        : "Early access to new capabilities.",
-                    color: "text-accent-purple",
-                  },
-                  {
-                    icon: Shield,
-                    title: lang === "sv" ? "Nordic-first" : "Nordic-first",
-                    body:
-                      lang === "sv"
-                        ? "GDPR-tänk och svensk supportton."
-                        : "GDPR-minded with Swedish support tone.",
-                    color: "text-accent-pink",
-                  },
-                ].map((item) => (
-                  <li
-                    key={item.title}
-                    className="flex gap-3 p-3 rounded-xl border border-white/[0.05] bg-black/20"
-                  >
-                    <div className="w-9 h-9 rounded-lg bg-white/[0.04] border border-white/[0.06] flex items-center justify-center shrink-0">
-                      <item.icon className={`w-4 h-4 ${item.color}`} />
-                    </div>
-                    <div>
-                      <div className="text-sm font-medium text-white">{item.title}</div>
-                      <div className="text-xs text-muted mt-0.5 leading-relaxed">{item.body}</div>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-
-              <div className="grid grid-cols-3 gap-2 pt-2">
-                {[
-                  {
-                    icon: Users,
-                    label: t.waitlist.statWaiting,
-                    value: count === null ? "—" : `${count}`,
-                  },
-                  {
-                    icon: Crown,
-                    label: t.waitlist.statSpots,
-                    value: lang === "sv" ? "Vågor" : "Waves",
-                  },
-                  {
-                    icon: Clock,
-                    label: t.waitlist.statLaunch,
-                    value: "2026",
-                  },
-                ].map((s) => (
-                  <div
-                    key={s.label}
-                    className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-2.5 text-center"
-                  >
-                    <s.icon className="w-3.5 h-3.5 text-accent-cyan mx-auto mb-1" />
-                    <div className="text-sm font-bold text-white tabular-nums">{s.value}</div>
-                    <div className="text-[9px] text-muted leading-tight mt-0.5">{s.label}</div>
-                  </div>
-                ))}
-              </div>
+        <div className="mt-14 grid gap-10 lg:grid-cols-[1fr_1.02fr] lg:items-start lg:gap-14">
+          {/* perks */}
+          <div className="wl-perks">
+            <div className="wl-perk-grid">
+              {perks.map((perk, index) => (
+                <motion.div
+                  key={perk.title}
+                  initial={{ opacity: 0, y: 14 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-60px" }}
+                  transition={{ duration: 0.4, delay: index * 0.06 }}
+                  className="wl-perk"
+                >
+                  <span className="wl-perk-icon">{perk.icon}</span>
+                  <span>
+                    <strong>{perk.title}</strong>
+                    <small>{perk.text}</small>
+                  </span>
+                </motion.div>
+              ))}
             </div>
-          </ScrollReveal>
 
-          {/* Form column */}
-          <ScrollReveal className="lg:col-span-3 order-1 lg:order-2">
-            <div className="relative p-6 sm:p-8 md:p-10 rounded-3xl border border-white/[0.1] bg-[#0a0a12]/80 backdrop-blur-xl overflow-hidden shadow-[0_0_80px_rgba(185,103,255,0.08)]">
-              <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-accent-purple/50 to-transparent" />
-              <div className="absolute -top-24 -right-20 w-64 h-64 bg-accent-cyan/10 rounded-full blur-3xl pointer-events-none" />
-              <div className="absolute -bottom-24 -left-16 w-56 h-56 bg-accent-purple/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="wl-note">
+              <span className="wl-note-mark">
+                <MapPin className="h-3.5 w-3.5" />
+              </span>
+              <p>
+                {isSv
+                  ? "Byggt i Sverige av Stilledev. BudAI är fortfarande under utveckling — vi lovar inget vi inte kan hålla."
+                  : "Built in Sweden by Stilledev. BudAI is still in development — we won't promise what we can't hold."}
+              </p>
+            </div>
 
-              <AnimatePresence mode="wait">
-                {!submitted ? (
-                  <motion.div
-                    key="form"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0, y: -12 }}
-                    className="relative z-10"
-                  >
-                    <p className="text-[11px] text-muted/70 mb-4 leading-relaxed" data-pricing-soon-note>
-                      {lang === "sv"
-                        ? "Prissättning meddelas före full lansering. Early access låser 10 % (BUDAI-EARLY-10)."
-                        : "Pricing will be announced before full launch. Early access locks 10% (BUDAI-EARLY-10)."}
-                    </p>
-                    <LayoutGroup id="account-type">
-                      <div className="inline-flex p-1 rounded-xl bg-black/30 border border-white/[0.06] mb-6">
-                        {(["individual", "company"] as const).map((opt) => (
+            <ul className="wl-fineprint">
+              <li>
+                <Check className="h-3.5 w-3.5" />
+                {isSv ? "Ingen betalning, inget kort." : "No payment, no card."}
+              </li>
+              <li>
+                <Check className="h-3.5 w-3.5" />
+                {isSv ? "Avregistrera när du vill." : "Leave whenever you want."}
+              </li>
+              <li>
+                <Check className="h-3.5 w-3.5" />
+                {isSv
+                  ? "E-post används bara för BudAI-uppdateringar."
+                  : "Email is only used for BudAI updates."}
+              </li>
+            </ul>
+          </div>
+
+          {/* form / success */}
+          <div className="wl-card">
+            <div className="wl-card-line" aria-hidden="true" />
+            <AnimatePresence mode="wait" initial={false}>
+              {!submitted ? (
+                <motion.div
+                  key="form"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.24 }}
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <div className="wl-card-kicker">{isSv ? "Säkra din plats" : "Secure your spot"}</div>
+                      <h3 className="wl-card-title">
+                        {isSv ? "Lås upp 10 % för alltid." : "Unlock 10% for good."}
+                      </h3>
+                      <p className="wl-card-sub">
+                        {isSv ? "Det tar under en minut." : "Takes under a minute."}
+                      </p>
+                    </div>
+                    <span className="wl-badge" aria-hidden>
+                      <BadgePercent className="h-5 w-5" />
+                    </span>
+                  </div>
+
+                  <form onSubmit={handleSubmit} className="mt-7 space-y-5">
+                    <fieldset>
+                      <legend className="wl-label">{isSv ? "Jag utforskar BudAI för" : "I'm exploring BudAI for"}</legend>
+                      <div className="wl-switch" role="group">
+                        <button
+                          type="button"
+                          aria-pressed={accountType === "individual"}
+                          onClick={() => setAccountType("individual")}
+                          className={accountType === "individual" ? "is-selected" : ""}
+                        >
+                          <User className="h-4 w-4" />
+                          {isSv ? "Mig själv" : "Myself"}
+                        </button>
+                        <button
+                          type="button"
+                          aria-pressed={accountType === "company"}
+                          onClick={() => setAccountType("company")}
+                          className={accountType === "company" ? "is-selected" : ""}
+                        >
+                          <Building2 className="h-4 w-4" />
+                          {isSv ? "Mitt team" : "My team"}
+                        </button>
+                      </div>
+                    </fieldset>
+
+                    <fieldset>
+                      <legend className="wl-label">{isSv ? "Mest intresserad av" : "Most interested in"}</legend>
+                      <div className="wl-chip-row">
+                        {interestOptions.map((option) => (
                           <button
-                            key={opt}
+                            key={option.id}
                             type="button"
-                            onClick={() => setAccountType(opt)}
-                            className={`relative flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium ${
-                              accountType === opt
-                                ? "text-white"
-                                : "text-muted hover:text-white transition-colors"
-                            }`}
+                            aria-pressed={interest === option.id}
+                            onClick={() => setInterest(option.id)}
+                            className={`wl-chip ${interest === option.id ? "is-selected" : ""}`}
                           >
-                            {accountType === opt && (
-                              <motion.span
-                                layoutId="account-type-pill"
-                                transition={{ type: "spring", stiffness: 500, damping: 35, mass: 0.7 }}
-                                className="absolute inset-0 rounded-lg bg-gradient-to-r from-accent-cyan to-accent-purple"
-                              />
-                            )}
-                            <span className="relative flex items-center gap-2">
-                              {opt === "individual" ? (
-                                <User className="w-4 h-4" />
-                              ) : (
-                                <Building2 className="w-4 h-4" />
-                              )}
-                              {opt === "individual"
-                                ? t.waitlist.individualTab
-                                : t.waitlist.companyTab}
-                            </span>
+                            {option.label}
                           </button>
                         ))}
                       </div>
+                    </fieldset>
 
-                      <motion.form
-                        layout
-                        onSubmit={handleSubmit}
-                        className="space-y-3.5 mb-2"
-                        transition={{ layout: { duration: 0.25, ease: [0.22, 1, 0.36, 1] } }}
-                      >
-                        <motion.div layout className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                          <div className="relative">
-                            <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted pointer-events-none" />
-                            <input
-                              type="text"
-                              value={form.name}
-                              onChange={(e) => setForm({ ...form, name: e.target.value })}
-                              placeholder={t.waitlist.namePlaceholder}
-                              required
-                              autoComplete="name"
-                              className={inputClass}
-                            />
-                          </div>
-                          <div className="relative">
-                            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted pointer-events-none" />
-                            <input
-                              type="email"
-                              value={form.email}
-                              onChange={(e) => setForm({ ...form, email: e.target.value })}
-                              placeholder={t.waitlist.emailPlaceholder}
-                              required
-                              autoComplete="email"
-                              className={inputClass}
-                            />
-                          </div>
-
-                          <AnimatePresence initial={false}>
-                            {accountType === "company" && (
-                              <>
-                                <motion.div
-                                  layout
-                                  initial={{ opacity: 0 }}
-                                  animate={{ opacity: 1 }}
-                                  exit={{ opacity: 0 }}
-                                  className="relative"
-                                >
-                                  <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted pointer-events-none" />
-                                  <input
-                                    type="text"
-                                    value={form.company}
-                                    onChange={(e) => setForm({ ...form, company: e.target.value })}
-                                    placeholder={t.waitlist.companyPlaceholder}
-                                    required={accountType === "company"}
-                                    autoComplete="organization"
-                                    className={inputClass}
-                                  />
-                                </motion.div>
-                                <motion.div layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="relative">
-                                  <Briefcase className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted pointer-events-none" />
-                                  <select
-                                    value={form.industry}
-                                    onChange={(e) => setForm({ ...form, industry: e.target.value })}
-                                    required={accountType === "company"}
-                                    className={`${inputClass} appearance-none`}
-                                  >
-                                    <option value="" disabled className="bg-surface">
-                                      {t.waitlist.industryPlaceholder}
-                                    </option>
-                                    {(lang === "sv" ? industriesSv : industriesEn).map((ind) => (
-                                      <option key={ind} value={ind} className="bg-surface">
-                                        {ind}
-                                      </option>
-                                    ))}
-                                  </select>
-                                </motion.div>
-                                <motion.div layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="relative md:col-span-2">
-                                  <Users className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted pointer-events-none" />
-                                  <select
-                                    value={form.employees}
-                                    onChange={(e) => setForm({ ...form, employees: e.target.value })}
-                                    required={accountType === "company"}
-                                    className={`${inputClass} appearance-none`}
-                                  >
-                                    <option value="" disabled className="bg-surface">
-                                      {t.waitlist.employeesPlaceholder}
-                                    </option>
-                                    {employeeRanges.map((e) => (
-                                      <option key={e} value={e} className="bg-surface">
-                                        {e}
-                                      </option>
-                                    ))}
-                                  </select>
-                                </motion.div>
-                              </>
-                            )}
-                          </AnimatePresence>
-
-                          <motion.div
-                            layout
-                            className={`relative ${accountType === "individual" ? "md:col-span-2" : ""}`}
-                          >
-                            <Sparkles className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted pointer-events-none" />
-                            <select
-                              value={form.interest}
-                              onChange={(e) => setForm({ ...form, interest: e.target.value })}
-                              required
-                              className={`${inputClass} appearance-none`}
-                            >
-                              <option value="" disabled className="bg-surface">
-                                {t.waitlist.interestPlaceholder}
-                              </option>
-                              {(lang === "sv" ? interestsSv : interestsEn).map((i) => (
-                                <option key={i} value={i} className="bg-surface">
-                                  {i}
-                                </option>
-                              ))}
-                            </select>
-                          </motion.div>
-
-                          {/* Optional referral */}
-                          <motion.div layout className="relative md:col-span-2">
-                            <Tag className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted pointer-events-none" />
-                            <input
-                              type="text"
-                              value={referral}
-                              onChange={(e) => setReferral(e.target.value)}
-                              placeholder={
-                                lang === "sv"
-                                  ? "Referenskod (valfritt)"
-                                  : "Referral code (optional)"
-                              }
-                              className={inputClass}
-                              maxLength={64}
-                            />
-                          </motion.div>
-                        </motion.div>
-
-                        <AnimatePresence>
-                          {error && (
-                            <motion.div
-                              initial={{ opacity: 0, y: -8, height: 0 }}
-                              animate={{ opacity: 1, y: 0, height: "auto" }}
-                              exit={{ opacity: 0, height: 0 }}
-                              className="overflow-hidden"
-                            >
-                              <div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-red-500/[0.07] border border-red-500/20">
-                                <AlertTriangle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
-                                <div>
-                                  <p className="text-sm text-red-300">{t.waitlist.errorMsg}</p>
-                                  {errorDetail && (
-                                    <p className="text-red-400/50 text-xs mt-1 font-mono">{errorDetail}</p>
-                                  )}
-                                </div>
-                              </div>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-3 pt-1">
-                          <Magnetic strength={0.12} className="block w-full sm:w-auto">
-                            <button
-                              type="submit"
-                              disabled={loading}
-                              className="btn-primary w-full sm:w-auto !px-8 !py-3.5 disabled:opacity-40 disabled:cursor-not-allowed"
-                            >
-                              {loading ? (
-                                <span className="flex items-center gap-2">
-                                  <span className="inline-block w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                  {lang === "sv" ? "Skickar…" : "Submitting…"}
-                                </span>
-                              ) : (
-                                <span className="flex items-center gap-2">
-                                  {t.waitlist.submit} <ArrowRight className="w-5 h-5" />
-                                </span>
-                              )}
-                            </button>
-                          </Magnetic>
-                          <p className="text-[11px] text-muted/55 leading-relaxed max-w-xs">
-                            {t.waitlist.discountHint}
-                          </p>
-                        </div>
-                      </motion.form>
-                    </LayoutGroup>
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key="success"
-                    initial={{ opacity: 0, scale: 0.96 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                    className="relative z-10 text-center py-8 sm:py-10"
-                  >
-                    <motion.div
-                      initial={{ scale: 0, rotate: -16 }}
-                      animate={{ scale: 1, rotate: 0 }}
-                      transition={{ type: "spring", stiffness: 260, damping: 18, delay: 0.08 }}
-                      className="w-20 h-20 rounded-full bg-gradient-to-br from-accent-green to-accent-cyan flex items-center justify-center mx-auto mb-6 shadow-[0_0_50px_rgba(0,255,157,0.35)]"
-                    >
-                      <Check className="w-10 h-10 text-white" strokeWidth={3} />
-                    </motion.div>
-                    <h3 className="text-2xl sm:text-3xl font-bold mb-3 text-white">
-                      {t.waitlist.successTitle}
-                    </h3>
-                    <p className="text-muted mb-2">
-                      {t.waitlist.successPre}{" "}
-                      <span className="text-accent-cyan font-medium">{form.email}</span>{" "}
-                      {t.waitlist.successPost}
-                    </p>
-                    <p className="text-sm text-muted/55 mb-6">{t.waitlist.successNote}</p>
-
-                    <div className="inline-flex flex-col items-center gap-3">
-                      <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass text-sm text-accent-green border border-accent-green/20">
-                        <Crown className="w-4 h-4" />
-                        {t.waitlist.foundingActive}
+                    <div className="grid gap-4 sm:grid-cols-[0.8fr_1.2fr]">
+                      <div>
+                        <label htmlFor="wl-name" className="wl-label">
+                          {isSv ? "Namn" : "Name"} <span>{isSv ? "(valfritt)" : "(optional)"}</span>
+                        </label>
+                        <input
+                          id="wl-name"
+                          type="text"
+                          value={name}
+                          onChange={(event) => setName(event.target.value)}
+                          autoComplete="name"
+                          maxLength={100}
+                          placeholder={isSv ? "Ditt namn" : "Your name"}
+                          className="wl-input"
+                        />
                       </div>
-                      <p className="text-[11px] text-muted/55 max-w-xs">
-                        {lang === "sv"
-                          ? "Tips: dela stilledev.se/?ref=din-kod — referral sparas i din anmälan."
-                          : "Tip: share stilledev.se/?ref=your-code — referrals are saved with your signup."}
-                      </p>
-                      <button
-                        type="button"
-                        onClick={copyCode}
-                        className="px-5 py-3 rounded-xl bg-accent-cyan/5 border border-accent-cyan/25 hover:border-accent-cyan/40 transition-colors text-center group"
-                      >
-                        <div className="text-[10px] uppercase tracking-wider text-muted mb-1">
-                          {t.waitlist.discountCodeLabel}
+                      <div>
+                        <label htmlFor="wl-email" className="wl-label">
+                          {isSv ? "E-post" : "Email"}
+                        </label>
+                        <div className="relative">
+                          <Mail className="wl-input-icon" aria-hidden="true" />
+                          <input
+                            id="wl-email"
+                            type="email"
+                            value={email}
+                            onChange={(event) => setEmail(event.target.value)}
+                            autoComplete="email"
+                            required
+                            maxLength={254}
+                            placeholder={isSv ? "du@exempel.se" : "you@example.com"}
+                            className="wl-input wl-input--email"
+                          />
                         </div>
-                        <div className="font-mono text-sm text-accent-cyan tracking-wide flex items-center gap-2 justify-center">
-                          BUDAI-EARLY-10
-                          {copied ? (
-                            <Check className="w-3.5 h-3.5 text-accent-green" />
-                          ) : (
-                            <Copy className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100" />
-                          )}
-                        </div>
-                        <div className="text-[11px] text-muted mt-1">10% · early access</div>
-                      </button>
+                      </div>
                     </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          </ScrollReveal>
+
+                    {error && (
+                      <div className="wl-error" role="alert">
+                        <AlertTriangle className="h-4 w-4 shrink-0" />
+                        <span>{error}</span>
+                      </div>
+                    )}
+
+                    <button type="submit" disabled={loading} className="wl-submit group">
+                      <span>
+                        {loading
+                          ? isSv
+                            ? "Skickar…"
+                            : "Joining…"
+                          : isSv
+                            ? "Gå med och lås 10 %"
+                            : "Join and lock in 10%"}
+                      </span>
+                      {loading ? (
+                        <span className="wl-spinner" aria-hidden />
+                      ) : (
+                        <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
+                      )}
+                    </button>
+
+                    <p className="wl-legal">
+                      {isSv ? "Genom att gå med godkänner du vår " : "By joining you accept our "}
+                      <a href="/legal/privacy">{isSv ? "integritetspolicy" : "privacy policy"}</a>.
+                    </p>
+                  </form>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="success"
+                  initial={{ opacity: 0, scale: 0.985 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.34, ease: [0.22, 1, 0.36, 1] }}
+                  className="wl-success"
+                  role="status"
+                  aria-live="polite"
+                >
+                  <div className="wl-success-icon">
+                    <Check className="h-6 w-6" strokeWidth={2.6} />
+                  </div>
+                  <span className="wl-kicker wl-kicker--mint">
+                    <Sparkles className="h-3.5 w-3.5" />
+                    {isSv ? "Du är med" : "You're in"}
+                  </span>
+                  <h3>{isSv ? "Välkommen som founding member." : "Welcome, founding member."}</h3>
+                  <p>
+                    {isSv ? "Vi sparade platsen för " : "We saved the spot for "}
+                    <strong>{email.trim().toLowerCase()}</strong>
+                    {isSv ? " — 10 % är låst till ditt konto." : " — 10% is locked to your account."}
+                  </p>
+
+                  <div className="wl-code">
+                    <span className="wl-code-label">{isSv ? "Din founding-kod" : "Your founding code"}</span>
+                    <span className="wl-code-value">{code}</span>
+                    <button
+                      type="button"
+                      onClick={() => void copy(code, "code")}
+                      className="wl-code-copy"
+                      aria-label={isSv ? "Kopiera kod" : "Copy code"}
+                    >
+                      {copied === "code" ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                      {copied === "code" ? (isSv ? "Kopierad" : "Copied") : isSv ? "Kopiera" : "Copy"}
+                    </button>
+                  </div>
+
+                  <div className="wl-invite">
+                    <div className="min-w-0">
+                      <div className="wl-invite-title">
+                        {isSv ? "Bjud in en vän — båda flyttar fram" : "Invite a friend — you both move up"}
+                      </div>
+                      <div className="wl-invite-link">{inviteLink || "…"}</div>
+                    </div>
+                    <button type="button" onClick={() => void copy(inviteLink, "link")} className="wl-invite-btn">
+                      {copied === "link" ? <Check className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}
+                    </button>
+                  </div>
+
+                  <a href="#playground" className="wl-secondary">
+                    <span>{isSv ? "Testa Playground medan du väntar" : "Try the Playground while you wait"}</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </a>
+
+                  <p className="wl-success-note">
+                    {isSv
+                      ? "BudAI är fortfarande under utveckling. Vi hör av oss när nästa släpp är redo."
+                      : "BudAI is still in development. We'll be in touch when the next release is ready."}
+                  </p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+
+        {/* bottom strip */}
+        <div className="wl-strip">
+          <span className="wl-strip-item">
+            <Send className="h-3.5 w-3.5" />
+            {isSv ? "Ett mejl när något är redo — inget brus." : "One email when something is ready — no noise."}
+          </span>
+          <span className="wl-strip-divider" aria-hidden />
+          <span className="wl-strip-item">
+            <Zap className="h-3.5 w-3.5" />
+            {isSv ? "Byggt i Kista, Stockholm." : "Built in Kista, Stockholm."}
+          </span>
         </div>
       </div>
     </section>

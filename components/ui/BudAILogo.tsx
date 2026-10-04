@@ -2,25 +2,43 @@
 
 import { useId, type CSSProperties } from "react";
 
-type Size = "xs" | "sm" | "md" | "lg" | "xl" | "hero";
-type Variant = "dark" | "light";
+/* ────────────────────────────────────────────────────────────────
+   BudAI · "Prism Core" — the mark
+   ────────────────────────────────────────────────────────────────
+   One gem-cut prism (hexagonal aperture), one living core, three
+   orbital rings turning in real 3D, satellites riding them, and a
+   light sheen sweeping the glass. Built from CSS 3D transforms +
+   inline SVG so it stays vector-crisp from 16px favicon to a hero
+   stage, with zero external assets and zero layout shift.
 
-const SIZES: Record<Size, number> = {
-  xs: 28,
-  sm: 38,
-  md: 48,
-  lg: 76,
-  xl: 120,
-  hero: 220,
+   Motion is throttled by a single variable (--logo-tempo) so the
+   mark can idle, think, or flare without re-rendering a frame of JS.
+   ──────────────────────────────────────────────────────────────── */
+
+export type LogoSize = "xs" | "sm" | "md" | "lg" | "xl" | "hero";
+export type LogoVariant = "dark" | "light" | "mono";
+export type LogoMotion = "idle" | "thinking" | "alert";
+
+const SIZES: Record<LogoSize, number> = {
+  xs: 26,
+  sm: 40,
+  md: 56,
+  lg: 88,
+  xl: 140,
+  hero: 260,
 };
 
-/**
- * BudAI mark — final lockup: "Signal Core"
- *
- * One circle. One living core. One orbiting signal.
- * Premium AI-infrastructure identity — motion only (2D CSS), no 3D, no letter monogram.
- * Designed to read at 16px favicon and own a hero stage.
- */
+type LogoProps = {
+  size?: LogoSize;
+  className?: string;
+  animated?: boolean;
+  interactive?: boolean;
+  onClick?: () => void;
+  label?: string;
+  variant?: LogoVariant;
+  motion?: LogoMotion;
+};
+
 export default function BudAILogo({
   size = "sm",
   className = "",
@@ -29,304 +47,211 @@ export default function BudAILogo({
   onClick,
   label = "BudAI",
   variant = "dark",
-}: {
-  size?: Size;
-  className?: string;
-  animated?: boolean;
-  interactive?: boolean;
-  onClick?: () => void;
-  label?: string;
-  variant?: Variant;
-}) {
-  const uid = useId().replace(/:/g, "");
+  motion = "idle",
+}: LogoProps) {
+  const uid = useId().replace(/[^a-zA-Z0-9]/g, "");
   const px = SIZES[size];
-  const isHero = size === "hero" || size === "xl";
-  const isTiny = size === "xs" || size === "sm";
+  const rich = px >= 52; // full 3D scene only where it can breathe
+  const tiny = px <= 30; // favicon-grade: strip to the essentials
   const light = variant === "light";
-  const motion = animated;
-  const Tag = interactive || onClick ? "button" : "div";
+  const mono = variant === "mono";
+  const clickable = interactive || Boolean(onClick);
+  const Tag = clickable ? "button" : "div";
+
+  const tempo = !animated ? 0 : motion === "thinking" ? 2.6 : motion === "alert" ? 4 : 1;
 
   return (
     <Tag
-      type={Tag === "button" ? "button" : undefined}
-      onClick={onClick}
-      aria-label={label}
-      className={`relative inline-flex items-center justify-center shrink-0 group/logo ${
-        interactive || onClick
-          ? "cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-cyan/50 rounded-full"
-          : ""
+      {...(clickable ? { type: "button" as const, onClick } : {})}
+      aria-label={clickable ? label : undefined}
+      aria-hidden={clickable ? undefined : true}
+      data-motion={animated ? motion : "static"}
+      className={`budai-logo ${rich ? "budai-logo--rich" : ""} ${
+        tiny ? "budai-logo--tiny" : ""
+      } ${light ? "budai-logo--light" : ""} ${mono ? "budai-logo--mono" : ""} ${
+        clickable ? "budai-logo--interactive" : ""
       } ${className}`}
-      style={{ width: px, height: px }}
+      style={
+        {
+          "--logo-size": `${px}px`,
+          "--logo-tempo": tempo,
+        } as CSSProperties
+      }
     >
-      {/* Ambient field — only when motion + dark */}
-      {motion && !light && (
-        <>
-          <span
-            aria-hidden
-            className="absolute inset-[-36%] rounded-full pointer-events-none logo-glow-breathe"
-            style={{
-              background:
-                "radial-gradient(circle, rgba(0,229,255,0.5) 0%, rgba(124,58,237,0.18) 42%, transparent 70%)",
-              filter: `blur(${isHero ? 24 : isTiny ? 6 : 12}px)`,
-              opacity: isHero ? 0.95 : 0.65,
-            }}
-          />
-          <span
-            aria-hidden
-            className="absolute inset-[-16%] rounded-full pointer-events-none border border-accent-cyan/30 logo-pulse-ring"
-          />
-          {isHero && (
-            <span
-              aria-hidden
-              className="absolute inset-[-26%] rounded-full pointer-events-none border border-dashed border-accent-purple/25 logo-ambient-spin"
-            />
-          )}
-        </>
+      {/* ambient bloom */}
+      {!mono && <span className="budai-halo" aria-hidden />}
+
+      {/* 3D orbital field */}
+      {rich && (
+        <span className="budai-scene" aria-hidden>
+          <span className="budai-orbit budai-orbit--a">
+            <span className="budai-bead budai-bead--a" />
+          </span>
+          <span className="budai-orbit budai-orbit--b">
+            <span className="budai-bead budai-bead--b" />
+          </span>
+          <span className="budai-orbit budai-orbit--c">
+            <span className="budai-bead budai-bead--c" />
+          </span>
+          <span className="budai-axis" />
+        </span>
       )}
 
-      <span
-        className={`relative z-[1] w-full h-full rounded-full overflow-hidden ${
-          motion ? "logo-mark-breathe" : ""
-        } ${
-          interactive || onClick
-            ? "transition-transform duration-300 group-hover/logo:scale-[1.06] group-active/logo:scale-95"
-            : ""
-        }`}
-        style={
-          {
-            background: light
-              ? "radial-gradient(circle at 32% 28%, #ffffff 0%, #f1f5f9 48%, #e2e8f0 100%)"
-              : "radial-gradient(circle at 32% 28%, #1a3358 0%, #0a1220 46%, #03050a 100%)",
-            border: light
-              ? "1px solid rgba(15,23,42,0.12)"
-              : "1px solid rgba(255,255,255,0.18)",
-            boxShadow: light
-              ? "0 4px 20px rgba(15,23,42,0.12), inset 0 1px 0 #fff"
-              : isHero
-                ? "0 0 70px rgba(0,229,255,0.38), 0 0 2px rgba(255,255,255,0.35), inset 0 1px 0 rgba(255,255,255,0.28)"
-                : "0 0 22px rgba(0,229,255,0.3), inset 0 1px 0 rgba(255,255,255,0.22)",
-          } as CSSProperties
-        }
-      >
-        <svg viewBox="0 0 64 64" className="absolute inset-0 w-full h-full" aria-hidden>
-          <defs>
-            <linearGradient id={`sc-ring-${uid}`} x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor={light ? "#0891b2" : "#f0fdff"} />
-              <stop offset="40%" stopColor={light ? "#06b6d4" : "#22d3ee"} />
-              <stop offset="100%" stopColor={light ? "#7c3aed" : "#a78bfa"} />
-            </linearGradient>
-            <linearGradient id={`sc-arc-${uid}`} x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#67e8f9" stopOpacity="0.15" />
-              <stop offset="50%" stopColor="#22d3ee" stopOpacity="1" />
-              <stop offset="100%" stopColor="#c4b5fd" stopOpacity="0.2" />
-            </linearGradient>
-            <radialGradient id={`sc-core-${uid}`} cx="34%" cy="30%" r="68%">
-              <stop offset="0%" stopColor="#ffffff" />
-              <stop offset="22%" stopColor="#ecfeff" />
-              <stop offset="55%" stopColor="#22d3ee" />
-              <stop offset="100%" stopColor="#6366f1" />
-            </radialGradient>
-            <radialGradient id={`sc-wash-${uid}`} cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor={light ? "rgba(6,182,212,0.14)" : "rgba(0,229,255,0.2)"} />
-              <stop offset="100%" stopColor="rgba(0,0,0,0)" />
-            </radialGradient>
-            <filter id={`sc-glow-${uid}`} x="-60%" y="-60%" width="220%" height="220%">
-              <feGaussianBlur stdDeviation="1.6" result="b" />
-              <feMerge>
-                <feMergeNode in="b" />
-                <feMergeNode in="SourceGraphic" />
-              </feMerge>
-            </filter>
-          </defs>
+      {/* the gem */}
+      <svg viewBox="0 0 64 64" className="budai-gem" fill="none" aria-hidden>
+        <defs>
+          <linearGradient id={`bud-frame-${uid}`} x1="6" y1="4" x2="58" y2="60" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stopColor={light ? "#0e7490" : "#d9fffa"} />
+            <stop offset="38%" stopColor={light ? "#0891b2" : "#87e9df"} />
+            <stop offset="100%" stopColor={light ? "#4338ca" : "#b9a8f6"} />
+          </linearGradient>
+          <linearGradient id={`bud-edge-${uid}`} x1="12" y1="52" x2="52" y2="12" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stopColor={light ? "#7c3aed" : "#b9a8f6"} stopOpacity="0.15" />
+            <stop offset="52%" stopColor={light ? "#0891b2" : "#87e9df"} stopOpacity="0.95" />
+            <stop offset="100%" stopColor={light ? "#38bdf8" : "#c9f9ff"} stopOpacity="0.2" />
+          </linearGradient>
+          <radialGradient id={`bud-core-${uid}`} cx="36%" cy="30%" r="72%">
+            <stop offset="0%" stopColor="#ffffff" />
+            <stop offset="26%" stopColor={light ? "#7dd3fc" : "#e8fffd"} />
+            <stop offset="62%" stopColor={light ? "#0ea5e9" : "#87e9df"} />
+            <stop offset="100%" stopColor={light ? "#4338ca" : "#7c6bf0"} />
+          </radialGradient>
+          <radialGradient id={`bud-iris-${uid}`} cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#ffffff" stopOpacity="0" />
+            <stop offset="72%" stopColor="#87e9df" stopOpacity="0" />
+            <stop offset="100%" stopColor="#87e9df" stopOpacity="0.55" />
+          </radialGradient>
+          <filter id={`bud-glow-${uid}`} x="-70%" y="-70%" width="240%" height="240%">
+            <feGaussianBlur stdDeviation="1.7" result="b" />
+            <feMerge>
+              <feMergeNode in="b" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
 
-          {/* Soft inner wash */}
-          <circle cx="32" cy="32" r="23" fill={`url(#sc-wash-${uid})`} />
+        {/* outer prism — pointy-top hexagon, rounded corners */}
+        <path
+          className="budai-frame"
+          d="M32 5.1 L55.3 18.5 V45.5 L32 58.9 L8.7 45.5 V18.5 Z"
+          stroke={`url(#bud-frame-${uid})`}
+          strokeWidth={rich ? 2.1 : 2.4}
+          strokeLinejoin="round"
+        />
 
-          {/* Track ring (static precision) */}
-          <circle
-            cx="32"
-            cy="32"
-            r="24.2"
-            fill="none"
-            stroke={light ? "rgba(15,23,42,0.08)" : "rgba(255,255,255,0.07)"}
-            strokeWidth="0.8"
-          />
+        {/* inner counter-rotated facet ring */}
+        <path
+          className={animated ? "budai-facet" : undefined}
+          d="M45.5 32 L38.9 43.4 H25.1 L18.5 32 L25.1 20.6 H38.9 Z"
+          stroke={`url(#bud-edge-${uid})`}
+          strokeWidth="1.25"
+          strokeLinejoin="round"
+          opacity="0.92"
+        />
 
-          {/* Rotating dashed telemetry ring */}
-          <g
-            className={motion ? "logo-ambient-spin" : undefined}
-            style={
-              motion
-                ? ({ transformOrigin: "32px 32px", animationDuration: isHero ? "14s" : "11s" } as CSSProperties)
-                : undefined
-            }
-          >
-            <circle
-              cx="32"
-              cy="32"
-              r="26"
-              fill="none"
-              stroke={`url(#sc-ring-${uid})`}
-              strokeWidth="1.35"
-              strokeDasharray="2.2 5.5"
-              strokeLinecap="round"
-              opacity="0.7"
-            />
+        {/* facet cuts — skipped when tiny so the silhouette stays clean */}
+        {!tiny && (
+          <g className="budai-cuts" stroke={`url(#bud-edge-${uid})`} strokeWidth="0.6" opacity="0.5">
+            <path d="M32 5.1 L32 20.6" />
+            <path d="M55.3 18.5 L38.9 20.6" />
+            <path d="M55.3 45.5 L38.9 43.4" />
+            <path d="M32 58.9 L32 43.4" />
+            <path d="M8.7 45.5 L25.1 43.4" />
+            <path d="M8.7 18.5 L25.1 20.6" />
           </g>
+        )}
 
-          {/* Primary brand ring */}
-          <circle
-            cx="32"
-            cy="32"
-            r="21.2"
-            fill="none"
-            stroke={`url(#sc-ring-${uid})`}
-            strokeWidth={isHero ? 2.15 : 1.85}
-            opacity="0.98"
-          />
+        {/* iris halo behind the core */}
+        {!tiny && <circle cx="32" cy="32" r="13.4" fill={`url(#bud-iris-${uid})`} className="budai-iris" />}
 
-          {/* Counter-rotating dialogue arc (single clean sweep) */}
-          <g
-            className={motion ? "logo-orbit-2d" : undefined}
-            style={
-              motion
-                ? ({
-                    transformOrigin: "32px 32px",
-                    animationDuration: isHero ? "11s" : "15s",
-                    animationDirection: "reverse",
-                  } as CSSProperties)
-                : undefined
-            }
-          >
+        {/* the core */}
+        <circle
+          className={animated ? "budai-core" : undefined}
+          cx="32"
+          cy="32"
+          r={tiny ? 7.4 : 8.4}
+          fill={`url(#bud-core-${uid})`}
+          filter={rich ? `url(#bud-glow-${uid})` : undefined}
+          style={{ transformOrigin: "32px 32px" }}
+        />
+        <circle cx="32" cy="32" r={tiny ? 7.4 : 8.4} stroke="#ffffff" strokeOpacity={light ? 0.5 : 0.4} strokeWidth="0.7" />
+        {/* specular */}
+        <circle cx={28.6} cy={28.8} r={rich ? 2.6 : 2.2} fill="#ffffff" opacity={light ? 0.9 : 0.68} />
+
+        {/* scanner arc — only in the full scene */}
+        {rich && (
+          <g className="budai-scanner" style={{ transformOrigin: "32px 32px" }}>
             <path
-              d="M18.5 32 A13.5 13.5 0 0 1 45.5 32"
-              fill="none"
-              stroke={`url(#sc-arc-${uid})`}
-              strokeWidth="2.6"
+              d="M32 16.6 A15.4 15.4 0 0 1 47.4 32"
+              stroke={`url(#bud-edge-${uid})`}
+              strokeWidth="1.5"
               strokeLinecap="round"
-              filter={motion ? `url(#sc-glow-${uid})` : undefined}
-            />
-            {/* subtle second arc opposite */}
-            <path
-              d="M45.5 32 A13.5 13.5 0 0 1 18.5 32"
-              fill="none"
-              stroke={light ? "rgba(99,102,241,0.35)" : "rgba(167,139,250,0.45)"}
-              strokeWidth="1.2"
-              strokeLinecap="round"
-              strokeDasharray="3 10"
-              opacity="0.85"
+              filter={`url(#bud-glow-${uid})`}
             />
           </g>
+        )}
+      </svg>
 
-          {/* Orbiting live signal bead */}
-          <g
-            className={motion ? "logo-orbit-2d" : undefined}
-            style={
-              motion
-                ? ({
-                    transformOrigin: "32px 32px",
-                    animationDuration: isHero ? "4.2s" : "5.8s",
-                  } as CSSProperties)
-                : undefined
-            }
-          >
-            <circle
-              cx="32"
-              cy="6.8"
-              r="3.35"
-              fill={`url(#sc-ring-${uid})`}
-              filter={motion ? `url(#sc-glow-${uid})` : undefined}
-            />
-            <circle cx="32" cy="6.8" r="1.45" fill="#fff" />
-            {/* faint trail */}
-            <circle cx="32" cy="6.8" r="5.2" fill="none" stroke="#22d3ee" strokeWidth="0.6" opacity="0.35" />
-          </g>
+      {/* glass sheen sweeping across the prism */}
+      {rich && !mono && <span className="budai-sheen" aria-hidden />}
 
-          {/* Core — the product heart */}
-          <circle
-            cx="32"
-            cy="32"
-            r="10"
-            fill={`url(#sc-core-${uid})`}
-            className={motion ? "logo-core-pulse" : undefined}
-            style={motion ? ({ transformOrigin: "32px 32px" } as CSSProperties) : undefined}
-            filter={motion ? `url(#sc-glow-${uid})` : undefined}
-          />
-          <circle cx="32" cy="32" r="10" fill="none" stroke="#fff" strokeWidth="0.75" opacity="0.42" />
-          {/* Specular highlight */}
-          <circle cx="28.2" cy="28.4" r="2.9" fill="#fff" opacity={light ? 0.85 : 0.62} />
-          {/* Inner focus dot */}
-          <circle cx="33.6" cy="34.2" r="1.15" fill="#0e7490" opacity="0.35" />
-
-          {/* Three micro-nodes — constellation, not clutter */}
-          <circle
-            cx="47.5"
-            cy="38.5"
-            r="1.45"
-            fill="#a5f3fc"
-            opacity="0.8"
-            className={motion ? "logo-float-mote" : undefined}
-          />
-          <circle
-            cx="16.2"
-            cy="36.8"
-            r="1.2"
-            fill="#c4b5fd"
-            opacity="0.72"
-            className={motion ? "logo-float-mote" : undefined}
-            style={motion ? ({ animationDelay: "0.9s" } as CSSProperties) : undefined}
-          />
-          <circle
-            cx="38.5"
-            cy="17.5"
-            r="1.05"
-            fill="#e0f2fe"
-            opacity="0.65"
-            className={motion ? "logo-float-mote" : undefined}
-            style={motion ? ({ animationDelay: "1.7s" } as CSSProperties) : undefined}
-          />
-        </svg>
-      </span>
+      {/* satellites in front of the glass for depth */}
+      {rich && (
+        <span className="budai-front" aria-hidden>
+          <span className="budai-mote budai-mote--a" />
+          <span className="budai-mote budai-mote--b" />
+          <span className="budai-mote budai-mote--c" />
+        </span>
+      )}
     </Tag>
   );
 }
+
+/* ── Wordmark ─────────────────────────────────────────────── */
 
 export function BudAIWordmark({
   size = "sm",
   className = "",
   animated = true,
   variant = "dark",
+  motion = "idle",
+  showBy = false,
 }: {
-  size?: Size;
+  size?: LogoSize;
   className?: string;
   animated?: boolean;
-  variant?: Variant;
+  variant?: LogoVariant;
+  motion?: LogoMotion;
+  showBy?: boolean;
 }) {
-  const textSize =
+  const text =
     size === "xs" || size === "sm"
-      ? "text-[15px] font-bold tracking-tight"
+      ? "text-[16px]"
       : size === "md"
-        ? "text-base font-bold tracking-tight"
-        : "text-xl font-bold tracking-tight";
-
+        ? "text-[19px]"
+        : size === "lg"
+          ? "text-2xl"
+          : "text-3xl";
   return (
-    <span className={`inline-flex items-center gap-2.5 ${className}`}>
-      <BudAILogo size={size} animated={animated} variant={variant} />
-      <span className={`${textSize} ${variant === "light" ? "text-slate-900" : "text-white"}`}>
-        Bud<span className="text-accent-cyan">AI</span>
+    <span className={`budai-wordmark inline-flex items-center gap-2.5 ${className}`}>
+      <BudAILogo size={size} animated={animated} variant={variant} motion={motion} />
+      <span className={`${text} font-extrabold leading-none tracking-[-0.03em] ${variant === "light" ? "text-slate-900" : "text-white"}`}>
+        Bud
+        <span className={`budai-wordmark-accent ${animated ? "" : "is-static"}`}>AI</span>
       </span>
+      {showBy && (
+        <span className="ml-0.5 hidden text-[10px] font-medium uppercase tracking-[0.18em] text-white/35 sm:inline">
+          by Stilledev
+        </span>
+      )}
     </span>
   );
 }
 
-export function StilledevMark({
-  size = 20,
-  className = "",
-}: {
-  size?: number;
-  className?: string;
-}) {
-  const uid = useId().replace(/:/g, "");
+/* ── Stilledev ────────────────────────────────────────────── */
+
+export function StilledevMark({ size = 20, className = "" }: { size?: number; className?: string }) {
+  const uid = useId().replace(/[^a-zA-Z0-9]/g, "");
   return (
     <span
       className={`inline-flex items-center justify-center shrink-0 ${className}`}
@@ -336,18 +261,11 @@ export function StilledevMark({
       <svg viewBox="0 0 32 32" className="w-full h-full" fill="none">
         <defs>
           <linearGradient id={`sm-${uid}`} x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#00e5ff" />
-            <stop offset="100%" stopColor="#8b5cf6" />
+            <stop offset="0%" stopColor="#87e9df" />
+            <stop offset="100%" stopColor="#b9a8f6" />
           </linearGradient>
         </defs>
-        <circle
-          cx="16"
-          cy="16"
-          r="14.5"
-          stroke={`url(#sm-${uid})`}
-          strokeWidth="1.5"
-          fill="rgba(0,229,255,0.06)"
-        />
+        <path d="M16 1.8 L28.3 8.9 V23.1 L16 30.2 L3.7 23.1 V8.9 Z" stroke={`url(#sm-${uid})`} strokeWidth="1.5" fill="rgba(135,233,223,0.07)" strokeLinejoin="round" />
         <path
           d="M21.5 11.2c-.6-1.8-2.2-2.9-4.4-2.9-2.8 0-4.6 1.5-4.6 3.5 0 1.9 1.3 2.9 4.2 3.5l1.4.3c2.1.5 3.1 1.2 3.1 2.6 0 1.6-1.5 2.7-3.7 2.7-2.1 0-3.6-1-4.3-2.7"
           stroke={`url(#sm-${uid})`}

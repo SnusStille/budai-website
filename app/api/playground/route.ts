@@ -44,53 +44,140 @@ function adminSb() {
   return createClient(url, key);
 }
 
-const SYSTEM_PROMPT = (
-  lang: "sv" | "en",
-  dual: boolean,
-  concise: boolean,
-  extra?: string,
-  hasImage?: boolean
-) => {
-  const langLine =
+/* ── Personas ─────────────────────────────────────────────── */
+
+type PersonaId = "core" | "writer" | "analyst" | "builder" | "coach" | "studio";
+
+const PERSONAS: Record<PersonaId, { sv: string; en: string }> = {
+  core: {
+    sv: "Du är BudAI Core — en varm, rak och praktisk AI-arbetsassistent. Du hjälper till att skriva, tänka, planera och förenkla arbete.",
+    en: "You are BudAI Core — a warm, direct, practical AI work assistant. You help people write, think, plan and simplify work.",
+  },
+  writer: {
+    sv: "Du är BudAI Writer — en skarp svensk/engelsk skribent. Du skriver publicerbar text, föreslår rubriker, stryker fluff och levererar färdigt material.",
+    en: "You are BudAI Writer — a sharp bilingual copywriter. You produce publishable text, propose headlines, cut fluff, and deliver finished material.",
+  },
+  analyst: {
+    sv: "Du är BudAI Analyst — strukturerad och källkritisk. Du väger alternativ, listar antaganden, risker och rekommenderar ett tydligt nästa steg.",
+    en: "You are BudAI Analyst — structured and source-critical. You weigh options, list assumptions and risks, and recommend one clear next step.",
+  },
+  builder: {
+    sv: "Du är BudAI Builder — teknisk och konkret. Du skriver kod, förklarar arkitektur, felsöker och ger körbara exempel med korta kommentarer.",
+    en: "You are BudAI Builder — technical and concrete. You write code, explain architecture, debug, and give runnable examples with short comments.",
+  },
+  coach: {
+    sv: "Du är BudAI Coach — uppmuntrande och prestigelös. Du ställer en bra följdfråga när det behövs och delar upp stora mål i små, tydliga steg.",
+    en: "You are BudAI Coach — encouraging and ego-free. You ask one good follow-up question when needed and break big goals into small, clear steps.",
+  },
+  studio: {
+    sv: "Du är BudAI Studio — kreativ och bildspråklig. Du beskriver miljöer, ljus och känsla och skriver detaljerade bildprompter.",
+    en: "You are BudAI Studio — creative and visual. You describe scenes, light and mood, and write detailed image prompts.",
+  },
+};
+
+/* ── Response styles ──────────────────────────────────────── */
+
+type StyleId = "balanced" | "concise" | "creative" | "precise" | "stepbystep";
+
+const STYLES: Record<StyleId, { sv: string; en: string }> = {
+  balanced: {
+    sv: "Svara hjälpsamt och innehållsrikt (120–260 ord när det är värt det). Korta stycken eller punktlistor.",
+    en: "Reply helpfully and substantially (120–260 words when deserved). Short paragraphs or bullets.",
+  },
+  concise: {
+    sv: "Var knivskarp: 60–110 ord, punktlistor välkomna. Ingen utfyllnad, ingen repetition av frågan.",
+    en: "Be razor sharp: 60–110 words, bullets welcome. No filler, never restate the question.",
+  },
+  creative: {
+    sv: "Var lekfull och bildrik. Överraska med en oväntad vinkel, ett konkret exempel och en mening värd att citera.",
+    en: "Be playful and vivid. Surprise with an unexpected angle, one concrete example, and a line worth quoting.",
+  },
+  precise: {
+    sv: "Var exakt och källkritisk. Skilj tydligt på fakta, antaganden och osäkerhet. Flagga när information kan ha ändrats.",
+    en: "Be exact and source-critical. Separate facts, assumptions and uncertainty. Flag when information may have changed.",
+  },
+  stepbystep: {
+    sv: "Arbeta steg för steg. Numrera stegen, visa hur du kommer fram, avsluta med ett tydligt nästa steg.",
+    en: "Work step by step. Number the steps, show your reasoning, end with one clear next step.",
+  },
+};
+
+/* ── Effort / depth ──────────────────────────────────────── */
+
+type EffortId = "quick" | "balanced" | "deep";
+
+const EFFORT: Record<EffortId, { sv: string; en: string; tokens: number }> = {
+  quick: {
+    sv: "Svara snabbt och kompakt.",
+    en: "Answer fast and compact.",
+    tokens: 700,
+  },
+  balanced: { sv: "", en: "", tokens: 1300 },
+  deep: {
+    sv: "Tänk igenom detta noggrant. Överväg minst två infallsvinklar, lyft kantfall och var extragrundlig.",
+    en: "Think this through carefully. Consider at least two angles, surface edge cases, and be extra thorough.",
+    tokens: 2600,
+  },
+};
+
+function buildSystem(opts: {
+  lang: "sv" | "en";
+  persona: PersonaId;
+  style: StyleId;
+  effort: EffortId;
+  dual: boolean;
+  extra?: string;
+  hasImage?: boolean;
+}) {
+  const { lang, persona, style, effort, dual, extra, hasImage } = opts;
+
+  const parts: string[] = [];
+  parts.push(PERSONAS[persona][lang === "sv" ? "sv" : "en"]);
+  parts.push("Du är BudAI, byggd av Stilledev i Sverige. En tidig förhandsvisning.");
+  parts.push("Kärnprinciper: var konkret, undvik floskler, hitta inte på fakta, erkänn osäkerhet.");
+  parts.push(
     lang === "sv"
-      ? "Always reply in Swedish unless the user clearly writes in English only."
-      : "Always reply in English unless the user clearly writes in Swedish only.";
+      ? "Svara på svenska om användaren skriver på svenska, annars på engelska."
+      : "Reply in English unless the user writes in Swedish, then reply in Swedish."
+  );
+  parts.push(STYLES[style][lang === "sv" ? "sv" : "en"]);
+  if (EFFORT[effort][lang === "sv" ? "sv" : "en"]) parts.push(EFFORT[effort][lang === "sv" ? "sv" : "en"]);
 
-  let length: string;
   if (dual) {
-    length = `Produce TWO alternatives EXACTLY:
-
-===OPTION_A===
-<title max 6 words>
-<body 160-300 words>
-
-===OPTION_B===
-<title max 6 words>
-<body 160-300 words different angle>`;
-  } else if (concise) {
-    length = `Keep replies sharp (60-110 words). Bullets welcome.`;
-  } else {
-    length = `Helpful and substantial (120-260 words when deserved). Short paragraphs or bullets. Warm and concrete.`;
+    parts.push(
+      lang === "sv"
+        ? "Ge EXAKT två alternativ i formatet:\n\n===OPTION_A===\n<rubrik max 6 ord>\n<text 160–300 ord>\n\n===OPTION_B===\n<rubrik max 6 ord>\n<text 160–300 ord, annan vinkel>"
+        : "Produce EXACTLY two alternatives:\n\n===OPTION_A===\n<title max 6 words>\n<body 160–300 words>\n\n===OPTION_B===\n<title max 6 words>\n<body 160–300 words, different angle>"
+    );
   }
 
-  const vision = hasImage
-    ? `\nThe user attached an image. Describe and analyze it accurately. Never invent text that is not readable. If unclear, say so.`
-    : "";
+  parts.push(
+    lang === "sv"
+      ? "Lova aldrig priser, lanseringsdatum, rabatter eller funktioner som inte är bekräftade. Låtsas aldrig ha tillgång till privat data."
+      : "Never promise pricing, launch dates, discounts or unconfirmed features. Never claim access to private data."
+  );
 
-  const extraBlock = extra?.trim()
-    ? `\n\nContext (memory / device / system — respect privacy):\n${extra.trim().slice(0, 3500)}`
-    : "";
+  if (hasImage) {
+    parts.push(
+      lang === "sv"
+        ? "Användaren har bifogat en bild. Beskriv och analysera den korrekt. Hitta inte på text som inte går att läsa."
+        : "The user attached an image. Describe and analyse it accurately. Never invent unreadable text."
+    );
+  }
 
-  return `You are BudAI — an AI work assistant by Stilledev (Sweden).
-You help people write, automate, decide, and think clearer. Nordic context when relevant.
-${langLine}
-Developer preview. Pricing/access: waitlist + code BUDAI-EARLY-10 (10% at launch).
-Never claim access to private phone data, messages, contacts, camera, or mic unless the user explicitly provided content.
-If useful long-term facts appear (name, role, company, preferences, goals), end your reply with a single hidden line:
-[[MEMORY: short fact]]
-Only for durable facts, not temporary task details. Max one per reply. Skip if nothing durable.
-${length}${vision}${extraBlock}`;
-};
+  if (extra?.trim()) {
+    parts.push(
+      (lang === "sv" ? "Kontext (minne/enhet — respektera integritet):\n" : "Context (memory/device — respect privacy):\n") +
+        extra.trim().slice(0, 3500)
+    );
+  }
+
+  parts.push(
+    "Om du lär dig en varaktig fakta om användaren (namn, roll, företag, preferens, mål), avsluta svaret med exakt en rad: [[MEMORY: kort fakta]]. Bara beständiga fakta, aldrig uppgiftsdetaljer."
+  );
+
+  return parts.join("\n\n");
+}
 
 function parseDual(text: string) {
   const parts = text
@@ -111,13 +198,35 @@ function parseDual(text: string) {
   return { replies };
 }
 
-function stripMemoryTag(text: string): { clean: string; memory: string | null } {
+function stripMemory(text: string): { clean: string; memory: string | null } {
   const m = text.match(/\[\[MEMORY:\s*([\s\S]*?)\]\]/i);
-  if (!m) return { clean: text.trim(), memory: null };
+  if (!m) return { clean: text, memory: null };
   const memory = m[1].trim().slice(0, 240);
-  const clean = text.replace(m[0], "").trim();
+  const clean = text.replace(m[0], "");
   return { clean, memory: memory || null };
 }
+
+/** Live view of a streaming answer: hide the memory tag the moment it starts. */
+function visibleStream(text: string) {
+  const i = text.search(/\[\[MEMORY:/i);
+  return i === -1 ? text : text.slice(0, i);
+}
+
+type Body = {
+  messages?: { role?: string; content?: string }[];
+  lang?: string;
+  dual?: boolean;
+  concise?: boolean;
+  persona?: string;
+  style?: string;
+  effort?: string;
+  stream?: boolean;
+  context?: string;
+  imageBase64?: string;
+  imageMediaType?: string;
+  guest?: string;
+  temporary?: boolean;
+};
 
 export async function POST(req: NextRequest) {
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
@@ -128,17 +237,35 @@ export async function POST(req: NextRequest) {
   const anthropic = getClient();
   if (!anthropic) {
     return NextResponse.json(
-      { error: "Playground is not configured. Set ANTHROPIC_API_KEY.", reply: null },
+      {
+        error:
+          "Playground is not configured yet. Add ANTHROPIC_API_KEY to enable live answers — the interface still works.",
+        code: "unconfigured",
+        reply: null,
+      },
       { status: 503 }
     );
   }
 
   try {
-    const body = await req.json();
+    const body = (await req.json()) as Body;
     const rawMessages = body?.messages;
-    const lang = body?.lang === "sv" ? "sv" : "en";
-    const concise = body?.concise === true;
-    const dual = concise ? false : body?.dual === true;
+    const lang: "sv" | "en" = body?.lang === "sv" ? "sv" : "en";
+    const dual = body?.dual === true;
+    const persona = (
+      ["core", "writer", "analyst", "builder", "coach", "studio"].includes(String(body?.persona))
+        ? body?.persona
+        : "core"
+    ) as PersonaId;
+    const style = (
+      ["balanced", "concise", "creative", "precise", "stepbystep"].includes(String(body?.style))
+        ? body?.style
+        : "balanced"
+    ) as StyleId;
+    const effort = (
+      ["quick", "balanced", "deep"].includes(String(body?.effort)) ? body?.effort : "balanced"
+    ) as EffortId;
+    const wantStream = body?.stream === true;
     const contextBlock = typeof body?.context === "string" ? body.context : "";
     const imageBase64 = typeof body?.imageBase64 === "string" ? body.imageBase64 : null;
     const imageMediaType =
@@ -153,7 +280,6 @@ export async function POST(req: NextRequest) {
     const user = await resolveUser(req);
     const tier: AccessTier = user ? "member" : "guest";
 
-    // Soft server quota when tables exist (single clean upsert)
     const sb = adminSb();
     if (imageBase64 && tier === "guest") {
       return NextResponse.json(
@@ -161,6 +287,8 @@ export async function POST(req: NextRequest) {
         { status: 403 }
       );
     }
+
+    /* Server-side quota bookkeeping (best effort — tables may not exist yet) */
     if (sb) {
       try {
         const day = dayKey();
@@ -178,14 +306,11 @@ export async function POST(req: NextRequest) {
               { status: 429 }
             );
           }
-          if (imageBase64) {
-            const imgUsed = full?.images ?? 0;
-            if (imgUsed >= limitFor(tier, "images")) {
-              return NextResponse.json(
-                { error: "Daily image analysis limit reached.", code: "limit" },
-                { status: 429 }
-              );
-            }
+          if (imageBase64 && (full?.images ?? 0) >= limitFor(tier, "images")) {
+            return NextResponse.json(
+              { error: "Daily image analysis limit reached.", code: "limit" },
+              { status: 429 }
+            );
           }
           await sb.from("usage_daily").upsert({
             user_id: user.id,
@@ -228,7 +353,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid message" }, { status: 400 });
     }
 
-    const recent = rawMessages.slice(-12);
+    const recent = rawMessages.slice(-14);
     type Msg = {
       role: "user" | "assistant";
       content: string | Anthropic.ContentBlockParam[];
@@ -242,7 +367,7 @@ export async function POST(req: NextRequest) {
         (m.role !== "user" && m.role !== "assistant") ||
         typeof m.content !== "string" ||
         m.content.length === 0 ||
-        m.content.length > 4000
+        m.content.length > 8000
       ) {
         return NextResponse.json({ error: "Invalid message" }, { status: 400 });
       }
@@ -272,54 +397,115 @@ export async function POST(req: NextRequest) {
     }
 
     const model = process.env.ANTHROPIC_MODEL || "claude-sonnet-4-20250514";
-
-    const response = await anthropic.messages.create({
-      model,
-      max_tokens: dual ? 1600 : concise ? 500 : 1200,
-      system: SYSTEM_PROMPT(lang, dual, concise, contextBlock, !!imageBase64),
-      messages: messages as Anthropic.MessageParam[],
+    const system = buildSystem({
+      lang,
+      persona,
+      style,
+      effort,
+      dual,
+      extra: contextBlock,
+      hasImage: !!imageBase64,
     });
+    const maxTokens = dual ? 1800 : EFFORT[effort].tokens;
 
-    const textBlock = response.content.find((c) => c.type === "text");
-    let text = textBlock && textBlock.type === "text" ? textBlock.text : "";
-    const { clean, memory } = stripMemoryTag(text);
-    text = clean;
-
-    // Persist auto-memory for members
-    if (memory && user && sb && !temporary) {
+    const persistMemory = async (memory: string | null) => {
+      if (!memory || !user || !sb || temporary) return;
       try {
         const { data: prof } = await sb
           .from("profiles")
           .select("memory_enabled")
           .eq("id", user.id)
           .maybeSingle();
-        if (prof?.memory_enabled !== false) {
-          await sb.from("memories").insert({
-            user_id: user.id,
-            content: memory,
-            category: "general",
-            source: "auto",
-            confidence: 0.75,
-          });
-        }
+        if (prof?.memory_enabled === false) return;
+        await sb.from("memories").insert({
+          user_id: user.id,
+          content: memory,
+          category: "general",
+          source: "auto",
+          confidence: 0.75,
+        });
       } catch {
         /* */
       }
+    };
+
+    /* ── Streaming path ───────────────────────────────────── */
+    if (wantStream && !dual) {
+      const stream = anthropic.messages.stream({
+        model,
+        max_tokens: maxTokens,
+        system,
+        messages: messages as Anthropic.MessageParam[],
+      });
+
+      const encoder = new TextEncoder();
+      const started = Date.now();
+
+      const readable = new ReadableStream<Uint8Array>({
+        async start(controller) {
+          let full = "";
+          try {
+            for await (const event of stream) {
+              if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
+                full += event.delta.text;
+                const visible = visibleStream(full);
+                if (visible) controller.enqueue(encoder.encode(visible));
+              }
+            }
+            const { memory } = stripMemory(full);
+            await persistMemory(memory);
+            controller.enqueue(encoder.encode(`\n\u0000META${JSON.stringify({ ms: Date.now() - started, model, memory: memory ?? null })}`));
+          } catch (err) {
+            console.error("Playground stream error:", err);
+            controller.enqueue(encoder.encode("\n\u0000ERR" + JSON.stringify({ error: "stream" })));
+          } finally {
+            controller.close();
+          }
+        },
+        cancel() {
+          try {
+            stream.abort();
+          } catch {
+            /* */
+          }
+        },
+      });
+
+      return new Response(readable, {
+        headers: {
+          "Content-Type": "text/plain; charset=utf-8",
+          "Cache-Control": "no-cache, no-transform",
+          "X-Accel-Buffering": "no",
+        },
+      });
     }
 
+    /* ── Classic path (dual / non-stream) ──────────────────── */
+    const response = await anthropic.messages.create({
+      model,
+      max_tokens: maxTokens,
+      system,
+      messages: messages as Anthropic.MessageParam[],
+    });
+
+    const textBlock = response.content.find((c) => c.type === "text");
+    const raw = textBlock && textBlock.type === "text" ? textBlock.text : "";
+    const { clean, memory } = stripMemory(raw);
+    await persistMemory(memory);
+
     if (dual) {
-      const parsed = parseDual(text);
+      const parsed = parseDual(clean);
       if (parsed) {
         return NextResponse.json({
           dual: true,
           replies: parsed.replies,
-          reply: parsed.replies[0]?.body ?? text,
+          reply: parsed.replies[0]?.body ?? clean,
           memory,
         });
       }
     }
 
-    return NextResponse.json({ dual: false, reply: text || "…", memory });
+    return NextResponse.json({ dual: false, reply: clean.trim() || "…", memory });
   } catch (err) {
     console.error("Playground error:", err);
     return NextResponse.json({ error: "Generation failed" }, { status: 500 });

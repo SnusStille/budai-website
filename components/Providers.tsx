@@ -1,40 +1,34 @@
 "use client";
 
-import { useCallback, useState } from "react";
-import LoadingScreen from "@/components/effects/LoadingScreen";
-import { LangProvider } from "@/components/ui/LanguageContext";
-import CommandPalette from "@/components/ui/CommandPalette";
+import { MotionConfig } from "framer-motion";
+import { LangProvider, useLang } from "@/components/ui/LanguageContext";
 import { ToastProvider } from "@/components/ui/ToastStack";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import AuthModal from "@/components/auth/AuthModal";
 import AuthHashHandler from "@/components/auth/AuthHashHandler";
 
-export default function Providers({ children }: { children: React.ReactNode }) {
-  const [loaded, setLoaded] = useState(false);
-
-  // Stable callback — LoadingScreen must NOT re-run its effect every render
-  const handleLoaded = useCallback(() => setLoaded(true), []);
-
+function LocalizedSkipLink() {
+  const { lang } = useLang();
   return (
-    <LangProvider>
-      <AuthProvider>
-        <ToastProvider>
-          <AuthHashHandler />
-          <LoadingScreen onComplete={handleLoaded} />
-          <div
-            className={loaded ? "opacity-100" : "opacity-0"}
-            style={{
-              transition: "opacity 0.28s ease",
-              pointerEvents: loaded ? "auto" : "none",
-            }}
-            // Keep in accessibility tree; only visually hidden during intro
-          >
+    <a href="#playground" className="skip-link">
+      {lang === "sv" ? "Hoppa till Playground" : "Skip to the Playground"}
+    </a>
+  );
+}
+
+export default function Providers({ children }: { children: React.ReactNode }) {
+  return (
+    <MotionConfig reducedMotion="user">
+      <LangProvider>
+        <LocalizedSkipLink />
+        <AuthProvider>
+          <ToastProvider>
+            <AuthHashHandler />
             {children}
-          </div>
-          <CommandPalette />
-          <AuthModal />
-        </ToastProvider>
-      </AuthProvider>
-    </LangProvider>
+            <AuthModal />
+          </ToastProvider>
+        </AuthProvider>
+      </LangProvider>
+    </MotionConfig>
   );
 }

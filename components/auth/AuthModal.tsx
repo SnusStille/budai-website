@@ -139,7 +139,7 @@ export default function AuthModal() {
               </div>
             ) : (
               <>
-                {/* Google OAuth — gated until launch config is solid (Supabase + Google Cloud). */}
+                {/* Google OAuth is not configured for this preview; email magic link remains available. */}
                 <div className="relative mb-3">
                   <button
                     type="button"
@@ -147,8 +147,8 @@ export default function AuthModal() {
                     aria-disabled="true"
                     title={
                       lang === "sv"
-                        ? "Google-inloggning kommer vid launch"
-                        : "Google sign-in available on launch"
+                        ? "Google-inloggning är inte aktiverad i den här förhandsvisningen"
+                        : "Google sign-in is not enabled in this preview"
                     }
                     className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-white/[0.08] bg-white/[0.03] text-sm font-semibold text-white/55 cursor-not-allowed"
                   >
@@ -174,13 +174,13 @@ export default function AuthModal() {
                       {lang === "sv" ? "Fortsätt med Google" : "Continue with Google"}
                     </span>
                     <span className="ml-1 shrink-0 text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full border border-accent-cyan/30 bg-accent-cyan/10 text-accent-cyan">
-                      {lang === "sv" ? "Vid launch" : "On launch"}
+                      {lang === "sv" ? "Ej aktiverat" : "Preview"}
                     </span>
                   </button>
                   <p className="mt-1.5 text-[10px] text-muted/55 text-center leading-relaxed px-1">
                     {lang === "sv"
-                      ? "Google-inloggning aktiveras vid launch. Använd magisk länk via e-post just nu — det fungerar stabilt."
-                      : "Google sign-in will be available on launch. Use the email magic link for now — it’s the stable path."}
+                      ? "Google-inloggning är inte aktiverad i förhandsvisningen. Använd magisk länk via e-post för att logga in."
+                      : "Google sign-in is not enabled in this preview. Use the email magic link to sign in."}
                   </p>
                 </div>
 

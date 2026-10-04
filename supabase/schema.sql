@@ -1,5 +1,5 @@
 -- ============================================================================
--- BudAI — Supabase schema (launch + admin v2)
+-- BudAI — Supabase schema (early preview + admin)
 -- Safe to re-run (idempotent). Supabase → SQL Editor → Run.
 -- ============================================================================
 
@@ -27,10 +27,10 @@ create table if not exists public.waitlist_users (
   employees text,
   interest text not null,
   access_status waitlist_access_status not null default 'pending',
-  discount_code text default 'BUDAI-EARLY-10',
+  discount_code text,
   notes text,
   source text default 'landing',
-  priority int default 50 check (priority >= 0 and priority <= 100),
+  priority int check (priority >= 0 and priority <= 100),
   last_contacted_at timestamptz,
   tags text[] default '{}',
   created_at timestamptz not null default now(),
@@ -46,7 +46,10 @@ alter table public.waitlist_users alter column industry drop not null;
 alter table public.waitlist_users alter column employees drop not null;
 
 alter table public.waitlist_users
-  add column if not exists discount_code text default 'BUDAI-EARLY-10';
+  add column if not exists discount_code text;
+
+alter table public.waitlist_users
+  alter column discount_code drop default;
 
 alter table public.waitlist_users
   add column if not exists notes text;
@@ -58,7 +61,10 @@ alter table public.waitlist_users
   add column if not exists updated_at timestamptz not null default now();
 
 alter table public.waitlist_users
-  add column if not exists priority int default 50;
+  add column if not exists priority int;
+
+alter table public.waitlist_users
+  alter column priority drop default;
 
 alter table public.waitlist_users
   add column if not exists last_contacted_at timestamptz;
@@ -156,7 +162,7 @@ create policy "admin_events_insert_anon"
 
 -- Note: tighten policies before scale (service role + server routes).
 
-comment on table public.waitlist_users is 'BudAI waitlist + early-bird discount codes';
-comment on column public.waitlist_users.discount_code is 'Founder early access code, default BUDAI-EARLY-10 (10% off)';
-comment on column public.waitlist_users.priority is '0-100 invite priority for launch waves';
+comment on table public.waitlist_users is 'BudAI early-preview waitlist';
+comment on column public.waitlist_users.discount_code is 'Optional promotion code, only if an offer is formally introduced';
+comment on column public.waitlist_users.priority is 'Internal waitlist ordering; not a public benefit';
 comment on table public.admin_events is 'Lightweight admin activity / audit trail';

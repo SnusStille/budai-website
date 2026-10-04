@@ -6,9 +6,12 @@ import {
   type Conversation,
   type ChatMessage,
   type MemoryItem,
+  type PgSettings,
   newId,
   titleFromMessages,
 } from "@/lib/playground/types";
+
+export type { PgSettings };
 
 const HIST_KEY = "budai-pg-history-v2";
 const MEM_KEY = "budai-pg-memory-v2"; // guests: unused for cloud memory
@@ -24,17 +27,10 @@ function safeParse<T>(raw: string | null, fallback: T): T {
   }
 }
 
-export type PgSettings = {
-  memoryEnabled: boolean;
-  temporaryDefault: boolean;
-};
-
 export function loadSettings(): PgSettings {
-  if (typeof window === "undefined") return { memoryEnabled: true, temporaryDefault: false };
-  return safeParse(localStorage.getItem(SETTINGS_KEY), {
-    memoryEnabled: true,
-    temporaryDefault: false,
-  });
+  const fallback: PgSettings = { memoryEnabled: true, temporaryDefault: false };
+  if (typeof window === "undefined") return fallback;
+  return { ...fallback, ...safeParse<Partial<PgSettings>>(localStorage.getItem(SETTINGS_KEY), {}) };
 }
 
 export function saveSettings(s: PgSettings) {

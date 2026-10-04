@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
-import { Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
+import "@fontsource-variable/plus-jakarta-sans";
+import "@fontsource-variable/jetbrains-mono";
 import "./globals.css";
 import Providers from "@/components/Providers";
 import VercelAnalytics from "@/components/VercelAnalytics";
@@ -11,46 +12,34 @@ const jsonLd = {
   applicationCategory: "BusinessApplication",
   operatingSystem: "Web",
   description:
-    "AI work assistant for Swedish companies and individuals — write, automate, and think faster in Swedish and English.",
+    "BudAI is an AI work assistant in early preview, built in Sweden to help people write, think, create, and move everyday work forward in Swedish and English.",
   url: process.env.NEXT_PUBLIC_SITE_URL || "https://stilledev.se",
   author: { "@type": "Organization", name: "Stilledev" },
-  offers: { "@type": "Offer", price: "0", priceCurrency: "SEK", description: "Developer preview" },
+  releaseNotes: "Early product preview; features are still in development.",
 };
-
-const jakarta = Plus_Jakarta_Sans({
-  subsets: ["latin", "latin-ext"],
-  variable: "--font-jakarta",
-  display: "swap",
-  weight: ["400", "500", "600", "700", "800"],
-});
-
-const jetbrains = JetBrains_Mono({
-  subsets: ["latin", "latin-ext"],
-  variable: "--font-jetbrains",
-  display: "swap",
-});
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://stilledev.se";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "Stilledev.se · BudAI",
+    default: "BudAI — AI work assistant in early preview",
     template: "%s · BudAI",
   },
   description:
-    "BudAI är AI-arbetsassistenten för Sverige — skriv, automatisera och tänk snabbare på svenska och engelska. Utvecklarförhandsvisning av Stilledev.",
+    "Meet BudAI, an AI work assistant in early preview. Write, think, create, and move everyday work forward in Swedish and English. Built in Sweden by Stilledev.",
   keywords: [
     "AI",
     "artificial intelligence",
     "Sweden",
     "Sverige",
-    "business automation",
-    "digital assistant",
+    "work productivity",
+    "AI writing assistant",
+    "Swedish language AI",
+    "English language AI",
+    "workflow planning",
     "Stilledev",
     "BudAI",
-    "enterprise AI",
-    "automatisering",
   ],
   authors: [{ name: "Stilledev" }],
   creator: "Stilledev",
@@ -62,9 +51,9 @@ export const metadata: Metadata = {
     alternateLocale: ["en_US"],
     url: siteUrl,
     siteName: "BudAI",
-    title: "BudAI — AI-arbete för Sverige",
+    title: "BudAI — AI work assistant in early preview",
     description:
-      "AI-arbetsassistent för svenska företag och privatpersoner. Skriv, automatisera och tänk snabbare — SV & EN.",
+      "Try BudAI’s interactive Playground. An AI work assistant in early preview, built in Sweden for Swedish and English workdays.",
     images: [
       {
         url: "/og.png",
@@ -76,9 +65,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "BudAI — AI-arbete för Sverige",
+    title: "BudAI — AI work assistant in early preview",
     description:
-      "AI-arbetsassistent för svenska företag och privatpersoner. Skriv, automatisera och tänk snabbare — SV & EN.",
+      "Try BudAI’s interactive Playground. An AI work assistant in early preview, built in Sweden for Swedish and English workdays.",
     images: ["/og.png"],
   },
   icons: {
@@ -90,7 +79,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#020205",
+  themeColor: "#080a0f",
   colorScheme: "dark",
   width: "device-width",
   initialScale: 1,
@@ -101,16 +90,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html
       lang="en"
-      className={`${jakarta.variable} ${jetbrains.variable} font-sans`}
+      className="font-sans"
       suppressHydrationWarning
     >
       <body className="antialiased noise-overlay bg-background text-white">
-        <a
-          href="#playground"
-          className="absolute left-3 top-3 z-[200] -translate-y-16 focus:translate-y-0 px-4 py-2 rounded-lg bg-accent-cyan text-black text-sm font-semibold transition-transform"
-        >
-          Skip to content
-        </a>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

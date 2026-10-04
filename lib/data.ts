@@ -14,132 +14,8 @@ function getSupabase(): SupabaseClient | null {
   return _supabase;
 }
 
-const mockUsers: WaitlistUser[] = [
-  {
-    id: "1",
-    name: "Anna Lindqvist",
-    email: "anna@techcorp.se",
-    account_type: "company",
-    company: "TechCorp AB",
-    industry: "Technology",
-    employees: "50-200",
-    interest: "Automation",
-    created_at: "2026-07-20T10:00:00Z",
-    access_status: "approved",
-    discount_code: "BUDAI-EARLY-10",
-    notes: null,
-    source: "landing",
-    priority: 80,
-    last_contacted_at: null,
-    tags: ["enterprise"],
-  },
-  {
-    id: "2",
-    name: "Erik Johansson",
-    email: "erik@nordicretail.se",
-    account_type: "company",
-    company: "Nordic Retail",
-    industry: "Retail",
-    employees: "200-1000",
-    interest: "Data Analysis",
-    created_at: "2026-07-21T14:30:00Z",
-    access_status: "pending",
-    discount_code: "BUDAI-EARLY-10",
-    notes: null,
-    source: "landing",
-    priority: 55,
-    last_contacted_at: null,
-    tags: [],
-  },
-  {
-    id: "3",
-    name: "Sofia Bergström",
-    email: "sofia.b@gmail.com",
-    account_type: "individual",
-    company: null,
-    industry: null,
-    employees: null,
-    interest: "Customer Support",
-    created_at: "2026-07-22T09:15:00Z",
-    access_status: "pending",
-    discount_code: "BUDAI-EARLY-10",
-    notes: null,
-    source: "landing",
-    priority: 40,
-    last_contacted_at: null,
-    tags: ["creator"],
-  },
-  {
-    id: "4",
-    name: "Marcus Holm",
-    email: "marcus@finova.se",
-    account_type: "company",
-    company: "Finova Group",
-    industry: "Finance",
-    employees: "1000+",
-    interest: "Workflow Optimization",
-    created_at: "2026-07-23T16:45:00Z",
-    access_status: "approved",
-    discount_code: "BUDAI-EARLY-10",
-    notes: "Enterprise lead",
-    source: "landing",
-    priority: 95,
-    last_contacted_at: "2026-08-01T10:00:00Z",
-    tags: ["enterprise", "priority"],
-  },
-  {
-    id: "5",
-    name: "Lisa Andersson",
-    email: "lisa.andersson@outlook.com",
-    account_type: "individual",
-    company: null,
-    industry: null,
-    employees: null,
-    interest: "Document Generation",
-    created_at: "2026-07-24T11:20:00Z",
-    access_status: "pending",
-    discount_code: "BUDAI-EARLY-10",
-    notes: null,
-    source: "landing",
-    priority: 35,
-    last_contacted_at: null,
-    tags: null,
-  },
-];
-
-const mockEvents: AdminEvent[] = [
-  {
-    id: "e1",
-    kind: "signup",
-    message: "New waitlist signup",
-    meta: { email: "lisa.andersson@outlook.com" },
-    created_at: new Date(Date.now() - 3600_000).toISOString(),
-  },
-  {
-    id: "e2",
-    kind: "approve",
-    message: "User approved",
-    meta: { email: "marcus@finova.se" },
-    created_at: new Date(Date.now() - 7200_000).toISOString(),
-  },
-  {
-    id: "e3",
-    kind: "system",
-    message: "Schema health check OK",
-    meta: null,
-    created_at: new Date(Date.now() - 10_800_000).toISOString(),
-  },
-];
-
-export const mockAnalytics = [
-  { date: "Mon", visits: 120, signups: 8, playground_uses: 45 },
-  { date: "Tue", visits: 180, signups: 12, playground_uses: 62 },
-  { date: "Wed", visits: 240, signups: 18, playground_uses: 89 },
-  { date: "Thu", visits: 210, signups: 15, playground_uses: 74 },
-  { date: "Fri", visits: 320, signups: 24, playground_uses: 112 },
-  { date: "Sat", visits: 150, signups: 9, playground_uses: 38 },
-  { date: "Sun", visits: 190, signups: 14, playground_uses: 56 },
-];
+const mockUsers: WaitlistUser[] = [];
+const mockEvents: AdminEvent[] = [];
 
 const isSupabaseReady = () =>
   Boolean(
@@ -206,9 +82,9 @@ export async function addWaitlistUser(
 ): Promise<WaitlistUser> {
   const payload = {
     ...user,
-    discount_code: user.discount_code || "BUDAI-EARLY-10",
+    discount_code: user.discount_code ?? null,
     source: user.source || "landing",
-    priority: user.priority ?? 50,
+    priority: user.priority ?? null,
     tags: user.tags ?? [],
   };
 
@@ -405,8 +281,6 @@ export function getWaitlistStats(users: WaitlistUser[]) {
   const rejected = users.filter((u) => u.access_status === "rejected").length;
   const companies = users.filter((u) => u.account_type === "company").length;
   const individuals = users.filter((u) => u.account_type === "individual").length;
-  const withDiscount = users.filter((u) => !!u.discount_code).length;
-  const highPriority = users.filter((u) => (u.priority ?? 0) >= 70).length;
   return {
     total: users.length,
     pending,
@@ -414,7 +288,5 @@ export function getWaitlistStats(users: WaitlistUser[]) {
     rejected,
     companies,
     individuals,
-    withDiscount,
-    highPriority,
   };
 }

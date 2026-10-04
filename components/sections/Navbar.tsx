@@ -1,320 +1,186 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Globe, Command } from "lucide-react";
+import { useEffect, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { ArrowRight, Command, Globe2, Menu, X } from "lucide-react";
+import BudAILogo, { BudAIWordmark } from "@/components/ui/BudAILogo";
 import { useLang } from "@/components/ui/LanguageContext";
-import StockholmClock from "@/components/ui/StockholmClock";
-import BudAILogo from "@/components/ui/BudAILogo";
-
-const SECTION_IDS = [
-  "capabilities",
-  "playground",
-  "terminal",
-  "waitlist",
-  "roadmap",
-  "status",
-] as const;
 
 export default function Navbar() {
-  const [scrolled, setScrolled] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [active, setActive] = useState("");
   const { lang, setLang, t } = useLang();
-  const ratios = useRef<Record<string, number>>({});
-  const logoClicks = useRef<number[]>([]);
+  const [scrolled, setScrolled] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [active, setActive] = useState<string>("home");
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const isSv = lang === "sv";
+
+  const links = [
+    { label: t.nav.playground, href: "#playground", id: "playground" },
+    { label: isSv ? "Om BudAI" : "About BudAI", href: "#about", id: "about" },
+    { label: t.nav.waitlist, href: "#waitlist", id: "waitlist" },
+  ];
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 40);
+    const onScroll = () => {
+      setScrolled(window.scrollY > 18);
+      const height = document.documentElement.scrollHeight - window.innerHeight;
+      setProgress(height > 0 ? Math.min(1, Math.max(0, window.scrollY / height)) : 0);
+    };
     window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   useEffect(() => {
-    document.body.style.overflow = mobileOpen ? "hidden" : "";
+    const ids = ["home", "playground", "about", "waitlist"];
+    const sections = ids
+      .map((id) => document.getElementById(id))
+      .filter((node): node is HTMLElement => Boolean(node));
+    if (!sections.length || typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visibleEntry = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+        if (visibleEntry?.target?.id) setActive(visibleEntry.target.id);
+      },
+      { rootMargin: "-45% 0px -45% 0px", threshold: [0, 0.2, 0.5, 1] }
+    );
+    sections.forEach((section) => observer.observe(section));
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMobileOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
     return () => {
-      document.body.style.overflow = "";
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKeyDown);
     };
   }, [mobileOpen]);
 
-  // Reliable scroll-spy: pick section with highest intersection ratio near viewport center
-  useEffect(() => {
-    const els = SECTION_IDS.map((id) => document.getElementById(id)).filter(
-      (el): el is HTMLElement => !!el
-    );
-    if (!els.length) {
-      // Sections may mount late (dynamic) — retry shortly
-      const t = setTimeout(() => setActive((a) => a), 400);
-      return () => clearTimeout(t);
-    }
-
-    ratios.current = {};
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const e of entries) {
-          ratios.current[e.target.id] = e.isIntersecting ? e.intersectionRatio : 0;
-        }
-        let best = "";
-        let bestR = 0;
-        for (const id of SECTION_IDS) {
-          const r = ratios.current[id] ?? 0;
-          if (r > bestR) {
-            bestR = r;
-            best = id;
-          }
-        }
-        // Fallback: scroll position based if ratios all zero
-        if (bestR < 0.05) {
-          const mid = window.scrollY + window.innerHeight * 0.35;
-          let closest = "";
-          let dist = Infinity;
-          for (const id of SECTION_IDS) {
-            const el = document.getElementById(id);
-            if (!el) continue;
-            const d = Math.abs(el.offsetTop - mid);
-            if (d < dist) {
-              dist = d;
-              closest = id;
-            }
-          }
-          if (closest) setActive(closest);
-        } else if (best) {
-          setActive(best);
-        }
-      },
-      {
-        // Center-weighted band so only one section "owns" the indicator
-        rootMargin: "-35% 0px -50% 0px",
-        threshold: [0, 0.1, 0.2, 0.35, 0.5, 0.7, 1],
-      }
-    );
-
-    els.forEach((el) => observer.observe(el));
-
-    // Also update on scroll for edge cases (fast scroll / dynamic mount)
-    const onScroll = () => {
-      const mid = window.scrollY + window.innerHeight * 0.35;
-      let closest = "";
-      let dist = Infinity;
-      for (const id of SECTION_IDS) {
-        const el = document.getElementById(id);
-        if (!el) continue;
-        const top = el.offsetTop;
-        const bottom = top + el.offsetHeight;
-        if (mid >= top - 80 && mid <= bottom + 40) {
-          const d = Math.abs(top - mid);
-          if (d < dist) {
-            dist = d;
-            closest = id;
-          }
-        }
-      }
-      if (closest) setActive(closest);
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    onScroll();
-
-    return () => {
-      observer.disconnect();
-      window.removeEventListener("scroll", onScroll);
-    };
-  }, [lang, mobileOpen]);
-
-  const links = [
-    { label: t.nav.capabilities, href: "#capabilities", id: "capabilities" },
-    { label: t.nav.playground, href: "#playground", id: "playground" },
-    { label: t.nav.terminal, href: "#terminal", id: "terminal" },
-    { label: t.nav.waitlist, href: "#waitlist", id: "waitlist" },
-    { label: t.nav.roadmap, href: "#roadmap", id: "roadmap" },
-    { label: t.nav.status, href: "#status", id: "status" },
-  ];
+  const closeMenu = () => setMobileOpen(false);
 
   return (
     <>
-      <motion.nav
-        initial={{ y: -80, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.6, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-400 ${
-          scrolled
-            ? "glass-strong shadow-lg shadow-black/30 border-b border-white/[0.07] backdrop-blur-xl"
-            : "bg-transparent"
-        }`}
+      <motion.header
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+        className={`site-nav ${scrolled ? "site-nav--scrolled" : ""}`}
       >
-        <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 lg:h-[4.5rem]">
-            <a
-              href="#"
-              className="flex items-center gap-2.5 group"
-              aria-label="BudAI home"
-              onClick={(e) => {
-                // Surprise #3 — triple-click logo within 1.2s
-                const now = Date.now();
-                logoClicks.current = [...logoClicks.current, now].filter((ts) => now - ts < 1200);
-                if (logoClicks.current.length >= 3) {
-                  e.preventDefault();
-                  logoClicks.current = [];
-                  window.dispatchEvent(new Event("budai:logo-secret"));
-                }
-              }}
-            >
-              <span className="transition-transform group-active:scale-95 inline-flex">
-                <BudAILogo size="sm" animated />
-              </span>
-              <div className="flex flex-col leading-none">
-                <span className="text-xl font-bold tracking-tight">
-                  Bud<span className="text-accent-cyan">AI</span>
-                </span>
-                <span className="text-[10px] tracking-wide">
-                  <span className="text-white font-medium">{t.nav.developedBy}</span>{" "}
-                  <span className="text-accent-cyan group-hover:text-white transition-colors">Stilledev</span>
-                </span>
-              </div>
-            </a>
+        <div className="site-nav-inner">
+          <a href="#home" className="site-brand" aria-label="BudAI home">
+            <BudAILogo size="sm" animated={scrolled} motion="idle" />
+            <span className="site-brand-word">
+              Bud<span>AI</span>
+            </span>
+            <span className="site-brand-by">by Stilledev</span>
+          </a>
 
-            <div className="hidden lg:flex items-center gap-0.5">
-              {links.map((l) => {
-                const isActive = active === l.id;
-                return (
-                  <a
-                    key={l.href}
-                    href={l.href}
-                    className={`relative px-3.5 py-2 text-sm rounded-lg transition-colors ${
-                      isActive ? "text-white" : "text-muted hover:text-white hover:bg-white/5"
-                    }`}
-                  >
-                    {l.label}
-                    <span
-                      className={`absolute bottom-1 left-1/2 -translate-x-1/2 h-0.5 rounded-full bg-accent-cyan transition-all duration-300 ${
-                        isActive ? "w-5 opacity-100 shadow-[0_0_8px_rgba(0,229,255,0.6)]" : "w-0 opacity-0"
-                      }`}
-                    />
-                  </a>
-                );
-              })}
-            </div>
-
-            <div className="hidden lg:flex items-center gap-2.5">
-              <StockholmClock className="hidden xl:inline-flex" />
-              <div
-                className="flex items-center p-0.5 rounded-full bg-black/40 border border-white/[0.08] shadow-inner"
-                role="group"
-                aria-label="Language"
+          <nav className="site-nav-links" aria-label={isSv ? "Huvudmeny" : "Main navigation"}>
+            {links.map((link) => (
+              <a
+                key={link.href}
+                href={link.href}
+                className={active === link.id ? "is-active" : ""}
+                aria-current={active === link.id ? "true" : undefined}
               >
-                {(["en", "sv"] as const).map((code) => (
-                  <button
-                    key={code}
-                    type="button"
-                    onClick={() => setLang(code)}
-                    aria-pressed={lang === code}
-                    className={`relative min-w-[2.6rem] px-3 py-1.5 text-[11px] font-semibold tracking-wide rounded-full transition-all ${
-                      lang === code
-                        ? "bg-gradient-to-r from-accent-cyan to-accent-purple text-white shadow-[0_0_16px_rgba(0,229,255,0.25)]"
-                        : "text-muted/70 hover:text-white"
-                    }`}
-                  >
-                    {code === "en" ? "EN" : "SV"}
-                  </button>
-                ))}
-              </div>
-
-              <button
-                type="button"
-                onClick={() =>
-                  window.dispatchEvent(
-                    new KeyboardEvent("keydown", { key: "k", metaKey: true, bubbles: true })
-                  )
-                }
-                className="hidden xl:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-mono text-muted/60 hover:text-white border border-white/[0.06] hover:border-white/15 hover:bg-white/[0.04] transition-all"
-                aria-label="Open command palette"
-              >
-                <Command className="w-3 h-3" />K
-              </button>
-
-              <a href="#waitlist" className="btn-primary !px-5 !py-2.5 text-sm">
-                <span>{t.nav.requestAccess}</span>
+                {link.label}
               </a>
-            </div>
+            ))}
+          </nav>
 
+          <div className="site-nav-actions">
+            <span className="nav-kbd-hint hidden xl:inline-flex" aria-hidden>
+              <Command className="h-3 w-3" />
+              <span className="font-mono text-[10px]">⌘K</span>
+            </span>
+            <div className="language-switch" role="group" aria-label={isSv ? "Välj språk" : "Choose language"}>
+              {(["en", "sv"] as const).map((code) => (
+                <button key={code} type="button" aria-pressed={lang === code} onClick={() => setLang(code)}>
+                  {code.toUpperCase()}
+                </button>
+              ))}
+            </div>
+            <a href="#waitlist" className="nav-cta">
+              <span>{t.nav.requestAccess}</span>
+              <span className="nav-cta-badge">10%</span>
+              <ArrowRight className="h-3.5 w-3.5" />
+            </a>
             <button
-              onClick={() => setMobileOpen(!mobileOpen)}
-              className="lg:hidden p-2 text-white rounded-lg hover:bg-white/5 transition-colors"
-              aria-label={mobileOpen ? "Close menu" : "Open menu"}
+              type="button"
+              onClick={() => setMobileOpen((open) => !open)}
+              className="mobile-menu-button"
+              aria-label={mobileOpen ? (isSv ? "Stäng meny" : "Close menu") : isSv ? "Öppna meny" : "Open menu"}
               aria-expanded={mobileOpen}
+              aria-controls="mobile-navigation"
             >
-              {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
           </div>
         </div>
-      </motion.nav>
+        <span className="nav-progress" aria-hidden>
+          <span className="nav-progress-fill" style={{ transform: `scaleX(${progress})` }} />
+        </span>
+      </motion.header>
 
       <AnimatePresence>
         {mobileOpen && (
           <motion.div
+            className="mobile-nav-overlay"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-40 lg:hidden"
           >
-            <div
-              className="absolute inset-0 bg-background/98 backdrop-blur-2xl"
-              onClick={() => setMobileOpen(false)}
+            <button
+              type="button"
+              className="mobile-nav-backdrop"
+              onClick={closeMenu}
+              aria-label={isSv ? "Stäng meny" : "Close menu"}
             />
-            <div className="relative pt-24 px-6 flex flex-col gap-1 max-h-screen overflow-y-auto pb-10">
-              {links.map((l, i) => (
-                <motion.a
-                  key={l.href}
-                  href={l.href}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.04 }}
-                  onClick={() => setMobileOpen(false)}
-                  className={`px-4 py-3.5 text-lg rounded-xl transition-colors ${
-                    active === l.id
-                      ? "text-white bg-white/5 border border-accent-cyan/20"
-                      : "text-white/80 hover:text-white hover:bg-white/5"
-                  }`}
-                >
-                  {l.label}
-                </motion.a>
+            <motion.nav
+              id="mobile-navigation"
+              aria-label={isSv ? "Mobilmeny" : "Mobile navigation"}
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.18 }}
+              className="mobile-nav-panel"
+            >
+              <div className="mobile-nav-brand">
+                <BudAIWordmark size="sm" variant="dark" />
+              </div>
+              <div className="mobile-nav-title">
+                <span>{isSv ? "Upptäck BudAI" : "Explore BudAI"}</span>
+                <Globe2 className="h-4 w-4" />
+              </div>
+              {links.map((link) => (
+                <a key={link.href} href={link.href} onClick={closeMenu} className="mobile-nav-link">
+                  {link.label}
+                  <ArrowRight className="h-4 w-4" />
+                </a>
               ))}
-
-              <div className="flex items-center gap-3 mt-4 px-4">
-                <Globe className="w-4 h-4 text-muted" />
-                <div className="flex p-0.5 rounded-full bg-black/40 border border-white/[0.08]">
-                  <button
-                    type="button"
-                    onClick={() => setLang("en")}
-                    className={`px-4 py-2 text-sm font-semibold rounded-full ${
-                      lang === "en"
-                        ? "bg-gradient-to-r from-accent-cyan to-accent-purple text-white"
-                        : "text-muted"
-                    }`}
-                  >
-                    English
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setLang("sv")}
-                    className={`px-4 py-2 text-sm font-semibold rounded-full ${
-                      lang === "sv"
-                        ? "bg-gradient-to-r from-accent-cyan to-accent-purple text-white"
-                        : "text-muted"
-                    }`}
-                  >
-                    Svenska
-                  </button>
+              <div className="mobile-language-row">
+                <span>{isSv ? "Språk" : "Language"}</span>
+                <div className="language-switch" role="group" aria-label={isSv ? "Välj språk" : "Choose language"}>
+                  {(["en", "sv"] as const).map((code) => (
+                    <button key={code} type="button" aria-pressed={lang === code} onClick={() => setLang(code)}>
+                      {code.toUpperCase()}
+                    </button>
+                  ))}
                 </div>
               </div>
-
-              <a
-                href="#waitlist"
-                onClick={() => setMobileOpen(false)}
-                className="mt-4 btn-primary !py-3.5 text-center"
-              >
-                <span>{t.nav.requestAccess}</span>
+              <a href="#waitlist" onClick={closeMenu} className="button-primary mobile-nav-cta">
+                <span>{isSv ? "Gå med — lås 10 %" : "Join — lock in 10%"}</span>
+                <ArrowRight className="h-4 w-4" />
               </a>
-            </div>
+            </motion.nav>
           </motion.div>
         )}
       </AnimatePresence>

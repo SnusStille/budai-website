@@ -9,11 +9,11 @@ export interface WaitlistUser {
   interest: string;
   created_at: string;
   access_status: "pending" | "approved" | "rejected";
-  /** Early-bird 10% founder discount flag */
+  /** Optional promotion code, if an offer is formally introduced */
   discount_code: string | null;
   notes: string | null;
   source: string | null;
-  /** Priority score 0–100 for launch invites */
+  /** Internal waitlist ordering, not a public benefit */
   priority: number | null;
   /** Last contact / outreach timestamp */
   last_contacted_at: string | null;

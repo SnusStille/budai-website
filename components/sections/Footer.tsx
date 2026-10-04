@@ -1,221 +1,142 @@
 "use client";
 
-import { useState } from "react";
-import { Github, MessageSquare, Linkedin, Mail, ArrowUpRight, X } from "lucide-react";
+import { ArrowRight, ArrowUp, BadgePercent, Sparkles } from "lucide-react";
 import BudAILogo, { StilledevLink, StilledevMark } from "@/components/ui/BudAILogo";
-import { motion, AnimatePresence } from "framer-motion";
 import { useLang } from "@/components/ui/LanguageContext";
 
-const groups = (lang: string) => [
-  {
-    title: lang === "sv" ? "Produkt" : "Product",
-    links: [
-      { label: lang === "sv" ? "Förmågor" : "Capabilities", href: "#capabilities" },
-      { label: "FAQ", href: "#faq" },
-      { label: "AI Playground", href: "#playground" },
-      { label: "Terminal", href: "#terminal" },
-      { label: "Roadmap", href: "#roadmap" },
-      { label: lang === "sv" ? "Systemstatus" : "System Status", href: "#status" },
-    ],
-  },
-  {
-    title: lang === "sv" ? "Företag" : "Company",
-    links: [
-      { label: "Stilledev", href: "https://stilledev.se", external: true },
-      { label: lang === "sv" ? "Early access" : "Early access", href: "#waitlist" },
-      { label: lang === "sv" ? "Prissättning" : "Pricing", href: "#waitlist" },
-      { label: lang === "sv" ? "Kontakt" : "Contact", href: "mailto:Stilleinc@hotmail.com" },
-    ],
-  },
-  {
-    title: "Legal",
-    links: [
-      { label: lang === "sv" ? "Integritetspolicy" : "Privacy Policy", href: "/legal/privacy" },
-      { label: lang === "sv" ? "Användarvillkor" : "Terms of Service", href: "/legal/terms" },
-      { label: lang === "sv" ? "Cookiepolicy" : "Cookie Policy", href: "/legal/cookies" },
-      { label: "GDPR", href: "/legal/gdpr" },
-    ],
-  },
-];
-
-const socials = [
-  { icon: Github, href: "https://github.com/SnusStille", label: "GitHub" },
-  { icon: MessageSquare, href: "https://discord.com/users/353944097301594123", label: "Discord" },
-  { icon: Linkedin, href: "https://www.linkedin.com/in/oliver-stille-8bb48a403/", label: "LinkedIn" },
-  { icon: Mail, href: "mailto:Stilleinc@hotmail.com", label: "Email" },
-];
-
 export default function Footer() {
-  const { lang, t } = useLang();
-  const [showLegal, setShowLegal] = useState<string | null>(null);
-  const groupsData = groups(lang);
-
-  const legalContent: Record<string, { title: string; content: string[] }> = {
-    privacy: {
-      title: lang === "sv" ? "Integritetspolicy" : "Privacy Policy",
-      content: [
-        lang === "sv"
-          ? "BudAI värnar om din integritet. Vi samlar endast in data som är nödvändig för att tillhandahålla våra tjänster. All personlig information behandlas i enlighet med GDPR och lagras säkert på servrar inom EU."
-          : "BudAI values your privacy. We only collect data necessary to provide our services. All personal information is processed in accordance with GDPR and stored securely on servers within the EU.",
-        lang === "sv"
-          ? "Vi delar aldrig din data med tredje part utan ditt uttryckliga samtycke. Du har rätt att begära radering av dina data när som helst genom att kontakta oss på Stilleinc@hotmail.com."
-          : "We never share your data with third parties without your explicit consent. You have the right to request deletion of your data at any time by contacting us at Stilleinc@hotmail.com.",
-      ],
-    },
-    terms: {
-      title: lang === "sv" ? "Användarvillkor" : "Terms of Service",
-      content: [
-        lang === "sv"
-          ? "Genom att använda BudAI godkänner du dessa villkor. Tjänsten tillhandahålls i befintligt skick och vi garanterar inte att den alltid är tillgänglig eller felfri."
-          : "By using BudAI, you agree to these terms. The service is provided as-is and we do not guarantee that it will always be available or error-free.",
-        lang === "sv"
-          ? "Du får inte använda BudAI för olagliga aktiviteter eller på ett sätt som skadar vår infrastruktur. Vi förbehåller oss rätten att stänga av konton som bryter mot dessa villkor."
-          : "You may not use BudAI for illegal activities or in a way that damages our infrastructure. We reserve the right to terminate accounts that violate these terms.",
-      ],
-    },
-    cookies: {
-      title: lang === "sv" ? "Cookiepolicy" : "Cookie Policy",
-      content: [
-        lang === "sv"
-          ? "BudAI använder cookies för att förbättra din upplevelse och analysera trafik. Vi använder endast nödvändiga cookies och analytiska cookies med ditt samtycke."
-          : "BudAI uses cookies to enhance your experience and analyze traffic. We only use necessary cookies and analytical cookies with your consent.",
-        lang === "sv"
-          ? "Du kan när som helst ändra dina cookie-inställningar eller återkalla ditt samtycke. Nödvändiga cookies kan inte inaktiveras eftersom de krävs för att webbplatsen ska fungera."
-          : "You can change your cookie settings or withdraw your consent at any time. Necessary cookies cannot be disabled as they are required for the website to function.",
-      ],
-    },
-    gdpr: {
-      title: "GDPR",
-      content: [
-        lang === "sv"
-          ? "BudAI följer EU:s dataskyddsförordning (GDPR). Som användare har du följande rättigheter: rätt till tillgång, rätt till rättelse, rätt till radering, rätt till begränsning av behandling, rätt till dataportabilitet, och rätt att göra invändningar."
-          : "BudAI complies with the EU General Data Protection Regulation (GDPR). As a user, you have the following rights: right of access, right to rectification, right to erasure, right to restriction of processing, right to data portability, and right to object.",
-        lang === "sv"
-          ? "Personuppgiftsansvarig: Stilledev AB. Kontakta oss på Stilleinc@hotmail.com för frågor om GDPR eller för att utöva dina rättigheter."
-          : "Data controller: Stilledev AB. Contact us at Stilleinc@hotmail.com for GDPR questions or to exercise your rights.",
-      ],
-    },
-  };
+  const { lang } = useLang();
+  const isSv = lang === "sv";
 
   return (
-    <footer className="relative border-t border-white/[0.04]">
-      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent-cyan/20 to-transparent" />
-      <div className="max-w-7xl mx-auto px-6 lg:px-8 py-14 md:py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 lg:gap-8">
-          <div className="lg:col-span-2">
-            <a href="#" className="flex items-center gap-2.5 mb-5 group">
-              <BudAILogo size="md" animated />
-              <span className="text-xl font-bold tracking-tight">
-                Bud<span className="text-accent-cyan">AI</span>
+    <footer className="site-footer relative overflow-hidden">
+      <div className="footer-glow" aria-hidden />
+      <div className="relative z-10 mx-auto max-w-7xl px-5 pb-10 pt-16 sm:px-8 lg:px-10">
+        {/* closing CTA */}
+        <div className="footer-cta">
+          <div className="min-w-0">
+            <span className="footer-cta-kicker">
+              <BadgePercent className="h-3.5 w-3.5" />
+              {isSv ? "Founding members" : "Founding members"}
+            </span>
+            <h2>
+              {isSv ? "Testa BudAI i dag — och lås " : "Try BudAI today — and lock in "}
+              <span className="text-gradient">10 %</span>
+              {isSv ? " för framtiden." : " for the future."}
+            </h2>
+            <p>
+              {isSv
+                ? "Playground är öppen utan konto. Väntelistan ger dig early access och founding-rabatten."
+                : "The Playground is open without an account. The waitlist gives you early access and the founding discount."}
+            </p>
+          </div>
+          <div className="footer-cta-actions">
+            <a href="#playground" className="button-primary group">
+              <span>{isSv ? "Öppna Playground" : "Open the Playground"}</span>
+              <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
+            </a>
+            <a href="#waitlist" className="button-secondary">
+              <Sparkles className="h-4 w-4" />
+              <span>{isSv ? "Gå med i väntelistan" : "Join the waitlist"}</span>
+            </a>
+          </div>
+        </div>
+
+        <div className="grid gap-10 pt-14 sm:grid-cols-2 lg:grid-cols-[1.4fr_0.7fr_0.7fr_0.7fr] lg:gap-12">
+          <div>
+            <a href="#home" className="inline-flex items-center gap-3" aria-label="BudAI home">
+              <BudAILogo size="sm" animated motion="idle" />
+              <span className="text-lg font-semibold tracking-tight text-white">
+                Bud<span className="text-[var(--cyan)]">AI</span>
               </span>
             </a>
-            <p className="text-sm text-muted leading-relaxed max-w-sm mb-6">
-              {lang === "sv"
-                ? "En avancerad AI-plattform som hjälper svenska företag och privatpersoner att spara tid, automatisera uppgifter och förbättra arbetsflöden."
-                : "An advanced AI platform that helps Swedish companies and individuals save time, automate tasks, and improve workflows."}
+            <p className="mt-4 max-w-sm text-sm leading-6 text-white/48">
+              {isSv
+                ? "En AI-arbetsassistent i tidig förhandsvisning. Byggd i Sverige av Stilledev."
+                : "An AI work assistant in early preview. Built in Sweden by Stilledev."}
             </p>
-            <div className="flex items-center gap-2.5">
-              {socials.map((s) => (
-                <a
-                  key={s.label}
-                  href={s.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={s.label}
-                  className="w-9 h-9 rounded-lg bg-white/5 flex items-center justify-center text-muted hover:text-white hover:bg-white/10 hover:border-accent-cyan/20 border border-transparent transition-all"
-                >
-                  <s.icon className="w-4 h-4" />
-                </a>
-              ))}
+            <div className="footer-status">
+              <span className="footer-status-dot" aria-hidden />
+              <span>{isSv ? "Preview igång" : "Preview live"}</span>
+              <span className="footer-status-sep" aria-hidden />
+              <span>v5.3</span>
             </div>
           </div>
 
-          {groupsData.map((g) => (
-            <div key={g.title}>
-              <h4 className="text-sm font-semibold text-white mb-4">{g.title}</h4>
-              <ul className="space-y-3">
-                {g.links.map((l) => (
-                  <li key={l.label}>
-                    <a
-                      href={l.href}
-                      target={"external" in l && l.external ? "_blank" : undefined}
-                      rel={"external" in l && l.external ? "noopener noreferrer" : undefined}
-                      onClick={(e) => {
-                        if (l.href.startsWith("/legal/")) {
-                          e.preventDefault();
-                          setShowLegal(l.href.replace("/legal/", ""));
-                        }
-                      }}
-                      className="text-sm text-muted hover:text-white transition-colors inline-flex items-center gap-1 group"
-                    >
-                      {l.label}
-                      <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+          <div>
+            <h2 className="footer-heading">{isSv ? "Utforska" : "Explore"}</h2>
+            <ul className="footer-link-list">
+              <li>
+                <a href="#playground">Playground</a>
+              </li>
+              <li>
+                <a href="#about">{isSv ? "Om BudAI" : "About BudAI"}</a>
+              </li>
+              <li>
+                <a href="#waitlist">{isSv ? "Early access" : "Early access"}</a>
+              </li>
+              <li>
+                <a href="https://stilledev.se" target="_blank" rel="noopener noreferrer">
+                  Stilledev
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          <div>
+            <h2 className="footer-heading">{isSv ? "Genvägar" : "Shortcuts"}</h2>
+            <ul className="footer-link-list">
+              <li>
+                <span className="footer-kbd">
+                  <kbd>⌘K</kbd> {isSv ? "Kommandon" : "Commands"}
+                </span>
+              </li>
+              <li>
+                <span className="footer-kbd">
+                  <kbd>⌘N</kbd> {isSv ? "Ny chatt" : "New chat"}
+                </span>
+              </li>
+              <li>
+                <span className="footer-kbd">
+                  <kbd>/</kbd> {isSv ? "Kommandon i fältet" : "Commands in the field"}
+                </span>
+              </li>
+            </ul>
+          </div>
+
+          <div>
+            <h2 className="footer-heading">{isSv ? "Information" : "Information"}</h2>
+            <ul className="footer-link-list">
+              <li>
+                <a href="/legal/privacy">{isSv ? "Integritetspolicy" : "Privacy policy"}</a>
+              </li>
+              <li>
+                <a href="/legal/terms">{isSv ? "Användarvillkor" : "Terms of service"}</a>
+              </li>
+              <li>
+                <a href="/legal/cookies">{isSv ? "Cookiepolicy" : "Cookie policy"}</a>
+              </li>
+              <li>
+                <a href="mailto:Stilleinc@hotmail.com">{isSv ? "Kontakta oss" : "Contact"}</a>
+              </li>
+            </ul>
+          </div>
         </div>
 
-        <div className="mt-14 pt-8 border-t border-white/[0.04] flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-sm text-muted">{t.footer.rights}</p>
-          <p className="text-sm text-muted flex items-center gap-1.5">
-            {lang === "sv" ? "Utvecklad av" : "Developed by"}{" "}
-            <StilledevLink showMark />
-            <span className="text-muted/30">·</span>
-            <span className="text-xs">Sweden</span>
+        <div className="footer-bottom mt-12 flex flex-col gap-3 border-t border-white/[0.07] pt-5 sm:flex-row sm:items-center sm:justify-between">
+          <p className="flex items-center gap-2">
+            <StilledevMark size={16} />
+            © 2026 BudAI · {isSv ? "av " : "by "}
+            <StilledevLink className="!text-white/60 hover:!text-white" />
           </p>
+          <div className="flex items-center gap-4">
+            <p>{isSv ? "Preview först. Vi bygger vidare." : "Preview first. Still building."}</p>
+            <a href="#home" className="footer-top" aria-label={isSv ? "Till toppen" : "Back to top"}>
+              <ArrowUp className="h-3.5 w-3.5" />
+            </a>
+          </div>
         </div>
       </div>
-
-      <AnimatePresence>
-        {showLegal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-black/70 backdrop-blur-sm"
-              onClick={() => setShowLegal(null)}
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 16 }}
-              className="relative z-10 max-w-lg w-full rounded-2xl bg-[#0a0a14] border border-white/[0.08] p-6 shadow-2xl"
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="legal-title"
-            >
-              <button
-                className="absolute top-4 right-4 text-muted hover:text-white transition-colors"
-                onClick={() => setShowLegal(null)}
-                aria-label="Close"
-              >
-                <X className="w-5 h-5" />
-              </button>
-              <h3 id="legal-title" className="text-xl font-bold text-white mb-4 pr-8">
-                {legalContent[showLegal]?.title}
-              </h3>
-              <div className="space-y-3">
-                {legalContent[showLegal]?.content.map((paragraph, i) => (
-                  <p key={i} className="text-sm text-muted leading-relaxed">
-                    {paragraph}
-                  </p>
-                ))}
-              </div>
-              <a
-                href={`/legal/${showLegal}`}
-                className="mt-5 inline-flex items-center gap-1 text-sm text-accent-cyan hover:text-white transition-colors"
-              >
-                {lang === "sv" ? "Läs fullständig sida" : "View full page"}
-                <ArrowUpRight className="w-3.5 h-3.5" />
-              </a>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
     </footer>
   );
 }

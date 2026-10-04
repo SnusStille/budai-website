@@ -63,8 +63,8 @@ export default function SurpriseToasts() {
           title: lang === "sv" ? "Du läste hela vägen" : "You made it to the end",
           body:
             lang === "sv"
-              ? "Tack. Gå med i väntelistan om du vill vara med från start — 10% early access."
-              : "Thanks. Join the waitlist if you want in from day one — 10% early access.",
+              ? "Tack. Gå med i väntelistan om du vill få uppdateringar när förhandsvisningen utvecklas."
+              : "Thanks. Join the waitlist if you’d like updates as the preview develops.",
           duration: 5500,
         });
       }
