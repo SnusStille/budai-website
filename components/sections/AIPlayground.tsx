@@ -1638,7 +1638,9 @@ export default function AIPlayground() {
           <span className="section-badge text-accent-cyan mb-4">{t.playground.badge}</span>
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight mb-3">
             {t.playground.title}{" "}
-            <span className="text-gradient">{t.playground.titleHighlight}</span>
+            <span className="text-gradient inline-block px-[0.04em] -mx-[0.04em]">
+              {t.playground.titleHighlight}
+            </span>
           </h2>
           <p className="text-sm sm:text-base text-muted max-w-2xl mx-auto">{t.playground.subtitle}</p>
         </ScrollReveal>

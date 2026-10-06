@@ -111,6 +111,11 @@ The error means **Google provider is off** in Supabase, or Client ID/Secret are 
 
 Callback path always: `/auth/callback?next=/#playground`
 
+The callback's final redirect does not trust `Host` or `X-Forwarded-*` request
+headers. It uses localhost during local development, the canonical site URL in
+production, and Vercel's deployment-provided `VERCEL_URL` for preview
+deployments.
+
 ---
 
 ## D. Email template tip (optional)
