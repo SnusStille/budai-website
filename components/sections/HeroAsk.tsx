@@ -18,7 +18,6 @@ export default function HeroAsk() {
     if (!prompt) return;
     sessionStorage.setItem("budai:pending-prompt", prompt);
     window.dispatchEvent(new CustomEvent("budai:prompt", { detail: prompt }));
-    document.getElementById("playground")?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   return (
@@ -28,7 +27,7 @@ export default function HeroAsk() {
           e.preventDefault();
           go(v);
         }}
-        className="flex items-center gap-2 rounded-2xl border border-white/10 bg-[#05050b]/80 p-2 pl-5 shadow-[0_0_60px_-20px_rgba(0,229,255,0.45)] backdrop-blur-xl transition-colors focus-within:border-accent-cyan/40"
+        className="flex items-center gap-2 rounded-2xl border border-white/[0.12] bg-[#080810]/90 p-2 pl-5 shadow-[0_12px_36px_-28px_rgba(0,229,255,0.35)] backdrop-blur-xl transition-[border-color,box-shadow] focus-within:border-accent-cyan/40 focus-within:shadow-[0_12px_42px_-24px_rgba(0,229,255,0.32)]"
       >
         <input
           value={v}
@@ -37,7 +36,7 @@ export default function HeroAsk() {
           aria-label={sv ? "Fråga BudAI" : "Ask BudAI"}
           className="min-w-0 flex-1 bg-transparent py-2.5 text-[15px] text-white outline-none placeholder:text-muted/70"
         />
-        <button type="submit" aria-label="Send" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-cyan text-[#020205] transition-opacity hover:opacity-90">
+        <button type="submit" aria-label={sv ? "Gå till chatten" : "Go to chat"} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/[0.06] text-accent-cyan transition-colors hover:border-accent-cyan/40 hover:bg-accent-cyan/10">
           <ArrowDown className="h-5 w-5" />
         </button>
       </form>

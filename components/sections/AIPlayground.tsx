@@ -479,13 +479,12 @@ export default function AIPlayground() {
   const [savedBranch, setSavedBranch] = useState<ChatMessage[] | null>(null);
 
   useEffect(() => {
-    const setPrompt = (text: string, scrollToPlayground = false) => {
+    const setPrompt = (text: string) => {
       sessionStorage.removeItem("budai:pending-prompt");
       setInput(text);
-      if (scrollToPlayground) {
-        document.getElementById("playground")?.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
-      window.setTimeout(() => document.querySelector<HTMLTextAreaElement>("#playground textarea")?.focus({ preventScroll: true }), 450);
+      const input = document.getElementById("playground-input");
+      input?.scrollIntoView({ behavior: "smooth", block: "center" });
+      window.setTimeout(() => input?.focus({ preventScroll: true }), 450);
     };
     const onPrompt = (e: Event) => {
       const text = (e as CustomEvent<string>).detail;
@@ -494,7 +493,7 @@ export default function AIPlayground() {
     };
     window.addEventListener("budai:prompt", onPrompt);
     const pendingPrompt = sessionStorage.getItem("budai:pending-prompt");
-    if (pendingPrompt) setPrompt(pendingPrompt, true);
+    if (pendingPrompt) setPrompt(pendingPrompt);
     return () => window.removeEventListener("budai:prompt", onPrompt);
   }, []);
   const [activity, setActivity] = useState<AiActivity>("idle");
@@ -2504,6 +2503,7 @@ export default function AIPlayground() {
                     <Plus className={`w-4 h-4 transition-transform ${toolsOpen ? "rotate-45" : ""}`} />
                   </button>
                   <textarea
+                    id="playground-input"
                     ref={taRef}
                     value={input}
                     onChange={(e) => {
