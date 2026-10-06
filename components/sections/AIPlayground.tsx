@@ -479,13 +479,22 @@ export default function AIPlayground() {
   const [savedBranch, setSavedBranch] = useState<ChatMessage[] | null>(null);
 
   useEffect(() => {
+    const setPrompt = (text: string, scrollToPlayground = false) => {
+      sessionStorage.removeItem("budai:pending-prompt");
+      setInput(text);
+      if (scrollToPlayground) {
+        document.getElementById("playground")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+      window.setTimeout(() => document.querySelector<HTMLTextAreaElement>("#playground textarea")?.focus({ preventScroll: true }), 450);
+    };
     const onPrompt = (e: Event) => {
       const text = (e as CustomEvent<string>).detail;
       if (typeof text !== "string") return;
-      setInput(text);
-      window.setTimeout(() => document.querySelector<HTMLTextAreaElement>("#playground textarea")?.focus({ preventScroll: true }), 450);
+      setPrompt(text);
     };
     window.addEventListener("budai:prompt", onPrompt);
+    const pendingPrompt = sessionStorage.getItem("budai:pending-prompt");
+    if (pendingPrompt) setPrompt(pendingPrompt, true);
     return () => window.removeEventListener("budai:prompt", onPrompt);
   }, []);
   const [activity, setActivity] = useState<AiActivity>("idle");
@@ -1621,7 +1630,7 @@ export default function AIPlayground() {
   return (
     <section
       id="playground"
-      className="relative section-hairline py-12 sm:py-20 md:py-24 overflow-hidden"
+      className="relative section-hairline scroll-mt-20 py-12 sm:py-20 md:py-24 overflow-hidden"
     >
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(100vw,720px)] h-[min(100vw,720px)] bg-accent-purple/5 rounded-full blur-[140px] pointer-events-none" />
 

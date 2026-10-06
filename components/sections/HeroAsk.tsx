@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowUp } from "lucide-react";
+import { ArrowDown } from "lucide-react";
 import { useLang } from "@/components/ui/LanguageContext";
 
 /** Ask box under the hero: type, and the Playground opens with your question filled in. */
@@ -14,9 +14,11 @@ export default function HeroAsk() {
     : ["Write a friendly reminder email", "Plan my week", "Explain compound interest simply"];
 
   const go = (text: string) => {
-    if (!text.trim()) return;
-    document.getElementById("playground")?.scrollIntoView({ behavior: "smooth" });
-    window.dispatchEvent(new CustomEvent("budai:prompt", { detail: text.trim() }));
+    const prompt = text.trim();
+    if (!prompt) return;
+    sessionStorage.setItem("budai:pending-prompt", prompt);
+    window.dispatchEvent(new CustomEvent("budai:prompt", { detail: prompt }));
+    document.getElementById("playground")?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   return (
@@ -36,7 +38,7 @@ export default function HeroAsk() {
           className="min-w-0 flex-1 bg-transparent py-2.5 text-[15px] text-white outline-none placeholder:text-muted/70"
         />
         <button type="submit" aria-label="Send" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-cyan text-[#020205] transition-opacity hover:opacity-90">
-          <ArrowUp className="h-5 w-5" />
+          <ArrowDown className="h-5 w-5" />
         </button>
       </form>
       <div className="mt-3 flex flex-wrap justify-center gap-2">

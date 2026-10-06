@@ -80,8 +80,16 @@ export default function About() {
             <a href="https://github.com/SnusStille/budai-website" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-[#020205] hover:opacity-90 transition-opacity">
               <Github className="h-4 w-4" /> GitHub
             </a>
-            <a href="mailto:Stilleinc@hotmail.com" className="inline-flex items-center gap-2 rounded-full border border-white/15 px-5 py-2.5 text-sm font-medium text-white hover:border-accent-cyan/40 transition-colors">
-              <Mail className="h-4 w-4" /> {sv ? "Kontakt" : "Contact"}
+            <a
+              href="mailto:Stilleinc@hotmail.com"
+              aria-label={sv ? "Skicka e-post till Stilleinc@hotmail.com" : "Email Stilleinc@hotmail.com"}
+              className="inline-flex items-center gap-3 rounded-xl border border-accent-cyan/30 bg-accent-cyan/[0.06] px-5 py-3 text-white transition-colors hover:border-accent-cyan/60 hover:bg-accent-cyan/10"
+            >
+              <Mail className="h-5 w-5 shrink-0 text-accent-cyan" />
+              <span className="flex flex-col items-start">
+                <span className="text-sm font-semibold">{sv ? "Skicka e-post" : "Send an email"}</span>
+                <span className="text-xs text-muted">Stilleinc@hotmail.com</span>
+              </span>
             </a>
           </div>
         </ScrollReveal>

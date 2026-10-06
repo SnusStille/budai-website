@@ -19,12 +19,12 @@ npm run dev
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | waitlist | |
 | `ANTHROPIC_API_KEY` | playground | server-only |
 | `ANTHROPIC_MODEL` | optional | default Claude Sonnet |
-| `ADMIN_PASSWORD` | optional | defaults to launch key — **client-visible**; Stille-only gate, not enterprise auth |
+| `ADMIN_PASSWORD` | optional | server-only; if unset, admin login is locked |
 
 ## Admin
 
 Restricted to **Stille** only. Password never shown on the login UI.  
-Default key: see `ADMIN.md` / env (not printed on the page).
+Set `ADMIN_PASSWORD` in `.env.local` for local development or in the deployment environment for production. There is no default key.
 
 ## Waitlist 10%
 
