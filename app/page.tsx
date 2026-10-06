@@ -14,8 +14,14 @@ import Navbar from "@/components/sections/Navbar";
 import Hero from "@/components/sections/Hero";
 import Capabilities from "@/components/sections/Capabilities";
 import Waitlist from "@/components/sections/Waitlist";
-import Timeline from "@/components/sections/Timeline";
-import Vision from "@/components/sections/Vision";
+import ProofBar from "@/components/sections/ProofBar";
+import HeroAsk from "@/components/sections/HeroAsk";
+import FeedbackButton from "@/components/ui/FeedbackButton";
+import Journey from "@/components/sections/Journey";
+import FloatingGlyphs from "@/components/effects/FloatingGlyphs";
+import SiteChrome from "@/components/ui/SiteChrome";
+import WhatsNew from "@/components/ui/WhatsNew";
+import Shortcuts from "@/components/ui/Shortcuts";
 import Footer from "@/components/sections/Footer";
 
 const AIEnvironment = dynamic(() => import("@/components/effects/AIEnvironment"), {
@@ -23,14 +29,13 @@ const AIEnvironment = dynamic(() => import("@/components/effects/AIEnvironment")
 });
 const CursorGlow = dynamic(() => import("@/components/effects/CursorGlow"), { ssr: false });
 
+const About = dynamic(() => import("@/components/sections/About"));
 const AIPlayground = dynamic(() => import("@/components/sections/AIPlayground"));
-const Terminal = dynamic(() => import("@/components/sections/Terminal"));
-const SystemStatus = dynamic(() => import("@/components/sections/SystemStatus"));
 
 export default function Home() {
   useEffect(() => {
     if (process.env.NODE_ENV === "development") {
-      console.log("%cBudAI · v0.93 · Stilledev", "color:#00e5ff;font-weight:bold;");
+      console.log("%cBudAI · Stilledev", "color:#00e5ff;font-weight:bold;");
     }
 
     let buffer = "";
@@ -78,17 +83,22 @@ export default function Home() {
       <SectionDots />
       <div className="fixed inset-0 z-[1] pointer-events-none ai-grid opacity-[0.35]" aria-hidden />
       <div className="fixed inset-0 z-[1] pointer-events-none ai-vignette" aria-hidden />
+      <FloatingGlyphs />
 
       <div className="relative z-10">
         <Navbar />
+        <SiteChrome />
+        <WhatsNew />
+        <Shortcuts />
+        <FeedbackButton />
         <Hero />
-        <Capabilities />
+        <HeroAsk />
+        <ProofBar />
         <AIPlayground />
-        <Terminal />
+        <Capabilities />
+        <About />
         <Waitlist />
-        <Timeline />
-        <SystemStatus />
-        <Vision />
+        <Journey />
         <Footer />
       </div>
 

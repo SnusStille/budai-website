@@ -19,7 +19,7 @@ npm run dev
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | waitlist | |
 | `ANTHROPIC_API_KEY` | playground | server-only |
 | `ANTHROPIC_MODEL` | optional | default Claude Sonnet |
-| `NEXT_PUBLIC_ADMIN_PASSWORD` | optional | defaults to launch key — **client-visible**; Stille-only gate, not enterprise auth |
+| `ADMIN_PASSWORD` | optional | defaults to launch key — **client-visible**; Stille-only gate, not enterprise auth |
 
 ## Admin
 

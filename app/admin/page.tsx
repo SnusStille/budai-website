@@ -38,12 +38,6 @@ import { getWaitlistUsers, getWaitlistStats, updateUserStatus, getAdminEvents, l
 import { WaitlistUser, AdminEvent } from "@/types";
 import { createClient, isAuthConfigured } from "@/lib/supabase/client";
 
-/**
- * Admin password: set NEXT_PUBLIC_ADMIN_PASSWORD (fallback only for local Stille).
- * NEVER show the password string in the UI.
- */
-const ADMIN_PASSWORD =
-  process.env.NEXT_PUBLIC_ADMIN_PASSWORD || "Daylightshere76";
 
 type Tab = "overview" | "waitlist" | "chats" | "platform" | "ops" | "export";
 
@@ -145,14 +139,20 @@ export default function AdminPage() {
 
   const stats = useMemo(() => getWaitlistStats(users), [users]);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === ADMIN_PASSWORD) {
-      setAuthenticated(true);
-      setError(false);
+    try {
+      const res = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
+      });
+      if (!res.ok) throw new Error("bad");
       sessionStorage.setItem("budai_admin_auth", "true");
       sessionStorage.setItem("budai_admin_key", password);
-    } else {
+      setError(false);
+      setAuthenticated(true);
+    } catch {
       setError(true);
     }
   };
@@ -239,7 +239,7 @@ export default function AdminPage() {
   const adminKey = () =>
     (typeof window !== "undefined" && sessionStorage.getItem("budai_admin_key")) ||
     password ||
-    ADMIN_PASSWORD;
+    "";
 
   const loadChats = async (q = "") => {
     setChatsLoading(true);
@@ -424,7 +424,6 @@ export default function AdminPage() {
               <p className="text-muted text-sm inline-flex items-center gap-1.5 flex-wrap">
                 <StilledevMark size={14} />
                 Stilledev ops · waitlist · early access ·{" "}
-                <span className="font-mono text-accent-cyan/80">v0.93</span>
               </p>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
@@ -737,7 +736,7 @@ export default function AdminPage() {
                 { icon: Globe, label: "Site", value: "stilledev.se", note: "Public marketing" },
                 { icon: MessageSquare, label: "Playground", value: "Product AI", note: "Auth · memory · vision" },
                 { icon: Database, label: "Waitlist", value: String(users.length), note: "Signups" },
-                { icon: Activity, label: "Preview", value: "v0.93 · 93%", note: "Toward launch" },
+                { icon: Activity, label: "Preview", value: "Developer preview", note: "Preview" },
                 { icon: Users, label: "Profiles", value: platform.profiles == null ? "—" : String(platform.profiles), note: "Auth users" },
                 { icon: Cpu, label: "Conversations", value: platform.conversations == null ? "—" : String(platform.conversations), note: "Cloud threads" },
                 { icon: Sparkles, label: "Memories", value: platform.memories == null ? "—" : String(platform.memories), note: "Active facts" },

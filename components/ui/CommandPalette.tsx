@@ -3,8 +3,8 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Search, ArrowRight, Sparkles, Terminal as TerminalIcon, Users, Map,
-  Activity, Cpu, Languages, MessageCircle, CornerDownLeft,
+  Search, ArrowRight, Sparkles, Users, Map,
+  Cpu, Languages, MessageCircle, CornerDownLeft,
 } from "lucide-react";
 import { useLang } from "@/components/ui/LanguageContext";
 
@@ -41,9 +41,9 @@ export default function CommandPalette() {
     () => [
       { id: "capabilities", label: "Go to Capabilities", icon: Sparkles, action: () => goTo("capabilities"), keywords: "features what budai does" },
       { id: "playground", label: "Try the Playground", icon: MessageCircle, action: () => goTo("playground"), keywords: "chat demo try ai" },
-      { id: "terminal", label: "Watch the Terminal", icon: TerminalIcon, action: () => goTo("terminal"), keywords: "code live activity" },
       { id: "roadmap", label: "View Roadmap", icon: Map, action: () => goTo("roadmap"), keywords: "timeline plan future" },
-      { id: "status", label: "Check System Status", icon: Activity, action: () => goTo("status"), keywords: "uptime health services" },
+      { id: "whatsnew", label: "What's new", icon: Sparkles, action: () => window.dispatchEvent(new Event("budai:whats-new")), keywords: "changelog updates releases" },
+      { id: "about", label: "About the builder", icon: Sparkles, action: () => goTo("about"), keywords: "stilledev developer github contact" },
       { id: "waitlist", label: "Join the Waitlist", icon: Users, action: () => goTo("waitlist"), keywords: "signup access request join" },
       {
         id: "lang",

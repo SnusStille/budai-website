@@ -1,15 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { isAdmin } from "@/lib/adminAuth";
 
 /**
  * Stille-only admin read of product conversations.
  * Auth: x-admin-key header must match ADMIN password (same as /admin UI).
  * Uses service role — never expose this key to the browser beyond the admin gate.
  */
-
-function adminPassword() {
-  return process.env.NEXT_PUBLIC_ADMIN_PASSWORD || process.env.ADMIN_PASSWORD || "Daylightshere76";
-}
 
 function serviceClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
@@ -18,13 +15,8 @@ function serviceClient() {
   return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
 }
 
-function authorized(req: NextRequest) {
-  const h = req.headers.get("x-admin-key") || "";
-  return h.length > 0 && h === adminPassword();
-}
-
 export async function GET(req: NextRequest) {
-  if (!authorized(req)) {
+  if (!isAdmin(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

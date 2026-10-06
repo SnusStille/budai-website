@@ -30,7 +30,7 @@ export default function AICore({ isMobile = false }: { isMobile?: boolean }) {
 
   const rows = [
     { icon: Server, label: lang === "sv" ? "Fokus" : "Focus", value: lang === "sv" ? "Sverige · Norden" : "Sweden · Nordics" },
-    { icon: Cpu, label: lang === "sv" ? "Motor" : "Engine", value: "BudAI Core v0.93" },
+    { icon: Cpu, label: lang === "sv" ? "Motor" : "Engine", value: "BudAI Core" },
     { icon: Activity, label: lang === "sv" ? "Demo" : "Demo", value: lang === "sv" ? "Live Playground" : "Live Playground" },
     { icon: Zap, label: lang === "sv" ? "Läge" : "Mode", value: lang === "sv" ? "Developer Preview" : "Developer Preview" },
     { icon: Shield, label: lang === "sv" ? "Integritet" : "Privacy", value: lang === "sv" ? "GDPR-minded · TLS" : "GDPR-minded · TLS" },
@@ -121,7 +121,7 @@ export default function AICore({ isMobile = false }: { isMobile?: boolean }) {
                       <span className="relative flex h-1.5 w-1.5">
                         <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-accent-green" />
                       </span>
-                      {lang === "sv" ? "Preview · v0.93" : "Preview · v0.93"}
+                      Preview
                     </div>
                   </div>
                 </div>

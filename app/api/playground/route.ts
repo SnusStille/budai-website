@@ -44,6 +44,13 @@ function adminSb() {
   return createClient(url, key);
 }
 
+const PERSONAS: Record<string, string> = {
+  writer: "Persona: Writer. Write polished, well-structured prose in the user's voice. Give a ready-to-use draft first, then brief edit suggestions.",
+  analyst: "Persona: Analyst. Think in structure: summarize, surface assumptions and risks, compare options, and end with a clear recommendation.",
+  coder: "Persona: Coder. Give correct, minimal code in fenced blocks with the language tagged. Explain only what is non-obvious and mention edge cases.",
+  translator: "Persona: Translator. Translate faithfully between Swedish and English, keep tone and register, and note any ambiguity briefly.",
+};
+
 const SYSTEM_PROMPT = (
   lang: "sv" | "en",
   dual: boolean,
@@ -139,6 +146,8 @@ export async function POST(req: NextRequest) {
     const lang = body?.lang === "sv" ? "sv" : "en";
     const concise = body?.concise === true;
     const dual = concise ? false : body?.dual === true;
+    const personaLine = PERSONAS[String(body?.persona || "")] ? "\n\n" + PERSONAS[String(body?.persona)] : "";
+    const wantStream = body?.stream === true && !dual;
     const contextBlock = typeof body?.context === "string" ? body.context : "";
     const imageBase64 = typeof body?.imageBase64 === "string" ? body.imageBase64 : null;
     const imageMediaType =
@@ -273,10 +282,62 @@ export async function POST(req: NextRequest) {
 
     const model = process.env.ANTHROPIC_MODEL || "claude-sonnet-4-20250514";
 
+    if (wantStream) {
+      const enc = new TextEncoder();
+      const readable = new ReadableStream({
+        async start(controller) {
+          let full = "";
+          let sent = 0;
+          try {
+            const s = anthropic.messages.stream({
+              model,
+              max_tokens: concise ? 500 : 1200,
+              system: SYSTEM_PROMPT(lang, dual, concise, contextBlock + personaLine, !!imageBase64),
+              messages: messages as Anthropic.MessageParam[],
+            });
+            s.on("text", (d: string) => {
+              full += d;
+              // hold back a possible [[MEMORY: …]] tag so it never flashes on screen
+              const cut = full.indexOf("[[");
+              let limit = cut === -1 ? full.length : cut;
+              if (cut === -1 && full.endsWith("[")) limit -= 1;
+              if (limit > sent) {
+                controller.enqueue(enc.encode(full.slice(sent, limit)));
+                sent = limit;
+              }
+            });
+            await s.finalMessage();
+            const { clean, memory } = stripMemoryTag(full);
+            if (clean.length > sent) controller.enqueue(enc.encode(clean.slice(Math.min(sent, clean.length))));
+            if (memory) {
+              controller.enqueue(enc.encode("\u0000" + JSON.stringify({ memory })));
+              if (user && sb && !temporary) {
+                try {
+                  const { data: prof } = await sb.from("profiles").select("memory_enabled").eq("id", user.id).maybeSingle();
+                  if (prof?.memory_enabled !== false) {
+                    await sb.from("memories").insert({ user_id: user.id, content: memory, category: "general", source: "auto", confidence: 0.75 });
+                  }
+                } catch {
+                  /* */
+                }
+              }
+            }
+          } catch (err) {
+            console.error("Playground stream error:", err);
+            controller.enqueue(enc.encode("\u0000" + JSON.stringify({ error: "Generation failed" })));
+          }
+          controller.close();
+        },
+      });
+      return new Response(readable, {
+        headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store, no-transform", "X-Accel-Buffering": "no" },
+      });
+    }
+
     const response = await anthropic.messages.create({
       model,
       max_tokens: dual ? 1600 : concise ? 500 : 1200,
-      system: SYSTEM_PROMPT(lang, dual, concise, contextBlock, !!imageBase64),
+      system: SYSTEM_PROMPT(lang, dual, concise, contextBlock + personaLine, !!imageBase64),
       messages: messages as Anthropic.MessageParam[],
     });
 

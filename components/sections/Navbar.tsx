@@ -2,19 +2,12 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Globe, Command } from "lucide-react";
+import { Menu, X, Globe } from "lucide-react";
 import { useLang } from "@/components/ui/LanguageContext";
-import StockholmClock from "@/components/ui/StockholmClock";
 import BudAILogo from "@/components/ui/BudAILogo";
+import TypeWordmark from "@/components/ui/TypeWordmark";
 
-const SECTION_IDS = [
-  "capabilities",
-  "playground",
-  "terminal",
-  "waitlist",
-  "roadmap",
-  "status",
-] as const;
+const SECTION_IDS = ["playground", "capabilities", "about", "waitlist", "roadmap"] as const;
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -121,12 +114,11 @@ export default function Navbar() {
   }, [lang, mobileOpen]);
 
   const links = [
-    { label: t.nav.capabilities, href: "#capabilities", id: "capabilities" },
     { label: t.nav.playground, href: "#playground", id: "playground" },
-    { label: t.nav.terminal, href: "#terminal", id: "terminal" },
+    { label: t.nav.capabilities, href: "#capabilities", id: "capabilities" },
+    { label: lang === "sv" ? "Byggaren" : "Builder", href: "#about", id: "about" },
     { label: t.nav.waitlist, href: "#waitlist", id: "waitlist" },
     { label: t.nav.roadmap, href: "#roadmap", id: "roadmap" },
-    { label: t.nav.status, href: "#status", id: "status" },
   ];
 
   return (
@@ -142,12 +134,15 @@ export default function Navbar() {
         }`}
       >
         <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 lg:h-[4.5rem]">
+          <div className="flex items-center justify-between h-16 lg:h-[4.5rem] lg:grid lg:grid-cols-[1fr_auto_1fr]">
             <a
               href="#"
-              className="flex items-center gap-2.5 group"
+              className="flex items-center gap-2.5 group outline-none focus-visible:ring-2 focus-visible:ring-accent-cyan/50 rounded-lg"
               aria-label="BudAI home"
               onClick={(e) => {
+                e.preventDefault();
+                (e.currentTarget as HTMLElement).blur();
+                window.scrollTo({ top: 0, behavior: "smooth" });
                 // Surprise #3 — triple-click logo within 1.2s
                 const now = Date.now();
                 logoClicks.current = [...logoClicks.current, now].filter((ts) => now - ts < 1200);
@@ -158,18 +153,13 @@ export default function Navbar() {
                 }
               }}
             >
-              <span className="transition-transform group-active:scale-95 inline-flex">
+              <span className="transition-transform duration-300 group-active:scale-95 group-hover:[transform:perspective(260px)_rotateY(16deg)_scale(1.08)] inline-flex">
                 <BudAILogo size="sm" animated />
               </span>
-              <div className="flex flex-col leading-none">
-                <span className="text-xl font-bold tracking-tight">
-                  Bud<span className="text-accent-cyan">AI</span>
-                </span>
-                <span className="text-[10px] tracking-wide">
-                  <span className="text-white font-medium">{t.nav.developedBy}</span>{" "}
-                  <span className="text-accent-cyan group-hover:text-white transition-colors">Stilledev</span>
-                </span>
-              </div>
+              <span className="flex flex-col leading-none">
+                <TypeWordmark />
+                <span className="mt-1.5 hidden sm:block font-mono text-[9px] lowercase tracking-[0.22em] text-white/40">developed by stilledev</span>
+              </span>
             </a>
 
             <div className="hidden lg:flex items-center gap-0.5">
@@ -180,7 +170,11 @@ export default function Navbar() {
                     key={l.href}
                     href={l.href}
                     className={`relative px-3.5 py-2 text-sm rounded-lg transition-colors ${
-                      isActive ? "text-white" : "text-muted hover:text-white hover:bg-white/5"
+                      isActive
+                        ? "text-white"
+                        : l.id === "playground"
+                          ? "text-accent-cyan hover:text-white hover:bg-white/5"
+                          : "text-muted hover:text-white hover:bg-white/5"
                     }`}
                   >
                     {l.label}
@@ -194,8 +188,7 @@ export default function Navbar() {
               })}
             </div>
 
-            <div className="hidden lg:flex items-center gap-2.5">
-              <StockholmClock className="hidden xl:inline-flex" />
+            <div className="hidden lg:flex items-center gap-2.5 lg:justify-self-end">
               <div
                 className="flex items-center p-0.5 rounded-full bg-black/40 border border-white/[0.08] shadow-inner"
                 role="group"
@@ -217,19 +210,6 @@ export default function Navbar() {
                   </button>
                 ))}
               </div>
-
-              <button
-                type="button"
-                onClick={() =>
-                  window.dispatchEvent(
-                    new KeyboardEvent("keydown", { key: "k", metaKey: true, bubbles: true })
-                  )
-                }
-                className="hidden xl:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-mono text-muted/60 hover:text-white border border-white/[0.06] hover:border-white/15 hover:bg-white/[0.04] transition-all"
-                aria-label="Open command palette"
-              >
-                <Command className="w-3 h-3" />K
-              </button>
 
               <a href="#waitlist" className="btn-primary !px-5 !py-2.5 text-sm">
                 <span>{t.nav.requestAccess}</span>

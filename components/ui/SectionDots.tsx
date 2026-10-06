@@ -6,10 +6,9 @@ import { motion } from "framer-motion";
 const SECTIONS = [
   { id: "capabilities", label: "Capabilities" },
   { id: "playground", label: "Playground" },
-  { id: "terminal", label: "Terminal" },
+  { id: "about", label: "Builder" },
   { id: "waitlist", label: "Waitlist" },
   { id: "roadmap", label: "Roadmap" },
-  { id: "status", label: "Status" },
 ];
 
 export default function SectionDots() {

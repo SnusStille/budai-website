@@ -1,181 +1,166 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import BudAILogo from "@/components/ui/BudAILogo";
-import { StilledevMark } from "@/components/ui/BudAILogo";
+import Tilt3D from "@/components/ui/Tilt3D";
 
-const STEPS_EN = [
-  "Initializing BudAI core…",
-  "Loading Nordic language pack…",
-  "Securing privacy edge…",
-  "Ready · v0.93",
-];
+const LAYERS = [-28, -20, -12, -6, 0, 6, 12, 20, 28];
+const WORD = "BudAI";
+const GLYPHS = "01<>{}/=+*#";
+const BOOT = ["init core", "load models", "warm up playground", "ready"];
+const DURATION = 7000;
 
-const STEPS_SV = [
-  "Initierar BudAI-kärna…",
-  "Laddar nordiskt språkpaket…",
-  "Säkrar integritetskant…",
-  "Redo · v0.93",
-];
-
-export default function LoadingScreen({ onComplete }: { onComplete: () => void }) {
-  const [progress, setProgress] = useState(0);
-  const [visible, setVisible] = useState(true);
-  const [step, setStep] = useState(0);
-  const [steps, setSteps] = useState<string[]>(STEPS_EN);
-  const [skipLabel, setSkipLabel] = useState("Skip →");
-  const doneRef = useRef(false);
-  const onCompleteRef = useRef(onComplete);
-  onCompleteRef.current = onComplete;
-
-  const finish = () => {
-    if (doneRef.current) return;
-    doneRef.current = true;
-    setProgress(100);
-    setStep(Math.max(0, steps.length - 1));
-    try {
-      sessionStorage.setItem("budai-intro-seen", "1");
-    } catch {
-      /* */
-    }
-    onCompleteRef.current();
-    setTimeout(() => setVisible(false), 280);
-  };
-
+/** Each letter of the wordmark scrambles through code characters, then locks in. */
+function Scramble({ start }: { start: number }) {
+  const [out, setOut] = useState<string[]>(() => WORD.split("").map(() => ""));
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem("budai-lang");
-      const navSv = (navigator.language || "").toLowerCase().startsWith("sv");
-      const useSv = saved === "sv" || (!saved && navSv);
-      if (useSv) {
-        setSteps(STEPS_SV);
-        setSkipLabel("Hoppa över →");
-      }
-    } catch {
-      /* */
-    }
-
-    // Instant if already seen or reduced motion
-    try {
-      if (sessionStorage.getItem("budai-intro-seen") === "1") {
-        finish();
-        return;
-      }
-    } catch {
-      /* */
-    }
-
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      finish();
-      return;
-    }
-
-    const failsafe = setTimeout(finish, 2200);
-    let p = 0;
-    let cancelled = false;
-    let timer = 0;
-
-    const tick = () => {
-      if (cancelled || doneRef.current) return;
-      p = Math.min(100, p + (p < 55 ? 7 : p < 88 ? 4 : 6));
-      setProgress(p);
-      setStep(Math.min(3, Math.floor((p / 100) * 4)));
-      if (p >= 100) {
-        clearTimeout(failsafe);
-        finish();
-        return;
-      }
-      timer = window.setTimeout(tick, 36);
+    let raf = 0;
+    const t0 = performance.now();
+    const tick = (t: number) => {
+      const el = t - t0;
+      setOut(WORD.split("").map((c, i) => {
+        const s = start + i * 340;
+        if (el < s) return "";
+        if (el > s + 560) return c;
+        return GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
+      }));
+      if (el < start + WORD.length * 340 + 600) raf = requestAnimationFrame(tick);
     };
-
-    timer = window.setTimeout(tick, 30);
-
-    return () => {
-      cancelled = true;
-      clearTimeout(timer);
-      clearTimeout(failsafe);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [start]);
 
   return (
-    <AnimatePresence>
-      {visible && (
-        <motion.div
-          initial={{ opacity: 1 }}
-          exit={{ opacity: 0, filter: "blur(8px)" }}
-          transition={{ duration: 0.35 }}
-          className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-background overflow-hidden"
-          role="status"
-          aria-live="polite"
-          aria-label="Loading BudAI"
-        >
-          <div className="absolute inset-0 grid-bg opacity-15" />
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(0,229,255,0.07),transparent_55%)]" />
+    <span aria-label={WORD}>
+      {WORD.split("").map((c, i) => (
+        <span key={i} className="relative inline-block" aria-hidden>
+          <span className="invisible">{c}</span>
+          <span className={`absolute inset-0 flex items-center justify-center ${i >= 3 ? "text-accent-cyan" : ""} ${out[i] && out[i] !== c ? "opacity-60 font-mono" : ""}`}>
+            {out[i]}
+          </span>
+        </span>
+      ))}
+    </span>
+  );
+}
 
-          <div className="relative z-10 flex flex-col items-center px-6">
-            <motion.div
-              initial={{ scale: 0.88, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-              className="mb-8 relative"
-            >
-              <div
-                aria-hidden
-                className="absolute inset-[-28%] rounded-full border border-dashed border-accent-cyan/25 pointer-events-none logo-ambient-spin"
-              />
-              <div
-                aria-hidden
-                className="absolute inset-[-14%] rounded-full border border-accent-purple/15 pointer-events-none"
-              />
-              <BudAILogo size="xl" animated />
-            </motion.div>
+export default function LoadingScreen() {
+  const [show, setShow] = useState(true);
+  const [out, setOut] = useState(false);
+  const [p, setP] = useState(0);
+  const finish = useRef<() => void>(() => {});
 
-            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight mb-1">
-              Bud<span className="text-accent-cyan">AI</span>
-            </h1>
-            <p className="text-xs text-muted/70 mb-3 tracking-wide">
-              Nordic AI work assistant
-            </p>
-            <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-muted/55 mb-8 font-medium">
-              <StilledevMark size={14} />
-              <span>Stilledev · Sweden</span>
-            </div>
+  useEffect(() => {
+    let seen = false;
+    try {
+      seen = sessionStorage.getItem("budai_intro") === "1";
+    } catch {
+      /* ignore */
+    }
+    if (seen || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setShow(false);
+      return;
+    }
+    document.body.style.overflow = "hidden";
+    let raf = 0;
+    let closing = false;
+    finish.current = () => {
+      if (closing) return;
+      closing = true;
+      cancelAnimationFrame(raf);
+      try {
+        sessionStorage.setItem("budai_intro", "1");
+      } catch {
+        /* ignore */
+      }
+      setP(1);
+      setOut(true);
+      window.setTimeout(() => {
+        document.body.style.overflow = "";
+        setShow(false);
+      }, 900);
+    };
+    const start = performance.now();
+    const tick = (t: number) => {
+      const v = Math.min(1, (t - start) / DURATION);
+      setP(v);
+      if (v < 1) raf = requestAnimationFrame(tick);
+      else finish.current();
+    };
+    raf = requestAnimationFrame(tick);
+    return () => {
+      cancelAnimationFrame(raf);
+      document.body.style.overflow = "";
+    };
+  }, []);
 
-            <p className="text-sm text-muted font-mono mb-5 h-5 text-center tracking-wide">
-              {steps[Math.min(step, steps.length - 1)]}
-            </p>
+  if (!show) return null;
+  const thresholds = [0.1, 0.36, 0.62, 0.9];
 
-            <div className="w-64 max-w-[80vw]">
-              <div className="h-1 bg-white/[0.05] rounded-full overflow-hidden border border-white/[0.05]">
+  return (
+    <div
+      role="status"
+      aria-label="Loading BudAI"
+      onClick={() => finish.current()}
+      className={`fixed inset-0 z-[200] flex flex-col items-center justify-center overflow-hidden bg-[#020205] transition-[opacity,transform,filter] duration-[900ms] ease-out ${
+        out ? "opacity-0 scale-110 blur-md pointer-events-none" : "opacity-100"
+      }`}
+    >
+      <div className="ai-grid absolute inset-0 opacity-30" aria-hidden />
+      <div className="absolute h-[620px] w-[620px] rounded-full bg-accent-cyan/[0.08] blur-[140px]" aria-hidden />
+      <div className="absolute h-[380px] w-[380px] translate-x-24 translate-y-20 rounded-full bg-accent-purple/[0.1] blur-[120px]" aria-hidden />
+
+      <p className="bud-pop relative mb-6 font-mono text-[11px] lowercase tracking-[0.35em] text-white/40" style={{ animationDelay: "0.3s" }}>
+        developed by stilledev
+      </p>
+
+      <div className="relative flex items-center justify-center">
+        <span className="bud-shock" style={{ animationDelay: "0.7s" }} aria-hidden />
+        <span className="bud-shock" style={{ animationDelay: "3.4s" }} aria-hidden />
+        <Tilt3D max={10}>
+          <div className="bud-scene" style={{ perspective: 900 }}>
+            <div className="bud-logo3d">
+              {LAYERS.map((z, i) => (
                 <div
-                  className="h-full rounded-full transition-[width] duration-75 ease-out"
-                  style={{
-                    width: `${Math.min(progress, 100)}%`,
-                    backgroundImage:
-                      "linear-gradient(90deg, #00e5ff, #b967ff, #00ff9d)",
-                  }}
-                />
-              </div>
-              <div className="flex justify-between mt-2 text-[10px] font-mono text-muted/40 tabular-nums">
-                <span>{Math.min(Math.round(progress), 100)}%</span>
-                <span>v0.93</span>
-              </div>
+                  key={z}
+                  className="bud-layer-in absolute inset-0 flex items-center justify-center"
+                  style={{ transform: `translateZ(${z}px)`, opacity: z === 0 ? 1 : 0.1 + (28 - Math.abs(z)) / 190, animationDelay: `${0.5 + i * 0.1}s` }}
+                >
+                  <BudAILogo size="hero" animated={z === 0} />
+                </div>
+              ))}
+              <div className="bud-ring3d" />
+              <div className="bud-ring3d bud-ring3d-b" />
             </div>
-
-            {progress > 8 && progress < 100 && (
-              <button
-                type="button"
-                onClick={finish}
-                className="mt-7 text-[11px] text-muted/40 hover:text-muted transition-colors"
-              >
-                {skipLabel}
-              </button>
-            )}
           </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+        </Tilt3D>
+      </div>
+
+      <p className="bud-pop relative mt-12 text-lg sm:text-xl font-medium tracking-wide text-white/80" style={{ animationDelay: "2s" }}>
+        Your new <span className="bg-gradient-to-r from-accent-cyan to-accent-purple bg-clip-text text-transparent">ChatGPT</span>
+      </p>
+
+      <h1 className="relative mt-1 text-6xl sm:text-8xl font-bold tracking-tight text-white [text-shadow:0_0_50px_rgba(0,229,255,0.45)]">
+        <Scramble start={2600} />
+      </h1>
+
+      <div className="relative mt-9 w-72">
+        <div className="relative h-px bg-white/10">
+          <div className="h-px bg-gradient-to-r from-accent-cyan to-accent-purple" style={{ width: `${p * 100}%` }} />
+          <span className="absolute -top-[3px] h-[7px] w-[7px] -translate-x-1/2 rounded-full bg-white shadow-[0_0_12px_rgba(0,229,255,1)]" style={{ left: `${p * 100}%` }} />
+        </div>
+        <ul className="mt-4 h-[72px] space-y-1 font-mono text-[11px] text-white/45">
+          {BOOT.map((b, i) =>
+            p >= thresholds[i] ? (
+              <li key={b} className="bud-pop flex justify-between" style={{ animationDuration: "0.5s" }}>
+                <span>&gt; {b}</span>
+                <span className="text-accent-green">ok</span>
+              </li>
+            ) : null
+          )}
+        </ul>
+      </div>
+      <p className="bud-pop absolute bottom-8 text-[11px] text-white/25" style={{ animationDelay: "1.5s" }}>click to skip</p>
+    </div>
   );
 }

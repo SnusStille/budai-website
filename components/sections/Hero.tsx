@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowRight, FileText, Languages, Zap, Shield, ChevronDown } from "lucide-react";
+import { ArrowRight, FileText, Languages, Zap, ChevronDown } from "lucide-react";
 import { useLang } from "@/components/ui/LanguageContext";
 import Magnetic from "@/components/ui/Magnetic";
 import AICore from "@/components/effects/AICore";
+import ParticleCore from "@/components/effects/ParticleCore";
+import Tilt3D from "@/components/ui/Tilt3D";
 import { StilledevLink } from "@/components/ui/BudAILogo";
 
 export default function Hero() {
@@ -25,13 +27,11 @@ export default function Hero() {
           { icon: FileText, label: "Privat · skriv & planera", color: "text-accent-cyan" },
           { icon: Zap, label: "Företag · automatisera", color: "text-accent-green" },
           { icon: Languages, label: "EN · SV", color: "text-accent-purple" },
-          { icon: Shield, label: "GDPR-minded", color: "text-accent-pink" },
         ]
       : [
           { icon: FileText, label: "Personal · write & plan", color: "text-accent-cyan" },
           { icon: Zap, label: "Business · automate", color: "text-accent-green" },
           { icon: Languages, label: "EN · SV", color: "text-accent-purple" },
-          { icon: Shield, label: "GDPR-minded", color: "text-accent-pink" },
         ];
 
   const accent =
@@ -43,6 +43,10 @@ export default function Hero() {
 
   return (
     <section className="relative min-h-[100svh] flex items-center justify-center overflow-hidden pt-24 pb-16">
+      <div className="absolute inset-x-0 bottom-0 h-[55%] pointer-events-none overflow-hidden bud-floor-wrap" aria-hidden>
+        <div className="bud-floor" />
+      </div>
+      <ParticleCore />
       {!isMobile && (
         <>
           <div className="absolute top-[18%] left-1/2 -translate-x-1/2 w-[70vw] max-w-[900px] h-[50vw] max-h-[520px] bg-accent-cyan/[0.07] rounded-full blur-[120px] pointer-events-none" />
@@ -62,13 +66,6 @@ export default function Hero() {
             <span className="relative inline-flex rounded-full h-full w-full bg-accent-green" />
           </span>
           <span className="text-xs sm:text-sm font-medium text-accent-green">{t.hero.badge}</span>
-          <span className="w-px h-3.5 bg-white/10" />
-          <span className="text-xs sm:text-sm text-muted flex items-center gap-2">
-            <span className="font-mono text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 rounded-md bg-white/[0.06] border border-accent-cyan/25 text-accent-cyan tracking-wide">
-              v0.93
-            </span>
-            <span className="hidden sm:inline">93%</span>
-          </span>
         </motion.div>
 
         <motion.a
@@ -92,7 +89,9 @@ export default function Hero() {
           transition={{ duration: 0.55, delay: 0.2 }}
           className="flex justify-center mb-5 sm:mb-7"
         >
-          <AICore isMobile={isMobile} />
+          <Tilt3D max={isMobile ? 0 : 14}>
+            <AICore isMobile={isMobile} />
+          </Tilt3D>
         </motion.div>
 
         <motion.h1

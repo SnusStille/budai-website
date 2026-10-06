@@ -67,10 +67,10 @@ ANTHROPIC_API_KEY=
 ANTHROPIC_MODEL=claude-sonnet-4-20250514   # optional
 OPENAI_API_KEY=                     # image gen only; omit = 501
 OPENAI_IMAGE_MODEL=                 # optional
-NEXT_PUBLIC_ADMIN_PASSWORD=         # optional override; UI never shows the key
+ADMIN_PASSWORD=         # optional override; UI never shows the key
 ```
 
-Admin access key (Stille-only, **never shown on page**): still `Daylightshere76` unless env overrides.
+Admin access key (Stille-only, **never shown on page**): still `[removed]` unless env overrides.
 
 ---
 

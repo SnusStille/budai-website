@@ -182,23 +182,37 @@ function normalizeUser(row: Record<string, unknown>): WaitlistUser {
   };
 }
 
+async function adminApi(method: string, body?: unknown, query = "") {
+  const key = typeof window !== "undefined" ? sessionStorage.getItem("budai_admin_key") || "" : "";
+  const res = await fetch(`/api/admin/waitlist${query}`, {
+    method,
+    headers: { "Content-Type": "application/json", "x-admin-key": key },
+    body: body ? JSON.stringify(body) : undefined,
+    cache: "no-store",
+  });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(json.error || "Admin request failed");
+  return json;
+}
+
+async function mutate(id: string, fields: Record<string, unknown>): Promise<void> {
+  if (!getSupabase()) {
+    const u = mockUsers.find((x) => x.id === id);
+    if (u) Object.assign(u, fields);
+    return;
+  }
+  await adminApi("PATCH", { id, fields });
+}
+
 export async function getWaitlistUsers(): Promise<WaitlistUser[]> {
-  const supabase = getSupabase();
-  if (!supabase) {
-    return new Promise((resolve) => setTimeout(() => resolve([...mockUsers]), 400));
+  if (!getSupabase()) return new Promise((r) => setTimeout(() => r([...mockUsers]), 400));
+  try {
+    const { users } = await adminApi("GET");
+    return (users as Record<string, unknown>[]).map(normalizeUser);
+  } catch (e) {
+    console.error("Admin waitlist error:", e);
+    return [];
   }
-
-  const { data, error } = await supabase
-    .from("waitlist_users")
-    .select("*")
-    .order("created_at", { ascending: false });
-
-  if (error) {
-    console.error("Supabase error:", error);
-    return mockUsers;
-  }
-
-  return (data || []).map((r) => normalizeUser(r as Record<string, unknown>));
 }
 
 export async function addWaitlistUser(
@@ -225,130 +239,53 @@ export async function addWaitlistUser(
     return new Promise((resolve) => setTimeout(() => resolve(newUser), 500));
   }
 
-  const { data, error } = await supabase
-    .from("waitlist_users")
-    .insert([{ ...payload, access_status: "pending" }])
-    .select()
-    .single();
-
-  if (error) {
-    console.error("Supabase error:", error);
-    throw error;
-  }
-
-  return normalizeUser(data as Record<string, unknown>);
-}
-
-export async function updateUserStatus(
-  id: string,
-  status: WaitlistUser["access_status"]
-): Promise<void> {
-  const supabase = getSupabase();
-  if (!supabase) {
-    const user = mockUsers.find((u) => u.id === id);
-    if (user) user.access_status = status;
-    return new Promise((resolve) => setTimeout(resolve, 300));
-  }
-
   const { error } = await supabase
     .from("waitlist_users")
-    .update({ access_status: status, updated_at: new Date().toISOString() })
-    .eq("id", id);
+    .insert([{ ...payload, access_status: "pending" }]);
 
   if (error) {
     console.error("Supabase error:", error);
     throw error;
   }
+
+  return normalizeUser({
+    ...payload,
+    id: "",
+    created_at: new Date().toISOString(),
+    access_status: "pending",
+  } as Record<string, unknown>);
+}
+
+export async function updateUserStatus(id: string, status: WaitlistUser["access_status"]): Promise<void> {
+  return mutate(id, { access_status: status });
 }
 
 export async function updateUserNotes(id: string, notes: string): Promise<void> {
-  const supabase = getSupabase();
-  if (!supabase) {
-    const user = mockUsers.find((u) => u.id === id);
-    if (user) user.notes = notes;
-    return new Promise((resolve) => setTimeout(resolve, 300));
-  }
-
-  const { error } = await supabase
-    .from("waitlist_users")
-    .update({ notes, updated_at: new Date().toISOString() })
-    .eq("id", id);
-
-  if (error) {
-    console.error("Supabase error:", error);
-    throw error;
-  }
+  return mutate(id, { notes });
 }
 
 export async function updateUserPriority(id: string, priority: number): Promise<void> {
-  const supabase = getSupabase();
-  if (!supabase) {
-    const user = mockUsers.find((u) => u.id === id);
-    if (user) user.priority = priority;
-    return new Promise((resolve) => setTimeout(resolve, 200));
-  }
-
-  const { error } = await supabase
-    .from("waitlist_users")
-    .update({ priority, updated_at: new Date().toISOString() })
-    .eq("id", id);
-
-  if (error) {
-    console.error("Supabase error:", error);
-    throw error;
-  }
+  return mutate(id, { priority });
 }
 
 export async function markContacted(id: string): Promise<void> {
-  const ts = new Date().toISOString();
-  const supabase = getSupabase();
-  if (!supabase) {
-    const user = mockUsers.find((u) => u.id === id);
-    if (user) user.last_contacted_at = ts;
-    return new Promise((resolve) => setTimeout(resolve, 200));
-  }
-
-  const { error } = await supabase
-    .from("waitlist_users")
-    .update({ last_contacted_at: ts, updated_at: ts })
-    .eq("id", id);
-
-  if (error) {
-    console.error("Supabase error:", error);
-    throw error;
-  }
+  return mutate(id, { last_contacted_at: new Date().toISOString() });
 }
 
 export async function deleteUser(id: string): Promise<void> {
-  const supabase = getSupabase();
-  if (!supabase) {
+  if (!getSupabase()) {
     const idx = mockUsers.findIndex((u) => u.id === id);
     if (idx > -1) mockUsers.splice(idx, 1);
-    return new Promise((resolve) => setTimeout(resolve, 300));
+    return;
   }
-
-  const { error } = await supabase.from("waitlist_users").delete().eq("id", id);
-
-  if (error) {
-    console.error("Supabase error:", error);
-    throw error;
-  }
+  await adminApi("DELETE", undefined, `?id=${encodeURIComponent(id)}`);
 }
 
 export async function getWaitlistCount(): Promise<number> {
   const supabase = getSupabase();
   if (!supabase) return mockUsers.length;
-
-  const { count, error } = await supabase
-    .from("waitlist_users")
-    .select("*", { count: "exact", head: true });
-
-  if (error) {
-    console.error("Supabase count error:", error);
-    return mockUsers.length;
-  }
-
-  return count ?? mockUsers.length;
+  const { data, error } = await supabase.rpc("waitlist_count");
+  return error || typeof data !== "number" ? 0 : data;
 }
 
 export async function getAdminEvents(limit = 30): Promise<AdminEvent[]> {
@@ -417,4 +354,15 @@ export function getWaitlistStats(users: WaitlistUser[]) {
     withDiscount,
     highPriority,
   };
+}
+
+export async function getWaitlistStatus(
+  email: string
+): Promise<{ position: number; total: number; code: string | null; referrals: number } | null> {
+  const supabase = getSupabase();
+  if (!supabase) return null;
+  const { data, error } = await supabase.rpc("waitlist_status", { p_email: email });
+  const row = Array.isArray(data) ? data[0] : data;
+  if (error || !row) return null;
+  return { position: row.pos as number, total: row.total as number, code: (row.code as string) ?? null, referrals: (row.referrals as number) ?? 0 };
 }

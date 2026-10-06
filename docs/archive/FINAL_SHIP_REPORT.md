@@ -93,7 +93,7 @@
    - `SUPABASE_SERVICE_ROLE_KEY` (admin chats)
    - `ANTHROPIC_API_KEY`
    - Optional `OPENAI_API_KEY`
-   - Optional `NEXT_PUBLIC_ADMIN_PASSWORD`
+   - Optional `ADMIN_PASSWORD`
 3. Supabase Site URL + redirect allowlist + Google provider if used  
 4. SQL v4 → v5 → v6 if not applied  
 5. Smoke: guest chat, inspire, dual, auth, waitlist, admin chats, legal pages  
