@@ -101,8 +101,11 @@ export default function VoiceOrb({ open, sv, busy, reply, onSend, onClose }: {
       stream?.getTracks().forEach((t) => t.stop());
       ctx?.close().catch(() => {});
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
+  // Speak each fresh reply once, then resume listening. `listen` is a stable
+  // useCallback in this file, so the dep arrays stay intentionally small.
   useEffect(() => {
     if (!open || !awaiting.current || busy || !reply || reply === spoken.current) return;
     const u = new SpeechSynthesisUtterance(clean(reply));

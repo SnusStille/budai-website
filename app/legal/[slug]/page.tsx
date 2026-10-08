@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { notFound, useParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { ArrowLeft, Shield, FileText, Cookie, Scale } from "lucide-react";
 import Link from "next/link";
@@ -89,20 +89,22 @@ const content: Record<string, Page> = {
 export default function LegalPage() {
   const params = useParams();
   const slug = (params?.slug as string) || "privacy";
-  const page = content[slug] || content.privacy;
+  const page = content[slug];
+  // Unknown legal slug should 404 instead of quietly showing the privacy policy.
+  if (!page) notFound();
   const Icon = page.icon;
   const { lang } = useLang();
   const L = lang === "sv" ? "sv" : "en";
 
   return (
-    <main className="min-h-screen bg-background text-white pt-20 pb-16 px-4 sm:px-6">
+    <main className="legal-doc min-h-screen bg-background text-white pt-20 pb-16 px-4 sm:px-6">
       <div className="max-w-2xl mx-auto">
         <div className="flex items-center justify-between gap-3 mb-8">
           <Link
             href="/"
             className="inline-flex items-center gap-2 text-sm text-muted hover:text-white transition-colors"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeft aria-hidden className="w-4 h-4" />
             {L === "sv" ? "Tillbaka till BudAI" : "Back to BudAI"}
           </Link>
           <BudAILogo size="sm" animated />
@@ -116,7 +118,7 @@ export default function LegalPage() {
         >
           <div className="flex items-center gap-3 mb-6">
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-accent-cyan/90 to-accent-purple/90 flex items-center justify-center">
-              <Icon className="w-6 h-6 text-white" />
+              <Icon aria-hidden className="w-6 h-6 text-white" />
             </div>
             <div>
               <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{page.title[L]}</h1>

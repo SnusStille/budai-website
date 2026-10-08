@@ -60,6 +60,15 @@ export default function Signature() {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
+  useEffect(() => {
+    if (!open) return;
+    const onEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("keydown", onEsc);
+    return () => window.removeEventListener("keydown", onEsc);
+  }, [open]);
+
   return (
     <AnimatePresence>
       {open && (
@@ -117,7 +126,7 @@ export default function Signature() {
                 {lang === "sv" ? "Stäng" : "Close"}
               </button>
             </div>
-            <p className="mt-4 text-[10px] text-muted/40 font-mono">
+            <p className="mt-4 text-[10px] text-muted/55 font-mono">
               tip: konami · or type “stille”
             </p>
           </motion.div>

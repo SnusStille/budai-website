@@ -22,6 +22,11 @@ export default function CookieConsent() {
     return () => clearTimeout(timer);
   }, []);
 
+  // Let other floating chrome (back-to-top) step aside while this bar is open.
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("budai:cookie-bar", { detail: visible }));
+  }, [visible]);
+
   const save = (v: string) => {
     try {
       localStorage.setItem("budai-cookies", v);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useLang } from "@/components/ui/LanguageContext";
 import { useToast } from "@/components/ui/ToastStack";
 
@@ -11,37 +11,37 @@ import { useToast } from "@/components/ui/ToastStack";
 export default function FocusMode() {
   const { lang } = useLang();
   const { push } = useToast();
-  const [on, setOn] = useState(false);
+  const on = useRef(false);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      const tag = (e.target as HTMLElement)?.tagName;
-      if (tag === "INPUT" || tag === "TEXTAREA" || (e.target as HTMLElement)?.isContentEditable)
-        return;
-      if (e.key === "f" || e.key === "F") {
-        e.preventDefault();
-        setOn((v) => {
-          const next = !v;
-          document.documentElement.classList.toggle("budai-focus", next);
-          push({
-            icon: "info",
-            title: next
-              ? lang === "sv"
-                ? "Fokusläge på"
-                : "Focus mode on"
-              : lang === "sv"
-                ? "Fokusläge av"
-                : "Focus mode off",
-            body: next
-              ? lang === "sv"
-                ? "Chrome nedtonad. Tryck F igen."
-                : "Chrome dimmed. Press F again."
-              : undefined,
-            duration: 2800,
-          });
-          return next;
-        });
-      }
+      // Never hijack keys with modifiers, held keys, or typing in a field.
+      if (e.metaKey || e.ctrlKey || e.altKey || e.repeat) return;
+      const el = e.target as HTMLElement | null;
+      const tag = el?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || el?.isContentEditable) return;
+      if (e.key !== "f" && e.key !== "F") return;
+      if (window.getSelection()?.toString()) return;
+      e.preventDefault();
+      const next = !on.current;
+      on.current = next;
+      document.documentElement.classList.toggle("budai-focus", next);
+      push({
+        icon: "info",
+        title: next
+          ? lang === "sv"
+            ? "Fokusläge på"
+            : "Focus mode on"
+          : lang === "sv"
+            ? "Fokusläge av"
+            : "Focus mode off",
+        body: next
+          ? lang === "sv"
+            ? "Chrome nedtonad. Tryck F igen."
+            : "Chrome dimmed. Press F again."
+          : undefined,
+        duration: 2800,
+      });
     };
     window.addEventListener("keydown", onKey);
     return () => {
@@ -50,7 +50,5 @@ export default function FocusMode() {
     };
   }, [lang, push]);
 
-  // silence unused if needed
-  void on;
   return null;
 }

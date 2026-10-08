@@ -184,28 +184,28 @@ export default function UserTable({
                 </button>
               )}
               <div className="flex flex-wrap gap-2">
-                <button
+                <button type="button"
                   disabled={busy === user.id}
                   onClick={() => handleStatus(user.id, "approved")}
                   className="text-xs px-2.5 py-1.5 rounded-lg bg-accent-green/10 text-accent-green border border-accent-green/20"
                 >
                   Approve
                 </button>
-                <button
+                <button type="button"
                   disabled={busy === user.id}
                   onClick={() => handleStatus(user.id, "pending")}
                   className="text-xs px-2.5 py-1.5 rounded-lg bg-white/5 text-muted border border-white/10"
                 >
                   Pending
                 </button>
-                <button
+                <button type="button"
                   disabled={busy === user.id}
                   onClick={() => handleStatus(user.id, "rejected")}
                   className="text-xs px-2.5 py-1.5 rounded-lg bg-red-500/10 text-red-400 border border-red-500/20"
                 >
                   Reject
                 </button>
-                <button
+                <button type="button"
                   disabled={busy === user.id}
                   onClick={() => handleDelete(user.id)}
                   className="text-xs px-2.5 py-1.5 rounded-lg text-muted hover:text-red-400"
@@ -297,7 +297,7 @@ export default function UserTable({
                         )}
                       </button>
                     ) : (
-                      <span className="text-muted/40">—</span>
+                      <span className="text-muted/55">—</span>
                     )}
                   </td>
                   <td className="px-5 py-3.5">
@@ -336,7 +336,7 @@ export default function UserTable({
                           setNoteDraft((d) => ({ ...d, [user.id]: e.target.value }))
                         }
                         placeholder="Note…"
-                        className="w-full px-2 py-1 rounded-md bg-white/5 border border-white/10 text-xs text-white placeholder:text-muted/50 focus:outline-none focus:border-accent-cyan/30"
+                        className="w-full px-2 py-1 rounded-md bg-white/5 border border-white/10 text-xs text-white placeholder:text-muted/60 focus:outline-none focus:border-accent-cyan/30"
                       />
                       {(noteDraft[user.id] !== undefined &&
                         noteDraft[user.id] !== (user.notes ?? "")) && (
@@ -355,7 +355,7 @@ export default function UserTable({
                   </td>
                   <td className="px-5 py-3.5">
                     <div className="flex items-center justify-end gap-1">
-                      <button
+                      <button type="button"
                         disabled={busy === user.id}
                         onClick={() => handleStatus(user.id, "approved")}
                         className="p-1.5 rounded-lg hover:bg-accent-green/10 text-muted hover:text-accent-green"
@@ -363,7 +363,7 @@ export default function UserTable({
                       >
                         <CheckCircle className="w-4 h-4" />
                       </button>
-                      <button
+                      <button type="button"
                         disabled={busy === user.id}
                         onClick={() => handleStatus(user.id, "rejected")}
                         className="p-1.5 rounded-lg hover:bg-red-500/10 text-muted hover:text-red-400"
@@ -371,7 +371,7 @@ export default function UserTable({
                       >
                         <XCircle className="w-4 h-4" />
                       </button>
-                      <button
+                      <button type="button"
                         disabled={busy === user.id}
                         onClick={async () => {
                           setBusy(user.id);
@@ -387,7 +387,7 @@ export default function UserTable({
                       >
                         <Mail className="w-4 h-4" />
                       </button>
-                      <button
+                      <button type="button"
                         disabled={busy === user.id}
                         onClick={() => handleDelete(user.id)}
                         className="p-1.5 rounded-lg hover:bg-white/5 text-muted hover:text-red-400"

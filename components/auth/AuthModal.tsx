@@ -39,6 +39,20 @@ export default function AuthModal() {
     }
   }, [authFlash, authOpen, lang]);
 
+  // Escape closes the auth sheet; the page behind it stops scrolling.
+  useEffect(() => {
+    if (!authOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeAuth();
+    };
+    window.addEventListener("keydown", onKey);
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = "";
+    };
+  }, [authOpen, closeAuth]);
+
   const onEmail = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.includes("@")) return;
@@ -241,7 +255,7 @@ export default function AuthModal() {
                 ? "Vi delar aldrig dina chattar. Minne och historik är privata under ditt konto (RLS)."
                 : "We never share your chats. Memory and history are private under your account (RLS)."}
             </p>
-            <p className="mt-2 text-center text-[10px] text-muted/40 inline-flex items-center justify-center gap-1 w-full">
+            <p className="mt-2 text-center text-[10px] text-muted/55 inline-flex items-center justify-center gap-1 w-full">
               <Sparkles className="w-3 h-3" /> BudAI · Stilledev
             </p>
           </motion.div>

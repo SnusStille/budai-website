@@ -13,7 +13,7 @@ import {
 import type { Session, User } from "@supabase/supabase-js";
 import { createClient, isAuthConfigured } from "@/lib/supabase/client";
 import { LIMITS, type AccessTier, dayKey, limitFor } from "@/lib/limits";
-import { getAuthCallbackUrl, getBrowserOrigin } from "@/lib/site";
+import { getAuthCallbackUrl } from "@/lib/site";
 import { friendlyAuthError } from "@/lib/authErrors";
 
 type Usage = { messages: number; images: number; generations: number };

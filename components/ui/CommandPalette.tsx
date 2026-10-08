@@ -76,6 +76,8 @@ export default function CommandPalette() {
   }, [query, commands]);
 
   // Global ⌘K / Ctrl+K listener, plus "/" as a quick alternative — Esc closes.
+  // `budai:palette` lets visible UI (navbar, footer, empty states) open it too,
+  // so the shortcut is discoverable instead of being a hidden power feature.
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       const isTypingTarget = ["INPUT", "TEXTAREA"].includes((e.target as HTMLElement)?.tagName);
@@ -89,8 +91,13 @@ export default function CommandPalette() {
         setOpen(false);
       }
     };
+    const onOpen = () => setOpen(true);
     window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
+    window.addEventListener("budai:palette", onOpen);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("budai:palette", onOpen);
+    };
   }, [open]);
 
   useEffect(() => {
@@ -155,7 +162,7 @@ export default function CommandPalette() {
                   </div>
                 ) : (
                   filtered.map((cmd, i) => (
-                    <button
+                    <button type="button"
                       key={cmd.id}
                       onClick={cmd.action}
                       onMouseEnter={() => setActiveIndex(i)}
@@ -171,7 +178,7 @@ export default function CommandPalette() {
                 )}
               </div>
 
-              <div className="flex items-center gap-4 px-4 py-2.5 border-t border-white/[0.06] text-[11px] text-muted/50">
+              <div className="flex items-center gap-4 px-4 py-2.5 border-t border-white/[0.06] text-[11px] text-muted/60">
                 <span className="flex items-center gap-1">
                   <span className="px-1.5 py-0.5 rounded border border-white/10">↑</span>
                   <span className="px-1.5 py-0.5 rounded border border-white/10">↓</span>

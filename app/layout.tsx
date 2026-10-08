@@ -1,36 +1,70 @@
 import type { Metadata, Viewport } from "next";
-import { Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import Providers from "@/components/Providers";
 import VercelAnalytics from "@/components/VercelAnalytics";
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://stilledev.se";
+
 const jsonLd = {
   "@context": "https://schema.org",
-  "@type": "SoftwareApplication",
-  name: "BudAI",
-  applicationCategory: "BusinessApplication",
-  operatingSystem: "Web",
-  description:
-    "AI work assistant for Swedish companies and individuals — write, automate, and think faster in Swedish and English.",
-  url: process.env.NEXT_PUBLIC_SITE_URL || "https://stilledev.se",
-  author: { "@type": "Organization", name: "Stilledev" },
-  offers: { "@type": "Offer", price: "0", priceCurrency: "SEK", description: "Developer preview" },
+  "@graph": [
+    {
+      "@type": "SoftwareApplication",
+      name: "BudAI",
+      applicationCategory: "BusinessApplication",
+      operatingSystem: "Web",
+      description:
+        "AI work assistant for Swedish companies and individuals — write, automate, and think faster in Swedish and English.",
+      url: siteUrl,
+      inLanguage: ["sv-SE", "en"],
+      author: { "@type": "Organization", name: "Stilledev", url: siteUrl },
+      publisher: { "@type": "Organization", name: "Stilledev", url: siteUrl },
+      offers: {
+        "@type": "Offer",
+        price: "0",
+        priceCurrency: "SEK",
+        description: "Developer preview — free to try",
+      },
+    },
+    {
+      "@type": "Organization",
+      name: "Stilledev",
+      url: siteUrl,
+      description:
+        "Stilledev builds BudAI — an AI work assistant for Sweden and the Nordics.",
+    },
+  ],
 };
 
-const jakarta = Plus_Jakarta_Sans({
-  subsets: ["latin", "latin-ext"],
+/**
+ * Fonts are self-hosted (SIL Open Font License — see app/fonts/LICENSE-*).
+ * Benefits: no third-party font requests, deterministic builds, faster first paint.
+ * Same typefaces as before: Plus Jakarta Sans (UI) + JetBrains Mono (code).
+ */
+const jakarta = localFont({
+  src: [
+    { path: "./fonts/PlusJakartaSans-latin.woff2", weight: "200 800", style: "normal" },
+    { path: "./fonts/PlusJakartaSans-latin-ext.woff2", weight: "200 800", style: "normal" },
+  ],
   variable: "--font-jakarta",
   display: "swap",
-  weight: ["400", "500", "600", "700", "800"],
+  preload: true,
+  adjustFontFallback: "Arial",
+  fallback: ["system-ui", "-apple-system", "Segoe UI", "sans-serif"],
 });
 
-const jetbrains = JetBrains_Mono({
-  subsets: ["latin", "latin-ext"],
+const jetbrains = localFont({
+  src: [
+    { path: "./fonts/JetBrainsMono-latin.woff2", weight: "100 800", style: "normal" },
+    { path: "./fonts/JetBrainsMono-latin-ext.woff2", weight: "100 800", style: "normal" },
+  ],
   variable: "--font-jetbrains",
   display: "swap",
+  preload: true,
+  adjustFontFallback: "Arial",
+  fallback: ["ui-monospace", "SFMono-Regular", "Menlo", "monospace"],
 });
-
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://stilledev.se";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -55,6 +89,7 @@ export const metadata: Metadata = {
   authors: [{ name: "Stilledev" }],
   creator: "Stilledev",
   publisher: "Stilledev",
+  category: "productivity",
   robots: { index: true, follow: true },
   openGraph: {
     type: "website",
@@ -82,11 +117,17 @@ export const metadata: Metadata = {
     images: ["/og.png"],
   },
   icons: {
-    icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
+    icon: [{ url: "/favicon.svg", type: "image/svg+xml" }, { url: "/apple-icon.png" }],
+    apple: [{ url: "/apple-icon.png", sizes: "180x180" }],
   },
   alternates: {
     canonical: siteUrl,
+    languages: {
+      "sv-SE": siteUrl,
+      en: siteUrl,
+    },
   },
+  applicationName: "BudAI",
 };
 
 export const viewport: Viewport = {
@@ -105,33 +146,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       suppressHydrationWarning
     >
       <body className="antialiased noise-overlay bg-background text-white">
-        <a
-          href="#playground"
-          className="absolute left-3 top-3 z-[200] -translate-y-16 focus:translate-y-0 px-4 py-2 rounded-lg bg-accent-cyan text-black text-sm font-semibold transition-transform"
-        >
-          Skip to content
-        </a>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
         <Providers>{children}</Providers>
         <VercelAnalytics />
-      <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "SoftwareApplication",
-              name: "BudAI",
-              applicationCategory: "BusinessApplication",
-              operatingSystem: "Web",
-              description: "BudAI is an AI assistant for everyday work in Swedish and English.",
-              offers: { "@type": "Offer", price: "0", priceCurrency: "SEK" },
-              creator: { "@type": "Organization", name: "Stilledev" },
-            }),
-          }}
-        />
       </body>
     </html>
   );

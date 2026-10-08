@@ -615,13 +615,14 @@ export default function LogoEasterEgg() {
       }
     };
 
+    const pending = timers.current;
     window.addEventListener("budai:logo-click", onClick);
     return () => {
       window.removeEventListener("budai:logo-click", onClick);
       window.removeEventListener("resize", resize);
       cancelAnimationFrame(raf.current);
       window.clearTimeout(idle.current);
-      timers.current.forEach((id) => window.clearTimeout(id));
+      pending.forEach((id) => window.clearTimeout(id));
     };
   }, []);
 

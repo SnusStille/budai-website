@@ -26,7 +26,6 @@ import {
   PanelLeft,
   ImagePlus,
   Mic,
-  MicOff,
   LogIn,
   LogOut,
   BrainCircuit,
@@ -56,6 +55,7 @@ import {
   Share2,
   Globe2,
   Command,
+  CornerDownLeft,
 } from "lucide-react";
 import ScrollReveal from "@/components/ui/ScrollReveal";
 import BudAILogo from "@/components/ui/BudAILogo";
@@ -69,7 +69,6 @@ import {
   type AttachmentDraft,
   type Mode,
   newId,
-  titleFromMessages,
   memoryToPromptBlock,
   looksLikeImageGen,
 } from "@/lib/playground/types";
@@ -1592,14 +1591,14 @@ export default function AIPlayground() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={lang === "sv" ? "Sök…" : "Search…"}
-            className="w-full pl-8 pr-2 py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.06] text-[12px] text-white placeholder:text-muted/50 focus:outline-none focus:border-accent-cyan/30"
+            className="w-full pl-8 pr-2 py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.06] text-[12px] text-white placeholder:text-muted/60 focus:outline-none focus:border-accent-cyan/30"
           />
         </div>
       </div>
 
       <div className="flex-1 overflow-y-auto p-2 space-y-3 min-h-0">
         {grouped.length === 0 && (
-          <p className="text-[11px] text-muted/50 px-2 py-4 leading-relaxed">
+          <p className="text-[11px] text-muted/60 px-2 py-4 leading-relaxed">
             {auth.isGuest
               ? lang === "sv"
                 ? "Gästhistorik sparas tillfälligt på enheten."
@@ -1611,7 +1610,7 @@ export default function AIPlayground() {
         )}
         {grouped.map((g) => (
           <div key={g.label}>
-            <div className="text-[10px] uppercase tracking-wider text-muted/50 px-2 mb-1">{g.label}</div>
+            <div className="text-[10px] uppercase tracking-wider text-muted/60 px-2 mb-1">{g.label}</div>
             <div className="space-y-0.5">
               {g.items.map((c) => (
                 <div
@@ -1636,8 +1635,12 @@ export default function AIPlayground() {
                         onChange={(e) => setRenameVal(e.target.value)}
                         className="flex-1 min-w-0 px-1.5 py-1 rounded-md bg-black/40 border border-white/10 text-[12px] text-white"
                       />
-                      <button type="submit" className="p-1 text-accent-cyan">
-                        <Check className="w-3 h-3" />
+                      <button
+                        type="submit"
+                        aria-label={lang === "sv" ? "Spara namn" : "Save name"}
+                        className="p-1 text-accent-cyan"
+                      >
+                        <Check aria-hidden className="w-3 h-3" />
                       </button>
                     </form>
                   ) : (
@@ -1688,7 +1691,7 @@ export default function AIPlayground() {
             {!memoryEnabled && <EyeOff className="w-3 h-3 text-muted" />}
           </button>
         )}
-        <div className="px-2 py-1 text-[10px] text-muted/40 font-mono">
+        <div className="px-2 py-1 text-[10px] text-muted/55 font-mono">
           {rem}/{lim} {lang === "sv" ? "msg idag" : "msg today"}
         </div>
       </div>
@@ -1713,12 +1716,15 @@ export default function AIPlayground() {
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(100vw,720px)] h-[min(100vw,720px)] bg-accent-purple/5 rounded-full blur-[140px] pointer-events-none" />
 
       <div className="max-w-[1500px] mx-auto px-2 sm:px-4 lg:px-6 relative z-10">
-        <ScrollReveal className="text-center mb-4 sm:mb-5">
-          <span className="section-badge text-accent-cyan mb-4">{t.playground.badge}</span>
-          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight mb-1">
+        <ScrollReveal className="mb-4 text-center sm:mb-6">
+          <span className="section-badge mb-4 text-accent-cyan">{t.playground.badge}</span>
+          <h2 className="mb-2 text-2xl font-bold tracking-tight sm:text-3xl md:text-4xl">
             {t.playground.title}{" "}
             <span className="text-gradient">{t.playground.titleHighlight}</span>
           </h2>
+          <p className="mx-auto max-w-xl text-sm leading-relaxed text-muted sm:text-base">
+            {t.playground.subtitle}
+          </p>
         </ScrollReveal>
 
         <ScrollReveal>
@@ -1904,9 +1910,12 @@ export default function AIPlayground() {
                     </button>
                   ))}
                   <div className="ml-auto flex items-center gap-1.5">
-                    <span className="hidden sm:inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-mono text-accent-cyan/80 border border-accent-cyan/20 bg-accent-cyan/5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-accent-green animate-pulse" />
-                      BudAI Core
+                    <span
+                      className="hidden items-center gap-1 rounded-lg border border-accent-cyan/20 bg-accent-cyan/5 px-2 py-1 font-mono text-[10px] text-accent-cyan/80 sm:inline-flex"
+                      title={lang === "sv" ? "Utvecklarförhandsvisning" : "Developer preview"}
+                    >
+                      <span className="h-1.5 w-1.5 rounded-full bg-accent-green animate-pulse" />
+                      BudAI Core · v0.93
                     </span>
                     <div
                       className="flex p-0.5 rounded-full bg-black/50 border border-white/[0.08]"
@@ -1918,6 +1927,7 @@ export default function AIPlayground() {
                           key={code}
                           type="button"
                           onClick={() => setAnswerLang(code)}
+                          aria-pressed={answerLang === code}
                           className={`px-2 py-0.5 text-[10px] font-bold rounded-full ${
                             answerLang === code
                               ? "bg-gradient-to-r from-accent-cyan to-accent-purple text-white"
@@ -1942,13 +1952,13 @@ export default function AIPlayground() {
                     </button>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 text-[10px] text-muted/50 px-0.5">
+                <div className="flex items-center gap-2 text-[10px] text-muted/60 px-0.5">
                   <Globe2 className="w-3 h-3" />
                   <span className="truncate">
                     {(INTENT_PRESETS[lang] || INTENT_PRESETS.en).find((x) => x.id === intentId)?.hint ||
                       (lang === "sv" ? "Välj läge ovan" : "Pick a mode above")}
                   </span>
-                  <span className="ml-auto font-mono text-muted/40 hidden sm:inline">
+                  <span className="ml-auto font-mono text-muted/55 hidden sm:inline">
                     {lang === "sv" ? "⌘/ för fokus" : "⌘/ for tips"}
                   </span>
                 </div>
@@ -1965,7 +1975,8 @@ export default function AIPlayground() {
                   setAtBottom(near);
                 }}
                 aria-live="polite"
-                className="flex-1 overflow-y-auto p-3 sm:p-5 space-y-4 min-h-0"
+                aria-busy={busy}
+                className="flex-1 overflow-y-auto p-3 sm:p-5 space-y-4 min-h-0 overscroll-contain"
                 style={{ WebkitOverflowScrolling: "touch" }}
               >
                 {isEmpty && (
@@ -1979,7 +1990,7 @@ export default function AIPlayground() {
                     </div>
                     <div className="inline-flex items-center gap-1.5 mb-3 px-2.5 py-1 rounded-full border border-accent-green/25 bg-accent-green/10 text-[10px] font-mono text-accent-green">
                       <span className="w-1.5 h-1.5 rounded-full bg-accent-green animate-pulse" />
-                      {lang === "sv" ? "LIVE · BudAI Core" : "LIVE · BudAI Core"}
+                      LIVE · BudAI Core
                     </div>
                     <h3 className="text-xl sm:text-2xl font-bold text-white mb-1.5 tracking-tight relative">
                       {lang === "sv" ? "Vad ska vi få gjort?" : "What should we ship?"}
@@ -2203,7 +2214,7 @@ export default function AIPlayground() {
                               className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-lg border border-accent-cyan/25 bg-accent-cyan/10 text-accent-cyan hover:bg-accent-cyan/15"
                             >
                               <PanelRight className="w-3 h-3" />
-                              {lang === "sv" ? "Workspace" : "Workspace"}
+                              {"Workspace"}
                             </button>
                           )}
                           <button
@@ -2278,12 +2289,14 @@ export default function AIPlayground() {
                               setFeedback((f) => ({ ...f, [msg.id]: "up" }));
                               showToast("ok", lang === "sv" ? "Tack — sparat lokalt" : "Thanks — saved locally");
                             }}
+                            aria-label={lang === "sv" ? "Bra svar" : "Good reply"}
+                            aria-pressed={feedback[msg.id] === "up"}
                             className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-1 ${
                               feedback[msg.id] === "up" ? "text-accent-green" : "text-muted hover:text-white"
                             }`}
                             title="Good"
                           >
-                            <ThumbsUp className="w-3 h-3" />
+                            <ThumbsUp aria-hidden className="w-3 h-3" />
                           </button>
                           <button
                             type="button"
@@ -2291,12 +2304,14 @@ export default function AIPlayground() {
                               setFeedback((f) => ({ ...f, [msg.id]: "down" }));
                               showToast("ok", lang === "sv" ? "Tack — vi tar det vidare" : "Thanks — noted");
                             }}
+                            aria-label={lang === "sv" ? "Dåligt svar" : "Bad reply"}
+                            aria-pressed={feedback[msg.id] === "down"}
                             className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-1 ${
                               feedback[msg.id] === "down" ? "text-red-300" : "text-muted hover:text-white"
                             }`}
                             title="Bad"
                           >
-                            <ThumbsDown className="w-3 h-3" />
+                            <ThumbsDown aria-hidden className="w-3 h-3" />
                           </button>
                         </div>
                       )}
@@ -2322,13 +2337,61 @@ export default function AIPlayground() {
                             className="inline-flex items-center gap-1 text-[10px] text-muted hover:text-white"
                           >
                             <RotateCcw className="w-3 h-3" />
-                            {lang === "sv" ? "Variation" : "Variation"}
+                            {"Variation"}
                           </button>
                         </div>
                       )}
                     </div>
                   </div>
                 ))}
+
+                {/* Follow-up nudges — after a finished reply, only when idle */}
+                {!busy &&
+                  !typingText &&
+                  messages.length > 0 &&
+                  messages[messages.length - 1].role === "assistant" &&
+                  !messages[messages.length - 1].error &&
+                  (() => {
+                    const last = messages[messages.length - 1];
+                    return (
+                      <motion.div
+                        key={`nudge-${last.id}`}
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
+                        className="flex flex-wrap items-center gap-1.5 pl-0 sm:pl-11"
+                        role="group"
+                        aria-label={lang === "sv" ? "Följdfrågor" : "Follow-up prompts"}
+                      >
+                        <Sparkles className="h-3 w-3 text-accent-cyan/60" aria-hidden />
+                        {(lang === "sv"
+                          ? [
+                              ["Kortare", "Gör det kortare."],
+                              ["Mer detaljer", "Lägg till mer detaljer."],
+                              ["Mer formellt", "Skriv om det i en mer formell ton."],
+                              ["Som lista", "Gör om det till en tydlig lista."],
+                              ["På engelska", "Översätt det till engelska."],
+                            ]
+                          : [
+                              ["Shorter", "Make that shorter."],
+                              ["More detail", "Add more detail."],
+                              ["More formal", "Rewrite that in a more formal tone."],
+                              ["As a list", "Turn that into a clear list."],
+                              ["In Swedish", "Translate that to Swedish."],
+                            ]
+                        ).map(([label, prompt]) => (
+                          <button
+                            key={label}
+                            type="button"
+                            onClick={() => void runPrompt(prompt)}
+                            className="press rounded-full border border-white/[0.08] bg-white/[0.02] px-3 py-1 text-[11px] text-muted transition-colors hover:border-accent-cyan/30 hover:bg-accent-cyan/[0.06] hover:text-accent-cyan"
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </motion.div>
+                    );
+                  })()}
 
                 {/* Live activity — cinematic thinking */}
                 {(typingText || (busy && activity !== "typing")) && (
@@ -2337,23 +2400,6 @@ export default function AIPlayground() {
                       <div className="w-full h-full rounded-[10px] bg-[#07070e] flex items-center justify-center overflow-hidden">
                         <BudAILogo size="xs" animated mode="thinking" className="!w-[22px] !h-[22px]" />
                       </div>
-                      {activity === "idle" && messages.length > 0 && messages[messages.length - 1].role === "assistant" && (
-                        <div className="flex flex-wrap gap-1.5 pl-1 pt-1">
-                          {(lang === "sv"
-                            ? [["Kortare", "Gör det kortare."], ["Mer detaljer", "Lägg till mer detaljer."], ["Mer formellt", "Skriv om det i en mer formell ton."], ["Som lista", "Gör om det till en tydlig lista."], ["På engelska", "Översätt det till engelska."]]
-                            : [["Shorter", "Make that shorter."], ["More detail", "Add more detail."], ["More formal", "Rewrite that in a more formal tone."], ["As a list", "Turn that into a clear list."], ["In Swedish", "Translate that to Swedish."]]
-                          ).map(([label, prompt]) => (
-                            <button
-                              key={label}
-                              type="button"
-                              onClick={() => void runPrompt(prompt)}
-                              className="rounded-full border border-white/[0.08] px-3 py-1 text-[11px] text-muted transition-colors hover:border-accent-cyan/30 hover:text-accent-cyan"
-                            >
-                              {label}
-                            </button>
-                          ))}
-                        </div>
-                      )}
                       {busy && !typingText && (
                         <span className="absolute -inset-1 rounded-xl border border-accent-cyan/30 logo-pulse-ring pointer-events-none" />
                       )}
@@ -2365,8 +2411,7 @@ export default function AIPlayground() {
                       {typingText ? (
                         <div className="relative whitespace-pre-wrap leading-relaxed">
                           {renderMarkdownRaw(closeFences(typingText))}
-                          <span className="inline-block w-1.5 h-4 ml-0.5 align-middle rounded-sm bg-accent-cyan/80 animate-pulse" aria-hidden />
-                          <span className="inline-block w-1.5 h-4 bg-accent-cyan ml-0.5 align-middle animate-pulse" />
+                          <span className="bud-caret align-middle" aria-hidden />
                         </div>
                       ) : (
                         <div className="relative space-y-2">
@@ -2394,9 +2439,7 @@ export default function AIPlayground() {
                             ))}
                           </div>
                           <p className="text-[10px] text-muted/70 font-mono">
-                            {lang === "sv"
-                              ? "BudAI Core · nordic path"
-                              : "BudAI Core · nordic path"}
+                            {"BudAI Core · nordic path"}
                           </p>
                         </div>
                       )}
@@ -2455,6 +2498,14 @@ export default function AIPlayground() {
                     {lang === "sv" ? "Lyssnar — prata nu" : "Listening — speak now"}
                   </div>
                 )}
+                {busy && input.trim() && (
+                  <div className="mb-2 flex items-center gap-1.5 px-1 text-[11px] text-accent-cyan/80">
+                    <Sparkles className="h-3 w-3 animate-pulse" />
+                    {lang === "sv"
+                      ? "BudAI svarar — du kan skriva klart under tiden."
+                      : "BudAI is replying — keep typing and send after."}
+                  </div>
+                )}
 
                 {toolsOpen && (
                   <div className="mb-2 flex flex-wrap gap-1.5 p-2 rounded-xl border border-white/[0.07] bg-black/30">
@@ -2472,6 +2523,7 @@ export default function AIPlayground() {
                     <button
                       type="button"
                       onClick={toggleMic}
+                      aria-pressed={listening}
                       className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] border ${
                         listening
                           ? "border-accent-green/40 bg-accent-green/10 text-accent-green"
@@ -2482,7 +2534,7 @@ export default function AIPlayground() {
                       {lang === "sv" ? "Röst" : "Voice"}
                     </button>
                     <span
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] text-muted/50 border border-white/[0.05] cursor-default"
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] text-muted/60 border border-white/[0.05] cursor-default"
                       title={lang === "sv" ? "PDF/dokument kommer snart" : "PDF/docs coming soon"}
                     >
                       <FileDown className="w-3.5 h-3.5 opacity-40" />
@@ -2505,7 +2557,7 @@ export default function AIPlayground() {
                         {lang === "sv" ? "Skapa bild" : "Create image"}
                       </button>
                     ) : (
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] text-muted/45 border border-white/[0.05]">
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] text-muted/55 border border-white/[0.05]">
                         <Wand2 className="w-3.5 h-3.5 opacity-40" />
                         {lang === "sv" ? "Bildgen · snart" : "Image gen · soon"}
                       </span>
@@ -2701,8 +2753,7 @@ export default function AIPlayground() {
                           ? "Skriv till BudAI…"
                           : "Message BudAI…"
                     }
-                    disabled={busy}
-                    className="flex-1 px-3.5 py-2.5 rounded-2xl bg-white/[0.04] border border-white/[0.09] text-sm text-white placeholder:text-muted/60 focus:outline-none focus:border-accent-cyan/40 resize-none min-h-[44px] max-h-[140px]"
+                    className="flex-1 px-3.5 py-2.5 rounded-2xl bg-white/[0.04] border border-white/[0.09] text-sm text-white placeholder:text-muted/60 focus:outline-none focus:border-accent-cyan/40 focus:bg-white/[0.06] transition-colors resize-none min-h-[44px] max-h-[140px]"
                   />
                   <button
                     type="button"
@@ -2722,32 +2773,39 @@ export default function AIPlayground() {
                     <button
                       type="button"
                       onClick={stopAll}
+                      aria-label={lang === "sv" ? "Stoppa svaret" : "Stop the reply"}
                       className="shrink-0 h-11 px-3.5 rounded-2xl border border-red-400/30 text-red-200"
                     >
-                      <StopCircle className="w-4 h-4" />
+                      <StopCircle aria-hidden className="w-4 h-4" />
                     </button>
                   ) : (
                     <button
                       type="submit"
                       disabled={(!input.trim() && !attach) || busy}
-                      className="shrink-0 h-11 px-3.5 sm:px-4 rounded-2xl bg-gradient-to-r from-accent-cyan to-accent-purple text-white disabled:opacity-40 flex items-center shadow-[0_0_20px_rgba(0,229,255,0.25)] hover:shadow-[0_0_28px_rgba(0,229,255,0.4)] transition-shadow"
+                      aria-label={lang === "sv" ? "Skicka meddelande" : "Send message"}
+                      className="press shrink-0 h-11 px-3.5 sm:px-4 rounded-2xl bg-gradient-to-r from-accent-cyan to-accent-purple text-white disabled:opacity-40 disabled:shadow-none flex items-center shadow-[0_0_20px_rgba(0,229,255,0.25)] hover:shadow-[0_0_28px_rgba(0,229,255,0.4)] transition-shadow"
                     >
                       <Send className="w-4 h-4" />
                     </button>
                   )}
                 </form>
-                <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-muted/40 px-0.5">
+                <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 px-0.5 text-[10px] text-muted/55">
                   <span className="inline-flex items-center gap-1">
                     <Shield className="w-3 h-3" />
-                    {auth.isGuest
-                      ? lang === "sv"
-                        ? "Gästgräns"
-                        : "Guest limits"
-                      : lang === "sv"
-                        ? "Kontoläge"
-                        : "Account"}
+                    {auth.isGuest ? (lang === "sv" ? "Gästgräns" : "Guest limits") : lang === "sv" ? "Kontoläge" : "Account"}
                   </span>
-                  <span>{lang === "sv" ? "Skriv inga känsliga uppgifter under previewn" : "Don't enter sensitive data during the preview"}</span>
+                  <span className="hidden items-center gap-1 sm:inline-flex">
+                    <CornerDownLeft className="h-2.5 w-2.5" />
+                    {lang === "sv" ? "Enter skickar · Shift+Enter ny rad" : "Enter sends · Shift+Enter new line"}
+                  </span>
+                  <span className="hidden items-center gap-1 md:inline-flex">
+                    <Command className="h-2.5 w-2.5" />K {lang === "sv" ? "palett" : "palette"}
+                  </span>
+                  <span className="ml-auto truncate">
+                    {lang === "sv"
+                      ? "Skriv inga känsliga uppgifter under previewn"
+                      : "Don't enter sensitive data during the preview"}
+                  </span>
                 </div>
               </div>
             </div>
@@ -2756,7 +2814,7 @@ export default function AIPlayground() {
               {workspace && (
                 <aside className="hidden lg:flex w-[min(42%,420px)] shrink-0 flex-col border-l border-white/[0.08] bg-[#07070e] min-h-0">
                   <div className="flex items-center gap-2 px-3 py-2.5 border-b border-white/[0.06] shrink-0">
-                    <GripHorizontal className="w-3.5 h-3.5 text-muted/50" />
+                    <GripHorizontal className="w-3.5 h-3.5 text-muted/60" />
                     <div className="min-w-0 flex-1">
                       <div className="text-[10px] uppercase tracking-[0.14em] text-accent-cyan/80 font-medium">
                         Workspace
@@ -3047,7 +3105,7 @@ export default function AIPlayground() {
                         </button>
                       </div>
                     )}
-                    <div className="text-[10px] text-muted/50 mt-1 font-mono">
+                    <div className="text-[10px] text-muted/60 mt-1 font-mono">
                       {m.source} · {new Date(m.createdAt).toLocaleDateString()}
                     </div>
                   </div>
@@ -3099,7 +3157,9 @@ export default function AIPlayground() {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
-            className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-[96] px-4 py-2.5 rounded-xl border text-sm shadow-xl max-w-[90vw] ${
+            role="status"
+            aria-live="polite"
+            className={`pointer-events-none fixed bottom-6 left-1/2 -translate-x-1/2 z-[96] px-4 py-2.5 rounded-xl border text-sm shadow-xl max-w-[90vw] ${
               toast.kind === "err"
                 ? "border-red-400/30 bg-[#1a1014] text-red-100"
                 : toast.kind === "warn"
@@ -3118,9 +3178,11 @@ export default function AIPlayground() {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
-            className="fixed bottom-20 left-1/2 -translate-x-1/2 z-[96] px-3 py-1.5 rounded-full border border-accent-purple/30 bg-[#07070e] text-[11px] text-purple-100 flex items-center gap-1.5 shadow-lg"
+            role="status"
+            aria-live="polite"
+            className="pointer-events-none fixed bottom-20 left-1/2 -translate-x-1/2 z-[96] px-3 py-1.5 rounded-full border border-accent-purple/30 bg-[#07070e] text-[11px] text-purple-100 flex items-center gap-1.5 shadow-lg"
           >
-            <BrainCircuit className="w-3.5 h-3.5 text-accent-purple" />
+            <BrainCircuit aria-hidden className="w-3.5 h-3.5 text-accent-purple" />
             {lang === "sv" ? "Minne uppdaterat" : "Memory updated"}
           </motion.div>
         )}

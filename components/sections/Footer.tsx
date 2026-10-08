@@ -1,7 +1,7 @@
 "use client";
 
 import StatusPill from "@/components/ui/StatusPill";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Github, MessageSquare, Linkedin, Mail, ArrowUpRight, X } from "lucide-react";
 import BudAILogo, { StilledevLink, StilledevMark } from "@/components/ui/BudAILogo";
 import { motion, AnimatePresence } from "framer-motion";
@@ -21,7 +21,7 @@ const groups = (lang: string) => [
     links: [
       { label: "Stilledev", href: "https://stilledev.se", external: true },
       { label: lang === "sv" ? "Byggaren" : "Builder", href: "#about" },
-      { label: lang === "sv" ? "Early access" : "Early access", href: "#waitlist" },
+      { label: "Early access", href: "#waitlist" },
       { label: lang === "sv" ? "Prissättning" : "Pricing", href: "#waitlist" },
       { label: lang === "sv" ? "Kontakt" : "Contact", href: "mailto:Stilleinc@hotmail.com" },
       { label: lang === "sv" ? "Skicka feedback" : "Send feedback", href: "mailto:Stilleinc@hotmail.com?subject=BudAI%20preview%20feedback" },
@@ -50,6 +50,20 @@ export default function Footer() {
   const { lang, t } = useLang();
   const [showLegal, setShowLegal] = useState<string | null>(null);
   const groupsData = groups(lang);
+
+  // Escape closes the legal dialog (and the page behind it stops scrolling)
+  useEffect(() => {
+    if (!showLegal) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setShowLegal(null);
+    };
+    window.addEventListener("keydown", onKey);
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = "";
+    };
+  }, [showLegal]);
 
   const legalContent: Record<string, { title: string; content: string[] }> = {
     privacy: {
@@ -104,7 +118,15 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto px-6 lg:px-8 py-14 md:py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 lg:gap-8">
           <div className="lg:col-span-2">
-            <a href="#" className="flex items-center gap-2.5 mb-5 group">
+            <a
+              href="#"
+              aria-label="BudAI home"
+              onClick={(e) => {
+                e.preventDefault();
+                if (window.scrollY > 300) window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+              className="flex items-center gap-2.5 mb-5 group outline-none focus-visible:ring-2 focus-visible:ring-accent-cyan/50 rounded-lg"
+            >
               <BudAILogo size="md" animated />
               <span className="text-xl font-bold tracking-tight">
                 Bud<span className="text-accent-cyan">AI</span>
@@ -120,8 +142,8 @@ export default function Footer() {
                 <a
                   key={s.label}
                   href={s.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  target={s.href.startsWith("http") ? "_blank" : undefined}
+                  rel={s.href.startsWith("http") ? "noopener noreferrer" : undefined}
                   aria-label={s.label}
                   className="w-9 h-9 rounded-lg bg-white/5 flex items-center justify-center text-muted hover:text-white hover:bg-white/10 hover:border-accent-cyan/20 border border-transparent transition-all"
                 >
@@ -133,10 +155,10 @@ export default function Footer() {
 
           {groupsData.map((g, gi) => (
             <div key={g.title}>
-              <h4 className="mb-4 flex items-center gap-2 text-sm font-semibold text-white">
-                <span className={`h-1.5 w-1.5 rounded-full ${["bg-accent-cyan", "bg-accent-purple", "bg-accent-green"][gi % 3]}`} />
+              <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-white">
+                <span aria-hidden className={`h-1.5 w-1.5 rounded-full ${["bg-accent-cyan", "bg-accent-purple", "bg-accent-green"][gi % 3]}`} />
                 {g.title}
-              </h4>
+              </h3>
               <ul className="space-y-3">
                 {g.links.map((l) => (
                   <li key={l.label}>
@@ -167,7 +189,7 @@ export default function Footer() {
           <p className="text-sm text-muted flex items-center gap-1.5">
             {lang === "sv" ? "Utvecklad av" : "Developed by"}{" "}
             <StilledevLink showMark />
-            <span className="text-muted/30">·</span>
+            <span className="text-muted/45">·</span>
             <span className="text-xs">Sweden</span>
           </p>
         </div>
@@ -175,7 +197,7 @@ export default function Footer() {
 
       <AnimatePresence>
         {showLegal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-[130] flex items-center justify-center p-4">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -193,11 +215,13 @@ export default function Footer() {
               aria-labelledby="legal-title"
             >
               <button
-                className="absolute top-4 right-4 text-muted hover:text-white transition-colors"
+                type="button"
+                autoFocus
+                className="press absolute right-4 top-4 rounded-lg border border-white/10 bg-white/[0.03] p-1.5 text-muted transition-colors hover:border-accent-cyan/30 hover:text-white focus-visible:ring-2 focus-visible:ring-accent-cyan/50 outline-none"
                 onClick={() => setShowLegal(null)}
-                aria-label="Close"
+                aria-label={lang === "sv" ? "Stäng" : "Close"}
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
               <h3 id="legal-title" className="text-xl font-bold text-white mb-4 pr-8">
                 {legalContent[showLegal]?.title}
@@ -214,13 +238,15 @@ export default function Footer() {
                 className="mt-5 inline-flex items-center gap-1 text-sm text-accent-cyan hover:text-white transition-colors"
               >
                 {lang === "sv" ? "Läs fullständig sida" : "View full page"}
-                <ArrowUpRight className="w-3.5 h-3.5" />
+                <ArrowUpRight aria-hidden className="w-3.5 h-3.5" />
               </a>
             </motion.div>
           </div>
         )}
       </AnimatePresence>
-      <div className="flex justify-center pb-4"><StatusPill /></div>
+      <div className="flex justify-center px-6 pb-4">
+        <StatusPill />
+      </div>
   <div className="relative h-20 sm:h-36 overflow-hidden select-none pointer-events-none" aria-hidden>
         <span className="absolute inset-x-0 -bottom-3 sm:-bottom-6 text-center font-bold tracking-tighter leading-none text-[24vw] sm:text-[17vw] bg-gradient-to-b from-white/[0.12] via-accent-cyan/[0.05] to-transparent bg-clip-text text-transparent">
           BudAI

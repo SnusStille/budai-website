@@ -8,7 +8,7 @@ const LAYERS = [-28, -20, -12, -6, 0, 6, 12, 20, 28];
 const WORD = "BudAI";
 const GLYPHS = "01<>{}/=+*#";
 const BOOT = ["init core", "load models", "warm up playground", "ready"];
-const DURATION = 5600;
+const DURATION = 3200;
 
 /** Each letter of the wordmark scrambles through code characters, then locks in. */
 function Scramble({ start }: { start: number }) {
@@ -65,7 +65,7 @@ export default function LoadingScreen() {
       return;
     }
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const duration = reduced ? 1800 : DURATION;
+    const duration = reduced ? 1400 : DURATION;
     document.body.style.overflow = "hidden";
     let raf = 0;
     let closing = false;
@@ -123,9 +123,13 @@ export default function LoadingScreen() {
         <p className="bud-pop text-base sm:text-xl font-medium tracking-wide text-white/80" style={{ animationDelay: "1.6s" }}>
           Your new <span className="bg-gradient-to-r from-accent-cyan to-accent-purple bg-clip-text text-transparent">ChatGPT</span>
         </p>
-        <h1 className="text-5xl sm:text-7xl font-bold tracking-tight text-white [text-shadow:0_0_50px_rgba(0,229,255,0.45)]">
+        {/* Deliberately not a heading: the intro is transient, the hero owns the h1 */}
+        <p
+          aria-label="BudAI"
+          className="text-5xl sm:text-7xl font-bold tracking-tight text-white [text-shadow:0_0_50px_rgba(0,229,255,0.45)]"
+        >
           <Scramble start={2200} />
-        </h1>
+        </p>
       </div>
 
       {/* center: the logo, exactly mid-screen */}
@@ -167,7 +171,14 @@ export default function LoadingScreen() {
             ) : null
           )}
         </ul>
-        <p className="bud-pop text-[11px] text-white/25" style={{ animationDelay: "1.5s" }}>click to skip</p>
+        <button
+          type="button"
+          onClick={() => finish.current()}
+          className="bud-pop press mt-2 rounded-full border border-white/10 px-3 py-1 text-[11px] text-white/40 transition-colors hover:border-accent-cyan/30 hover:text-white/80"
+          style={{ animationDelay: "1.5s" }}
+        >
+          click to skip
+        </button>
       </div>
     </div>
   );

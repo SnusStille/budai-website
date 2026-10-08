@@ -54,7 +54,7 @@ export default function AICore({ isMobile = false }: { isMobile?: boolean }) {
         </div>
 
         <p className="mt-4 text-[11px] sm:text-xs text-accent-cyan/70 font-mono tracking-wide animate-pulse">
-          {lang === "sv" ? "● core online" : "● core online"}
+          {"● core online"}
         </p>
       </motion.div>
 

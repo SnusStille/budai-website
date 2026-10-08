@@ -396,7 +396,7 @@ export default function AdminPage() {
             </div>
           </div>
 
-          <p className="text-center text-xs text-muted/40 mt-6 inline-flex items-center justify-center gap-1.5 w-full">
+          <p className="text-center text-xs text-muted/55 mt-6 inline-flex items-center justify-center gap-1.5 w-full">
             BudAI by <StilledevMark size={14} /> <span className="text-accent-cyan">Stilledev</span>
           </p>
         </motion.div>

@@ -27,7 +27,7 @@ export default function SurpriseToasts() {
     const onLogo = () => {
       push({
         icon: "trophy",
-        title: lang === "sv" ? "Founder mode" : "Founder mode",
+        title: "Founder mode",
         body:
           lang === "sv"
             ? "Triple-click. Vi gillar nyfikna människor."

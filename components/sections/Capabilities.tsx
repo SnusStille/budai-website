@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   FileText,
   Workflow,
@@ -8,89 +8,16 @@ import {
   Languages,
   ChevronDown,
   HelpCircle,
-  Sparkles,
-  ArrowUpRight,
   BrainCircuit,
   Image as ImageIcon,
   Mic,
   Shield,
-  Zap,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import ScrollReveal from "@/components/ui/ScrollReveal";
 import SpotlightCard from "@/components/ui/SpotlightCard";
 import { Check as CheckIcon, X as XIcon, User as UserIcon, Building2 as BuildingIcon, Sparkles as SparkIcon } from "lucide-react";
 import { useLang } from "@/components/ui/LanguageContext";
-import BudAILogo from "@/components/ui/BudAILogo";
-
-const capabilities = [
-  {
-    id: "write",
-    icon: FileText,
-    title: "Write & draft",
-    titleSv: "Skriv & utkast",
-    tag: "Docs",
-    tagSv: "Dokument",
-    desc: "Reports, emails, proposals, and notes in your voice — Swedish or English — in seconds.",
-    descSv:
-      "Rapporter, mejl, offerter och anteckningar i din ton — svenska eller engelska — på sekunder.",
-    preview:
-      "Subject: Q2 pilot proposal\n\nHi team — here's a crisp one-pager…",
-    previewSv:
-      "Ämne: Q2-pilotförslag\n\nHej team — här är en skarp one-pager…",
-    gradient: "from-accent-cyan to-accent-blue",
-    accent: "text-accent-cyan",
-    glow: "rgba(0,229,255,0.15)",
-  },
-  {
-    id: "automate",
-    icon: Workflow,
-    title: "Automate the routine",
-    titleSv: "Automatisera rutin",
-    tag: "Ops",
-    tagSv: "Drift",
-    desc: "Turn recurring work into clear playbooks so your team spends time on judgment, not copy-paste.",
-    descSv:
-      "Gör återkommande jobb till playbooks så teamet lägger tid på bedömning — inte copy-paste.",
-    preview: "1. Collect inputs\n2. Draft summary\n3. Flag risks\n4. Send digest",
-    previewSv: "1. Samla input\n2. Utkast sammanfattning\n3. Flagga risker\n4. Skicka digest",
-    gradient: "from-accent-purple to-accent-pink",
-    accent: "text-accent-purple",
-    glow: "rgba(124,92,255,0.15)",
-  },
-  {
-    id: "decide",
-    icon: BarChart3,
-    title: "Decide with clarity",
-    titleSv: "Besluta tydligare",
-    tag: "Insight",
-    tagSv: "Insikt",
-    desc: "Summarize messy context, surface risks, and get concrete next steps — practical, not vague.",
-    descSv:
-      "Sammanfatta rörig kontext, lyft risker och få konkreta nästa steg — praktiskt, inte vagt.",
-    preview: "Risk: medium\nBlocker: data quality\nNext: 3 owners, 1 week",
-    previewSv: "Risk: medium\nBlocker: datakvalitet\nNästa: 3 ägare, 1 vecka",
-    gradient: "from-accent-green to-accent-cyan",
-    accent: "text-accent-green",
-    glow: "rgba(45,212,191,0.12)",
-  },
-  {
-    id: "bilingual",
-    icon: Languages,
-    title: "Nordic bilingual",
-    titleSv: "Nordisk tvåspråkig",
-    tag: "SV · EN",
-    tagSv: "SV · EN",
-    desc: "Built for teams that switch languages mid-day without dropping quality or tone.",
-    descSv:
-      "Byggd för team som byter språk mitt i dagen utan att tappa kvalitet eller ton.",
-    preview: "Draft in SV → polish in EN\nSame intent. Same quality.",
-    previewSv: "Utkast på SV → putsa på EN\nSamma intent. Samma kvalitet.",
-    gradient: "from-accent-pink to-accent-purple",
-    accent: "text-accent-pink",
-    glow: "rgba(167,139,250,0.12)",
-  },
-];
 
 const PRODUCT_PILLS = [
   {
@@ -319,6 +246,95 @@ export default function Capabilities() {
             </SpotlightCard>
           ))}
         </div>
+
+        {/* What the preview actually ships today */}
+        <ScrollReveal className="mb-16">
+          <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5 sm:p-6">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+              <h3 className="text-base font-semibold text-white sm:text-lg">
+                {sv ? "Redan inne i previewn" : "Already inside the preview"}
+              </h3>
+              <span className="rounded-full border border-accent-green/25 bg-accent-green/10 px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider text-accent-green">
+                {sv ? "Live nu" : "Live now"}
+              </span>
+            </div>
+            <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
+              {PRODUCT_PILLS.map((pill) => (
+                <div
+                  key={pill.en}
+                  tabIndex={0}
+                  className="lift group rounded-xl border border-white/[0.07] bg-white/[0.02] p-4 text-left outline-none transition-colors hover:border-accent-cyan/30 hover:bg-accent-cyan/[0.04] focus-visible:border-accent-cyan/40"
+                >
+                  <div className="mb-2.5 flex h-9 w-9 items-center justify-center rounded-lg border border-accent-cyan/20 bg-accent-cyan/10 text-accent-cyan transition-transform duration-300 group-hover:scale-105">
+                    <pill.icon className="h-4 w-4" />
+                  </div>
+                  <p className="text-sm font-semibold text-white">{sv ? pill.sv : pill.en}</p>
+                  <p className="mt-1 text-[12px] leading-relaxed text-muted">
+                    {sv ? pill.tipSv : pill.tipEn}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </ScrollReveal>
+
+        {/* FAQ — honest answers, one open at a time */}
+        <ScrollReveal className="mx-auto max-w-3xl">
+          <div className="mb-6 text-center">
+            <span className="section-badge mb-4 text-accent-green">
+              <HelpCircle className="h-3.5 w-3.5" />
+              FAQ
+            </span>
+            <h3 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
+              {sv ? "Vanliga frågor" : "Frequently asked"}
+            </h3>
+          </div>
+          <div className="divide-y divide-white/[0.06] overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.02]">
+            {FAQ.map((item, i) => {
+              const open = openFaq === i;
+              return (
+                <div key={item.qEn}>
+                  <button
+                    type="button"
+                    onClick={() => setOpenFaq(open ? null : i)}
+                    aria-expanded={open}
+                    className="flex w-full items-center justify-between gap-4 px-4 py-4 text-left transition-colors hover:bg-white/[0.03] sm:px-5"
+                  >
+                    <span className={`text-[15px] font-medium transition-colors ${open ? "text-white" : "text-white/85"}`}>
+                      {sv ? item.qSv : item.qEn}
+                    </span>
+                    <ChevronDown
+                      className={`h-4 w-4 shrink-0 transition-transform duration-300 ${
+                        open ? "rotate-180 text-accent-cyan" : "text-muted"
+                      }`}
+                    />
+                  </button>
+                  <AnimatePresence initial={false}>
+                    {open && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+                        className="overflow-hidden"
+                      >
+                        <p className="px-4 pb-4 text-sm leading-relaxed text-muted sm:px-5">
+                          {sv ? item.aSv : item.aEn}
+                        </p>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              );
+            })}
+          </div>
+          <p className="mt-5 text-center text-xs text-muted/70">
+            {sv ? "Något otydligt? " : "Something unclear? "}
+            <a href="mailto:Stilleinc@hotmail.com" className="link-underline text-accent-cyan hover:text-white">
+              {sv ? "Mejla Stilledev" : "Email Stilledev"}
+            </a>
+          </p>
+        </ScrollReveal>
 
       </div>
     </section>

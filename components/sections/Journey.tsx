@@ -12,6 +12,7 @@ const RINGS = [
   { name: "World", sv: "Världen", size: 340, c: "#2dd4bf", d: "32s" },
 ];
 const RING_OF = [0, 0, 1, 2];
+const RING_STAGE = [0, 2, 3];
 
 export default function Journey() {
   const { lang } = useLang();
@@ -78,53 +79,62 @@ export default function Journey() {
           </p>
         </ScrollReveal>
 
-        <div className="grid lg:grid-cols-[1fr_1.05fr] gap-8 lg:gap-12 items-center" onMouseEnter={() => setAuto(false)}>
-          <div className="order-2 lg:order-1 space-y-2.5" role="list">
+        <div
+          className="grid lg:grid-cols-[1fr_1.05fr] gap-8 lg:gap-12 items-center"
+          onMouseEnter={() => setAuto(false)}
+          onFocusCapture={() => setAuto(false)}
+        >
+          <div className="order-2 lg:order-1 space-y-2.5">
             {stages.map((s, i) => {
               const on = active === i;
+              const panelId = `journey-stage-${i}`;
               return (
-                <button
+                <div
                   key={s.title}
-                  type="button"
-                  role="listitem"
-                  aria-pressed={on}
-                  onClick={() => {
-                    setAuto(false);
-                    setActive(i);
-                  }}
-                  className={`relative w-full rounded-2xl border p-4 text-left transition-all duration-300 ${
+                  className={`relative rounded-2xl border transition-all duration-300 ${
                     on ? "border-white/20 bg-white/[0.05] shadow-[0_0_50px_-20px_rgba(124,92,255,0.6)]" : "border-white/[0.06] hover:bg-white/[0.03]"
                   }`}
                 >
-                  <div className="flex items-center gap-3">
-                    <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border ${on ? s.chipTone : "border-white/10 text-muted"}`}>
-                      <s.icon className="h-4 w-4" />
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-base font-semibold text-white">{s.title}</span>
-                        <span className={`rounded-full border px-2 py-0.5 text-[10px] font-medium ${s.chipTone}`}>{s.chip}</span>
-                        {i === 1 && (
-                          <span className="ml-auto flex items-center gap-1.5 text-[10px] text-accent-cyan">
-                            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent-cyan" />
-                            {sv ? "Vi är här" : "We are here"}
-                          </span>
-                        )}
+                  <button
+                    type="button"
+                    aria-expanded={on}
+                    aria-controls={panelId}
+                    onClick={() => {
+                      setAuto(false);
+                      setActive(i);
+                    }}
+                    className="w-full rounded-2xl p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-cyan/50"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors duration-300 ${on ? s.chipTone : "border-white/10 text-muted"}`}>
+                        <s.icon className="h-4 w-4" aria-hidden />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-base font-semibold text-white">{s.title}</span>
+                          <span className={`rounded-full border px-2 py-0.5 text-[10px] font-medium ${s.chipTone}`}>{s.chip}</span>
+                          {i === 1 && (
+                            <span className="ml-auto flex items-center gap-1.5 text-[10px] text-accent-cyan">
+                              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent-cyan" />
+                              {sv ? "Vi är här" : "We are here"}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[13px] text-muted">{s.lead}</p>
                       </div>
-                      <p className="text-[13px] text-muted">{s.lead}</p>
                     </div>
-                  </div>
-                  {on && (
-                    <ul className="mt-3 space-y-1.5 pl-12 text-sm text-white/80">
+                  </button>
+                  <div id={panelId} hidden={!on}>
+                    <ul className="-mt-1 space-y-1.5 px-4 pb-4 pl-16 text-sm text-white/80">
                       {s.items.map((it) => (
                         <li key={it} className="flex gap-2.5">
-                          <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: RINGS[ring].c }} />
+                          <span aria-hidden className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: RINGS[ring].c }} />
                           {it}
                         </li>
                       ))}
                     </ul>
-                  )}
-                </button>
+                  </div>
+                </div>
               );
             })}
           </div>
@@ -159,13 +169,19 @@ export default function Journey() {
             </div>
             <div className="mt-2 flex justify-center gap-2">
               {RINGS.map((r, i) => (
-                <span
+                <button
                   key={r.name}
-                  className="rounded-full border px-3 py-1 text-xs transition-all duration-300"
-                  style={{ borderColor: ring === i ? r.c : "rgba(255,255,255,0.1)", color: ring === i ? r.c : "rgba(255,255,255,0.45)", background: ring === i ? `${r.c}14` : "transparent" }}
+                  type="button"
+                  aria-pressed={ring === i}
+                  onClick={() => {
+                    setAuto(false);
+                    setActive(RING_STAGE[i]);
+                  }}
+                  className="rounded-full border px-3 py-1 text-xs transition-all duration-300 hover:brightness-125"
+                  style={{ borderColor: ring === i ? r.c : "rgba(255,255,255,0.1)", color: ring === i ? r.c : "rgba(255,255,255,0.55)", background: ring === i ? `${r.c}14` : "transparent" }}
                 >
                   {sv ? r.sv : r.name}
-                </span>
+                </button>
               ))}
             </div>
           </div>

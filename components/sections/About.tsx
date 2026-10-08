@@ -19,6 +19,10 @@ function CountUp({ to }: { to: number }) {
     const io = new IntersectionObserver(([e]) => {
       if (!e.isIntersecting) return;
       io.disconnect();
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        setV(to);
+        return;
+      }
       const t0 = performance.now();
       const tick = (t: number) => {
         const k = Math.min(1, (t - t0) / 1400);
@@ -47,8 +51,8 @@ export default function About() {
 
   return (
     <section id="about" className="relative section-hairline py-20 md:py-28 overflow-hidden">
-      <div className="absolute -left-40 top-1/3 w-[420px] h-[420px] rounded-full bg-accent-green/[0.06] blur-[120px] pointer-events-none" />
-<div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-[1.05fr_1fr] gap-12 items-center">
+      <div aria-hidden className="absolute -left-40 top-1/3 w-[420px] h-[420px] rounded-full bg-accent-green/[0.06] blur-[120px] pointer-events-none" />
+      <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-[1.05fr_1fr] gap-12 items-center">
         <ScrollReveal>
           <span className="section-badge text-accent-green mb-5">{sv ? "Byggaren" : "The builder"}</span>
           <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-white leading-[1.05] mb-6">
@@ -91,9 +95,11 @@ export default function About() {
           <Tilt3D max={6}>
           <div className="rounded-2xl border border-white/[0.08] bg-[#07070e]/90 shadow-[0_0_80px_-20px_rgba(0,229,255,0.4)] overflow-hidden">
             <div className="flex items-center gap-1.5 px-4 py-3 border-b border-white/[0.06]">
-              <span className="w-2.5 h-2.5 rounded-full bg-red-400/50" />
-              <span className="w-2.5 h-2.5 rounded-full bg-yellow-400/50" />
-              <span className="w-2.5 h-2.5 rounded-full bg-green-400/50" />
+              <span aria-hidden className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-red-400/50" />
+                <span className="w-2.5 h-2.5 rounded-full bg-yellow-400/50" />
+                <span className="w-2.5 h-2.5 rounded-full bg-green-400/50" />
+              </span>
               <span className="ml-3 font-mono text-[11px] text-muted/60">stilledev.ts</span>
             </div>
             <CodeTyper />

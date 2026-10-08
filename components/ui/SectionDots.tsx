@@ -2,16 +2,18 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
+import { useLang } from "@/components/ui/LanguageContext";
 
 const SECTIONS = [
-  { id: "capabilities", label: "Capabilities" },
-  { id: "playground", label: "Playground" },
-  { id: "about", label: "Builder" },
-  { id: "waitlist", label: "Waitlist" },
-  { id: "roadmap", label: "Roadmap" },
+  { id: "capabilities", label: "Capabilities", sv: "Förmågor" },
+  { id: "playground", label: "Playground", sv: "Playground" },
+  { id: "about", label: "Builder", sv: "Byggaren" },
+  { id: "waitlist", label: "Waitlist", sv: "Väntelista" },
+  { id: "roadmap", label: "Roadmap", sv: "Roadmap" },
 ];
 
 export default function SectionDots() {
+  const { lang } = useLang();
   const [active, setActive] = useState<string | null>(null);
   const [visible, setVisible] = useState(false);
   const ratios = useRef<Record<string, number>>({});
@@ -93,18 +95,18 @@ export default function SectionDots() {
       aria-label="Section navigation"
     >
       {SECTIONS.map((s) => (
-        <button
+        <button type="button"
           key={s.id}
           onClick={() => goTo(s.id)}
           className="group relative flex items-center justify-end"
-          aria-label={`Go to ${s.label}`}
+          aria-label={`${lang === "sv" ? "Gå till" : "Go to"} ${lang === "sv" ? s.sv : s.label}`}
           aria-current={active === s.id ? "true" : undefined}
         >
-          <span className="absolute right-5 whitespace-nowrap px-2.5 py-1 rounded-md bg-black/85 border border-white/10 text-[11px] text-white opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-            {s.label}
+          <span className="pointer-events-none absolute right-5 whitespace-nowrap rounded-md border border-white/10 bg-black/85 px-2.5 py-1 text-[11px] text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100">
+            {lang === "sv" ? s.sv : s.label}
           </span>
           <span
-            className={`block rounded-full transition-all duration-250 ${
+            className={`block rounded-full transition-all duration-200 ${
               active === s.id
                 ? "w-2.5 h-2.5 bg-accent-cyan shadow-[0_0_10px_rgba(0,229,255,0.7)]"
                 : "w-1.5 h-1.5 bg-white/25 group-hover:bg-white/50"

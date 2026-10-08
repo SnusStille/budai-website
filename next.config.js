@@ -20,6 +20,25 @@ const nextConfig = {
             // microphone allowed for Playground voice (self only)
             value: "camera=(), microphone=(self), geolocation=()",
           },
+          // Only browsers honour this on HTTPS, so local dev is unaffected.
+          {
+            key: "Strict-Transport-Security",
+            value: "max-age=63072000; includeSubDomains",
+          },
+        ],
+      },
+      {
+        // Immutable hashed build assets — cache hard at the edge.
+        source: "/_next/static/(.*)",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
+        ],
+      },
+      {
+        // Brand assets that rarely change.
+        source: "/(favicon.svg|og.png|apple-icon.*)",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=604800, stale-while-revalidate=86400" },
         ],
       },
     ];

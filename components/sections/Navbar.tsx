@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Globe, Bell } from "lucide-react";
+import { Menu, X, Globe, Bell, Search } from "lucide-react";
 import { useLang } from "@/components/ui/LanguageContext";
 import BudAILogo from "@/components/ui/BudAILogo";
 import TypeWordmark from "@/components/ui/TypeWordmark";
@@ -34,6 +34,15 @@ export default function Navbar() {
     return () => {
       document.body.style.overflow = "";
     };
+  }, [mobileOpen]);
+
+  // Escape closes the mobile sheet; ⌘K closes it too before opening the palette.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && mobileOpen) setMobileOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
   }, [mobileOpen]);
 
   // Reliable scroll-spy: pick section with highest intersection ratio near viewport center
@@ -133,10 +142,10 @@ export default function Navbar() {
         initial={{ y: -80, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.6, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
-        className={`fixed top-0 left-0 right-0 z-[60] transition-all duration-400 ${
+        className={`fixed top-0 left-0 right-0 z-[60] transition-[background-color,border-color,box-shadow,backdrop-filter] duration-300 ease-out ${
           scrolled
             ? "glass-strong shadow-lg shadow-black/30 border-b border-white/[0.07] backdrop-blur-xl"
-            : "bg-transparent"
+            : "bg-transparent border-b border-transparent"
         }`}
       >
         <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
@@ -172,6 +181,7 @@ export default function Navbar() {
                   <a
                     key={l.href}
                     href={l.href}
+                    aria-current={isActive ? "location" : undefined}
                     className={`relative px-3.5 py-2 text-sm rounded-lg transition-colors ${
                       isActive
                         ? "text-white"
@@ -182,6 +192,7 @@ export default function Navbar() {
                   >
                     {l.label}
                     <span
+                      aria-hidden
                       className={`absolute bottom-1 left-1/2 -translate-x-1/2 h-0.5 rounded-full bg-accent-cyan transition-all duration-300 ${
                         isActive ? "w-5 opacity-100 shadow-[0_0_8px_rgba(0,229,255,0.6)]" : "w-0 opacity-0"
                       }`}
@@ -192,6 +203,18 @@ export default function Navbar() {
             </div>
 
             <div className="hidden lg:flex items-center gap-2.5 lg:justify-self-end">
+              <button
+                type="button"
+                onClick={() => window.dispatchEvent(new Event("budai:palette"))}
+                aria-label={lang === "sv" ? "Öppna kommandopaletten" : "Open command palette"}
+                className="group flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.02] py-2 pl-3 pr-2 text-[11px] text-muted/80 transition-colors hover:border-accent-cyan/30 hover:text-white"
+              >
+                <Search className="h-3.5 w-3.5" />
+                <span className="hidden xl:inline">{lang === "sv" ? "Sök" : "Search"}</span>
+                <kbd className="rounded border border-white/10 bg-black/40 px-1.5 py-0.5 font-mono text-[10px] text-muted/70 transition-colors group-hover:border-accent-cyan/30 group-hover:text-accent-cyan">
+                  ⌘K
+                </kbd>
+              </button>
               <div
                 className="flex items-center p-0.5 rounded-full bg-black/40 border border-white/[0.08] shadow-inner"
                 role="group"
@@ -248,7 +271,7 @@ export default function Navbar() {
               <a href="#playground" className="rounded-full bg-accent-cyan px-3.5 py-1.5 text-xs font-semibold text-[#020205]">
                 {lang === "sv" ? "Prova" : "Try"}
               </a>
-              <button
+              <button type="button"
               onClick={() => setMobileOpen(!mobileOpen)}
               className="p-2 text-white rounded-lg hover:bg-white/5 transition-colors"
               aria-label={mobileOpen ? "Close menu" : "Open menu"}
@@ -273,7 +296,23 @@ export default function Navbar() {
               className="absolute inset-0 bg-[#020205]/95 backdrop-blur-2xl"
               onClick={() => setMobileOpen(false)}
             />
-            <div className="relative pt-24 px-6 flex flex-col gap-1 max-h-screen overflow-y-auto pb-10">
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-label={lang === "sv" ? "Meny" : "Menu"}
+              className="relative pt-20 px-6 flex flex-col gap-1 max-h-screen overflow-y-auto pb-10"
+            >
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileOpen(false);
+                  window.setTimeout(() => window.dispatchEvent(new Event("budai:palette")), 180);
+                }}
+                className="mb-2 flex items-center gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.03] px-4 py-3.5 text-left text-sm text-muted"
+              >
+                <Search className="h-4 w-4 text-accent-cyan" />
+                {lang === "sv" ? "Sök på sidan…" : "Search the site…"}
+              </button>
               {links.map((l, i) => (
                 <motion.a
                   key={l.href}
@@ -295,28 +334,21 @@ export default function Navbar() {
               <div className="flex items-center gap-3 mt-4 px-4">
                 <Globe className="w-4 h-4 text-muted" />
                 <div className="flex p-0.5 rounded-full bg-black/40 border border-white/[0.08]">
-                  <button
-                    type="button"
-                    onClick={() => setLang("en")}
-                    className={`px-4 py-2 text-sm font-semibold rounded-full ${
-                      lang === "en"
-                        ? "bg-gradient-to-r from-accent-cyan to-accent-purple text-white"
-                        : "text-muted"
-                    }`}
-                  >
-                    English
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setLang("sv")}
-                    className={`px-4 py-2 text-sm font-semibold rounded-full ${
-                      lang === "sv"
-                        ? "bg-gradient-to-r from-accent-cyan to-accent-purple text-white"
-                        : "text-muted"
-                    }`}
-                  >
-                    Svenska
-                  </button>
+                  {(["en", "sv"] as const).map((code) => (
+                    <button
+                      key={code}
+                      type="button"
+                      onClick={() => setLang(code)}
+                      aria-pressed={lang === code}
+                      className={`px-4 py-2 text-sm font-semibold rounded-full ${
+                        lang === code
+                          ? "bg-gradient-to-r from-accent-cyan to-accent-purple text-white"
+                          : "text-muted"
+                      }`}
+                    >
+                      {code === "en" ? "English" : "Svenska"}
+                    </button>
+                  ))}
                 </div>
               </div>
 

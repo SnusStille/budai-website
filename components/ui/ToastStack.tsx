@@ -107,7 +107,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                 <button
                   type="button"
                   onClick={() => dismiss(t.id)}
-                  className="p-1 rounded-md text-muted/50 hover:text-white shrink-0 self-start"
+                  className="p-1 rounded-md text-muted/60 hover:text-white shrink-0 self-start"
                   aria-label="Dismiss"
                 >
                   <X className="w-3.5 h-3.5" />

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowRight, FileText, Languages, Zap, ChevronDown } from "lucide-react";
+import { ArrowRight, FileText, Languages, Zap, ChevronDown, Gift } from "lucide-react";
 import { useLang } from "@/components/ui/LanguageContext";
 import Magnetic from "@/components/ui/Magnetic";
 import AICore from "@/components/effects/AICore";
@@ -16,10 +16,11 @@ export default function Hero() {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    const onResize = () => setIsMobile(window.innerWidth < 768);
-    onResize();
-    window.addEventListener("resize", onResize, { passive: true });
-    return () => window.removeEventListener("resize", onResize);
+    const mq = window.matchMedia("(max-width: 767px)");
+    const sync = () => setIsMobile(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
   }, []);
 
   const chips =
@@ -47,8 +48,14 @@ export default function Hero() {
       <ParticleCore />
       {!isMobile && (
         <>
-          <div className="absolute top-[18%] left-1/2 -translate-x-1/2 w-[70vw] max-w-[900px] h-[50vw] max-h-[520px] bg-accent-cyan/[0.07] rounded-full blur-[120px] pointer-events-none" />
-          <div className="absolute bottom-[10%] right-[8%] w-[40vw] max-w-[420px] h-[40vw] max-h-[420px] bg-accent-purple/[0.05] rounded-full blur-[100px] pointer-events-none" />
+          <div
+            aria-hidden
+            className="absolute top-[18%] left-1/2 -translate-x-1/2 w-[70vw] max-w-[900px] h-[50vw] max-h-[520px] bg-accent-cyan/[0.07] rounded-full blur-[120px] pointer-events-none"
+          />
+          <div
+            aria-hidden
+            className="absolute bottom-[10%] right-[8%] w-[40vw] max-w-[420px] h-[40vw] max-h-[420px] bg-accent-purple/[0.05] rounded-full blur-[100px] pointer-events-none"
+          />
         </>
       )}
 
@@ -71,13 +78,15 @@ export default function Hero() {
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.18 }}
-          className="mx-auto mb-6 sm:mb-8 block w-fit text-[11px] sm:text-xs text-muted/70 hover:text-accent-green transition-colors"
+          className="group mx-auto mb-6 inline-flex w-fit items-center gap-2 rounded-full border border-accent-green/25 bg-accent-green/[0.06] px-3.5 py-1.5 text-[11px] font-medium text-accent-green/90 transition-all duration-300 hover:border-accent-green/45 hover:bg-accent-green/[0.1] hover:text-accent-green sm:mb-8 sm:text-xs"
         >
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-white/[0.07] bg-white/[0.02] hover:border-accent-green/25">
-            <span className="text-accent-green/90 font-medium">10%</span>
-            <span className="text-muted/40">·</span>
-            <span>{lang === "sv" ? "early access vid join" : "early access on join"}</span>
+          <Gift className="h-3.5 w-3.5 transition-transform duration-300 group-hover:-rotate-12" />
+          <span className="font-semibold">10%</span>
+          <span className="text-accent-green/45">·</span>
+          <span className="text-white/75">
+            {lang === "sv" ? "rabatt när du går med i väntelistan" : "off when you join the waitlist"}
           </span>
+          <ArrowRight className="h-3 w-3 opacity-0 transition-all duration-300 group-hover:translate-x-0.5 group-hover:opacity-100" />
         </motion.a>
 
         {/* Single product mark — no rotating headline words */}
@@ -173,25 +182,30 @@ export default function Hero() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.65 }}
-          className="text-xs text-muted/50"
+          className="text-xs text-muted/60"
         >
           {lang === "sv" ? "Utvecklad av " : "Built by "}
           <StilledevLink />
-          <span className="text-muted/30"> · </span>
+          <span className="text-muted/45"> · </span>
           Sweden
         </motion.p>
 
-        <motion.a
-          href="#capabilities"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.8 }}
-          className="absolute bottom-6 left-1/2 -translate-x-1/2 text-muted/40 hover:text-accent-cyan transition-colors hidden sm:flex flex-col items-center gap-1"
-        >
-          <span className="text-[10px] uppercase tracking-widest">Scroll</span>
-          <ChevronDown className="w-4 h-4 animate-bounce" />
-        </motion.a>
       </div>
+
+      <motion.a
+        href="#what-is-budai"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.9 }}
+        className="absolute bottom-5 left-1/2 hidden -translate-x-1/2 flex-col items-center gap-1.5 text-muted/55 transition-colors hover:text-accent-cyan sm:flex"
+        aria-label={lang === "sv" ? "Scrolla vidare" : "Scroll down"}
+      >
+        <span className="text-[10px] uppercase tracking-[0.25em]">Scroll</span>
+        <span className="relative flex h-8 w-5 items-start justify-center rounded-full border border-white/10">
+          <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-accent-cyan/70 animate-bounce" />
+        </span>
+        <ChevronDown className="hidden w-4 h-4" />
+      </motion.a>
     </section>
   );
 }

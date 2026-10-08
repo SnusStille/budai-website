@@ -21,19 +21,29 @@ export default function StatusPill() {
       }
     };
     void ping();
-    const id = window.setInterval(ping, 60000);
+    const id = window.setInterval(() => {
+      if (!document.hidden) void ping();
+    }, 60000);
+    const onVisible = () => {
+      if (!document.hidden) void ping();
+    };
+    document.addEventListener("visibilitychange", onVisible);
     return () => {
       alive = false;
       window.clearInterval(id);
+      document.removeEventListener("visibilitychange", onVisible);
     };
   }, []);
 
   if (!s) return null;
   return (
-    <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-[11px] text-white/70">
-      <span className={`h-1.5 w-1.5 rounded-full ${s.ok ? "bg-accent-green" : "bg-red-400"}`} />
+    <span
+      role="status"
+      className="inline-flex items-center gap-2 whitespace-nowrap rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-[11px] text-white/70"
+    >
+      <span aria-hidden className={`h-1.5 w-1.5 rounded-full ${s.ok ? "bg-accent-green" : "bg-red-400"}`} />
       {s.ok ? (sv ? "Alla system fungerar" : "All systems operational") : sv ? "Störning" : "Degraded"}
-      {s.ok && <span className="font-mono text-white/40">{s.ms} ms</span>}
+      {s.ok && <span className="font-mono text-white/45">{s.ms} ms</span>}
     </span>
   );
 }

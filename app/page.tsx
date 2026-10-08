@@ -15,6 +15,7 @@ import Hero from "@/components/sections/Hero";
 import Capabilities from "@/components/sections/Capabilities";
 import Waitlist from "@/components/sections/Waitlist";
 import WhatIsBudAI from "@/components/sections/WhatIsBudAI";
+import CapabilityTicker from "@/components/sections/CapabilityTicker";
 import ErrorBoundary from "@/components/ui/ErrorBoundary";
 import HeroAsk from "@/components/sections/HeroAsk";
 import LazyEgg from "@/components/effects/LazyEgg";
@@ -97,6 +98,7 @@ export default function Home() {
         <Hero />
         <HeroAsk />
         <WhatIsBudAI />
+        <CapabilityTicker />
         <ErrorBoundary>
           <AIPlayground />
         </ErrorBoundary>
