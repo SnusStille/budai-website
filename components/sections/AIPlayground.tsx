@@ -1221,12 +1221,25 @@ export default function AIPlayground() {
           messages: messages.map((m) => ({ role: m.role, content: m.content })),
         }),
       });
-      const data = await res.json();
+      if (res.status === 429) {
+        showToast("err", lang === "sv" ? "För många delningar just nu. Försök om en stund." : "Too many shares right now. Try again shortly.");
+        return;
+      }
+      if (res.status === 503) {
+        showToast("err", lang === "sv" ? "Delning är inte aktiverad ännu" : "Sharing isn't enabled yet");
+        return;
+      }
+      const data = (await res.json().catch(() => ({}))) as { id?: string };
       if (!res.ok || !data.id) throw new Error("share");
-      await navigator.clipboard.writeText(`${window.location.origin}/s/${data.id}`);
-      showToast("ok", lang === "sv" ? "Länk kopierad" : "Link copied");
+      // The link exists even if the clipboard is blocked (non-HTTPS, iframe, permissions).
+      const url = `${window.location.origin}/s/${data.id}`;
+      const copied = await navigator.clipboard.writeText(url).then(() => true, () => false);
+      showToast(
+        "ok",
+        copied ? (lang === "sv" ? "Länk kopierad" : "Link copied") : lang === "sv" ? "Länken är skapad" : "Link created"
+      );
     } catch {
-      showToast("err", lang === "sv" ? "Kunde inte dela" : "Could not share");
+      showToast("err", lang === "sv" ? "Kunde inte dela. Försök igen." : "Could not share. Try again.");
     }
   };
 

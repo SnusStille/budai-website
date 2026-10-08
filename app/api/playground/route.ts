@@ -2,6 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { dayKey, limitFor, type AccessTier } from "@/lib/limits";
+import { clientIp, createRateLimiter } from "@/lib/requestGuard";
 
 function getClient() {
   const key = process.env.ANTHROPIC_API_KEY;
@@ -9,21 +10,8 @@ function getClient() {
   return new Anthropic({ apiKey: key });
 }
 
-const requestCounts = new Map<string, { count: number; resetAt: number }>();
-const LIMIT = 60;
-const WINDOW_MS = 60 * 60 * 1000;
-
-function isRateLimited(ip: string): boolean {
-  const now = Date.now();
-  const entry = requestCounts.get(ip);
-  if (!entry || now > entry.resetAt) {
-    requestCounts.set(ip, { count: 1, resetAt: now + WINDOW_MS });
-    return false;
-  }
-  if (entry.count >= LIMIT) return true;
-  entry.count += 1;
-  return false;
-}
+// Per-address hourly cap for anonymous playground traffic (shared, self-pruning limiter).
+const isRateLimited = createRateLimiter(60, 60 * 60 * 1000);
 
 async function resolveUser(req: NextRequest) {
   const auth = req.headers.get("authorization");
@@ -127,7 +115,7 @@ function stripMemoryTag(text: string): { clean: string; memory: string | null } 
 }
 
 export async function POST(req: NextRequest) {
-  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  const ip = clientIp(req);
   if (isRateLimited(ip)) {
     return NextResponse.json({ error: "Rate limit reached. Try again later." }, { status: 429 });
   }

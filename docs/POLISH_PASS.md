@@ -74,6 +74,19 @@ Okänd slug under `/legal/*` ger nu **404** istället för att tyst visa integri
 - Manifestet har nu PNG-ikoner i 192/512 (installationsprompt i Chrome/Android).
 - Dokumentationens påståenden (röst, export, lokalt minne, bildgenerering) verifierade mot koden.
 
+## 5c. Rundan "allt ännu bättre" (API + formulär)
+
+- **API-härdning:** `lib/requestGuard.ts` ger en delad rate limiter som rensar utgångna poster
+  (playground-routens tidigare `Map` växte utan gräns), säker JSON-läsning (`null`/arrayer ger
+  inte längre 500) och klient-IP bakom proxy.
+- **Rate limit på publika skrivningar:** `/api/feedback` 10 per timme och IP, `/api/share`
+  20 per timme och IP. Svarar 429 med tydligt meddelande.
+- **Feedback-dialogen:** specifika fel (429 vs nätverk), Cmd/Ctrl+Enter skickar, teckenräknare,
+  fokus i textfältet när dialogen öppnas, aria-label på fältet, stängknappen översatt.
+- **Dela tråd:** 429/503 visar egna meddelanden. Om klippboken är blockerad visas ändå
+  "Länken är skapad" i stället för ett felmeddelande.
+- **Typkontroll:** `tsc --noEmit` körs rent, ESLint med `--max-warnings=0` rent.
+
 ## 6. Kvar att göra innan bred lansering
 
 - Sätt `NEXT_PUBLIC_SITE_URL` till produktionsdomänen (canonical, sitemap, OG).
