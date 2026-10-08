@@ -87,6 +87,21 @@ Okänd slug under `/legal/*` ger nu **404** istället för att tyst visa integri
   "Länken är skapad" i stället för ett felmeddelande.
 - **Typkontroll:** `tsc --noEmit` körs rent, ESLint med `--max-warnings=0` rent.
 
+## 5d. Säkerhet och SEO (runda 3)
+
+- **Admin-inloggning:** max 10 försök per IP och 15 minuter (brute-force-skydd), `Cache-Control: no-store`,
+  säker JSON-läsning. Admin-sidan visar nu "Too many attempts" i stället för felaktigt "Wrong password".
+- **robots.txt:** `/api/` är nu uteslutet från crawling (tidigare bara `/admin`).
+
+**Kända risker att besluta om (ändrade inte, för att inte bryta befintliga installationer):**
+- `NEXT_PUBLIC_ADMIN_PASSWORD` accepteras som legacy-fallback. Prefixet gör att värdet kan hamna i klientbundeln
+  om någon refererar det i klientkod. Sätt `ADMIN_PASSWORD` och ta bort den gamla variabeln.
+- Admin-nyckeln sparas i `sessionStorage` (`budai_admin_key`). Det är acceptabelt för ett internt verktyg men
+  innebär att en XSS-sårbarhet skulle kunna läsa nyckeln.
+- Rate limit använder klient-IP från `x-forwarded-for`. Saknas headern delas bucketen "unknown", vilket
+  bland annat betyder att admin-inloggningen kan låsas globalt i 15 minuter av någon som missbrukar den.
+  Bakom en proxy (t.ex. Vercel) är detta inte ett problem.
+
 ## 6. Kvar att göra innan bred lansering
 
 - Sätt `NEXT_PUBLIC_SITE_URL` till produktionsdomänen (canonical, sitemap, OG).

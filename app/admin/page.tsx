@@ -154,6 +154,11 @@ export default function AdminPage() {
         setError(true);
         return;
       }
+      if (res.status === 429) {
+        setHint("Too many attempts. Wait 15 minutes and try again.");
+        setError(true);
+        return;
+      }
       if (!res.ok) {
         setHint("Wrong password.");
         setError(true);
