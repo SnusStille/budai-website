@@ -21,7 +21,8 @@ export default function Shortcuts() {
         setOpen((o) => !o);
       } else if (e.key === "/") {
         e.preventDefault();
-        document.getElementById("playground")?.scrollIntoView({ behavior: "smooth" });
+        const ta = document.querySelector<HTMLTextAreaElement>("#playground textarea");
+        (ta ?? document.getElementById("playground"))?.scrollIntoView({ behavior: "smooth", block: "center" });
         window.setTimeout(() => document.querySelector<HTMLTextAreaElement>("#playground textarea")?.focus({ preventScroll: true }), 500);
       }
     };

@@ -68,10 +68,13 @@ export default function ParticleCore() {
     };
     resize();
 
-    let tx = 0, ty = 0, mx = 0, my = 0, spin = 0.6, raf = 0, last = 0, visible = true;
+    let tx = 0, ty = 0, mx = 0, my = 0, spin = 0.6, raf = 0, last = 0, visible = true, boost = 0;
+    const onType = () => {
+      boost = 1;
+    };
     const F = 520;
 
-    const frame = (now: number, m: number) => {
+    const frame = (now: number, m: number, boost = 0) => {
       const R = size * 0.3;
       const cx = size / 2, cy = size / 2;
       const wrapped = ((spin + Math.PI) % TAU) - Math.PI;
@@ -92,7 +95,7 @@ export default function ParticleCore() {
         P.push([cx + x1 * sc, cy + y2 * sc, sc]);
       }
 
-      const L = size * 0.085;
+      const L = size * (0.085 + boost * 0.03);
       ctx.lineWidth = 0.8;
       for (let i = 0; i < N; i++) {
         for (let j = i + 1; j < N; j++) {
@@ -110,14 +113,14 @@ export default function ParticleCore() {
       for (let i = 0; i < N; i++) {
         const t = i / N, sc = P[i][2];
         const a = Math.max(0.15, Math.min(1, 0.25 + (sc - 0.75) * 2.2));
-        ctx.fillStyle = `rgba(${Math.round(185 * t)},${Math.round(229 - 126 * t)},255,${a})`;
+        ctx.fillStyle = `rgba(${Math.round(124 * t)},${Math.round(229 - 137 * t)},255,${a})`;
         ctx.beginPath();
         ctx.arc(P[i][0], P[i][1], 1 + 1.7 * sc, 0, TAU);
         ctx.fill();
       }
     };
 
-    if (reduced) {
+    if (reduced || mobile) {
       frame(0, 0);
       return;
     }
@@ -131,10 +134,11 @@ export default function ParticleCore() {
       if (cyc >= 4 && cyc < 5.5) m = ease((cyc - 4) / 1.5);
       else if (cyc >= 5.5 && cyc < 9) m = 1;
       else if (cyc >= 9) m = 1 - ease((cyc - 9) / 1.5);
-      spin += 0.006;
+      boost *= 0.94;
+      spin += 0.006 + boost * 0.05;
       mx += (tx - mx) * 0.06;
       my += (ty - my) * 0.06;
-      frame(now, m);
+      frame(now, m, boost);
     };
     raf = requestAnimationFrame(loop);
 
@@ -145,11 +149,13 @@ export default function ParticleCore() {
     const io = new IntersectionObserver(([e]) => (visible = e.isIntersecting));
     io.observe(canvas);
     window.addEventListener("pointermove", onMove, { passive: true });
+    window.addEventListener("budai:typing", onType);
     window.addEventListener("resize", resize, { passive: true });
     return () => {
       cancelAnimationFrame(raf);
       io.disconnect();
       window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("budai:typing", onType);
       window.removeEventListener("resize", resize);
     };
   }, []);

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Globe } from "lucide-react";
+import { Menu, X, Globe, Bell } from "lucide-react";
 import { useLang } from "@/components/ui/LanguageContext";
 import BudAILogo from "@/components/ui/BudAILogo";
 import TypeWordmark from "@/components/ui/TypeWordmark";
@@ -10,6 +10,12 @@ import TypeWordmark from "@/components/ui/TypeWordmark";
 const SECTION_IDS = ["playground", "capabilities", "about", "waitlist", "roadmap"] as const;
 
 export default function Navbar() {
+  const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    const on = (e: Event) => setBusy(!!(e as CustomEvent<boolean>).detail);
+    window.addEventListener("budai:busy", on);
+    return () => window.removeEventListener("budai:busy", on);
+  }, []);
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [active, setActive] = useState("");
@@ -127,7 +133,7 @@ export default function Navbar() {
         initial={{ y: -80, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.6, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-400 ${
+        className={`fixed top-0 left-0 right-0 z-[60] transition-all duration-400 ${
           scrolled
             ? "glass-strong shadow-lg shadow-black/30 border-b border-white/[0.07] backdrop-blur-xl"
             : "bg-transparent"
@@ -137,28 +143,25 @@ export default function Navbar() {
           <div className="flex items-center justify-between h-16 lg:h-[4.5rem] lg:grid lg:grid-cols-[1fr_auto_1fr]">
             <a
               href="#"
+              data-budai-logo
               className="flex items-center gap-2.5 group outline-none focus-visible:ring-2 focus-visible:ring-accent-cyan/50 rounded-lg"
               aria-label="BudAI home"
               onClick={(e) => {
                 e.preventDefault();
                 (e.currentTarget as HTMLElement).blur();
-                window.scrollTo({ top: 0, behavior: "smooth" });
-                // Surprise #3 — triple-click logo within 1.2s
-                const now = Date.now();
-                logoClicks.current = [...logoClicks.current, now].filter((ts) => now - ts < 1200);
-                if (logoClicks.current.length >= 3) {
-                  e.preventDefault();
-                  logoClicks.current = [];
-                  window.dispatchEvent(new Event("budai:logo-secret"));
-                }
+                if (window.scrollY > 300) window.scrollTo({ top: 0, behavior: "smooth" });
+                // Progressive easter egg: every click advances the sequence (see LogoEasterEgg)
+                window.dispatchEvent(new CustomEvent("budai:logo-click", { detail: { el: e.currentTarget } }));
               }}
             >
               <span className="transition-transform duration-300 group-active:scale-95 group-hover:[transform:perspective(260px)_rotateY(16deg)_scale(1.08)] inline-flex">
-                <BudAILogo size="sm" animated />
+                <BudAILogo size="sm" animated mode={busy ? "thinking" : "idle"} />
               </span>
               <span className="flex flex-col leading-none">
                 <TypeWordmark />
-                <span className="mt-1.5 hidden sm:block font-mono text-[9px] lowercase tracking-[0.22em] text-white/40">developed by stilledev</span>
+                <span className="mt-1.5 hidden items-center gap-1.5 font-mono text-[9px] uppercase tracking-[0.2em] text-white/40 sm:flex">
+                  DEVELOPED BY <b className="font-bold text-accent-cyan [text-shadow:0_0_12px_rgba(0,229,255,0.55)]">STILLEDEV</b>
+                </span>
               </span>
             </a>
 
@@ -211,19 +214,49 @@ export default function Navbar() {
                 ))}
               </div>
 
+              <button
+                type="button"
+                onClick={() => window.dispatchEvent(new Event("budai:whats-new"))}
+                aria-label={lang === "sv" ? "Vad är nytt" : "What's new"}
+                className="relative rounded-full border border-white/[0.08] p-2 text-white/70 transition-colors hover:border-accent-cyan/40 hover:text-white"
+              >
+                <Bell className="h-4 w-4" />
+                <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-accent-cyan" />
+              </button>
+              <a href="#playground" className="rounded-full border border-white/15 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:border-accent-cyan/40">
+                Playground
+              </a>
               <a href="#waitlist" className="btn-primary !px-5 !py-2.5 text-sm">
                 <span>{t.nav.requestAccess}</span>
               </a>
             </div>
 
-            <button
+            <div className="flex items-center gap-2 lg:hidden">
+              <div className="flex items-center rounded-full border border-white/[0.08] bg-black/40 p-0.5" role="group" aria-label="Language">
+                {(["en", "sv"] as const).map((code) => (
+                  <button
+                    key={code}
+                    type="button"
+                    onClick={() => setLang(code)}
+                    aria-pressed={lang === code}
+                    className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ${lang === code ? "bg-gradient-to-r from-accent-cyan to-accent-purple text-white" : "text-muted/70"}`}
+                  >
+                    {code.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+              <a href="#playground" className="rounded-full bg-accent-cyan px-3.5 py-1.5 text-xs font-semibold text-[#020205]">
+                {lang === "sv" ? "Prova" : "Try"}
+              </a>
+              <button
               onClick={() => setMobileOpen(!mobileOpen)}
-              className="lg:hidden p-2 text-white rounded-lg hover:bg-white/5 transition-colors"
+              className="p-2 text-white rounded-lg hover:bg-white/5 transition-colors"
               aria-label={mobileOpen ? "Close menu" : "Open menu"}
               aria-expanded={mobileOpen}
             >
               {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
+            </div>
           </div>
         </div>
       </motion.nav>
@@ -234,10 +267,10 @@ export default function Navbar() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-40 lg:hidden"
+            className="fixed inset-0 z-[55] lg:hidden"
           >
             <div
-              className="absolute inset-0 bg-background/98 backdrop-blur-2xl"
+              className="absolute inset-0 bg-[#020205]/95 backdrop-blur-2xl"
               onClick={() => setMobileOpen(false)}
             />
             <div className="relative pt-24 px-6 flex flex-col gap-1 max-h-screen overflow-y-auto pb-10">

@@ -43,7 +43,7 @@ export default function FeedbackButton() {
           setOpen(true);
           setState("idle");
         }}
-        className="fixed bottom-5 left-5 z-40 hidden items-center gap-2 rounded-full border border-white/10 bg-[#05050b]/80 px-4 py-2.5 text-xs font-medium text-white/80 shadow-lg backdrop-blur-xl transition-colors hover:border-accent-cyan/40 hover:text-white md:flex"
+        className="fixed bottom-5 left-5 z-40 hidden items-center gap-2 rounded-full border border-white/10 bg-[#07070e]/80 px-4 py-2.5 text-xs font-medium text-white/80 shadow-lg backdrop-blur-xl transition-colors hover:border-accent-cyan/40 hover:text-white md:flex"
       >
         <MessageSquare className="h-4 w-4 text-accent-cyan" />
         {sv ? "Feedback" : "Feedback"}

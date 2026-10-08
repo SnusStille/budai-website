@@ -6,7 +6,8 @@ import { ArrowRight, FileText, Languages, Zap, ChevronDown } from "lucide-react"
 import { useLang } from "@/components/ui/LanguageContext";
 import Magnetic from "@/components/ui/Magnetic";
 import AICore from "@/components/effects/AICore";
-import ParticleCore from "@/components/effects/ParticleCore";
+import dynamic from "next/dynamic";
+const ParticleCore = dynamic(() => import("@/components/effects/ParticleCore"), { ssr: false });
 import Tilt3D from "@/components/ui/Tilt3D";
 import { StilledevLink } from "@/components/ui/BudAILogo";
 
@@ -43,9 +44,6 @@ export default function Hero() {
 
   return (
     <section className="relative min-h-[100svh] flex items-center justify-center overflow-hidden pt-24 pb-16">
-      <div className="absolute inset-x-0 bottom-0 h-[55%] pointer-events-none overflow-hidden bud-floor-wrap" aria-hidden>
-        <div className="bud-floor" />
-      </div>
       <ParticleCore />
       {!isMobile && (
         <>
@@ -59,7 +57,7 @@ export default function Hero() {
           initial={{ opacity: 0, y: 16, scale: 0.96 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 0.55, delay: 0.12 }}
-          className="inline-flex items-center gap-2.5 px-4 sm:px-5 py-2 sm:py-2.5 rounded-full glass-strong mb-6 sm:mb-8 border border-accent-green/25 shadow-[0_0_40px_rgba(0,255,157,0.08)]"
+          className="inline-flex items-center gap-2.5 px-4 sm:px-5 py-2 sm:py-2.5 rounded-full glass-strong mb-6 sm:mb-8 border border-accent-green/25 shadow-[0_0_40px_rgba(45,212,191,0.08)]"
         >
           <span className="relative flex h-2 w-2 sm:h-2.5 sm:w-2.5">
             <span className="absolute inline-flex h-full w-full rounded-full opacity-70 bg-accent-green animate-ping" />

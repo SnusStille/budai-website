@@ -1,5 +1,6 @@
 "use client";
 
+import StatusPill from "@/components/ui/StatusPill";
 import { useState } from "react";
 import { Github, MessageSquare, Linkedin, Mail, ArrowUpRight, X } from "lucide-react";
 import BudAILogo, { StilledevLink, StilledevMark } from "@/components/ui/BudAILogo";
@@ -101,28 +102,6 @@ export default function Footer() {
     <footer className="relative border-t border-white/[0.04]">
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent-cyan/20 to-transparent" />
       <div className="max-w-7xl mx-auto px-6 lg:px-8 py-14 md:py-16">
-        <div className="bud-3d-in mb-14 flex flex-col items-center justify-between gap-5 rounded-2xl border border-white/10 bg-gradient-to-r from-accent-cyan/10 via-accent-purple/10 to-accent-green/10 p-6 sm:flex-row sm:p-8">
-          <div className="text-center sm:text-left">
-            <p className="text-xl font-semibold text-white">{lang === "sv" ? "Redo att prova din nya ChatGPT?" : "Ready to try your new ChatGPT?"}</p>
-            <p className="mt-1 text-sm text-muted">{lang === "sv" ? "Gratis under preview. Ingen betalning krävs." : "Free during the preview. No payment needed."}</p>
-          </div>
-          <div className="flex gap-3">
-            <a href="#playground" className="rounded-full bg-accent-cyan px-5 py-2.5 text-sm font-semibold text-[#020205] hover:opacity-90 transition-opacity">{lang === "sv" ? "Öppna Playground" : "Open the Playground"}</a>
-            <a href="#waitlist" className="rounded-full border border-white/15 px-5 py-2.5 text-sm font-medium text-white hover:border-accent-cyan/40 transition-colors">{lang === "sv" ? "Väntelistan" : "Waitlist"}</a>
-            <button
-              type="button"
-              onClick={() => {
-                const url = window.location.origin;
-                if (navigator.share) void navigator.share({ title: "BudAI", text: "Your new ChatGPT", url }).catch(() => {});
-                else void navigator.clipboard.writeText(url);
-              }}
-              className="hidden rounded-full border border-white/15 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:border-accent-cyan/40 sm:inline-block"
-            >
-              {lang === "sv" ? "Dela" : "Share"}
-            </button>
-          </div>
-        </div>
-
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 lg:gap-8">
           <div className="lg:col-span-2">
             <a href="#" className="flex items-center gap-2.5 mb-5 group">
@@ -241,7 +220,8 @@ export default function Footer() {
           </div>
         )}
       </AnimatePresence>
-      <div className="relative h-20 sm:h-36 overflow-hidden select-none pointer-events-none" aria-hidden>
+      <div className="flex justify-center pb-4"><StatusPill /></div>
+  <div className="relative h-20 sm:h-36 overflow-hidden select-none pointer-events-none" aria-hidden>
         <span className="absolute inset-x-0 -bottom-3 sm:-bottom-6 text-center font-bold tracking-tighter leading-none text-[24vw] sm:text-[17vw] bg-gradient-to-b from-white/[0.12] via-accent-cyan/[0.05] to-transparent bg-clip-text text-transparent">
           BudAI
         </span>

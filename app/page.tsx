@@ -14,11 +14,12 @@ import Navbar from "@/components/sections/Navbar";
 import Hero from "@/components/sections/Hero";
 import Capabilities from "@/components/sections/Capabilities";
 import Waitlist from "@/components/sections/Waitlist";
-import ProofBar from "@/components/sections/ProofBar";
+import WhatIsBudAI from "@/components/sections/WhatIsBudAI";
+import ErrorBoundary from "@/components/ui/ErrorBoundary";
 import HeroAsk from "@/components/sections/HeroAsk";
+import LazyEgg from "@/components/effects/LazyEgg";
 import FeedbackButton from "@/components/ui/FeedbackButton";
 import Journey from "@/components/sections/Journey";
-import FloatingGlyphs from "@/components/effects/FloatingGlyphs";
 import SiteChrome from "@/components/ui/SiteChrome";
 import WhatsNew from "@/components/ui/WhatsNew";
 import Shortcuts from "@/components/ui/Shortcuts";
@@ -30,6 +31,7 @@ const AIEnvironment = dynamic(() => import("@/components/effects/AIEnvironment")
 const CursorGlow = dynamic(() => import("@/components/effects/CursorGlow"), { ssr: false });
 
 const About = dynamic(() => import("@/components/sections/About"));
+const AIBackdropFX = dynamic(() => import("@/components/effects/AIBackdropFX"), { ssr: false });
 const AIPlayground = dynamic(() => import("@/components/sections/AIPlayground"));
 
 export default function Home() {
@@ -48,7 +50,7 @@ export default function Home() {
       if (buffer.length > target.length) buffer = buffer.slice(-target.length);
       if (buffer === target) {
         console.log("%c🚀 Welcome, developer.", "color: #00e5ff; font-size: 14px; font-weight: bold;");
-        console.log("%cYou found the easter egg.", "color: #00ff9d; font-size: 12px;");
+        console.log("%cYou found the easter egg.", "color: #2dd4bf; font-size: 12px;");
         document.documentElement.classList.add("egg-flash");
         setTimeout(() => document.documentElement.classList.remove("egg-flash"), 1200);
         window.dispatchEvent(new Event("budai:egg"));
@@ -83,7 +85,7 @@ export default function Home() {
       <SectionDots />
       <div className="fixed inset-0 z-[1] pointer-events-none ai-grid opacity-[0.35]" aria-hidden />
       <div className="fixed inset-0 z-[1] pointer-events-none ai-vignette" aria-hidden />
-      <FloatingGlyphs />
+      <AIBackdropFX />
 
       <div className="relative z-10">
         <Navbar />
@@ -91,10 +93,13 @@ export default function Home() {
         <WhatsNew />
         <Shortcuts />
         <FeedbackButton />
+        <LazyEgg />
         <Hero />
         <HeroAsk />
-        <ProofBar />
-        <AIPlayground />
+        <WhatIsBudAI />
+        <ErrorBoundary>
+          <AIPlayground />
+        </ErrorBoundary>
         <Capabilities />
         <About />
         <Waitlist />

@@ -5,9 +5,8 @@
 Restricted to **Stille (Stilledev)** only.
 
 - Password is **never shown** on the login page.
-- Set the server-only `ADMIN_PASSWORD` in `.env.local` for local development or in the deployment environment for production.
-- There is no default password: if `ADMIN_PASSWORD` is unset, admin login is locked.
-- Never use a `NEXT_PUBLIC_*` variable for the password; those values can be included in the browser bundle.
+- Default / env: `ADMIN_PASSWORD` (falls back to project launch key).
+- **Note:** `NEXT_PUBLIC_*` values ship in the browser bundle — this is a private gate, not enterprise auth. Do not treat it as production security.
 
 ## Features
 

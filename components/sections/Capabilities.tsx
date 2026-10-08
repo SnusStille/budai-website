@@ -56,7 +56,7 @@ const capabilities = [
     previewSv: "1. Samla input\n2. Utkast sammanfattning\n3. Flagga risker\n4. Skicka digest",
     gradient: "from-accent-purple to-accent-pink",
     accent: "text-accent-purple",
-    glow: "rgba(185,103,255,0.15)",
+    glow: "rgba(124,92,255,0.15)",
   },
   {
     id: "decide",
@@ -72,7 +72,7 @@ const capabilities = [
     previewSv: "Risk: medium\nBlocker: datakvalitet\nNästa: 3 ägare, 1 vecka",
     gradient: "from-accent-green to-accent-cyan",
     accent: "text-accent-green",
-    glow: "rgba(0,255,157,0.12)",
+    glow: "rgba(45,212,191,0.12)",
   },
   {
     id: "bilingual",
@@ -88,7 +88,7 @@ const capabilities = [
     previewSv: "Utkast på SV → putsa på EN\nSamma intent. Samma kvalitet.",
     gradient: "from-accent-pink to-accent-purple",
     accent: "text-accent-pink",
-    glow: "rgba(255,107,157,0.12)",
+    glow: "rgba(167,139,250,0.12)",
   },
 ];
 
@@ -218,12 +218,12 @@ export default function Capabilities() {
       cons: sv ? ["Prissätts per team", "Kräver ett företagskonto"] : ["Priced per team", "Needs a company account"],
       cta: sv ? "Gå med i väntelistan" : "Join the waitlist",
       href: "#waitlist",
-      card: "border-accent-green/30 bg-accent-green/[0.04]",
-      bar: "from-accent-green to-accent-green/0",
-      chip: "border-accent-green/30 bg-accent-green/10 text-accent-green",
-      iconTone: "border-accent-green/30 bg-accent-green/10 text-accent-green",
-      btn: "border border-accent-green/40 text-white hover:bg-accent-green/10",
-      blob: "bg-accent-green/20",
+      card: "border-white/20 bg-white/[0.04]",
+      bar: "from-accent-cyan via-accent-purple to-accent-purple/0",
+      chip: "border-white/20 bg-white/10 text-white",
+      iconTone: "border-white/20 bg-white/10 text-white",
+      btn: "border border-white/30 text-white hover:bg-white/10",
+      blob: "bg-white/10",
     },
   ];
 

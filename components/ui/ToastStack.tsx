@@ -93,7 +93,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, x: 16, scale: 0.96 }}
                 transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-                className="pointer-events-auto rounded-xl border border-white/[0.1] bg-[#0c0c14]/95 backdrop-blur-xl shadow-[0_12px_40px_rgba(0,0,0,0.5)] px-3.5 py-3 flex gap-3"
+                className="pointer-events-auto rounded-xl border border-white/[0.1] bg-[#07070e]/95 backdrop-blur-xl shadow-[0_12px_40px_rgba(0,0,0,0.5)] px-3.5 py-3 flex gap-3"
               >
                 <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-accent-cyan/20 to-accent-purple/20 border border-white/10 flex items-center justify-center shrink-0">
                   <Icon className="w-4 h-4 text-accent-cyan" />

@@ -29,6 +29,7 @@ import {
   MessageSquare,
 } from "lucide-react";
 import AdminLayout from "@/components/admin/AdminLayout";
+import AdminInbox from "@/components/admin/AdminInbox";
 import StatsCards from "@/components/admin/StatsCards";
 import UserTable from "@/components/admin/UserTable";
 import ActivityChart from "@/components/admin/ActivityChart";
@@ -48,6 +49,7 @@ export default function AdminPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState(false);
+  const [hint, setHint] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   const [tab, setTab] = useState<Tab>("overview");
   const [quickFilter, setQuickFilter] = useState("");
@@ -147,12 +149,23 @@ export default function AdminPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ password }),
       });
-      if (!res.ok) throw new Error("bad");
+      if (res.status === 503) {
+        setHint("The admin password isn't set on the server. Add ADMIN_PASSWORD to .env.local (or your host's env vars) and restart.");
+        setError(true);
+        return;
+      }
+      if (!res.ok) {
+        setHint("Wrong password.");
+        setError(true);
+        return;
+      }
       sessionStorage.setItem("budai_admin_auth", "true");
-      sessionStorage.setItem("budai_admin_key", password);
+      sessionStorage.setItem("budai_admin_key", password.trim());
+      setHint("");
       setError(false);
       setAuthenticated(true);
     } catch {
+      setHint("Network error. Is the server running?");
       setError(true);
     }
   };
@@ -356,7 +369,7 @@ export default function AdminPage() {
                     className="text-red-400 text-xs mt-2"
                     role="alert"
                   >
-                    Access denied.
+                    {hint || "Access denied."}
                   </motion.p>
                 )}
               </div>
@@ -407,6 +420,7 @@ export default function AdminPage() {
   return (
     <AdminLayout>
       <div className="space-y-6">
+        <AdminInbox />
         <motion.div
           id="dashboard"
           initial={{ opacity: 0, y: 12 }}

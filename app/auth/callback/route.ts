@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import { PRODUCTION_URL } from "@/lib/site";
+import { getSiteUrl, PRODUCTION_URL } from "@/lib/site";
 
 /**
  * Supabase Auth callback — PKCE code, magic-link token_hash, provider errors.
@@ -10,38 +10,45 @@ import { PRODUCTION_URL } from "@/lib/site";
  * http://localhost:3000 and redirectTo is not allowlisted, emails point at
  * localhost. Fix Site URL = https://stilledev.se (AUTH_SETUP.md).
  */
-function safeAppOrigin(): string {
-  if (process.env.NODE_ENV !== "production") {
-    return "http://localhost:3000";
+function safeAppOrigin(request: Request): string {
+  const url = new URL(request.url);
+  const xfHost = request.headers.get("x-forwarded-host");
+  const host = (xfHost || request.headers.get("host") || url.host)
+    .split(",")[0]
+    .trim()
+    .toLowerCase();
+  const xfProto = request.headers.get("x-forwarded-proto");
+  let proto = (xfProto || url.protocol.replace(":", "") || "https")
+    .split(",")[0]
+    .trim()
+    .toLowerCase();
+
+  if (!host || host.startsWith("0.0.0.0")) {
+    return getSiteUrl();
   }
 
-  if (process.env.VERCEL_ENV === "production") {
-    return PRODUCTION_URL;
+  // Production brand domain always HTTPS
+  if (host === "stilledev.se" || host === "www.stilledev.se") {
+    return `https://${host}`;
   }
 
-  // VERCEL_URL is supplied by the deployment environment, unlike request headers.
-  const vercelHost = (process.env.VERCEL_URL || "").trim().toLowerCase();
-  if (/^[a-z0-9-]+(?:\.[a-z0-9-]+)*\.vercel\.app$/.test(vercelHost)) {
-    return `https://${vercelHost}`;
+  const isLoopback = host.startsWith("localhost") || host.startsWith("127.0.0.1");
+  if (isLoopback) {
+    return `http://${host.includes(":") ? host : `${host}:3000`}`.replace(
+      ":3000:3000",
+      ":3000"
+    );
   }
 
-  const configuredUrl = process.env.NEXT_PUBLIC_SITE_URL;
-  if (configuredUrl) {
-    try {
-      const configured = new URL(configuredUrl);
-      if (
-        configured.protocol === "https:" &&
-        (configured.hostname === "stilledev.se" ||
-          configured.hostname === "www.stilledev.se")
-      ) {
-        return configured.origin;
-      }
-    } catch {
-      // Fall back to the canonical production origin for invalid configuration.
-    }
+  // Vercel / preview
+  if (host.endsWith(".vercel.app") || host.endsWith(".e2b.app")) {
+    return `https://${host}`;
   }
 
-  return PRODUCTION_URL;
+  if (proto !== "http" && proto !== "https") proto = "https";
+  if (process.env.NODE_ENV === "production" && proto === "http") proto = "https";
+
+  return `${proto}://${host}`;
 }
 
 function playgroundRedirect(origin: string, params: Record<string, string>) {
@@ -57,7 +64,15 @@ export async function GET(request: Request) {
   const errorParam = searchParams.get("error");
   const errorDesc = searchParams.get("error_description");
 
-  const origin = safeAppOrigin();
+  let origin = safeAppOrigin(request);
+
+  // Hard safety: never send production NODE_ENV users to localhost
+  if (
+    process.env.VERCEL_ENV === "production" &&
+    (origin.includes("localhost") || origin.includes("127.0.0.1"))
+  ) {
+    origin = PRODUCTION_URL;
+  }
 
   const ok = () => playgroundRedirect(origin, { auth: "ok" });
   const fail = (reason: string) =>

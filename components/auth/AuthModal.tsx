@@ -72,7 +72,7 @@ export default function AuthModal() {
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 16 }}
-            className="relative w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl border border-white/[0.1] bg-[#0a0a12] p-6 sm:p-8 shadow-[0_0_80px_rgba(0,229,255,0.12)] max-h-[92vh] overflow-y-auto"
+            className="relative w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl border border-white/[0.1] bg-[#07070e] p-6 sm:p-8 shadow-[0_0_80px_rgba(0,229,255,0.12)] max-h-[92vh] overflow-y-auto"
             role="dialog"
             aria-modal="true"
           >
@@ -185,7 +185,7 @@ export default function AuthModal() {
                 </div>
 
                 <div className="relative my-4 text-center text-[10px] text-muted uppercase tracking-wider">
-                  <span className="bg-[#0a0a12] px-2 relative z-[1]">
+                  <span className="bg-[#07070e] px-2 relative z-[1]">
                     {lang === "sv" ? "eller e-post" : "or email"}
                   </span>
                   <span className="absolute inset-x-0 top-1/2 h-px bg-white/[0.06]" />

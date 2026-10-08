@@ -6,20 +6,9 @@ import ScrollReveal from "@/components/ui/ScrollReveal";
 import SpotlightCard from "@/components/ui/SpotlightCard";
 import { useLang } from "@/components/ui/LanguageContext";
 import Tilt3D from "@/components/ui/Tilt3D";
+import CodeTyper from "@/components/ui/CodeTyper";
 
-const CODE = `const stilledev = {
-  codingFor: "10 years",
-  buildingBudAI: "2 years",
-  stack: [
-    "Next.js",
-    "TypeScript",
-    "Tailwind",
-    "Supabase",
-    "Claude API"
-  ],
-  goal: "your new ChatGPT",
-  status: "developer preview",
-};`;
+const STACK = ["Next.js", "TypeScript", "Tailwind", "Supabase", "Claude API"];
 
 function CountUp({ to }: { to: number }) {
   const ref = useRef<HTMLSpanElement>(null);
@@ -47,7 +36,6 @@ function CountUp({ to }: { to: number }) {
 export default function About() {
   const { lang } = useLang();
   const sv = lang === "sv";
-  const [typedChars, setTypedChars] = useState(0);
   const stats = [
     { n: 10, label: sv ? "år av kodande" : "years of coding", c: "text-accent-cyan" },
     { n: 2, label: sv ? "år med BudAI" : "years on BudAI", c: "text-accent-purple" },
@@ -57,39 +45,10 @@ export default function About() {
     ? ["Kod i produktionskvalitet", "Integritet först", "Öppet på GitHub"]
     : ["Production-grade code", "Privacy first", "Open on GitHub"];
 
-  useEffect(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      setTypedChars(CODE.length);
-      return;
-    }
-
-    let timeout: ReturnType<typeof setTimeout>;
-    let active = true;
-    const write = (index: number) => {
-      if (!active) return;
-      if (index > CODE.length) {
-        setTypedChars(0);
-        timeout = setTimeout(() => write(1), 320);
-        return;
-      }
-      setTypedChars(index);
-      timeout = setTimeout(() => write(index + 1), index === CODE.length ? 1800 : 28);
-    };
-    write(1);
-
-    return () => {
-      active = false;
-      clearTimeout(timeout);
-    };
-  }, []);
-
-  const visibleCode = CODE.slice(0, typedChars);
-  const codeParts = visibleCode.split(/(const\b|codingFor\b|buildingBudAI\b|stack\b|goal\b|status\b|"(?:[^"]*)?")/g);
-
   return (
     <section id="about" className="relative section-hairline py-20 md:py-28 overflow-hidden">
       <div className="absolute -left-40 top-1/3 w-[420px] h-[420px] rounded-full bg-accent-green/[0.06] blur-[120px] pointer-events-none" />
-      <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-[1.05fr_1fr] gap-12 items-center">
+<div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-[1.05fr_1fr] gap-12 items-center">
         <ScrollReveal>
           <span className="section-badge text-accent-green mb-5">{sv ? "Byggaren" : "The builder"}</span>
           <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-white leading-[1.05] mb-6">
@@ -122,16 +81,8 @@ export default function About() {
             <a href="https://github.com/SnusStille/budai-website" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-[#020205] hover:opacity-90 transition-opacity">
               <Github className="h-4 w-4" /> GitHub
             </a>
-            <a
-              href="mailto:Stilleinc@hotmail.com"
-              aria-label={sv ? "Skicka e-post till Stilleinc@hotmail.com" : "Email Stilleinc@hotmail.com"}
-              className="inline-flex items-center gap-3 rounded-xl border border-accent-cyan/30 bg-accent-cyan/[0.06] px-5 py-3 text-white transition-colors hover:border-accent-cyan/60 hover:bg-accent-cyan/10"
-            >
-              <Mail className="h-5 w-5 shrink-0 text-accent-cyan" />
-              <span className="flex flex-col items-start">
-                <span className="text-sm font-semibold">{sv ? "Skicka e-post" : "Send an email"}</span>
-                <span className="text-xs text-muted">Stilleinc@hotmail.com</span>
-              </span>
+            <a href="mailto:Stilleinc@hotmail.com" className="inline-flex items-center gap-2 rounded-full border border-white/15 px-5 py-2.5 text-sm font-medium text-white hover:border-accent-cyan/40 transition-colors">
+              <Mail className="h-4 w-4" /> {sv ? "Kontakt" : "Contact"}
             </a>
           </div>
         </ScrollReveal>
@@ -145,29 +96,7 @@ export default function About() {
               <span className="w-2.5 h-2.5 rounded-full bg-green-400/50" />
               <span className="ml-3 font-mono text-[11px] text-muted/60">stilledev.ts</span>
             </div>
-            <pre
-              aria-hidden="true"
-              className="overflow-x-auto p-5 font-mono text-[13px] leading-[1.85] text-white/80"
-            >
-              <code>
-                {codeParts.map((part, index) => (
-                  <span
-                    key={index}
-                    className={
-                      part === "const"
-                        ? "text-accent-purple"
-                        : part.startsWith('"')
-                          ? "text-accent-cyan"
-                          : ""
-                    }
-                  >
-                    {part}
-                  </span>
-                ))}
-                <span className="motion-safe:animate-pulse text-accent-cyan">▍</span>
-              </code>
-            </pre>
-            <span className="sr-only">{CODE}</span>
+            <CodeTyper />
           </div>
           </Tilt3D>
         </ScrollReveal>

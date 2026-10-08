@@ -52,7 +52,7 @@ export default function BuddyCard({ className = "" }: { className?: string }) {
           transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
           className={`${className} fixed bottom-4 right-4 z-[30] w-[min(300px,calc(100vw-2rem))]`}
         >
-          <div className="group relative rounded-2xl border border-white/10 bg-gradient-to-b from-[#12121c] to-[#0a0a12] shadow-[0_8px_40px_rgba(0,0,0,0.5)] overflow-hidden">
+          <div className="group relative rounded-2xl border border-white/10 bg-gradient-to-b from-[#12121c] to-[#07070e] shadow-[0_8px_40px_rgba(0,0,0,0.5)] overflow-hidden">
             <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-accent-cyan/50 to-transparent" />
             {/* Auto-hide progress */}
             <motion.div
@@ -74,7 +74,7 @@ export default function BuddyCard({ className = "" }: { className?: string }) {
             <div className="relative flex items-start gap-3 p-4 pb-2">
               <div className="relative shrink-0">
                 <BudAILogo size="md" animated />
-                <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-accent-green border-2 border-[#0a0a12]" />
+                <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-accent-green border-2 border-[#07070e]" />
               </div>
               <div className="flex-1 min-w-0 pr-4">
                 <p className="text-sm font-semibold text-white leading-snug">

@@ -8,7 +8,7 @@ const LAYERS = [-28, -20, -12, -6, 0, 6, 12, 20, 28];
 const WORD = "BudAI";
 const GLYPHS = "01<>{}/=+*#";
 const BOOT = ["init core", "load models", "warm up playground", "ready"];
-const DURATION = 7000;
+const DURATION = 5600;
 
 /** Each letter of the wordmark scrambles through code characters, then locks in. */
 function Scramble({ start }: { start: number }) {
@@ -19,12 +19,12 @@ function Scramble({ start }: { start: number }) {
     const tick = (t: number) => {
       const el = t - t0;
       setOut(WORD.split("").map((c, i) => {
-        const s = start + i * 340;
+        const s = start + i * 300;
         if (el < s) return "";
-        if (el > s + 560) return c;
+        if (el > s + 520) return c;
         return GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
       }));
-      if (el < start + WORD.length * 340 + 600) raf = requestAnimationFrame(tick);
+      if (el < start + WORD.length * 300 + 600) raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
@@ -51,16 +51,21 @@ export default function LoadingScreen() {
   const finish = useRef<() => void>(() => {});
 
   useEffect(() => {
-    let seen = false;
+    let fresh = true;
     try {
-      seen = sessionStorage.getItem("budai_intro") === "1";
+      const ts = Number(localStorage.getItem("budai_intro_ts") || 0);
+      fresh = !ts || Date.now() - ts > 30 * 60 * 1000;
     } catch {
       /* ignore */
     }
-    if (seen || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    const nav = navigator as Navigator & { connection?: { saveData?: boolean }; deviceMemory?: number };
+    const slow = !!nav.connection?.saveData || (!!nav.deviceMemory && nav.deviceMemory <= 2);
+    if (!fresh || slow) {
       setShow(false);
       return;
     }
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const duration = reduced ? 1800 : DURATION;
     document.body.style.overflow = "hidden";
     let raf = 0;
     let closing = false;
@@ -69,7 +74,7 @@ export default function LoadingScreen() {
       closing = true;
       cancelAnimationFrame(raf);
       try {
-        sessionStorage.setItem("budai_intro", "1");
+        localStorage.setItem("budai_intro_ts", String(Date.now()));
       } catch {
         /* ignore */
       }
@@ -82,7 +87,7 @@ export default function LoadingScreen() {
     };
     const start = performance.now();
     const tick = (t: number) => {
-      const v = Math.min(1, (t - start) / DURATION);
+      const v = Math.min(1, (t - start) / duration);
       setP(v);
       if (v < 1) raf = requestAnimationFrame(tick);
       else finish.current();
@@ -102,21 +107,31 @@ export default function LoadingScreen() {
       role="status"
       aria-label="Loading BudAI"
       onClick={() => finish.current()}
-      className={`fixed inset-0 z-[200] flex flex-col items-center justify-center overflow-hidden bg-[#020205] transition-[opacity,transform,filter] duration-[900ms] ease-out ${
+      className={`fixed inset-0 z-[200] flex items-center justify-center overflow-hidden bg-[#020205] transition-[opacity,transform,filter] duration-[900ms] ease-out ${
         out ? "opacity-0 scale-110 blur-md pointer-events-none" : "opacity-100"
       }`}
     >
       <div className="ai-grid absolute inset-0 opacity-30" aria-hidden />
       <div className="absolute h-[620px] w-[620px] rounded-full bg-accent-cyan/[0.08] blur-[140px]" aria-hidden />
-      <div className="absolute h-[380px] w-[380px] translate-x-24 translate-y-20 rounded-full bg-accent-purple/[0.1] blur-[120px]" aria-hidden />
+      <div className="absolute h-[380px] w-[380px] translate-x-24 translate-y-20 rounded-full bg-accent-purple/[0.12] blur-[120px]" aria-hidden />
 
-      <p className="bud-pop relative mb-6 font-mono text-[11px] lowercase tracking-[0.35em] text-white/40" style={{ animationDelay: "0.3s" }}>
-        developed by stilledev
-      </p>
+      {/* top: credit, tagline, wordmark */}
+      <div className="absolute inset-x-0 top-[6%] sm:top-[8%] flex flex-col items-center gap-2 text-center">
+        <p className="bud-pop font-mono text-[11px] uppercase tracking-[0.35em] text-white/40" style={{ animationDelay: "0.3s" }}>
+          DEVELOPED BY <b className="font-bold text-accent-cyan [text-shadow:0_0_14px_rgba(0,229,255,0.6)]">STILLEDEV</b>
+        </p>
+        <p className="bud-pop text-base sm:text-xl font-medium tracking-wide text-white/80" style={{ animationDelay: "1.6s" }}>
+          Your new <span className="bg-gradient-to-r from-accent-cyan to-accent-purple bg-clip-text text-transparent">ChatGPT</span>
+        </p>
+        <h1 className="text-5xl sm:text-7xl font-bold tracking-tight text-white [text-shadow:0_0_50px_rgba(0,229,255,0.45)]">
+          <Scramble start={2200} />
+        </h1>
+      </div>
 
-      <div className="relative flex items-center justify-center">
+      {/* center: the logo, exactly mid-screen */}
+      <div className="relative flex items-center justify-center scale-[0.8] sm:scale-100">
         <span className="bud-shock" style={{ animationDelay: "0.7s" }} aria-hidden />
-        <span className="bud-shock" style={{ animationDelay: "3.4s" }} aria-hidden />
+        <span className="bud-shock" style={{ animationDelay: "3.2s" }} aria-hidden />
         <Tilt3D max={10}>
           <div className="bud-scene" style={{ perspective: 900 }}>
             <div className="bud-logo3d">
@@ -124,7 +139,7 @@ export default function LoadingScreen() {
                 <div
                   key={z}
                   className="bud-layer-in absolute inset-0 flex items-center justify-center"
-                  style={{ transform: `translateZ(${z}px)`, opacity: z === 0 ? 1 : 0.1 + (28 - Math.abs(z)) / 190, animationDelay: `${0.5 + i * 0.1}s` }}
+                  style={{ transform: `translateZ(${z}px)`, opacity: z === 0 ? 1 : 0.1 + (28 - Math.abs(z)) / 190, animationDelay: `${0.4 + i * 0.09}s` }}
                 >
                   <BudAILogo size="hero" animated={z === 0} />
                 </div>
@@ -136,20 +151,13 @@ export default function LoadingScreen() {
         </Tilt3D>
       </div>
 
-      <p className="bud-pop relative mt-12 text-lg sm:text-xl font-medium tracking-wide text-white/80" style={{ animationDelay: "2s" }}>
-        Your new <span className="bg-gradient-to-r from-accent-cyan to-accent-purple bg-clip-text text-transparent">ChatGPT</span>
-      </p>
-
-      <h1 className="relative mt-1 text-6xl sm:text-8xl font-bold tracking-tight text-white [text-shadow:0_0_50px_rgba(0,229,255,0.45)]">
-        <Scramble start={2600} />
-      </h1>
-
-      <div className="relative mt-9 w-72">
-        <div className="relative h-px bg-white/10">
+      {/* bottom: progress + boot log */}
+      <div className="absolute inset-x-0 bottom-[4%] flex flex-col items-center">
+        <div className="relative h-px w-64 bg-white/10 sm:w-72">
           <div className="h-px bg-gradient-to-r from-accent-cyan to-accent-purple" style={{ width: `${p * 100}%` }} />
           <span className="absolute -top-[3px] h-[7px] w-[7px] -translate-x-1/2 rounded-full bg-white shadow-[0_0_12px_rgba(0,229,255,1)]" style={{ left: `${p * 100}%` }} />
         </div>
-        <ul className="mt-4 h-[72px] space-y-1 font-mono text-[11px] text-white/45">
+        <ul className="mt-3 h-[68px] w-64 space-y-1 font-mono text-[11px] text-white/45 sm:w-72">
           {BOOT.map((b, i) =>
             p >= thresholds[i] ? (
               <li key={b} className="bud-pop flex justify-between" style={{ animationDuration: "0.5s" }}>
@@ -159,8 +167,8 @@ export default function LoadingScreen() {
             ) : null
           )}
         </ul>
+        <p className="bud-pop text-[11px] text-white/25" style={{ animationDelay: "1.5s" }}>click to skip</p>
       </div>
-      <p className="bud-pop absolute bottom-8 text-[11px] text-white/25" style={{ animationDelay: "1.5s" }}>click to skip</p>
     </div>
   );
 }

@@ -23,7 +23,7 @@ export default function SpotlightCard({ children, className = "", tilt = true }:
       onMouseLeave={() => {
         if (ref.current) ref.current.style.transform = "";
       }}
-      className={`group relative overflow-hidden transition-transform duration-200 ease-out will-change-transform ${className}`}
+      className={`group relative overflow-hidden transition-transform duration-200 ease-out ${className}`}
     >
       <div
         aria-hidden

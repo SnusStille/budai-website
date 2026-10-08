@@ -38,7 +38,7 @@ export default function AIEnvironment() {
       // Static ambient only
       const g = ctx.createRadialGradient(W * 0.5, H * 0.3, 0, W * 0.5, H * 0.3, Math.max(W, H) * 0.5);
       g.addColorStop(0, "rgba(0,229,255,0.1)");
-      g.addColorStop(0.45, "rgba(185,103,255,0.05)");
+      g.addColorStop(0.45, "rgba(124,92,255,0.05)");
       g.addColorStop(1, "rgba(0,0,0,0)");
       ctx.fillStyle = g;
       ctx.fillRect(0, 0, W, H);
@@ -114,8 +114,8 @@ export default function AIEnvironment() {
 
     const colors = [
       (a: number) => `rgba(0,229,255,${a})`,
-      (a: number) => `rgba(185,103,255,${a})`,
-      (a: number) => `rgba(0,255,157,${a})`,
+      (a: number) => `rgba(124,92,255,${a})`,
+      (a: number) => `rgba(45,212,191,${a})`,
     ];
 
     const draw = (now: number) => {
@@ -128,8 +128,8 @@ export default function AIEnvironment() {
 
       // Strong ambient blooms
       bloom(W * 0.5, H * 0.22, Math.min(W, H) * 0.48, "rgba(0,229,255,0.11)");
-      bloom(W * 0.82, H * 0.5, Math.min(W, H) * 0.36, "rgba(185,103,255,0.09)");
-      bloom(W * 0.15, H * 0.72, Math.min(W, H) * 0.3, "rgba(0,255,157,0.06)");
+      bloom(W * 0.82, H * 0.5, Math.min(W, H) * 0.36, "rgba(124,92,255,0.09)");
+      bloom(W * 0.15, H * 0.72, Math.min(W, H) * 0.3, "rgba(45,212,191,0.06)");
 
       // Soft perspective grid lines (few, not dense)
       ctx.strokeStyle = "rgba(0,229,255,0.04)";
@@ -173,7 +173,7 @@ export default function AIEnvironment() {
           pk.y = 80 + Math.random() * (H - 160);
         }
         const grad = ctx.createLinearGradient(pk.x, 0, pk.x + pk.w, 0);
-        const c = pk.hue === 0 ? "0,229,255" : "185,103,255";
+        const c = pk.hue === 0 ? "0,229,255" : "124,92,255";
         grad.addColorStop(0, `rgba(${c},0)`);
         grad.addColorStop(0.5, `rgba(${c},0.45)`);
         grad.addColorStop(1, `rgba(${c},0)`);

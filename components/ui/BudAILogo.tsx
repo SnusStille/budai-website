@@ -29,7 +29,9 @@ export default function BudAILogo({
   onClick,
   label = "BudAI",
   variant = "dark",
+  mode = "idle",
 }: {
+  mode?: "idle" | "thinking";
   size?: Size;
   className?: string;
   animated?: boolean;
@@ -62,12 +64,18 @@ export default function BudAILogo({
       } ${className}`}
       style={{ width: px, height: px }}
     >
-      <svg viewBox="0 0 32 32" fill="none" className="w-full h-full overflow-visible" aria-hidden="true">
+      <svg viewBox="0 0 32 32" fill="none" className={`w-full h-full overflow-visible ${mode === "thinking" ? "bud-thinking" : ""}`} aria-hidden="true">
         <defs>
           <linearGradient id={g} x1="2" y1="4" x2="30" y2="28" gradientUnits="userSpaceOnUse">
             <stop stopColor={cyan} />
-            <stop offset="1" stopColor="#7c5cff" />
+            <stop offset="0.55" stopColor="#7c5cff" />
+            <stop offset="1" stopColor={cyan} />
+            {a && <animateTransform attributeName="gradientTransform" type="rotate" from="0 16 16" to="360 16 16" dur="7s" repeatCount="indefinite" />}
           </linearGradient>
+          <radialGradient id={`${g}-rg`}>
+            <stop stopColor={cyan} stopOpacity="0.55" />
+            <stop offset="1" stopColor={cyan} stopOpacity="0" />
+          </radialGradient>
           <linearGradient id={tl} x1="16" y1="0" x2="22" y2="0" gradientUnits="userSpaceOnUse">
             <stop stopColor={cyan} />
             <stop offset="1" stopColor={cyan} stopOpacity="0" />
@@ -81,14 +89,18 @@ export default function BudAILogo({
           </filter>
         </defs>
 
+        <circle cx="16" cy="16" r="11" fill={`url(#${g}-rg)`} className={a ? "bud-core" : undefined} />
+        <path d="M26.5 4.5v3M25 6h3" stroke="#fff" strokeWidth="0.6" strokeLinecap="round" className={a ? "bud-node" : undefined} />
+        <path d="M5.5 25v3M4 26.5h3" stroke="#fff" strokeWidth="0.6" strokeLinecap="round" className={a ? "bud-node" : undefined} style={{ animationDelay: "0.8s" }} />
+        <path d="M27.5 26v2.4M26.3 27.2h2.4" stroke="#fff" strokeWidth="0.5" strokeLinecap="round" className={a ? "bud-node" : undefined} style={{ animationDelay: "1.6s" }} />
         {/* outer HUD ring + compass ticks */}
         <circle cx="16" cy="16" r="13" stroke={fill} strokeWidth="1" strokeLinecap="round" strokeDasharray={a ? "18 5 7 5 3 5" : undefined} opacity={a ? 0.5 : 0.22} className={a ? "bud-orbit-rev" : undefined} />
         <path d="M16 0.6v1.8M31.4 16h-1.8M16 31.4v-1.8M0.6 16h1.8" stroke={cyan} strokeWidth="0.8" strokeLinecap="round" opacity="0.55" />
 
         {/* code brackets + AI spark, softly glowing */}
         <g filter={a ? `url(#${gl})` : undefined}>
-          <path className={a ? "bud-chev-l" : undefined} d={L} stroke={fill} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
-          <path className={a ? "bud-chev-r" : undefined} d={R} stroke={fill} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+          <g className={a ? "bud-asm-l" : undefined}><path className={a ? "bud-chev-l" : undefined} d={L} stroke={fill} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></g>
+          <g className={a ? "bud-asm-r" : undefined}><path className={a ? "bud-chev-r" : undefined} d={R} stroke={fill} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></g>
           <path d="M16 10.6C16.7 13.9 18.1 15.3 21.4 16C18.1 16.7 16.7 18.1 16 21.4C15.3 18.1 13.9 16.7 10.6 16C13.9 15.3 15.3 13.9 16 10.6Z" fill={fill} className={a ? "bud-core" : undefined} />
         </g>
 

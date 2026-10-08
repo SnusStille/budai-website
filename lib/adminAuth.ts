@@ -2,11 +2,16 @@ import { timingSafeEqual } from "crypto";
 import type { NextRequest } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-/** Server-only. ADMIN_PASSWORD has no fallback: if unset, admin is locked. */
+/** Server-only. Prefers ADMIN_PASSWORD; also accepts NEXT_PUBLIC_ADMIN_PASSWORD so an older .env.local keeps working. */
+const secret = () => (process.env.ADMIN_PASSWORD || process.env.NEXT_PUBLIC_ADMIN_PASSWORD || "").trim();
+
+export const adminConfigured = () => !!secret();
+
 export function passwordOk(got: string): boolean {
-  const expected = process.env.ADMIN_PASSWORD || "";
-  if (!expected || !got) return false;
-  const a = Buffer.from(got);
+  const expected = secret();
+  const g = (got || "").trim();
+  if (!expected || !g) return false;
+  const a = Buffer.from(g);
   const b = Buffer.from(expected);
   return a.length === b.length && timingSafeEqual(a, b);
 }

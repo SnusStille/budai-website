@@ -36,7 +36,7 @@ export default function ActivityChart() {
                 className="w-full rounded-t-lg bg-gradient-to-t from-accent-cyan/50 to-accent-purple/40 border border-white/[0.06] border-b-0 relative group min-h-[8px]"
                 title={`${day.visits} visits · ${day.signups} signups · ${day.playground_uses} playground`}
               >
-                <div className="absolute -top-9 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-[#0c0c14] px-2 py-1 rounded text-[10px] whitespace-nowrap border border-white/10 pointer-events-none z-10">
+                <div className="absolute -top-9 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-[#07070e] px-2 py-1 rounded text-[10px] whitespace-nowrap border border-white/10 pointer-events-none z-10">
                   {day.visits}v · {day.signups}s · {day.playground_uses}p
                 </div>
               </motion.div>

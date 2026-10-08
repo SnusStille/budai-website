@@ -47,7 +47,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       onClick={() => goTo(item.id)}
       className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-colors ${
         active === item.id
-          ? "bg-accent-cyan/12 text-accent-cyan border border-accent-cyan/20"
+          ? "bg-accent-cyan/10 text-accent-cyan border border-accent-cyan/20"
           : "text-muted hover:text-white hover:bg-white/5 border border-transparent"
       }`}
     >
@@ -59,7 +59,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-background text-white">
       <div className="flex">
-        <aside className="w-64 min-h-screen border-r border-white/[0.08] bg-[#07070c] fixed left-0 top-0 hidden lg:flex flex-col">
+        <aside className="w-64 min-h-screen border-r border-white/[0.08] bg-[#07070e] fixed left-0 top-0 hidden lg:flex flex-col">
           <div className="p-5 border-b border-white/[0.08]">
             <div className="flex items-center gap-2.5">
               <BudAILogo size="sm" animated />
@@ -116,7 +116,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           </div>
         </aside>
 
-        <div className="lg:hidden fixed top-0 left-0 right-0 z-40 border-b border-white/[0.08] bg-[#07070c]/95 backdrop-blur-xl flex items-center justify-between px-4 h-14">
+        <div className="lg:hidden fixed top-0 left-0 right-0 z-40 border-b border-white/[0.08] bg-[#07070e]/95 backdrop-blur-xl flex items-center justify-between px-4 h-14">
           <div className="flex items-center gap-2.5">
             <BudAILogo size="xs" animated />
             <span className="font-bold text-sm">
@@ -136,7 +136,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         {mobileOpen && (
           <div className="lg:hidden fixed inset-0 z-30 pt-14">
             <div
-              className="absolute inset-0 bg-background/98 backdrop-blur-xl"
+              className="absolute inset-0 bg-background/95 backdrop-blur-xl"
               onClick={() => setMobileOpen(false)}
             />
             <nav className="relative p-4 space-y-1">

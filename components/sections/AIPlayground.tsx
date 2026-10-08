@@ -193,6 +193,16 @@ function renderTextBlock(text: string, keyPrefix: string): ReactNode {
   return <div className="space-y-0.5">{nodes}</div>;
 }
 
+const SLASH = [
+  { cmd: "/summarize", d: ["Summarize", "Sammanfatta"], en: "Summarize this in 3 bullet points:\n\n", sv: "Sammanfatta detta i tre punkter:\n\n" },
+  { cmd: "/email", d: ["Write an email", "Skriv ett mejl"], en: "Write a short, friendly email about: ", sv: "Skriv ett kort, vänligt mejl om: " },
+  { cmd: "/plan", d: ["Make a plan", "Gör en plan"], en: "Make a clear step-by-step plan for: ", sv: "Gör en tydlig steg-för-steg-plan för: " },
+  { cmd: "/translate", d: ["Translate", "Översätt"], en: "Translate this to Swedish, keep the tone:\n\n", sv: "Översätt detta till engelska, behåll tonen:\n\n" },
+  { cmd: "/table", d: ["Make a table", "Gör en tabell"], en: "Turn this into a clear table:\n\n", sv: "Gör om detta till en tydlig tabell:\n\n" },
+  { cmd: "/explain", d: ["Explain simply", "Förklara enkelt"], en: "Explain simply, with an example: ", sv: "Förklara enkelt, med ett exempel: " },
+  { cmd: "/fix", d: ["Fix my text", "Förbättra min text"], en: "Fix the grammar and improve the style of this text:\n\n", sv: "Rätta grammatiken och förbättra stilen i texten:\n\n" },
+];
+
 const PERSONAS = [
   { id: "default", en: "Default", sv: "Standard" },
   { id: "writer", en: "Writer", sv: "Skribent" },
@@ -224,7 +234,19 @@ function closeFences(t: string): string {
   return (t.match(/```/g) || []).length % 2 === 1 ? t + "\n```" : t;
 }
 
+const MD_CACHE = new Map<string, ReactNode[]>();
 function renderMarkdown(text: string): ReactNode[] {
+  const hit = MD_CACHE.get(text);
+  if (hit) return hit;
+  const out = renderMarkdownRaw(text);
+  if (text.length < 20000) {
+    MD_CACHE.set(text, out);
+    if (MD_CACHE.size > 300) MD_CACHE.delete(MD_CACHE.keys().next().value as string);
+  }
+  return out;
+}
+
+function renderMarkdownRaw(text: string): ReactNode[] {
   const parts = text.split(/(```[\s\S]*?```)/g);
   return parts.map((block, bi) => {
     if (block.startsWith("```") && block.endsWith("```")) {
@@ -474,29 +496,64 @@ export default function AIPlayground() {
   const [input, setInput] = useState("");
   const [persona, setPersona] = useState("default");
   const [voiceOpen, setVoiceOpen] = useState(false);
+  const [slashIdx, setSlashIdx] = useState(0);
+  const stickRef = useRef(true);
+  const [atBottom, setAtBottom] = useState(true);
+  const titleRef = useRef("");
+
+  useEffect(() => {
+    try {
+      const d = sessionStorage.getItem("budai_draft");
+      if (d) setInput((cur) => cur || d);
+      const p = localStorage.getItem("budai_persona");
+      if (p && PERSONAS.some((x) => x.id === p)) setPersona(p);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+  useEffect(() => {
+    const id = window.setTimeout(() => {
+      try {
+        sessionStorage.setItem("budai_draft", input);
+      } catch {
+        /* ignore */
+      }
+    }, 500);
+    return () => window.clearTimeout(id);
+  }, [input]);
+  useEffect(() => {
+    try {
+      localStorage.setItem("budai_persona", persona);
+    } catch {
+      /* ignore */
+    }
+  }, [persona]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
   const [savedBranch, setSavedBranch] = useState<ChatMessage[] | null>(null);
 
   useEffect(() => {
-    const setPrompt = (text: string) => {
-      sessionStorage.removeItem("budai:pending-prompt");
-      setInput(text);
-      const input = document.getElementById("playground-input");
-      input?.scrollIntoView({ behavior: "smooth", block: "center" });
-      window.setTimeout(() => input?.focus({ preventScroll: true }), 450);
-    };
     const onPrompt = (e: Event) => {
       const text = (e as CustomEvent<string>).detail;
       if (typeof text !== "string") return;
-      setPrompt(text);
+      setInput(text);
+      window.setTimeout(() => document.querySelector<HTMLTextAreaElement>("#playground textarea")?.focus({ preventScroll: true }), 450);
     };
     window.addEventListener("budai:prompt", onPrompt);
-    const pendingPrompt = sessionStorage.getItem("budai:pending-prompt");
-    if (pendingPrompt) setPrompt(pendingPrompt);
     return () => window.removeEventListener("budai:prompt", onPrompt);
   }, []);
   const [activity, setActivity] = useState<AiActivity>("idle");
+  useEffect(() => {
+    const busyNow = activity !== "idle";
+    window.dispatchEvent(new CustomEvent("budai:busy", { detail: busyNow }));
+    if (busyNow) {
+      if (!titleRef.current) titleRef.current = document.title;
+      document.title = lang === "sv" ? "● BudAI tänker…" : "● BudAI is thinking…";
+    } else if (titleRef.current) {
+      document.title = titleRef.current;
+      titleRef.current = "";
+    }
+  }, [activity, lang]);
   const [typingText, setTypingText] = useState("");
   const [mode, setMode] = useState<Mode>("single");
   const [intentId, setIntentId] = useState<string>("chat");
@@ -641,9 +698,10 @@ export default function AIPlayground() {
   }, [auth.isMember, reloadSidebar]);
 
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
+    const el = scrollRef.current;
+    if (!el) return;
+    if (messages[messages.length - 1]?.role === "user") stickRef.current = true;
+    if (stickRef.current) el.scrollTop = el.scrollHeight; // don't yank the view if the reader scrolled up
   }, [messages, typingText, activity]);
 
   const authHeaders = useCallback(async (): Promise<HeadersInit> => {
@@ -834,6 +892,9 @@ export default function AIPlayground() {
     abortRef.current = false;
     setActivity("typing");
     setTypingText("");
+    let latest = "";
+    let queued = false;
+    let finished = false;
     for (;;) {
       if (abortRef.current) {
         await reader.cancel().catch(() => undefined);
@@ -843,7 +904,14 @@ export default function AIPlayground() {
       if (done) break;
       acc += dec.decode(value, { stream: true });
       const cut = acc.indexOf("\u0000");
-      setTypingText(cut === -1 ? acc : acc.slice(0, cut));
+      latest = cut === -1 ? acc : acc.slice(0, cut);
+      if (!queued) {
+        queued = true;
+        requestAnimationFrame(() => {
+          queued = false;
+          if (!finished) setTypingText(latest);
+        });
+      }
     }
     const cut = acc.indexOf("\u0000");
     const text = (cut === -1 ? acc : acc.slice(0, cut)).trim();
@@ -855,6 +923,7 @@ export default function AIPlayground() {
         /* ignore */
       }
     }
+    finished = true;
     setTypingText("");
     setActivity("idle");
     if (meta.error && !text) {
@@ -1626,23 +1695,30 @@ export default function AIPlayground() {
     </div>
   );
 
+  const slashOn = /^\/[a-z]*$/i.test(input) && !attach;
+  const slashItems = slashOn ? SLASH.filter((c) => c.cmd.startsWith(input.toLowerCase())) : [];
+  const applySlash = (i: number) => {
+    const it = slashItems[i % Math.max(1, slashItems.length)];
+    if (!it) return;
+    setInput(lang === "sv" ? it.sv : it.en);
+    setSlashIdx(0);
+    window.setTimeout(() => taRef.current?.focus({ preventScroll: true }), 0);
+  };
+
   return (
     <section
       id="playground"
-      className="relative section-hairline scroll-mt-20 py-12 sm:py-20 md:py-24 overflow-hidden"
+      className="relative section-hairline py-8 sm:py-10 md:py-12 overflow-hidden [overflow-anchor:none]"
     >
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(100vw,720px)] h-[min(100vw,720px)] bg-accent-purple/5 rounded-full blur-[140px] pointer-events-none" />
 
-      <div className="max-w-6xl mx-auto px-3 sm:px-6 lg:px-8 relative z-10">
-        <ScrollReveal className="text-center mb-6 sm:mb-8">
+      <div className="max-w-[1500px] mx-auto px-2 sm:px-4 lg:px-6 relative z-10">
+        <ScrollReveal className="text-center mb-4 sm:mb-5">
           <span className="section-badge text-accent-cyan mb-4">{t.playground.badge}</span>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight mb-3">
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight mb-1">
             {t.playground.title}{" "}
-            <span className="text-gradient inline-block px-[0.04em] -mx-[0.04em]">
-              {t.playground.titleHighlight}
-            </span>
+            <span className="text-gradient">{t.playground.titleHighlight}</span>
           </h2>
-          <p className="text-sm sm:text-base text-muted max-w-2xl mx-auto">{t.playground.subtitle}</p>
         </ScrollReveal>
 
         <ScrollReveal>
@@ -1650,7 +1726,7 @@ export default function AIPlayground() {
             className={`rounded-2xl sm:rounded-3xl overflow-hidden border border-white/[0.12] bg-[#05050a]/98 shadow-[0_0_100px_rgba(0,229,255,0.12),0_40px_80px_rgba(0,0,0,0.45)] flex ${
               expanded
                 ? "fixed inset-0 sm:inset-3 z-[80] rounded-none sm:rounded-3xl"
-                : "min-h-[min(82vh,760px)]"
+                : "h-[min(88dvh,940px)] min-h-[520px]"
             }`}
           >
             <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-accent-cyan/50 to-transparent z-20" />
@@ -1663,7 +1739,7 @@ export default function AIPlayground() {
                   animate={{ width: 240, opacity: 1 }}
                   exit={{ width: 0, opacity: 0 }}
                   transition={{ duration: 0.2 }}
-                  className="hidden md:flex flex-col border-r border-white/[0.06] bg-[#08080f] shrink-0 overflow-hidden"
+                  className="hidden md:flex flex-col border-r border-white/[0.06] bg-[#07070e] shrink-0 overflow-hidden"
                   style={{ maxWidth: 240 }}
                 >
                   {SidebarBody}
@@ -1688,7 +1764,7 @@ export default function AIPlayground() {
                   >
                     <PanelLeft className="w-4 h-4" />
                   </button>
-                  <BudAILogo size="sm" animated />
+                  <BudAILogo size="sm" animated mode={activity !== "idle" ? "thinking" : "idle"} />
                   <div className="min-w-0">
                     <div className="text-sm font-semibold text-white truncate flex items-center gap-1.5">
                       Bud<span className="text-accent-cyan">AI</span>
@@ -1744,33 +1820,31 @@ export default function AIPlayground() {
                   >
                     <Download className="w-4 h-4" />
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => exportRich("doc")}
-                    disabled={!messages.length}
-                    className="hidden sm:inline-flex px-2 py-2 rounded-lg border border-white/[0.06] text-[10px] font-medium text-muted hover:text-white disabled:opacity-30"
-                    title="Word (.doc)"
-                  >
-                    DOC
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => exportRich("pdf")}
-                    disabled={!messages.length}
-                    className="hidden sm:inline-flex px-2 py-2 rounded-lg border border-white/[0.06] text-[10px] font-medium text-muted hover:text-white disabled:opacity-30"
-                    title="PDF"
-                  >
-                    PDF
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => void shareThread()}
-                    disabled={!messages.length}
-                    className="hidden sm:inline-flex px-2 py-2 rounded-lg border border-white/[0.06] text-[10px] font-medium text-muted hover:text-white disabled:opacity-30"
-                    title={lang === "sv" ? "Dela länk" : "Share link"}
-                  >
-                    {lang === "sv" ? "DELA" : "SHARE"}
-                  </button>
+                  <details className="relative hidden sm:block">
+                    <summary className="flex cursor-pointer list-none items-center gap-1 rounded-lg border border-white/[0.06] px-2.5 py-2 text-[11px] font-medium text-muted hover:text-white [&::-webkit-details-marker]:hidden">
+                      {lang === "sv" ? "Exportera" : "Export"} ▾
+                    </summary>
+                    <div className="absolute right-0 z-30 mt-1 w-40 rounded-xl border border-white/10 bg-[#07070e]/95 p-1 shadow-2xl backdrop-blur-xl">
+                      {[
+                        { label: "Word (.doc)", run: () => exportRich("doc") },
+                        { label: "PDF", run: () => exportRich("pdf") },
+                        { label: lang === "sv" ? "Dela länk" : "Share link", run: () => void shareThread() },
+                      ].map((it) => (
+                        <button
+                          key={it.label}
+                          type="button"
+                          disabled={!messages.length}
+                          onClick={(e) => {
+                            it.run();
+                            e.currentTarget.closest("details")?.removeAttribute("open");
+                          }}
+                          className="block w-full rounded-lg px-3 py-2 text-left text-xs text-white/85 hover:bg-white/5 disabled:opacity-30"
+                        >
+                          {it.label}
+                        </button>
+                      ))}
+                    </div>
+                  </details>
                   <button
                     type="button"
                     onClick={() => setShowShortcuts(true)}
@@ -1884,6 +1958,12 @@ export default function AIPlayground() {
               <div
                 ref={scrollRef}
                 role="log"
+                onScroll={(e) => {
+                  const el = e.currentTarget;
+                  const near = el.scrollHeight - el.scrollTop - el.clientHeight < 160;
+                  stickRef.current = near;
+                  setAtBottom(near);
+                }}
                 aria-live="polite"
                 className="flex-1 overflow-y-auto p-3 sm:p-5 space-y-4 min-h-0"
                 style={{ WebkitOverflowScrolling: "touch" }}
@@ -1995,7 +2075,7 @@ export default function AIPlayground() {
                       )}
                     </div>
                     <div
-                      className={`min-w-0 max-w-[min(100%,560px)] space-y-2 ${
+                      className={`min-w-0 max-w-[min(100%,820px)] space-y-2 ${
                         msg.role === "user" ? "items-end" : ""
                       }`}
                     >
@@ -2254,9 +2334,26 @@ export default function AIPlayground() {
                 {(typingText || (busy && activity !== "typing")) && (
                   <div className="flex gap-2.5">
                     <div className="relative w-9 h-9 rounded-xl bg-gradient-to-br from-accent-cyan/90 to-accent-purple/90 p-[2px] shrink-0 shadow-[0_0_24px_rgba(0,229,255,0.35)]">
-                      <div className="w-full h-full rounded-[10px] bg-[#0a0a12] flex items-center justify-center overflow-hidden">
-                        <BudAILogo size="xs" animated className="!w-[22px] !h-[22px]" />
+                      <div className="w-full h-full rounded-[10px] bg-[#07070e] flex items-center justify-center overflow-hidden">
+                        <BudAILogo size="xs" animated mode="thinking" className="!w-[22px] !h-[22px]" />
                       </div>
+                      {activity === "idle" && messages.length > 0 && messages[messages.length - 1].role === "assistant" && (
+                        <div className="flex flex-wrap gap-1.5 pl-1 pt-1">
+                          {(lang === "sv"
+                            ? [["Kortare", "Gör det kortare."], ["Mer detaljer", "Lägg till mer detaljer."], ["Mer formellt", "Skriv om det i en mer formell ton."], ["Som lista", "Gör om det till en tydlig lista."], ["På engelska", "Översätt det till engelska."]]
+                            : [["Shorter", "Make that shorter."], ["More detail", "Add more detail."], ["More formal", "Rewrite that in a more formal tone."], ["As a list", "Turn that into a clear list."], ["In Swedish", "Translate that to Swedish."]]
+                          ).map(([label, prompt]) => (
+                            <button
+                              key={label}
+                              type="button"
+                              onClick={() => void runPrompt(prompt)}
+                              className="rounded-full border border-white/[0.08] px-3 py-1 text-[11px] text-muted transition-colors hover:border-accent-cyan/30 hover:text-accent-cyan"
+                            >
+                              {label}
+                            </button>
+                          ))}
+                        </div>
+                      )}
                       {busy && !typingText && (
                         <span className="absolute -inset-1 rounded-xl border border-accent-cyan/30 logo-pulse-ring pointer-events-none" />
                       )}
@@ -2267,7 +2364,7 @@ export default function AIPlayground() {
                       </div>
                       {typingText ? (
                         <div className="relative whitespace-pre-wrap leading-relaxed">
-                          {renderMarkdown(closeFences(typingText))}
+                          {renderMarkdownRaw(closeFences(typingText))}
                           <span className="inline-block w-1.5 h-4 ml-0.5 align-middle rounded-sm bg-accent-cyan/80 animate-pulse" aria-hidden />
                           <span className="inline-block w-1.5 h-4 bg-accent-cyan ml-0.5 align-middle animate-pulse" />
                         </div>
@@ -2416,6 +2513,42 @@ export default function AIPlayground() {
                   </div>
                 )}
 
+                {slashItems.length > 0 && (
+                  <div role="listbox" className="mb-2 overflow-hidden rounded-xl border border-white/10 bg-[#07070e]/95 shadow-2xl">
+                    {slashItems.map((c, i) => (
+                      <button
+                        key={c.cmd}
+                        type="button"
+                        role="option"
+                        aria-selected={i === slashIdx % slashItems.length}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          applySlash(i);
+                        }}
+                        className={`flex w-full items-center justify-between gap-4 px-3.5 py-2 text-left text-xs transition-colors ${
+                          i === slashIdx % slashItems.length ? "bg-accent-cyan/10 text-white" : "text-white/70 hover:bg-white/5"
+                        }`}
+                      >
+                        <span className="font-mono text-accent-cyan">{c.cmd}</span>
+                        <span className="text-muted">{lang === "sv" ? c.d[1] : c.d[0]}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {!atBottom && messages.length > 0 && (
+                  <div className="mb-2 flex justify-center">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        stickRef.current = true;
+                        scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+                      }}
+                      className="rounded-full border border-accent-cyan/30 bg-accent-cyan/10 px-3 py-1 text-[11px] text-accent-cyan hover:bg-accent-cyan/20 transition-colors"
+                    >
+                      ↓ {lang === "sv" ? "Senaste" : "Latest"}
+                    </button>
+                  </div>
+                )}
                 {savedBranch && (
                   <div className="mb-2 flex items-center justify-between rounded-lg border border-white/10 bg-white/[0.03] px-3 py-1.5 text-[11px] text-muted">
                     <span>{lang === "sv" ? "Tidigare version sparad" : "Earlier version saved"}</span>
@@ -2425,19 +2558,21 @@ export default function AIPlayground() {
                   </div>
                 )}
                 <div className="mb-2 flex flex-wrap items-center gap-1.5" role="group" aria-label="Persona">
-                  {PERSONAS.map((p) => (
-                    <button
-                      key={p.id}
-                      type="button"
-                      onClick={() => setPersona(p.id)}
-                      aria-pressed={persona === p.id}
-                      className={`rounded-full border px-3 py-1 text-[11px] transition-colors ${
-                        persona === p.id ? "border-accent-cyan/40 bg-accent-cyan/10 text-accent-cyan" : "border-white/[0.08] text-muted hover:text-white"
-                      }`}
+                  <label className="flex items-center gap-1.5 rounded-full border border-white/[0.08] pl-3 pr-1 text-[11px] text-muted">
+                    <span>{lang === "sv" ? "Läge" : "Persona"}</span>
+                    <select
+                      value={persona}
+                      onChange={(e) => setPersona(e.target.value)}
+                      aria-label="Persona"
+                      className="bg-transparent py-1 pr-2 text-[11px] text-accent-cyan outline-none [&>option]:bg-[#07070e]"
                     >
-                      {lang === "sv" ? p.sv : p.en}
-                    </button>
-                  ))}
+                      {PERSONAS.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {lang === "sv" ? p.sv : p.en}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
                   <div className="ml-auto flex flex-wrap items-center gap-2">
                     <Routines input={input} sv={lang === "sv"} onRun={(t) => void runPrompt(t)} />
                     <button type="button" onClick={() => setVoiceOpen(true)} className="rounded-full border border-white/[0.08] px-3 py-1 text-[11px] text-muted hover:text-white transition-colors">
@@ -2505,14 +2640,41 @@ export default function AIPlayground() {
                     <Plus className={`w-4 h-4 transition-transform ${toolsOpen ? "rotate-45" : ""}`} />
                   </button>
                   <textarea
-                    id="playground-input"
-                    ref={taRef}
+                    onPaste={(e) => {
+                        const f = Array.from(e.clipboardData.files).find((x) => x.type.startsWith("image/"));
+                        if (!f || !fileRef.current) return;
+                        e.preventDefault();
+                        const dt = new DataTransfer();
+                        dt.items.add(f);
+                        fileRef.current.files = dt.files;
+                        void onFile({ target: fileRef.current } as unknown as React.ChangeEvent<HTMLInputElement>);
+                      }}
+                      ref={taRef}
                     value={input}
                     onChange={(e) => {
                       setInput(e.target.value);
+                      setSlashIdx(0);
                       autoResize();
                     }}
                     onKeyDown={(e) => {
+                      if (slashItems.length) {
+                        if (e.key === "ArrowDown") {
+                          e.preventDefault();
+                          setSlashIdx((i) => (i + 1) % slashItems.length);
+                          return;
+                        }
+                        if (e.key === "ArrowUp") {
+                          e.preventDefault();
+                          setSlashIdx((i) => (i - 1 + slashItems.length) % slashItems.length);
+                          return;
+                        }
+                        if (e.key === "Tab" || e.key === "Enter") {
+                          e.preventDefault();
+                          applySlash(slashIdx);
+                          return;
+                        }
+                      }
+                      if (e.key === "Escape" && activity !== "idle") abortRef.current = true;
                       if (e.key === "Enter" && !e.shiftKey) {
                         e.preventDefault();
                         if ((input.trim() || attach) && !busy) {
@@ -2699,7 +2861,7 @@ export default function AIPlayground() {
               animate={{ y: 0 }}
               exit={{ y: "40%" }}
               transition={{ type: "spring", damping: 28, stiffness: 320 }}
-              className="relative max-h-[85vh] rounded-t-3xl border border-white/[0.1] bg-[#08080f] flex flex-col shadow-2xl"
+              className="relative max-h-[85vh] rounded-t-3xl border border-white/[0.1] bg-[#07070e] flex flex-col shadow-2xl"
             >
               <div className="flex items-center gap-2 px-4 py-3 border-b border-white/[0.06]">
                 <div className="min-w-0 flex-1">
@@ -2752,7 +2914,7 @@ export default function AIPlayground() {
               animate={{ x: 0 }}
               exit={{ x: -280 }}
               transition={{ type: "spring", damping: 28, stiffness: 320 }}
-              className="absolute left-0 top-0 bottom-0 w-[min(300px,88vw)] bg-[#08080f] border-r border-white/[0.08] flex flex-col shadow-2xl"
+              className="absolute left-0 top-0 bottom-0 w-[min(300px,88vw)] bg-[#07070e] border-r border-white/[0.08] flex flex-col shadow-2xl"
             >
               <div className="flex items-center justify-between p-3 border-b border-white/[0.06]">
                 <span className="text-sm font-semibold text-white">BudAI</span>
@@ -2784,7 +2946,7 @@ export default function AIPlayground() {
             <motion.div
               initial={{ y: 24, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              className="relative w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl border border-white/[0.1] bg-[#0a0a12] p-5 max-h-[85vh] overflow-y-auto"
+              className="relative w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl border border-white/[0.1] bg-[#07070e] p-5 max-h-[85vh] overflow-y-auto"
             >
               <button
                 type="button"
@@ -2941,7 +3103,7 @@ export default function AIPlayground() {
               toast.kind === "err"
                 ? "border-red-400/30 bg-[#1a1014] text-red-100"
                 : toast.kind === "warn"
-                  ? "border-amber-400/30 bg-[#121018] text-amber-100"
+                  ? "border-amber-400/30 bg-[#07070e] text-amber-100"
                   : "border-accent-cyan/30 bg-[#0c1418] text-cyan-50"
             }`}
           >
@@ -2956,7 +3118,7 @@ export default function AIPlayground() {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
-            className="fixed bottom-20 left-1/2 -translate-x-1/2 z-[96] px-3 py-1.5 rounded-full border border-accent-purple/30 bg-[#121018] text-[11px] text-purple-100 flex items-center gap-1.5 shadow-lg"
+            className="fixed bottom-20 left-1/2 -translate-x-1/2 z-[96] px-3 py-1.5 rounded-full border border-accent-purple/30 bg-[#07070e] text-[11px] text-purple-100 flex items-center gap-1.5 shadow-lg"
           >
             <BrainCircuit className="w-3.5 h-3.5 text-accent-purple" />
             {lang === "sv" ? "Minne uppdaterat" : "Memory updated"}
@@ -2978,7 +3140,7 @@ export default function AIPlayground() {
               initial={{ opacity: 0, y: 12, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 8, scale: 0.98 }}
-              className="relative w-full max-w-md rounded-2xl border border-white/10 bg-[#0c0c14] shadow-2xl p-5"
+              className="relative w-full max-w-md rounded-2xl border border-white/10 bg-[#07070e] shadow-2xl p-5"
             >
               <div className="flex items-center gap-2 mb-4">
                 <Command className="w-4 h-4 text-accent-cyan" />

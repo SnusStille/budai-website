@@ -3,13 +3,13 @@
 import { useEffect, useState, type CSSProperties } from "react";
 import { Check, Rocket, Layers, Globe } from "lucide-react";
 import ScrollReveal from "@/components/ui/ScrollReveal";
-import BudAILogo from "@/components/ui/BudAILogo";
+import Logo3D from "@/components/ui/Logo3D";
 import { useLang } from "@/components/ui/LanguageContext";
 
 const RINGS = [
   { name: "Sweden", sv: "Sverige", size: 140, c: "#00e5ff", d: "14s" },
-  { name: "Nordics", sv: "Norden", size: 240, c: "#b967ff", d: "22s" },
-  { name: "World", sv: "Världen", size: 340, c: "#00ff9d", d: "32s" },
+  { name: "Nordics", sv: "Norden", size: 240, c: "#7c5cff", d: "22s" },
+  { name: "World", sv: "Världen", size: 340, c: "#2dd4bf", d: "32s" },
 ];
 const RING_OF = [0, 0, 1, 2];
 
@@ -21,7 +21,7 @@ export default function Journey() {
 
   useEffect(() => {
     if (!auto || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const id = window.setInterval(() => setActive((a) => (a + 1) % 4), 5500);
+    const id = window.setInterval(() => setActive((a) => (a + 1) % 4), 7500);
     return () => window.clearInterval(id);
   }, [auto]);
 
@@ -78,7 +78,7 @@ export default function Journey() {
           </p>
         </ScrollReveal>
 
-        <div className="grid lg:grid-cols-[1fr_1.05fr] gap-8 lg:gap-12 items-center">
+        <div className="grid lg:grid-cols-[1fr_1.05fr] gap-8 lg:gap-12 items-center" onMouseEnter={() => setAuto(false)}>
           <div className="order-2 lg:order-1 space-y-2.5" role="list">
             {stages.map((s, i) => {
               const on = active === i;
@@ -154,7 +154,7 @@ export default function Journey() {
                 </div>
               </div>
               <div className="relative z-10">
-                <BudAILogo size="lg" animated />
+                <Logo3D />
               </div>
             </div>
             <div className="mt-2 flex justify-center gap-2">
