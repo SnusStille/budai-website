@@ -17,6 +17,8 @@ buggfixar ovanpå den befintliga produkten.
 | `app/admin/layout.tsx` | Titel `Control Center · BudAI`, `noindex, nofollow`. |
 | `app/legal/[slug]/layout.tsx` | Riktiga titlar, beskrivningar och canonical för varje juridisksida. |
 | `app/apple-icon.tsx` | Genererad PNG-ikon (180×180) för iOS hemskärm — Apple ignorerar SVG. |
+| `app/_icon/AppIconArt.tsx` | Delad ikonritning (privat mapp) som ger Apple-, PWA- och maskable-ikoner ur samma design. |
+| `app/icon-192`, `app/icon-512` | PNG-ikoner för installation som PWA (refereras i `manifest.ts`). |
 
 Okänd slug under `/legal/*` ger nu **404** istället för att tyst visa integritetspolicyn.
 
@@ -65,6 +67,12 @@ Okänd slug under `/legal/*` ger nu **404** istället för att tyst visa integri
 - Rutter: `/`, `/admin`, `/legal/{privacy,terms,cookies,gdpr}` = 200 · okänd slug/sida = 404 ·
   `/s/<uuid>` = 404 för okänt id · `sitemap.xml`, `robots.txt`, `manifest.webmanifest`,
   `og.png`, `apple-icon` = 200.
+
+## 5b. Kontroller i sista rundan
+
+- `tsc --noEmit` — 0 typfel.
+- Manifestet har nu PNG-ikoner i 192/512 (installationsprompt i Chrome/Android).
+- Dokumentationens påståenden (röst, export, lokalt minne, bildgenerering) verifierade mot koden.
 
 ## 6. Kvar att göra innan bred lansering
 
