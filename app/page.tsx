@@ -16,7 +16,6 @@ import FeedbackButton from "@/components/ui/FeedbackButton";
 import Journey from "@/components/sections/Journey";
 import Footer from "@/components/sections/Footer";
 import SiteChrome from "@/components/ui/SiteChrome";
-import HeroAsk from "@/components/sections/HeroAsk";
 
 const NeuralJourney = dynamic(() => import("@/components/sections/NeuralJourney"));
 const About = dynamic(() => import("@/components/sections/About"));
@@ -76,10 +75,9 @@ export default function Home() {
         <WhatIsBudAI />
         <NeuralJourney />
 
-        {/* A tight, light-to-dark handoff: final neural chapter → prompt → live product. */}
+        {/* The real Playground rises over the last beat of the neural-core flight. */}
         <div className="playground-handoff relative z-10">
           <div className="pointer-events-none absolute inset-x-0 -top-24 h-48 bg-gradient-to-b from-transparent via-[#05050a]/65 to-[#05050a]" aria-hidden />
-          <HeroAsk />
           <ErrorBoundary>
             <AIPlayground />
           </ErrorBoundary>

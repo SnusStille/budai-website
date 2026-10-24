@@ -178,12 +178,14 @@ interaction logic were inspected; none was pasted into BudAI wholesale:
 | `vercel/ai-elements` | Root Apache-2.0. Current README says the project will be deprecated at the end of Nov 2026 and moved into shadcn/ui. | The package ecosystem is AI SDK 7 / Tailwind 4-oriented; avoid a migration immediately before deprecation and preserve BudAI's tailored interface. |
 | `akella/webGLImageTransitions` | No root licence; source is a standalone image-transition demo. | Not reusable and not suitable for interactive form/chat surfaces. |
 
-**Chosen approach:** keep the current single WebGL renderer and camera flight, then let the
-real `HeroAsk` and `AIPlayground` arrive through a small native CSS view-timeline bloom.
-No second canvas, route interception, pinning, package, or screenshot-only UI. Browsers
-without scroll-timeline support show the interface normally; reduced-motion disables the
-effect. The ask-box bridge also stages its text only in page memory so a fast submit cannot
-be lost if the Playground's code-split chunk is still mounting.
+**Chosen approach:** keep the current single WebGL renderer and camera flight. The actual
+`AIPlayground` now rises over the final 56svh of that same pinned camera path: the core
+continues its approach behind the real chat panel, and chapter-04 copy fades away as the
+Playground comes forward. The extra `HeroAsk` form has been removed, leaving one real
+composer instead of two. A native CSS view-timeline adds the panel fade where supported;
+without it, the real UI simply scrolls into view. Reduced motion removes the overlap and
+shows the static chapter cards followed by the ordinary Playground. No second canvas,
+route interception, extra package, or screenshot-only UI.
 
 The startup overlay has been brought back toward its recognisable production composition
 (Stilledev credit, centered BudAI wordmark, fullscreen core flight and lower indeterminate

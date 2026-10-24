@@ -5,11 +5,58 @@ import dynamic from "next/dynamic";
 import BudAILogo from "@/components/ui/BudAILogo";
 import { useLang } from "@/components/ui/LanguageContext";
 
-const BrainFlight = dynamic(() => import("@/components/effects/BrainFlight"), { ssr: false });
+function FlightFallback() {
+  return null;
+}
+
+const BrainFlight = dynamic(
+  () => import("@/components/effects/BrainFlight").catch((error: unknown) => {
+    if (process.env.NODE_ENV === "development") console.warn("[BudAI loader] brain-flight fallback", error);
+    return { default: FlightFallback };
+  }),
+  { ssr: false }
+);
 const SEEN_KEY = "budai-startup-seen";
+
+/** The original wordmark scramble, shortened so it never becomes a delay. */
+function ScrambleWordmark() {
+  const [letters, setLetters] = useState<string[]>(() => WORD.split("").map(() => ""));
+
+  useEffect(() => {
+    let raf = 0;
+    const start = performance.now();
+    const tick = (now: number) => {
+      const elapsed = now - start;
+      setLetters(WORD.split("").map((letter, index) => {
+        const begins = index * 75;
+        if (elapsed < begins) return "";
+        if (elapsed >= begins + 260) return letter;
+        return GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
+      }));
+      if (elapsed < WORD.length * 75 + 260) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  return (
+    <span role="img" aria-label={WORD}>
+      {WORD.split("").map((letter, index) => (
+        <span key={index} className="relative inline-block" aria-hidden="true">
+          <span className="invisible">{letter}</span>
+          <span className={`absolute inset-0 flex items-center justify-center ${index >= 3 ? "text-accent-cyan" : ""} ${letters[index] && letters[index] !== letter ? "font-mono opacity-60" : ""}`}>
+            {letters[index]}
+          </span>
+        </span>
+      ))}
+    </span>
+  );
+}
 const REVEAL_DELAY = 240;
 const MAX_WAIT = 2600;
 const FADE_MS = 320;
+const WORD = "BudAI";
+const GLYPHS = "01<>{}/=+*#";
 
 /**
  * A real-load-aware introduction, not a timed fake loading sequence.
@@ -128,38 +175,37 @@ export default function LoadingScreen() {
       <div className="pointer-events-none absolute -left-32 top-1/4 h-80 w-80 rounded-full bg-accent-cyan/[0.07] blur-[120px]" aria-hidden />
       <div className="pointer-events-none absolute -right-32 bottom-1/4 h-80 w-80 rounded-full bg-accent-purple/[0.08] blur-[120px]" aria-hidden />
 
-      {/* Original production identity, brought forward with the current BudAI mark. */}
-      <div className="pointer-events-none absolute inset-x-0 top-[6%] z-10 flex flex-col items-center px-5 text-center sm:top-[7%]">
-        <p className="font-mono text-[10px] uppercase tracking-[0.32em] text-white/40 sm:text-[11px]">
-          Developed by <span className="font-semibold text-accent-cyan/85">Stilledev</span>
+      {/* Original production signature and wordmark, now paired with the current mark. */}
+      <div className="pointer-events-none absolute inset-x-0 top-[6%] z-10 flex flex-col items-center gap-2 px-5 text-center sm:top-[8%]">
+        <p className="font-mono text-[10px] uppercase tracking-[0.35em] text-white/40 sm:text-[11px]">
+          Developed by <b className="font-bold text-accent-cyan [text-shadow:0_0_14px_rgba(0,229,255,0.6)]">Stilledev</b>
         </p>
-        <div className="mt-4 flex items-center gap-3 sm:mt-5 sm:gap-4">
-          <span aria-hidden="true"><BudAILogo size="md" animated mode="thinking" /></span>
-          <h1 className="text-4xl font-bold tracking-[-0.045em] text-white sm:text-6xl">
-            Bud<span className="text-gradient">AI</span>
-          </h1>
-        </div>
-        <p className="mt-2 text-sm text-white/65 sm:mt-3 sm:text-base">
-          {sv ? "Din AI-arbetskompanjon." : "Your AI work companion."}
+        <p className="text-sm font-medium tracking-wide text-white/80 sm:text-xl">
+          {sv ? "Din nya " : "Your new "}
+          <span className="bg-gradient-to-r from-accent-cyan to-accent-purple bg-clip-text text-transparent">ChatGPT</span>
         </p>
+        <h1 className="flex items-center gap-3 text-5xl font-bold tracking-tight text-white [text-shadow:0_0_50px_rgba(0,229,255,0.45)] sm:text-7xl">
+          <span aria-hidden="true"><BudAILogo size="sm" animated mode="thinking" /></span>
+          <ScrambleWordmark />
+        </h1>
       </div>
 
-      {/* Indeterminate by design: the camera flight is art direction, never a fake percentage. */}
-      <div className="absolute inset-x-0 bottom-[5%] z-10 flex flex-col items-center px-5 text-center">
-        <div className="h-px w-56 overflow-hidden rounded-full bg-white/10 sm:w-72" aria-hidden>
+      {/* Original lower sweep, made indeterminate: no pretend model/API boot progress. */}
+      <div className="absolute inset-x-0 bottom-[4%] z-10 flex flex-col items-center px-5 text-center">
+        <div className="h-px w-64 overflow-hidden rounded-full bg-white/10 sm:w-72" aria-hidden="true">
           <span className="startup-light-sweep block h-full w-1/2 rounded-full bg-gradient-to-r from-transparent via-accent-cyan to-accent-purple" />
         </div>
-        <p className="mt-4 min-h-5 text-xs text-white/45">
+        <p className="mt-3 min-h-5 text-xs text-white/45">
           {takingLonger
-            ? sv ? "Det tar lite längre tid — du kan fortsätta när som helst." : "Taking a little longer — you can continue whenever you like."
+            ? sv ? "Det tar längre tid än väntat — fortsätt när du vill." : "Taking longer than expected — continue whenever you like."
             : sv ? "Laddar BudAI" : "Loading BudAI"}
         </p>
         <button
           type="button"
           onClick={() => finish.current()}
-          className="pointer-events-auto mt-2 min-h-10 rounded-full px-4 py-2 text-xs text-white/65 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-cyan/60"
+          className="pointer-events-auto mt-1 min-h-10 rounded-full px-4 py-2 font-mono text-[11px] uppercase tracking-[0.16em] text-white/45 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-cyan/60"
         >
-          {sv ? "Fortsätt till BudAI" : "Continue to BudAI"}
+          {sv ? "Klicka för att fortsätta" : "Click to skip"}
         </button>
       </div>
     </div>

@@ -83,7 +83,6 @@ import {
   saveSettings,
 } from "@/lib/playground/localStore";
 import * as cloud from "@/lib/playground/cloudStore";
-import { consumePlaygroundPrompt } from "@/lib/playground/promptHandoff";
 
 /* ─── helpers ─────────────────────────────────────────── */
 
@@ -554,22 +553,6 @@ export default function AIPlayground() {
   const [editText, setEditText] = useState("");
   const [savedBranch, setSavedBranch] = useState<ChatMessage[] | null>(null);
 
-  useEffect(() => {
-    const applyPrompt = (text: string) => {
-      setInput(text);
-      window.setTimeout(() => document.querySelector<HTMLTextAreaElement>("#playground textarea")?.focus({ preventScroll: true }), 450);
-    };
-    const onPrompt = (e: Event) => {
-      const detail = (e as CustomEvent<unknown>).detail;
-      const staged = consumePlaygroundPrompt();
-      const text = typeof detail === "string" ? detail : staged;
-      if (typeof text === "string") applyPrompt(text);
-    };
-    window.addEventListener("budai:prompt", onPrompt);
-    const pending = consumePlaygroundPrompt();
-    if (pending) applyPrompt(pending);
-    return () => window.removeEventListener("budai:prompt", onPrompt);
-  }, []);
   const [activity, setActivity] = useState<AiActivity>("idle");
   useEffect(() => {
     const busyNow = activity !== "idle";

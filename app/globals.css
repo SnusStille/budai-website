@@ -999,11 +999,15 @@ select option {
 @media (prefers-reduced-motion: reduce) { .bud-3d-in { animation: none; } }
 
 /*
- * Neural-to-product handoff: a restrained core bloom and a short reveal on the
- * real prompt and Playground. Native view timelines are progressive enhancement;
- * without them (or with reduced motion), the working interface stays fully visible.
+ * Neural-to-product handoff: the real Playground overlaps the final 56svh of the
+ * pinned camera flight. Its chapter copy clears away as the live interface rises
+ * over the core. Without view-timeline support, the interface is simply visible.
  */
-.playground-handoff { isolation: isolate; }
+.neural-story .neural-final-copy[data-beat="on"] {
+  opacity: var(--neural-copy-opacity, 1);
+  transition: none;
+}
+.playground-handoff { isolation: isolate; margin-top: -56svh; }
 .playground-handoff::before {
   content: "";
   position: absolute;
@@ -1023,12 +1027,8 @@ select option {
   38% { opacity: 0.42; scale: 1; }
   100% { opacity: 0.13; scale: 1.24; }
 }
-@keyframes budai-prompt-arrival {
-  from { opacity: 0.35; translate: 0 14px; }
-  to { opacity: 1; translate: 0 0; }
-}
 @keyframes budai-playground-arrival {
-  from { opacity: 0.35; }
+  from { opacity: 0.25; }
   to { opacity: 1; }
 }
 @supports (animation-timeline: view()) {
@@ -1037,11 +1037,6 @@ select option {
     animation-timeline: view(block);
     animation-range: entry 0% entry 60%;
   }
-  .playground-handoff #enter {
-    animation: budai-prompt-arrival linear both;
-    animation-timeline: view(block);
-    animation-range: entry 0% entry 48%;
-  }
   .playground-handoff #playground {
     animation: budai-playground-arrival linear both;
     animation-timeline: view(block);
@@ -1049,8 +1044,8 @@ select option {
   }
 }
 @media (prefers-reduced-motion: reduce) {
+  .playground-handoff { margin-top: 0; }
   .playground-handoff::before,
-  .playground-handoff #enter,
   .playground-handoff #playground { animation: none !important; }
 }
 

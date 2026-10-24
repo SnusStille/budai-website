@@ -75,6 +75,7 @@ export default function NeuralJourney() {
   const [active, setActive] = useState(0);
   const [reduced, setReduced] = useState(false);
   const [started, setStarted] = useState(false);
+  const [arrived, setArrived] = useState(false);
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -93,6 +94,7 @@ export default function NeuralJourney() {
     let raf = 0;
     let lastBeat = -1;
     let lastProgress = -1;
+    let lastArrivalState = false;
     let startedOnce = false;
     let inView = true;
 
@@ -115,6 +117,14 @@ export default function NeuralJourney() {
         lastProgress = p;
         if (railRef.current) {
           railRef.current.style.transform = `scaleY(${Math.max(0.001, p)})`;
+        }
+        // The last chapter dissolves as the real Playground overlaps the core flight.
+        const copyOpacity = Math.max(0, Math.min(1, (0.96 - p) / 0.14));
+        el.style.setProperty("--neural-copy-opacity", String(copyOpacity));
+        const nowArrived = p >= 0.96;
+        if (nowArrived !== lastArrivalState) {
+          lastArrivalState = nowArrived;
+          setArrived(nowArrived);
         }
         if (p > 0.02 && !startedOnce) {
           startedOnce = true;
@@ -237,10 +247,15 @@ export default function NeuralJourney() {
                 <article
                   key={c.id}
                   data-beat={on ? "on" : "off"}
-                  aria-hidden={!on}
+                  data-chapter={c.id}
+                  aria-hidden={!on || (i === CHAPTERS.length - 1 && arrived)}
                   // Every beat occupies the same box and cross-fades to zero, so two
                   // beats can never be visible at once.
                   className={`transition-[opacity,transform] duration-500 ease-out ${
+                    i === CHAPTERS.length - 1 ? "neural-final-copy" : ""
+                  } ${
+                    arrived && i === CHAPTERS.length - 1 ? "pointer-events-none" : ""
+                  } ${
                     on
                       ? "relative z-10 translate-y-0 opacity-100"
                       : "pointer-events-none absolute inset-x-0 bottom-0 z-0 translate-y-2 opacity-0"
@@ -263,7 +278,7 @@ export default function NeuralJourney() {
                     <div className="mt-6 flex flex-wrap items-center gap-3">
                       <a
                         href="#playground"
-                        tabIndex={on ? 0 : -1}
+                        tabIndex={on && !arrived ? 0 : -1}
                         className="btn-primary inline-flex items-center gap-2 !px-6 !py-3 text-sm shadow-[0_0_40px_rgba(0,229,255,0.22)]"
                       >
                         {sv ? "Öppna Playground" : "Open the Playground"}
