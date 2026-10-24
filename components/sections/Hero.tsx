@@ -57,7 +57,7 @@ export default function Hero() {
           initial={{ opacity: 0, y: 16, scale: 0.96 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 0.55, delay: 0.12 }}
-          className="inline-flex items-center gap-2.5 px-4 sm:px-5 py-2 sm:py-2.5 rounded-full glass-strong mb-6 sm:mb-8 border border-accent-green/25 shadow-[0_0_40px_rgba(45,212,191,0.08)]"
+          className="inline-flex items-center gap-2.5 px-4 sm:px-5 py-2 sm:py-2.5 rounded-full glass-strong mb-6 sm:mb-8 border border-accent-green/25 shadow-[0_0_40px_rgba(112,217,206,0.08)]"
         >
           <span className="relative flex h-2 w-2 sm:h-2.5 sm:w-2.5">
             <span className="absolute inline-flex h-full w-full rounded-full opacity-70 bg-accent-green animate-ping" />
@@ -127,7 +127,7 @@ export default function Hero() {
           <Magnetic>
             <a
               href="#playground"
-              className="btn-primary inline-flex items-center gap-2 !px-7 !py-3.5 text-sm sm:text-base shadow-[0_0_40px_rgba(0,229,255,0.2)]"
+              className="btn-primary inline-flex items-center gap-2 !px-7 !py-3.5 text-sm sm:text-base shadow-[0_0_40px_rgba(48,195,236,0.2)]"
             >
               <span>{t.hero.ctaPrimary}</span>
               <ArrowRight className="w-4 h-4" />

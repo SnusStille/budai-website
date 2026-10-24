@@ -29,7 +29,7 @@ export default function CodeBackground() {
             top: `${18 + row * 15}%`,
             animationDuration: `${18 + row * 3}s`,
             animationDelay: `${row * -2.5}s`,
-            textShadow: "0 0 8px rgba(0,229,255,0.12)",
+            textShadow: "0 0 8px rgba(48,195,236,0.12)",
           }}
         >
           {snippet}&nbsp;&nbsp;&nbsp;{snippet}&nbsp;&nbsp;&nbsp;{snippet}&nbsp;&nbsp;&nbsp;{snippet}

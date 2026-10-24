@@ -75,7 +75,7 @@ export default function Signature() {
             animate={{ scale: 1, y: 0, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
             transition={{ type: "spring", damping: 20, stiffness: 260 }}
-            className="relative z-10 w-full max-w-sm rounded-2xl glass-strong border border-accent-cyan/25 p-6 shadow-[0_0_80px_rgba(0,229,255,0.2)] text-center overflow-hidden"
+            className="relative z-10 w-full max-w-sm rounded-2xl glass-strong border border-accent-cyan/25 p-6 shadow-[0_0_80px_rgba(48,195,236,0.2)] text-center overflow-hidden"
           >
             <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-accent-cyan/60 to-transparent" />
             <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-40 h-40 bg-accent-cyan/20 rounded-full blur-3xl pointer-events-none" />
@@ -92,7 +92,7 @@ export default function Signature() {
                 : "BudAI isn’t just code — it’s a vision for how work should feel. Thanks for stopping by. Reach out if you want to build the future with us."}
             </p>
             <div className="flex items-center justify-center gap-3 mb-5">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-accent-cyan to-accent-purple flex items-center justify-center text-sm font-bold text-white shadow-[0_0_20px_rgba(0,229,255,0.35)]">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-accent-cyan to-accent-purple flex items-center justify-center text-sm font-bold text-white shadow-[0_0_20px_rgba(48,195,236,0.35)]">
                 S
               </div>
               <div className="text-left">

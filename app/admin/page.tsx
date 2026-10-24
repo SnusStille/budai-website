@@ -331,7 +331,7 @@ export default function AdminPage() {
 
           <form
             onSubmit={handleLogin}
-            className="rounded-2xl p-8 border border-white/[0.1] bg-white/[0.03] backdrop-blur-xl shadow-[0_0_60px_rgba(0,229,255,0.06)]"
+            className="rounded-2xl p-8 border border-white/[0.1] bg-white/[0.03] backdrop-blur-xl shadow-[0_0_60px_rgba(48,195,236,0.06)]"
           >
             <div className="space-y-4">
               <div>

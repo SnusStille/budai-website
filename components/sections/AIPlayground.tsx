@@ -507,6 +507,8 @@ export default function AIPlayground() {
       if (d) setInput((cur) => cur || d);
       const p = localStorage.getItem("budai_persona");
       if (p && PERSONAS.some((x) => x.id === p)) setPersona(p);
+      const m = localStorage.getItem("budai_model");
+      if (m) setModelId(m);
     } catch {
       /* ignore */
     }
@@ -584,6 +586,23 @@ export default function AIPlayground() {
   const [listening, setListening] = useState(false);
   const [genMode, setGenMode] = useState(false);
   const [imageGenEnabled, setImageGenEnabled] = useState(false);
+  /* Model tier. The list comes from the server, so the control only exists for models this
+     deployment can actually serve — and the id is resolved through an allowlist, never trusted. */
+  const [models, setModels] = useState<
+    { id: string; en: string; sv: string; noteEn: string; noteSv: string; model: string }[]
+  >([]);
+  const [modelId, setModelId] = useState("quality");
+  useEffect(() => {
+    try {
+      localStorage.setItem("budai_model", modelId);
+    } catch {
+      /* ignore */
+    }
+  }, [modelId]);
+  // a tier stored from an earlier deploy that this one cannot serve falls back to the default
+  useEffect(() => {
+    if (models.length && !models.some((m) => m.id === modelId)) setModelId("quality");
+  }, [models, modelId]);
   const [lightbox, setLightbox] = useState<string | null>(null);
   const [toast, setToast] = useState<{ kind: "ok" | "warn" | "err"; text: string } | null>(null);
   const [search, setSearch] = useState("");
@@ -632,7 +651,10 @@ export default function AIPlayground() {
     fetch("/api/features")
       .then((r) => r.json())
       .then((d) => {
-        if (!cancelled) setImageGenEnabled(!!d.imageGeneration);
+        if (!cancelled) {
+          setImageGenEnabled(!!d.imageGeneration);
+          if (Array.isArray(d.models)) setModels(d.models);
+        }
       })
       .catch(() => {
         if (!cancelled) setImageGenEnabled(false);
@@ -895,14 +917,23 @@ export default function AIPlayground() {
     let latest = "";
     let queued = false;
     let finished = false;
+
+    // A dropped connection mid-stream must not throw away the answer that already arrived:
+    // whatever came through is kept, and the visitor is told the reply was cut short.
+    let cutShort = false;
     for (;;) {
       if (abortRef.current) {
         await reader.cancel().catch(() => undefined);
         break;
       }
-      const { done, value } = await reader.read();
-      if (done) break;
-      acc += dec.decode(value, { stream: true });
+      try {
+        const { done, value } = await reader.read();
+        if (done) break;
+        acc += dec.decode(value, { stream: true });
+      } catch {
+        cutShort = true;
+        break;
+      }
       const cut = acc.indexOf("\u0000");
       latest = cut === -1 ? acc : acc.slice(0, cut);
       if (!queued) {
@@ -926,6 +957,12 @@ export default function AIPlayground() {
     finished = true;
     setTypingText("");
     setActivity("idle");
+    if (cutShort && text) {
+      showToast(
+        "warn",
+        lang === "sv" ? "Svaret klipptes av — kopplingen förlorades." : "The reply was cut short — the connection dropped."
+      );
+    }
     if (meta.error && !text) {
       pushError(lang === "sv" ? "Något gick fel. Försök igen." : "Something went wrong. Try again.", retry);
       return;
@@ -1016,6 +1053,7 @@ export default function AIPlayground() {
           concise: mode === "concise",
           stream: !(mode === "dual" || intent.id === "dual"),
           persona,
+          model: modelId,
           context: contextBlock(),
           guest: auth.isGuest ? auth.guestKey : undefined,
           imageBase64: img?.b64,
@@ -1051,9 +1089,16 @@ export default function AIPlayground() {
         return;
       }
       if (!res.ok) {
+        const unconfigured =
+          res.status === 503 || /api key|not configured/i.test(String(data?.error || ""));
+        if (unconfigured) console.warn("[BudAI] playground backend not configured:", data?.error);
         pushError(
-          data.error ||
-            (lang === "sv" ? "Något gick fel. Försök igen." : "Something went wrong. Try again."),
+          unconfigured
+            ? lang === "sv"
+              ? "Motorn är inte inkopplad i den här miljön. Försök igen snart."
+              : "The model isn’t connected in this environment. Try again shortly."
+            : data.error ||
+              (lang === "sv" ? "Något gick fel. Försök igen." : "Something went wrong. Try again."),
           { text: trimmed, image: img }
         );
         return;
@@ -1723,7 +1768,7 @@ export default function AIPlayground() {
 
         <ScrollReveal>
           <div
-            className={`rounded-2xl sm:rounded-3xl overflow-hidden border border-white/[0.12] bg-[#05050a]/98 shadow-[0_0_100px_rgba(0,229,255,0.12),0_40px_80px_rgba(0,0,0,0.45)] flex ${
+            className={`rounded-2xl sm:rounded-3xl overflow-hidden border border-white/[0.12] bg-[#05050a]/98 shadow-[0_0_100px_rgba(48,195,236,0.12),0_40px_80px_rgba(0,0,0,0.45)] flex ${
               expanded
                 ? "fixed inset-0 sm:inset-3 z-[80] rounded-none sm:rounded-3xl"
                 : "h-[min(88dvh,940px)] min-h-[520px]"
@@ -1739,7 +1784,7 @@ export default function AIPlayground() {
                   animate={{ width: 240, opacity: 1 }}
                   exit={{ width: 0, opacity: 0 }}
                   transition={{ duration: 0.2 }}
-                  className="hidden md:flex flex-col border-r border-white/[0.06] bg-[#07070e] shrink-0 overflow-hidden"
+                  className="hidden md:flex flex-col border-r border-white/[0.06] bg-[#080c14] shrink-0 overflow-hidden"
                   style={{ maxWidth: 240 }}
                 >
                   {SidebarBody}
@@ -1824,7 +1869,7 @@ export default function AIPlayground() {
                     <summary className="flex cursor-pointer list-none items-center gap-1 rounded-lg border border-white/[0.06] px-2.5 py-2 text-[11px] font-medium text-muted hover:text-white [&::-webkit-details-marker]:hidden">
                       {lang === "sv" ? "Exportera" : "Export"} ▾
                     </summary>
-                    <div className="absolute right-0 z-30 mt-1 w-40 rounded-xl border border-white/10 bg-[#07070e]/95 p-1 shadow-2xl backdrop-blur-xl">
+                    <div className="absolute right-0 z-30 mt-1 w-40 rounded-xl border border-white/10 bg-[#080c14]/95 p-1 shadow-2xl backdrop-blur-xl">
                       {[
                         { label: "Word (.doc)", run: () => exportRich("doc") },
                         { label: "PDF", run: () => exportRich("pdf") },
@@ -1896,7 +1941,7 @@ export default function AIPlayground() {
                       }}
                       className={`px-2.5 py-1.5 rounded-full text-[11px] font-semibold border transition-all ${
                         intentId === it.id
-                          ? "bg-gradient-to-r from-accent-cyan/20 to-accent-purple/20 border-accent-cyan/40 text-white shadow-[0_0_20px_rgba(0,229,255,0.12)]"
+                          ? "bg-gradient-to-r from-accent-cyan/20 to-accent-purple/20 border-accent-cyan/40 text-white shadow-[0_0_20px_rgba(48,195,236,0.12)]"
                           : "border-white/[0.08] text-muted hover:text-white hover:border-white/20 bg-white/[0.02]"
                       }`}
                     >
@@ -2043,7 +2088,7 @@ export default function AIPlayground() {
                       type="button"
                       onClick={runInspire}
                       disabled={busy}
-                      className="mt-5 group inline-flex items-center gap-2 px-4 py-2.5 rounded-full border border-accent-cyan/25 bg-gradient-to-r from-accent-cyan/10 to-accent-purple/10 hover:from-accent-cyan/20 hover:to-accent-purple/20 text-sm text-white/90 transition-all shadow-[0_0_30px_rgba(0,229,255,0.08)]"
+                      className="mt-5 group inline-flex items-center gap-2 px-4 py-2.5 rounded-full border border-accent-cyan/25 bg-gradient-to-r from-accent-cyan/10 to-accent-purple/10 hover:from-accent-cyan/20 hover:to-accent-purple/20 text-sm text-white/90 transition-all shadow-[0_0_30px_rgba(48,195,236,0.08)]"
                     >
                       <Dices className="w-4 h-4 text-accent-cyan group-hover:rotate-12 transition-transform" />
                       <span className="font-medium">
@@ -2111,7 +2156,7 @@ export default function AIPlayground() {
                                   openWorkspace(msg.id, opt.body);
                                 }
                               }}
-                              className="text-left p-3.5 rounded-2xl border border-white/[0.1] bg-gradient-to-b from-white/[0.06] to-white/[0.02] hover:border-accent-cyan/40 hover:shadow-[0_8px_32px_rgba(0,229,255,0.12)] transition-all"
+                              className="text-left p-3.5 rounded-2xl border border-white/[0.1] bg-gradient-to-b from-white/[0.06] to-white/[0.02] hover:border-accent-cyan/40 hover:shadow-[0_8px_32px_rgba(48,195,236,0.12)] transition-all"
                             >
                               <div className="text-xs font-semibold text-accent-cyan mb-1">
                                 {opt.title}
@@ -2168,7 +2213,7 @@ export default function AIPlayground() {
                                 setEditingId(null);
                                 void runPrompt(editText.trim(), { base: messages.slice(0, idx) });
                               }}
-                              className="rounded-lg bg-accent-cyan px-3 py-1.5 text-xs font-semibold text-[#020205]"
+                              className="rounded-lg bg-accent-cyan px-3 py-1.5 text-xs font-semibold text-[#02050c]"
                             >
                               {lang === "sv" ? "Skicka om" : "Resend"}
                             </button>
@@ -2333,8 +2378,8 @@ export default function AIPlayground() {
                 {/* Live activity — cinematic thinking */}
                 {(typingText || (busy && activity !== "typing")) && (
                   <div className="flex gap-2.5">
-                    <div className="relative w-9 h-9 rounded-xl bg-gradient-to-br from-accent-cyan/90 to-accent-purple/90 p-[2px] shrink-0 shadow-[0_0_24px_rgba(0,229,255,0.35)]">
-                      <div className="w-full h-full rounded-[10px] bg-[#07070e] flex items-center justify-center overflow-hidden">
+                    <div className="relative w-9 h-9 rounded-xl bg-gradient-to-br from-accent-cyan/90 to-accent-purple/90 p-[2px] shrink-0 shadow-[0_0_24px_rgba(48,195,236,0.35)]">
+                      <div className="w-full h-full rounded-[10px] bg-[#080c14] flex items-center justify-center overflow-hidden">
                         <BudAILogo size="xs" animated mode="thinking" className="!w-[22px] !h-[22px]" />
                       </div>
                       {activity === "idle" && messages.length > 0 && messages[messages.length - 1].role === "assistant" && (
@@ -2358,9 +2403,9 @@ export default function AIPlayground() {
                         <span className="absolute -inset-1 rounded-xl border border-accent-cyan/30 logo-pulse-ring pointer-events-none" />
                       )}
                     </div>
-                    <div className="relative bg-gradient-to-br from-white/[0.06] to-white/[0.02] px-3.5 py-2.5 rounded-2xl border border-accent-cyan/20 text-sm text-white/90 min-w-[140px] max-w-[min(100%,520px)] overflow-hidden shadow-[0_0_40px_rgba(0,229,255,0.08)]">
+                    <div className="relative bg-gradient-to-br from-white/[0.06] to-white/[0.02] px-3.5 py-2.5 rounded-2xl border border-accent-cyan/20 text-sm text-white/90 min-w-[140px] max-w-[min(100%,520px)] overflow-hidden shadow-[0_0_40px_rgba(48,195,236,0.08)]">
                       <div className="absolute inset-0 pointer-events-none opacity-40">
-                        <div className="absolute inset-0 bg-[linear-gradient(110deg,transparent_20%,rgba(0,229,255,0.12)_45%,transparent_70%)] playground-shimmer" />
+                        <div className="absolute inset-0 bg-[linear-gradient(110deg,transparent_20%,rgba(48,195,236,0.12)_45%,transparent_70%)] playground-shimmer" />
                       </div>
                       {typingText ? (
                         <div className="relative whitespace-pre-wrap leading-relaxed">
@@ -2514,7 +2559,7 @@ export default function AIPlayground() {
                 )}
 
                 {slashItems.length > 0 && (
-                  <div role="listbox" className="mb-2 overflow-hidden rounded-xl border border-white/10 bg-[#07070e]/95 shadow-2xl">
+                  <div role="listbox" className="mb-2 overflow-hidden rounded-xl border border-white/10 bg-[#080c14]/95 shadow-2xl">
                     {slashItems.map((c, i) => (
                       <button
                         key={c.cmd}
@@ -2564,7 +2609,7 @@ export default function AIPlayground() {
                       value={persona}
                       onChange={(e) => setPersona(e.target.value)}
                       aria-label="Persona"
-                      className="bg-transparent py-1 pr-2 text-[11px] text-accent-cyan outline-none [&>option]:bg-[#07070e]"
+                      className="bg-transparent py-1 pr-2 text-[11px] text-accent-cyan outline-none [&>option]:bg-[#080c14]"
                     >
                       {PERSONAS.map((p) => (
                         <option key={p.id} value={p.id}>
@@ -2573,6 +2618,26 @@ export default function AIPlayground() {
                       ))}
                     </select>
                   </label>
+                  {models.length > 1 && (
+                    <label
+                      className="flex items-center gap-1.5 rounded-full border border-white/[0.08] pl-3 pr-1 text-[11px] text-muted"
+                      title={models.find((m) => m.id === modelId)?.model}
+                    >
+                      <span>{lang === "sv" ? "Modell" : "Model"}</span>
+                      <select
+                        value={modelId}
+                        onChange={(e) => setModelId(e.target.value)}
+                        aria-label={lang === "sv" ? "Modell" : "Model"}
+                        className="bg-transparent py-1 pr-2 text-[11px] text-accent-cyan outline-none [&>option]:bg-[#080c14]"
+                      >
+                        {models.map((m) => (
+                          <option key={m.id} value={m.id}>
+                            {(lang === "sv" ? m.sv : m.en) + " — " + (lang === "sv" ? m.noteSv : m.noteEn)}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  )}
                   <div className="ml-auto flex flex-wrap items-center gap-2">
                     <Routines input={input} sv={lang === "sv"} onRun={(t) => void runPrompt(t)} />
                     <button type="button" onClick={() => setVoiceOpen(true)} className="rounded-full border border-white/[0.08] px-3 py-1 text-[11px] text-muted hover:text-white transition-colors">
@@ -2730,7 +2795,7 @@ export default function AIPlayground() {
                     <button
                       type="submit"
                       disabled={(!input.trim() && !attach) || busy}
-                      className="shrink-0 h-11 px-3.5 sm:px-4 rounded-2xl bg-gradient-to-r from-accent-cyan to-accent-purple text-white disabled:opacity-40 flex items-center shadow-[0_0_20px_rgba(0,229,255,0.25)] hover:shadow-[0_0_28px_rgba(0,229,255,0.4)] transition-shadow"
+                      className="shrink-0 h-11 px-3.5 sm:px-4 rounded-2xl bg-gradient-to-r from-accent-cyan to-accent-purple text-white disabled:opacity-40 flex items-center shadow-[0_0_20px_rgba(48,195,236,0.25)] hover:shadow-[0_0_28px_rgba(48,195,236,0.4)] transition-shadow"
                     >
                       <Send className="w-4 h-4" />
                     </button>
@@ -2754,7 +2819,7 @@ export default function AIPlayground() {
 
               {/* BudAI Workspace — substantial outputs side panel */}
               {workspace && (
-                <aside className="hidden lg:flex w-[min(42%,420px)] shrink-0 flex-col border-l border-white/[0.08] bg-[#07070e] min-h-0">
+                <aside className="hidden lg:flex w-[min(42%,420px)] shrink-0 flex-col border-l border-white/[0.08] bg-[#080c14] min-h-0">
                   <div className="flex items-center gap-2 px-3 py-2.5 border-b border-white/[0.06] shrink-0">
                     <GripHorizontal className="w-3.5 h-3.5 text-muted/50" />
                     <div className="min-w-0 flex-1">
@@ -2861,7 +2926,7 @@ export default function AIPlayground() {
               animate={{ y: 0 }}
               exit={{ y: "40%" }}
               transition={{ type: "spring", damping: 28, stiffness: 320 }}
-              className="relative max-h-[85vh] rounded-t-3xl border border-white/[0.1] bg-[#07070e] flex flex-col shadow-2xl"
+              className="relative max-h-[85vh] rounded-t-3xl border border-white/[0.1] bg-[#080c14] flex flex-col shadow-2xl"
             >
               <div className="flex items-center gap-2 px-4 py-3 border-b border-white/[0.06]">
                 <div className="min-w-0 flex-1">
@@ -2914,7 +2979,7 @@ export default function AIPlayground() {
               animate={{ x: 0 }}
               exit={{ x: -280 }}
               transition={{ type: "spring", damping: 28, stiffness: 320 }}
-              className="absolute left-0 top-0 bottom-0 w-[min(300px,88vw)] bg-[#07070e] border-r border-white/[0.08] flex flex-col shadow-2xl"
+              className="absolute left-0 top-0 bottom-0 w-[min(300px,88vw)] bg-[#080c14] border-r border-white/[0.08] flex flex-col shadow-2xl"
             >
               <div className="flex items-center justify-between p-3 border-b border-white/[0.06]">
                 <span className="text-sm font-semibold text-white">BudAI</span>
@@ -2946,7 +3011,7 @@ export default function AIPlayground() {
             <motion.div
               initial={{ y: 24, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              className="relative w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl border border-white/[0.1] bg-[#07070e] p-5 max-h-[85vh] overflow-y-auto"
+              className="relative w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl border border-white/[0.1] bg-[#080c14] p-5 max-h-[85vh] overflow-y-auto"
             >
               <button
                 type="button"
@@ -3103,7 +3168,7 @@ export default function AIPlayground() {
               toast.kind === "err"
                 ? "border-red-400/30 bg-[#1a1014] text-red-100"
                 : toast.kind === "warn"
-                  ? "border-amber-400/30 bg-[#07070e] text-amber-100"
+                  ? "border-amber-400/30 bg-[#080c14] text-amber-100"
                   : "border-accent-cyan/30 bg-[#0c1418] text-cyan-50"
             }`}
           >
@@ -3118,7 +3183,7 @@ export default function AIPlayground() {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
-            className="fixed bottom-20 left-1/2 -translate-x-1/2 z-[96] px-3 py-1.5 rounded-full border border-accent-purple/30 bg-[#07070e] text-[11px] text-purple-100 flex items-center gap-1.5 shadow-lg"
+            className="fixed bottom-20 left-1/2 -translate-x-1/2 z-[96] px-3 py-1.5 rounded-full border border-accent-purple/30 bg-[#080c14] text-[11px] text-purple-100 flex items-center gap-1.5 shadow-lg"
           >
             <BrainCircuit className="w-3.5 h-3.5 text-accent-purple" />
             {lang === "sv" ? "Minne uppdaterat" : "Memory updated"}
@@ -3140,7 +3205,7 @@ export default function AIPlayground() {
               initial={{ opacity: 0, y: 12, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 8, scale: 0.98 }}
-              className="relative w-full max-w-md rounded-2xl border border-white/10 bg-[#07070e] shadow-2xl p-5"
+              className="relative w-full max-w-md rounded-2xl border border-white/10 bg-[#080c14] shadow-2xl p-5"
             >
               <div className="flex items-center gap-2 mb-4">
                 <Command className="w-4 h-4 text-accent-cyan" />

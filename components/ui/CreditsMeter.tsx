@@ -5,7 +5,7 @@ export default function CreditsMeter({ rem, lim, sv }: { rem: number; lim: numbe
   if (!Number.isFinite(lim) || lim <= 0) return null;
   const pct = Math.max(0, Math.min(1, rem / lim));
   const C = 2 * Math.PI * 9;
-  const tone = pct > 0.4 ? "#00e5ff" : pct > 0.15 ? "#fbbf24" : "#f87171";
+  const tone = pct > 0.4 ? "#30c3ec" : pct > 0.15 ? "#f1aa57" : "#f87171";
   return (
     <a href="#capabilities" className="group flex items-center gap-2 rounded-full border border-white/[0.08] px-2.5 py-1 text-[11px] text-muted hover:text-white transition-colors" title={sv ? "Se paketen för fler credits" : "See plans for more credits"}>
       <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import BudAILogo from "@/components/ui/BudAILogo";
 import Tilt3D from "@/components/ui/Tilt3D";
 
@@ -8,7 +9,7 @@ const LAYERS = [-28, -20, -12, -6, 0, 6, 12, 20, 28];
 const WORD = "BudAI";
 const GLYPHS = "01<>{}/=+*#";
 const BOOT = ["init core", "load models", "warm up playground", "ready"];
-const DURATION = 5600;
+const DURATION = 3200;
 
 /** Each letter of the wordmark scrambles through code characters, then locks in. */
 function Scramble({ start }: { start: number }) {
@@ -45,12 +46,20 @@ function Scramble({ start }: { start: number }) {
 }
 
 export default function LoadingScreen() {
-  const [show, setShow] = useState(true);
+  // The intro belongs to the product landing. The studio route has its own film leader,
+  // so nothing here ever covers "/" (and nothing can trap a visitor: see the guards below).
+  const pathname = usePathname();
+  const enabled = pathname === "/budai";
+  const [show, setShow] = useState<boolean | null>(null);
   const [out, setOut] = useState(false);
   const [p, setP] = useState(0);
   const finish = useRef<() => void>(() => {});
 
   useEffect(() => {
+    if (!enabled) {
+      setShow(false);
+      return;
+    }
     let fresh = true;
     try {
       const ts = Number(localStorage.getItem("budai_intro_ts") || 0);
@@ -85,6 +94,11 @@ export default function LoadingScreen() {
         setShow(false);
       }, 900);
     };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" || e.key === "Enter") finish.current();
+    };
+    const guard = window.setTimeout(() => finish.current(), duration + 1500);
+    window.addEventListener("keydown", onKey);
     const start = performance.now();
     const tick = (t: number) => {
       const v = Math.min(1, (t - start) / duration);
@@ -95,9 +109,11 @@ export default function LoadingScreen() {
     raf = requestAnimationFrame(tick);
     return () => {
       cancelAnimationFrame(raf);
+      clearTimeout(guard);
+      window.removeEventListener("keydown", onKey);
       document.body.style.overflow = "";
     };
-  }, []);
+  }, [enabled]);
 
   if (!show) return null;
   const thresholds = [0.1, 0.36, 0.62, 0.9];
@@ -107,7 +123,7 @@ export default function LoadingScreen() {
       role="status"
       aria-label="Loading BudAI"
       onClick={() => finish.current()}
-      className={`fixed inset-0 z-[200] flex items-center justify-center overflow-hidden bg-[#020205] transition-[opacity,transform,filter] duration-[900ms] ease-out ${
+      className={`fixed inset-0 z-[200] flex items-center justify-center overflow-hidden bg-[#02050c] transition-[opacity,transform,filter] duration-[900ms] ease-out ${
         out ? "opacity-0 scale-110 blur-md pointer-events-none" : "opacity-100"
       }`}
     >
@@ -118,12 +134,12 @@ export default function LoadingScreen() {
       {/* top: credit, tagline, wordmark */}
       <div className="absolute inset-x-0 top-[6%] sm:top-[8%] flex flex-col items-center gap-2 text-center">
         <p className="bud-pop font-mono text-[11px] uppercase tracking-[0.35em] text-white/40" style={{ animationDelay: "0.3s" }}>
-          DEVELOPED BY <b className="font-bold text-accent-cyan [text-shadow:0_0_14px_rgba(0,229,255,0.6)]">STILLEDEV</b>
+          DEVELOPED BY <b className="font-bold text-accent-cyan [text-shadow:0_0_14px_rgba(48,195,236,0.6)]">STILLEDEV</b>
         </p>
         <p className="bud-pop text-base sm:text-xl font-medium tracking-wide text-white/80" style={{ animationDelay: "1.6s" }}>
           Your new <span className="bg-gradient-to-r from-accent-cyan to-accent-purple bg-clip-text text-transparent">ChatGPT</span>
         </p>
-        <h1 className="text-5xl sm:text-7xl font-bold tracking-tight text-white [text-shadow:0_0_50px_rgba(0,229,255,0.45)]">
+        <h1 className="text-5xl sm:text-7xl font-bold tracking-tight text-white [text-shadow:0_0_50px_rgba(48,195,236,0.45)]">
           <Scramble start={2200} />
         </h1>
       </div>
@@ -155,7 +171,7 @@ export default function LoadingScreen() {
       <div className="absolute inset-x-0 bottom-[4%] flex flex-col items-center">
         <div className="relative h-px w-64 bg-white/10 sm:w-72">
           <div className="h-px bg-gradient-to-r from-accent-cyan to-accent-purple" style={{ width: `${p * 100}%` }} />
-          <span className="absolute -top-[3px] h-[7px] w-[7px] -translate-x-1/2 rounded-full bg-white shadow-[0_0_12px_rgba(0,229,255,1)]" style={{ left: `${p * 100}%` }} />
+          <span className="absolute -top-[3px] h-[7px] w-[7px] -translate-x-1/2 rounded-full bg-white shadow-[0_0_12px_rgba(48,195,236,1)]" style={{ left: `${p * 100}%` }} />
         </div>
         <ul className="mt-3 h-[68px] w-64 space-y-1 font-mono text-[11px] text-white/45 sm:w-72">
           {BOOT.map((b, i) =>

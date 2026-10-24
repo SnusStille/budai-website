@@ -34,7 +34,7 @@ export default async function Shared({ params }: { params: { id: string } | Prom
         </div>
         <div className="mt-12 rounded-2xl border border-white/10 bg-gradient-to-r from-accent-cyan/10 to-accent-purple/10 p-6 text-center">
           <p className="text-lg font-semibold">Your new ChatGPT, in Swedish and English</p>
-          <a href="/#playground" className="mt-4 inline-block rounded-full bg-accent-cyan px-6 py-2.5 text-sm font-semibold text-[#020205]">Try BudAI free</a>
+          <a href="/budai#playground" className="mt-4 inline-block rounded-full bg-accent-cyan px-6 py-2.5 text-sm font-semibold text-[#02050c]">Try BudAI free</a>
         </div>
       </div>
     </main>

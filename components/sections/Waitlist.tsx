@@ -14,7 +14,7 @@ const interestsSv = ["Skrivande och dokument", "Automatisering", "Dataanalys", "
 
 const initialForm = { name: "", email: "", company: "", employees: "", interest: "" };
 const field =
-  "w-full rounded-xl bg-white/[0.04] border border-white/10 px-4 py-3 text-sm text-white placeholder:text-muted/70 transition-colors focus:outline-none focus:border-accent-cyan/50 focus:ring-1 focus:ring-accent-cyan/30 [&>option]:bg-[#07070e]";
+  "w-full rounded-xl bg-white/[0.04] border border-white/10 px-4 py-3 text-sm text-white placeholder:text-muted/70 transition-colors focus:outline-none focus:border-accent-cyan/50 focus:ring-1 focus:ring-accent-cyan/30 [&>option]:bg-[#080c14]";
 
 export default function Waitlist() {
   const { lang } = useLang();
@@ -86,7 +86,11 @@ export default function Waitlist() {
     } catch (err: unknown) {
       const msg = ((err as { message?: string })?.message || "").toLowerCase();
       setError(
-        msg.includes("duplicate") || msg.includes("unique") || msg.includes("already")
+        msg.includes("not_configured")
+          ? sv
+            ? "Kön är inte öppen just nu — lagret är inte kopplat. Mejla Stilleinc@hotmail.com så bokar vi din plats."
+            : "The list is not accepting signups right now (storage not connected). Email Stilleinc@hotmail.com and we will hold your place."
+          : msg.includes("duplicate") || msg.includes("unique") || msg.includes("already")
           ? sv ? "Den e-postadressen finns redan på listan." : "That email is already on the waitlist."
           : msg.includes("network") || msg.includes("fetch")
             ? sv ? "Nätverksfel. Kontrollera anslutningen och försök igen." : "Network error. Check your connection and try again."
@@ -142,9 +146,9 @@ export default function Waitlist() {
 
         {!submitted ? (
           <form onSubmit={handleSubmit} className="mx-auto mt-9 max-w-xl text-left">
-            <div className="relative overflow-hidden rounded-2xl p-px shadow-[0_0_70px_-20px_rgba(124,92,255,0.6)] sm:rounded-full">
+            <div className="relative overflow-hidden rounded-2xl p-px shadow-[0_0_70px_-20px_rgba(143,184,245,0.6)] sm:rounded-full">
               <div aria-hidden className="bud-spin-conic absolute -inset-[60%]" />
-              <div className="relative flex flex-col gap-2 rounded-[15px] bg-[#07070e] p-2 sm:flex-row sm:items-center sm:rounded-full sm:p-1.5 sm:pl-5">
+              <div className="relative flex flex-col gap-2 rounded-[15px] bg-[#080c14] p-2 sm:flex-row sm:items-center sm:rounded-full sm:p-1.5 sm:pl-5">
                 <label className="flex flex-1 items-center gap-3 px-3 py-2 sm:px-0 sm:py-0">
                   <Mail className="h-5 w-5 shrink-0 text-accent-cyan" />
                   <input
@@ -179,13 +183,12 @@ export default function Waitlist() {
 
             {details && (
               <div className="bud-pop mt-4 space-y-3 rounded-2xl border border-white/10 bg-white/[0.02] p-4 sm:p-5">
-                <div className="grid grid-cols-2 gap-1 rounded-xl border border-white/10 bg-white/[0.03] p-1" role="tablist">
+                <div className="grid grid-cols-2 gap-1 rounded-xl border border-white/10 bg-white/[0.03] p-1">
                   {tabs.map((tb) => (
                     <button
                       key={tb.id}
                       type="button"
-                      role="tab"
-                      aria-selected={accountType === tb.id}
+                      aria-pressed={accountType === tb.id}
                       onClick={() => setAccountType(tb.id)}
                       className={`flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-medium transition-colors ${
                         accountType === tb.id ? "bg-accent-cyan/15 text-accent-cyan" : "text-muted hover:text-white"
@@ -224,7 +227,7 @@ export default function Waitlist() {
             <p className="mt-4 text-center text-[11px] text-muted/70">{sv ? "Ingen spam. Ingen betalning krävs." : "No spam. No payment needed."}</p>
           </form>
         ) : (
-          <div className="bud-pop mx-auto mt-9 max-w-md rounded-2xl border border-white/10 bg-[#07070e]/90 p-6 shadow-[0_0_70px_-20px_rgba(124,92,255,0.6)]">
+          <div className="bud-pop mx-auto mt-9 max-w-md rounded-2xl border border-white/10 bg-[#080c14]/90 p-6 shadow-[0_0_70px_-20px_rgba(143,184,245,0.6)]">
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full border border-accent-green/40 bg-accent-green/10">
               <Check className="h-6 w-6 text-accent-green" />
             </div>

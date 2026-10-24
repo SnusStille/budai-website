@@ -28,7 +28,7 @@ export default function SpotlightCard({ children, className = "", tilt = true }:
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-        style={{ background: "radial-gradient(260px circle at var(--mx,50%) var(--my,50%), rgba(0,229,255,0.12), transparent 70%)" }}
+        style={{ background: "radial-gradient(260px circle at var(--mx,50%) var(--my,50%), rgba(48,195,236,0.12), transparent 70%)" }}
       />
       <div className="relative h-full">{children}</div>
     </div>
