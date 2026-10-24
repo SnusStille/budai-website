@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import BudAILogo from "@/components/ui/BudAILogo";
+import Link from "next/link";
 import { serviceClient } from "@/lib/adminAuth";
 
 export const dynamic = "force-dynamic";
@@ -15,12 +16,12 @@ export default async function Shared({ params }: { params: { id: string } | Prom
   const msgs = data.messages as { role: string; content: string }[];
 
   return (
-    <main className="min-h-screen bg-background text-white">
+    <main id="main-content" className="min-h-screen text-white">
       <div className="mx-auto max-w-2xl px-5 py-10">
-        <a href="/" className="mb-8 inline-flex items-center gap-3">
+        <Link href="/" aria-label="BudAI home" className="mb-8 inline-flex items-center gap-3">
           <BudAILogo size="sm" />
           <span className="text-lg font-bold tracking-tight">BudAI</span>
-        </a>
+        </Link>
         <p className="font-mono text-[11px] uppercase tracking-widest text-muted/60">Shared conversation · read-only</p>
         <h1 className="mb-8 mt-1 text-2xl font-semibold">{data.title}</h1>
         <div className="space-y-4">
@@ -33,8 +34,8 @@ export default async function Shared({ params }: { params: { id: string } | Prom
           ))}
         </div>
         <div className="mt-12 rounded-2xl border border-white/10 bg-gradient-to-r from-accent-cyan/10 to-accent-purple/10 p-6 text-center">
-          <p className="text-lg font-semibold">Your new ChatGPT, in Swedish and English</p>
-          <a href="/#playground" className="mt-4 inline-block rounded-full bg-accent-cyan px-6 py-2.5 text-sm font-semibold text-[#020205]">Try BudAI free</a>
+          <p className="text-lg font-semibold">An AI work companion in Swedish and English</p>
+          <Link href="/#playground" className="mt-4 inline-flex rounded-full bg-accent-cyan px-6 py-2.5 text-sm font-semibold text-[#020205] transition-transform hover:-translate-y-0.5">Open the Playground</Link>
         </div>
       </div>
     </main>

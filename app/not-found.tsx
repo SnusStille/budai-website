@@ -3,7 +3,7 @@ import BudAILogo from "@/components/ui/BudAILogo";
 
 export default function NotFound() {
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center gap-6 px-6 text-center bg-background text-white">
+    <main id="main-content" className="min-h-screen flex flex-col items-center justify-center gap-6 px-6 text-center text-white">
       <BudAILogo size="lg" />
       <p className="font-mono text-sm text-accent-cyan">{"</> 404"}</p>
       <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">This page doesn&apos;t exist</h1>

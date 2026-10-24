@@ -82,7 +82,11 @@ export const metadata: Metadata = {
     images: ["/og.png"],
   },
   icons: {
-    icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
   },
   alternates: {
     canonical: siteUrl,
@@ -104,34 +108,22 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       className={`${jakarta.variable} ${jetbrains.variable} font-sans`}
       suppressHydrationWarning
     >
-      <body className="antialiased noise-overlay bg-background text-white">
+      <body className="noise-overlay isolate bg-background text-white antialiased">
         <a
-          href="#playground"
-          className="absolute left-3 top-3 z-[200] -translate-y-16 focus:translate-y-0 px-4 py-2 rounded-lg bg-accent-cyan text-black text-sm font-semibold transition-transform"
+          href="#main-content"
+          className="absolute left-3 top-3 z-[200] -translate-y-16 rounded-lg bg-accent-cyan px-4 py-2 text-sm font-semibold text-black transition-transform focus:translate-y-0"
         >
-          Skip to content
+          Skip to main content
         </a>
+        <div className="site-world-backdrop pointer-events-none fixed inset-0 z-0" aria-hidden="true" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
-        <Providers>{children}</Providers>
+        <div className="relative z-10 min-h-screen">
+          <Providers>{children}</Providers>
+        </div>
         <VercelAnalytics />
-      <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "SoftwareApplication",
-              name: "BudAI",
-              applicationCategory: "BusinessApplication",
-              operatingSystem: "Web",
-              description: "BudAI is an AI assistant for everyday work in Swedish and English.",
-              offers: { "@type": "Offer", price: "0", priceCurrency: "SEK" },
-              creator: { "@type": "Organization", name: "Stilledev" },
-            }),
-          }}
-        />
       </body>
     </html>
   );

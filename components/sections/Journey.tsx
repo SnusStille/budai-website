@@ -56,7 +56,7 @@ export default function Journey() {
       chipTone: "border-accent-pink/30 bg-accent-pink/10 text-accent-pink",
       title: sv ? "AI för alla" : "AI for everyone",
       lead: sv ? "Tillgänglig för varje människa och företag." : "Accessible to every person and company.",
-      items: sv ? ["Din nya ChatGPT, på ditt språk", "Växer steg för steg, ärligt", "Byggd för att hålla"] : ["Your new ChatGPT, in your language", "Growing step by step, honestly", "Built to last"],
+      items: sv ? ["AI-arbete på ditt språk", "Växer steg för steg, ärligt", "Byggd för att hålla"] : ["AI work in your language", "Growing step by step, honestly", "Built to last"],
     },
   ];
 
@@ -79,14 +79,13 @@ export default function Journey() {
         </ScrollReveal>
 
         <div className="grid lg:grid-cols-[1fr_1.05fr] gap-8 lg:gap-12 items-center" onMouseEnter={() => setAuto(false)}>
-          <div className="order-2 lg:order-1 space-y-2.5" role="list">
+          <div className="order-2 lg:order-1 space-y-2.5">
             {stages.map((s, i) => {
               const on = active === i;
               return (
                 <button
                   key={s.title}
                   type="button"
-                  role="listitem"
                   aria-pressed={on}
                   onClick={() => {
                     setAuto(false);

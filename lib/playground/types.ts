@@ -54,6 +54,13 @@ export type AttachmentDraft = {
 
 export type Mode = "single" | "dual" | "concise";
 
+/**
+ * Playground model tiers. The server maps these onto env-configured Anthropic
+ * models (ANTHROPIC_MODEL_FAST / ANTHROPIC_MODEL / ANTHROPIC_MODEL_DEEP), so a
+ * tier is only selectable when it is actually available.
+ */
+export type ModelTierId = "fast" | "quality" | "deep";
+
 export function newId(prefix = "c") {
   if (typeof crypto !== "undefined" && crypto.randomUUID) {
     return `${prefix}-${crypto.randomUUID().slice(0, 8)}`;

@@ -308,7 +308,7 @@ export default function AdminPage() {
 
   if (!authenticated) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center px-6">
+      <div id="main-content" className="min-h-screen bg-background flex items-center justify-center px-6">
         <div className="absolute inset-0 grid-bg opacity-20 pointer-events-none" />
         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[480px] h-[480px] bg-accent-cyan/[0.06] rounded-full blur-[120px] pointer-events-none" />
         <motion.div

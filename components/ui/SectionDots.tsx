@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 
 const SECTIONS = [
+  { id: "neural", label: "Story" },
   { id: "capabilities", label: "Capabilities" },
   { id: "playground", label: "Playground" },
   { id: "about", label: "Builder" },

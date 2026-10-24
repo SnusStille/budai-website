@@ -10,28 +10,23 @@ import SurpriseToasts from "@/components/ui/SurpriseToasts";
 import Signature from "@/components/ui/Signature";
 import FocusMode from "@/components/ui/FocusMode";
 import BuddyCard from "@/components/sections/BuddyCard";
+import HeroAsk from "@/components/sections/HeroAsk";
+import LazyEgg from "@/components/effects/LazyEgg";
+import WhatsNew from "@/components/ui/WhatsNew";
+import Shortcuts from "@/components/ui/Shortcuts";
 import Navbar from "@/components/sections/Navbar";
 import Hero from "@/components/sections/Hero";
 import Capabilities from "@/components/sections/Capabilities";
 import Waitlist from "@/components/sections/Waitlist";
 import WhatIsBudAI from "@/components/sections/WhatIsBudAI";
 import ErrorBoundary from "@/components/ui/ErrorBoundary";
-import HeroAsk from "@/components/sections/HeroAsk";
-import LazyEgg from "@/components/effects/LazyEgg";
 import FeedbackButton from "@/components/ui/FeedbackButton";
 import Journey from "@/components/sections/Journey";
-import SiteChrome from "@/components/ui/SiteChrome";
-import WhatsNew from "@/components/ui/WhatsNew";
-import Shortcuts from "@/components/ui/Shortcuts";
 import Footer from "@/components/sections/Footer";
+import SiteChrome from "@/components/ui/SiteChrome";
 
-const AIEnvironment = dynamic(() => import("@/components/effects/AIEnvironment"), {
-  ssr: false,
-});
-const CursorGlow = dynamic(() => import("@/components/effects/CursorGlow"), { ssr: false });
-
+const NeuralJourney = dynamic(() => import("@/components/sections/NeuralJourney"));
 const About = dynamic(() => import("@/components/sections/About"));
-const AIBackdropFX = dynamic(() => import("@/components/effects/AIBackdropFX"), { ssr: false });
 const AIPlayground = dynamic(() => import("@/components/sections/AIPlayground"));
 
 export default function Home() {
@@ -51,8 +46,6 @@ export default function Home() {
       if (buffer === target) {
         console.log("%c🚀 Welcome, developer.", "color: #00e5ff; font-size: 14px; font-weight: bold;");
         console.log("%cYou found the easter egg.", "color: #2dd4bf; font-size: 12px;");
-        document.documentElement.classList.add("egg-flash");
-        setTimeout(() => document.documentElement.classList.remove("egg-flash"), 1200);
         window.dispatchEvent(new Event("budai:egg"));
         buffer = "";
       }
@@ -64,11 +57,7 @@ export default function Home() {
   useEffect(() => {
     const originalTitle = document.title;
     const onVisibility = () => {
-      if (document.visibilityState === "hidden") {
-        document.title = "Stilledev.se · BudAI";
-      } else {
-        document.title = originalTitle;
-      }
+      document.title = document.visibilityState === "hidden" ? "Stilledev.se · BudAI" : originalTitle;
     };
     document.addEventListener("visibilitychange", onVisibility);
     return () => {
@@ -78,14 +67,13 @@ export default function Home() {
   }, []);
 
   return (
-    <main className="page-transition relative min-h-screen text-white overflow-x-hidden bg-background">
+    // overflow-x: clip — NOT hidden: `hidden` makes <main> a scroll container and
+    // silently breaks position: sticky for the story chapter.
+    <main id="main-content" className="relative min-h-screen overflow-x-clip text-white pb-20 md:pb-32">
       <ScrollProgress />
-      <AIEnvironment />
-      <CursorGlow />
       <SectionDots />
-      <div className="fixed inset-0 z-[1] pointer-events-none ai-grid opacity-[0.35]" aria-hidden />
-      <div className="fixed inset-0 z-[1] pointer-events-none ai-vignette" aria-hidden />
-      <AIBackdropFX />
+      <div className="pointer-events-none fixed inset-0 z-[1] ai-grid opacity-[0.28]" aria-hidden />
+      <div className="pointer-events-none fixed inset-0 z-[1] ai-vignette" aria-hidden />
 
       <div className="relative z-10">
         <Navbar />
@@ -97,13 +85,20 @@ export default function Home() {
         <Hero />
         <HeroAsk />
         <WhatIsBudAI />
-        <ErrorBoundary>
-          <AIPlayground />
-        </ErrorBoundary>
-        <Capabilities />
-        <About />
-        <Waitlist />
-        <Journey />
+        <NeuralJourney />
+
+        {/* The real Playground rises over the last beat of the neural-core flight. */}
+        <div className="playground-handoff relative z-10">
+          <div className="pointer-events-none absolute inset-x-0 -top-24 h-48 bg-gradient-to-b from-transparent via-[#05050a]/65 to-[#05050a]" aria-hidden />
+          <ErrorBoundary>
+            <AIPlayground />
+          </ErrorBoundary>
+        </div>
+
+        <Reveal><Capabilities /></Reveal>
+        <Reveal><About /></Reveal>
+        <Reveal><Waitlist /></Reveal>
+        <Reveal><Journey /></Reveal>
         <Footer />
       </div>
 
@@ -115,4 +110,9 @@ export default function Home() {
       <CookieConsent />
     </main>
   );
+}
+
+/** CSS view-timeline progressive enhancement: browsers without it show content normally. */
+function Reveal({ children }: { children: React.ReactElement }) {
+  return <div className="bud-3d-in relative z-10">{children}</div>;
 }

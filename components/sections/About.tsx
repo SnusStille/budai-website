@@ -58,8 +58,8 @@ export default function About() {
           </h2>
           <p className="text-base sm:text-lg text-muted leading-relaxed mb-8 max-w-lg">
             {sv
-              ? "Jag är Stilledev. Jag har skrivit mjukvara i tio år, och de senaste två har jag lagt allt på en sak: BudAI, en AI som faktiskt fungerar i svenskt vardagsarbete. Idag är det en preview. Målet är att bli din nya ChatGPT."
-              : "I'm Stilledev. I've been writing software for ten years, and for the last two I've put all of it into one thing: BudAI, an AI that actually works in everyday Swedish work. Today it's a preview. The goal is to become your new ChatGPT."}
+              ? "Jag är Stilledev. Jag har skrivit mjukvara i tio år, och de senaste två har jag lagt allt på en sak: BudAI, en AI som faktiskt fungerar i svenskt vardagsarbete. Idag är det en preview. Målet är att bli din pålitliga AI-arbetsassistent."
+              : "I'm Stilledev. I've been writing software for ten years, and for the last two I've put all of it into one thing: BudAI, an AI built for everyday work in Swedish. Today it's a preview. The goal is to become your trusted AI work companion."}
           </p>
 
           <div className="grid grid-cols-3 gap-3 mb-8 max-w-lg">
@@ -81,7 +81,7 @@ export default function About() {
             <a href="https://github.com/SnusStille/budai-website" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-[#020205] hover:opacity-90 transition-opacity">
               <Github className="h-4 w-4" /> GitHub
             </a>
-            <a href="mailto:Stilleinc@hotmail.com" className="inline-flex items-center gap-2 rounded-full border border-white/15 px-5 py-2.5 text-sm font-medium text-white hover:border-accent-cyan/40 transition-colors">
+            <a href="mailto:noreply@stilledev.se" className="inline-flex items-center gap-2 rounded-full border border-white/15 px-5 py-2.5 text-sm font-medium text-white hover:border-accent-cyan/40 transition-colors">
               <Mail className="h-4 w-4" /> {sv ? "Kontakt" : "Contact"}
             </a>
           </div>

@@ -9,6 +9,30 @@ function getClient() {
   return new Anthropic({ apiKey: key });
 }
 
+/**
+ * Model tiers. Every tier is optional and driven only by environment variables,
+ * so no model name or key ever reaches the browser. `ANTHROPIC_MODEL` is the
+ * default "quality" tier; the others only exist when explicitly configured.
+ */
+type ModelTier = "fast" | "quality" | "deep";
+
+function modelForTier(tier: ModelTier): string {
+  const fallback = process.env.ANTHROPIC_MODEL || "claude-sonnet-4-20250514";
+  const byTier: Record<ModelTier, string | undefined> = {
+    fast: process.env.ANTHROPIC_MODEL_FAST,
+    quality: process.env.ANTHROPIC_MODEL,
+    deep: process.env.ANTHROPIC_MODEL_DEEP,
+  };
+  const chosen = byTier[tier];
+  return chosen && chosen.trim() ? chosen.trim() : fallback;
+}
+
+function requestTier(value: unknown): ModelTier {
+  if (value === "fast" && process.env.ANTHROPIC_MODEL_FAST) return "fast";
+  if (value === "deep" && process.env.ANTHROPIC_MODEL_DEEP) return "deep";
+  return "quality";
+}
+
 const requestCounts = new Map<string, { count: number; resetAt: number }>();
 const LIMIT = 60;
 const WINDOW_MS = 60 * 60 * 1000;
@@ -280,7 +304,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid message" }, { status: 400 });
     }
 
-    const model = process.env.ANTHROPIC_MODEL || "claude-sonnet-4-20250514";
+    const modelTier = requestTier(body?.modelTier);
+    const model = modelForTier(modelTier);
 
     if (wantStream) {
       const enc = new TextEncoder();

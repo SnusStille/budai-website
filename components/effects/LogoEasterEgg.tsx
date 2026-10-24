@@ -422,9 +422,10 @@ export default function LogoEasterEgg() {
   const [dev, setDev] = useState<{ lines: string[]; out: boolean } | null>(null);
 
   useEffect(() => {
+    const effectTimers = timers.current;
     const later = (fn: () => void, ms: number) => {
       const id = window.setTimeout(fn, ms);
-      timers.current.push(id);
+      effectTimers.push(id);
       return id;
     };
     const resize = () => {
@@ -621,7 +622,8 @@ export default function LogoEasterEgg() {
       window.removeEventListener("resize", resize);
       cancelAnimationFrame(raf.current);
       window.clearTimeout(idle.current);
-      timers.current.forEach((id) => window.clearTimeout(id));
+      effectTimers.forEach((id) => window.clearTimeout(id));
+      effectTimers.length = 0;
     };
   }, []);
 

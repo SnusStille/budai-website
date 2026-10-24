@@ -24,3 +24,4 @@ npm-debug.log*
 
 # keep dependency install result out of source control
 node_modules
+qa-shots/

@@ -306,9 +306,6 @@ body {
     border: 1px solid rgba(255, 255, 255, 0.06);
   }
 
-  .page-transition {
-    animation: fadeIn 0.45s ease-out;
-  }
 
   section {
     transition: background-color 0.5s ease, color 0.5s ease;
@@ -997,9 +994,60 @@ select option {
   to { opacity: 1; transform: none; }
 }
 @supports (animation-timeline: view()) {
-  .bud-3d-in { animation: bud-3d-in linear backwards; animation-timeline: view(); animation-range: entry 0% entry 55%; }
+  .bud-3d-in { animation: bud-3d-in linear both; animation-timeline: view(); animation-range: entry 0% entry 55%; }
 }
 @media (prefers-reduced-motion: reduce) { .bud-3d-in { animation: none; } }
+
+/*
+ * Neural-to-product handoff: the real Playground overlaps the final 56svh of the
+ * pinned camera flight. Its chapter copy clears away as the live interface rises
+ * over the core. Without view-timeline support, the interface is simply visible.
+ */
+.neural-story .neural-final-copy[data-beat="on"] {
+  opacity: var(--neural-copy-opacity, 1);
+  transition: none;
+}
+.playground-handoff { isolation: isolate; margin-top: -56svh; }
+.playground-handoff::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  top: 0;
+  left: 50%;
+  width: min(72rem, 145vw);
+  height: min(52rem, 115vw);
+  transform: translateX(-50%);
+  pointer-events: none;
+  opacity: 0.24;
+  background: radial-gradient(ellipse at 50% 8%, rgba(0, 229, 255, 0.2), rgba(124, 92, 255, 0.08) 32%, transparent 68%);
+  filter: blur(42px);
+}
+@keyframes budai-core-arrival {
+  0% { opacity: 0; scale: 0.7; }
+  38% { opacity: 0.42; scale: 1; }
+  100% { opacity: 0.13; scale: 1.24; }
+}
+@keyframes budai-playground-arrival {
+  from { opacity: 0.25; }
+  to { opacity: 1; }
+}
+@supports (animation-timeline: view()) {
+  .playground-handoff::before {
+    animation: budai-core-arrival linear both;
+    animation-timeline: view(block);
+    animation-range: entry 0% entry 60%;
+  }
+  .playground-handoff #playground {
+    animation: budai-playground-arrival linear both;
+    animation-timeline: view(block);
+    animation-range: entry 0% entry 42%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .playground-handoff { margin-top: 0; }
+  .playground-handoff::before,
+  .playground-handoff #playground { animation: none !important; }
+}
 
 /* Loader 3D logo + nav logo energy */
 @keyframes bud-logo-sway { 0%, 100% { transform: rotateX(10deg) rotateY(-30deg); } 50% { transform: rotateX(-6deg) rotateY(30deg); } }
@@ -1115,3 +1163,356 @@ html[data-dev-mode] [data-budai-logo] svg { filter: drop-shadow(0 0 8px rgba(0, 
 @keyframes bud-codescan { 0% { transform: translateY(-48px); opacity: 0; } 8% { opacity: 1; } 55% { transform: translateY(420px); opacity: 0.8; } 100% { transform: translateY(420px); opacity: 0; } }
 .bud-codescan { background: linear-gradient(180deg, transparent, rgba(0, 229, 255, 0.1), transparent); border-bottom: 1px solid rgba(0, 229, 255, 0.25); animation: bud-codescan 6.5s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) { .bud-codescan { animation: none; opacity: 0; } }
+
+/* ─────────────────────────────────────────────────────────────
+   Neural cinema — the shared visual language of the living core
+   ───────────────────────────────────────────────────────────── */
+
+/* WebGL unavailable: a composed still, never an empty box */
+.neural-fallback {
+  background:
+    radial-gradient(circle at 50% 48%, rgba(0, 229, 255, 0.13), transparent 58%),
+    radial-gradient(circle at 62% 60%, rgba(124, 92, 255, 0.1), transparent 62%);
+}
+.neural-fallback::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.14) 1px, transparent 1px);
+  background-size: 18px 18px;
+  mask-image: radial-gradient(circle at 50% 50%, #000 20%, transparent 68%);
+  -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 20%, transparent 68%);
+  opacity: 0.5;
+}
+
+/* Reduced-motion / no-flight variants keep the identity without the motion */
+.neural-static-visual {
+  background:
+    radial-gradient(circle at 50% 55%, rgba(0, 229, 255, 0.14), transparent 60%),
+    radial-gradient(circle at 68% 40%, rgba(124, 92, 255, 0.12), transparent 62%),
+    #05050b;
+}
+
+
+
+/* No JavaScript: the story degrades to a readable stack instead of a pinned frame */
+@media (scripting: none) {
+  .neural-story { height: auto !important; }
+  .neural-story .neural-stage { position: static; height: auto; overflow: visible; padding: 4.5rem 0 5rem; }
+  .neural-story .neural-stage canvas { display: none; }
+  .neural-story [data-beat] {
+    position: static !important;
+    opacity: 1 !important;
+    transform: none !important;
+    margin-bottom: 3.5rem;
+  }
+  .neural-story [data-beat]:not([data-beat="on"]) { display: block; }
+}
+
+/* position: sticky needs a non-scrolling ancestor chain. `overflow-x: hidden`
+   turns an element into a scroll container and silently breaks sticky children,
+   so use `clip` anywhere a full-bleed horizontal guard is needed. */
+html, body { overflow-x: clip; }
+
+/* Quiet signal mark: a single GPU-friendly orbit, not a stack of filters. */
+@keyframes bud-signal-orbit { to { transform: rotate(360deg); } }
+@keyframes bud-signal-breathe { 0%, 100% { opacity: .82; transform: scale(.94); } 50% { opacity: 1; transform: scale(1.07); } }
+.bud-signal-orbit { transform-origin: 16px 16px; animation: bud-signal-orbit 12s linear infinite; }
+.bud-signal-core { transform-origin: 16px 16px; animation: bud-signal-breathe 3.6s ease-in-out infinite; }
+.bud-signal-thinking .bud-signal-orbit { animation-duration: 3.2s; }
+.bud-signal-thinking .bud-signal-core { animation-duration: 1.2s; }
+.bud-logo-stage { perspective: 700px; }
+.bud-logo-float { transform-style: preserve-3d; animation: bud-mark-float 7s ease-in-out infinite; }
+@keyframes bud-mark-float { 0%, 100% { transform: rotateX(-3deg) rotateY(-6deg) translateY(0); } 50% { transform: rotateX(3deg) rotateY(6deg) translateY(-3px); } }
+.bud-logo-orbit { position: absolute; left: 50%; top: 50%; border: 1px solid rgba(0,229,255,.13); border-radius: 50%; transform: translate(-50%,-50%); }
+.bud-logo-orbit-a { width: 94px; height: 48px; animation: bud-logo-orbit-a 18s linear infinite; }
+.bud-logo-orbit-b { width: 76px; height: 76px; border-color: rgba(124,92,255,.12); animation: bud-logo-orbit-b 24s linear infinite; }
+@keyframes bud-logo-orbit-a { to { transform: translate(-50%,-50%) rotate(360deg); } }
+@keyframes bud-logo-orbit-b { to { transform: translate(-50%,-50%) rotate(-360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .bud-signal-orbit, .bud-signal-core, .bud-logo-float, .bud-logo-orbit-a, .bud-logo-orbit-b { animation: none !important; }
+}
+
+/* Lenis keeps native document scrolling/anchors but owns wheel easing. */
+html.lenis { height: auto; }
+html.lenis.lenis-smooth { scroll-behavior: auto !important; }
+html.lenis.lenis-stopped { overflow: hidden; }
+html.lenis.lenis-smooth iframe { pointer-events: none; }
+
+/* One atmospheric backdrop persists behind every route; page content remains crisp. */
+.site-world-backdrop {
+  background:
+    radial-gradient(60rem 42rem at 4% 2%, rgba(0, 229, 255, 0.075), transparent 72%),
+    radial-gradient(52rem 40rem at 98% 30%, rgba(124, 92, 255, 0.07), transparent 70%),
+    radial-gradient(56rem 40rem at 48% 100%, rgba(0, 229, 255, 0.035), transparent 72%),
+    #020205;
+}
+
+/* App Router template transition: short, opacity-only, no movement of fixed UI. */
+@keyframes route-arrive { from { opacity: 0; } to { opacity: 1; } }
+.route-arrival { animation: route-arrive 180ms ease-out both; }
+
+@keyframes startup-light-travel { from { transform: translateX(-140%); } to { transform: translateX(240%); } }
+.startup-light-sweep { animation: startup-light-travel 1.3s cubic-bezier(.22,.7,.3,1) infinite; }
+
+.startup-brain-stage {
+  position: absolute;
+  z-index: 1;
+  top: 52%;
+  left: 50%;
+  width: min(46rem, 100vw);
+  height: min(42rem, 72svh);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  filter: drop-shadow(0 0 34px rgba(0, 229, 255, .08));
+}
+.startup-brain-stage canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.startup-neural-scene {
+  position: absolute;
+  top: 53%;
+  left: 50%;
+  width: min(34rem, 84vw);
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  opacity: .72;
+}
+.startup-neural-scene::before {
+  content: "";
+  position: absolute;
+  inset: 24%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0,229,255,.12), rgba(87,74,255,.045) 44%, transparent 72%);
+}
+.startup-neural-ring {
+  position: absolute;
+  inset: 19%;
+  border: 1px solid rgba(0,229,255,.24);
+  border-radius: 50%;
+}
+.startup-neural-ring-a { transform: rotate(-28deg) scaleY(.38); }
+.startup-neural-ring-b {
+  inset: 23%;
+  border-color: rgba(139,112,255,.3);
+  transform: rotate(38deg) scaleY(.46);
+}
+.startup-neural-ring-c {
+  inset: 34%;
+  border-color: rgba(184,248,255,.3);
+  border-style: dashed;
+}
+.startup-neural-core {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #b8f8ff;
+  box-shadow: 0 0 12px 4px rgba(0,229,255,.34);
+  transform: translate(-50%, -50%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .route-arrival, .startup-light-sweep, .startup-neural-ring { animation: none !important; }
+  .startup-light-sweep { width: 100%; opacity: .7; transform: none; }
+  html[data-budai-starting="true"] #main-content { animation-duration: 1ms; }
+}
+
+/* Keep the already-rendered route beneath the opaque intro until the same exit
+   event reveals it. The delayed visibility animation is a JS-stall safety net. */
+@keyframes budai-main-failsafe {
+  0%, 99% { visibility: hidden; }
+  100% { visibility: visible; }
+}
+html[data-budai-starting="true"] #main-content {
+  visibility: hidden;
+  animation: budai-main-failsafe 18s steps(1, end) forwards;
+}
+
+/* Startup screen: server markup is visible immediately; these keyframes are a
+   JS-free safety valve only. Hydrated startup logic exits on real readiness. */
+.budai-startup-screen:not([data-exiting]) {
+  animation: budai-startup-emergency-exit 18s linear forwards;
+  isolation: isolate;
+  contain: layout paint;
+}
+.budai-startup-screen[data-exiting] {
+  opacity: 0;
+  filter: blur(5px);
+  pointer-events: none;
+}
+@keyframes budai-startup-emergency-exit {
+  0%, 94% { opacity: 1; visibility: visible; pointer-events: auto; }
+  100% { opacity: 0; visibility: hidden; pointer-events: none; }
+}
+
+/* BudAI Status: low-light atmosphere around the real, scroll-pinned WebGL world. */
+.status-page { isolation: isolate; background: #03050a; }
+.status-page-atmosphere {
+  position: absolute;
+  inset: 0 0 auto;
+  height: min(1100px, 110vh);
+  pointer-events: none;
+  background:
+    radial-gradient(52rem 38rem at 8% 8%, rgba(0, 229, 255, 0.09), transparent 70%),
+    radial-gradient(48rem 42rem at 92% 25%, rgba(124, 92, 255, 0.10), transparent 70%),
+    radial-gradient(46rem 36rem at 50% 82%, rgba(27, 74, 130, 0.07), transparent 70%);
+}
+.status-live-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #00e5ff;
+  box-shadow: 0 0 14px rgba(0, 229, 255, 0.75);
+  animation: status-live-pulse 2.4s ease-in-out infinite;
+}
+@keyframes status-live-pulse { 50% { opacity: .42; box-shadow: 0 0 5px rgba(0,229,255,.25); } }
+.status-flight-wrap { position: relative; width: 100%; }
+.status-flight {
+  min-height: min(760px, 82svh);
+  background: radial-gradient(ellipse at 50% 42%, rgba(6, 17, 29, 0.5), #03050a 75%);
+  --sf-focus-ring: #b8f8ff;
+  --sf-focus-ring-shadow: rgba(0,0,0,.96);
+}
+.status-flight > .sf-pin { z-index: 1; }
+.status-flight canvas { outline: none; }
+.status-flight-error {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  align-content: center;
+  min-height: min(760px, 82svh);
+  max-width: 40rem;
+  margin: calc(-1 * min(760px, 82svh)) auto 0;
+  padding: 2rem;
+  pointer-events: none;
+}
+.status-flight-error > * { pointer-events: auto; }
+.status-static-story {
+  position: relative;
+  display: flex;
+  min-height: min(760px, 82svh);
+  align-items: flex-end;
+  overflow: hidden;
+  padding: clamp(1.25rem, 5vw, 4rem);
+  background:
+    radial-gradient(ellipse at 50% 25%, rgba(0,229,255,.13), transparent 48%),
+    radial-gradient(ellipse at 80% 30%, rgba(124,92,255,.13), transparent 52%),
+    linear-gradient(180deg, #080c15, #03050a 82%);
+}
+.status-static-orbit {
+  position: absolute;
+  top: 6%;
+  left: 50%;
+  width: min(72vw, 620px);
+  aspect-ratio: 1;
+  transform: translateX(-50%);
+  perspective: 900px;
+  pointer-events: none;
+}
+.status-static-ring {
+  position: absolute;
+  inset: 11%;
+  border: 1px solid rgba(0,229,255,.32);
+  border-radius: 50%;
+  box-shadow: inset 0 0 60px rgba(0,229,255,.035), 0 0 32px rgba(0,229,255,.08);
+  transform: rotateX(68deg) rotateZ(-24deg);
+}
+.status-static-ring-a { inset: 4%; border-color: rgba(124,92,255,.38); transform: rotateX(72deg) rotateZ(27deg); }
+.status-static-ring-b { inset: 20%; border-color: rgba(0,229,255,.4); transform: rotateY(64deg) rotateZ(48deg); }
+.status-static-core {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 18%; aspect-ratio: 1;
+  border: 1px solid rgba(184,248,255,.72);
+  border-radius: 38% 62% 53% 47%;
+  background: radial-gradient(circle at 34% 30%, #b8f8ff, #00a8cc 37%, #5544b8 72%, transparent 73%);
+  box-shadow: 0 0 45px rgba(0,229,255,.34), inset -14px -10px 25px rgba(3,5,10,.52);
+  transform: translate(-50%,-50%) rotate(32deg);
+}
+.status-static-list {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  width: min(100%, 58rem);
+  gap: .75rem;
+  margin: 0 auto;
+}
+.status-static-list li {
+  display: grid;
+  grid-template-columns: 2.5rem 1fr;
+  gap: .9rem;
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: 1rem;
+  background: rgba(4,7,13,.77);
+  padding: .95rem 1rem;
+  backdrop-filter: blur(14px);
+}
+.status-static-list li > span { font: 10px/1.5 var(--font-jetbrains), monospace; letter-spacing: .12em; color: rgba(0,229,255,.75); }
+.status-static-list h3 { margin: 0; font-size: .94rem; font-weight: 600; color: rgba(255,255,255,.92); }
+.status-static-list p { margin: .35rem 0 0; font-size: .75rem; line-height: 1.55; color: rgba(255,255,255,.54); }
+.status-readout-card {
+  min-width: 0;
+  border: 1px solid rgba(255,255,255,.085);
+  border-radius: 1.25rem;
+  background: linear-gradient(145deg, rgba(255,255,255,.045), rgba(255,255,255,.018));
+  padding: 1.25rem;
+  box-shadow: inset 0 1px rgba(255,255,255,.035), 0 20px 60px rgba(0,0,0,.12);
+}
+@media (max-width: 640px) {
+  .status-static-story { align-items: flex-end; min-height: 84svh; padding: 1rem; }
+  .status-static-orbit { top: -2%; width: 112vw; }
+  .status-static-list { gap: .5rem; }
+  .status-static-list li { padding: .7rem .75rem; border-radius: .85rem; }
+  .status-static-list p { font-size: .69rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .budai-startup-screen { transition-duration: 1ms !important; }
+  /* Keep the static brain intro finite even when its JavaScript never hydrates. */
+  .budai-startup-screen:not([data-exiting]) { animation-duration: 18s; }
+  .startup-brain-stage { filter: none; }
+  .status-live-dot { animation: none; }
+  .status-static-ring, .status-static-core { animation: none; }
+  .status-flight-ending { transition: none; transform: none; }
+}
+.status-flight-ending {
+  position: fixed;
+  z-index: 80;
+  top: calc(5.5rem + env(safe-area-inset-top, 0px));
+  left: clamp(1rem, 7vw, 6rem);
+  width: min(28rem, calc(100vw - 8rem));
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(-8px);
+  transition: opacity .35s ease, transform .35s ease, visibility .35s;
+}
+.status-flight-ending-card {
+  border: 1px solid rgba(0,229,255,.2);
+  border-radius: 1.1rem;
+  background: rgba(3,7,14,.82);
+  padding: 1rem 1.1rem;
+  box-shadow: 0 16px 60px rgba(0,0,0,.28), inset 0 1px rgba(255,255,255,.04);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+#status-flight[data-ending="true"] .status-flight-ending {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+@media (max-width: 640px) {
+  .status-flight-ending {
+    top: calc(1rem + env(safe-area-inset-top, 0px));
+    left: 1rem;
+    width: calc(100vw - 5.75rem);
+  }
+  .status-flight-ending-card { border-radius: .9rem; padding: .75rem .85rem; }
+}

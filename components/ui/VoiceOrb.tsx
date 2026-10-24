@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
 
 type Rec = {
@@ -31,8 +31,9 @@ export default function VoiceOrb({ open, sv, busy, reply, onSend, onClose }: {
   const latest = useRef({ sv, onSend, reply });
   latest.current = { sv, onSend, reply };
   st.current = state;
+  const listenRef = useRef<() => void>(() => {});
 
-  const listen = () => {
+  const listen = useCallback(() => {
     if (!live.current) return;
     const w = window as unknown as { SpeechRecognition?: new () => Rec; webkitSpeechRecognition?: new () => Rec };
     const Ctor = w.SpeechRecognition || w.webkitSpeechRecognition;
@@ -53,7 +54,9 @@ export default function VoiceOrb({ open, sv, busy, reply, onSend, onClose }: {
       }
     };
     r.onend = () => {
-      if (live.current && !awaiting.current && !window.speechSynthesis.speaking) window.setTimeout(listen, 250);
+      if (live.current && !awaiting.current && !window.speechSynthesis.speaking) {
+        window.setTimeout(() => listenRef.current(), 250);
+      }
     };
     r.onerror = () => {};
     rec.current = r;
@@ -63,7 +66,8 @@ export default function VoiceOrb({ open, sv, busy, reply, onSend, onClose }: {
     } catch {
       /* already started */
     }
-  };
+  }, []);
+  listenRef.current = listen;
 
   useEffect(() => {
     if (!open) return;
@@ -101,7 +105,7 @@ export default function VoiceOrb({ open, sv, busy, reply, onSend, onClose }: {
       stream?.getTracks().forEach((t) => t.stop());
       ctx?.close().catch(() => {});
     };
-  }, [open]);
+  }, [open, listen]);
 
   useEffect(() => {
     if (!open || !awaiting.current || busy || !reply || reply === spoken.current) return;
@@ -116,8 +120,7 @@ export default function VoiceOrb({ open, sv, busy, reply, onSend, onClose }: {
     u.onerror = done;
     setState("speaking");
     window.speechSynthesis.speak(u);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [reply, busy, open]);
+  }, [reply, busy, open, listen, sv]);
 
   if (!open) return null;
   const label =

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 
 type Seg = [string, string];
-const STATUSES = ["developer preview", "shipping weekly", "building in public", "your new ChatGPT"];
+const STATUSES = ["developer preview", "shipping weekly", "building in public", "AI work, made clearer"];
 const STACK = ["Next.js", "TypeScript", "Tailwind", "Supabase", "Claude API"];
 const S = "text-accent-cyan";
 
@@ -15,7 +15,7 @@ function build(status: string): Seg[][] {
     [["  stack: [", ""]],
     ...STACK.map((s, i): Seg[] => [["    ", ""], [`"${s}"`, S], [i < STACK.length - 1 ? "," : "", ""]]),
     [["  ],", ""]],
-    [["  goal: ", ""], ['"your new ChatGPT"', S], [",", ""]],
+    [["  goal: ", ""], ['"trusted AI work companion"', S], [",", ""]],
     [["  status: ", ""], [`"${status}"`, S], [",", ""]],
     [["};", ""]],
   ];
