@@ -1,13 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import BrainFlight from "@/components/effects/BrainFlight";
 import { markIntroDone } from "@/components/effects/introState";
 
 const WORD = "BudAI";
 const GLYPHS = "01<>{}/=+*#";
 const BOOT = ["init core", "load models", "warm up playground", "ready"];
-const DURATION = 5600;
+const DURATION = 2200;
 
 /** Each letter of the wordmark scrambles through code characters, then locks in. */
 function Scramble({ start }: { start: number }) {
@@ -65,7 +64,7 @@ export default function LoadingScreen() {
       return;
     }
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const duration = reduced ? 1800 : DURATION;
+    const duration = reduced ? 350 : DURATION;
     document.body.style.overflow = "hidden";
     let raf = 0;
     let closing = false;
@@ -94,8 +93,13 @@ export default function LoadingScreen() {
       else finish.current();
     };
     raf = requestAnimationFrame(tick);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" || e.key === "Enter" || e.key === " ") finish.current();
+    };
+    window.addEventListener("keydown", onKey);
     return () => {
       cancelAnimationFrame(raf);
+      window.removeEventListener("keydown", onKey);
       document.body.style.overflow = "";
     };
   }, []);
@@ -117,20 +121,37 @@ export default function LoadingScreen() {
         className={`absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,229,255,0.35),transparent_55%)] transition-opacity duration-700 ${out ? "opacity-100" : "opacity-0"}`}
         aria-hidden
       />
-      <BrainFlight progress={p} activity={Math.max(0, (p - 0.7) / 0.3)} />
-      <div className="absolute h-[620px] w-[620px] rounded-full bg-accent-cyan/[0.08] blur-[140px]" aria-hidden />
-      <div className="absolute h-[380px] w-[380px] translate-x-24 translate-y-20 rounded-full bg-accent-purple/[0.12] blur-[120px]" aria-hidden />
+      {/* CSS-only core: the intro must never compete with the page for GPU time */}
+      <div className="pointer-events-none absolute inset-0 flex items-center justify-center" aria-hidden>
+        <div className="relative h-[min(78vw,540px)] w-[min(78vw,540px)]">
+          <div className="absolute inset-[16%] rounded-full bg-accent-cyan/[0.10] blur-[90px]" />
+          <div className="absolute inset-[26%] rounded-full bg-accent-purple/[0.12] blur-[80px]" />
+          <div
+            className="intro-orbit absolute inset-0 rounded-full opacity-70"
+            style={{
+              background:
+                "conic-gradient(from 0deg, transparent 0%, rgba(0,229,255,0.5) 14%, transparent 34%, rgba(124,92,255,0.45) 58%, transparent 78%, rgba(45,212,191,0.35) 92%, transparent 100%)",
+              maskImage: "radial-gradient(circle, transparent 58%, #000 66%, #000 74%, transparent 82%)",
+              WebkitMaskImage:
+                "radial-gradient(circle, transparent 58%, #000 66%, #000 74%, transparent 82%)",
+            }}
+          />
+          <div className="intro-orbit absolute inset-[12%] rounded-full border border-dashed border-white/10" style={{ animationDirection: "reverse", animationDuration: "26s" }} />
+          <div className="absolute inset-[32%] rounded-full border border-accent-cyan/25 intro-pulse" />
+          <div className="absolute left-1/2 top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_0_40px_12px_rgba(0,229,255,0.55)]" />
+        </div>
+      </div>
 
       {/* top: credit, tagline, wordmark */}
       <div className="absolute inset-x-0 top-[6%] sm:top-[8%] flex flex-col items-center gap-2 text-center">
         <p className="bud-pop font-mono text-[11px] uppercase tracking-[0.35em] text-white/40" style={{ animationDelay: "0.3s" }}>
           DEVELOPED BY <b className="font-bold text-accent-cyan [text-shadow:0_0_14px_rgba(0,229,255,0.6)]">STILLEDEV</b>
         </p>
-        <p className="bud-pop text-base sm:text-xl font-medium tracking-wide text-white/80" style={{ animationDelay: "1.6s" }}>
+        <p className="bud-pop text-base sm:text-xl font-medium tracking-wide text-white/80" style={{ animationDelay: "0.7s" }}>
           Your new <span className="bg-gradient-to-r from-accent-cyan to-accent-purple bg-clip-text text-transparent">ChatGPT</span>
         </p>
         <h1 className="text-5xl sm:text-7xl font-bold tracking-tight text-white [text-shadow:0_0_50px_rgba(0,229,255,0.45)]">
-          <Scramble start={2200} />
+          <Scramble start={900} />
         </h1>
       </div>
 
@@ -150,7 +171,7 @@ export default function LoadingScreen() {
             ) : null
           )}
         </ul>
-        <p className="bud-pop text-[11px] text-white/25" style={{ animationDelay: "1.5s" }}>click to skip</p>
+        <p className="bud-pop text-[11px] text-white/25" style={{ animationDelay: "0.8s" }}>click to skip</p>
       </div>
     </div>
   );

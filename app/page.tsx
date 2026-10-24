@@ -6,10 +6,6 @@ import ScrollProgress from "@/components/ui/ScrollProgress";
 import SectionDots from "@/components/ui/SectionDots";
 import CookieConsent from "@/components/ui/CookieConsent";
 import BackToTop from "@/components/ui/BackToTop";
-import SurpriseToasts from "@/components/ui/SurpriseToasts";
-import Signature from "@/components/ui/Signature";
-import FocusMode from "@/components/ui/FocusMode";
-import BuddyCard from "@/components/sections/BuddyCard";
 import Navbar from "@/components/sections/Navbar";
 import Hero from "@/components/sections/Hero";
 import Capabilities from "@/components/sections/Capabilities";
@@ -17,21 +13,13 @@ import Waitlist from "@/components/sections/Waitlist";
 import WhatIsBudAI from "@/components/sections/WhatIsBudAI";
 import ErrorBoundary from "@/components/ui/ErrorBoundary";
 import HeroAsk from "@/components/sections/HeroAsk";
-import LazyEgg from "@/components/effects/LazyEgg";
 import FeedbackButton from "@/components/ui/FeedbackButton";
 import Journey from "@/components/sections/Journey";
 import SiteChrome from "@/components/ui/SiteChrome";
-import WhatsNew from "@/components/ui/WhatsNew";
-import Shortcuts from "@/components/ui/Shortcuts";
 import Footer from "@/components/sections/Footer";
 
-const AIEnvironment = dynamic(() => import("@/components/effects/AIEnvironment"), {
-  ssr: false,
-});
-const CursorGlow = dynamic(() => import("@/components/effects/CursorGlow"), { ssr: false });
-
+const NeuralJourney = dynamic(() => import("@/components/sections/NeuralJourney"));
 const About = dynamic(() => import("@/components/sections/About"));
-const AIBackdropFX = dynamic(() => import("@/components/effects/AIBackdropFX"), { ssr: false });
 const AIPlayground = dynamic(() => import("@/components/sections/AIPlayground"));
 
 export default function Home() {
@@ -51,8 +39,6 @@ export default function Home() {
       if (buffer === target) {
         console.log("%c🚀 Welcome, developer.", "color: #00e5ff; font-size: 14px; font-weight: bold;");
         console.log("%cYou found the easter egg.", "color: #2dd4bf; font-size: 12px;");
-        document.documentElement.classList.add("egg-flash");
-        setTimeout(() => document.documentElement.classList.remove("egg-flash"), 1200);
         window.dispatchEvent(new Event("budai:egg"));
         buffer = "";
       }
@@ -64,11 +50,7 @@ export default function Home() {
   useEffect(() => {
     const originalTitle = document.title;
     const onVisibility = () => {
-      if (document.visibilityState === "hidden") {
-        document.title = "Stilledev.se · BudAI";
-      } else {
-        document.title = originalTitle;
-      }
+      document.title = document.visibilityState === "hidden" ? "Stilledev.se · BudAI" : originalTitle;
     };
     document.addEventListener("visibilitychange", onVisibility);
     return () => {
@@ -78,25 +60,20 @@ export default function Home() {
   }, []);
 
   return (
-    <main className="page-transition relative min-h-screen text-white overflow-x-hidden bg-background">
+    <main className="page-transition relative min-h-screen overflow-x-hidden bg-background text-white">
       <ScrollProgress />
-      <AIEnvironment />
-      <CursorGlow />
       <SectionDots />
-      <div className="fixed inset-0 z-[1] pointer-events-none ai-grid opacity-[0.35]" aria-hidden />
-      <div className="fixed inset-0 z-[1] pointer-events-none ai-vignette" aria-hidden />
-      <AIBackdropFX />
+      <div className="pointer-events-none fixed inset-0 z-[1] ai-grid opacity-[0.28]" aria-hidden />
+      <div className="pointer-events-none fixed inset-0 z-[1] ai-vignette" aria-hidden />
 
       <div className="relative z-10">
         <Navbar />
         <SiteChrome />
-        <WhatsNew />
-        <Shortcuts />
         <FeedbackButton />
-        <LazyEgg />
         <Hero />
-        <HeroAsk />
         <WhatIsBudAI />
+        <NeuralJourney />
+        <HeroAsk />
         <ErrorBoundary>
           <AIPlayground />
         </ErrorBoundary>
@@ -108,10 +85,6 @@ export default function Home() {
       </div>
 
       <BackToTop />
-      <SurpriseToasts />
-      <Signature />
-      <FocusMode />
-      <BuddyCard />
       <CookieConsent />
     </main>
   );

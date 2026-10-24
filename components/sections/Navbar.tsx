@@ -150,8 +150,6 @@ export default function Navbar() {
                 e.preventDefault();
                 (e.currentTarget as HTMLElement).blur();
                 if (window.scrollY > 300) window.scrollTo({ top: 0, behavior: "smooth" });
-                // Progressive easter egg: every click advances the sequence (see LogoEasterEgg)
-                window.dispatchEvent(new CustomEvent("budai:logo-click", { detail: { el: e.currentTarget } }));
               }}
             >
               <span className="transition-transform duration-300 group-active:scale-95 group-hover:[transform:perspective(260px)_rotateY(16deg)_scale(1.08)] inline-flex">

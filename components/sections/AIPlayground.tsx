@@ -56,6 +56,7 @@ import {
   Share2,
   Globe2,
   Command,
+  Gauge,
 } from "lucide-react";
 import ScrollReveal from "@/components/ui/ScrollReveal";
 import BudAILogo from "@/components/ui/BudAILogo";
@@ -68,6 +69,7 @@ import {
   type AiActivity,
   type AttachmentDraft,
   type Mode,
+  type ModelTierId,
   newId,
   titleFromMessages,
   memoryToPromptBlock,
@@ -202,6 +204,18 @@ const SLASH = [
   { cmd: "/explain", d: ["Explain simply", "Förklara enkelt"], en: "Explain simply, with an example: ", sv: "Förklara enkelt, med ett exempel: " },
   { cmd: "/fix", d: ["Fix my text", "Förbättra min text"], en: "Fix the grammar and improve the style of this text:\n\n", sv: "Rätta grammatiken och förbättra stilen i texten:\n\n" },
 ];
+
+const TIER_ORDER: ModelTierId[] = ["fast", "quality", "deep"];
+const TIER_LABELS: Record<ModelTierId, { sv: string; en: string }> = {
+  fast: { sv: "Snabb", en: "Fast" },
+  quality: { sv: "Standard", en: "Standard" },
+  deep: { sv: "Djup", en: "Deep" },
+};
+const TIER_HINTS: Record<ModelTierId, { sv: string; en: string }> = {
+  fast: { sv: "Kortare svar, snabbare", en: "Shorter answers, faster" },
+  quality: { sv: "Balanserad standardnivå", en: "Balanced default" },
+  deep: { sv: "Mer tid på svåra frågor", en: "More effort on hard questions" },
+};
 
 const PERSONAS = [
   { id: "default", en: "Default", sv: "Standard" },
@@ -591,6 +605,13 @@ export default function AIPlayground() {
   const [listening, setListening] = useState(false);
   const [genMode, setGenMode] = useState(false);
   const [imageGenEnabled, setImageGenEnabled] = useState(false);
+  /** Model tiers the server can serve (env-driven, no names leak to the client). */
+  const [tierSupport, setTierSupport] = useState<Record<ModelTierId, boolean>>({
+    fast: false,
+    quality: true,
+    deep: false,
+  });
+  const [modelTier, setModelTier] = useState<ModelTierId>("quality");
   const [lightbox, setLightbox] = useState<string | null>(null);
   const [toast, setToast] = useState<{ kind: "ok" | "warn" | "err"; text: string } | null>(null);
   const [search, setSearch] = useState("");
@@ -618,6 +639,9 @@ export default function AIPlayground() {
 
   const busy = activity !== "idle" && activity !== "error" && activity !== "listening";
 
+  /* Tiers the server can actually serve; the picker only appears when there is a choice. */
+  const availableTiers = TIER_ORDER.filter((t) => tierSupport[t]);
+
   const showToast = useCallback((kind: "ok" | "warn" | "err", text: string) => {
     setToast({ kind, text });
     window.setTimeout(() => setToast(null), 4200);
@@ -639,7 +663,24 @@ export default function AIPlayground() {
     fetch("/api/features")
       .then((r) => r.json())
       .then((d) => {
-        if (!cancelled) setImageGenEnabled(!!d.imageGeneration);
+        if (cancelled) return;
+        setImageGenEnabled(!!d.imageGeneration);
+        if (d.models?.available && typeof d.models.available === "object") {
+          const a = d.models.available as Record<string, unknown>;
+          setTierSupport({
+            fast: a.fast === true,
+            quality: a.quality !== false,
+            deep: a.deep === true,
+          });
+          try {
+            const saved = localStorage.getItem("budai_model_tier");
+            if (saved === "fast" && a.fast === true) setModelTier("fast");
+            else if (saved === "deep" && a.deep === true) setModelTier("deep");
+            else setModelTier("quality");
+          } catch {
+            /* ignore */
+          }
+        }
       })
       .catch(() => {
         if (!cancelled) setImageGenEnabled(false);
@@ -1028,6 +1069,7 @@ export default function AIPlayground() {
           imageBase64: img?.b64,
           imageMediaType: img?.media,
           temporary: temporary || !memoryEnabled,
+          modelTier,
         }),
       });
       window.clearTimeout(timeout);
@@ -1911,6 +1953,51 @@ export default function AIPlayground() {
                     </button>
                   ))}
                   <div className="ml-auto flex items-center gap-1.5">
+                    {availableTiers.length > 1 && (
+                      <details className="relative">
+                        <summary
+                          className="flex cursor-pointer list-none items-center gap-1 rounded-lg border border-white/[0.08] bg-white/[0.02] px-2 py-1 text-[10px] font-medium text-muted hover:text-white [&::-webkit-details-marker]:hidden"
+                          aria-label={lang === "sv" ? "Välj modellnivå" : "Choose model tier"}
+                          title={
+                            lang === "sv"
+                              ? "Modellnivå: snabb, standard eller djup"
+                              : "Model tier: fast, standard or deep"
+                          }
+                        >
+                          <Gauge className="h-3 w-3 text-accent-cyan/80" />
+                          {TIER_LABELS[modelTier][lang]}
+                          <span className="text-muted/40">▾</span>
+                        </summary>
+                        <div className="absolute right-0 z-30 mt-1 w-56 rounded-xl border border-white/10 bg-[#07070e]/95 p-1 shadow-2xl backdrop-blur-xl">
+                          {availableTiers.map((t) => (
+                            <button
+                              key={t}
+                              type="button"
+                              onClick={(e) => {
+                                setModelTier(t);
+                                try {
+                                  localStorage.setItem("budai_model_tier", t);
+                                } catch {
+                                  /* ignore */
+                                }
+                                e.currentTarget.closest("details")?.removeAttribute("open");
+                              }}
+                              aria-pressed={modelTier === t}
+                              className={`block w-full rounded-lg px-2.5 py-2 text-left text-[11px] transition-colors ${
+                                modelTier === t
+                                  ? "bg-accent-cyan/10 text-white"
+                                  : "text-white/75 hover:bg-white/5"
+                              }`}
+                            >
+                              <span className="block font-semibold">{TIER_LABELS[t][lang]}</span>
+                              <span className="mt-0.5 block text-[10px] leading-snug text-muted/70">
+                                {TIER_HINTS[t][lang]}
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      </details>
+                    )}
                     <span className="hidden sm:inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-mono text-accent-cyan/80 border border-accent-cyan/20 bg-accent-cyan/5">
                       <span className="w-1.5 h-1.5 rounded-full bg-accent-green animate-pulse" />
                       BudAI Core

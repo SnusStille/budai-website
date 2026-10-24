@@ -1115,3 +1115,59 @@ html[data-dev-mode] [data-budai-logo] svg { filter: drop-shadow(0 0 8px rgba(0, 
 @keyframes bud-codescan { 0% { transform: translateY(-48px); opacity: 0; } 8% { opacity: 1; } 55% { transform: translateY(420px); opacity: 0.8; } 100% { transform: translateY(420px); opacity: 0; } }
 .bud-codescan { background: linear-gradient(180deg, transparent, rgba(0, 229, 255, 0.1), transparent); border-bottom: 1px solid rgba(0, 229, 255, 0.25); animation: bud-codescan 6.5s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) { .bud-codescan { animation: none; opacity: 0; } }
+
+/* ─────────────────────────────────────────────────────────────
+   Neural cinema — the shared visual language of the living core
+   ───────────────────────────────────────────────────────────── */
+
+/* WebGL unavailable: a composed still, never an empty box */
+.neural-fallback {
+  background:
+    radial-gradient(circle at 50% 48%, rgba(0, 229, 255, 0.13), transparent 58%),
+    radial-gradient(circle at 62% 60%, rgba(124, 92, 255, 0.1), transparent 62%);
+}
+.neural-fallback::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.14) 1px, transparent 1px);
+  background-size: 18px 18px;
+  mask-image: radial-gradient(circle at 50% 50%, #000 20%, transparent 68%);
+  -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 20%, transparent 68%);
+  opacity: 0.5;
+}
+
+/* Reduced-motion / no-flight variants keep the identity without the motion */
+.neural-static-visual {
+  background:
+    radial-gradient(circle at 50% 55%, rgba(0, 229, 255, 0.14), transparent 60%),
+    radial-gradient(circle at 68% 40%, rgba(124, 92, 255, 0.12), transparent 62%),
+    #05050b;
+}
+
+/* Intro core (LoadingScreen) */
+@keyframes intro-spin { to { transform: rotate(360deg); } }
+@keyframes intro-core {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.85; }
+  50% { transform: translate(-50%, -50%) scale(1.35); opacity: 1; }
+}
+.intro-orbit { animation: intro-spin 14s linear infinite; }
+.intro-pulse { animation: intro-core 2.4s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .intro-orbit, .intro-pulse { animation: none; }
+}
+
+/* No JavaScript: the story degrades to a readable stack instead of a pinned frame */
+@media (scripting: none) {
+  .neural-story { height: auto !important; }
+  .neural-story .neural-stage { position: static; height: auto; overflow: visible; padding: 4.5rem 0 5rem; }
+  .neural-story .neural-stage canvas { display: none; }
+  .neural-story [data-beat] {
+    position: static !important;
+    opacity: 1 !important;
+    transform: none !important;
+    margin-bottom: 3.5rem;
+  }
+  .neural-story [data-beat]:not([data-beat="on"]) { display: block; }
+}
