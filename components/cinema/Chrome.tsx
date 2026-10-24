@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { emitCinema } from "@/lib/cinema/bus";
+import { emitCinema, LEADER_MS } from "@/lib/cinema/bus";
 import { subscribeScroll } from "@/lib/cinema/scroll";
 import { scrollToScene } from "@/lib/cinema/scroll";
 import { SCENE_ORDER, clamp01, type SceneId } from "@/lib/cinema/timeline";
@@ -23,9 +23,13 @@ export const SCENE_META: Record<SceneId, { n: string; label: string; labelSv: st
    A 2.3s countdown, not a spinner. It never locks the page: it fades on a timer, on
    click, on Esc, and unconditionally after its safety timeout — a visitor can always
    reach the content, and if JS never runs the leader is never in the DOM at all.      */
+const SEEN_KEY = "stilledev_leader_seen";
+
 export function Leader() {
   const { lang } = useLang();
   const sv = lang === "sv";
+  // pending = not decided yet (also the SSR shape: nothing painted, so no black flash)
+  const [mode, setMode] = useState<"pending" | "play" | "skip">("pending");
   const [out, setOut] = useState(false);
   const [count, setCount] = useState(3);
   const done = useRef(false);
@@ -35,17 +39,33 @@ export function Leader() {
     done.current = true;
     emitCinema({ type: "intro", value: 1 });
     setOut(true);
+    try {
+      sessionStorage.setItem(SEEN_KEY, "1");
+    } catch {
+      /* private mode */
+    }
   }, []);
 
   useEffect(() => {
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const saveData =
       (navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData === true;
-    if (reduced || saveData) {
-      finish();
+    let seen = false;
+    try {
+      seen = sessionStorage.getItem(SEEN_KEY) === "1";
+    } catch {
+      /* private mode */
+    }
+    // Whoever skips the leader still has to advance the world's intro, or the logotype would
+    // never form: the countdown and the mark share one channel (lib/cinema/bus.ts).
+    if (reduced || saveData || seen) {
+      emitCinema({ type: "intro", value: 1 });
+      setMode("skip");
+      setOut(true);
       return;
     }
-    const DUR = 2300;
+    setMode("play");
+    const DUR = LEADER_MS;
     const t0 = performance.now();
     let raf = 0;
     const ease = (x: number) => 1 - Math.pow(1 - x, 3);
@@ -68,6 +88,8 @@ export function Leader() {
       window.removeEventListener("keydown", onKey);
     };
   }, [finish]);
+
+  if (mode !== "play") return null;
 
   return (
     <div

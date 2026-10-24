@@ -55,7 +55,8 @@ export default function Home() {
 
       <Hud />
       <StudioNav />
-      {!reduced && <Leader />}
+      {/* the leader decides for itself (reduced motion, save-data, return visit) */}
+      <Leader />
 
       <div className="relative z-10">
         <Arrival />
