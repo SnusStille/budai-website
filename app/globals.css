@@ -998,6 +998,62 @@ select option {
 }
 @media (prefers-reduced-motion: reduce) { .bud-3d-in { animation: none; } }
 
+/*
+ * Neural-to-product handoff: a restrained core bloom and a short reveal on the
+ * real prompt and Playground. Native view timelines are progressive enhancement;
+ * without them (or with reduced motion), the working interface stays fully visible.
+ */
+.playground-handoff { isolation: isolate; }
+.playground-handoff::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  top: 0;
+  left: 50%;
+  width: min(72rem, 145vw);
+  height: min(52rem, 115vw);
+  transform: translateX(-50%);
+  pointer-events: none;
+  opacity: 0.24;
+  background: radial-gradient(ellipse at 50% 8%, rgba(0, 229, 255, 0.2), rgba(124, 92, 255, 0.08) 32%, transparent 68%);
+  filter: blur(42px);
+}
+@keyframes budai-core-arrival {
+  0% { opacity: 0; scale: 0.7; }
+  38% { opacity: 0.42; scale: 1; }
+  100% { opacity: 0.13; scale: 1.24; }
+}
+@keyframes budai-prompt-arrival {
+  from { opacity: 0.35; translate: 0 14px; }
+  to { opacity: 1; translate: 0 0; }
+}
+@keyframes budai-playground-arrival {
+  from { opacity: 0.35; }
+  to { opacity: 1; }
+}
+@supports (animation-timeline: view()) {
+  .playground-handoff::before {
+    animation: budai-core-arrival linear both;
+    animation-timeline: view(block);
+    animation-range: entry 0% entry 60%;
+  }
+  .playground-handoff #enter {
+    animation: budai-prompt-arrival linear both;
+    animation-timeline: view(block);
+    animation-range: entry 0% entry 48%;
+  }
+  .playground-handoff #playground {
+    animation: budai-playground-arrival linear both;
+    animation-timeline: view(block);
+    animation-range: entry 0% entry 42%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .playground-handoff::before,
+  .playground-handoff #enter,
+  .playground-handoff #playground { animation: none !important; }
+}
+
 /* Loader 3D logo + nav logo energy */
 @keyframes bud-logo-sway { 0%, 100% { transform: rotateX(10deg) rotateY(-30deg); } 50% { transform: rotateX(-6deg) rotateY(30deg); } }
 @keyframes bud-ring-a { from { transform: rotateX(74deg) rotateZ(0deg); } to { transform: rotateX(74deg) rotateZ(360deg); } }

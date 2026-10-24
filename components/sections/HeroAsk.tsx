@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ArrowUp } from "lucide-react";
 import { useLang } from "@/components/ui/LanguageContext";
+import { stagePlaygroundPrompt } from "@/lib/playground/promptHandoff";
 
 /**
  * Ask box under the cinematic entrance: type a question, and the Playground
@@ -16,9 +17,25 @@ export default function HeroAsk() {
 
   const go = (text: string) => {
     if (!text.trim()) return;
-    window.dispatchEvent(new CustomEvent("budai:prompt", { detail: text.trim() }));
-    const ta = document.querySelector<HTMLTextAreaElement>("#playground textarea");
-    (ta ?? document.getElementById("playground"))?.scrollIntoView({ behavior: "smooth", block: "center" });
+    stagePlaygroundPrompt(text);
+
+    const scrollToPlayground = () => {
+      const target = document.querySelector<HTMLTextAreaElement>("#playground textarea")
+        ?? document.getElementById("playground");
+      if (!target) return false;
+      target.scrollIntoView({ behavior: "smooth", block: "center" });
+      return true;
+    };
+
+    if (!scrollToPlayground()) {
+      // AIPlayground is code-split. If it has not mounted yet, wait for its real
+      // section instead of losing the prompt or leaving the visitor in place.
+      const observer = new MutationObserver(() => {
+        if (scrollToPlayground()) observer.disconnect();
+      });
+      observer.observe(document.body, { childList: true, subtree: true });
+      window.setTimeout(() => observer.disconnect(), 5000);
+    }
   };
 
   return (
@@ -40,7 +57,7 @@ export default function HeroAsk() {
           aria-label={sv ? "Fråga BudAI" : "Ask BudAI"}
           className="min-w-0 flex-1 bg-transparent py-2.5 text-[15px] text-white outline-none placeholder:text-muted/70"
         />
-        <button type="submit" aria-label="Send" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-cyan text-[#020205] transition-opacity hover:opacity-90">
+        <button type="submit" aria-label={sv ? "Skicka fråga" : "Send question"} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-cyan text-[#020205] transition-opacity hover:opacity-90">
           <ArrowUp className="h-5 w-5" />
         </button>
       </form>

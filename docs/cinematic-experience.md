@@ -29,9 +29,10 @@ same job.
 | `edenbergel/kyu-chatbot` | MIT | Next 16 / React 19 / R3F 9 / OpenAI. A single sphere with moving lights and `useChat` without streaming. Not compatible (peers), not an improvement over the existing Playground. Rejected. |
 | `moazamdotdev/4chat` | Unlicense (public domain) | Next 16 / React 19 / AI SDK 7 / shadcn + a vendored copy of Vercel AI Elements (~50 components). Not droppable into Tailwind 3 / Next 14 / React 18 without a large migration. Interaction patterns were studied: prompt composer with attachments, model picker, message action toolbar, stick-to-bottom conversation. Implemented natively where they added value. |
 
-Vercel AI Elements itself is MIT but is distributed for the AI SDK / Tailwind 4 stack.
-Adopting it would have meant adding `ai`, `streamdown`, `shiki`, `radix-ui` and a React 19
-upgrade to a working product — rejected on the “no unnecessary dependencies” rule.
+The current Vercel AI Elements repository carries an Apache-2.0 root licence and is
+distributed for the AI SDK / Tailwind 4 stack. Adopting it would have meant adding `ai`,
+`streamdown`, `shiki`, `radix-ui` and a React 19 upgrade to a working product — rejected on
+the “no unnecessary dependencies” rule.
 
 ## 3. What was built instead
 
@@ -162,3 +163,31 @@ Chromium binary cannot launch because `libnspr4.so` / `libnss3.so` are absent. N
 Anthropic/Supabase credentials were present, so real AI/auth/data writes were not exercised.
 The earlier visual QA run above predates these route/brand changes and is not presented as
 verification of the current visuals.
+
+## 8. October 2026 handoff research and implementation
+
+These candidates were cloned and their source, root licence, stack requirements and/or
+interaction logic were inspected; none was pasted into BudAI wholesale:
+
+| Repository | Source and licence check | Compatibility finding |
+| --- | --- | --- |
+| `14islands/r3f-scroll-rig` | Root `LICENSE` says MIT; `package.json` says ISC. `ScrollScene` uses a shared R3F canvas plus DOM tracking/observers. | The mismatch makes the exact reuse terms ambiguous; regardless, adding R3F/Three and replacing the working single-canvas engine is unjustified. The one-scene/shared-context/performance principles confirm the existing architecture. |
+| `RaphaelPelerin/portfolio` | Source demonstrates a mutable scroll-progress store, one GSAP `ScrollTrigger` for a pinned sequence, and explicit reduced-motion handling. **No root licence**. | Technique reviewed, no code/assets copied. BudAI already has one native scroll-scrubbed camera engine; pinning the Playground or adding Lenis/GSAP would reduce normal document behavior and complicate direct links. |
+| `moazamdotdev/4chat` | Root Unlicense; source includes attachment state/drop handling, a message log that sticks to bottom, and a rich prompt input. | Its actual package uses Next 16, React 19, AI SDK 7, Tailwind 4 and many vendored UI components. Keep the working BudAI chat and its existing upload/model/streaming APIs. |
+| `edenbergel/kyu-chatbot` | Root MIT; source is a Next Pages Router demo with a Three/R3F orb and basic OpenAI chat hook. | Not an App Router/streaming/upload/auth implementation; it offers no better transition or product functionality. |
+| `vercel/ai-elements` | Root Apache-2.0. Current README says the project will be deprecated at the end of Nov 2026 and moved into shadcn/ui. | The package ecosystem is AI SDK 7 / Tailwind 4-oriented; avoid a migration immediately before deprecation and preserve BudAI's tailored interface. |
+| `akella/webGLImageTransitions` | No root licence; source is a standalone image-transition demo. | Not reusable and not suitable for interactive form/chat surfaces. |
+
+**Chosen approach:** keep the current single WebGL renderer and camera flight, then let the
+real `HeroAsk` and `AIPlayground` arrive through a small native CSS view-timeline bloom.
+No second canvas, route interception, pinning, package, or screenshot-only UI. Browsers
+without scroll-timeline support show the interface normally; reduced-motion disables the
+effect. The ask-box bridge also stages its text only in page memory so a fast submit cannot
+be lost if the Playground's code-split chunk is still mounting.
+
+The startup overlay has been brought back toward its recognisable production composition
+(Stilledev credit, centered BudAI wordmark, fullscreen core flight and lower indeterminate
+light sweep), using the current BudAI mark. It now waits only for a genuinely incomplete
+initial document, leaves on the real `load` event or a short safety timeout, never claims
+models are ready, and offers an explicit keyboard-accessible continue button. No overlay
+runs on normal navigation or repeat visits.

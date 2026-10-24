@@ -128,30 +128,36 @@ export default function LoadingScreen() {
       <div className="pointer-events-none absolute -left-32 top-1/4 h-80 w-80 rounded-full bg-accent-cyan/[0.07] blur-[120px]" aria-hidden />
       <div className="pointer-events-none absolute -right-32 bottom-1/4 h-80 w-80 rounded-full bg-accent-purple/[0.08] blur-[120px]" aria-hidden />
 
-      <div className="relative z-10 flex flex-col items-center px-6 text-center">
-        <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-white/40">
-          BudAI <span className="text-accent-cyan/70">·</span> Stilledev
+      {/* Original production identity, brought forward with the current BudAI mark. */}
+      <div className="pointer-events-none absolute inset-x-0 top-[6%] z-10 flex flex-col items-center px-5 text-center sm:top-[7%]">
+        <p className="font-mono text-[10px] uppercase tracking-[0.32em] text-white/40 sm:text-[11px]">
+          Developed by <span className="font-semibold text-accent-cyan/85">Stilledev</span>
         </p>
-        <div className="my-7 rounded-[2rem] border border-white/[0.08] bg-black/20 p-4 shadow-[0_0_70px_rgba(0,229,255,0.1)] backdrop-blur-sm">
-          <BudAILogo size="xl" animated mode="thinking" />
+        <div className="mt-4 flex items-center gap-3 sm:mt-5 sm:gap-4">
+          <span aria-hidden="true"><BudAILogo size="md" animated mode="thinking" /></span>
+          <h1 className="text-4xl font-bold tracking-[-0.045em] text-white sm:text-6xl">
+            Bud<span className="text-gradient">AI</span>
+          </h1>
         </div>
-        <h1 className="text-4xl font-bold tracking-[-0.04em] text-white sm:text-6xl">Bud<span className="text-gradient">AI</span></h1>
-        <p className="mt-3 text-sm text-white/65 sm:text-base">
-          {sv ? "AI som hjälper arbetet framåt." : "AI that moves your work forward."}
+        <p className="mt-2 text-sm text-white/65 sm:mt-3 sm:text-base">
+          {sv ? "Din AI-arbetskompanjon." : "Your AI work companion."}
         </p>
+      </div>
 
-        <div className="mt-9 h-px w-44 overflow-hidden rounded-full bg-white/10 sm:w-56" aria-hidden>
+      {/* Indeterminate by design: the camera flight is art direction, never a fake percentage. */}
+      <div className="absolute inset-x-0 bottom-[5%] z-10 flex flex-col items-center px-5 text-center">
+        <div className="h-px w-56 overflow-hidden rounded-full bg-white/10 sm:w-72" aria-hidden>
           <span className="startup-light-sweep block h-full w-1/2 rounded-full bg-gradient-to-r from-transparent via-accent-cyan to-accent-purple" />
         </div>
-        <p className="mt-4 min-h-5 text-xs text-white/40">
+        <p className="mt-4 min-h-5 text-xs text-white/45">
           {takingLonger
             ? sv ? "Det tar lite längre tid — du kan fortsätta när som helst." : "Taking a little longer — you can continue whenever you like."
-            : sv ? "Välkommen till BudAI" : "Welcome to BudAI"}
+            : sv ? "Laddar BudAI" : "Loading BudAI"}
         </p>
         <button
           type="button"
           onClick={() => finish.current()}
-          className="mt-3 rounded-full px-4 py-2 text-xs text-white/55 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-cyan/60"
+          className="pointer-events-auto mt-2 min-h-10 rounded-full px-4 py-2 text-xs text-white/65 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-cyan/60"
         >
           {sv ? "Fortsätt till BudAI" : "Continue to BudAI"}
         </button>
