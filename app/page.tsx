@@ -16,8 +16,6 @@ import FeedbackButton from "@/components/ui/FeedbackButton";
 import Journey from "@/components/sections/Journey";
 import Footer from "@/components/sections/Footer";
 import SiteChrome from "@/components/ui/SiteChrome";
-import LoadingScreen from "@/components/effects/LoadingScreen";
-import LenisScroll from "@/components/ui/LenisScroll";
 import HeroAsk from "@/components/sections/HeroAsk";
 
 const NeuralJourney = dynamic(() => import("@/components/sections/NeuralJourney"));
@@ -64,9 +62,7 @@ export default function Home() {
   return (
     // overflow-x: clip — NOT hidden: `hidden` makes <main> a scroll container and
     // silently breaks position: sticky for the story chapter.
-    <main className="page-transition relative min-h-screen overflow-x-clip bg-background text-white pb-20 md:pb-32">
-      <LenisScroll />
-      <LoadingScreen />
+    <main id="main-content" className="relative min-h-screen overflow-x-clip text-white pb-20 md:pb-32">
       <ScrollProgress />
       <SectionDots />
       <div className="pointer-events-none fixed inset-0 z-[1] ai-grid opacity-[0.28]" aria-hidden />

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Globe, Bell } from "lucide-react";
+import { Menu, X, Globe } from "lucide-react";
 import { useLang } from "@/components/ui/LanguageContext";
 import BudAILogo from "@/components/ui/BudAILogo";
 import TypeWordmark from "@/components/ui/TypeWordmark";
@@ -21,7 +21,6 @@ export default function Navbar() {
   const [active, setActive] = useState("");
   const { lang, setLang, t } = useLang();
   const ratios = useRef<Record<string, number>>({});
-  const logoClicks = useRef<number[]>([]);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
@@ -212,15 +211,6 @@ export default function Navbar() {
                 ))}
               </div>
 
-              <button
-                type="button"
-                onClick={() => window.dispatchEvent(new Event("budai:whats-new"))}
-                aria-label={lang === "sv" ? "Vad är nytt" : "What's new"}
-                className="relative rounded-full border border-white/[0.08] p-2 text-white/70 transition-colors hover:border-accent-cyan/40 hover:text-white"
-              >
-                <Bell className="h-4 w-4" />
-                <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-accent-cyan" />
-              </button>
               <a href="#playground" className="rounded-full border border-white/15 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:border-accent-cyan/40">
                 Playground
               </a>

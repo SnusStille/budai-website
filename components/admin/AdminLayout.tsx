@@ -3,6 +3,7 @@
 import { ReactNode, useEffect, useState } from "react";
 import { Users, BarChart3, Settings, LogOut, Terminal, Menu, X, KeyRound } from "lucide-react";
 import BudAILogo from "@/components/ui/BudAILogo";
+import Link from "next/link";
 
 const NAV_ITEMS = [
   { id: "dashboard", icon: BarChart3, label: "Dashboard" },
@@ -57,7 +58,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   );
 
   return (
-    <div className="min-h-screen bg-background text-white">
+    <div id="main-content" className="min-h-screen text-white">
       <div className="flex">
         <aside className="w-64 min-h-screen border-r border-white/[0.08] bg-[#07070e] fixed left-0 top-0 hidden lg:flex flex-col">
           <div className="p-5 border-b border-white/[0.08]">
@@ -106,13 +107,13 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           </nav>
 
           <div className="p-3 border-t border-white/[0.08]">
-            <a
+            <Link
               href="/"
               className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm text-muted hover:text-white hover:bg-white/5 transition-colors"
             >
               <LogOut className="w-4 h-4" />
               Exit Admin
-            </a>
+            </Link>
           </div>
         </aside>
 
@@ -143,13 +144,13 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
               {NAV_ITEMS.map((item) => (
                 <NavButton key={item.id} item={item} />
               ))}
-              <a
+              <Link
                 href="/"
                 className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm text-muted hover:text-white hover:bg-white/5 transition-colors"
               >
                 <LogOut className="w-4 h-4" />
                 Exit Admin
-              </a>
+              </Link>
             </nav>
           </div>
         )}

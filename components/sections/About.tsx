@@ -58,8 +58,8 @@ export default function About() {
           </h2>
           <p className="text-base sm:text-lg text-muted leading-relaxed mb-8 max-w-lg">
             {sv
-              ? "Jag är Stilledev. Jag har skrivit mjukvara i tio år, och de senaste två har jag lagt allt på en sak: BudAI, en AI som faktiskt fungerar i svenskt vardagsarbete. Idag är det en preview. Målet är att bli din nya ChatGPT."
-              : "I'm Stilledev. I've been writing software for ten years, and for the last two I've put all of it into one thing: BudAI, an AI that actually works in everyday Swedish work. Today it's a preview. The goal is to become your new ChatGPT."}
+              ? "Jag är Stilledev. Jag har skrivit mjukvara i tio år, och de senaste två har jag lagt allt på en sak: BudAI, en AI som faktiskt fungerar i svenskt vardagsarbete. Idag är det en preview. Målet är att bli din pålitliga AI-arbetsassistent."
+              : "I'm Stilledev. I've been writing software for ten years, and for the last two I've put all of it into one thing: BudAI, an AI built for everyday work in Swedish. Today it's a preview. The goal is to become your trusted AI work companion."}
           </p>
 
           <div className="grid grid-cols-3 gap-3 mb-8 max-w-lg">

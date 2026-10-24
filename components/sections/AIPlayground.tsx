@@ -1646,7 +1646,7 @@ export default function AIPlayground() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-2 space-y-3 min-h-0">
+      <div data-lenis-prevent className="flex-1 overflow-y-auto p-2 space-y-3 min-h-0">
         {grouped.length === 0 && (
           <p className="text-[11px] text-muted/50 px-2 py-4 leading-relaxed">
             {auth.isGuest
@@ -2059,7 +2059,7 @@ export default function AIPlayground() {
                   setAtBottom(near);
                 }}
                 aria-live="polite"
-                className="flex-1 overflow-y-auto p-3 sm:p-5 space-y-4 min-h-0"
+                data-lenis-prevent className="flex-1 overflow-y-auto p-3 sm:p-5 space-y-4 min-h-0"
                 style={{ WebkitOverflowScrolling: "touch" }}
               >
                 {isEmpty && (
@@ -2897,7 +2897,7 @@ export default function AIPlayground() {
                       <PanelRightClose className="w-3.5 h-3.5" />
                     </button>
                   </div>
-                  <div className="flex-1 overflow-y-auto p-4 text-[13px] text-white/90 leading-relaxed workspace-scroll">
+                  <div data-lenis-prevent className="flex-1 overflow-y-auto p-4 text-[13px] text-white/90 leading-relaxed workspace-scroll">
                     {renderMarkdown(workspace.body)}
                   </div>
                   <div className="shrink-0 p-2.5 border-t border-white/[0.06] flex gap-2">
@@ -2980,7 +2980,7 @@ export default function AIPlayground() {
                   <X className="w-4 h-4" />
                 </button>
               </div>
-              <div className="flex-1 overflow-y-auto p-4 text-sm text-white/90">
+              <div data-lenis-prevent className="flex-1 overflow-y-auto p-4 text-sm text-white/90">
                 {renderMarkdown(workspace.body)}
               </div>
             </motion.div>
@@ -3040,7 +3040,7 @@ export default function AIPlayground() {
             <motion.div
               initial={{ y: 24, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              className="relative w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl border border-white/[0.1] bg-[#07070e] p-5 max-h-[85vh] overflow-y-auto"
+              data-lenis-prevent className="relative w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl border border-white/[0.1] bg-[#07070e] p-5 max-h-[85vh] overflow-y-auto"
             >
               <button
                 type="button"

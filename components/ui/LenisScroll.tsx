@@ -1,11 +1,16 @@
 "use client";
 
 import { useEffect } from "react";
+import { usePathname } from "next/navigation";
 import Lenis from "lenis";
 
 /** Native-scroll-preserving smooth wheel scrolling, synchronized for the WebGL story. */
 export default function LenisScroll() {
+  const pathname = usePathname();
+
   useEffect(() => {
+    // The private admin console stays native and immediate; marketing routes share the scroll feel.
+    if (pathname.startsWith("/admin") || pathname === "/auth/callback") return undefined;
     const motionPreference = window.matchMedia("(prefers-reduced-motion: reduce)");
     if (motionPreference.matches) return undefined;
 
@@ -48,7 +53,7 @@ export default function LenisScroll() {
       motionPreference.removeEventListener("change", onMotionChange);
       lenis.destroy();
     };
-  }, []);
+  }, [pathname]);
 
   return null;
 }

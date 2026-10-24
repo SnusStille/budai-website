@@ -6,6 +6,8 @@ import { ToastProvider } from "@/components/ui/ToastStack";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import AuthModal from "@/components/auth/AuthModal";
 import AuthHashHandler from "@/components/auth/AuthHashHandler";
+import LoadingScreen from "@/components/effects/LoadingScreen";
+import LenisScroll from "@/components/ui/LenisScroll";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -13,6 +15,8 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       <AuthProvider>
         <ToastProvider>
           <AuthHashHandler />
+          <LenisScroll />
+          <LoadingScreen />
           {children}
           <CommandPalette />
           <AuthModal />

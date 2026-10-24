@@ -77,10 +77,11 @@ phones — never a faint backdrop behind the text).
 `NeuralJourney` pins a viewport and scrubs `mode="scroll"` through four real product beats,
 ending on a live CTA into the Playground.
 
-**Deleted, because they duplicated or distracted:** `AIEnvironment`, `AIBackdropFX`,
-`ParticleCore`, `BrainFlight`, `HeroBrainPanel`, `AICore`, `CodeBackground`, `CursorGlow`,
-`LoadingScreen`'s WebGL brain, `SurpriseToasts`, `BuddyCard`, `Signature`, `FocusMode`,
-`WhatsNew`, `Shortcuts`, `LazyEgg`, `LogoEasterEgg`.
+**Removed, because they duplicated or distracted:** `AIEnvironment`, `AIBackdropFX`,
+`ParticleCore`, `HeroBrainPanel`, `AICore`, `CodeBackground`, `CursorGlow`,
+`SurpriseToasts`, `BuddyCard`, `Signature`, `FocusMode`, `WhatsNew`, `Shortcuts`,
+`LazyEgg`, `LogoEasterEgg`. The old timed 5.6 s startup overlay was removed as a blocker;
+`BrainFlight` was later restored only for a short, skippable, genuine slow-load intro.
 
 ## 4. Playground
 
@@ -129,3 +130,35 @@ all checks passed.
   `{"fast":true,"quality":true,"deep":true}`, the tier picker renders only because there is
   a real choice, selecting "Deep" and sending a message produced a request body carrying
   `modelTier: "deep"` and `stream: true`.
+
+## 7. Route continuity, startup, and brand follow-up
+
+The root layout now owns the persistent dark atmospheric backdrop, global providers,
+Lenis scroll controller, and a short opacity-only `app/template.tsx` route entrance. The
+root layout itself persists during App Router navigation, so browser back/forward and
+client links remain native; direct requests still receive the route from Next. The private
+`/admin` console stays on native scroll. Playground message/workspace scroll panes opt out
+of Lenis so they continue to scroll normally.
+
+`LoadingScreen` is mounted once from `Providers`. It is absent on a ready document, repeat
+visits in the same tab, reduced-motion mode, save-data connections, and low-memory devices.
+It appears only if the initial document remains loading after a short grace period, exits
+on the real `load` event, and has a skip action plus a short timeout. The brain flight is
+art direction only (no fake model/API boot log or percentage); the page remains scrollable.
+
+The intended mark is the inline signal SVG in `components/ui/BudAILogo.tsx` (there was no
+standalone logo file). `public/budai-mark.svg`, `favicon.svg`, Apple touch icon, PWA icons,
+`public/og.png`, and `/opengraph-image` now use that same mark. Footer legal links navigate
+to the real legal routes rather than opening a second, stale modal copy. The nonfunctional
+"What's new" bell and dead footer anchor were removed.
+
+Follow-up checks: production build, TypeScript, and ESLint passed. HTTP checks returned
+200 for home, admin, legal routes, manifest, favicon, PWA/Apple icons, both social images,
+health/features APIs, sitemap, and robots; an invalid shared-conversation ID returned 404.
+The server-rendered home contains the route wrapper and current brand but no startup overlay
+or retired competitor copy. **This follow-up could not run browser-driven desktop/mobile,
+back/forward, console, chat, upload, auth, or waitlist submission tests:** this sandbox's
+Chromium binary cannot launch because `libnspr4.so` / `libnss3.so` are absent. No
+Anthropic/Supabase credentials were present, so real AI/auth/data writes were not exercised.
+The earlier visual QA run above predates these route/brand changes and is not presented as
+verification of the current visuals.

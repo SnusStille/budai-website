@@ -306,9 +306,6 @@ body {
     border: 1px solid rgba(255, 255, 255, 0.06);
   }
 
-  .page-transition {
-    animation: fadeIn 0.45s ease-out;
-  }
 
   section {
     transition: background-color 0.5s ease, color 0.5s ease;
@@ -1164,7 +1161,6 @@ html[data-dev-mode] [data-budai-logo] svg { filter: drop-shadow(0 0 8px rgba(0, 
 /* position: sticky needs a non-scrolling ancestor chain. `overflow-x: hidden`
    turns an element into a scroll container and silently breaks sticky children,
    so use `clip` anywhere a full-bleed horizontal guard is needed. */
-main.page-transition { overflow-x: clip; }
 html, body { overflow-x: clip; }
 
 /* Quiet signal mark: a single GPU-friendly orbit, not a stack of filters. */
@@ -1191,3 +1187,24 @@ html.lenis { height: auto; }
 html.lenis.lenis-smooth { scroll-behavior: auto !important; }
 html.lenis.lenis-stopped { overflow: hidden; }
 html.lenis.lenis-smooth iframe { pointer-events: none; }
+
+/* One atmospheric backdrop persists behind every route; page content remains crisp. */
+.site-world-backdrop {
+  background:
+    radial-gradient(60rem 42rem at 4% 2%, rgba(0, 229, 255, 0.075), transparent 72%),
+    radial-gradient(52rem 40rem at 98% 30%, rgba(124, 92, 255, 0.07), transparent 70%),
+    radial-gradient(56rem 40rem at 48% 100%, rgba(0, 229, 255, 0.035), transparent 72%),
+    #020205;
+}
+
+/* App Router template transition: short, opacity-only, no movement of fixed UI. */
+@keyframes route-arrive { from { opacity: 0; } to { opacity: 1; } }
+.route-arrival { animation: route-arrive 180ms ease-out both; }
+
+@keyframes startup-light-travel { from { transform: translateX(-140%); } to { transform: translateX(240%); } }
+.startup-light-sweep { animation: startup-light-travel 1.3s cubic-bezier(.22,.7,.3,1) infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .route-arrival, .startup-light-sweep { animation: none !important; }
+  .startup-light-sweep { width: 100%; opacity: .7; transform: none; }
+}

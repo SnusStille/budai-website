@@ -4,7 +4,7 @@ import BudAILogo from "@/components/ui/BudAILogo";
 
 export default function ErrorPage({ reset }: { error: Error; reset: () => void }) {
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center gap-6 px-6 text-center bg-background text-white">
+    <main id="main-content" className="min-h-screen flex flex-col items-center justify-center gap-6 px-6 text-center text-white">
       <BudAILogo size="lg" />
       <p className="font-mono text-sm text-accent-pink">{"{ error }"}</p>
       <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">Something went wrong</h1>
