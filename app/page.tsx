@@ -62,7 +62,7 @@ export default function Home() {
   return (
     // overflow-x: clip — NOT hidden: `hidden` makes <main> a scroll container and
     // silently breaks position: sticky for the story chapter.
-    <main className="page-transition relative min-h-screen overflow-x-clip bg-background text-white">
+    <main className="page-transition relative min-h-screen overflow-x-clip bg-background text-white pb-20 md:pb-32">
       <ScrollProgress />
       <SectionDots />
       <div className="pointer-events-none fixed inset-0 z-[1] ai-grid opacity-[0.28]" aria-hidden />
