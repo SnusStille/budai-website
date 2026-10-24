@@ -22,7 +22,7 @@ const groups = (lang: string) => [
       { label: lang === "sv" ? "Byggaren" : "Builder", href: "#about" },
       { label: lang === "sv" ? "Early access" : "Early access", href: "#waitlist" },
       { label: lang === "sv" ? "Prissättning" : "Pricing", href: "#waitlist" },
-      { label: lang === "sv" ? "Kontakt" : "Contact", href: "mailto:Stilleinc@hotmail.com" },
+      { label: lang === "sv" ? "Kontakt" : "Contact", href: "mailto:noreply@stilledev.se" },
       { label: lang === "sv" ? "Skicka feedback" : "Send feedback", href: "mailto:Stilleinc@hotmail.com?subject=BudAI%20preview%20feedback" },
     ],
   },
@@ -41,7 +41,7 @@ const socials = [
   { icon: Github, href: "https://github.com/SnusStille", label: "GitHub" },
   { icon: MessageSquare, href: "https://discord.com/users/353944097301594123", label: "Discord" },
   { icon: Linkedin, href: "https://www.linkedin.com/in/oliver-stille-8bb48a403/", label: "LinkedIn" },
-  { icon: Mail, href: "mailto:Stilleinc@hotmail.com", label: "Email" },
+  { icon: Mail, href: "mailto:noreply@stilledev.se", label: "Email Stilledev" },
 ];
 
 export default function Footer() {

@@ -81,7 +81,7 @@ export default function About() {
             <a href="https://github.com/SnusStille/budai-website" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-[#020205] hover:opacity-90 transition-opacity">
               <Github className="h-4 w-4" /> GitHub
             </a>
-            <a href="mailto:Stilleinc@hotmail.com" className="inline-flex items-center gap-2 rounded-full border border-white/15 px-5 py-2.5 text-sm font-medium text-white hover:border-accent-cyan/40 transition-colors">
+            <a href="mailto:noreply@stilledev.se" className="inline-flex items-center gap-2 rounded-full border border-white/15 px-5 py-2.5 text-sm font-medium text-white hover:border-accent-cyan/40 transition-colors">
               <Mail className="h-4 w-4" /> {sv ? "Kontakt" : "Contact"}
             </a>
           </div>
