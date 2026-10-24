@@ -86,7 +86,7 @@ function mix(a: Vec3, b: Vec3, t: number): Vec3 {
 /* ------------------------------------------------------------- the shell */
 
 /**
- * One folded hemisphere of the "brain". Returns a point on its surface.
+ * One folded hemisphere. Returns a point on its surface.
  * The silhouette reads as an organ rather than a ball: two lobes with a fissure,
  * longitudinal gyri, a flatter underside and a longer front-to-back axis.
  */
@@ -94,23 +94,25 @@ function lobePoint(dir: Vec3, side: -1 | 1): Vec3 {
   const [dx, dy, dz] = dir;
 
   // gyri: radial folds that follow the brain's long axis
-  const az = Math.atan2(dy, dz); // around the front-back axis
+  const az = Math.atan2(dy, dz);
   const pol = Math.atan2(dx, dy);
   const folds =
-    Math.sin(az * 7.0) * 0.055 +
-    Math.sin(pol * 9.0 + dz * 3.0) * 0.03 +
-    Math.sin((az + pol) * 13.0) * 0.012;
-  const r = 1 + folds + wobble(dx * 1.4, dy * 1.4, dz * 1.4) * 0.02;
+    Math.sin(az * 8.0) * 0.062 +
+    Math.sin(pol * 11.0 + dz * 3.4) * 0.036 +
+    Math.sin((az + pol) * 17.0) * 0.014 +
+    wobble(dx * 1.7, dy * 1.7, dz * 1.7) * 0.028;
+  const r = 1 + folds;
 
-  // two hemispheres with a central fissure
-  const fissure = Math.abs(dx) < 0.045 ? 0.045 - Math.abs(dx) : 0;
-  let x = dx * r * 0.92 + side * (0.075 + fissure * 0.4);
-  let y = dy * r * 0.8;
-  let z = dz * r * 1.08;
+  // hemispheres, with a deep central fissure that closes towards the crown
+  const gap = Math.max(0, 0.9 - Math.abs(dy + 0.05)) * 0.05;
+  let x = dx * r * 0.93 + side * (0.055 + gap);
+  let y = dy * r * 0.82;
+  let z = dz * r * 1.1;
 
-  // flatter underside, rounder crown
-  if (y < -0.28) y = -0.28 + (y + 0.28) * 0.55;
-  if (y > 0.5) y = 0.5 + (y - 0.5) * 0.85;
+  // flatter underside, rounder crown, slight frontal bulge
+  if (y < -0.3) y = -0.3 + (y + 0.3) * 0.5;
+  if (y > 0.55) y = 0.55 + (y - 0.55) * 0.8;
+  if (z > 0.45) z += (z - 0.45) * 0.12;
 
   return [x, y, z];
 }
@@ -172,8 +174,11 @@ function connect(
       const dz = q[2] - p[2];
       const d2 = dx * dx + dy * dy + dz * dz;
       if (d2 > maxDist * maxDist || d2 < 0.004) continue;
-      const t = 1 - Math.sqrt(d2) / maxDist;
-      pushLine(lines, p, q, mix(colors[i], colors[j], 0.5), 0.1 + t * 0.22);
+      const dist = Math.sqrt(d2);
+      const t = 1 - dist / maxDist;
+      // long wires are dimmer: a 1.5-unit line at full alpha reads as a laser beam
+      const fade = Math.min(1, 0.42 / Math.max(dist, 0.15));
+      pushLine(lines, p, q, mix(colors[i], colors[j], 0.5), (0.1 + t * 0.22) * fade);
       made++;
     }
   }
@@ -193,49 +198,100 @@ export function buildScene({ quality = 1, deep = true }: BuildOptions = {}): Sce
   const lines: LineSink = { pos: [], col: [], alpha: [] };
 
   /* --- 1. core: folded two-lobed neuron shell ----------------------------- */
-  const shellN = Math.round(1150 * q);
+  const shellN = Math.round(1500 * q);
   const shellPts: Vec3[] = [];
   const shellCols: Vec3[] = [];
   for (let i = 0; i < shellN; i++) {
     const dir = fib(i, shellN);
-    // a little radial thickness so it reads as tissue, not a shell film
-    const jitter = 1 - Math.pow(rand(), 3) * 0.16;
+    // some points sit just under the surface: the organ has volume, not a film
+    const inner = rand() < 0.26;
+    const shrink = inner ? 0.62 + rand() * 0.3 : 1 - Math.pow(rand(), 3) * 0.1;
     const p = brainPoint(dir);
-    const pos: Vec3 = [p[0] * jitter, p[1] * jitter, p[2] * jitter];
+    const pos: Vec3 = [p[0] * shrink, p[1] * shrink, p[2] * shrink];
     const t = rand();
-    const col = mix(mix(CYAN, VIOLET, t * 0.85), ICE, Math.pow(rand(), 4) * 0.9);
+    const col = inner
+      ? mix(VIOLET, TEAL, rand() * 0.6)
+      : mix(mix(CYAN, VIOLET, t * 0.8), ICE, Math.pow(rand(), 4) * 0.95);
     shellPts.push(pos);
     shellCols.push(col);
-    pushPoint(pts, pos, col, 0.55 + rand() * 0.85, rand());
+    pushPoint(pts, pos, col, inner ? 0.35 + rand() * 0.4 : 0.5 + rand() * 0.8, rand());
   }
 
-  // brainstem + cerebellum: the anatomy that makes the silhouette read as a brain
-  const stemN = Math.round(150 * q);
+  // brainstem: short and tapered, dropping from the centre. Kept sparse and
+  // slightly jittered — a tight run of points on a smooth curve reads as a laser
+  // beam, not as tissue.
+  const stemN = Math.round(70 * q);
   for (let i = 0; i < stemN; i++) {
     const t = i / stemN;
     const p: Vec3 = [
-      Math.sin(t * 2.2) * 0.12,
-      -1.25 - t * 0.95,
-      0.15 + t * 0.42 + Math.cos(t * 3.1) * 0.05,
+      Math.sin(t * 2.0) * 0.12 + (rand() - 0.5) * 0.09,
+      -0.95 - t * 0.5,
+      0.1 + t * 0.3 + Math.cos(t * 3.1) * 0.06 + (rand() - 0.5) * 0.07,
     ];
     const col = mix(TEAL, CYAN, t);
-    pushPoint(pts, p, col, 0.5 + rand() * 0.5, rand());
-    shellPts.push(p);
-    shellCols.push(col);
-  }
-  const cerebN = Math.round(260 * q);
-  for (let i = 0; i < cerebN; i++) {
-    const dir = fib(i, cerebN);
-    const r = 0.62 + rand() * 0.06;
-    const p: Vec3 = [dir[0] * r * 1.05, -0.72 + dir[1] * r * 0.42, -1.0 + dir[2] * r * 0.8];
-    const col = mix(VIOLET, TEAL, rand() * 0.5);
-    pushPoint(pts, p, col, 0.45 + rand() * 0.5, rand());
+    pushPoint(pts, p, col, 0.3 + rand() * 0.35, rand());
     shellPts.push(p);
     shellCols.push(col);
   }
 
+  // cerebellum: two lateral bulbs with folia (fine horizontal ridges)
+  const cerebN = Math.round(430 * q);
+  for (let i = 0; i < cerebN; i++) {
+    const dir = fib(i, cerebN);
+    const folia = Math.sin(dir[1] * 26.0) * 0.035;
+    const r = 0.78 + folia + rand() * 0.05;
+    const p: Vec3 = [
+      dir[0] * r * 1.02,
+      -0.78 + dir[1] * r * 0.5,
+      -0.92 + dir[2] * r * 0.86,
+    ];
+    const col = mix(VIOLET, TEAL, rand() * 0.45);
+    pushPoint(pts, p, col, 0.4 + rand() * 0.5, rand());
+    shellPts.push(p);
+    shellCols.push(col);
+  }
+
+  // corpus callosum: an internal arc bridging the hemispheres
+  const callN = Math.round(150 * q);
+  for (let i = 0; i < callN; i++) {
+    const a = -Math.PI * 0.42 + (i / callN) * Math.PI * 0.84;
+    const p: Vec3 = [Math.sin(a) * 0.62, -0.05 + Math.cos(a) * 0.42, Math.sin(a * 1.6) * 0.3];
+    const col = mix(ICE, CYAN, rand() * 0.5);
+    pushPoint(pts, p, col, 0.3 + rand() * 0.35, rand());
+    shellPts.push(p);
+    shellCols.push(col);
+  }
+
+  // the nucleus: a small, very bright cluster at the centre of the organ.
+  // It is what the camera "arrives" at, and it brightens while the AI works.
+  const nucleusN = Math.round(90 * q);
+  for (let i = 0; i < nucleusN; i++) {
+    const dir = fib(i, nucleusN);
+    const r = Math.pow(rand(), 0.55) * 0.42;
+    const p: Vec3 = [dir[0] * r, dir[1] * r * 0.8, dir[2] * r];
+    pushPoint(pts, p, mix(ICE, CYAN, rand() * 0.4), 0.7 + rand() * 0.9, rand());
+    shellPts.push(p);
+    shellCols.push(mix(ICE, CYAN, 0.5));
+  }
+
+  // the heart: a few oversized additive sprites. In the shader their size clamps
+  // high, so they render as soft luminous discs — this is what bloom latches onto.
+  pushPoint(pts, [0, 0, 0], ICE, 13, 0.1);
+  pushPoint(pts, [0.05, 0.02, 0.04], CYAN, 7, 0.2);
+  pushPoint(pts, [-0.07, -0.03, 0.02], VIOLET, 5.5, 0.3);
+
   const shellCandidates = shellPts.map((_, i) => i).filter((i) => i % 3 === 0);
-  connect(lines, shellPts, shellCols, shellCandidates, 2, 0.42, rand);
+  connect(lines, shellPts, shellCols, shellCandidates, 2, 0.4, rand);
+
+  // Radiance from the nucleus. Kept few and very faint on purpose: a full spoke
+  // wheel turns the core back into a starburst, and the spokes that point at the
+  // camera render as hard straight lines cutting across the whole organ.
+  for (let i = 0; i < Math.round(22 * q); i++) {
+    const dir = fib(i, 22);
+    const a: Vec3 = [0, 0, 0];
+    const b: Vec3 = [dir[0] * 0.85, dir[1] * 0.7, dir[2] * 0.85];
+    pushLine(lines, a, b, mix(ICE, CYAN, rand()), 0.03 + rand() * 0.03);
+  }
 
   /* --- 2. web: looser outer network -------------------------------------- */
   const webN = Math.round(720 * q);
@@ -269,47 +325,100 @@ export function buildScene({ quality = 1, deep = true }: BuildOptions = {}): Sce
 
   /* --- 4. deep field chamber (skipped in hero mode) ----------------------- */
   if (deep) {
-    const fieldN = Math.round(1500 * q);
+    // The chamber is a tunnel, not a box: density is highest around the axis close
+    // to the far end, so travelling down it feels like approaching something.
+    const fieldN = Math.round(1750 * q);
     const fieldPts: Vec3[] = [];
     const fieldCols: Vec3[] = [];
     for (let i = 0; i < fieldN; i++) {
-      const t = rand();
-      const z = -1.2 - t * 30; // recedes far down -Z
-      const radius = 1.1 + Math.pow(rand(), 0.6) * 6.4;
-      const ang = rand() * Math.PI * 2;
-      const p: Vec3 = [Math.cos(ang) * radius, Math.sin(ang) * radius * 0.78, z];
-      const col = mix(mix(VIOLET, CYAN, rand() * 0.9), TEAL, t * 0.4);
+      const t = Math.pow(rand(), 0.62); // biased towards the far end
+      const z = -1.6 - t * 21.5;
+      // radius shrinks as we approach the destination → a funnel, not a corridor
+      const maxR = 7.2 * (1 - t * 0.72) + 0.9;
+      const radius = 0.75 + Math.pow(rand(), 0.75) * maxR;
+      const ang = rand() * Math.PI * 2 + t * 2.4; // slow twist
+      const p: Vec3 = [Math.cos(ang) * radius, Math.sin(ang) * radius * 0.82, z];
+      const col = mix(mix(VIOLET, CYAN, rand() * 0.9), ICE, t * 0.35);
       fieldPts.push(p);
       fieldCols.push(col);
-      pushPoint(pts, p, col, 0.3 + rand() * 0.6, rand());
+      pushPoint(pts, p, col, 0.28 + rand() * 0.55, rand());
     }
-    // conduits: short streaks along Z create the sense of travelling forward
-    for (let i = 0; i < fieldN * 0.45; i++) {
+    // conduits: streaks along Z sell forward motion at every speed
+    for (let i = 0; i < fieldN * 0.5; i++) {
       const src = fieldPts[Math.floor(rand() * fieldPts.length)];
-      const len = 0.6 + rand() * 2.6;
-      const a: Vec3 = [src[0], src[1], src[2]];
-      const b: Vec3 = [src[0] * 0.96, src[1] * 0.96, src[2] - len];
-      pushLine(lines, a, b, mix(CYAN, VIOLET, rand()), 0.05 + rand() * 0.12);
+      const len = 0.7 + rand() * 3.2;
+      pushLine(
+        lines,
+        [src[0], src[1], src[2]],
+        [src[0] * 0.97, src[1] * 0.97, src[2] - len],
+        mix(CYAN, VIOLET, rand()),
+        0.05 + rand() * 0.12
+      );
     }
 
-    // focus cluster at the end of the chamber — the thing we travel towards
-    const focusN = Math.round(420 * q);
-    const focusZ = -21.5;
+    // the destination: a living core — a dense bright nucleus, a halo shell,
+    // two orbital rings and a few short neural filaments. Arrival must read as
+    // "an intelligence", not as a starburst.
+    const focusZ = -22.5;
+    const R = 2.0;
+
+    // the heart of the destination
+    pushPoint(pts, [0, 0, focusZ], [0.45, 0.86, 1.0], 14, 0.1);
+    pushPoint(pts, [0.1, 0.05, focusZ + 0.1], CYAN, 6, 0.2);
+    pushPoint(pts, [-0.12, -0.06, focusZ - 0.05], VIOLET, 4, 0.3);
+
+    // dense nucleus: biased hard towards the centre so it has a bright heart
+    const focusN = Math.round(1000 * q);
     for (let i = 0; i < focusN; i++) {
       const dir = fib(i, focusN);
-      const r = Math.pow(rand(), 0.5) * 1.5;
-      const p: Vec3 = [dir[0] * r, dir[1] * r, focusZ + dir[2] * r * 0.9];
-      const col = mix(ICE, CYAN, rand() * 0.6);
-      pushPoint(pts, p, col, 0.7 + rand() * 1.4, rand());
+      const r = (0.08 + 0.92 * Math.pow(rand(), 2.1)) * R;
+      const p: Vec3 = [dir[0] * r, dir[1] * r * 0.96, focusZ + dir[2] * r * 0.88];
+      const heat = 1 - r / R; // hotter at the centre
+      pushPoint(pts, p, mix(mix(CYAN, ICE, heat * 0.6), VIOLET, rand() * 0.25), 0.48 + heat * 1.25, rand());
     }
-    const halo: Vec3[] = [];
+
+    // halo shell: a thin atmosphere around the nucleus
+    for (let i = 0; i < Math.round(520 * q); i++) {
+      const dir = fib(i, 420);
+      const r = R * (1.5 + rand() * 0.55);
+      const p: Vec3 = [dir[0] * r, dir[1] * r * 0.92, focusZ + dir[2] * r * 0.75];
+      pushPoint(pts, p, mix(mix(VIOLET, ICE, 0.4), CYAN, 0.3), 0.3 + rand() * 0.5, rand());
+    }
+
+    // two orbital rings: the only "constructed" shapes in the whole scene, so the
+    // core reads as something made by an intelligence
+    for (const [ringR, tilt, alpha] of [
+      [R * 1.32, 0.42, 0.85],
+      [R * 1.78, -0.6, 0.6],
+    ] as const) {
+      const segs = 132;
+      for (let i = 0; i < segs; i++) {
+        const a0 = (i / segs) * Math.PI * 2;
+        const a1 = ((i + 1) / segs) * Math.PI * 2;
+        const pt = (a: number): Vec3 => [
+          Math.cos(a) * ringR,
+          Math.sin(a) * ringR * Math.sin(tilt),
+          focusZ + Math.sin(a) * ringR * Math.cos(tilt),
+        ];
+        pushLine(lines, pt(a0), pt(a1), mix(ICE, CYAN, 0.55), alpha * 0.9);
+        if (i % 4 === 0) {
+          const q0 = pt(a0);
+          pushPoint(pts, q0, ICE, 0.5 + rand() * 0.35, rand());
+        }
+      }
+    }
+
+    // short filaments: neural hairs, kept close so they read as detail not spikes
     for (let i = 0; i < 90; i++) {
       const dir = fib(i, 90);
-      halo.push([dir[0] * 3.4, dir[1] * 3.4, focusZ - 1.5 + dir[2] * 2]);
-    }
-    for (const p of halo) {
-      pushPoint(pts, p, mix(VIOLET, ICE, 0.3), 0.9 + rand(), rand());
-      pushLine(lines, [0, 0, focusZ], p, ICE, 0.045);
+      const from: Vec3 = [dir[0] * R * 0.9, dir[1] * R * 0.86, focusZ + dir[2] * R * 0.8];
+      const len = 0.35 + rand() * 0.55;
+      const to: Vec3 = [
+        dir[0] * R * 0.9 + dir[0] * len,
+        dir[1] * R * 0.86 + dir[1] * len,
+        focusZ + dir[2] * R * 0.8 - len * 0.4,
+      ];
+      pushLine(lines, from, to, mix(ICE, CYAN, rand()), 0.1 + rand() * 0.1);
     }
   }
 
@@ -338,12 +447,14 @@ type Key = { at: number; pos: Vec3; target: Vec3; fov: number };
 const KEYS: Key[] = [
   // the subject sits slightly above centre so the chapter copy at the bottom of the
   // viewport never competes with the brightest part of the scene
-  { at: 0.0, pos: [0.0, 0.42, 5.9], target: [0, -0.42, 0], fov: 52 },
-  { at: 0.3, pos: [1.65, 1.0, 4.15], target: [0, -0.34, 0], fov: 54 },
+  { at: 0.0, pos: [0.0, 0.42, 6.7], target: [0, -0.42, 0], fov: 52 },
+  { at: 0.3, pos: [1.75, 1.05, 4.7], target: [0, -0.34, 0], fov: 54 },
   { at: 0.52, pos: [0.55, 0.2, 2.45], target: [0, -0.16, -0.3], fov: 58 },
-  { at: 0.7, pos: [0.0, 0.06, 1.05], target: [0, 0.0, -2.2], fov: 62 },
-  { at: 0.86, pos: [0.0, 0.0, -2.2], target: [0, 0.02, -8.0], fov: 66 },
-  { at: 1.0, pos: [0.0, 0.0, -7.4], target: [0, 0.04, -18.5], fov: 68 },
+  { at: 0.7, pos: [0.0, 0.06, 0.6], target: [0, 0.0, -6.0], fov: 64 },
+  // through the chamber: the walls rush past, the nucleus grows
+  { at: 0.86, pos: [0.0, 0.0, -8.0], target: [0, 0.02, -18.0], fov: 62 },
+  // arrival: close enough that the nucleus fills the upper frame behind the CTA
+  { at: 1.0, pos: [0.0, 0.16, -19.3], target: [0, -0.34, -22.5], fov: 53 },
 ];
 
 const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v);
@@ -451,14 +562,20 @@ export function multiply(a: Float32Array, b: Float32Array): Float32Array {
   return out;
 }
 
-/** View-projection for a given progress plus a small pointer-driven parallax. */
+/**
+ * View-projection for a given progress plus a small pointer-driven parallax.
+ * `bias` 0..1 fades the copy-avoiding vertical offset: the scroll chapter frames the
+ * subject high so chapter text can sit under it, the hero frames it dead centre.
+ */
 export function viewProjection(
   p: number,
   aspect: number,
   pointer: { x: number; y: number },
-  time: number
+  time: number,
+  bias = 1
 ): Float32Array {
   const cam = sampleCamera(p);
+  cam.target = [cam.target[0], cam.target[1] * bias, cam.target[2]];
   // parallax: orbit a few degrees around the target, damped by the pointer
   const yaw = pointer.x * 0.22 + Math.sin(time * 0.13) * 0.02;
   const pitch = -pointer.y * 0.14 + Math.sin(time * 0.17) * 0.012;

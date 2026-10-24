@@ -5,7 +5,6 @@ import { motion } from "framer-motion";
 import { ArrowRight, FileText, Languages, Zap, ChevronDown } from "lucide-react";
 import { useLang } from "@/components/ui/LanguageContext";
 import Magnetic from "@/components/ui/Magnetic";
-import { isIntroDone, subscribeIntro } from "@/components/effects/introState";
 import NeuralCinema from "@/components/effects/NeuralCinema";
 import { StilledevLink } from "@/components/ui/BudAILogo";
 
@@ -17,16 +16,6 @@ import { StilledevLink } from "@/components/ui/BudAILogo";
 export default function Hero() {
   const { t, lang } = useLang();
   const [isMobile, setIsMobile] = useState(false);
-  const [introReady, setIntroReady] = useState(isIntroDone);
-
-  useEffect(() => subscribeIntro(() => setIntroReady(true)), []);
-
-  // Safety: if the intro never reports back, never leave the hero blank.
-  useEffect(() => {
-    if (introReady) return;
-    const id = window.setTimeout(() => setIntroReady(true), 3600);
-    return () => window.clearTimeout(id);
-  }, [introReady]);
 
   useEffect(() => {
     const onResize = () => setIsMobile(window.innerWidth < 768);
@@ -55,10 +44,6 @@ export default function Hero() {
         ? "Sverige"
         : "Sweden";
 
-  if (!introReady) {
-    return <section className="relative min-h-[100svh]" aria-hidden />;
-  }
-
   return (
     <section className="relative flex min-h-[100svh] items-center overflow-hidden pb-16 pt-24 sm:pb-20 sm:pt-28">
       <div className="relative mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -67,13 +52,13 @@ export default function Hero() {
           className="pointer-events-none absolute inset-0 -z-10"
           aria-hidden
         >
-          <div className="absolute left-[58%] top-[16%] h-[46vw] max-h-[560px] w-[46vw] max-w-[560px] -translate-x-1/2 rounded-full bg-accent-cyan/[0.07] blur-[120px]" />
-          <div className="absolute bottom-[6%] right-0 h-[30vw] max-h-[380px] w-[30vw] max-w-[380px] rounded-full bg-accent-purple/[0.06] blur-[100px]" />
+          <div className="absolute left-[58%] top-[16%] h-[34vw] max-h-[420px] w-[34vw] max-w-[420px] -translate-x-1/2 rounded-full bg-accent-cyan/[0.05] blur-[120px]" />
+          <div className="absolute bottom-[6%] right-0 h-[24vw] max-h-[300px] w-[24vw] max-w-[300px] rounded-full bg-accent-purple/[0.05] blur-[100px]" />
         </div>
 
         <div className="relative grid items-center gap-8 lg:grid-cols-[1.02fr_0.98fr] lg:gap-6">
           {/* ---------------- copy ---------------- */}
-          <div className="relative z-10 order-1 text-center lg:text-left">
+          <div className="relative z-10 order-2 text-center lg:order-1 lg:text-left">
             <motion.div
               initial={{ opacity: 0, y: 14 }}
               animate={{ opacity: 1, y: 0 }}
@@ -177,11 +162,11 @@ export default function Hero() {
 
           {/* ---------------- living core ---------------- */}
           <div
-            className="pointer-events-none absolute inset-x-0 top-[4%] order-2 h-[52svh] opacity-40 [mask-image:radial-gradient(circle_at_50%_45%,#000_42%,transparent_76%)] lg:relative lg:inset-auto lg:top-auto lg:order-2 lg:mx-auto lg:h-auto lg:aspect-square lg:w-full lg:max-w-[560px] lg:opacity-100 lg:[mask-image:none]"
+            className="pointer-events-none relative order-1 mx-auto h-[240px] w-full max-w-[420px] opacity-95 sm:h-[280px] lg:order-2 lg:h-auto lg:max-w-[600px] lg:aspect-square lg:opacity-100"
             aria-hidden
           >
             <div className="absolute inset-0">
-              <NeuralCinema mode="hero" />
+              <NeuralCinema mode="hero" glow={isMobile ? 1.05 : 1.15} />
             </div>
 
             {/* HUD frame — only on the large layout, where the core has its own column */}

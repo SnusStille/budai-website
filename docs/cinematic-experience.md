@@ -46,12 +46,34 @@ pure and testable in `components/effects/neural/engine.ts`:
 - additive sprite glow, synapse lines, thought-wave brightness tied to AI activity,
 - pointer parallax, near-plane fade, slow orbital drift.
 
+**Frame graph.** Scene into an RGBA8 framebuffer → bright pass (½ res, threshold 0.08,
+knee 0.12) → separable gaussian ping-pong (3 passes desktop with a widening spread,
+2 on mobile) → composite: exponential filmic shoulder `1 - exp(-c * 1.05)`, a
+pre-tonemap saturation lift that keeps the cyan/violet identity once the core saturates,
+vignette 0.38 and a dither to kill banding in the dark gradients. The 9-tap separable
+kernel is the linear-sampling trick from `Jam3/glsl-fast-gaussian-blur` (MIT), adopted
+verbatim with attribution; everything else is written for this codebase. If the
+framebuffer cannot be allocated the renderer falls back to drawing straight to the canvas.
+
+**Three bugs worth recording**, because each one looked like art direction and was not:
+
+1. The vertex shader rotated the *world* while the camera path is authored in a fixed
+   world, so by the end of the flight the destination had been spun out of frame (a black
+   arrival). The spin now decays to zero by ~48 % progress.
+2. The scroll chapter's readability scrim was a radial gradient centred on the frame —
+   i.e. a dark hole painted exactly over the core. It is now anchored bottom-left, where
+   the copy actually is.
+3. The offscreen scene pass ran with blending *disabled*. Every sprite quad overwrote the
+   ones behind it, punching crescent-shaped bites out of overlapping neurons. The scene
+   pass now keeps `SRC_ALPHA, ONE`, matching the direct-to-canvas path.
+
 Three.js / React Three Fiber were evaluated and rejected: they are not in the project, a
 single scene does not justify ~150–300 KB gzipped, and mixing a second renderer stack with
 the existing framer-motion/Tailwind surface would have cost more than it bought.
 
 **One visual language, two placements.** `Hero` renders the core in `mode="hero"`
-(ambient, pointer-aware, in its own column on desktop, a masked backdrop on phones).
+(ambient, pointer-aware, in its own column on desktop, its own block *above* the copy on
+phones — never a faint backdrop behind the text).
 `NeuralJourney` pins a viewport and scrubs `mode="scroll"` through four real product beats,
 ending on a live CTA into the Playground.
 
@@ -80,8 +102,30 @@ shortcuts and usage limits. Two real gaps were closed:
 - The Google Fonts fetch is blocked in the sandbox used for verification; builds were run
   with `NEXT_FONT_GOOGLE_MOCKED_RESPONSES` pointing at a mock CSS module. On Vercel the
   normal `next/font` download path is used and unchanged.
-- No browser is available in that sandbox, so rendering was verified by (a) shader parsing,
-  (b) a jsdom + mocked-WebGL mount that asserts draw calls and full resource release,
-  (c) production HTTP checks. Visual confirmation still needs a human on a real device.
-- Live chat, streaming, vision uploads and waitlist inserts need real `ANTHROPIC_API_KEY`
-  and Supabase credentials; only their error paths could be exercised here.
+- Headless verification runs on SwiftShader (software WebGL), which is representative of
+  correctness, not of frame-rate. Real GPU timings on low-end Android are still unverified.
+- Live chat, streaming, vision uploads and waitlist inserts need a real `ANTHROPIC_API_KEY`
+  and Supabase credentials. The request shape, tier selection, streaming flag, error and
+  disabled states were verified; a real model response was not.
+- Screenshot comparison is against this author's judgement, not a designer's sign-off.
+
+## 6. Tests actually run
+
+Production build (`next build`) is green. `npm run qa:visual` drives a real headless
+Chromium at 1440×900 and 390×844 and fails the run on a console error, a broken route, a
+story chapter that stops sticking, or a no-WebGL page that loses its content. Latest run:
+all checks passed.
+
+- Routes: `/`, `/api/health`, `/api/features`, `/legal/privacy`, `/legal/terms`,
+  `/sitemap.xml`, `/robots.txt` → 200.
+- Desktop: hero, story at 20/55/100 % scroll, Playground, waitlist. Story stage sticks
+  (canvas pinned at 72 px under the nav); console clean.
+- Mobile 390×844: hero core above the copy, story stage pinned at 56 px, Playground usable;
+  console clean.
+- `prefers-reduced-motion: reduce`: no sticky stage, the four chapters render as a readable
+  static card grid; console clean.
+- WebGL disabled: headline, story copy and Playground anchor all present; console clean.
+- Playground with `ANTHROPIC_MODEL_FAST` / `_DEEP` set: `/api/features` reports
+  `{"fast":true,"quality":true,"deep":true}`, the tier picker renders only because there is
+  a real choice, selecting "Deep" and sending a message produced a request body carrying
+  `modelTier: "deep"` and `stream: true`.

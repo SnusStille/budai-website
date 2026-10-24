@@ -104,7 +104,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       className={`${jakarta.variable} ${jetbrains.variable} font-sans`}
       suppressHydrationWarning
     >
-      <body className="antialiased noise-overlay bg-background text-white">
+      <body className="noise-overlay bg-background text-white antialiased">
         <a
           href="#playground"
           className="absolute left-3 top-3 z-[200] -translate-y-16 focus:translate-y-0 px-4 py-2 rounded-lg bg-accent-cyan text-black text-sm font-semibold transition-transform"

@@ -1145,18 +1145,7 @@ html[data-dev-mode] [data-budai-logo] svg { filter: drop-shadow(0 0 8px rgba(0, 
     #05050b;
 }
 
-/* Intro core (LoadingScreen) */
-@keyframes intro-spin { to { transform: rotate(360deg); } }
-@keyframes intro-core {
-  0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.85; }
-  50% { transform: translate(-50%, -50%) scale(1.35); opacity: 1; }
-}
-.intro-orbit { animation: intro-spin 14s linear infinite; }
-.intro-pulse { animation: intro-core 2.4s ease-in-out infinite; }
 
-@media (prefers-reduced-motion: reduce) {
-  .intro-orbit, .intro-pulse { animation: none; }
-}
 
 /* No JavaScript: the story degrades to a readable stack instead of a pinned frame */
 @media (scripting: none) {
@@ -1171,3 +1160,9 @@ html[data-dev-mode] [data-budai-logo] svg { filter: drop-shadow(0 0 8px rgba(0, 
   }
   .neural-story [data-beat]:not([data-beat="on"]) { display: block; }
 }
+
+/* position: sticky needs a non-scrolling ancestor chain. `overflow-x: hidden`
+   turns an element into a scroll container and silently breaks sticky children,
+   so use `clip` anywhere a full-bleed horizontal guard is needed. */
+main.page-transition { overflow-x: clip; }
+html, body { overflow-x: clip; }

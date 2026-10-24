@@ -188,19 +188,23 @@ export default function NeuralJourney() {
       style={{ height: `${CHAPTERS.length * 100 + 20}svh` }}
     >
       {heading}
-      <div className="neural-stage sticky top-0 h-[100svh] w-full overflow-hidden">
+      {/* sticky, not fixed: the stage parks under the floating nav so the
+          progress rail and the copy are never hidden behind it */}
+      <div className="neural-stage sticky top-14 h-[calc(100svh-3.5rem)] w-full overflow-clip sm:top-[4.5rem] sm:h-[calc(100svh-4.5rem)]">
         {/* the flight */}
         <div className="absolute inset-0">
-          <NeuralCinema mode="scroll" scrollTarget={sectionRef} />
+          <NeuralCinema mode="scroll" scrollTarget={sectionRef} glow={1.3} />
         </div>
 
-        {/* readable scrims — the scene is allowed to be bright, the text never unreadable */}
+        {/* Readable scrims — the scene is allowed to be bright, the text never
+            unreadable. The copy lives bottom-left, so the darkening is anchored
+            there instead of drawing a dead spot over the core in the middle. */}
         <div
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_40%_45%,rgba(2,2,5,0.62)_0%,rgba(2,2,5,0.42)_38%,rgba(2,2,5,0.14)_70%,rgba(2,2,5,0)_100%)]"
+          className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_top_right,rgba(2,2,5,0.9)_0%,rgba(2,2,5,0.66)_26%,rgba(2,2,5,0.24)_50%,rgba(2,2,5,0)_72%)]"
           aria-hidden
         />
         <div
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-[46%] bg-gradient-to-t from-[#020205] via-[#020205]/70 to-transparent"
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-[42%] bg-gradient-to-t from-[#020205] via-[#020205]/55 to-transparent"
           aria-hidden
         />
         <div
@@ -208,17 +212,25 @@ export default function NeuralJourney() {
           aria-hidden
         />
 
-        {/* section marker */}
-        <div className="pointer-events-none absolute left-4 top-20 flex items-center gap-2 sm:left-8 sm:top-24">
-          <span className="h-1.5 w-1.5 rounded-full bg-accent-cyan shadow-[0_0_10px_rgba(0,229,255,0.9)]" />
-          <span className="font-mono text-[10px] uppercase tracking-[0.32em] text-white/45">
-            BudAI · neural core
-          </span>
+        {/* top bar: section marker + escape hatch, never overlapping */}
+        <div className="pointer-events-none absolute inset-x-0 top-3 flex items-center justify-between gap-3 px-4 sm:top-5 sm:px-8">
+          <div className="hidden items-center gap-2 sm:flex">
+            <span className="h-1.5 w-1.5 rounded-full bg-accent-cyan shadow-[0_0_10px_rgba(0,229,255,0.9)]" />
+            <span className="font-mono text-[10px] uppercase tracking-[0.32em] text-white/45">
+              BudAI · neural core
+            </span>
+          </div>
+          <a
+            href="#playground"
+            className="pointer-events-auto ml-auto shrink-0 rounded-full border border-white/12 bg-black/30 px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-white/55 backdrop-blur-sm transition-colors hover:border-accent-cyan/40 hover:text-white"
+          >
+            {sv ? "Hoppa till Playground" : "Skip to Playground"}
+          </a>
         </div>
 
         {/* copy panels */}
         <div className="absolute inset-x-0 bottom-0 z-10 mx-auto max-w-6xl px-4 pb-10 sm:px-8 sm:pb-14">
-          <div className="relative min-h-[15rem] sm:min-h-[16rem]">
+          <div className="relative min-h-[17rem] sm:min-h-[18rem]">
             {CHAPTERS.map((c, i) => {
               const on = active === i;
               return (
@@ -226,10 +238,12 @@ export default function NeuralJourney() {
                   key={c.id}
                   data-beat={on ? "on" : "off"}
                   aria-hidden={!on}
+                  // Every beat occupies the same box and cross-fades to zero, so two
+                  // beats can never be visible at once.
                   className={`transition-[opacity,transform] duration-500 ease-out ${
                     on
-                      ? "relative translate-y-0 opacity-100"
-                      : "pointer-events-none absolute inset-x-0 bottom-0 translate-y-3 opacity-0"
+                      ? "relative z-10 translate-y-0 opacity-100"
+                      : "pointer-events-none absolute inset-x-0 bottom-0 z-0 translate-y-2 opacity-0"
                   }`}
                 >
                   <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-accent-cyan/80">
@@ -304,13 +318,6 @@ export default function NeuralJourney() {
           </span>
         </div>
 
-        {/* an always-available exit for anyone who does not want the ride */}
-        <a
-          href="#playground"
-          className="absolute right-4 top-20 rounded-full border border-white/12 bg-black/30 px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-white/55 backdrop-blur-sm transition-colors hover:border-accent-cyan/40 hover:text-white sm:right-8 sm:top-24"
-        >
-          {sv ? "Hoppa till Playground" : "Skip to Playground"}
-        </a>
       </div>
     </section>
   );
