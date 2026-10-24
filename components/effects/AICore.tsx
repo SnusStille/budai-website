@@ -48,6 +48,7 @@ export default function AICore({ isMobile = false }: { isMobile?: boolean }) {
             size="hero"
             animated
             interactive
+            className={isMobile ? "!h-[160px] !w-[160px]" : "!h-[212px] !w-[212px]"}
             onClick={() => window.dispatchEvent(new CustomEvent("budai:logo-click", { detail: { el: heroRef.current } }))}
             label="BudAI"
           />

@@ -8,6 +8,7 @@ import Magnetic from "@/components/ui/Magnetic";
 import AICore from "@/components/effects/AICore";
 import dynamic from "next/dynamic";
 const ParticleCore = dynamic(() => import("@/components/effects/ParticleCore"), { ssr: false });
+const BrainFlight = dynamic(() => import("@/components/effects/BrainFlight"), { ssr: false });
 import Tilt3D from "@/components/ui/Tilt3D";
 import { StilledevLink } from "@/components/ui/BudAILogo";
 
@@ -45,6 +46,11 @@ export default function Hero() {
   return (
     <section className="relative min-h-[100svh] flex items-center justify-center overflow-hidden pt-24 pb-16">
       <ParticleCore />
+      {!isMobile && (
+        <div className="absolute inset-0 pointer-events-none opacity-[0.5] [mask-image:radial-gradient(ellipse_at_center,black_35%,transparent_75%)]" aria-hidden>
+          <BrainFlight mode="ambient" />
+        </div>
+      )}
       {!isMobile && (
         <>
           <div className="absolute top-[18%] left-1/2 -translate-x-1/2 w-[70vw] max-w-[900px] h-[50vw] max-h-[520px] bg-accent-cyan/[0.07] rounded-full blur-[120px] pointer-events-none" />

@@ -2,10 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
-import BudAILogo from "@/components/ui/BudAILogo";
-import Tilt3D from "@/components/ui/Tilt3D";
+import BrainFlight from "@/components/effects/BrainFlight";
 
-const LAYERS = [-28, -20, -12, -6, 0, 6, 12, 20, 28];
 const WORD = "BudAI";
 const GLYPHS = "01<>{}/=+*#";
 const BOOT = ["init core", "load models", "warm up playground", "ready"];
@@ -128,6 +126,7 @@ export default function LoadingScreen() {
       }`}
     >
       <div className="ai-grid absolute inset-0 opacity-30" aria-hidden />
+      <BrainFlight progress={p} />
       <div className="absolute h-[620px] w-[620px] rounded-full bg-accent-cyan/[0.08] blur-[140px]" aria-hidden />
       <div className="absolute h-[380px] w-[380px] translate-x-24 translate-y-20 rounded-full bg-accent-purple/[0.12] blur-[120px]" aria-hidden />
 
@@ -142,29 +141,6 @@ export default function LoadingScreen() {
         <h1 className="text-5xl sm:text-7xl font-bold tracking-tight text-white [text-shadow:0_0_50px_rgba(48,195,236,0.45)]">
           <Scramble start={2200} />
         </h1>
-      </div>
-
-      {/* center: the logo, exactly mid-screen */}
-      <div className="relative flex items-center justify-center scale-[0.8] sm:scale-100">
-        <span className="bud-shock" style={{ animationDelay: "0.7s" }} aria-hidden />
-        <span className="bud-shock" style={{ animationDelay: "3.2s" }} aria-hidden />
-        <Tilt3D max={10}>
-          <div className="bud-scene" style={{ perspective: 900 }}>
-            <div className="bud-logo3d">
-              {LAYERS.map((z, i) => (
-                <div
-                  key={z}
-                  className="bud-layer-in absolute inset-0 flex items-center justify-center"
-                  style={{ transform: `translateZ(${z}px)`, opacity: z === 0 ? 1 : 0.1 + (28 - Math.abs(z)) / 190, animationDelay: `${0.4 + i * 0.09}s` }}
-                >
-                  <BudAILogo size="hero" animated={z === 0} />
-                </div>
-              ))}
-              <div className="bud-ring3d" />
-              <div className="bud-ring3d bud-ring3d-b" />
-            </div>
-          </div>
-        </Tilt3D>
       </div>
 
       {/* bottom: progress + boot log */}

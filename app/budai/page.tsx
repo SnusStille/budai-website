@@ -13,6 +13,7 @@ import FocusMode from "@/components/ui/FocusMode";
 import BuddyCard from "@/components/sections/BuddyCard";
 import Navbar from "@/components/sections/Navbar";
 import Hero from "@/components/sections/Hero";
+import BrainScrollStory from "@/components/sections/BrainScrollStory";
 import Capabilities from "@/components/sections/Capabilities";
 import Waitlist from "@/components/sections/Waitlist";
 import WhatIsBudAI from "@/components/sections/WhatIsBudAI";
@@ -119,6 +120,7 @@ export default function BudAIPage() {
         <FeedbackButton />
         <LazyEgg />
         <Hero />
+        <BrainScrollStory />
         <HeroAsk />
         <WhatIsBudAI />
         <ErrorBoundary>
