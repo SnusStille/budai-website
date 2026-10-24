@@ -997,7 +997,7 @@ select option {
   to { opacity: 1; transform: none; }
 }
 @supports (animation-timeline: view()) {
-  .bud-3d-in { animation: bud-3d-in linear backwards; animation-timeline: view(); animation-range: entry 0% entry 55%; }
+  .bud-3d-in { animation: bud-3d-in linear both; animation-timeline: view(); animation-range: entry 0% entry 55%; }
 }
 @media (prefers-reduced-motion: reduce) { .bud-3d-in { animation: none; } }
 
@@ -1166,3 +1166,28 @@ html[data-dev-mode] [data-budai-logo] svg { filter: drop-shadow(0 0 8px rgba(0, 
    so use `clip` anywhere a full-bleed horizontal guard is needed. */
 main.page-transition { overflow-x: clip; }
 html, body { overflow-x: clip; }
+
+/* Quiet signal mark: a single GPU-friendly orbit, not a stack of filters. */
+@keyframes bud-signal-orbit { to { transform: rotate(360deg); } }
+@keyframes bud-signal-breathe { 0%, 100% { opacity: .82; transform: scale(.94); } 50% { opacity: 1; transform: scale(1.07); } }
+.bud-signal-orbit { transform-origin: 16px 16px; animation: bud-signal-orbit 12s linear infinite; }
+.bud-signal-core { transform-origin: 16px 16px; animation: bud-signal-breathe 3.6s ease-in-out infinite; }
+.bud-signal-thinking .bud-signal-orbit { animation-duration: 3.2s; }
+.bud-signal-thinking .bud-signal-core { animation-duration: 1.2s; }
+.bud-logo-stage { perspective: 700px; }
+.bud-logo-float { transform-style: preserve-3d; animation: bud-mark-float 7s ease-in-out infinite; }
+@keyframes bud-mark-float { 0%, 100% { transform: rotateX(-3deg) rotateY(-6deg) translateY(0); } 50% { transform: rotateX(3deg) rotateY(6deg) translateY(-3px); } }
+.bud-logo-orbit { position: absolute; left: 50%; top: 50%; border: 1px solid rgba(0,229,255,.13); border-radius: 50%; transform: translate(-50%,-50%); }
+.bud-logo-orbit-a { width: 94px; height: 48px; animation: bud-logo-orbit-a 18s linear infinite; }
+.bud-logo-orbit-b { width: 76px; height: 76px; border-color: rgba(124,92,255,.12); animation: bud-logo-orbit-b 24s linear infinite; }
+@keyframes bud-logo-orbit-a { to { transform: translate(-50%,-50%) rotate(360deg); } }
+@keyframes bud-logo-orbit-b { to { transform: translate(-50%,-50%) rotate(-360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .bud-signal-orbit, .bud-signal-core, .bud-logo-float, .bud-logo-orbit-a, .bud-logo-orbit-b { animation: none !important; }
+}
+
+/* Lenis keeps native document scrolling/anchors but owns wheel easing. */
+html.lenis { height: auto; }
+html.lenis.lenis-smooth { scroll-behavior: auto !important; }
+html.lenis.lenis-stopped { overflow: hidden; }
+html.lenis.lenis-smooth iframe { pointer-events: none; }

@@ -60,10 +60,10 @@ const CHAPTERS: Chapter[] = [
     label: { sv: "Ingången", en: "The entrance" },
     title: { sv: "Kliv in i BudAI", en: "Step into BudAI" },
     body: {
-      sv: "Playground är live och öppen. Ingen registrering krävs för att prova — konto låser upp historik, minne och bildanalys.",
-      en: "The Playground is live and open. No signup needed to try it — an account unlocks history, memory and image analysis.",
+      sv: "Playground börjar direkt här nedanför. Ställ en fråga, fortsätt i samma tråd och utforska BudAI i din egen takt.",
+      en: "The Playground begins just below. Ask a question, continue the same thread and explore BudAI at your own pace.",
     },
-    meta: { sv: "Live nu · Gratis att prova", en: "Live now · Free to try" },
+    meta: { sv: "Fortsätt nedåt · Playground", en: "Continue below · Playground" },
   },
 ];
 
@@ -268,13 +268,6 @@ export default function NeuralJourney() {
                       >
                         {sv ? "Öppna Playground" : "Open the Playground"}
                         <ArrowRight className="h-4 w-4" />
-                      </a>
-                      <a
-                        href="#waitlist"
-                        tabIndex={on ? 0 : -1}
-                        className="inline-flex items-center gap-2 rounded-xl border border-white/12 bg-white/[0.03] px-5 py-3 text-sm text-white/85 transition-colors hover:border-accent-cyan/30"
-                      >
-                        {sv ? "Gå med i väntelistan" : "Join the waitlist"}
                       </a>
                     </div>
                   )}

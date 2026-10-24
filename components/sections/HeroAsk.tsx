@@ -4,14 +4,15 @@ import { useState } from "react";
 import { ArrowUp } from "lucide-react";
 import { useLang } from "@/components/ui/LanguageContext";
 
-/** Ask box under the hero: type, and the Playground opens with your question filled in. */
+/**
+ * Ask box under the cinematic entrance: type a question, and the Playground
+ * opens with it pre-filled. Stripped to its function — no status strip,
+ * no suggestion chips, no fine print between the brain and the product.
+ */
 export default function HeroAsk() {
   const { lang } = useLang();
   const sv = lang === "sv";
   const [v, setV] = useState("");
-  const chips = sv
-    ? ["Skriv ett vänligt påminnelsemejl", "Planera min vecka", "Förklara ränta på ränta enkelt"]
-    : ["Write a friendly reminder email", "Plan my week", "Explain compound interest simply"];
 
   const go = (text: string) => {
     if (!text.trim()) return;
@@ -21,15 +22,7 @@ export default function HeroAsk() {
   };
 
   return (
-    <div id="enter" className="relative z-10 mx-auto mt-10 mb-4 max-w-2xl px-4 sm:mt-12 sm:px-6">
-      {/* handoff from the cinematic chapter into the real product */}
-      <div className="mb-6 flex flex-col items-center gap-2" aria-hidden>
-        <span className="h-8 w-px bg-gradient-to-b from-transparent via-accent-cyan/40 to-accent-cyan/70" />
-        <span className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.32em] text-accent-cyan/70">
-          <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-accent-green" />
-          {sv ? "Live · öppen ingång" : "Live · open entrance"}
-        </span>
-      </div>
+    <div id="enter" className="relative z-10 mx-auto mb-0 max-w-2xl px-4 pt-8 sm:px-6 sm:pt-10">
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -51,14 +44,6 @@ export default function HeroAsk() {
           <ArrowUp className="h-5 w-5" />
         </button>
       </form>
-      <div className="mt-3 flex flex-wrap justify-center gap-2">
-        {chips.map((c) => (
-          <button key={c} type="button" onClick={() => go(c)} className="rounded-full border border-white/[0.08] px-3 py-1.5 text-xs text-muted transition-colors hover:border-accent-cyan/30 hover:text-white">
-            {c}
-          </button>
-        ))}
-      </div>
-      <p className="mt-2 text-center text-[11px] text-muted/60">{sv ? "Ingen registrering behövs för att prova." : "No signup needed to try it."}</p>
     </div>
   );
 }

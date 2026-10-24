@@ -12,11 +12,13 @@ import Capabilities from "@/components/sections/Capabilities";
 import Waitlist from "@/components/sections/Waitlist";
 import WhatIsBudAI from "@/components/sections/WhatIsBudAI";
 import ErrorBoundary from "@/components/ui/ErrorBoundary";
-import HeroAsk from "@/components/sections/HeroAsk";
 import FeedbackButton from "@/components/ui/FeedbackButton";
 import Journey from "@/components/sections/Journey";
-import SiteChrome from "@/components/ui/SiteChrome";
 import Footer from "@/components/sections/Footer";
+import SiteChrome from "@/components/ui/SiteChrome";
+import LoadingScreen from "@/components/effects/LoadingScreen";
+import LenisScroll from "@/components/ui/LenisScroll";
+import HeroAsk from "@/components/sections/HeroAsk";
 
 const NeuralJourney = dynamic(() => import("@/components/sections/NeuralJourney"));
 const About = dynamic(() => import("@/components/sections/About"));
@@ -63,6 +65,8 @@ export default function Home() {
     // overflow-x: clip — NOT hidden: `hidden` makes <main> a scroll container and
     // silently breaks position: sticky for the story chapter.
     <main className="page-transition relative min-h-screen overflow-x-clip bg-background text-white pb-20 md:pb-32">
+      <LenisScroll />
+      <LoadingScreen />
       <ScrollProgress />
       <SectionDots />
       <div className="pointer-events-none fixed inset-0 z-[1] ai-grid opacity-[0.28]" aria-hidden />
@@ -75,14 +79,20 @@ export default function Home() {
         <Hero />
         <WhatIsBudAI />
         <NeuralJourney />
-        <HeroAsk />
-        <ErrorBoundary>
-          <AIPlayground />
-        </ErrorBoundary>
-        <Capabilities />
-        <About />
-        <Waitlist />
-        <Journey />
+
+        {/* A tight, light-to-dark handoff: final neural chapter → prompt → live product. */}
+        <div className="playground-handoff relative z-10">
+          <div className="pointer-events-none absolute inset-x-0 -top-24 h-48 bg-gradient-to-b from-transparent via-[#05050a]/65 to-[#05050a]" aria-hidden />
+          <HeroAsk />
+          <ErrorBoundary>
+            <AIPlayground />
+          </ErrorBoundary>
+        </div>
+
+        <Reveal><Capabilities /></Reveal>
+        <Reveal><About /></Reveal>
+        <Reveal><Waitlist /></Reveal>
+        <Reveal><Journey /></Reveal>
         <Footer />
       </div>
 
@@ -90,4 +100,9 @@ export default function Home() {
       <CookieConsent />
     </main>
   );
+}
+
+/** CSS view-timeline progressive enhancement: browsers without it show content normally. */
+function Reveal({ children }: { children: React.ReactElement }) {
+  return <div className="bud-3d-in relative z-10">{children}</div>;
 }
