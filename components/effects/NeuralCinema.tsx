@@ -278,8 +278,45 @@ export default function NeuralCinema({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const hostRef = useRef<HTMLDivElement>(null);
   const [failed, setFailed] = useState(false);
+  const [startupReady, setStartupReady] = useState(
+    () => typeof document !== "undefined" && document.documentElement.dataset.budaiStartupComplete === "true"
+  );
+  const [rendererEnabled, setRendererEnabled] = useState(false);
+
+  // Keep nonessential WebGL scene construction off the startup critical path.
+  useEffect(() => {
+    if (startupReady) return;
+    const onStartupComplete = () => setStartupReady(true);
+    window.addEventListener("budai:startup-complete", onStartupComplete);
+    if (document.documentElement.dataset.budaiStartupComplete === "true") onStartupComplete();
+    return () => window.removeEventListener("budai:startup-complete", onStartupComplete);
+  }, [startupReady]);
+
+  // Mount the renderer only when this scene is near the viewport, then let its
+  // own observer pause drawing when it leaves view.
+  useEffect(() => {
+    if (!startupReady) return;
+    const host = hostRef.current;
+    if (!host) return;
+    if (typeof IntersectionObserver === "undefined") {
+      setRendererEnabled(true);
+      return;
+    }
+    let frame = 0;
+    const observer = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting) return;
+      observer.disconnect();
+      frame = requestAnimationFrame(() => setRendererEnabled(true));
+    }, { rootMargin: "240px" });
+    observer.observe(host);
+    return () => {
+      observer.disconnect();
+      cancelAnimationFrame(frame);
+    };
+  }, [startupReady]);
 
   useEffect(() => {
+    if (!startupReady || !rendererEnabled) return;
     const canvas = canvasRef.current;
     const host = hostRef.current;
     if (!canvas || !host) return;
@@ -765,11 +802,11 @@ export default function NeuralCinema({
     return teardown;
     // scrollTarget/onFail are stable refs/callbacks from the caller
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode]);
+  }, [mode, startupReady, rendererEnabled]);
 
   return (
     <div ref={hostRef} className={`relative h-full w-full ${className}`} aria-hidden="true">
-      {failed ? (
+      {!startupReady || !rendererEnabled || failed ? (
         // WebGL unavailable: a composed still that still feels like BudAI, never a blank box.
         <div className="absolute inset-0 neural-fallback">
           <div className="absolute left-1/2 top-1/2 h-[58%] w-[58%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-accent-cyan/20" />

@@ -31,7 +31,18 @@ export default function StatusFlight() {
   const config = useMemo(() => createStatusFlyoverConfig(lang, quality), [lang, quality]);
   const [engineReady, setEngineReady] = useState(false);
   const [engineFailed, setEngineFailed] = useState(false);
+  const [startupReady, setStartupReady] = useState(
+    () => typeof document !== "undefined" && document.documentElement.dataset.budaiStartupComplete === "true"
+  );
   const sv = lang === "sv";
+
+  useEffect(() => {
+    if (startupReady) return;
+    const onStartupComplete = () => setStartupReady(true);
+    window.addEventListener("budai:startup-complete", onStartupComplete);
+    if (document.documentElement.dataset.budaiStartupComplete === "true") onStartupComplete();
+    return () => window.removeEventListener("budai:startup-complete", onStartupComplete);
+  }, [startupReady]);
 
   useEffect(() => {
     const host = containerRef.current;
@@ -80,6 +91,7 @@ export default function StatusFlight() {
   }, [config]);
 
   useEffect(() => {
+    if (!startupReady) return;
     const host = containerRef.current;
     if (!host) return;
     // Language changes rebuild scene copy; keep the text fallback visible until the
@@ -149,7 +161,7 @@ export default function StatusFlight() {
       canvas?.removeEventListener("webglcontextrestored", onContextRestored);
       handle?.dispose();
     };
-  }, [config]);
+  }, [config, startupReady]);
 
   return (
     <div className="status-flight-wrap">
@@ -182,7 +194,7 @@ export default function StatusFlight() {
           "--sf-body-size": "clamp(0.9rem, 1.25vw, 1.05rem)",
         } as CSSProperties}
       >
-        <div className="status-flight-ending" aria-hidden="true" inert>
+        <div className="status-flight-ending" aria-hidden="true" inert={"" as unknown as boolean}>
           <div className="status-flight-ending-card">
             <p className="font-mono text-[9px] uppercase tracking-[0.22em] text-accent-cyan/75">{sv ? "Resan landar" : "Journey resolved"}</p>
             <p className="mt-2 text-sm leading-relaxed text-white/75">

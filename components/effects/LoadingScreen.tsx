@@ -1,13 +1,17 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import BudAILogo from "@/components/ui/BudAILogo";
+import BrainFlight from "@/components/effects/BrainFlight";
 import { useLang } from "@/components/ui/LanguageContext";
 
-const MIN_VISIBLE_MS = 1250;
-const MAX_WAIT_MS = 9000;
+const MIN_VISIBLE_MS = 1350;
+const REDUCED_MIN_VISIBLE_MS = 650;
+const MAX_WAIT_MS = 8000;
 const FADE_MS = 360;
+const INTRO_TRAVEL_MS = 2100;
+const INTRO_PROGRESS_LIMIT = 0.64;
 const WORD = "BudAI";
 const GLYPHS = "01<>{}/=+*#";
 
@@ -52,10 +56,9 @@ function ScrambleWordmark() {
 }
 
 /**
- * Server-rendered so the recognizable BudAI intro is present before hydration.
- * It leaves only after the document, fonts and server-rendered route shell are
- * ready, with a minimum dwell and a hard safety timeout. The root Providers
- * instance survives App Router navigation, so this never replays on client routes.
+ * The root provider owns this for the whole document. The original WebGL2 brain
+ * is loaded only for the intro; route readiness and the first brain frame are
+ * coordinated, but no page waits for the rest of the site's 3D assets.
  */
 export default function LoadingScreen() {
   const { lang } = useLang();
@@ -64,7 +67,41 @@ export default function LoadingScreen() {
   const [show, setShow] = useState(true);
   const [out, setOut] = useState(false);
   const [takingLonger, setTakingLonger] = useState(false);
+  const [brainProgress, setBrainProgress] = useState(0);
+  const [brainRendered, setBrainRendered] = useState(false);
+  const [brainFailed, setBrainFailed] = useState(false);
+  const brainReady = useRef(false);
   const finish = useRef<() => void>(() => {});
+
+  const announceBrainReady = useCallback(() => {
+    if (brainReady.current) return;
+    brainReady.current = true;
+    setBrainRendered(true);
+    window.dispatchEvent(new Event("budai:loading-brain-ready"));
+  }, []);
+
+  useEffect(() => {
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduced) {
+      // BrainFlight draws one still frame under reduced motion.
+      setBrainProgress(0.08);
+      return;
+    }
+
+    let raf = 0;
+    let lastUpdate = 0;
+    const started = performance.now();
+    const tick = (now: number) => {
+      if (!lastUpdate || now - lastUpdate >= 32) {
+        const fraction = Math.min(1, (now - started) / INTRO_TRAVEL_MS);
+        setBrainProgress(fraction * INTRO_PROGRESS_LIMIT);
+        lastUpdate = now;
+      }
+      if (now - started < INTRO_TRAVEL_MS) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, []);
 
   useEffect(() => {
     if (document.documentElement.dataset.budaiStartupComplete === "true") {
@@ -74,9 +111,8 @@ export default function LoadingScreen() {
     document.documentElement.dataset.budaiStarting = "true";
     let cancelled = false;
     let finished = false;
-    let pageReady = pathname !== "/status" || document.querySelector("[data-budai-route-ready]") !== null;
-    let documentReady = document.readyState === "complete";
-    let fontsReady = !document.fonts || document.fonts.status === "loaded";
+    let routeReady = pathname !== "/status" || document.querySelector("[data-budai-route-ready]") !== null;
+    let brainHasDrawn = brainReady.current;
     let fadeTimer = 0;
     let maxTimer = 0;
     let readyRaf = 0;
@@ -84,6 +120,7 @@ export default function LoadingScreen() {
     let routeRaf1 = 0;
     let routeRaf2 = 0;
     const shownAt = performance.now();
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
     const dismiss = () => {
       if (finished) return;
@@ -93,13 +130,11 @@ export default function LoadingScreen() {
       cancelAnimationFrame(readyRaf);
       cancelAnimationFrame(routeRaf1);
       cancelAnimationFrame(routeRaf2);
-      window.removeEventListener("load", onLoad);
       window.removeEventListener("budai:experience-ready", onExperienceReady);
-      if (window.matchMedia) {
-        window.matchMedia("(prefers-reduced-motion: reduce)").removeEventListener("change", onMotionChange);
-      }
+      window.removeEventListener("budai:loading-brain-ready", onBrainReady);
+      reducedMotion.removeEventListener("change", onMotionChange);
       setOut(true);
-      const fadeDuration = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : FADE_MS;
+      const fadeDuration = reducedMotion.matches ? 0 : FADE_MS;
       fadeTimer = window.setTimeout(() => {
         document.documentElement.dataset.budaiStartupComplete = "true";
         delete document.documentElement.dataset.budaiStarting;
@@ -110,11 +145,12 @@ export default function LoadingScreen() {
     finish.current = dismiss;
 
     const readyToLeave = () => {
-      if (cancelled || finished || !documentReady || !fontsReady || !pageReady || readyRaf) return;
+      if (cancelled || finished || !routeReady || !brainHasDrawn || readyRaf) return;
+      const minimum = reducedMotion.matches ? REDUCED_MIN_VISIBLE_MS : MIN_VISIBLE_MS;
       const checkMinimumDwell = () => {
         readyRaf = 0;
         if (cancelled || finished) return;
-        if (performance.now() - shownAt >= MIN_VISIBLE_MS) {
+        if (performance.now() - shownAt >= minimum) {
           dismiss();
           return;
         }
@@ -122,52 +158,34 @@ export default function LoadingScreen() {
       };
       readyRaf = requestAnimationFrame(checkMinimumDwell);
     };
-    if (!fontsReady && document.fonts) {
-      void document.fonts.ready.then(() => {
-        fontsReady = true;
-        readyToLeave();
-      }, () => {
-        // A font failure should not strand the branded overlay.
-        fontsReady = true;
-        readyToLeave();
-      });
-    }
 
-    const onLoad = () => {
-      documentReady = true;
+    const onExperienceReady = () => {
+      routeReady = true;
       readyToLeave();
     };
-    const onExperienceReady = () => {
-      pageReady = true;
+    const onBrainReady = () => {
+      brainHasDrawn = true;
       readyToLeave();
     };
     const onMotionChange = (event: MediaQueryListEvent) => {
       if (event.matches) dismiss();
     };
 
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-    if (reducedMotion.matches) {
-      dismiss();
-      return () => {
-        cancelled = true;
-        window.clearTimeout(fadeTimer);
-        finish.current = () => {};
-      };
-    }
-
-    window.addEventListener("load", onLoad, { once: true });
-    window.addEventListener("budai:experience-ready", onExperienceReady, { once: true });
+    window.addEventListener("budai:experience-ready", onExperienceReady);
+    window.addEventListener("budai:loading-brain-ready", onBrainReady);
     reducedMotion.addEventListener("change", onMotionChange);
-    if (documentReady) onLoad();
-    // For regular routes, wait until the hydrated route has had a chance to paint.
-    // Status is ready once its server-rendered route shell is present.
+
+    // For regular routes, wait for React to hydrate and paint the route shell.
+    // Status exposes a server-rendered readiness marker, so its heavy flight is
+    // intentionally deferred until this short intro has left the screen.
     if (pathname !== "/status") {
       routeRaf1 = requestAnimationFrame(() => {
         routeRaf2 = requestAnimationFrame(onExperienceReady);
       });
     }
 
-    longTimer = window.setTimeout(() => setTakingLonger(true), 4200);
+    longTimer = window.setTimeout(() => setTakingLonger(true), 3500);
+    // If a device cannot create WebGL or the lazy chunk stalls, the loader still exits.
     maxTimer = window.setTimeout(dismiss, MAX_WAIT_MS);
     readyToLeave();
 
@@ -179,14 +197,19 @@ export default function LoadingScreen() {
       cancelAnimationFrame(readyRaf);
       cancelAnimationFrame(routeRaf1);
       cancelAnimationFrame(routeRaf2);
-      window.removeEventListener("load", onLoad);
       window.removeEventListener("budai:experience-ready", onExperienceReady);
+      window.removeEventListener("budai:loading-brain-ready", onBrainReady);
       reducedMotion.removeEventListener("change", onMotionChange);
       finish.current = () => {};
     };
   }, [pathname]);
 
   if (!show) return null;
+
+  const onBrainFailure = () => {
+    setBrainFailed(true);
+    announceBrainReady();
+  };
 
   return (
     <div
@@ -200,11 +223,24 @@ export default function LoadingScreen() {
     >
       <div className="ai-grid absolute inset-0 opacity-25" aria-hidden="true" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_45%,rgba(0,229,255,0.16),transparent_58%)]" aria-hidden="true" />
-      <div className="startup-neural-scene" aria-hidden="true">
-        <span className="startup-neural-ring startup-neural-ring-a" />
-        <span className="startup-neural-ring startup-neural-ring-b" />
-        <span className="startup-neural-ring startup-neural-ring-c" />
-        <span className="startup-neural-core" />
+      <div className="startup-brain-stage" aria-hidden="true">
+        {(!brainRendered || brainFailed) && (
+          <div className="startup-neural-scene">
+            <span className="startup-neural-ring startup-neural-ring-a" />
+            <span className="startup-neural-ring startup-neural-ring-b" />
+            <span className="startup-neural-ring startup-neural-ring-c" />
+            <span className="startup-neural-core" />
+          </div>
+        )}
+        {!brainFailed && (
+          <BrainFlight
+            mode="intro"
+            progress={brainProgress}
+            activity={Math.min(1, brainProgress * 1.5)}
+            onReady={announceBrainReady}
+            onFail={onBrainFailure}
+          />
+        )}
       </div>
       <div
         className="pointer-events-none absolute inset-0"
@@ -212,7 +248,7 @@ export default function LoadingScreen() {
         aria-hidden="true"
       />
 
-      {/* Original Stilledev signature and current BudAI signal mark. */}
+      {/* Stilledev signature and current BudAI signal mark. */}
       <div className="pointer-events-none absolute inset-x-0 top-[6%] z-10 flex flex-col items-center gap-2 px-5 text-center sm:top-[8%]">
         <p className="font-mono text-[10px] uppercase tracking-[0.35em] text-white/40 sm:text-[11px]">
           Developed by <b className="font-bold text-accent-cyan [text-shadow:0_0_14px_rgba(0,229,255,0.6)]">Stilledev</b>
@@ -227,7 +263,6 @@ export default function LoadingScreen() {
         </h1>
       </div>
 
-      {/* The sweep is intentionally indeterminate; it does not imply provider readiness. */}
       <div className="absolute inset-x-0 bottom-[4%] z-10 flex flex-col items-center px-5 text-center">
         <div className="h-px w-64 overflow-hidden rounded-full bg-white/10 sm:w-72" aria-hidden="true">
           <span className="startup-light-sweep block h-full w-1/2 rounded-full bg-gradient-to-r from-transparent via-accent-cyan to-accent-purple" />

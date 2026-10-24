@@ -43,6 +43,7 @@ export default function CommandPalette() {
       { id: "playground", label: "Try the Playground", icon: MessageCircle, action: () => goTo("playground"), keywords: "chat demo try ai" },
       { id: "roadmap", label: "View Roadmap", icon: Map, action: () => goTo("roadmap"), keywords: "timeline plan future" },
       { id: "neural", label: "See how BudAI works", icon: Brain, action: () => goTo("neural"), keywords: "story neural core cinematic 3d" },
+      { id: "whatsnew", label: "What's new", icon: Sparkles, action: () => window.dispatchEvent(new Event("budai:whats-new")), keywords: "changelog updates releases" },
       { id: "about", label: "About the builder", icon: Sparkles, action: () => goTo("about"), keywords: "stilledev developer github contact" },
       { id: "waitlist", label: "Join the Waitlist", icon: Users, action: () => goTo("waitlist"), keywords: "signup access request join" },
       {

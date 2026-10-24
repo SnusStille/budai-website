@@ -1255,6 +1255,22 @@ html.lenis.lenis-smooth iframe { pointer-events: none; }
 @keyframes startup-light-travel { from { transform: translateX(-140%); } to { transform: translateX(240%); } }
 .startup-light-sweep { animation: startup-light-travel 1.3s cubic-bezier(.22,.7,.3,1) infinite; }
 
+.startup-brain-stage {
+  position: absolute;
+  z-index: 1;
+  top: 52%;
+  left: 50%;
+  width: min(46rem, 100vw);
+  height: min(42rem, 72svh);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  filter: drop-shadow(0 0 34px rgba(0, 229, 255, .08));
+}
+.startup-brain-stage canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
 .startup-neural-scene {
   position: absolute;
   top: 53%;
@@ -1315,13 +1331,13 @@ html.lenis.lenis-smooth iframe { pointer-events: none; }
 }
 html[data-budai-starting="true"] #main-content {
   visibility: hidden;
-  animation: budai-main-failsafe 12s steps(1, end) forwards;
+  animation: budai-main-failsafe 18s steps(1, end) forwards;
 }
 
 /* Startup screen: server markup is visible immediately; these keyframes are a
    JS-free safety valve only. Hydrated startup logic exits on real readiness. */
 .budai-startup-screen:not([data-exiting]) {
-  animation: budai-startup-emergency-exit 12s linear forwards;
+  animation: budai-startup-emergency-exit 18s linear forwards;
   isolation: isolate;
   contain: layout paint;
 }
@@ -1458,7 +1474,9 @@ html[data-budai-starting="true"] #main-content {
 }
 @media (prefers-reduced-motion: reduce) {
   .budai-startup-screen { transition-duration: 1ms !important; }
-  .budai-startup-screen:not([data-exiting]) { animation-duration: 1ms; }
+  /* Keep the static brain intro finite even when its JavaScript never hydrates. */
+  .budai-startup-screen:not([data-exiting]) { animation-duration: 18s; }
+  .startup-brain-stage { filter: none; }
   .status-live-dot { animation: none; }
   .status-static-ring, .status-static-core { animation: none; }
   .status-flight-ending { transition: none; transform: none; }

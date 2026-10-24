@@ -553,6 +553,20 @@ export default function AIPlayground() {
   const [editText, setEditText] = useState("");
   const [savedBranch, setSavedBranch] = useState<ChatMessage[] | null>(null);
 
+  // Preserve the hero prompt bridge: quick prompts arrive here before the user starts chatting.
+  useEffect(() => {
+    const onPrompt = (e: Event) => {
+      const text = (e as CustomEvent<string>).detail;
+      if (typeof text !== "string") return;
+      setInput(text);
+      window.setTimeout(() => {
+        document.querySelector<HTMLTextAreaElement>("#playground textarea")?.focus({ preventScroll: true });
+      }, 450);
+    };
+    window.addEventListener("budai:prompt", onPrompt);
+    return () => window.removeEventListener("budai:prompt", onPrompt);
+  }, []);
+
   const [activity, setActivity] = useState<AiActivity>("idle");
   useEffect(() => {
     const busyNow = activity !== "idle";

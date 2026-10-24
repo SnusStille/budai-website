@@ -22,6 +22,7 @@ type Props = {
   interactive?: boolean;
   onRegionHover?: (region: number) => void;
   onFail?: () => void;
+  onReady?: () => void;
 };
 type Mat = Float32Array;
 type Target = { fbo: WebGLFramebuffer; tex: WebGLTexture; w: number; h: number };
@@ -393,6 +394,7 @@ export default function BrainFlight({
   interactive = false,
   onRegionHover,
   onFail,
+  onReady,
 }: Props) {
   const ref = useRef<HTMLCanvasElement>(null);
   const progRef = useRef(progress);
@@ -400,6 +402,7 @@ export default function BrainFlight({
   const activityRef = useRef(activity);
   const hoverCbRef = useRef(onRegionHover);
   const failCbRef = useRef(onFail);
+  const readyCbRef = useRef(onReady);
   const kickRef = useRef<(() => void) | null>(null);
 
   useEffect(() => { progRef.current = progress; }, [progress]);
@@ -407,6 +410,7 @@ export default function BrainFlight({
   useEffect(() => { activityRef.current = activity; kickRef.current?.(); }, [activity]);
   useEffect(() => { hoverCbRef.current = onRegionHover; }, [onRegionHover]);
   useEffect(() => { failCbRef.current = onFail; }, [onFail]);
+  useEffect(() => { readyCbRef.current = onReady; }, [onReady]);
 
   useEffect(() => {
     const canvas = ref.current;
@@ -444,6 +448,16 @@ export default function BrainFlight({
     let lastHover = -2;
     let curAct = activityRef.current;
     let tgtFocus = focusRef.current;
+    let reportedReady = false;
+    const onContextLost = (event: Event) => {
+      event.preventDefault();
+      running = false;
+      cancelAnimationFrame(raf);
+      failCbRef.current?.();
+    };
+    const onContextRestored = () => failCbRef.current?.();
+    canvas.addEventListener("webglcontextlost", onContextLost);
+    canvas.addEventListener("webglcontextrestored", onContextRestored);
 
     try {
       pointProg = link(gl, VS_POINTS, FS_POINTS);
@@ -627,6 +641,10 @@ export default function BrainFlight({
         tgtFocus = focusRef.current;
         curAct += (activityRef.current - curAct) * 0.06;
         render((now - start) / 1000, progRef.current);
+        if (!reportedReady) {
+          reportedReady = true;
+          readyCbRef.current?.();
+        }
         if (reduced) {
           running = false;
           return;
@@ -706,6 +724,8 @@ export default function BrainFlight({
         canvas.removeEventListener("pointermove", onMove);
         canvas.removeEventListener("pointerleave", onLeave);
       }
+      canvas.removeEventListener("webglcontextlost", onContextLost);
+      canvas.removeEventListener("webglcontextrestored", onContextRestored);
       freeTarget(gl, scene);
       freeTarget(gl, bA);
       freeTarget(gl, bB);

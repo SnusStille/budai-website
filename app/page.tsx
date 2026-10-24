@@ -6,6 +6,14 @@ import ScrollProgress from "@/components/ui/ScrollProgress";
 import SectionDots from "@/components/ui/SectionDots";
 import CookieConsent from "@/components/ui/CookieConsent";
 import BackToTop from "@/components/ui/BackToTop";
+import SurpriseToasts from "@/components/ui/SurpriseToasts";
+import Signature from "@/components/ui/Signature";
+import FocusMode from "@/components/ui/FocusMode";
+import BuddyCard from "@/components/sections/BuddyCard";
+import HeroAsk from "@/components/sections/HeroAsk";
+import LazyEgg from "@/components/effects/LazyEgg";
+import WhatsNew from "@/components/ui/WhatsNew";
+import Shortcuts from "@/components/ui/Shortcuts";
 import Navbar from "@/components/sections/Navbar";
 import Hero from "@/components/sections/Hero";
 import Capabilities from "@/components/sections/Capabilities";
@@ -70,8 +78,12 @@ export default function Home() {
       <div className="relative z-10">
         <Navbar />
         <SiteChrome />
+        <WhatsNew />
+        <Shortcuts />
         <FeedbackButton />
+        <LazyEgg />
         <Hero />
+        <HeroAsk />
         <WhatIsBudAI />
         <NeuralJourney />
 
@@ -91,6 +103,10 @@ export default function Home() {
       </div>
 
       <BackToTop />
+      <SurpriseToasts />
+      <Signature />
+      <FocusMode />
+      <BuddyCard />
       <CookieConsent />
     </main>
   );
