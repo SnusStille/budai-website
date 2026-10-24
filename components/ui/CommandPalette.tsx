@@ -6,7 +6,9 @@ import {
   Search, ArrowRight, Sparkles, Users, Map,
   Cpu, Languages, MessageCircle, CornerDownLeft,
 } from "lucide-react";
+import { usePathname } from "next/navigation";
 import { useLang } from "@/components/ui/LanguageContext";
+import { scrollToScene } from "@/lib/cinema/scroll";
 
 interface CommandItem {
   id: string;
@@ -20,8 +22,20 @@ interface CommandItem {
 // A command menu (⌘K / Ctrl+K) — the kind of thing Linear, Vercel, Raycast
 // and Stripe's docs have and most marketing sites don't bother building.
 // Lets a visitor jump anywhere on the site without hunting through the nav.
+const CHAPTERS = [
+  { id: "arrival", label: "01 · Ankomst / Arrival" },
+  { id: "descent", label: "02 · Premiss / The premise" },
+  { id: "intelligence", label: "03 · Intelligens / Intelligence" },
+  { id: "construction", label: "04 · Konstruktion / Construction" },
+  { id: "systems", label: "05 · System / Connected systems" },
+  { id: "works", label: "06 · Arbeten / Selected work" },
+  { id: "contact", label: "07 · Kontakt / Contact" },
+];
+
 export default function CommandPalette() {
   const { lang, setLang } = useLang();
+  const pathname = usePathname();
+  const isFilm = pathname === "/";
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
@@ -33,12 +47,24 @@ export default function CommandPalette() {
     if (el) {
       el.scrollIntoView({ behavior: "smooth", block: "start" });
     } else {
-      window.location.href = `/#${id}`;
+      window.location.href = `/budai#${id}`;
     }
   };
 
   const commands: CommandItem[] = useMemo(
     () => [
+      ...(isFilm
+        ? CHAPTERS.map((c) => ({
+            id: c.id,
+            label: c.label,
+            icon: ArrowRight,
+            action: () => {
+              setOpen(false);
+              scrollToScene(c.id);
+            },
+            keywords: "stilledev studio scene chapter film",
+          }))
+        : []),
       { id: "capabilities", label: "Go to Capabilities", icon: Sparkles, action: () => goTo("capabilities"), keywords: "features what budai does" },
       { id: "playground", label: "Try the Playground", icon: MessageCircle, action: () => goTo("playground"), keywords: "chat demo try ai" },
       { id: "roadmap", label: "View Roadmap", icon: Map, action: () => goTo("roadmap"), keywords: "timeline plan future" },

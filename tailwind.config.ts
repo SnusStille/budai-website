@@ -21,10 +21,24 @@ const config: Config = {
           yellow: "#fbbf24",
         },
         muted: "#8892a0",
+        // STILLEDEV cinematic layer — same OKLCH colours the WebGL world converts from
+        studio: {
+          void: "#02050c",
+          surface: "#080c14",
+          graphite: "#161b22",
+          silver: "#d9dfe2",
+          dim: "#8e9aa4",
+          white: "#f3f7f9",
+          signal: "#30c3ec",
+          volt: "#1b6cdb",
+          bleed: "#70d9ce",
+          ember: "#f1aa57",
+        },
       },
       fontFamily: {
-        sans: ["var(--font-jakarta)", "system-ui", "sans-serif"],
-        mono: ["var(--font-jetbrains)", "monospace"],
+        sans: ["var(--font-sans)", "system-ui", "sans-serif"],
+        mono: ["var(--font-mono)", "monospace"],
+        display: ["var(--font-display)", "Archivo", "system-ui", "sans-serif"],
       },
       animation: {
         "pulse-slow": "pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite",

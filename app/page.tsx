@@ -1,117 +1,74 @@
 "use client";
 
-import { useEffect } from "react";
 import dynamic from "next/dynamic";
-import ScrollProgress from "@/components/ui/ScrollProgress";
-import SectionDots from "@/components/ui/SectionDots";
 import CookieConsent from "@/components/ui/CookieConsent";
-import BackToTop from "@/components/ui/BackToTop";
-import SurpriseToasts from "@/components/ui/SurpriseToasts";
-import Signature from "@/components/ui/Signature";
-import FocusMode from "@/components/ui/FocusMode";
-import BuddyCard from "@/components/sections/BuddyCard";
-import Navbar from "@/components/sections/Navbar";
-import Hero from "@/components/sections/Hero";
-import Capabilities from "@/components/sections/Capabilities";
-import Waitlist from "@/components/sections/Waitlist";
-import WhatIsBudAI from "@/components/sections/WhatIsBudAI";
-import ErrorBoundary from "@/components/ui/ErrorBoundary";
-import HeroAsk from "@/components/sections/HeroAsk";
-import LazyEgg from "@/components/effects/LazyEgg";
 import FeedbackButton from "@/components/ui/FeedbackButton";
-import Journey from "@/components/sections/Journey";
-import SiteChrome from "@/components/ui/SiteChrome";
-import WhatsNew from "@/components/ui/WhatsNew";
-import Shortcuts from "@/components/ui/Shortcuts";
-import Footer from "@/components/sections/Footer";
+import Stage from "@/components/cinema/Stage";
+import { Hud, Leader, StudioNav } from "@/components/cinema/Chrome";
+import Arrival from "@/components/cinema/scenes/Arrival";
+import Premise from "@/components/cinema/scenes/Premise";
+import Intelligence from "@/components/cinema/scenes/Intelligence";
+import Construction from "@/components/cinema/scenes/Construction";
+import Systems from "@/components/cinema/scenes/Systems";
+import Works from "@/components/cinema/scenes/Works";
+import Contact from "@/components/cinema/scenes/Contact";
+import StudioFooter from "@/components/cinema/StudioFooter";
+import ErrorBoundary from "@/components/ui/ErrorBoundary";
+import { usePrefersReducedMotion } from "@/components/cinema/motion";
+import { SCENE_ORDER } from "@/lib/cinema/timeline";
+import { scrollToScene } from "@/lib/cinema/scroll";
+import { useEffect } from "react";
 
-const AIEnvironment = dynamic(() => import("@/components/effects/AIEnvironment"), {
-  ssr: false,
-});
+// kept from the product page: pointer glow + the studio feedback flow, both lazy
 const CursorGlow = dynamic(() => import("@/components/effects/CursorGlow"), { ssr: false });
 
-const About = dynamic(() => import("@/components/sections/About"));
-const AIBackdropFX = dynamic(() => import("@/components/effects/AIBackdropFX"), { ssr: false });
-const AIPlayground = dynamic(() => import("@/components/sections/AIPlayground"));
-
+/**
+ * STILLEDEV — the cinematic experience.
+ *
+ * The film is a *layer*, not a gate: all seven scenes are ordinary semantic HTML in this
+ * document, so the page is readable, crawlable and keyboard-navigable with WebGL unavailable,
+ * the animation disabled, or the canvas failing to boot. Heavy preserved features (the live
+ * BudAI playground, the waitlist) are mounted only when they come near the viewport, and the
+ * whole 3D module lives in its own chunk.
+ *
+ * The BudAI product landing lives on /budai with every anchor it had here intact.
+ */
 export default function Home() {
-  useEffect(() => {
-    if (process.env.NODE_ENV === "development") {
-      console.log("%cBudAI · Stilledev", "color:#00e5ff;font-weight:bold;");
-    }
+  const reduced = usePrefersReducedMotion();
 
-    let buffer = "";
-    const target = "budai";
-    const onKey = (e: KeyboardEvent) => {
-      const tag = (e.target as HTMLElement)?.tagName;
-      if (tag === "INPUT" || tag === "TEXTAREA" || (e.target as HTMLElement)?.isContentEditable)
-        return;
-      buffer += e.key.toLowerCase();
-      if (buffer.length > target.length) buffer = buffer.slice(-target.length);
-      if (buffer === target) {
-        console.log("%c🚀 Welcome, developer.", "color: #00e5ff; font-size: 14px; font-weight: bold;");
-        console.log("%cYou found the easter egg.", "color: #2dd4bf; font-size: 12px;");
-        document.documentElement.classList.add("egg-flash");
-        setTimeout(() => document.documentElement.classList.remove("egg-flash"), 1200);
-        window.dispatchEvent(new Event("budai:egg"));
-        buffer = "";
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, []);
-
+  // a deep link to a chapter (#intelligence …) is honoured once the layout has settled
   useEffect(() => {
-    const originalTitle = document.title;
-    const onVisibility = () => {
-      if (document.visibilityState === "hidden") {
-        document.title = "Stilledev.se · BudAI";
-      } else {
-        document.title = originalTitle;
-      }
-    };
-    document.addEventListener("visibilitychange", onVisibility);
-    return () => {
-      document.removeEventListener("visibilitychange", onVisibility);
-      document.title = originalTitle;
-    };
+    const id = window.location.hash.replace(/^#/, "");
+    if (!id || !SCENE_ORDER.includes(id as (typeof SCENE_ORDER)[number])) return;
+    const t = window.setTimeout(() => scrollToScene(id), 420);
+    return () => window.clearTimeout(t);
   }, []);
 
   return (
-    <main className="page-transition relative min-h-screen text-white overflow-x-hidden bg-background">
-      <ScrollProgress />
-      <AIEnvironment />
-      <CursorGlow />
-      <SectionDots />
-      <div className="fixed inset-0 z-[1] pointer-events-none ai-grid opacity-[0.35]" aria-hidden />
-      <div className="fixed inset-0 z-[1] pointer-events-none ai-vignette" aria-hidden />
-      <AIBackdropFX />
+    <main id="main" tabIndex={-1} className="st-page relative min-h-screen text-white">
+      {/* desktop garnish kept from the product page; skipped when motion is reduced */}
+      {!reduced && <CursorGlow />}
+
+      <ErrorBoundary>
+        <Stage reduced={reduced} />
+      </ErrorBoundary>
+
+      <Hud />
+      <StudioNav />
+      {!reduced && <Leader />}
 
       <div className="relative z-10">
-        <Navbar />
-        <SiteChrome />
-        <WhatsNew />
-        <Shortcuts />
-        <FeedbackButton />
-        <LazyEgg />
-        <Hero />
-        <HeroAsk />
-        <WhatIsBudAI />
-        <ErrorBoundary>
-          <AIPlayground />
-        </ErrorBoundary>
-        <Capabilities />
-        <About />
-        <Waitlist />
-        <Journey />
-        <Footer />
+        <Arrival />
+        <Premise />
+        <Intelligence />
+        <Construction />
+        <Systems />
+        <Works />
+        <Contact />
       </div>
 
-      <BackToTop />
-      <SurpriseToasts />
-      <Signature />
-      <FocusMode />
-      <BuddyCard />
+      <StudioFooter />
+      <FeedbackButton />
       <CookieConsent />
     </main>
   );

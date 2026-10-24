@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import BudAILogo from "@/components/ui/BudAILogo";
 import Tilt3D from "@/components/ui/Tilt3D";
 
@@ -8,7 +9,7 @@ const LAYERS = [-28, -20, -12, -6, 0, 6, 12, 20, 28];
 const WORD = "BudAI";
 const GLYPHS = "01<>{}/=+*#";
 const BOOT = ["init core", "load models", "warm up playground", "ready"];
-const DURATION = 5600;
+const DURATION = 3200;
 
 /** Each letter of the wordmark scrambles through code characters, then locks in. */
 function Scramble({ start }: { start: number }) {
@@ -45,12 +46,20 @@ function Scramble({ start }: { start: number }) {
 }
 
 export default function LoadingScreen() {
-  const [show, setShow] = useState(true);
+  // The intro belongs to the product landing. The studio route has its own film leader,
+  // so nothing here ever covers "/" (and nothing can trap a visitor: see the guards below).
+  const pathname = usePathname();
+  const enabled = pathname === "/budai";
+  const [show, setShow] = useState<boolean | null>(null);
   const [out, setOut] = useState(false);
   const [p, setP] = useState(0);
   const finish = useRef<() => void>(() => {});
 
   useEffect(() => {
+    if (!enabled) {
+      setShow(false);
+      return;
+    }
     let fresh = true;
     try {
       const ts = Number(localStorage.getItem("budai_intro_ts") || 0);
@@ -85,6 +94,11 @@ export default function LoadingScreen() {
         setShow(false);
       }, 900);
     };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" || e.key === "Enter") finish.current();
+    };
+    const guard = window.setTimeout(() => finish.current(), duration + 1500);
+    window.addEventListener("keydown", onKey);
     const start = performance.now();
     const tick = (t: number) => {
       const v = Math.min(1, (t - start) / duration);
@@ -95,9 +109,11 @@ export default function LoadingScreen() {
     raf = requestAnimationFrame(tick);
     return () => {
       cancelAnimationFrame(raf);
+      clearTimeout(guard);
+      window.removeEventListener("keydown", onKey);
       document.body.style.overflow = "";
     };
-  }, []);
+  }, [enabled]);
 
   if (!show) return null;
   const thresholds = [0.1, 0.36, 0.62, 0.9];
