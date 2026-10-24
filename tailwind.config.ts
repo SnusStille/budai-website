@@ -9,18 +9,18 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: "#020205",
-        surface: "#08080f",
-        "surface-elevated": "#0f0f1a",
+        background: "#02050c",
+        surface: "#080c14",
+        "surface-elevated": "#101622",
         accent: {
-          cyan: "#00e5ff",
-          green: "#2dd4bf",
-          purple: "#7c5cff",
-          pink: "#a78bfa",
-          blue: "#38bdf8",
-          yellow: "#fbbf24",
+          cyan: "#30c3ec",
+          green: "#70d9ce",
+          purple: "#8fb8f5",
+          pink: "#70d9ce",
+          blue: "#5fd0f2",
+          yellow: "#f1aa57",
         },
-        muted: "#8892a0",
+        muted: "#8e9aa4",
         // STILLEDEV cinematic layer — same OKLCH colours the WebGL world converts from
         studio: {
           void: "#02050c",

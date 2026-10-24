@@ -7,7 +7,7 @@ import { motion } from "framer-motion";
 // alone. Meant to sit inside a `relative inline-block` wrapper around the
 // word it underlines.
 export default function MarkerUnderline({
-  color = "#00e5ff",
+  color = "#30c3ec",
   delay = 0,
   duration = 0.7,
   thickness = 6,

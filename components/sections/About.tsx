@@ -78,7 +78,7 @@ export default function About() {
           </div>
 
           <div className="flex flex-wrap gap-3">
-            <a href="https://github.com/SnusStille/budai-website" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-[#020205] hover:opacity-90 transition-opacity">
+            <a href="https://github.com/SnusStille/budai-website" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-[#02050c] hover:opacity-90 transition-opacity">
               <Github className="h-4 w-4" /> GitHub
             </a>
             <a href="mailto:Stilleinc@hotmail.com" className="inline-flex items-center gap-2 rounded-full border border-white/15 px-5 py-2.5 text-sm font-medium text-white hover:border-accent-cyan/40 transition-colors">
@@ -89,7 +89,7 @@ export default function About() {
 
         <ScrollReveal delay={0.1}>
           <Tilt3D max={6}>
-          <div className="rounded-2xl border border-white/[0.08] bg-[#07070e]/90 shadow-[0_0_80px_-20px_rgba(0,229,255,0.4)] overflow-hidden">
+          <div className="rounded-2xl border border-white/[0.08] bg-[#080c14]/90 shadow-[0_0_80px_-20px_rgba(48,195,236,0.4)] overflow-hidden">
             <div className="flex items-center gap-1.5 px-4 py-3 border-b border-white/[0.06]">
               <span className="w-2.5 h-2.5 rounded-full bg-red-400/50" />
               <span className="w-2.5 h-2.5 rounded-full bg-yellow-400/50" />

@@ -46,7 +46,7 @@ const AIPlayground = dynamic(() => import("@/components/sections/AIPlayground"))
 export default function BudAIPage() {
   useEffect(() => {
     if (process.env.NODE_ENV === "development") {
-      console.log("%cBudAI · Stilledev", "color:#00e5ff;font-weight:bold;");
+      console.log("%cBudAI · Stilledev", "color:#30c3ec;font-weight:bold;");
     }
 
     let buffer = "";
@@ -58,8 +58,8 @@ export default function BudAIPage() {
       buffer += e.key.toLowerCase();
       if (buffer.length > target.length) buffer = buffer.slice(-target.length);
       if (buffer === target) {
-        console.log("%c🚀 Welcome, developer.", "color: #00e5ff; font-size: 14px; font-weight: bold;");
-        console.log("%cYou found the easter egg.", "color: #2dd4bf; font-size: 12px;");
+        console.log("%c🚀 Welcome, developer.", "color: #30c3ec; font-size: 14px; font-weight: bold;");
+        console.log("%cYou found the easter egg.", "color: #70d9ce; font-size: 12px;");
         document.documentElement.classList.add("egg-flash");
         setTimeout(() => document.documentElement.classList.remove("egg-flash"), 1200);
         window.dispatchEvent(new Event("budai:egg"));

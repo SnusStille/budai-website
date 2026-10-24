@@ -92,7 +92,7 @@ export default function CommandPalette() {
         keywords: "developer contact discord stilledev",
       },
     ],
-    [lang, setLang]
+    [lang, setLang, isFilm]
   );
 
   const filtered = useMemo(() => {

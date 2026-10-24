@@ -160,7 +160,7 @@ export default function Navbar() {
               <span className="flex flex-col leading-none">
                 <TypeWordmark />
                 <span className="mt-1.5 hidden items-center gap-1.5 font-mono text-[9px] uppercase tracking-[0.2em] text-white/40 sm:flex">
-                  DEVELOPED BY <b className="font-bold text-accent-cyan [text-shadow:0_0_12px_rgba(0,229,255,0.55)]">STILLEDEV</b>
+                  DEVELOPED BY <b className="font-bold text-accent-cyan [text-shadow:0_0_12px_rgba(48,195,236,0.55)]">STILLEDEV</b>
                 </span>
               </span>
             </a>
@@ -183,7 +183,7 @@ export default function Navbar() {
                     {l.label}
                     <span
                       className={`absolute bottom-1 left-1/2 -translate-x-1/2 h-0.5 rounded-full bg-accent-cyan transition-all duration-300 ${
-                        isActive ? "w-5 opacity-100 shadow-[0_0_8px_rgba(0,229,255,0.6)]" : "w-0 opacity-0"
+                        isActive ? "w-5 opacity-100 shadow-[0_0_8px_rgba(48,195,236,0.6)]" : "w-0 opacity-0"
                       }`}
                     />
                   </a>
@@ -205,7 +205,7 @@ export default function Navbar() {
                     aria-pressed={lang === code}
                     className={`relative min-w-[2.6rem] px-3 py-1.5 text-[11px] font-semibold tracking-wide rounded-full transition-all ${
                       lang === code
-                        ? "bg-gradient-to-r from-accent-cyan to-accent-purple text-white shadow-[0_0_16px_rgba(0,229,255,0.25)]"
+                        ? "bg-gradient-to-r from-accent-cyan to-accent-purple text-white shadow-[0_0_16px_rgba(48,195,236,0.25)]"
                         : "text-muted/70 hover:text-white"
                     }`}
                   >
@@ -245,7 +245,7 @@ export default function Navbar() {
                   </button>
                 ))}
               </div>
-              <a href="#playground" className="rounded-full bg-accent-cyan px-3.5 py-1.5 text-xs font-semibold text-[#020205]">
+              <a href="#playground" className="rounded-full bg-accent-cyan px-3.5 py-1.5 text-xs font-semibold text-[#02050c]">
                 {lang === "sv" ? "Prova" : "Try"}
               </a>
               <button
@@ -270,7 +270,7 @@ export default function Navbar() {
             className="fixed inset-0 z-[55] lg:hidden"
           >
             <div
-              className="absolute inset-0 bg-[#020205]/95 backdrop-blur-2xl"
+              className="absolute inset-0 bg-[#02050c]/95 backdrop-blur-2xl"
               onClick={() => setMobileOpen(false)}
             />
             <div className="relative pt-24 px-6 flex flex-col gap-1 max-h-screen overflow-y-auto pb-10">

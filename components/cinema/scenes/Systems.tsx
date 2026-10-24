@@ -1,5 +1,7 @@
 "use client";
 
+import { useRef, type MutableRefObject } from "react";
+import Beams from "@/components/cinema/Beams";
 import { Lines, Eyebrow, Fade, Rule } from "@/components/cinema/Primitives";
 import { SERVICES } from "@/lib/cinema/content";
 import { useLang } from "@/components/ui/LanguageContext";
@@ -22,6 +24,12 @@ export default function Systems() {
   const { lang } = useLang();
   const sv = lang === "sv";
   const svc = SERVICES.filter((s) => s.id !== "web");
+
+  // the beams read their geometry off these nodes, so the wiring follows the layout on any
+  // viewport. One stable array of ref boxes, filled by callback refs (no hook in a loop).
+  const nodesRef = useRef<MutableRefObject<HTMLLIElement | null>[]>(null!);
+  if (!nodesRef.current) nodesRef.current = PIPE.map(() => ({ current: null }));
+  const nodes = nodesRef.current;
 
   return (
     <Scene id="systems" titleId="systems-title" className="st-scene">
@@ -53,18 +61,27 @@ export default function Systems() {
           </div>
         </div>
 
-        {/* the pipeline: real stages, drawn as one line that lights up as the chapter arrives */}
+        {/* the pipeline: five real stages, wired with beams measured from the layout */}
         <Fade i={2}>
-          <ol className="st-pipe" aria-label={sv ? "Pipeline för automatisering" : "Automation pipeline"}>
-            {PIPE.map((p, i) => (
-              <li key={p.k} className="st-pipe__node" style={{ ["--i" as string]: i }}>
-                <span className="st-num">{String(i + 1).padStart(2, "0")}</span>
-                <span className="st-pipe__title">{sv ? p.kSv : p.k}</span>
-                <span className="st-mono">{sv ? p.note : p.noteEn}</span>
-                <span className="st-pipe__link" aria-hidden />
-              </li>
-            ))}
-          </ol>
+          <div className="relative">
+            <ol className="st-pipe" aria-label={sv ? "Pipeline för automatisering" : "Automation pipeline"}>
+              {PIPE.map((p, i) => (
+                <li
+                  key={p.k}
+                  ref={(el) => {
+                    nodes[i].current = el;
+                  }}
+                  className="st-pipe__node"
+                  style={{ ["--i" as string]: i }}
+                >
+                  <span className="st-num">{String(i + 1).padStart(2, "0")}</span>
+                  <span className="st-pipe__title">{sv ? p.kSv : p.k}</span>
+                  <span className="st-mono">{sv ? p.note : p.noteEn}</span>
+                </li>
+              ))}
+            </ol>
+            <Beams refs={nodes} />
+          </div>
         </Fade>
 
         <Rule className="mt-16" />

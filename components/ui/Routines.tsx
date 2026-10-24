@@ -47,7 +47,7 @@ export default function Routines({ input, sv, onRun }: { input: string; sv: bool
         {sv ? "Rutiner" : "Routines"}
       </button>
       {open && (
-        <div className="absolute bottom-full right-0 z-30 mb-2 w-72 rounded-2xl border border-white/10 bg-[#07070e]/95 p-3 shadow-2xl backdrop-blur-xl">
+        <div className="absolute bottom-full right-0 z-30 mb-2 w-72 rounded-2xl border border-white/10 bg-[#080c14]/95 p-3 shadow-2xl backdrop-blur-xl">
           {running ? (
             <div className="space-y-2">
               <p className="text-xs font-medium text-white">{running.name}</p>
@@ -56,7 +56,7 @@ export default function Routines({ input, sv, onRun }: { input: string; sv: bool
               ))}
               <div className="flex justify-end gap-2">
                 <button type="button" onClick={() => setRunning(null)} className="px-2 py-1 text-xs text-muted hover:text-white">{sv ? "Tillbaka" : "Back"}</button>
-                <button type="button" onClick={() => run(running, vals)} className="rounded-lg bg-accent-cyan px-3 py-1.5 text-xs font-semibold text-[#020205]">{sv ? "Kör" : "Run"}</button>
+                <button type="button" onClick={() => run(running, vals)} className="rounded-lg bg-accent-cyan px-3 py-1.5 text-xs font-semibold text-[#02050c]">{sv ? "Kör" : "Run"}</button>
               </div>
             </div>
           ) : (
