@@ -1,29 +1,10 @@
 import type { Metadata, Viewport } from "next";
-// Typefaces are self-hosted from Fontsource packages (OFL-1.1): no third-party font
-// request, no CLS, and the production build works without access to fonts.googleapis.com.
-import "@fontsource-variable/archivo/wdth.css";
-import "@fontsource-variable/plus-jakarta-sans/index.css";
-import "@fontsource-variable/jetbrains-mono/index.css";
+import { Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/Providers";
 import VercelAnalytics from "@/components/VercelAnalytics";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://stilledev.se";
-
-const orgLd = {
-  "@context": "https://schema.org",
-  "@type": "Organization",
-  name: "Stilledev",
-  alternateName: "STILLEDEV",
-  url: siteUrl,
-  description:
-    "Stilledev is a one-person creative technology studio in Stockholm, Sweden, building AI products and cinematic web interfaces.",
-  email: "Stilleinc@hotmail.com",
-  foundingLocation: { "@type": "Place", name: "Stockholm, Sweden" },
-  sameAs: ["https://github.com/SnusStille"],
-};
-
-const productLd = {
+const jsonLd = {
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
   name: "BudAI",
@@ -31,38 +12,45 @@ const productLd = {
   operatingSystem: "Web",
   description:
     "AI work assistant for Swedish companies and individuals — write, automate, and think faster in Swedish and English.",
-  url: `${siteUrl}/budai`,
+  url: process.env.NEXT_PUBLIC_SITE_URL || "https://stilledev.se",
   author: { "@type": "Organization", name: "Stilledev" },
-  publisher: { "@type": "Organization", name: "Stilledev" },
-  offers: {
-    "@type": "Offer",
-    price: "0",
-    priceCurrency: "SEK",
-    description: "Developer preview",
-  },
+  offers: { "@type": "Offer", price: "0", priceCurrency: "SEK", description: "Developer preview" },
 };
+
+const jakarta = Plus_Jakarta_Sans({
+  subsets: ["latin", "latin-ext"],
+  variable: "--font-jakarta",
+  display: "swap",
+  weight: ["400", "500", "600", "700", "800"],
+});
+
+const jetbrains = JetBrains_Mono({
+  subsets: ["latin", "latin-ext"],
+  variable: "--font-jetbrains",
+  display: "swap",
+});
+
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://stilledev.se";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "STILLEDEV — software, directed",
-    template: "%s · STILLEDEV",
+    default: "Stilledev.se · BudAI",
+    template: "%s · BudAI",
   },
   description:
-    "STILLEDEV is a Stockholm studio building AI products, automation and cinematic web interfaces — most visibly BudAI, an AI work assistant for Sweden and the Nordics.",
+    "BudAI är AI-arbetsassistenten för Sverige — skriv, automatisera och tänk snabbare på svenska och engelska. Utvecklarförhandsvisning av Stilledev.",
   keywords: [
-    "Stilledev",
-    "STILLEDEV",
-    "AI studio Stockholm",
-    "creative developer",
-    "web development Sweden",
-    "AI integration",
-    "automatisering",
-    "BudAI",
+    "AI",
     "artificial intelligence",
+    "Sweden",
     "Sverige",
-    "React",
-    "Next.js",
+    "business automation",
+    "digital assistant",
+    "Stilledev",
+    "BudAI",
+    "enterprise AI",
+    "automatisering",
   ],
   authors: [{ name: "Stilledev" }],
   creator: "Stilledev",
@@ -73,24 +61,24 @@ export const metadata: Metadata = {
     locale: "sv_SE",
     alternateLocale: ["en_US"],
     url: siteUrl,
-    siteName: "STILLEDEV",
-    title: "STILLEDEV — software, directed",
+    siteName: "BudAI",
+    title: "BudAI — AI-arbete för Sverige",
     description:
-      "AI products, automation and cinematic web interfaces, built in Stockholm. BudAI — an AI work assistant for Sweden and the Nordics — is live now.",
+      "AI-arbetsassistent för svenska företag och privatpersoner. Skriv, automatisera och tänk snabbare — SV & EN.",
     images: [
       {
         url: "/og.png",
         width: 1200,
         height: 630,
-        alt: "BudAI by Stilledev",
+        alt: "BudAI — AI work for Sweden",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "STILLEDEV — software, directed",
+    title: "BudAI — AI-arbete för Sverige",
     description:
-      "AI products, automation and cinematic web interfaces from Stockholm. Try BudAI live.",
+      "AI-arbetsassistent för svenska företag och privatpersoner. Skriv, automatisera och tänk snabbare — SV & EN.",
     images: ["/og.png"],
   },
   icons: {
@@ -102,7 +90,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#02050c",
+  themeColor: "#020205",
   colorScheme: "dark",
   width: "device-width",
   initialScale: 1,
@@ -111,20 +99,39 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="font-sans" suppressHydrationWarning>
+    <html
+      lang="en"
+      className={`${jakarta.variable} ${jetbrains.variable} font-sans`}
+      suppressHydrationWarning
+    >
       <body className="antialiased noise-overlay bg-background text-white">
         <a
-          href="#main"
-          className="absolute left-3 top-3 z-[200] -translate-y-16 focus:translate-y-0 px-4 py-2 rounded-lg bg-studio-signal text-black text-sm font-semibold transition-transform"
+          href="#playground"
+          className="absolute left-3 top-3 z-[200] -translate-y-16 focus:translate-y-0 px-4 py-2 rounded-lg bg-accent-cyan text-black text-sm font-semibold transition-transform"
         >
-          Skip to content to content
+          Skip to content
         </a>
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify([orgLd, productLd]) }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
         <Providers>{children}</Providers>
         <VercelAnalytics />
+      <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "SoftwareApplication",
+              name: "BudAI",
+              applicationCategory: "BusinessApplication",
+              operatingSystem: "Web",
+              description: "BudAI is an AI assistant for everyday work in Swedish and English.",
+              offers: { "@type": "Offer", price: "0", priceCurrency: "SEK" },
+              creator: { "@type": "Organization", name: "Stilledev" },
+            }),
+          }}
+        />
       </body>
     </html>
   );

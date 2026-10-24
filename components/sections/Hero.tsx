@@ -5,16 +5,19 @@ import { motion } from "framer-motion";
 import { ArrowRight, FileText, Languages, Zap, ChevronDown } from "lucide-react";
 import { useLang } from "@/components/ui/LanguageContext";
 import Magnetic from "@/components/ui/Magnetic";
+import { isIntroDone, subscribeIntro } from "@/components/effects/introState";
 import AICore from "@/components/effects/AICore";
 import dynamic from "next/dynamic";
 const ParticleCore = dynamic(() => import("@/components/effects/ParticleCore"), { ssr: false });
-const BrainFlight = dynamic(() => import("@/components/effects/BrainFlight"), { ssr: false });
+const HeroBrainPanel = dynamic(() => import("@/components/sections/HeroBrainPanel"), { ssr: false });
 import Tilt3D from "@/components/ui/Tilt3D";
 import { StilledevLink } from "@/components/ui/BudAILogo";
 
 export default function Hero() {
   const { t, lang } = useLang();
   const [isMobile, setIsMobile] = useState(false);
+  const [introReady, setIntroReady] = useState(isIntroDone);
+  useEffect(() => subscribeIntro(() => setIntroReady(true)), []);
 
   useEffect(() => {
     const onResize = () => setIsMobile(window.innerWidth < 768);
@@ -43,13 +46,24 @@ export default function Hero() {
         ? "Sverige"
         : "Sweden";
 
+  if (!introReady) {
+    return <section className="relative min-h-[100svh]" aria-hidden />;
+  }
+
   return (
     <section className="relative min-h-[100svh] flex items-center justify-center overflow-hidden pt-24 pb-16">
       <ParticleCore />
-      {!isMobile && (
-        <div className="absolute inset-0 pointer-events-none opacity-[0.5] [mask-image:radial-gradient(ellipse_at_center,black_35%,transparent_75%)]" aria-hidden>
-          <BrainFlight mode="ambient" />
-        </div>
+      {!isMobile ? (
+        <motion.div
+          className="absolute inset-0"
+          initial={{ opacity: 0, scale: 1.18 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 1.6, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <HeroBrainPanel />
+        </motion.div>
+      ) : (
+        <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_50%_35%,rgba(0,229,255,0.12),transparent_60%)]" aria-hidden />
       )}
       {!isMobile && (
         <>
@@ -63,7 +77,7 @@ export default function Hero() {
           initial={{ opacity: 0, y: 16, scale: 0.96 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 0.55, delay: 0.12 }}
-          className="inline-flex items-center gap-2.5 px-4 sm:px-5 py-2 sm:py-2.5 rounded-full glass-strong mb-6 sm:mb-8 border border-accent-green/25 shadow-[0_0_40px_rgba(112,217,206,0.08)]"
+          className="inline-flex items-center gap-2.5 px-4 sm:px-5 py-2 sm:py-2.5 rounded-full glass-strong mb-6 sm:mb-8 border border-accent-green/25 shadow-[0_0_40px_rgba(45,212,191,0.08)]"
         >
           <span className="relative flex h-2 w-2 sm:h-2.5 sm:w-2.5">
             <span className="absolute inline-flex h-full w-full rounded-full opacity-70 bg-accent-green animate-ping" />
@@ -88,9 +102,9 @@ export default function Hero() {
 
         {/* Single product mark — no rotating headline words */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.94 }}
+          initial={{ opacity: 0, scale: 0.86 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.55, delay: 0.2 }}
+          transition={{ duration: 0.7, delay: 0.45, ease: [0.22, 1, 0.36, 1] }}
           className="flex justify-center mb-5 sm:mb-7"
         >
           <Tilt3D max={isMobile ? 0 : 14}>
@@ -133,7 +147,7 @@ export default function Hero() {
           <Magnetic>
             <a
               href="#playground"
-              className="btn-primary inline-flex items-center gap-2 !px-7 !py-3.5 text-sm sm:text-base shadow-[0_0_40px_rgba(48,195,236,0.2)]"
+              className="btn-primary inline-flex items-center gap-2 !px-7 !py-3.5 text-sm sm:text-base shadow-[0_0_40px_rgba(0,229,255,0.2)]"
             >
               <span>{t.hero.ctaPrimary}</span>
               <ArrowRight className="w-4 h-4" />

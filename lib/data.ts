@@ -228,9 +228,6 @@ export async function addWaitlistUser(
 
   const supabase = getSupabase();
   if (!supabase) {
-    // Local demo only. A deployed site with no Supabase must fail loudly rather than tell
-    // someone they are on the list when nothing was written anywhere.
-    if (process.env.NODE_ENV !== "development") throw new Error("not_configured");
     const newUser: WaitlistUser = {
       id: String(Date.now()),
       ...payload,
@@ -284,12 +281,11 @@ export async function deleteUser(id: string): Promise<void> {
   await adminApi("DELETE", undefined, `?id=${encodeURIComponent(id)}`);
 }
 
-export async function getWaitlistCount(): Promise<number | null> {
+export async function getWaitlistCount(): Promise<number> {
   const supabase = getSupabase();
-  if (!supabase) return process.env.NODE_ENV === "development" ? mockUsers.length : null;
+  if (!supabase) return mockUsers.length;
   const { data, error } = await supabase.rpc("waitlist_count");
-  // null = unknown. The UI hides the badge instead of showing a made-up number.
-  return error || typeof data !== "number" ? null : data;
+  return error || typeof data !== "number" ? 0 : data;
 }
 
 export async function getAdminEvents(limit = 30): Promise<AdminEvent[]> {

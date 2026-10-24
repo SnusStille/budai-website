@@ -48,7 +48,7 @@ export default function BudAILogo({
   const tl = `${g}-tl`;
   const fill = `url(#${g})`;
   const a = animated;
-  const cyan = variant === "light" ? "#0891b2" : "#30c3ec";
+  const cyan = variant === "light" ? "#0891b2" : "#00e5ff";
   const L = "M10 9.5 3.5 16 10 22.5";
   const R = "M22 9.5l6.5 6.5-6.5 6.5";
 
@@ -68,7 +68,7 @@ export default function BudAILogo({
         <defs>
           <linearGradient id={g} x1="2" y1="4" x2="30" y2="28" gradientUnits="userSpaceOnUse">
             <stop stopColor={cyan} />
-            <stop offset="0.55" stopColor="#8fb8f5" />
+            <stop offset="0.55" stopColor="#7c5cff" />
             <stop offset="1" stopColor={cyan} />
             {a && <animateTransform attributeName="gradientTransform" type="rotate" from="0 16 16" to="360 16 16" dur="7s" repeatCount="indefinite" />}
           </linearGradient>
@@ -116,7 +116,7 @@ export default function BudAILogo({
         <path d="M9.6 16h3.4M19 16h3.4" stroke={cyan} strokeWidth="1" strokeLinecap="round" className={a ? "bud-flow" : undefined} opacity="0.85" />
         <circle cx="16" cy="16" r="7" stroke={fill} strokeWidth="0.9" strokeDasharray={a ? "1.5 3.5" : undefined} opacity={a ? 0.6 : 0.3} className={a ? "bud-orbit" : undefined} />
         <circle cx="16" cy="6.2" r="1" fill={cyan} className={a ? "bud-node" : undefined} />
-        <circle cx="16" cy="25.8" r="1" fill="#8fb8f5" className={a ? "bud-node" : undefined} style={{ animationDelay: "1.2s" }} />
+        <circle cx="16" cy="25.8" r="1" fill="#7c5cff" className={a ? "bud-node" : undefined} style={{ animationDelay: "1.2s" }} />
 
         {/* comet: orbiting node with a fading tail */}
         {a && (
@@ -175,7 +175,7 @@ export function StilledevMark({
       <svg viewBox="0 0 32 32" className="w-full h-full" fill="none">
         <defs>
           <linearGradient id={`sm-${uid}`} x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#30c3ec" />
+            <stop offset="0%" stopColor="#00e5ff" />
             <stop offset="100%" stopColor="#8b5cf6" />
           </linearGradient>
         </defs>
@@ -185,7 +185,7 @@ export function StilledevMark({
           r="14.5"
           stroke={`url(#sm-${uid})`}
           strokeWidth="1.5"
-          fill="rgba(48,195,236,0.06)"
+          fill="rgba(0,229,255,0.06)"
         />
         <path
           d="M21.5 11.2c-.6-1.8-2.2-2.9-4.4-2.9-2.8 0-4.6 1.5-4.6 3.5 0 1.9 1.3 2.9 4.2 3.5l1.4.3c2.1.5 3.1 1.2 3.1 2.6 0 1.6-1.5 2.7-3.7 2.7-2.1 0-3.6-1-4.3-2.7"

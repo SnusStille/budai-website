@@ -29,7 +29,7 @@ export default function AICore({ isMobile = false }: { isMobile?: boolean }) {
           className="absolute inset-[-8%] rounded-full pointer-events-none opacity-70 logo-ambient-spin"
           style={{
             background:
-              "conic-gradient(from 0deg, transparent 0%, rgba(48,195,236,0.22) 12%, transparent 28%, rgba(143,184,245,0.18) 48%, transparent 62%, rgba(112,217,206,0.12) 78%, transparent 100%)",
+              "conic-gradient(from 0deg, transparent 0%, rgba(0,229,255,0.22) 12%, transparent 28%, rgba(124,92,255,0.18) 48%, transparent 62%, rgba(45,212,191,0.12) 78%, transparent 100%)",
             filter: "blur(14px)",
           }}
         />

@@ -106,7 +106,7 @@ export default function SectionDots() {
           <span
             className={`block rounded-full transition-all duration-250 ${
               active === s.id
-                ? "w-2.5 h-2.5 bg-accent-cyan shadow-[0_0_10px_rgba(48,195,236,0.7)]"
+                ? "w-2.5 h-2.5 bg-accent-cyan shadow-[0_0_10px_rgba(0,229,255,0.7)]"
                 : "w-1.5 h-1.5 bg-white/25 group-hover:bg-white/50"
             }`}
           />

@@ -101,9 +101,6 @@ export default function VoiceOrb({ open, sv, busy, reply, onSend, onClose }: {
       stream?.getTracks().forEach((t) => t.stop());
       ctx?.close().catch(() => {});
     };
-    // listen() is intentionally NOT a dependency: it is recreated each render, and adding it
-    // would tear down and re-open the microphone on every render.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   useEffect(() => {
@@ -130,7 +127,7 @@ export default function VoiceOrb({ open, sv, busy, reply, onSend, onClose }: {
     : sv ? "Röstläge kräver Chrome, Edge eller Safari" : "Voice mode needs Chrome, Edge or Safari";
 
   return (
-    <div className="fixed inset-0 z-[150] flex flex-col items-center justify-center bg-[#02050c]/95 backdrop-blur-xl" role="dialog" aria-label="Voice mode">
+    <div className="fixed inset-0 z-[150] flex flex-col items-center justify-center bg-[#020205]/95 backdrop-blur-xl" role="dialog" aria-label="Voice mode">
       <button type="button" onClick={onClose} aria-label="Close" className="absolute right-5 top-5 rounded-full border border-white/10 p-2.5 text-white/70 hover:text-white">
         <X className="h-5 w-5" />
       </button>

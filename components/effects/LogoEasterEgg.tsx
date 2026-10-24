@@ -616,15 +616,12 @@ export default function LogoEasterEgg() {
     };
 
     window.addEventListener("budai:logo-click", onClick);
-    const timerQueue = timers.current;
     return () => {
       window.removeEventListener("budai:logo-click", onClick);
       window.removeEventListener("resize", resize);
       cancelAnimationFrame(raf.current);
       window.clearTimeout(idle.current);
-      // cleared from the array captured at effect time, then emptied
-      timerQueue.forEach((id) => window.clearTimeout(id));
-      timerQueue.length = 0;
+      timers.current.forEach((id) => window.clearTimeout(id));
     };
   }, []);
 
@@ -640,7 +637,7 @@ export default function LogoEasterEgg() {
           height="72"
           viewBox="-36 -36 72 72"
           className="pointer-events-none fixed z-[71]"
-          style={{ left: ringDisplay.x - 36, top: ringDisplay.y - 36, filter: "drop-shadow(0 0 4px rgba(48,195,236,0.7))" }}
+          style={{ left: ringDisplay.x - 36, top: ringDisplay.y - 36, filter: "drop-shadow(0 0 4px rgba(0,229,255,0.7))" }}
         >
           {Array.from({ length: 15 }, (_, i) => {
             const a = ((-90 + i * 24) * Math.PI) / 180;
@@ -651,7 +648,7 @@ export default function LogoEasterEgg() {
                 y1={Math.sin(a) * 28}
                 x2={Math.cos(a) * 33}
                 y2={Math.sin(a) * 33}
-                stroke={i < ringDisplay.n ? (i % 3 === 2 ? "#8fb8f5" : "#30c3ec") : "rgba(255,255,255,0.14)"}
+                stroke={i < ringDisplay.n ? (i % 3 === 2 ? "#7c5cff" : "#00e5ff") : "rgba(255,255,255,0.14)"}
                 strokeWidth="1.8"
                 strokeLinecap="round"
               />
@@ -678,7 +675,7 @@ export default function LogoEasterEgg() {
         <div aria-hidden className={`pointer-events-none fixed inset-0 z-[80] flex items-center justify-center transition-opacity duration-500 ${dev.out ? "opacity-0" : "opacity-100"}`}>
           <div className="absolute inset-0 bg-[radial-gradient(circle,rgba(2,2,5,0.35),rgba(2,2,5,0.9))]" />
           <div className="bud-scanlines absolute inset-0" />
-          <div className="relative mx-4 w-full max-w-md rounded-2xl border border-accent-cyan/30 bg-[#080c14]/90 p-6 font-mono shadow-[0_0_90px_-20px_rgba(48,195,236,0.6)] backdrop-blur-xl">
+          <div className="relative mx-4 w-full max-w-md rounded-2xl border border-accent-cyan/30 bg-[#07070e]/90 p-6 font-mono shadow-[0_0_90px_-20px_rgba(0,229,255,0.6)] backdrop-blur-xl">
             {dev.lines.map((l, i) => (
               <p key={i} className={i === 0 ? "text-sm tracking-[0.18em] text-accent-cyan" : i === 1 ? "mt-3 text-sm tracking-[0.2em] text-accent-green" : "mt-1 text-2xl font-bold tracking-[0.4em] text-white"}>
                 {l}

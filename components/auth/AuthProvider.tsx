@@ -284,7 +284,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     // CRITICAL: emailRedirectTo must be on Supabase Redirect allowlist.
     // If not, Supabase falls back to Dashboard Site URL (often localhost) → ERR_CONNECTION_REFUSED.
-    const emailRedirectTo = getAuthCallbackUrl("/budai#playground");
+    const emailRedirectTo = getAuthCallbackUrl("/#playground");
     const { error } = await supabase.auth.signInWithOtp({
       email: clean,
       options: {

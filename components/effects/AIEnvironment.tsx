@@ -37,8 +37,8 @@ export default function AIEnvironment() {
     if (reduced) {
       // Static ambient only
       const g = ctx.createRadialGradient(W * 0.5, H * 0.3, 0, W * 0.5, H * 0.3, Math.max(W, H) * 0.5);
-      g.addColorStop(0, "rgba(48,195,236,0.1)");
-      g.addColorStop(0.45, "rgba(143,184,245,0.05)");
+      g.addColorStop(0, "rgba(0,229,255,0.1)");
+      g.addColorStop(0.45, "rgba(124,92,255,0.05)");
       g.addColorStop(1, "rgba(0,0,0,0)");
       ctx.fillStyle = g;
       ctx.fillRect(0, 0, W, H);
@@ -113,9 +113,9 @@ export default function AIEnvironment() {
     };
 
     const colors = [
-      (a: number) => `rgba(48,195,236,${a})`,
-      (a: number) => `rgba(143,184,245,${a})`,
-      (a: number) => `rgba(112,217,206,${a})`,
+      (a: number) => `rgba(0,229,255,${a})`,
+      (a: number) => `rgba(124,92,255,${a})`,
+      (a: number) => `rgba(45,212,191,${a})`,
     ];
 
     const draw = (now: number) => {
@@ -127,12 +127,12 @@ export default function AIEnvironment() {
       ctx.clearRect(0, 0, W, H);
 
       // Strong ambient blooms
-      bloom(W * 0.5, H * 0.22, Math.min(W, H) * 0.48, "rgba(48,195,236,0.11)");
-      bloom(W * 0.82, H * 0.5, Math.min(W, H) * 0.36, "rgba(143,184,245,0.09)");
-      bloom(W * 0.15, H * 0.72, Math.min(W, H) * 0.3, "rgba(112,217,206,0.06)");
+      bloom(W * 0.5, H * 0.22, Math.min(W, H) * 0.48, "rgba(0,229,255,0.11)");
+      bloom(W * 0.82, H * 0.5, Math.min(W, H) * 0.36, "rgba(124,92,255,0.09)");
+      bloom(W * 0.15, H * 0.72, Math.min(W, H) * 0.3, "rgba(45,212,191,0.06)");
 
       // Soft perspective grid lines (few, not dense)
-      ctx.strokeStyle = "rgba(48,195,236,0.04)";
+      ctx.strokeStyle = "rgba(0,229,255,0.04)";
       ctx.lineWidth = 1;
       const gy = H * 0.55;
       for (let i = 0; i < 8; i++) {
@@ -241,7 +241,7 @@ export default function AIEnvironment() {
       }
 
       if (!isMobile && mouse.x > 0) {
-        bloom(mouse.x, mouse.y, 200, "rgba(48,195,236,0.07)");
+        bloom(mouse.x, mouse.y, 200, "rgba(0,229,255,0.07)");
       }
     };
 

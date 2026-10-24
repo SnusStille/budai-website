@@ -2,7 +2,6 @@ import Anthropic from "@anthropic-ai/sdk";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { dayKey, limitFor, type AccessTier } from "@/lib/limits";
-import { resolveModel } from "@/lib/playground/models";
 
 function getClient() {
   const key = process.env.ANTHROPIC_API_KEY;
@@ -281,8 +280,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid message" }, { status: 400 });
     }
 
-    // allowlisted label -> configured model (unknown or unconfigured ids fall back to the default)
-    const model = resolveModel(body?.model);
+    const model = process.env.ANTHROPIC_MODEL || "claude-sonnet-4-20250514";
 
     if (wantStream) {
       const enc = new TextEncoder();

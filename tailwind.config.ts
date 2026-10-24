@@ -9,36 +9,22 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: "#02050c",
-        surface: "#080c14",
-        "surface-elevated": "#101622",
+        background: "#020205",
+        surface: "#08080f",
+        "surface-elevated": "#0f0f1a",
         accent: {
-          cyan: "#30c3ec",
-          green: "#70d9ce",
-          purple: "#8fb8f5",
-          pink: "#70d9ce",
-          blue: "#5fd0f2",
-          yellow: "#f1aa57",
+          cyan: "#00e5ff",
+          green: "#2dd4bf",
+          purple: "#7c5cff",
+          pink: "#a78bfa",
+          blue: "#38bdf8",
+          yellow: "#fbbf24",
         },
-        muted: "#8e9aa4",
-        // STILLEDEV cinematic layer — same OKLCH colours the WebGL world converts from
-        studio: {
-          void: "#02050c",
-          surface: "#080c14",
-          graphite: "#161b22",
-          silver: "#d9dfe2",
-          dim: "#8e9aa4",
-          white: "#f3f7f9",
-          signal: "#30c3ec",
-          volt: "#1b6cdb",
-          bleed: "#70d9ce",
-          ember: "#f1aa57",
-        },
+        muted: "#8892a0",
       },
       fontFamily: {
-        sans: ["var(--font-sans)", "system-ui", "sans-serif"],
-        mono: ["var(--font-mono)", "monospace"],
-        display: ["var(--font-display)", "Archivo", "system-ui", "sans-serif"],
+        sans: ["var(--font-jakarta)", "system-ui", "sans-serif"],
+        mono: ["var(--font-jetbrains)", "monospace"],
       },
       animation: {
         "pulse-slow": "pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite",

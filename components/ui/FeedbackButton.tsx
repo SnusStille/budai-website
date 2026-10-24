@@ -43,14 +43,14 @@ export default function FeedbackButton() {
           setOpen(true);
           setState("idle");
         }}
-        className="fixed bottom-5 left-5 z-40 hidden items-center gap-2 rounded-full border border-white/10 bg-[#080c14]/80 px-4 py-2.5 text-xs font-medium text-white/80 shadow-lg backdrop-blur-xl transition-colors hover:border-accent-cyan/40 hover:text-white md:flex"
+        className="fixed bottom-5 left-5 z-40 hidden items-center gap-2 rounded-full border border-white/10 bg-[#07070e]/80 px-4 py-2.5 text-xs font-medium text-white/80 shadow-lg backdrop-blur-xl transition-colors hover:border-accent-cyan/40 hover:text-white md:flex"
       >
         <MessageSquare className="h-4 w-4 text-accent-cyan" />
         {sv ? "Feedback" : "Feedback"}
       </button>
       {open && (
         <div className="fixed inset-0 z-[140] flex items-end justify-center bg-black/60 p-4 backdrop-blur-sm sm:items-center" onClick={() => setOpen(false)} role="dialog" aria-label="Feedback">
-          <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-[#080c14] p-5" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-[#07070e] p-5" onClick={(e) => e.stopPropagation()}>
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-semibold text-white">{sv ? "Din feedback styr BudAI" : "Your feedback steers BudAI"}</h2>
               <button type="button" onClick={() => setOpen(false)} aria-label="Close" className="text-white/60 hover:text-white"><X className="h-5 w-5" /></button>
@@ -68,7 +68,7 @@ export default function FeedbackButton() {
                 </div>
                 <textarea value={msg} onChange={(e) => setMsg(e.target.value)} rows={4} maxLength={2000} placeholder={sv ? "Vad saknas, vad är trasigt, vad kan bli bättre?" : "What's missing, what's broken, what could be better?"} className="w-full resize-none rounded-xl border border-white/10 bg-black/40 p-3 text-sm text-white outline-none placeholder:text-muted/60 focus:border-accent-cyan/40" />
                 {state === "error" && <p className="mt-2 text-xs text-red-300">{sv ? "Kunde inte skicka. Försök igen." : "Could not send. Try again."}</p>}
-                <button type="button" onClick={send} disabled={state === "sending" || msg.trim().length < 3} className="mt-3 w-full rounded-xl bg-accent-cyan py-2.5 text-sm font-semibold text-[#02050c] disabled:opacity-40">
+                <button type="button" onClick={send} disabled={state === "sending" || msg.trim().length < 3} className="mt-3 w-full rounded-xl bg-accent-cyan py-2.5 text-sm font-semibold text-[#020205] disabled:opacity-40">
                   {state === "sending" ? (sv ? "Skickar…" : "Sending…") : sv ? "Skicka" : "Send"}
                 </button>
               </>

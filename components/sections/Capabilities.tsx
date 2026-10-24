@@ -40,7 +40,7 @@ const capabilities = [
       "Ämne: Q2-pilotförslag\n\nHej team — här är en skarp one-pager…",
     gradient: "from-accent-cyan to-accent-blue",
     accent: "text-accent-cyan",
-    glow: "rgba(48,195,236,0.15)",
+    glow: "rgba(0,229,255,0.15)",
   },
   {
     id: "automate",
@@ -56,7 +56,7 @@ const capabilities = [
     previewSv: "1. Samla input\n2. Utkast sammanfattning\n3. Flagga risker\n4. Skicka digest",
     gradient: "from-accent-purple to-accent-pink",
     accent: "text-accent-purple",
-    glow: "rgba(143,184,245,0.15)",
+    glow: "rgba(124,92,255,0.15)",
   },
   {
     id: "decide",
@@ -72,7 +72,7 @@ const capabilities = [
     previewSv: "Risk: medium\nBlocker: datakvalitet\nNästa: 3 ägare, 1 vecka",
     gradient: "from-accent-green to-accent-cyan",
     accent: "text-accent-green",
-    glow: "rgba(112,217,206,0.12)",
+    glow: "rgba(45,212,191,0.12)",
   },
   {
     id: "bilingual",
@@ -180,11 +180,11 @@ export default function Capabilities() {
       cons: sv ? ["Minst antal dagliga credits", "Kortast historik och minne", "Ingen prioriterad åtkomst"] : ["Fewest daily credits", "Shortest history and memory", "No priority access"],
       cta: sv ? "Prova Playground" : "Try the Playground",
       href: "#playground",
-      card: "border-accent-cyan/40 bg-accent-cyan/[0.05] shadow-[0_0_70px_-25px_rgba(48,195,236,0.55)]",
+      card: "border-accent-cyan/40 bg-accent-cyan/[0.05] shadow-[0_0_70px_-25px_rgba(0,229,255,0.55)]",
       bar: "from-accent-cyan to-accent-cyan/0",
       chip: "border-accent-cyan/30 bg-accent-cyan/10 text-accent-cyan",
       iconTone: "border-accent-cyan/30 bg-accent-cyan/10 text-accent-cyan",
-      btn: "bg-accent-cyan text-[#02050c]",
+      btn: "bg-accent-cyan text-[#020205]",
       blob: "bg-accent-cyan/20",
     },
     {

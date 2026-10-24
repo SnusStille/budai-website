@@ -102,7 +102,7 @@ export default function ParticleCore() {
           const dx = P[i][0] - P[j][0], dy = P[i][1] - P[j][1];
           const d2 = dx * dx + dy * dy;
           if (d2 < L * L) {
-            ctx.strokeStyle = `rgba(48,195,236,${(1 - Math.sqrt(d2) / L) * 0.32})`;
+            ctx.strokeStyle = `rgba(0,229,255,${(1 - Math.sqrt(d2) / L) * 0.32})`;
             ctx.beginPath();
             ctx.moveTo(P[i][0], P[i][1]);
             ctx.lineTo(P[j][0], P[j][1]);

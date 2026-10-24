@@ -25,14 +25,14 @@ export default function SiteChrome() {
 
   return (
     <>
-      <a href="#playground" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[70] focus:rounded-lg focus:bg-accent-cyan focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-[#02050c]">
+      <a href="#playground" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[70] focus:rounded-lg focus:bg-accent-cyan focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-[#020205]">
         Skip to the Playground
       </a>
       <button
         type="button"
         aria-label={lang === "sv" ? "Till toppen" : "Back to top"}
         onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-        className={`fixed bottom-5 right-5 z-40 hidden h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-[#080c14]/90 text-white/80 shadow-lg transition-all duration-300 hover:border-accent-cyan/40 hover:text-white md:flex ${
+        className={`fixed bottom-5 right-5 z-40 hidden h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-[#07070e]/90 text-white/80 shadow-lg transition-all duration-300 hover:border-accent-cyan/40 hover:text-white md:flex ${
           top ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-4 opacity-0"
         }`}
       >

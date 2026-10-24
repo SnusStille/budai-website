@@ -7,9 +7,9 @@ import Logo3D from "@/components/ui/Logo3D";
 import { useLang } from "@/components/ui/LanguageContext";
 
 const RINGS = [
-  { name: "Sweden", sv: "Sverige", size: 140, c: "#30c3ec", d: "14s" },
-  { name: "Nordics", sv: "Norden", size: 240, c: "#8fb8f5", d: "22s" },
-  { name: "World", sv: "Världen", size: 340, c: "#70d9ce", d: "32s" },
+  { name: "Sweden", sv: "Sverige", size: 140, c: "#00e5ff", d: "14s" },
+  { name: "Nordics", sv: "Norden", size: 240, c: "#7c5cff", d: "22s" },
+  { name: "World", sv: "Världen", size: 340, c: "#2dd4bf", d: "32s" },
 ];
 const RING_OF = [0, 0, 1, 2];
 
@@ -79,20 +79,21 @@ export default function Journey() {
         </ScrollReveal>
 
         <div className="grid lg:grid-cols-[1fr_1.05fr] gap-8 lg:gap-12 items-center" onMouseEnter={() => setAuto(false)}>
-          <div className="order-2 lg:order-1 space-y-2.5" role="group" aria-label="Project stages">
+          <div className="order-2 lg:order-1 space-y-2.5" role="list">
             {stages.map((s, i) => {
               const on = active === i;
               return (
                 <button
                   key={s.title}
                   type="button"
+                  role="listitem"
                   aria-pressed={on}
                   onClick={() => {
                     setAuto(false);
                     setActive(i);
                   }}
                   className={`relative w-full rounded-2xl border p-4 text-left transition-all duration-300 ${
-                    on ? "border-white/20 bg-white/[0.05] shadow-[0_0_50px_-20px_rgba(143,184,245,0.6)]" : "border-white/[0.06] hover:bg-white/[0.03]"
+                    on ? "border-white/20 bg-white/[0.05] shadow-[0_0_50px_-20px_rgba(124,92,255,0.6)]" : "border-white/[0.06] hover:bg-white/[0.03]"
                   }`}
                 >
                   <div className="flex items-center gap-3">
