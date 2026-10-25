@@ -1,5 +1,7 @@
 # BudAI — living system rebuild
 
+> Historical baseline / pre-Confluence iteration. Current implementation, recovery details and **53-test** verification: [Confluence verification](./confluence-verification.md) and [current overhaul audit](./current-overhaul.md).
+
 **2026-10-25 · `arena/74ed593c-budai-website` · [PR #6](https://github.com/SnusStille/budai-website/pull/6)**
 
 This extends the existing BudAI application and the earlier five pushed commits. It is not a replacement template. The workspace's live preview runs the optimized production build on port 3000. No merge or production deployment is claimed.

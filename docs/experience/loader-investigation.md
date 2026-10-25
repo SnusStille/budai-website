@@ -1,5 +1,7 @@
 # Loader investigation (2026-10-24)
 
+> Historical baseline / pre-Confluence iteration. Current implementation, recovery details and **53-test** verification: [Confluence verification](./confluence-verification.md) and [current overhaul audit](./current-overhaul.md).
+
 Baseline: `426a348`. Inspected layouts, Providers, every loader/overlay reference,
 BrainFlight, Hero, CSS stacking, effect cleanup, hydration, and full Git history
 (`git fetch --unshallow origin`).

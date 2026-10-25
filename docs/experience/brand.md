@@ -1,34 +1,37 @@
-# BudAI / Fold
+# BudAI / Confluence
 
-2026-10-25. Original geometric identity drawn for this repository, not a downloaded icon or a third-party logo. No trademark-registration or clearance claim is made.
+2026-10-25. This identity supersedes the earlier Fold/B silhouette. It is original vector geometry drawn for this repository, not a downloaded icon. No trademark-clearance or registration claim is made.
 
-The solid B has two cut directional ports and a shared vertical spine. It is deliberately legible without gradients, orbiting particles, thin outlines or glow. The wordmark is **BudAI**, set in the existing self-hosted Plus Jakarta Sans variable family, with consistent weight, tight tracking and exact casing. The opening's intentionally uppercase, progressively typed **BUDAI** is retained.
+**Two continuous neural ribbons converge around one computational cell.** The solid form is not a letter B, stock brain, robot, sparkle or B in a circle. It remains recognisable at small sizes without glow, gradients, thin orbital rings or filters. The exact wordmark is **BudAI**, in the existing self-hosted Plus Jakarta Sans variable family, consistent 650 weight/tight tracking. The opening's intentionally typed uppercase **BUDAI** is retained.
 
-## One source
+## One geometric source
 
-- `lib/brand.ts`: the authoritative mark path, colors and SVG generator.
-- `components/ui/BudAILogo.tsx`: the shared SVG, retaining the existing size/variant/interactive/thinking API and named lockup compatibility export. Idle is completely still; the optional thinking state is one restrained CSS opacity signal and respects reduced motion.
-- `components/ui/BudAIWordmark.tsx`: the shared typographic wordmark.
-- The **StilledevMark and StilledevLink implementations are unchanged**. Stilledev's S mark, colors, creator name, links and attribution are not replaced with the BudAI B.
+- `lib/brand.ts`: canonical filled SVG path, internal signal routes, colors, SVG serialization and deterministic volume sampling.
+- `lib/experience/identity-volume.ts`: original ear-clip extrusion of those same contours. The lit opening/landing sculpture and capability core use this volume, not unrelated model assets.
+- `BudAILogo.tsx`: existing size/variant/interactive/thinking API plus restrained signal transmission through the two ribbons and receipt at the cell. This is actual stroke geometry, not whole-logo glow/opacity pulsing.
+- `BudAIWordmark.tsx`: shared exact casing/typography; the original named lockup export remains compatible.
+- `mark-motion.ts`: **one shared** intersection/preferences/visibility observer, no logo canvas or JS animation RAF. Offscreen, hidden-document and reduced-motion marks sleep. Thinking accelerates the same signal language; static remains a complete silhouette.
 
-The UI uses this identity in navigation, opening HUD, landing badge, Playground toolbar/empty state/messages, Builder's illustrative editor, Next Signal, Roadmap, footer and existing administration surfaces. The existing logo easter-egg interaction still targets the same nav wrapper; it does not load a second identity.
+The neural points actually form the Confluence mark as the opening camera enters. A manufactured, lit volume resolves on the landing in the same retained canvas/final pose. It unfolds into the recovered anatomical tour on scroll. Small UI SVGs use the lightweight motion language; reduced-motion/no-WebGL do not need the 3D sculpture.
 
-## Files
+The UI applies this identity to navigation, opening, Hero, Playground, Builder, Next Signal, Roadmap, footer, administration and existing auth/error/share/legal consumers of the reusable mark. The capability core uses its 3D geometry. **StilledevMark, StilledevLink, creator attribution and unrelated logos are unchanged.**
 
-| Asset | Use |
+## Assets
+
+| File | Purpose |
 | --- | --- |
-| `public/budai-mark-on-dark.svg` | Pale monochrome mark on a dark background; transparent SVG |
-| `public/budai-mark-on-light.svg` | Dark ink on a light background; transparent SVG |
-| `public/favicon.svg`, `public/favicon-32.png` | Bold 32px favicon with dark rounded tile |
-| `public/apple-touch-icon.png` | 180px Apple touch icon |
-| `public/icon-192.png`, `public/icon-512.png` | Installed-app PNGs; 512 is also declared maskable |
-| `public/og.png` | 1200×630 card using the exact UI font and new mark, with unchanged Stilledev attribution |
-| `app/opengraph-image.tsx` | Statically generated response serving the same artwork as the explicit OG/Twitter image; no remote font/image fetch at request time |
+| `budai-mark-on-dark.svg` | Pale monochrome mark, transparent |
+| `budai-mark-on-light.svg` | Dark ink on light, transparent |
+| `favicon.svg`, `favicon-32.png` | Compact dark tile, no animation/filter |
+| `apple-touch-icon.png` | 180px |
+| `icon-192.png`, `icon-512.png` | Installed-app PNGs; 512 also maskable, safe-area padding |
+| `og.png` | 1200×630, actual self-hosted UI typography, preserved Stilledev attribution |
+| `app/opengraph-image.tsx` | Static response of the exact same social artwork |
 
-Installed icons include safe-area padding: the artwork fits inside the central 80% circle. Use the light-background SVG or `<BudAILogo variant="light" />` on white; default is pale ink for this dark site. Do not stretch, add orbiting rings, split-color the wordmark, or substitute `</>`.
+Files are under `public/`. Use `<BudAILogo variant="light" />` or the light-context SVG on white. Do not stretch the mark, add orbital rings, substitute the old B/`</>`, or animate installed icons. No SVG animation/filter/gradient is needed to recognise it.
 
-## Regenerate
+## Reproduce and verify
 
-Run the local app, then `npm run brand:generate` (Node 22+). It uses the already-installed test browser and self-hosted fonts; it does not call an image-generation service or require an external CDN. `TEST_BASE_URL` can select another local preview. Build the application afterward to regenerate the static metadata response. Application builds do **not** require this authoring script or Node 22's type-stripping feature.
+With the local app running: `npm run brand:generate` (Node 22+, existing test browser and self-hosted fonts; no external image/font service). Build afterward to regenerate the static metadata response. Production application builds do not require this authoring script/type-stripping flag.
 
-`tests/brand.spec.ts` checks every rendered primary mark against the shared path, exact wordmark casing, unchanged Stilledev S path, SVG simplicity, PNG dimensions, Apple metadata, manifest sizes/maskable declaration, and byte-identical explicit/automatic social images.
+`brand.spec.ts` checks the actual UI path/wordmark, preserved Stilledev path, static SVG simplicity, all PNG sizes, manifest/Apple declarations and byte-identical social routes. `arrival.spec.ts` verifies real internal signal motion and reduced-motion sleep, actual cortex crossing/identity formation and the retained landing canvas/pose. Pure tests verify finite extrusion geometry and deterministic morph targets.

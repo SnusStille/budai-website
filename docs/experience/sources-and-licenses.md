@@ -6,7 +6,7 @@ Research dates: 2026-10-24 and 2026-10-25. The latest four-repository investigat
 
 The anatomical brain is the repository's own procedural WebGL2 implementation, recovered against [43f44c9 — Add neural brain experience](https://github.com/SnusStille/budai-website/commit/43f44c9). Its signed-distance anatomy, two hemispheres, folds, brainstem, neural points and travelling connections are retained. Changes concern ownership, readiness, cleanup, bloom resolution, animation scheduling, the intro-to-hero departure and the restored scroll-linked flight into and through the anatomy. Original procedural axons extend that passage into the product environment. It is **not** a sphere, video or downloaded model.
 
-The original BudAI Fold mark and [shared brand system](./brand.md) replace the previous code/orbit artwork. Stilledev identity, biography, exact product plans and roadmap content remain intact. There was no Status section in this checkout; the existing Roadmap/Journey was upgraded instead of inventing one.
+The original BudAI Confluence mark and [shared brand system](./brand.md) replace the previous code/orbit artwork. Stilledev identity, biography, exact product plans and roadmap content remain intact. There was no Status section in this checkout; the existing Roadmap/Journey was upgraded instead of inventing one.
 
 ## Requested candidate repositories
 
@@ -40,3 +40,5 @@ These are focused technique adaptations, not claims that those complete projects
 ## Latest focused adaptation
 
 `lib/experience/projection.ts` adapts the perspective units-per-pixel and DOM projection approach from [14islands/r3f-scroll-rig's PerspectiveCamera](https://github.com/14islands/r3f-scroll-rig/blob/master/src/components/PerspectiveCamera.tsx). The [MIT notice](./licenses/r3f-scroll-rig-MIT.txt) is retained. No R3F/Drei/Lenis/Zustand runtime, anatomical dataset or unlicensed demo code was added. The capability hardware and access architecture use original procedural geometry with the existing Three.js dependency.
+
+The latest Confluence geometry, actual DOM handoff and current requested-source decisions are documented in [current-overhaul.md](./current-overhaul.md) and [confluence-verification.md](./confluence-verification.md). Prior research remains historical provenance, not a claim that all repositories were installed.

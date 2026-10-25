@@ -22,6 +22,8 @@ export default function BrainScrollStory() {
     node.dataset.enhanced=String(enhanced);
     node.style.setProperty("--neural-progress",String(p));
     node.dataset.journeyProgress=p.toFixed(4);
+    const skip=node.querySelector<HTMLAnchorElement>(".neural-hud-top>a");
+    if(skip){skip.tabIndex=enhanced&&p>.79?-1:0;skip.setAttribute("aria-hidden",String(enhanced&&p>.79));}
     node.querySelectorAll<HTMLElement>("[data-original-stage]").forEach((element,i)=>{
       const center=.075+(i+.5)*.55/4;
       const opacity=smooth(1-Math.abs(p-center)/.06875);

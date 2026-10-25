@@ -321,5 +321,8 @@
       "outcome": "expected",
       "durationMs": 1
     }
-  ]
+  ],
+  "historical": true,
+  "sourceRevision": "bbf5e61",
+  "supersededBy": "verification-confluence-2026-10-25.json"
 }

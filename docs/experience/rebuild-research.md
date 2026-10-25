@@ -1,6 +1,6 @@
 # Living system rebuild — source investigation
 
-Research: 2026-10-25. Existing code was compared byte-for-byte with the previously pushed `e26ed86` before editing; all earlier work is retained on the same Arena branch.
+Research: 2026-10-25. This records the earlier investigation; [the current overhaul audit](./current-overhaul.md) adds the exact recovered four-stage source, original orbit-vs-flight distinction, Confluence and the actual camera/DOM handoff. Existing code was compared byte-for-byte with the previously pushed `e26ed86` before editing; all earlier work is retained on the same Arena branch.
 
 ## Original brain, not a new substitute
 
