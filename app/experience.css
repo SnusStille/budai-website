@@ -20,19 +20,135 @@ section[id] { scroll-margin-top: 0; } /* html already supplies the navigation of
 
 /* One opening surface, one recovered brain. Preparation and failure keep the
    exact same seeded model poster; no SVG/logo/suspense substitute exists. */
-.opening-surface {display:none;position:fixed;inset:0;z-index:200;background:#020205;color:#dcebf0;isolation:isolate;}
+.opening-surface {display:none;position:fixed;inset:0;z-index:200;color:#dcebf0;--opening-progress:0;pointer-events:none;}
 html[data-budai-intro="preparing"] .opening-surface,
 html[data-budai-intro="playing"] .opening-surface,
 html[data-budai-intro="revealing"] .opening-surface {display:block;}
 .opening-surface[data-opening-phase="revealing"] {opacity:0;pointer-events:none;transition:opacity 500ms cubic-bezier(.22,1,.36,1);}
-.opening-brain-frame {position:absolute;inset:0;overflow:clip;}
+.opening-brain-frame {position:absolute;inset:0;z-index:200;background:radial-gradient(ellipse at 50% 48%,#071520,#020205 72%);overflow:clip;}
 .brain-poster {display:block;position:absolute;inset:0;overflow:clip;pointer-events:none;}
 .brain-poster img {position:absolute;inset:0;width:100%;height:100%;object-fit:cover;max-width:none;}
-.opening-credit,.opening-caption {position:absolute;left:6vw;right:6vw;z-index:202;display:flex;justify-content:space-between;align-items:center;gap:24px;font:9px var(--font-jetbrains),monospace;letter-spacing:.17em;color:#88a2af;}
+.opening-credit,.opening-caption {position:absolute;left:6vw;right:6vw;z-index:205;display:flex;justify-content:space-between;align-items:center;gap:24px;font:9px var(--font-jetbrains),monospace;letter-spacing:.17em;color:#88a2af;}
 .opening-credit {top:38px;}.opening-credit>span:first-child {color:#dcebf0;letter-spacing:.25em;}
 .opening-caption {bottom:30px;border-top:1px solid #91b5c424;padding-top:18px;}
 .opening-caption button {pointer-events:auto;min-height:44px;padding:8px 0 8px 16px;letter-spacing:0;color:#b9ced7;}
 .opening-caption kbd {font-size:8px;color:#78919c;border:1px solid #8ba9b328;padding:3px 5px;border-radius:3px;margin-left:9px;}
+
+/* THE NAME COMES TO LIFE — 4-Phase Cinematic BudAI Identity Reveal */
+.opening-identity {
+  position: absolute;
+  inset: 0;
+  z-index: 204;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  perspective: 900px;
+}
+.opening-identity-stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 28px 44px;
+  border-radius: 20px;
+  background: radial-gradient(ellipse at 50% 50%, #030912bf 0%, #02040966 58%, transparent 82%);
+  --exit-fade: clamp(0, calc((var(--opening-progress, 0) - 0.94) * 16), 1);
+  opacity: calc(1 - var(--exit-fade));
+  transform: translate3d(0, calc(var(--exit-fade) * -10px), 0) scale(calc(1 + var(--exit-fade) * 0.035));
+}
+.opening-identity-kicker {
+  font: 8px var(--font-jetbrains), monospace;
+  letter-spacing: .28em;
+  color: #84bfd2;
+  opacity: clamp(0, calc((var(--opening-progress, 0) - 0.08) * 8), 0.85);
+}
+.opening-identity-name {
+  position: relative;
+  display: inline-flex;
+  align-items: baseline;
+  font-family: "Plus Jakarta Sans Variable", sans-serif;
+  font-size: clamp(52px, 8.2vw, 104px);
+  font-weight: 680;
+  letter-spacing: -.055em;
+  line-height: 1;
+  color: #f2f9fc;
+  text-shadow: 0 12px 42px #02050acc, 0 0 38px #66d3ec24;
+  overflow: hidden;
+  padding: 4px 10px;
+}
+.opening-char {
+  display: inline-block;
+  will-change: transform, opacity, filter;
+}
+.opening-char-1 {
+  --c: clamp(0, calc((var(--opening-progress, 0) - 0.06) * 11), 1);
+  opacity: var(--c);
+  transform: translate3d(0, calc((1 - var(--c)) * 12px), 0);
+  filter: blur(calc((1 - var(--c)) * 5px));
+}
+.opening-char-2 {
+  --c: clamp(0, calc((var(--opening-progress, 0) - 0.13) * 11), 1);
+  opacity: var(--c);
+  transform: translate3d(0, calc((1 - var(--c)) * 12px), 0);
+  filter: blur(calc((1 - var(--c)) * 5px));
+}
+.opening-char-3 {
+  --c: clamp(0, calc((var(--opening-progress, 0) - 0.20) * 11), 1);
+  opacity: var(--c);
+  transform: translate3d(0, calc((1 - var(--c)) * 12px), 0);
+  filter: blur(calc((1 - var(--c)) * 5px));
+}
+.opening-char-4 {
+  --c: clamp(0, calc((var(--opening-progress, 0) - 0.27) * 10.5), 1);
+  opacity: var(--c);
+  transform: translate3d(0, calc((1 - var(--c)) * 12px), 0);
+  filter: blur(calc((1 - var(--c)) * 5px));
+}
+.opening-char-5 {
+  --c: clamp(0, calc((var(--opening-progress, 0) - 0.34) * 10), 1);
+  opacity: var(--c);
+  transform: translate3d(0, calc((1 - var(--c)) * 12px), 0);
+  filter: blur(calc((1 - var(--c)) * 5px));
+}
+.opening-char-accent {
+  background-image: linear-gradient(120deg, #dff8ff 0%, #7ad8ef 52%, #a5b0ec 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.opening-identity-cursor {
+  display: inline-block;
+  width: 2px;
+  height: .76em;
+  margin-left: 5px;
+  background: linear-gradient(180deg, #b8f3ff, #6ecce4);
+  box-shadow: 0 0 14px #78d8ef;
+  opacity: calc(clamp(0, calc((var(--opening-progress, 0) - 0.05) * 16), 1) * (1 - clamp(0, calc((var(--opening-progress, 0) - 0.56) * 10), 1)));
+}
+.opening-identity-sweep {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  --sweep: clamp(0, calc((var(--opening-progress, 0) - 0.32) * 3.2), 1);
+  background: linear-gradient(105deg, transparent 35%, #ccf7ff40 50%, transparent 65%);
+  transform: translateX(calc(-100% + var(--sweep) * 200%));
+  opacity: calc(sin(var(--sweep) * 3.14159));
+}
+.opening-identity-horizon {
+  display: block;
+  width: min(260px, 58vw);
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #82daef88, #a3aee866, transparent);
+  transform: scaleX(clamp(0, calc((var(--opening-progress, 0) - 0.36) * 3.6), 1));
+}
+.opening-identity-sub {
+  font: 8px var(--font-jetbrains), monospace;
+  letter-spacing: .24em;
+  color: #8ba9b8;
+  opacity: clamp(0, calc((var(--opening-progress, 0) - 0.40) * 4.5), 0.9);
+}
 
 /* Single persistent brain stage across opening → hero → neural scroll passage. */
 .intelligence-stage {

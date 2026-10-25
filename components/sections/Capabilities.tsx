@@ -247,11 +247,14 @@ export default function Capabilities() {
         </ScrollReveal>
 
         <CapabilityMap />
-        <div className="plans-heading"><span>{sv ? "Välj din väg" : "Choose your way in"}</span><p>{sv ? "Börja gratis. Väx när du är redo." : "Start free. Grow when you’re ready."}</p></div>
-        <div className="access-architecture" data-access-architecture aria-hidden="true">
+        <div className="plans-heading">
+          <span>{sv ? "Välj din väg" : "Choose your way in"}</span>
+          <p>{sv ? "Från rådata till färdigt svar — börja gratis och väx när du är redo." : "From raw input to structured output — start free and grow when you’re ready."}</p>
+        </div>
+        <div className="access-architecture" data-access-architecture data-ai-assembly-line aria-hidden="true">
           <div className="access-code-header">
-            <span>BUDAI / UNIFIED CORE ARCHITECTURE · 03 TIERS</span>
-            <code>{`export const tier = budai.scale({ core: "shared", mode: "basic" | "consumer" | "business" });`}</code>
+            <span>{sv ? "03B / THE AI ASSEMBLY LINE · FLÖDE & NIVÅER" : "03B / THE AI ASSEMBLY LINE · WORKFLOW & ACCESS TIERS"}</span>
+            <code>{`input(chat | image | voice) -> context.memory() -> model.stream() -> output`}</code>
           </div>
           <div className="access-fallback">
             <svg viewBox="-5 -2.1 10 4.2" width="100%" height="100%">
@@ -280,19 +283,19 @@ export default function Capabilities() {
           </div>
           <div className="access-labels">
             <span>
-              <code>core.tier(&quot;basic&quot;)</code>
+              <code>01 · INTAKE (CHAT · VISION · VOICE)</code>
               01 / BASIC
-              <small>{sv ? "Tillgänglig nu · Personlig kärna" : "Available now · Personal core"}</small>
+              <small>{sv ? "Tillgänglig nu · Direkt inmatning & svar" : "Available now · Direct intake & chat"}</small>
             </span>
             <span>
-              <code>core.tier(&quot;consumer&quot;)</code>
+              <code>02 · CONTEXT &amp; MEMORY PIPELINE</code>
               02 / CONSUMER
-              <small>{sv ? "Kommer snart · Utökat minne" : "Coming soon · Deep memory"}</small>
+              <small>{sv ? "Kommer snart · Strukturerat minne & modeller" : "Coming soon · Structured memory & models"}</small>
             </span>
             <span>
-              <code>core.tier(&quot;business&quot;)</code>
+              <code>03 · COHERENT TEAM OUTPUT</code>
               03 / BUSINESS
-              <small>{sv ? "Kommer snart · Teamkonstellation" : "Coming soon · Team constellation"}</small>
+              <small>{sv ? "Kommer snart · Gemensamt resultat & flöden" : "Coming soon · Coherent shared output"}</small>
             </span>
           </div>
         </div>

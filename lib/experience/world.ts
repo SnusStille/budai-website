@@ -450,13 +450,14 @@ export function createWorld(host: HTMLElement, editor: HTMLElement, onFailure: (
         const engineRect = capViewport?.getBoundingClientRect();
         const accessRect = accessViewport?.getBoundingClientRect();
         const morph = accessRect ? smooth(clamp((frame.height * 0.95 - accessRect.top) / (frame.height * 0.6))) : 0;
+        const assemblyProgress = accessRect ? clamp((frame.height * 0.85 - accessRect.top) / Math.max(1, accessRect.height + frame.height * 0.35)) : 0;
         const targetRect = morph > 0.05 ? accessRect : engineRect;
         const capWeight = smooth(clamp((1 - Math.abs(frame.chapter - 3) - 0.25) / 0.75));
         const inWindow = !!targetRect && targetRect.bottom > -50 && targetRect.top < frame.height + 100;
         engine.root.visible = inWindow;
         const capProgress = Number(capSystem?.dataset.progress ?? 0);
         const activeModule = focus >= 0 ? focus : Math.min(5, Math.floor(capProgress * 6));
-        engine.update(capProgress, activeModule, morph, frame.time);
+        engine.update(capProgress, activeModule, morph, frame.time, assemblyProgress);
 
         corridorPulses.forEach((pulse, idx) => {
           const u = (frame.time * 0.32 + idx * 0.19) % 1;

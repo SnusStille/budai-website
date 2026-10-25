@@ -38,6 +38,7 @@ export default function LoadingScreen() {
   const disabled = useRef(false);
   const failed = useRef(false);
   const stage = useRef<HTMLDivElement | null>(null);
+  const openingRef = useRef<HTMLDivElement | null>(null);
   const motion = useRef<BrainMotion>({ kind: "intro", progress: 0, entry: 0 });
   const finish = useRef<(immediate?: boolean) => void>(() => {});
   const begin = useRef<() => void>(() => {});
@@ -169,6 +170,11 @@ export default function LoadingScreen() {
         if (!live || closing) return;
         const p = clamp((now - started) / INTRO_MS);
         motion.current = { kind: "intro", progress: p, entry: 0 };
+        if (openingRef.current) {
+          openingRef.current.style.setProperty("--opening-progress", p.toFixed(4));
+          openingRef.current.dataset.nameStage =
+            p < 0.14 ? "opening" : p < 0.66 ? "forming" : p < 0.88 ? "settled" : "entering";
+        }
         drive(now);
         if (p >= 1) end();
         else raf = requestAnimationFrame(tick);
@@ -357,9 +363,11 @@ export default function LoadingScreen() {
     <>
       {phase !== "done" && (
         <div
+          ref={openingRef}
           className="opening-surface"
           data-global-loader
           data-opening-phase={phase}
+          data-name-stage="opening"
           role="status"
           aria-label="Entering BudAI"
           aria-live="polite"
@@ -370,6 +378,22 @@ export default function LoadingScreen() {
           <div className="opening-credit">
             <span>STILLEDEV</span>
             <span>NEURAL SYSTEM / 001</span>
+          </div>
+          <div className="opening-identity" data-opening-identity aria-hidden="true">
+            <div className="opening-identity-stage">
+              <span className="opening-identity-kicker">THE INTELLIGENCE SYSTEM</span>
+              <div className="opening-identity-name" data-opening-name="BudAI">
+                <span className="opening-char opening-char-1">B</span>
+                <span className="opening-char opening-char-2">u</span>
+                <span className="opening-char opening-char-3">d</span>
+                <span className="opening-char opening-char-4 opening-char-accent">A</span>
+                <span className="opening-char opening-char-5 opening-char-accent">I</span>
+                <i className="opening-identity-cursor" />
+                <i className="opening-identity-sweep" />
+              </div>
+              <i className="opening-identity-horizon" />
+              <span className="opening-identity-sub">DEVELOPED BY STILLEDEV · SWEDEN</span>
+            </div>
           </div>
           <div className="opening-caption">
             <span>INTELLIGENCE → INTERACTION</span>

@@ -20,22 +20,45 @@
 | `pmndrs/react-three-fiber` & `pmndrs/drei` | `MIT` | Demand-driven frame loops, view-offset projection alignment, and glass/emissive material layering. | Applied directly in `world.ts` (`domViewOffset` / `worldUnitsPerPixel` and sleep-when-hidden GPU loop). |
 | `pmndrs/postprocessing` | `Zlib` | Multi-tap Gaussian bloom and ACES Filmic tone mapping. | Used in `BrainFlight.tsx` (`FS_BLUR` / `FS_COMPOSITE`) and `world.ts` (`THREE.ACESFilmicToneMapping`). |
 | `greensock/GSAP` | Custom (`NOASSERTION`) — **not installed** | ScrollTrigger scrub math (`clamp`, `smoothstep`, reversible progress). | Implemented via zero-dependency deterministic math in `lib/experience/timeline.ts` and `lib/experience/scroll.ts`. |
-| `14islands/r3f-scroll-rig` | `MIT` | DOM-rect-to-WebGL viewport projection (`setViewOffset`) so 3D scenes track sticky DOM containers without scroll hijacking. | Used in `lib/experience/projection.ts` and `lib/experience/world.ts` to lock the 3D Living Intelligence Engine to `[data-capability-viewport]` and `[data-access-architecture]`. |
+| `theatre-js/theatre` | `Apache-2.0` — **not installed** | Keyframed sequence envelopes (`packages/core/src/sequences`) and multi-phase normalized timeline choreography. | Applied in the 4-phase `BudAI` opening reveal (`--opening-progress` `0..1` envelopes) and the multi-stage AI Assembly Line (`intakeFactor`, `connectFactor`, `outputFocus`). |
+| `14islands/r3f-scroll-rig` | `MIT` | DOM-rect-to-WebGL viewport projection (`setViewOffset`) so 3D scenes track sticky DOM containers without scroll hijacking. | Used in `lib/experience/projection.ts` and `lib/experience/world.ts` to lock the 3D scenes to `[data-capability-viewport]` and `[data-access-architecture]`. |
 
 ---
 
-## 3. Capabilities Overhaul (`03 / THE LIVING INTELLIGENCE ENGINE`)
+## 3. Capabilities Overhaul: Two Immersive 3D Experiences
 
-### Three Internal Creative Concepts Evaluated
+### Experience One: `03A / THE INFINITE CODE CHAMBER` (`[data-infinite-code-chamber]`)
 
-1. **Concept A — Holographic AST Cylinder**: A rotating cylindrical tower of syntax tokens around a central pillar. *Rejected* because text on the back of the cylinder is inverted/occluded and doesn't clearly separate the 6 capabilities or morph cleanly into the 3 access tiers.
-2. **Concept B — Dimensional 3D Code Architecture + Central Intelligence Core & Sculptural Module Stations (SELECTED)**:
-   - **Multi-Plane 3D Code Slates (`createCodeSlateTexture`)**: Six high-DPI `THREE.CanvasTexture` glass code panels positioned in 3D depth behind and around the engine (`write.ts`, `automate.ts`, `decide.ts`, `bilingual.ts`, `memory.ts`, `multimodal.ts`), framed with `EdgesGeometry` borders that tilt in 3D perspective and illuminate when their corresponding capability is active or hovered.
-   - **Floating 3D Syntax Token Stream (`tokenPlates`)**: Twelve 3D floating syntax plates (`export const budai`, `await memory.recall()`, `stream({ lang: "sv" })`, `vision.parse(frame)`, `core.route(intent)`, etc.) drifting through Z-depth and brightening as the camera scrubs through the section.
-   - **Central Intelligence Core + 6 Sculptural Capability Stations**: An `IcosahedronGeometry` core surrounded by three counter-rotating orbital gimbals, feeding six curved `TubeGeometry` waveguides with traveling energy pulses into six distinct 3D module geometries (`Octahedron` for Write, dual `Torus` for Automate, `Cone` for Decide, twin `Sphere` nodes for Swedish + English, `Box` vault for Memory, `Dodecahedron` + wave ring for Vision & Voice).
-   - **Live Code Execution Console (`[data-living-code-console]`)**: Embedded in the sticky 3D viewport readout, displaying the active module's live TypeScript invocation (`01-write.ts` .. `06-multimodal.ts`) and clicking through to prefill the real AI Playground.
-   - **Seamless Morph into Access Architecture (`[data-access-architecture]`)**: As the user scrolls to the plans (`Basic`, `Consumer`, `Business`), the 3D engine morphs (`accessMorph` `0 → 1`) to reveal three ascending 3D hexagonal Access Tier Stations connected by a curved energy bridge and paired with `core.tier("basic" | "consumer" | "business")` routing headers.
-3. **Concept C — Particle-Only Code Rain**: Falling character sprites behind HTML cards. *Rejected* per explicit product direction ("Do not simply place a Matrix-style falling green character animation behind cards").
+- **3D Chamber Architecture & Multi-Speed Depth Parallax**:
+  - Five concentric 3D architectural portal ribs (`chamberPortals`) and a 3D perspective coordinate grid (`depthGrid`) receding into the chamber (`0.55x` background parallax speed).
+  - Six high-DPI `THREE.CanvasTexture` 3D glass code slates (`01-write.ts` .. `06-multimodal.ts` at `1.0x` midground parallax speed), framed with `EdgesGeometry` borders that glide forward and illuminate when their corresponding capability is active or hovered.
+  - Twelve floating 3D syntax token plates (`1.35x` foreground parallax speed) drifting between the code panels and the Core.
+- **Code-to-Core Synaptic Compiler Filaments & Sculptural Capability Stations**:
+  - Six curved 3D `TubeGeometry` compiler filaments (`slateBeamCurves` + `slatePulses`) carry compilation pulses from each 3D Code Slate into the Central Intelligence Core (`IcosahedronGeometry` + 3 counter-rotating gimbals), which routes energy along six waveguides to the six sculptural capability assemblies (`Write`, `Automate`, `Decide`, `Swedish + English`, `Memory`, `Vision and voice`).
+- **Interactive Syntax-Highlighted Code Console (`[data-living-code-console]`)**:
+  - Displays the active module's live syntax-highlighted TypeScript code (`tokenizeLine`) and links directly to the real AI Playground.
+
+### Experience Two: `03B / THE AI ASSEMBLY LINE` (`[data-ai-assembly-line]`)
+
+- **Stage 01 — Raw Multimodal Intake (`x = -3.1`)**:
+  - Six separate 3D input pieces (`intakePieces`: Chat prompt, Image frame, Voice waveform, SV/EN locale, History thread, Memory fact) enter from scattered trajectories on the left and converge into the Intake Station as the user scrolls (`intakeFactor`).
+- **Stage 02 — Structured Context, Memory & Model Routing (`x = 0`)**:
+  - Three parallel 3D workflow conduits (`assemblyUpperCurve`, `tierBridgeCurve`, `assemblyLowerCurve`) with 9 synchronized traveling light packets connect Stage 01 through the central Context & Memory alignment station (`connectFactor`).
+- **Stage 03/04 — Coherent Streaming Output Focal Point (`x = +3.1`)**:
+  - Information synthesizes into the completed 3D Output Crystal (`tierCores[2]` + `outputFocalHalo` + 4 satellite nodes + 3D code architecture slates) which scales and illuminates (`outputFocus`) as the focal point of the scene before transitioning into `04 / THE BUILDER`.
+
+---
+
+## 4. Redesigned BudAI Loading & Intro Experience — "THE NAME COMES TO LIFE"
+
+- **Phase 1 — The Opening (`p = 0.00..0.06`)**:
+  - Opaque deep atmospheric backdrop (`#071520` → `#020205`) over the emerging 3D WebGL2 Neural Brain (`budai-neural-43f44c9`) with zero generic spinners and no immediate logo flash.
+- **Phase 2 — The Name is Formed (`p = 0.06..0.44`)**:
+  - Inside `.opening-identity` (`[data-opening-identity]`), the five letters `B`, `u`, `d`, `A`, `I` emerge sequentially letter-by-letter from depth (`translate3d` + `blur` → crisp focus) with a precision optical cursor (`.opening-identity-cursor`) and a restrained horizontal light sweep (`.opening-identity-sweep`).
+- **Phase 3 — The Identity Settles (`p = 0.44..0.94`)**:
+  - `BudAI` settles into full clarity with `AI` in signature cyan-lavender gradient, accompanied by a dimensional horizon line (`.opening-identity-horizon`) and `DEVELOPED BY STILLEDEV · SWEDEN`.
+- **Phase 4 — Enter the Actual Website (`p = 0.94..1.00` + `revealing`)**:
+  - The opening identity gently elevates and dissolves as the single persistent 3D Neural Brain completes its cortical crossing directly into the Hero brain pose (`#intelligence`), with session-based persistence (`sessionStorage["budai:cinematic-intro:v1"]`), keyboard `Esc` / `Skip intro` support, and `prefers-reduced-motion` bypass.
 
 ---
 

@@ -147,11 +147,11 @@ export default function CapabilityMap() {
   const currentCap = capabilities[active] ?? capabilities[0];
 
   return (
-    <div ref={root} className="capability-system" data-active={active} data-capability-system>
+    <div ref={root} className="capability-system" data-active={active} data-capability-system data-infinite-code-chamber>
       <div className="capability-sticky">
         <div className="capability-index">
           <div className="capability-matrix-header">
-            <span>03 / THE LIVING INTELLIGENCE ENGINE</span>
+            <span>{sv ? "03A / DEN OÄNDLIGA KODKAMMAREN" : "03A / THE INFINITE CODE CHAMBER"}</span>
             <span>06 MODULES</span>
           </div>
           <h3>
@@ -253,7 +253,7 @@ export default function CapabilityMap() {
           </div>
 
           <div className="capability-viewport-top">
-            <span>BUDAI / LIVING INTELLIGENCE ENGINE · CODE &amp; PATHWAYS</span>
+            <span>BUDAI / THE INFINITE CODE CHAMBER · DEPTH LAYER 01–06</span>
             <span>001 — 006</span>
           </div>
 
@@ -284,8 +284,8 @@ export default function CapabilityMap() {
           </div>
 
           <div className="capability-viewport-bottom">
-            <span>{sv ? "KOD → INTELLIGENSKÄRNA → MODUL" : "CODE → INTELLIGENCE CORE → MODULE"}</span>
-            <span>SV / EN · LIVE ENGINE</span>
+            <span>{sv ? "FÖRGRUND · MELLANPLAN · DJUP KODARKITEKTUR" : "FOREGROUND · MIDGROUND · DEEP CODE ARCHITECTURE"}</span>
+            <span>SV / EN · LIVE CHAMBER</span>
           </div>
         </div>
       </div>

@@ -422,6 +422,27 @@ export function createCapabilityEngine(parent?: THREE.Object3D) {
   const depthGrid = new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(depthGridPts), depthGridMat);
   codePanelGroup.add(depthGrid);
 
+  // 5 Concentric 3D Chamber Portal Ribs + Longitudinal Depth Rails (THE INFINITE CODE CHAMBER)
+  const chamberPortalMat = new THREE.LineBasicMaterial({
+    color: "#7ddaf0",
+    transparent: true,
+    opacity: 0.18,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+  });
+  const chamberPortals: THREE.LineSegments[] = [];
+  for (let pIdx = 0; pIdx < 5; pIdx++) {
+    const w = 5.6 - pIdx * 0.48;
+    const h = 4.2 - pIdx * 0.34;
+    const portal = new THREE.LineSegments(
+      new THREE.EdgesGeometry(new THREE.BoxGeometry(w, h, 0.04)),
+      chamberPortalMat
+    );
+    portal.position.set(-0.35, 0, -0.45 - pIdx * 0.82);
+    codePanelGroup.add(portal);
+    chamberPortals.push(portal);
+  }
+
   const slateBeamCurves: THREE.CatmullRomCurve3[] = [];
   const slateBeamMats: THREE.MeshBasicMaterial[] = [];
   const slatePulses: THREE.Mesh[] = [];
@@ -875,6 +896,95 @@ export function createCapabilityEngine(parent?: THREE.Object3D) {
     tierBridgePulses.push(pm);
   }
 
+  // ============================================================================
+  // 2B. THE AI ASSEMBLY LINE: Raw Intake Pieces -> Alignment Gates -> Coherent Output
+  // ============================================================================
+  const intakeMat = new THREE.MeshBasicMaterial({
+    color: BRIGHT,
+    transparent: true,
+    opacity: 0,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+  });
+  const intakeWireMat = new THREE.LineBasicMaterial({
+    color: CYAN,
+    transparent: true,
+    opacity: 0,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+  });
+  const intakeStartOffsets: Array<[number, number, number]> = [
+    [-4.35, 0.85, 0.42],
+    [-4.15, 0.45, -0.38],
+    [-4.45, 0.08, 0.28],
+    [-4.25, -0.34, -0.32],
+    [-4.4, -0.68, 0.36],
+    [-4.1, -0.92, -0.24],
+  ];
+  const intakePieces: THREE.Group[] = [];
+  intakeStartOffsets.forEach((pos, idx) => {
+    const ig = new THREE.Group();
+    ig.position.set(...pos);
+    const geo =
+      idx % 3 === 0
+        ? new THREE.OctahedronGeometry(0.11, 0)
+        : idx % 3 === 1
+        ? new THREE.BoxGeometry(0.16, 0.12, 0.08)
+        : new THREE.IcosahedronGeometry(0.11, 0);
+    ig.add(new THREE.Mesh(geo, intakeMat));
+    ig.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo), intakeWireMat));
+    accessGroup.add(ig);
+    intakePieces.push(ig);
+  });
+
+  // Upper & lower parallel workflow conduits connecting Stage 01 -> Stage 02 -> Stage 03
+  const assemblyUpperCurve = new THREE.CatmullRomCurve3([
+    new THREE.Vector3(-3.1, 0.42, 0.08),
+    new THREE.Vector3(-1.55, 0.52, -0.14),
+    new THREE.Vector3(0, 0.44, 0.08),
+    new THREE.Vector3(1.55, 0.56, 0.14),
+    new THREE.Vector3(3.1, 0.38, 0),
+  ]);
+  const assemblyLowerCurve = new THREE.CatmullRomCurve3([
+    new THREE.Vector3(-3.1, -0.22, -0.08),
+    new THREE.Vector3(-1.55, -0.14, 0.14),
+    new THREE.Vector3(0, -0.18, -0.08),
+    new THREE.Vector3(1.55, -0.08, -0.14),
+    new THREE.Vector3(3.1, -0.06, 0),
+  ]);
+  const assemblyConduitMat = new THREE.MeshBasicMaterial({
+    color: LAVENDER,
+    transparent: true,
+    opacity: 0,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+  });
+  accessGroup.add(
+    new THREE.Mesh(new THREE.TubeGeometry(assemblyUpperCurve, 44, 0.009, 6, false), assemblyConduitMat),
+    new THREE.Mesh(new THREE.TubeGeometry(assemblyLowerCurve, 44, 0.009, 6, false), assemblyConduitMat)
+  );
+  const assemblyUpperPulses: THREE.Mesh[] = [];
+  const assemblyLowerPulses: THREE.Mesh[] = [];
+  for (let p = 0; p < 3; p++) {
+    const up = new THREE.Mesh(slatePulseGeo, tierBridgePulseMat);
+    const lp = new THREE.Mesh(slatePulseGeo, tierBridgePulseMat);
+    accessGroup.add(up, lp);
+    assemblyUpperPulses.push(up);
+    assemblyLowerPulses.push(lp);
+  }
+
+  // Stage 04 Coherent Output Focal Halo around Station 3 (x = +3.1)
+  const outputFocalMat = new THREE.MeshBasicMaterial({
+    color: BRIGHT,
+    transparent: true,
+    opacity: 0,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+  });
+  const outputFocalHalo = new THREE.Mesh(new THREE.TorusGeometry(1.18, 0.015, 10, 72), outputFocalMat);
+  outputFocalHalo.position.set(3.1, 0.19, 0);
+  accessGroup.add(outputFocalHalo);
+
   tierX.forEach((tx, tIdx) => {
     const tGroup = new THREE.Group();
     tGroup.position.set(tx, -0.05, 0);
@@ -1028,7 +1138,9 @@ export function createCapabilityEngine(parent?: THREE.Object3D) {
 
   return {
     root,
-    update(progress: number, focus: number, morph = 0, time = 0) {
+    update(progress: number, focus: number, morph = 0, time = 0, assemblyProgress = 0.5) {
+      const p = clamp(progress);
+      const ap = clamp(assemblyProgress);
       const m = smooth(clamp(morph));
       const engineVis = smooth(1 - m * 1.15);
       const accessVis = smooth((m - 0.08) / 0.82);
@@ -1036,13 +1148,20 @@ export function createCapabilityEngine(parent?: THREE.Object3D) {
       engineGroup.visible = engineVis > 0.005;
       accessGroup.visible = accessVis > 0.005;
 
-      const active = focus >= 0 ? focus : Math.min(5, Math.floor(clamp(progress) * 6));
+      const active = focus >= 0 ? focus : Math.min(5, Math.floor(p * 6));
 
       if (engineGroup.visible) {
-        // 1A. Animate 6 Dimensional 3D Code Panels
+        // 1A. THE INFINITE CODE CHAMBER: Multi-speed depth parallax across Background (0.55x), Midground (1.0x), Foreground (1.35x)
+        const chamberTravel = (p - 0.5) * 0.72;
+        chamberPortalMat.opacity = 0.19 * engineVis;
+        chamberPortals.forEach((portal, pIdx) => {
+          portal.position.z = -0.45 - pIdx * 0.82 + chamberTravel * 0.55;
+          portal.rotation.z = Math.sin(time * 0.25 + pIdx * 0.4) * 0.015;
+        });
+
         codeSlates.forEach((slate, idx) => {
           const isFocused = idx === active;
-          const targetZ = isFocused ? -0.35 : slate.spec.basePos[2] - Math.abs(idx - active) * 0.18;
+          const targetZ = (isFocused ? -0.32 : slate.spec.basePos[2] - Math.abs(idx - active) * 0.18) + chamberTravel;
           const targetX = isFocused ? 0.65 : slate.spec.basePos[0] + (idx % 2 === 0 ? -0.15 : 0.25);
           const targetY = isFocused ? (2.5 - idx) * 0.62 + 0.18 : slate.spec.basePos[1] + Math.sin(time * 0.8 + idx) * 0.04;
 
@@ -1060,19 +1179,19 @@ export function createCapabilityEngine(parent?: THREE.Object3D) {
           slateBeamCurves[idx].getPointAt(su, slatePulses[idx].position);
           slatePulses[idx].scale.setScalar(isFocused ? 1.45 : 0.75);
         });
-        depthGrid.rotation.y = (clamp(progress) - 0.5) * 0.14;
+        depthGrid.rotation.y = (p - 0.5) * 0.14;
+        depthGrid.position.z = chamberTravel * 0.55;
         depthGridMat.opacity = 0.12 * engineVis;
 
-        // 1B. Animate Floating 3D Syntax Token Streams flowing from Code Panels into Core
+        // 1B. Foreground Layer (1.35x depth parallax): Floating 3D Syntax Token Streams
         tokenMeshes.forEach(tk => {
           const u = (time * 0.22 + tk.phase) % 1;
           const isLaneActive = tk.lane === active;
           const curve = pathwayCurves[tk.lane];
-          // Flow along a parallel depth plane behind the waveguides
           curve.getPointAt(1 - u, tk.mesh.position);
-          tk.mesh.position.z -= 0.42 + (tk.lane % 2) * 0.22;
+          tk.mesh.position.z += -0.36 + (tk.lane % 2) * 0.28 + chamberTravel * 1.35;
           tk.mesh.position.y += 0.12;
-          tk.mat.opacity = (isLaneActive ? 0.68 : 0.22) * Math.sin(u * Math.PI) * engineVis;
+          tk.mat.opacity = (isLaneActive ? 0.72 : 0.24) * Math.sin(u * Math.PI) * engineVis;
         });
 
         // 1C. Animate Central Intelligence Core
@@ -1127,23 +1246,59 @@ export function createCapabilityEngine(parent?: THREE.Object3D) {
       }
 
       if (accessGroup.visible) {
-        tierBridgeMat.opacity = 0.48 * accessVis;
-        tierBridgePulseMat.opacity = 0.92 * accessVis;
+        const intakeFactor = smooth(clamp(ap * 1.45));
+        const connectFactor = smooth(clamp((ap - 0.15) * 1.4));
+        const outputFocus = smooth(clamp((ap - 0.35) * 1.5));
+
+        intakeMat.opacity = 0.68 * accessVis;
+        intakeWireMat.opacity = 0.85 * accessVis;
+        intakePieces.forEach((ig, idx) => {
+          const start = intakeStartOffsets[idx];
+          const destY = (2.5 - idx) * 0.22;
+          ig.position.set(
+            lerp(start[0], -3.28, intakeFactor),
+            lerp(start[1], destY, intakeFactor) + Math.sin(time * 1.4 + idx) * 0.03,
+            lerp(start[2], 0, intakeFactor)
+          );
+          ig.rotation.y = time * 0.6 + idx;
+          ig.rotation.x = time * 0.35;
+        });
+
+        tierBridgeMat.opacity = (0.42 + connectFactor * 0.36) * accessVis;
+        assemblyConduitMat.opacity = (0.34 + connectFactor * 0.38) * accessVis;
+        tierBridgePulseMat.opacity = 0.94 * accessVis;
         tierBridgePulses.forEach((pm, pIdx) => {
           const u = (time * 0.28 + pIdx * 0.33) % 1;
           tierBridgeCurve.getPointAt(u, pm.position);
         });
+        assemblyUpperPulses.forEach((up, pIdx) => {
+          const u = (time * 0.32 + pIdx * 0.33 + 0.12) % 1;
+          assemblyUpperCurve.getPointAt(u, up.position);
+        });
+        assemblyLowerPulses.forEach((lp, pIdx) => {
+          const u = (time * 0.3 + pIdx * 0.33 + 0.24) % 1;
+          assemblyLowerCurve.getPointAt(u, lp.position);
+        });
+
+        outputFocalMat.opacity = (0.35 + outputFocus * 0.58) * accessVis;
+        outputFocalHalo.rotation.z = -time * 0.42;
+        outputFocalHalo.rotation.y = Math.sin(time * 0.55) * 0.22;
+        outputFocalHalo.scale.setScalar(1 + outputFocus * 0.14);
 
         for (let t = 0; t < 3; t++) {
-          tierWireMats[t].opacity = 0.88 * accessVis;
+          tierWireMats[t].opacity = (t === 2 ? 0.88 + outputFocus * 0.12 : 0.88) * accessVis;
           tierSolidMats[t].opacity = 0.86 * accessVis;
-          tierAccentMats[t].opacity = 0.68 * accessVis;
-          tierSlateMats[t].opacity = 0.46 * accessVis;
-          tierSlateEdges[t].opacity = 0.52 * accessVis;
+          tierSolidMats[t].emissiveIntensity = t === 2 ? 0.78 + outputFocus * 0.62 : 0.78;
+          tierAccentMats[t].opacity = (t === 2 ? 0.68 + outputFocus * 0.24 : 0.68) * accessVis;
+          tierSlateMats[t].opacity = (t === 2 ? 0.46 + outputFocus * 0.26 : 0.46) * accessVis;
+          tierSlateEdges[t].opacity = (t === 2 ? 0.52 + outputFocus * 0.32 : 0.52) * accessVis;
           tierSlateGroups[t].position.y = 0.58 + Math.sin(time * 1.1 + t * 1.3) * 0.035;
 
           tierCores[t].rotation.y = time * (0.35 + t * 0.1);
           tierCores[t].rotation.x = time * 0.2;
+          if (t === 2) {
+            tierCores[2].scale.setScalar(1 + outputFocus * 0.16);
+          }
 
           tierOrbits[t].forEach((orb, oIdx) => {
             orb.rotation.y = time * (0.32 - oIdx * 0.08) * (oIdx % 2 === 0 ? 1 : -1);
