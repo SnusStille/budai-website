@@ -21,7 +21,6 @@ import ScrollReveal from "@/components/ui/ScrollReveal";
 import SpotlightCard from "@/components/ui/SpotlightCard";
 import { Check as CheckIcon, X as XIcon, User as UserIcon, Building2 as BuildingIcon, Sparkles as SparkIcon } from "lucide-react";
 import { useLang } from "@/components/ui/LanguageContext";
-import {capabilityRecords} from "@/lib/experience/information-patterns";
 import BudAILogo from "@/components/ui/BudAILogo";
 import CapabilityMap from "@/components/experience/CapabilityMap";
 
@@ -251,26 +250,30 @@ export default function Capabilities() {
         <div className="access-architecture" data-access-architecture aria-hidden="true">
           <div className="access-fallback">
             <svg viewBox="-5 -2.1 10 4.2" width="100%" height="100%">
-              <line x1="-3.3" y1="0" x2="3.3" y2="0" stroke="#75cfe4" strokeOpacity="0.32" strokeWidth="0.018" />
+              <path d="M -3.3 0 Q -1.65 -0.18 0 0 T 3.3 0" fill="none" stroke="#7ee0f4" strokeOpacity="0.48" strokeWidth="0.024" />
               {[0, 1, 2].map(band => {
                 const cx = (band - 1) * 3.3;
+                const coreSize = 0.28 + band * 0.05;
                 return (
-                  <g key={band} opacity={band === 0 ? 0.92 : 0.72}>
+                  <g key={band} opacity={band === 0 ? 0.96 : 0.86}>
+                    <ellipse cx={cx} cy={0.78} rx={0.68 + band * 0.12} ry="0.16" fill="#143246" fillOpacity="0.78" stroke="#8ce8fa" strokeOpacity="0.55" strokeWidth="0.016" />
                     {Array.from({ length: band + 1 }, (_, r) => (
-                      <circle key={r} cx={cx} cy={0} r={0.44 + r * 0.18} fill="none" stroke={band === 1 ? "#a2eefc" : "#7fd5e8"} strokeOpacity={band === 1 ? 0.55 : 0.38} strokeWidth="0.015" />
+                      <ellipse key={r} cx={cx} cy={0} rx={0.56 + r * 0.22} ry={0.34 + r * 0.14} fill="none" stroke={band === 2 ? "#a9b8ff" : "#8ce8fa"} strokeOpacity={0.62 - r * 0.12} strokeWidth="0.016" transform={`rotate(${(r - 0.5) * 18} ${cx} 0)`} />
                     ))}
-                    <circle cx={cx} cy={0} r="0.09" fill="#d8f9ff" fillOpacity="0.9" />
-                    <g transform="scale(1,-1)">
-                      {capabilityRecords().map((p, i) => (
-                        <circle key={i} cx={cx + p.x * 0.6} cy={p.y * 0.62} r="0.028" fill="#a8e2ee" fillOpacity="0.65" />
-                      ))}
-                    </g>
+                    <polygon points={`${cx},${-coreSize} ${cx + coreSize},0 ${cx},${coreSize} ${cx - coreSize},0`} fill="#16384c" fillOpacity="0.92" stroke="#b0f5ff" strokeOpacity="0.88" strokeWidth="0.02" />
+                    <circle cx={cx} cy={0} r="0.10" fill="#ecfcff" fillOpacity="0.98" />
+                    {band === 2 && [-0.75, 0.75].map(dx => [-0.42, 0.42].map(dy => (
+                      <g key={`${dx}-${dy}`}>
+                        <line x1={cx} y1={0} x2={cx + dx} y2={dy} stroke="#a9b8ff" strokeOpacity="0.55" strokeWidth="0.014" />
+                        <circle cx={cx + dx} cy={dy} r="0.07" fill="#d8e2ff" fillOpacity="0.92" />
+                      </g>
+                    )))}
                   </g>
                 );
               })}
             </svg>
           </div>
-          <div className="access-labels"><span>01 / BASIC<small>{sv ? "Tillgänglig nu" : "Available now"}</small></span><span>02 / CONSUMER<small>Coming soon</small></span><span>03 / BUSINESS<small>Coming soon</small></span></div>
+          <div className="access-labels"><span>01 / BASIC<small>{sv ? "Tillgänglig nu · Personlig kärna" : "Available now · Personal core"}</small></span><span>02 / CONSUMER<small>{sv ? "Kommer snart · Utökat minne" : "Coming soon · Deep memory"}</small></span><span>03 / BUSINESS<small>{sv ? "Kommer snart · Teamkonstellation" : "Coming soon · Team constellation"}</small></span></div>
         </div>
         <div className="plan-comparison grid md:grid-cols-3 gap-4 mb-5" data-plan-comparison>
           {plans.map((pl, i) => (

@@ -512,6 +512,11 @@ html[data-budai-intro="playing"] body > a[href="#main"] { visibility: hidden; }
 .capability-viewport { position:relative; height: min(72svh,690px); margin-left:20px; pointer-events:none; }
 .capability-viewport-top, .capability-viewport-bottom { position:absolute; left:28px; right:0; display:flex; justify-content:space-between; color:#657f8f; font:7px var(--font-jetbrains),monospace; letter-spacing:.1em; }
 .capability-viewport-top { top:0; }.capability-viewport-bottom { bottom:0; }
+.capability-active-readout { position:absolute; left:28px; bottom:28px; padding:10px 14px; border-radius:8px; border:1px solid #82d4e830; background:linear-gradient(135deg,#07131de0,#040a11cc); backdrop-filter:blur(8px); display:flex; flex-direction:column; gap:3px; max-width:290px; }
+.capability-readout-kicker { display:inline-flex; align-items:center; gap:7px; font:7px var(--font-jetbrains),monospace; letter-spacing:.16em; color:#84d8ec; }
+.capability-readout-kicker>i { width:5px; height:5px; border-radius:50%; background:#8ee8fa; box-shadow:0 0 10px #78d8ec; }
+.capability-active-readout strong { font-size:12px; font-weight:500; color:#e6f4f9; letter-spacing:-.01em; }
+.capability-active-readout small { font-size:10px; color:#89a5b5; }
 .capability-drawing-fallback { position:absolute; width:42%; height:70%; top:15%; left:31%; transform:perspective(700px) rotateY(-25deg) rotateX(6deg); display:flex; flex-direction:column; justify-content:space-evenly; border-left:3px solid #83a6b866;border-right:3px solid #83a6b866; padding:8px; }
 .capability-drawing-fallback>span { height:11%; background:linear-gradient(120deg,#293f50,#0c1923); border:1px solid #92bfce44; box-shadow:12px 7px #0b1727,13px 8px #89adc92a; }
 html[data-world-state="ready"] .capability-drawing-fallback, html[data-world-state="ready"] .access-fallback { display:none; }
@@ -535,6 +540,7 @@ html[data-world-state="ready"] .capability-drawing-fallback, html[data-world-sta
  .capability-module strong { font-size:14px; }
  .capability-module small { font-size:11px; }
  .capability-viewport-top, .capability-viewport-bottom { left:0;font-size:6px; }
+ .capability-active-readout { left:0; bottom:18px; padding:8px 11px; max-width:240px; }
  .access-architecture { height:230px; }
  .access-labels { font-size:7px; }
  .plans-heading { padding-top:28px;flex-direction:column;align-items:flex-start;gap:8px; }

@@ -49,7 +49,12 @@ export function brainCameraAt({ kind, progress }: BrainMotion) {
   };
 }
 
-/** Only the canonical neural brain; branding is never a render target for this scene. */
+/**
+ * Continuous visual state across intro → hero → journey:
+ * As the camera dives into the brain during `journey`, `neural` ramps from 0 → 1
+ * (materializing the 3D digital intelligence architecture) while `cortex` gently
+ * recedes so the organic brain transforms seamlessly into digital intelligence.
+ */
 export function brainVisualAt(motion: BrainMotion) {
   if (motion.kind === "intro") {
     const p = clamp(motion.progress);
@@ -67,9 +72,9 @@ export function brainVisualAt(motion: BrainMotion) {
   }
   return {
     offset: BRAIN_STORY_ORIGIN,
-    neural: smooth((motion.progress - 0.58) / 0.25),
-    focus: motion.progress < 0.67 ? originalStageAt(motion.progress) : -1,
-    cortex: 1 - smooth((motion.progress - 0.67) / 0.3),
+    neural: smooth((motion.progress - 0.32) / 0.36),
+    focus: motion.progress < 0.64 ? originalStageAt(motion.progress) : -1,
+    cortex: 1 - smooth((motion.progress - 0.62) / 0.32) * 0.82,
   };
 }
 

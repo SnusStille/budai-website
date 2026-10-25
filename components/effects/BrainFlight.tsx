@@ -95,10 +95,16 @@ void main() {
   vec3 col = mix(cyan, purple, smoothstep(0.28, 0.88, vSeed + vR * 0.25));
   col = mix(col, vec3(0.66, 0.94, 1.0), vDepth * 0.26);
   col = mix(col, white, clamp(vGlow - 0.85, 0.0, 1.0) * 0.74);
-  float fg = uFocus < -0.5 ? 1.0 : (abs(vRegion - uFocus) < 0.5 ? 1.85 : 0.35);
+  float fg = uFocus < -0.5 ? 1.0 : (abs(vRegion - uFocus) < 0.5 ? 1.95 : 0.38);
   float act = 1.0 + uActivity * 0.5;
   float I = (core + halo) * vGlow * uGain * fg * act;
-  if (vRegion < -1.5) I *= smoothstep(0.10, 0.44, uJourney) * 1.18; else I *= uCortex;
+  if (vRegion < -1.5) {
+    vec3 digCol = mix(vec3(0.38, 0.88, 0.98), vec3(0.76, 0.96, 1.0), vDepth);
+    col = mix(col, digCol, 0.72);
+    I *= smoothstep(0.05, 0.36, uJourney) * 1.55;
+  } else {
+    I *= uCortex;
+  }
   vec3 rgb = col * I;
   outColor = vec4(rgb, max(max(rgb.r, rgb.g), rgb.b));
 }`;
@@ -150,14 +156,19 @@ void main() {
   vec3 base = vec3(0.04, 0.34, 0.42) * 0.30;
   vec3 wcol = vec3(0.48, 0.98, 1.0);
   vec3 tcol = vec3(0.62, 0.48, 1.0);
-  float fg = uFocus < -0.5 ? 1.0 : (abs(vRegion - uFocus) < 0.5 ? 1.85 : 0.35);
-  vec3 rgb = (base + wcol * wave * 0.84 + tcol * travel * 0.56) * uGain * fg;
-  if (vRegion < -1.5) rgb *= smoothstep(0.10, 0.44, uJourney) * 1.25;
-  rgb *= uCortex;
+  float fg = uFocus < -0.5 ? 1.0 : (abs(vRegion - uFocus) < 0.5 ? 1.95 : 0.38);
+  vec3 rgb = (base + wcol * wave * 0.86 + tcol * travel * 0.62) * uGain * fg;
+  if (vRegion < -1.5 && vRegion > -2.5) {
+    vec3 dBase = vec3(0.10, 0.48, 0.62) * 0.42;
+    vec3 dPulse = vec3(0.62, 0.96, 1.0) * (wave * 0.95 + travel * 0.85);
+    rgb = (dBase + dPulse) * uGain * smoothstep(0.05, 0.36, uJourney) * 1.55;
+  } else if (vRegion > -1.5) {
+    rgb *= uCortex;
+  }
   if (vRegion < -2.5) {
     float signal=exp(-pow((vT-uSignalT)*22.0,2.0));
-    rgb=vec3(.62,.82,.85)*(.04+.7*signal)*uArrival*uGain;
-    if(uPointMark>.5){vec2 q=gl_PointCoord*2.0-1.0;if(dot(q,q)>1.0)discard;rgb=vec3(.78,.91,.94)*exp(-dot(q,q)*2.0)*uArrival;}
+    rgb=vec3(.68,.92,.98)*(.08+.85*signal)*uArrival*uGain;
+    if(uPointMark>.5){vec2 q=gl_PointCoord*2.0-1.0;if(dot(q,q)>1.0)discard;rgb=vec3(.84,.97,1.0)*exp(-dot(q,q)*1.8)*uArrival;}
   }
   outColor = vec4(rgb, max(max(rgb.r, rgb.g), rgb.b));
 }`;
@@ -373,12 +384,26 @@ function buildBrain(mobile: boolean) {
   // into an empty screen on a narrow portrait frustum. These are original,
   // illustrative connections, not imported biological data.
   // Fine depth samples become ordered information, not six long neural rails.
+  // Full-frustum 3D Digital Intelligence Environment (aRegion = -2):
+  // Multi-plane architectural lattice + relay gate nodes that surround the camera
+  // as the organic brain transforms into structured digital intelligence.
   const volume:number[]=[];
-  for(let plane=0;plane<5;plane++)for(let row=0;row<4;row++)for(let column=0;column<10;column++){
-    if((row+column+plane)%2)continue;
-    const z=-0.9-plane*0.95;
-    const taper=1-plane*0.09;
-    volume.push((column-4.5)*.16*taper,(row-1.5)*.18*taper,z);
+  for(let plane=0;plane<6;plane++){
+    const z=-1.1-plane*1.18;
+    const rx=1.85-plane*0.14;
+    const ry=1.18-plane*0.09;
+    // Octagonal relay ring nodes around the flight corridor
+    for(let k=0;k<16;k++){
+      const ang=(k/16)*Math.PI*2;
+      volume.push(Math.cos(ang)*rx,Math.sin(ang)*ry,z);
+    }
+    // Structured inner data strata across the frustum
+    for(let row=-2;row<=2;row++){
+      for(let col=-4;col<=4;col++){
+        if((Math.abs(row)+Math.abs(col)+plane)%2===0)continue;
+        volume.push(col*0.36*(1-plane*0.06),row*0.34*(1-plane*0.06),z-0.35);
+      }
+    }
   }
   const volumeCount=volume.length/3;
   const all = [...surf, ...inner, ...volume];
@@ -442,11 +467,44 @@ function buildBrain(mobile: boolean) {
       if (Math.hypot(...a.map((v, k) => v - b[k])) < .48) { interiorEdges.push([...a, ...b]); break; }
     }
   }
-  // Structured digital intelligence pathways that guide the camera from the organic core toward the Playground
-  for (const x of [-0.52, -0.24, 0.24, 0.52]) {
-    for (const y of [-0.22, 0.22]) {
-      interiorEdges.push([x, y, -0.5, x * 0.62, y * 0.62, -2.4]);
-      interiorEdges.push([x * 0.62, y * 0.62, -2.4, x * 0.28, y * 0.28, -4.4]);
+  // 1) Concentric 3D Digital Intelligence Relay Gates (octagonal frames across 5 depth planes)
+  for (let plane = 0; plane < 5; plane++) {
+    const z = -1.4 - plane * 1.25;
+    const rx = 1.75 - plane * 0.15;
+    const ry = 1.10 - plane * 0.09;
+    const segs = 12;
+    for (let k = 0; k < segs; k++) {
+      const a0 = (k / segs) * Math.PI * 2;
+      const a1 = ((k + 1) / segs) * Math.PI * 2;
+      interiorEdges.push([
+        Math.cos(a0) * rx, Math.sin(a0) * ry, z,
+        Math.cos(a1) * rx, Math.sin(a1) * ry, z,
+      ]);
+    }
+  }
+  // 2) Converging Longitudinal Digital Intelligence Pathways guiding the camera to the Playground
+  for (let k = 0; k < 12; k++) {
+    const ang = (k / 12) * Math.PI * 2;
+    for (let s = 0; s < 5; s++) {
+      const z0 = -0.6 - s * 1.35;
+      const z1 = -0.6 - (s + 1) * 1.35;
+      const r0x = 1.65 - s * 0.21;
+      const r0y = 1.05 - s * 0.13;
+      const r1x = 1.65 - (s + 1) * 0.21;
+      const r1y = 1.05 - (s + 1) * 0.13;
+      interiorEdges.push([
+        Math.cos(ang) * r0x, Math.sin(ang) * r0y, z0,
+        Math.cos(ang) * r1x, Math.sin(ang) * r1y, z1,
+      ]);
+    }
+  }
+  // 3) Horizontal Digital Data Bus Rungs across the intelligence field
+  for (let plane = 0; plane < 5; plane++) {
+    const z = -1.75 - plane * 1.22;
+    for (const y of [-0.68, -0.24, 0.24, 0.68]) {
+      const span = 1.35 - plane * 0.12;
+      interiorEdges.push([-span, y, z, -0.28, y, z]);
+      interiorEdges.push([0.28, y, z, span, y, z]);
     }
   }
   const lineData = new Float32Array(((E + interiorEdges.length) * 2 + SIGNAL_VERTICES) * 7);
@@ -563,6 +621,12 @@ export default function BrainFlight({
     let curAct = activityRef.current;
     let departure = settledRef.current ? 1 : 0;
     let tgtFocus = focusRef.current;
+    let heroFocus = -1;
+    const onHeroRegion = (event: Event) => {
+      heroFocus = (event as CustomEvent<number>).detail;
+      kickRef.current?.();
+    };
+    window.addEventListener("budai:brain-region", onHeroRegion);
 
     try {
       pointProg = link(gl, VS_POINTS, FS_POINTS);
@@ -698,8 +762,12 @@ export default function BrainFlight({
         lastMvp = mvp;
 
         const intro = ambient ? 0.7 : 0.35 + 0.65 * Math.min(1, t / 0.9);
-        const gain = .82; // Readiness means a visible frame, never the old zero-gain first frame.
-        const focusNow = controlled?.kind === "journey" ? visual.focus : tgtFocus;
+        const gain = .85; // Readiness means a visible frame, never the old zero-gain first frame.
+        const focusNow = controlled?.kind === "journey"
+          ? visual.focus
+          : controlled?.kind === "hero" && heroFocus >= 0
+            ? heroFocus
+            : tgtFocus;
 
         gl.bindFramebuffer(gl.FRAMEBUFFER, scene.fbo);
         gl.viewport(0, 0, scene.w, scene.h);
@@ -878,6 +946,7 @@ export default function BrainFlight({
       io.disconnect();
       resizeObserver.disconnect();
       document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("budai:brain-region", onHeroRegion);
       canvas.removeEventListener("webglcontextlost", onLost);
       if (interactive) {
         canvas.removeEventListener("pointermove", onMove);

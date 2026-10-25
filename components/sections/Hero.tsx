@@ -1,18 +1,22 @@
 "use client";
 
-import { ArrowDown, ArrowRight, FileText, Languages, Zap } from "lucide-react";
+import { ArrowDown, ArrowRight, FileText, Languages, Network, Zap } from "lucide-react";
 import { useLang } from "@/components/ui/LanguageContext";
 import { StilledevLink } from "@/components/ui/BudAILogo";
 
-/** Stable editorial landing. No brain, logo scene, canvas or opening controller. */
+/** Landing hero paired with the persistent single-owner 3D Neural Brain stage. */
 export default function Hero() {
   const { t, lang } = useLang();
   const sv = lang === "sv";
   const chips = [
-    { icon: FileText, label: sv ? "Privat · skriv & planera" : "Personal · write & plan" },
-    { icon: Zap, label: sv ? "Företag · automatisera" : "Business · automate" },
-    { icon: Languages, label: "SV / EN" },
+    { icon: FileText, label: sv ? "Privat · skriv & planera" : "Personal · write & plan", region: 0 },
+    { icon: Zap, label: sv ? "Företag · automatisera" : "Business · automate", region: 2 },
+    { icon: Languages, label: "SV / EN", region: 1 },
+    { icon: Network, label: sv ? "Minne & röst" : "Memory & voice", region: 3 },
   ];
+  const focusRegion = (region: number) => {
+    window.dispatchEvent(new CustomEvent("budai:brain-region", { detail: region }));
+  };
 
   return (
     <section id="intelligence" className="hero-universe" aria-labelledby="hero-title">
@@ -29,7 +33,18 @@ export default function Hero() {
           <a href="#playground" className="btn-primary inline-flex items-center gap-3"><span>{t.hero.ctaPrimary}</span><ArrowRight size={17} /></a>
           <a href="#waitlist" className="hero-secondary">{t.hero.ctaSecondary}<ArrowRight size={16} /></a>
         </div>
-        <div className="hero-features">{chips.map(({ icon: Icon, label }) => <span key={label}><Icon size={13} />{label}</span>)}</div>
+        <div className="hero-features">
+          {chips.map(({ icon: Icon, label, region }) => (
+            <span
+              key={label}
+              onPointerEnter={() => focusRegion(region)}
+              onPointerLeave={() => focusRegion(-1)}
+            >
+              <Icon size={13} />
+              {label}
+            </span>
+          ))}
+        </div>
         <p className="hero-product-note">{sv ? "En yta för dig hemma och för teamet på jobbet — inte ännu ett generiskt chatbot-skal." : "One surface for you at home and the team at work — not another generic chatbot shell."}</p>
         <p className="hero-credit">{sv ? "Utvecklad av " : "Built by "}<StilledevLink /> <span>·</span> Sweden</p>
       </div>
