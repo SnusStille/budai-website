@@ -1,6 +1,6 @@
 # BudAI — cinematic website upgrade
 
-> Historical 2026-10-24 baseline report. The 2026-10-25 rebuild adds a distinct neural passage, new physical Capabilities, Next Signal and a redesigned identity. See [rebuild-research.md](./rebuild-research.md), [brand.md](./brand.md) and the current rebuild report. The results below describe the earlier baseline, not the latest release.
+> Historical 2026-10-24 baseline report. The 2026-10-25 rebuild adds a distinct neural passage, new physical Capabilities, Next Signal and a redesigned identity. See [rebuild-research.md](./rebuild-research.md), [brand.md](./brand.md) and [the current rebuild report](./rebuild-report.md). The results below describe the earlier baseline, not the latest release.
 
 **2026-10-24 · `arena/74ed593c-budai-website`**
 

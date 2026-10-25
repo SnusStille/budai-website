@@ -114,7 +114,12 @@ export default function LoadingScreen() {
     }
 
     const onKey = (event: KeyboardEvent) => { if (event.key === "Escape") end(); };
-    const onMotion = () => { if (media.matches) { setRenderBrain(false); setFallback(true); end(); } };
+    const onMotion = () => {
+      const disabled = media.matches || !!nav.connection?.saveData;
+      setRenderBrain(!disabled); setFallback(disabled);
+      readyRef.current = false; setReady(false);
+      if (media.matches) end();
+    };
     window.addEventListener("keydown", onKey);
     media.addEventListener("change", onMotion);
     // A timeout, not just rAF: the page is released even in a background tab.

@@ -4,7 +4,7 @@ import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment
 import { createCapabilityEngine } from "./capability-engine";
 import { domViewOffset, worldUnitsPerPixel } from "./projection";
 import { createDeveloperRoom } from "./developer-room";
-import { cameraAt, clamp, lerp, smooth, type JourneyFrame } from "./timeline";
+import { cameraAt, worldChapterAt, worldOpacityAt, clamp, lerp, smooth, type JourneyFrame } from "./timeline";
 
 const CYAN = "#79cfe4";
 const LAVENDER = "#9ca7df";
@@ -215,7 +215,17 @@ export function createWorld(host: HTMLElement, editor: HTMLElement, onFailure: (
           renderer.setSize(width, height); cssRenderer?.setSize(width, height);
           camera.aspect = width / height; camera.updateProjectionMatrix();
         }
-        const chapter = frame.chapter >= 4 && frame.chapter < 5 ? Math.max(frame.chapter, 4 + smooth(frame.departure ?? 0)) : frame.chapter;
+        const opacity = worldOpacityAt(frame);
+        host.style.opacity = String(opacity);
+        if (opacity <= .001) {
+          // Opacity is not a GPU pause. Sleep completely on reverse-to-landing;
+          // the same passive scroll source wakes this exact scene again.
+          editor.style.opacity = "0";
+          cssRenderer!.domElement.style.visibility = "hidden";
+          lastTime = frame.time;
+          return;
+        }
+        const chapter = worldChapterAt(frame);
         const pose = cameraAt(chapter, frame.sections.about ?? 0, mobile);
         camera.clearViewOffset();
         camera.position.fromArray(pose.position); camera.lookAt(new THREE.Vector3(...pose.target));
@@ -254,7 +264,6 @@ export function createWorld(host: HTMLElement, editor: HTMLElement, onFailure: (
         screen.visible = builderWeight > .02;
         editor.style.opacity = String(builderWeight);
         cssRenderer!.domElement.style.visibility = screen.visible ? "visible" : "hidden";
-        host.style.opacity = String(frame.chapter < 2 ? .25 * smooth((frame.sections.signal ?? 0) * 1.2) : frame.chapter > 4.6 ? .65 : .95);
         renderer.render(scene, camera);
         cssRenderer?.render(cssScene, camera);
         renderer.domElement.dataset.camera = pose.position.map((v) => v.toFixed(2)).join(",");

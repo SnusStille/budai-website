@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { isIntroDone, subscribeIntro } from "@/components/effects/introState";
 import { subscribeJourney } from "@/lib/experience/scroll";
+import { worldOpacityAt } from "@/lib/experience/timeline";
 import ProgressiveEditor from "./ProgressiveEditor";
 
 type World = ReturnType<typeof import("@/lib/experience/world").createWorld>;
@@ -56,7 +57,7 @@ export default function WorldStage() {
         document.documentElement.dataset.worldState = "ready";
         unsubscribe = subscribeJourney((frame) => {
           try { world?.update(frame); } catch { fail(); }
-        }, { continuous: true });
+        }, { continuous: frame => worldOpacityAt(frame) > .001 });
       } catch { fail(); }
     }).catch(fail);
     return () => {

@@ -8,6 +8,7 @@ declare global {
     __introObserver: MutationObserver;
     __firstBrain: HTMLCanvasElement | null;
     __brainDraws: number;
+    __worldDraws: number;
     __gpuQA: { programs: number; shaders: number; freedPrograms: number; freedShaders: number };
   }
 }
@@ -323,6 +324,12 @@ test("context loss and changing reduced motion clean up the shared world", async
   await expect(page.locator("[data-world-canvas], [data-brain-canvas]")).toHaveCount(0);
   await page.emulateMedia({ reducedMotion: "no-preference" });
   await expect(page.locator("[data-world-canvas]")).toHaveCount(1);
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await expect(page.locator(".universe-world")).toHaveAttribute("data-world-state", "ready");
+  await page.evaluate(() => scrollTo({top:0,behavior:"instant" as ScrollBehavior}));
+  await expect(page.locator("[data-brain-canvas]")).toHaveAttribute("data-rendered","true");
+  await expect(page.locator("[data-global-loader]")).toHaveCount(0);
+
 });
 
 test("partial world construction failure releases the canvas and DOM renderer", async ({ page }) => {
@@ -400,4 +407,45 @@ test("no JavaScript still exposes product content and navigation, never a blocki
   await expect(page.locator("#waitlist input[type=email]")).toBeVisible();
   await expect(page.locator(".roadmap-milestone")).toHaveCount(4);
   await context.close();
+});
+
+test("an already-loaded world actually stops GPU draws on reverse-to-landing and resumes the SAME scene", async ({ page }) => {
+  await quietChrome(page);
+  await page.addInitScript(() => {
+    window.__worldDraws = 0;
+    const original = WebGL2RenderingContext.prototype.drawElements;
+    WebGL2RenderingContext.prototype.drawElements = function (this:WebGL2RenderingContext,...args:Parameters<typeof original>) {
+      if ((this.canvas as HTMLCanvasElement).hasAttribute("data-world-canvas")) window.__worldDraws++;
+      return original.apply(this,args);
+    };
+  });
+  await page.goto("/#capabilities");
+  await expect.poll(() => page.evaluate(()=>window.__worldDraws)).toBeGreaterThan(10);
+  const canvas = await page.locator("[data-world-canvas]").elementHandle();
+  await page.evaluate(()=>scrollTo({top:0,behavior:"instant" as ScrollBehavior}));
+  await expect(page.locator(".universe-world")).toHaveCSS("opacity","0");
+  const stopped = await page.evaluate(()=>window.__worldDraws);
+  await page.waitForTimeout(600);
+  expect(await page.evaluate(()=>window.__worldDraws)).toBe(stopped);
+  await scrollSection(page,"capabilities",0);
+  await expect.poll(()=>page.evaluate(()=>window.__worldDraws)).toBeGreaterThan(stopped);
+  expect(await canvas!.evaluate(el=>el.isConnected)).toBe(true);
+  await expect(page.locator("[data-world-canvas]")).toHaveCount(1);
+});
+
+test("save-data mode keeps static anatomy and all actions without downloading a heavy world", async ({ page }) => {
+  await quietChrome(page,false);
+  const worlds:string[] = [];
+  page.on("request",r=>{if (/world\.|three\./.test(r.url())) worlds.push(r.url());});
+  await page.addInitScript(()=>Object.defineProperty(navigator,"connection",{configurable:true,value:{saveData:true}}));
+  await page.goto("/");
+  await expect(page.locator("[data-global-loader]")).toHaveCount(0);
+  await expect(page.locator(".intelligence-frame [data-brain-fallback]")).toBeVisible();
+  await scrollSection(page,"capabilities",0);
+  await expect(page.locator(".universe-world")).toHaveAttribute("data-world-state","fallback");
+  await expect(page.locator("[data-brain-canvas],[data-world-canvas]")).toHaveCount(0);
+  await expect(page.locator(".capability-module")).toHaveCount(6);
+  await scrollSection(page,"waitlist",0);
+  await expect(page.getByRole("textbox",{name:"Email",exact:true})).toBeVisible();
+  expect(worlds).toEqual([]);
 });

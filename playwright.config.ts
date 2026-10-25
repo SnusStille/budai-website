@@ -3,6 +3,7 @@ import { defineConfig } from "@playwright/test";
 const baseURL = process.env.TEST_BASE_URL || "http://127.0.0.1:3000";
 export default defineConfig({
   testDir: "./tests",
+  testIgnore: process.env.TEST_WAITLIST_DEV === "1" ? undefined : "**/waitlist-dev.spec.ts",
   timeout: 45_000,
   expect: { timeout: 10_000 },
   fullyParallel: false,

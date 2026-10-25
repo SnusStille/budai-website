@@ -74,3 +74,12 @@ export function cameraAt(chapter: number, builderProgress: number, mobile = fals
   if (mobile) position[2] += 5;
   return { position, target };
 }
+
+/** The Next Signal's approach is visual choreography, not a delayed form anchor. */
+export function worldChapterAt({ chapter, departure = 0 }: Pick<JourneyFrame, "chapter" | "departure">) {
+  return chapter >= 4 && chapter < 5 ? Math.max(chapter, 4 + smooth(departure)) : chapter;
+}
+export function worldOpacityAt(frame: Pick<JourneyFrame, "chapter" | "departure" | "sections">) {
+  const chapter = worldChapterAt(frame);
+  return chapter < 2 ? .25 * smooth((frame.sections.signal ?? 0) * 1.2) : chapter > 4.6 ? .65 : .95;
+}

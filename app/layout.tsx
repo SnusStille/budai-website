@@ -110,7 +110,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
         <Providers>{children}</Providers>
-        <VercelAnalytics />
+        <VercelAnalytics enabled={process.env.VERCEL === "1"} />
       <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{

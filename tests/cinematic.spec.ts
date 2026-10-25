@@ -22,6 +22,7 @@ test("restored neural journey is after landing and before the REAL Playground; o
   await prepare(page);
   const errors: string[] = [];
   page.on("pageerror", e => errors.push(e.message));
+  page.on("console", m => { if (m.type() === "error") errors.push(m.text()); });
   await page.goto("/#signal");
   const brain = page.locator("[data-brain-canvas]");
   await expect(brain).toHaveAttribute("data-rendered", "true");
@@ -51,6 +52,14 @@ test("restored neural journey is after landing and before the REAL Playground; o
   await expect(page.locator("#playground textarea")).toBeVisible();
   await expect(page.locator("[data-global-loader]")).toHaveCount(0);
   expect(await page.locator("[data-intelligence-stage]").evaluate(el => Number(getComputedStyle(el).opacity))).toBeLessThan(.01);
+  // Real wheel input can skip the story in either direction, without a virtual
+  // scroller, hidden input trap, extra intro or competing brain renderer.
+  await page.mouse.wheel(0, 50_000);
+  await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(5000);
+  await page.mouse.wheel(0, -50_000);
+  await expect.poll(() => page.evaluate(() => scrollY)).toBe(0);
+  await expect(page.locator("[data-global-loader]")).toHaveCount(0);
+  await expect(page.locator("[data-brain-canvas]")).toHaveCount(1);
   expect(errors).toEqual([]);
 });
 

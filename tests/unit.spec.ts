@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { INTRO_MS, INTRO_REVEAL_MS, introLetters, nextIntroLetter } from "../lib/experience/intro";
-import { cameraAt, CHAPTERS, journeyAt } from "../lib/experience/timeline";
+import { cameraAt, CHAPTERS, journeyAt, worldChapterAt, worldOpacityAt } from "../lib/experience/timeline";
 import { brainCameraAt, brainFovAt, brainJourneyProgress } from "../lib/experience/brain";
 import { codeCharactersAt, CODE_LENGTH, EXAMPLE_SOURCE, tokenizeLine } from "../lib/experience/code";
 
@@ -78,4 +78,14 @@ test("mobile brain uses one full-height target and a finite reversible perspecti
     expect(Number.isFinite(fov)).toBe(true); expect(fov).toBeGreaterThan(0); expect(fov).toBeLessThan(Math.PI);
   }
   expect(new Set(CHAPTERS.map(c=>c.number)).size).toBe(CHAPTERS.length);
+});
+
+test("world departure is reversible and its invisible landing state is genuinely dormant", () => {
+  expect(worldOpacityAt({chapter:0,sections:{signal:0}})).toBe(0);
+  expect(worldOpacityAt({chapter:3,sections:{signal:1}})).toBeGreaterThan(0);
+  expect(worldChapterAt({chapter:4,departure:1})).toBe(5);
+  expect(worldChapterAt({chapter:6,departure:1})).toBe(6);
+  const values = [0,.1,.5,.9,1].map(departure=>worldChapterAt({chapter:4,departure}));
+  expect([...values].sort((a,b)=>a-b)).toEqual(values);
+  expect([1,.9,.5,.1,0].map(departure=>worldChapterAt({chapter:4,departure})).reverse()).toEqual(values);
 });

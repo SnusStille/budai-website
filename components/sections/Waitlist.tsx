@@ -148,7 +148,7 @@ export default function Waitlist() {
         </ScrollReveal>
 
         {!submitted ? (
-          <form onSubmit={handleSubmit} className="mx-auto mt-9 max-w-xl text-left">
+          <form onSubmit={handleSubmit} aria-busy={loading} className="mx-auto mt-9 max-w-xl text-left">
             <div className="waitlist-composer relative overflow-hidden rounded-xl border border-white/15">
               <div className="relative flex flex-col gap-2 rounded-[15px] bg-[#07070e] p-2 sm:flex-row sm:items-center sm:rounded-full sm:p-1.5 sm:pl-5">
                 <label className="flex flex-1 items-center gap-3 px-3 py-2 sm:px-0 sm:py-0">
@@ -229,7 +229,7 @@ export default function Waitlist() {
             <p className="mt-4 text-center text-[11px] text-muted/70">{sv ? "Ingen spam. Ingen betalning krävs." : "No spam. No payment needed."}</p>
           </form>
         ) : (
-          <div className="bud-pop mx-auto mt-9 max-w-md rounded-2xl border border-white/10 bg-[#07070e]/90 p-6 shadow-[0_0_70px_-20px_rgba(124,92,255,0.6)]">
+          <div role="status" aria-live="polite" className="bud-pop mx-auto mt-9 max-w-md rounded-2xl border border-white/10 bg-[#07070e]/90 p-6 shadow-[0_0_70px_-20px_rgba(124,92,255,0.6)]">
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full border border-accent-green/40 bg-accent-green/10">
               <Check className="h-6 w-6 text-accent-green" />
             </div>

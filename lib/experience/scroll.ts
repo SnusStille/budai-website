@@ -1,6 +1,7 @@
 import { CHAPTERS, journeyAt, type JourneyFrame, type SectionBounds } from "./timeline";
 
-type Subscriber = { callback: (frame: JourneyFrame) => void; continuous: boolean };
+type Continuous = boolean | ((frame: JourneyFrame) => boolean);
+type Subscriber = { callback: (frame: JourneyFrame) => void; continuous: Continuous };
 const subscribers = new Set<Subscriber>();
 let stop: (() => void) | null = null;
 let wake: (() => void) | null = null;
@@ -44,7 +45,7 @@ function start() {
       if (y + height * .4 >= approachTop && current.active === "about") current.active = "waitlist";
       subscribers.forEach((sub) => sub.callback(current));
     }
-    if (!media.matches && Array.from(subscribers).some((s) => s.continuous)) schedule();
+    if (!media.matches && Array.from(subscribers).some((s) => typeof s.continuous === "function" ? s.continuous(current) : s.continuous)) schedule();
   };
   const schedule = () => { if (!raf && !disposed) raf = requestAnimationFrame(frame); };
   const onScroll = () => { last = 0; schedule(); };
@@ -73,7 +74,7 @@ function start() {
   };
 }
 
-export function subscribeJourney(callback: (frame: JourneyFrame) => void, options: { continuous?: boolean } = {}) {
+export function subscribeJourney(callback: (frame: JourneyFrame) => void, options: { continuous?: Continuous } = {}) {
   const subscriber = { callback, continuous: options.continuous ?? false };
   subscribers.add(subscriber);
   if (!stop && typeof window !== "undefined") stop = start();

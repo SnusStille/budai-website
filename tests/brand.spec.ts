@@ -5,10 +5,17 @@ test("one Fold identity reaches the real UI, installed icons and both social met
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.addInitScript(() => { localStorage.setItem("budai-cookies", "declined"); sessionStorage.setItem("budai-buddy-popup-dismissed", "true"); });
   await page.goto("/");
+  await expect(page.locator("html")).toHaveAttribute("data-budai-intro", "done");
+  await expect(page.locator("[data-global-loader]")).toHaveCount(0);
   const marks = page.locator("[data-budai-mark=fold] svg > path");
-  expect(await marks.count()).toBeGreaterThanOrEqual(7);
-  for (const mark of await marks.all()) await expect(mark).toHaveAttribute("d", BUDAI_MARK_PATH);
-  for (const wordmark of await page.locator("[data-budai-wordmark]").all()) await expect(wordmark).toHaveText("BudAI");
+  // Atomic snapshots: the loader's optional HUD and product states can unmount
+  // marks; a sequence of nth() locators would inspect different DOM snapshots.
+  const paths = await marks.evaluateAll(nodes => nodes.map(n=>n.getAttribute("d")));
+  expect(paths.length).toBeGreaterThanOrEqual(7);
+  for (const path of paths) expect(path).toBe(BUDAI_MARK_PATH);
+  const words = await page.locator("[data-budai-wordmark]").allTextContents();
+  expect(words.length).toBeGreaterThanOrEqual(3);
+  expect(new Set(words)).toEqual(new Set(["BudAI"]));
   await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveAttribute("href", "/apple-touch-icon.png");
   await expect(page.locator("nav").getByText("STILLEDEV", { exact: true })).toBeVisible();
   // The separate Stilledev S path is not the BudAI mark, and its attribution remains.
