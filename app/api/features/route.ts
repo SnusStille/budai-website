@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { publicModelOptions } from "@/lib/ai-models";
 
 /**
  * Public feature flags for the client.
@@ -14,6 +15,7 @@ export async function GET() {
   return NextResponse.json(
     {
       imageGeneration: imageGen,
+      models: publicModelOptions(),
       vision: true, // Claude vision via ANTHROPIC when configured
       voice: true, // Web Speech (browser-dependent)
     },

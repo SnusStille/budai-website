@@ -121,3 +121,14 @@ test("DOM-to-world unprojection follows the actual projection matrix",async()=>{
     expect((m[0]*a)/w).toBeCloseTo(x,7);expect((m[5]*b)/w).toBeCloseTo(y,7);
   }
 });
+
+test("model choices are configuration-aware public IDs; arbitrary or unavailable provider models are rejected",async()=>{
+  const {publicModelOptions,resolveModelTier}=await import("../lib/ai-models");
+  expect(publicModelOptions({})).toEqual([{id:"quality",label:"Quality"}]);
+  const env={ANTHROPIC_MODEL:"private-quality",ANTHROPIC_MODEL_FAST:"private-fast",ANTHROPIC_MODEL_DEEP:"private-deep"};
+  expect(publicModelOptions(env).map(o=>o.id)).toEqual(["quality","fast","deep"]);
+  expect(JSON.stringify(publicModelOptions(env))).not.toContain("private-");
+  expect(resolveModelTier("fast",env)).toBe("private-fast");expect(resolveModelTier("deep",env)).toBe("private-deep");
+  expect(resolveModelTier(undefined,env)).toBe("private-quality");
+  expect(resolveModelTier("fast",{})).toBeNull();expect(resolveModelTier("attacker-model",env)).toBeNull();expect(resolveModelTier({model:"private-fast"},env)).toBeNull();
+});

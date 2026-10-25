@@ -171,3 +171,68 @@ test("existing routes and safe API contracts remain available", async ({ page, r
   expect((await request.get("/s/not-a-real-id")).status()).toBe(404);
   expect([401, 503]).toContain((await request.get("/api/admin/status")).status());
 });
+
+test("configured model picker sends only the selected public tier through the real composer",async({page})=>{
+  await page.route("**/api/features",r=>r.fulfill({contentType:"application/json",body:JSON.stringify({imageGeneration:false,vision:true,voice:true,models:[{id:"quality",label:"Quality"},{id:"fast",label:"Fast"},{id:"deep",label:"Deep"}]})}));
+  await page.goto("/#playground");
+  const picker=page.getByRole("combobox",{name:"AI model",exact:true});await picker.selectOption("fast");
+  await page.evaluate(()=>{
+    const original=fetch.bind(window);window.__chatRequest=null;
+    window.fetch=async(resource,init)=>{
+      if(!String(resource).endsWith("/api/playground"))return original(resource,init);
+      window.__chatRequest=JSON.parse(String(init?.body));
+      return new Response('Selected model response.\u0000{"memory":null}',{headers:{"Content-Type":"text/plain"}});
+    };
+  });
+  await page.getByRole("textbox",{name:"Message BudAI",exact:true}).fill("Use the configured fast tier.");
+  await page.getByRole("button",{name:"Send message",exact:true}).click();
+  await expect(page.locator("#playground").getByText("Selected model response.",{exact:true})).toBeVisible();
+  expect(await page.evaluate(()=>window.__chatRequest?.modelTier)).toBe("fast");
+  expect(await page.evaluate(()=>localStorage.getItem("budai_model_tier"))).toBe("fast");
+  await page.reload();await expect(picker).toHaveValue("fast");
+});
+
+test("voice dictation keeps SV/EN, permission errors and thrown recognition failures usable",async({page})=>{
+  await page.addInitScript(()=>{
+    const w=window as unknown as {SpeechRecognition:unknown;__voiceMode:string;__voiceLangs:string[]};w.__voiceMode="ok";w.__voiceLangs=[];
+    w.SpeechRecognition=class{
+      lang="";interimResults=false;continuous=false;
+      onresult:((e:{results:Array<Array<{transcript:string}>>})=>void)|null=null;
+      onerror:((e:{error:string})=>void)|null=null;onend:(()=>void)|null=null;
+      start(){
+        w.__voiceLangs.push(this.lang);if(w.__voiceMode==="throw")throw new Error("Recognition start failed");
+        setTimeout(()=>{if(w.__voiceMode==="denied")this.onerror?.({error:"not-allowed"});else this.onresult?.({results:[[{transcript:this.lang==="sv-SE"?"Hjälp mig planera dagen.":"Help me plan the day."}]]});this.onend?.();},180);
+      }
+      stop(){this.onend?.();}abort(){this.onend?.();}
+    };
+  });
+  const calls:string[]=[];page.on("request",r=>{if(r.url().endsWith("/api/playground"))calls.push(r.url());});
+  await page.goto("/#playground");const input=page.locator("#playground textarea");
+  await page.getByRole("button",{name:/^Speak Voice to text/}).click();await expect(input).toHaveValue("Help me plan the day.");
+  await page.locator(".site-navigation").getByRole("button",{name:"SV",exact:true}).first().click();
+  await page.getByRole("button",{name:/^Prata in Röst till text/}).click();await expect(input).toHaveValue("Hjälp mig planera dagen.");
+  expect(await page.evaluate(()=>(window as unknown as {__voiceLangs:string[]}).__voiceLangs)).toEqual(["en-US","sv-SE"]);
+  await page.evaluate(()=>{(window as unknown as {__voiceMode:string}).__voiceMode="denied";});
+  await page.getByRole("button",{name:/^Prata in Röst till text/}).click();await expect(page.getByText("Mikrofon nekad i webbläsaren.",{exact:true})).toBeVisible();
+  await page.evaluate(()=>{(window as unknown as {__voiceMode:string}).__voiceMode="throw";});
+  await page.getByRole("button",{name:/^Prata in Röst till text/}).click();await expect(page.getByText("Kunde inte starta mikrofon.",{exact:true})).toBeVisible();
+  await expect(page.getByText("Lyssnar — prata nu",{exact:true})).toHaveCount(0);await expect(input).toBeEnabled();expect(calls).toEqual([]);
+});
+
+test("voice-mode permission failure stays closable above navigation and never starts an auto-retry loop",async({page})=>{
+  await page.addInitScript(()=>{
+    const w=window as unknown as {SpeechRecognition:unknown;__recognitionStarts:number};w.__recognitionStarts=0;
+    w.SpeechRecognition=class {
+      lang="";interimResults=false;continuous=false;onresult=null;onend:(()=>void)|null=null;onerror:((e:{error:string})=>void)|null=null;
+      start(){w.__recognitionStarts++;setTimeout(()=>{this.onerror?.({error:"not-allowed"});this.onend?.();},80);}stop(){}abort(){}
+    };
+    if(navigator.mediaDevices)navigator.mediaDevices.getUserMedia=async()=>{throw new Error("No microphone in browser QA");};
+  });
+  await page.goto("/#playground");await page.getByRole("button",{name:"Voice mode",exact:true}).click();
+  const dialog=page.getByRole("dialog",{name:"Voice mode",exact:true});await expect(dialog).toBeVisible();
+  await expect(dialog.getByRole("alert")).toHaveText("Microphone permission denied.");
+  await page.waitForTimeout(650);expect(await page.evaluate(()=>(window as unknown as {__recognitionStarts:number}).__recognitionStarts)).toBe(1);
+  const close=dialog.getByRole("button",{name:"Close",exact:true});
+  expect(await close.evaluate(el=>{const r=el.getBoundingClientRect();return el.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2));})).toBe(true);
+  await close.click();await expect(dialog).toHaveCount(0);await expect(page.getByRole("textbox",{name:"Message BudAI",exact:true})).toBeEnabled();
+});

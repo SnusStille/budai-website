@@ -594,6 +594,8 @@ export default function AIPlayground() {
   const [listening, setListening] = useState(false);
   const [genMode, setGenMode] = useState(false);
   const [imageGenEnabled, setImageGenEnabled] = useState(false);
+  const [modelTier,setModelTier]=useState<"quality"|"fast"|"deep">("quality");
+  const [modelOptions,setModelOptions]=useState<Array<{id:"quality"|"fast"|"deep";label:string}>>([{id:"quality",label:"Quality"}]);
   const [lightbox, setLightbox] = useState<string | null>(null);
   const [toast, setToast] = useState<{ kind: "ok" | "warn" | "err"; text: string } | null>(null);
   const [search, setSearch] = useState("");
@@ -626,6 +628,8 @@ export default function AIPlayground() {
     window.setTimeout(() => setToast(null), 4200);
   }, []);
 
+  useEffect(()=>()=>{recogRef.current?.stop();recogRef.current=null;},[]);
+
   /* boot sidebar on desktop */
   useEffect(() => {
     if (window.innerWidth >= 1024) setSidebarOpen(true);
@@ -642,7 +646,13 @@ export default function AIPlayground() {
     fetch("/api/features")
       .then((r) => r.json())
       .then((d) => {
-        if (!cancelled) setImageGenEnabled(!!d.imageGeneration);
+        if (!cancelled) {
+          setImageGenEnabled(!!d.imageGeneration);
+          if(Array.isArray(d.models)) {
+            const options=d.models.filter((o:{id?:string})=>o&&["quality","fast","deep"].includes(o.id??"")).map((o:{id:"quality"|"fast"|"deep"})=>({id:o.id,label:o.id==="quality"?"Quality":o.id==="fast"?"Fast":"Deep"}));
+            if(options.length){setModelOptions(options);try{const stored=localStorage.getItem("budai_model_tier");if(options.some((o:{id:string})=>o.id===stored))setModelTier(stored as "quality"|"fast"|"deep");}catch{/* optional storage */}}
+          }
+        }
       })
       .catch(() => {
         if (!cancelled) setImageGenEnabled(false);
@@ -1022,6 +1032,7 @@ export default function AIPlayground() {
         body: JSON.stringify({
           messages: apiMessages,
           lang: answerLang,
+          modelTier,
           dual: mode === "dual" || intent.id === "dual",
           concise: mode === "concise",
           stream: !(mode === "dual" || intent.id === "dual"),
@@ -1456,6 +1467,7 @@ export default function AIPlayground() {
       setActivity("listening");
       r.start();
     } catch {
+      setListening(false);setActivity("idle");
       showToast("err", lang === "sv" ? "Kunde inte starta mikrofon." : "Could not start microphone.");
     }
   };
@@ -1734,7 +1746,7 @@ export default function AIPlayground() {
             : "Your AI assistant for everyday work. Write, plan, summarize or analyze in Swedish and English. Try it free, without signing up."}</p>
         </div>
 
-        <PlaygroundArrival expanded={expanded}>
+        <PlaygroundArrival expanded={expanded} overlay={voiceOpen||showShortcuts||!!lightbox||mobileDrawer||memoryOpen}>
           <div
             data-playground-surface
             className={`playground-surface rounded-2xl sm:rounded-3xl overflow-hidden border border-white/[0.12] bg-[#05050a]/98 shadow-[0_0_100px_rgba(0,229,255,0.12),0_40px_80px_rgba(0,0,0,0.45)] flex ${
@@ -1922,7 +1934,7 @@ export default function AIPlayground() {
                   <div className="ml-auto flex items-center gap-1.5">
                     <span className="hidden sm:inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-mono text-accent-cyan/80 border border-accent-cyan/20 bg-accent-cyan/5">
                       <span className="w-1.5 h-1.5 rounded-full bg-accent-green animate-pulse" />
-                      BudAI Core
+                      {modelOptions.length>1?<select aria-label={lang==="sv"?"AI-modell":"AI model"} value={modelTier} onChange={e=>{const id=e.target.value as "quality"|"fast"|"deep";setModelTier(id);try{localStorage.setItem("budai_model_tier",id);}catch{/* optional */}}} className="pg-model-picker">{modelOptions.map(o=><option key={o.id} value={o.id}>{lang==="sv"?({quality:"Kvalitet",fast:"Snabb",deep:"Djup"}[o.id]):o.label}</option>)}</select>:"BudAI Core"}
                     </span>
                     <div
                       className="flex p-0.5 rounded-full bg-black/50 border border-white/[0.08]"

@@ -11,9 +11,9 @@ type Rec = {
   continuous: boolean;
   onresult: ((e: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null;
   onend: (() => void) | null;
-  onerror: (() => void) | null;
+  onerror: ((event?:{error?:string}) => void) | null;
 };
-type State = "listening" | "thinking" | "speaking" | "unsupported";
+type State = "listening" | "thinking" | "speaking" | "unsupported" | "error";
 
 const clean = (t: string) => t.replace(/```[\s\S]*?```/g, " ").replace(/[*_#>`~|]+/g, " ").replace(/\s+/g, " ").trim();
 
@@ -22,6 +22,8 @@ export default function VoiceOrb({ open, sv, busy, reply, onSend, onClose }: {
   open: boolean; sv: boolean; busy: boolean; reply: string; onSend: (t: string) => void; onClose: () => void;
 }) {
   const [state, setState] = useState<State>("listening");
+  const [error,setError]=useState("");
+  const retry=useRef(0);
   const orb = useRef<HTMLDivElement>(null);
   const rec = useRef<Rec | null>(null);
   const live = useRef(false);
@@ -53,15 +55,19 @@ export default function VoiceOrb({ open, sv, busy, reply, onSend, onClose }: {
       }
     };
     r.onend = () => {
-      if (live.current && !awaiting.current && !window.speechSynthesis.speaking) window.setTimeout(listen, 250);
+      if (live.current && st.current!=="error" && !awaiting.current && !window.speechSynthesis.speaking) {clearTimeout(retry.current);retry.current=window.setTimeout(listen,250);}
     };
-    r.onerror = () => {};
+    r.onerror = event => {
+      if(event?.error === "aborted")return;
+      st.current="error";setState("error");clearTimeout(retry.current);
+      setError(event?.error==="not-allowed" ? (latest.current.sv?"Mikrofon nekad i webbläsaren.":"Microphone permission denied.") : (latest.current.sv?"Kunde inte lyssna. Försök igen.":"Could not listen. Please try again."));
+    };
     rec.current = r;
     try {
       r.start();
       setState("listening");
     } catch {
-      /* already started */
+      st.current="error";setState("error");setError(latest.current.sv?"Kunde inte starta mikrofon.":"Could not start microphone.");
     }
   };
 
@@ -96,6 +102,7 @@ export default function VoiceOrb({ open, sv, busy, reply, onSend, onClose }: {
     return () => {
       live.current = false;
       cancelAnimationFrame(raf);
+      clearTimeout(retry.current);
       rec.current?.abort();
       window.speechSynthesis?.cancel();
       stream?.getTracks().forEach((t) => t.stop());
@@ -126,6 +133,7 @@ export default function VoiceOrb({ open, sv, busy, reply, onSend, onClose }: {
     state === "listening" ? (sv ? "Lyssnar…" : "Listening…")
     : state === "thinking" ? (sv ? "Tänker…" : "Thinking…")
     : state === "speaking" ? (sv ? "Svarar…" : "Speaking…")
+    : state === "error" ? error
     : sv ? "Röstläge kräver Chrome, Edge eller Safari" : "Voice mode needs Chrome, Edge or Safari";
 
   return (
@@ -134,10 +142,11 @@ export default function VoiceOrb({ open, sv, busy, reply, onSend, onClose }: {
         <X className="h-5 w-5" />
       </button>
       <div className="relative flex h-72 w-72 items-center justify-center">
-        {state !== "unsupported" && <span className="absolute h-56 w-56 animate-ping rounded-full border border-accent-cyan/20" style={{ animationDuration: "2.8s" }} />}
+        {state !== "unsupported" && state !== "error" && <span className="absolute h-56 w-56 animate-ping rounded-full border border-accent-cyan/20" style={{ animationDuration: "2.8s" }} />}
         <div ref={orb} onClick={() => window.speechSynthesis.cancel()} className={`bud-orb ${state}`} />
       </div>
-      <p className="mt-6 text-lg text-white/80">{label}</p>
+      <p role={state==="error"?"alert":"status"} className="mt-6 text-lg text-white/80">{label}</p>
+      {state==="error"&&<button type="button" className="mt-4 rounded-lg border border-white/20 px-4 py-2 text-sm" onClick={()=>{setError("");awaiting.current=false;listen();}}>{sv?"Försök med mikrofonen igen":"Try microphone again"}</button>}
       <p className="mt-2 text-xs text-white/35">{sv ? "Tryck på kulan för att avbryta svaret" : "Tap the orb to interrupt the reply"}</p>
     </div>
   );

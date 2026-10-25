@@ -9,7 +9,7 @@
     "lint": "next lint",
     "test": "node scripts/test-browser.mjs",
     "test:unit": "node scripts/test-browser.mjs unit.spec.ts",
-    "test:e2e": "node scripts/test-browser.mjs experience.spec.ts cinematic.spec.ts cinematic-mobile.spec.ts brand.spec.ts product.spec.ts",
+    "test:e2e": "node scripts/test-browser.mjs experience.spec.ts arrival.spec.ts cinematic.spec.ts cinematic-mobile.spec.ts brand.spec.ts product.spec.ts",
     "typecheck": "tsc --noEmit",
     "brand:generate": "node --experimental-strip-types scripts/generate-brand.mjs"
   },

@@ -526,8 +526,8 @@ html[data-world-state="ready"] .capability-drawing-fallback, html[data-world-sta
 .budai-mark[data-mode="thinking"] .confluence-trace,
 .budai-mark[data-mode="thinking"] .confluence-cell { animation-duration:2s; }
 .budai-mark[data-variant="light"] .confluence-signal { color:#497e8b;mix-blend-mode:multiply; }
-@keyframes confluence-transmit { 0%,68% {opacity:0;stroke-dashoffset:108} 70% {opacity:.85} 85% {opacity:.85;stroke-dashoffset:-8} 87%,100% {opacity:0;stroke-dashoffset:-8} }
-@keyframes confluence-receive { 0%,84%,97%,100% {opacity:0} 88% {opacity:.9} }
+@keyframes confluence-transmit { 0%,10% {opacity:0;stroke-dashoffset:108} 12% {opacity:.85} 32% {opacity:.85;stroke-dashoffset:-8} 34%,100% {opacity:0;stroke-dashoffset:-8} }
+@keyframes confluence-receive { 0%,31%,43%,100% {opacity:0} 36% {opacity:.9} }
 @media(prefers-reduced-motion:reduce) { .confluence-signal {display:none} }
 
 
@@ -616,3 +616,10 @@ html:not([data-brain-state="ready"]) .brain-journey-fallback {display:block;}
 @media(max-width:767px) { .playground-surface:not(.fixed) {height:min(88dvh,calc(100svh - 175px));min-height:520px;} }
 html[data-budai-intro="playing"] #main .confluence-trace,
 html[data-budai-intro="playing"] #main .confluence-cell {animation-play-state:paused;}
+
+.pg-model-picker {max-width:85px;background:transparent;color:inherit;border:0;font:inherit;outline-offset:4px;cursor:pointer;}
+.pg-model-picker option {background:#071017;color:#dcebf0;}
+
+/* Product controls use the same restrained ice/ink system, not stock AI gradients. */
+.playground-surface button.bg-gradient-to-r {background-image:none;background-color:#bdd7df;color:#071017;box-shadow:none;}
+@media(max-width:767px) { .playground-introduction::before {inset:-25px 0;} }

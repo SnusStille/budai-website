@@ -83,3 +83,20 @@ for(const viewport of [{width:1440,height:1000},{width:834,height:1112},{width:3
   await expect(anchor).toHaveAttribute("data-expanded","false");
   expect(errors).toEqual([]);
 });
+
+test("Confluence contains a real travelling signal and pauses on reduced motion without another logo canvas",async({page})=>{
+  await quiet(page);await page.goto("/");
+  const mark=page.locator(".site-navigation [data-budai-mark=confluence]");
+  await expect(mark).toHaveAttribute("data-mark-motion","running");
+  const offsets=await mark.locator(".confluence-trace").first().evaluate(el=>{
+    const animation=el.getAnimations()[0];animation.pause();animation.currentTime=1200;const a=getComputedStyle(el).strokeDashoffset;
+    animation.currentTime=2100;const b=getComputedStyle(el).strokeDashoffset;animation.play();return [a,b];
+  });
+  expect(offsets[0]).not.toBe(offsets[1]);
+  await expect(page.locator("footer [data-budai-mark=confluence]").first()).toHaveAttribute("data-mark-motion","paused");
+  await page.emulateMedia({reducedMotion:"reduce"});await expect(mark).toHaveAttribute("data-mark-motion","paused");
+  await expect(mark.locator(".confluence-signal")).toHaveCSS("display","none");
+  await expect(page.locator("[data-brain-canvas],[data-world-canvas]")).toHaveCount(0);
+  await page.emulateMedia({reducedMotion:"no-preference"});await expect(mark).toHaveAttribute("data-mark-motion","running");
+  await expect(page.locator("[data-brain-canvas]")).toHaveCount(1);await expect(page.locator("[data-global-loader]")).toHaveCount(0);
+});

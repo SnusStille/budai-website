@@ -7,7 +7,7 @@ import { subscribeJourney, refreshJourney } from "@/lib/experience/scroll";
 /** The actual product DOM, not a second interface or screenshot. Camera distance
  * supplies its projection; a layout-stable anchor preserves normal page scrolling.
  */
-export default function PlaygroundArrival({children,expanded}:{children:ReactNode;expanded:boolean}) {
+export default function PlaygroundArrival({children,expanded,overlay=false}:{children:ReactNode;expanded:boolean;overlay?:boolean}) {
   const anchor=useRef<HTMLDivElement>(null),plane=useRef<HTMLDivElement>(null);
   useEffect(()=>{
     const el=anchor.current,surface=plane.current;
@@ -29,7 +29,7 @@ export default function PlaygroundArrival({children,expanded}:{children:ReactNod
       const save=(navigator as Navigator&{connection?:{saveData?:boolean}}).connection?.saveData;
       const fallback=frame.reduced||save||document.documentElement.dataset.brainState==="fallback";
       const direct=location.hash==="#playground"&&frame.y>=(frame.bounds.playground?.top??Infinity)-frame.height*.4;
-      const settled=expanded||intent||direct||fallback||!frame.bounds.signal;
+      const settled=expanded||overlay||intent||direct||fallback||!frame.bounds.signal;
       const arrival=settled?1:playgroundArrivalAt(p);
       const projection=playgroundProjectionAt(p);
       el.dataset.arrival=arrival.toFixed(4);
@@ -39,13 +39,13 @@ export default function PlaygroundArrival({children,expanded}:{children:ReactNod
       // Expansion must escape its former transformed containing block and remain
       // above navigation. No interface remount: streams/history/input survive.
       const section=document.getElementById("playground");
-      if(section)section.style.zIndex=expanded?"90":"";
+      if(section)section.style.zIndex=expanded||overlay?"90":"";
     });
     return()=>{
       unsubscribe();el.removeEventListener("focusin",focus);el.removeEventListener("pointerdown",down);el.removeEventListener("click",commit);el.removeEventListener("input",commit);
       window.removeEventListener("pointerup",up);window.removeEventListener("pointercancel",up);
       const section=document.getElementById("playground");if(section)section.style.zIndex="";
     };
-  },[expanded]);
+  },[expanded,overlay]);
   return <div ref={anchor} className="playground-arrival-anchor" data-playground-arrival><div ref={plane} className="playground-plane">{children}</div></div>;
 }
