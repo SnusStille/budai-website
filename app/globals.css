@@ -3,6 +3,8 @@
 @tailwind utilities;
 
 :root {
+  --font-jakarta: "Plus Jakarta Sans Variable";
+  --font-jetbrains: "JetBrains Mono Variable";
   --bg: #020205;
   --surface: #07070e;
   --surface-elevated: #0f0f1a;
@@ -22,8 +24,15 @@
 }
 
 html {
-  scroll-behavior: smooth;
+  /* Initial fragments/history must settle immediately, not race hydration. */
+  scroll-behavior: auto;
   scroll-padding-top: 5rem;
+}
+
+/* Smooth native navigation only after an actual in-page link receives focus.
+   No wheel interception, delayed initial hash animation, or second scroll engine. */
+@media (prefers-reduced-motion: no-preference) {
+  html:has(a[href^="#"]:focus) { scroll-behavior: smooth; }
 }
 
 body {

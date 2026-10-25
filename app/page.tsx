@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect } from "react";
-import dynamic from "next/dynamic";
 import ScrollProgress from "@/components/ui/ScrollProgress";
 import SectionDots from "@/components/ui/SectionDots";
 import CookieConsent from "@/components/ui/CookieConsent";
@@ -20,19 +19,13 @@ import HeroAsk from "@/components/sections/HeroAsk";
 import LazyEgg from "@/components/effects/LazyEgg";
 import FeedbackButton from "@/components/ui/FeedbackButton";
 import Journey from "@/components/sections/Journey";
-import SiteChrome from "@/components/ui/SiteChrome";
 import WhatsNew from "@/components/ui/WhatsNew";
 import Shortcuts from "@/components/ui/Shortcuts";
 import Footer from "@/components/sections/Footer";
+import WorldStage from "@/components/experience/WorldStage";
+import About from "@/components/sections/About";
+import AIPlayground from "@/components/sections/AIPlayground";
 
-const AIEnvironment = dynamic(() => import("@/components/effects/AIEnvironment"), {
-  ssr: false,
-});
-const CursorGlow = dynamic(() => import("@/components/effects/CursorGlow"), { ssr: false });
-
-const About = dynamic(() => import("@/components/sections/About"));
-const AIBackdropFX = dynamic(() => import("@/components/effects/AIBackdropFX"), { ssr: false });
-const AIPlayground = dynamic(() => import("@/components/sections/AIPlayground"));
 
 export default function Home() {
   useEffect(() => {
@@ -40,6 +33,7 @@ export default function Home() {
       console.log("%cBudAI · Stilledev", "color:#00e5ff;font-weight:bold;");
     }
 
+    let eggTimer = 0;
     let buffer = "";
     const target = "budai";
     const onKey = (e: KeyboardEvent) => {
@@ -52,13 +46,18 @@ export default function Home() {
         console.log("%c🚀 Welcome, developer.", "color: #00e5ff; font-size: 14px; font-weight: bold;");
         console.log("%cYou found the easter egg.", "color: #2dd4bf; font-size: 12px;");
         document.documentElement.classList.add("egg-flash");
-        setTimeout(() => document.documentElement.classList.remove("egg-flash"), 1200);
+        clearTimeout(eggTimer);
+        eggTimer = window.setTimeout(() => document.documentElement.classList.remove("egg-flash"), 1200);
         window.dispatchEvent(new Event("budai:egg"));
         buffer = "";
       }
     };
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      clearTimeout(eggTimer);
+      document.documentElement.classList.remove("egg-flash");
+    };
   }, []);
 
   useEffect(() => {
@@ -78,18 +77,14 @@ export default function Home() {
   }, []);
 
   return (
-    <main className="page-transition relative min-h-screen text-white overflow-x-hidden bg-background">
+    <main id="main" tabIndex={-1} className="journey-page relative min-h-screen text-white">
+      <WorldStage />
       <ScrollProgress />
-      <AIEnvironment />
-      <CursorGlow />
       <SectionDots />
-      <div className="fixed inset-0 z-[1] pointer-events-none ai-grid opacity-[0.35]" aria-hidden />
-      <div className="fixed inset-0 z-[1] pointer-events-none ai-vignette" aria-hidden />
-      <AIBackdropFX />
+      <div className="universe-atmosphere" aria-hidden="true" />
 
       <div className="relative z-10">
         <Navbar />
-        <SiteChrome />
         <WhatsNew />
         <Shortcuts />
         <FeedbackButton />

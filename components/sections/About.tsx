@@ -1,104 +1,66 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { Github, Mail } from "lucide-react";
+import { useEffect, useRef } from "react";
+import { ArrowDown, ArrowRight, Code2, Github, Mail } from "lucide-react";
 import ScrollReveal from "@/components/ui/ScrollReveal";
-import SpotlightCard from "@/components/ui/SpotlightCard";
 import { useLang } from "@/components/ui/LanguageContext";
-import Tilt3D from "@/components/ui/Tilt3D";
-import CodeTyper from "@/components/ui/CodeTyper";
+import { EXAMPLE_SOURCE } from "@/lib/experience/code";
+import { subscribeJourney } from "@/lib/experience/scroll";
+import ProgressiveEditor from "@/components/experience/ProgressiveEditor";
 
 const STACK = ["Next.js", "TypeScript", "Tailwind", "Supabase", "Claude API"];
-
-function CountUp({ to }: { to: number }) {
-  const ref = useRef<HTMLSpanElement>(null);
-  const [v, setV] = useState(0);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const io = new IntersectionObserver(([e]) => {
-      if (!e.isIntersecting) return;
-      io.disconnect();
-      const t0 = performance.now();
-      const tick = (t: number) => {
-        const k = Math.min(1, (t - t0) / 1400);
-        setV(Math.round(to * (1 - Math.pow(1 - k, 3))));
-        if (k < 1) requestAnimationFrame(tick);
-      };
-      requestAnimationFrame(tick);
-    });
-    io.observe(el);
-    return () => io.disconnect();
-  }, [to]);
-  return <span ref={ref}>{v}</span>;
-}
 
 export default function About() {
   const { lang } = useLang();
   const sv = lang === "sv";
-  const stats = [
-    { n: 10, label: sv ? "år av kodande" : "years of coding", c: "text-accent-cyan" },
-    { n: 2, label: sv ? "år med BudAI" : "years on BudAI", c: "text-accent-purple" },
-    { n: 0, label: "SV · EN", c: "text-accent-green", text: sv ? "Tvåspråkig" : "Bilingual" },
-  ];
-  const values = sv
-    ? ["Kod i produktionskvalitet", "Integritet först", "Öppet på GitHub"]
-    : ["Production-grade code", "Privacy first", "Open on GitHub"];
+  const status = useRef<HTMLDivElement>(null);
+  useEffect(() => subscribeJourney((frame) => {
+    const p = frame.sections.about ?? 0;
+    status.current?.style.setProperty("--builder-progress", String(p));
+    if (status.current) status.current.dataset.step = String(Math.min(2, Math.floor(p * 3)));
+  }), []);
 
   return (
-    <section id="about" className="relative section-hairline py-20 md:py-28 overflow-hidden">
-      <div className="absolute -left-40 top-1/3 w-[420px] h-[420px] rounded-full bg-accent-green/[0.06] blur-[120px] pointer-events-none" />
-<div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-[1.05fr_1fr] gap-12 items-center">
+    <section id="about" className="builder-section" aria-labelledby="builder-title">
+      <div className="builder-scroll-track" id="builder-scene">
+        <div className="builder-sticky">
+          <div className="builder-heading">
+            <span className="chapter-label"><i />03 / {sv ? "BYGGAREN" : "THE BUILDER"}</span>
+            <h2 id="builder-title">{sv ? "Från en tanke." : "From a thought."}<br /><span>{sv ? "Till något verkligt." : "To something real."}</span></h2>
+            <p>{sv ? "Ett skrivbord för idéer som inte stannar vid idéer. Skrolla och se ett förberett kodexempel växa fram." : "A workspace for ideas that don't stay ideas. Scroll to bring a prepared code example to life."}</p>
+          </div>
+          <div className="builder-fallback-workspace" aria-hidden="true">
+            <div className="fallback-side-screen"><Code2 /><span>BUDAI / CORE</span><i /><i /><i /></div>
+            <div className="fallback-central-screen"><ProgressiveEditor /></div>
+            <div className="fallback-side-screen"><span>LOCAL / DEVELOPMENT</span><i /><i /><i /><i /></div>
+            <div className="fallback-desk" />
+          </div>
+          <div className="builder-scene-caption">
+            <span><i />{sv ? "EN ORIGINALMILJÖ I 3D" : "AN ORIGINAL 3D ENVIRONMENT"}</span>
+            <span>{sv ? "Förberett exempel · inte ett live-svar" : "Prepared example · not a live AI response"}</span>
+          </div>
+          <div ref={status} className="builder-sequence" data-step="0">
+            <div className="builder-sequence-line"><span /></div>
+            <span><b>01</b>{sv ? "Initiera" : "Initialize"}</span>
+            <span><b>02</b>{sv ? "Skapa" : "Compose"}</span>
+            <span><b>03</b>{sv ? "Utforska" : "Explore"}</span>
+            <a href="#builder-profile" aria-label={sv ? "Möt byggaren" : "Meet the builder"}><ArrowDown size={15} /></a>
+          </div>
+        </div>
+      </div>
+
+      <div id="builder-profile" className="builder-profile">
         <ScrollReveal>
-          <span className="section-badge text-accent-green mb-5">{sv ? "Byggaren" : "The builder"}</span>
-          <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-white leading-[1.05] mb-6">
-            {sv ? "10 år av kod." : "10 years of code."}
-            <br />
-            <span className="text-gradient">{sv ? "2 år av BudAI." : "2 years of BudAI."}</span>
-          </h2>
-          <p className="text-base sm:text-lg text-muted leading-relaxed mb-8 max-w-lg">
-            {sv
-              ? "Jag är Stilledev. Jag har skrivit mjukvara i tio år, och de senaste två har jag lagt allt på en sak: BudAI, en AI som faktiskt fungerar i svenskt vardagsarbete. Idag är det en preview. Målet är att bli din nya ChatGPT."
-              : "I'm Stilledev. I've been writing software for ten years, and for the last two I've put all of it into one thing: BudAI, an AI that actually works in everyday Swedish work. Today it's a preview. The goal is to become your new ChatGPT."}
-          </p>
-
-          <div className="grid grid-cols-3 gap-3 mb-8 max-w-lg">
-            {stats.map((s) => (
-              <SpotlightCard key={s.label} className="rounded-xl border border-white/[0.08] bg-white/[0.02] px-3 py-4 text-center">
-                <p className={`text-3xl sm:text-4xl font-bold ${s.c}`}>{s.n ? <CountUp to={s.n} /> : s.text}</p>
-                <p className="mt-1 text-[11px] text-muted">{s.label}</p>
-              </SpotlightCard>
-            ))}
-          </div>
-
-          <div className="flex flex-wrap gap-2 mb-8">
-            {values.map((v) => (
-              <span key={v} className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5 text-xs text-white/80">{v}</span>
-            ))}
-          </div>
-
-          <div className="flex flex-wrap gap-3">
-            <a href="https://github.com/SnusStille/budai-website" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-[#020205] hover:opacity-90 transition-opacity">
-              <Github className="h-4 w-4" /> GitHub
-            </a>
-            <a href="mailto:Stilleinc@hotmail.com" className="inline-flex items-center gap-2 rounded-full border border-white/15 px-5 py-2.5 text-sm font-medium text-white hover:border-accent-cyan/40 transition-colors">
-              <Mail className="h-4 w-4" /> {sv ? "Kontakt" : "Contact"}
-            </a>
-          </div>
+          <span className="chapter-label">THE HUMAN BEHIND THE INTELLIGENCE</span>
+          <h3>{sv ? "10 år av kod." : "10 years of code."}<br /><span className="text-gradient">{sv ? "2 år av BudAI." : "2 years of BudAI."}</span></h3>
+          <div className="builder-facts"><span><b>10</b>{sv ? "år av kodande" : "years of coding"}</span><span><b>02</b>{sv ? "år med BudAI" : "years on BudAI"}</span><span><b>SV / EN</b>{sv ? "Tvåspråkig" : "Bilingual"}</span></div>
         </ScrollReveal>
-
-        <ScrollReveal delay={0.1}>
-          <Tilt3D max={6}>
-          <div className="rounded-2xl border border-white/[0.08] bg-[#07070e]/90 shadow-[0_0_80px_-20px_rgba(0,229,255,0.4)] overflow-hidden">
-            <div className="flex items-center gap-1.5 px-4 py-3 border-b border-white/[0.06]">
-              <span className="w-2.5 h-2.5 rounded-full bg-red-400/50" />
-              <span className="w-2.5 h-2.5 rounded-full bg-yellow-400/50" />
-              <span className="w-2.5 h-2.5 rounded-full bg-green-400/50" />
-              <span className="ml-3 font-mono text-[11px] text-muted/60">stilledev.ts</span>
-            </div>
-            <CodeTyper />
-          </div>
-          </Tilt3D>
+        <ScrollReveal delay={.1}>
+          <p>{sv ? "Jag är Stilledev. Jag har skrivit mjukvara i tio år, och de senaste två har jag lagt allt på en sak: BudAI, en AI som faktiskt fungerar i svenskt vardagsarbete. Idag är det en preview. Målet är att bli din nya ChatGPT." : "I'm Stilledev. I've been writing software for ten years, and for the last two I've put all of it into one thing: BudAI, an AI that actually works in everyday Swedish work. Today it's a preview. The goal is to become your new ChatGPT."}</p>
+          <div className="builder-stack">{STACK.map((item) => <span key={item}>{item}</span>)}</div>
+          <ul className="builder-values">{(sv ? ["Kod i produktionskvalitet", "Integritet först", "Öppet på GitHub"] : ["Production-grade code", "Privacy first", "Open on GitHub"]).map((item) => <li key={item}>{item}</li>)}</ul>
+          <div className="builder-links"><a href="https://github.com/SnusStille/budai-website" target="_blank" rel="noopener noreferrer"><Github size={15} />GitHub<ArrowRight size={13} /></a><a href="mailto:Stilleinc@hotmail.com"><Mail size={15} />{sv ? "Kontakt" : "Contact"}</a></div>
+          <details className="builder-source-details"><summary>{sv ? "Läs kodexemplet" : "Read the code example"}<Code2 size={14} /></summary><p>{sv ? "Ett illustrativt anrop till Playground. Koden på skärmen körs inte och gör inga nätverksanrop." : "An illustrative request to the Playground. The code on the monitor is not executed and makes no network requests."}</p><pre tabIndex={0}><code>{EXAMPLE_SOURCE}</code></pre></details>
         </ScrollReveal>
       </div>
     </section>

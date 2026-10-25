@@ -59,7 +59,7 @@ export default function Waitlist() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.email.includes("@")) return;
+    if (loading || !form.email.includes("@")) return;
     setLoading(true);
     setError(null);
     try {
@@ -88,6 +88,8 @@ export default function Waitlist() {
       setError(
         msg.includes("duplicate") || msg.includes("unique") || msg.includes("already")
           ? sv ? "Den e-postadressen finns redan på listan." : "That email is already on the waitlist."
+          : msg.includes("not configured")
+            ? sv ? "Väntelistan är inte tillgänglig just nu. Försök igen senare." : "The waitlist is not accepting signups right now. Please try again later."
           : msg.includes("network") || msg.includes("fetch")
             ? sv ? "Nätverksfel. Kontrollera anslutningen och försök igen." : "Network error. Check your connection and try again."
             : sv ? "Kunde inte spara just nu. Försök igen om en stund." : "Could not save right now. Please try again in a moment."
@@ -118,13 +120,13 @@ export default function Waitlist() {
   ];
 
   return (
-    <section id="waitlist" className="relative section-hairline overflow-hidden py-24 md:py-32">
+    <section id="waitlist" className="waitlist-universe relative section-hairline overflow-hidden py-24 md:py-32">
       <Confetti active={confetti} />
-      <div className="pointer-events-none absolute left-1/2 top-1/2 h-[520px] w-[min(95vw,820px)] -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-r from-accent-cyan/[0.1] to-accent-purple/[0.12] blur-[130px]" />
+      <div className="waitlist-threshold" aria-hidden="true"><span /><span /><span /><span /></div>
 
       <div className="relative z-10 mx-auto max-w-3xl px-4 text-center sm:px-6">
         <ScrollReveal>
-          <span className="section-badge mb-5 text-accent-purple">{sv ? "Tidig tillgång" : "Early access"}</span>
+          <span className="chapter-label mb-7 inline-flex"><i />04 / {sv ? "NÄSTA KAPITEL" : "THE NEXT CHAPTER"}</span>
           <h2 className="mb-4 text-4xl font-bold tracking-tight text-white sm:text-6xl">
             {sv ? "Var först i " : "Be first in "}
             <span className="text-gradient">{sv ? "kön." : "line."}</span>
@@ -179,13 +181,12 @@ export default function Waitlist() {
 
             {details && (
               <div className="bud-pop mt-4 space-y-3 rounded-2xl border border-white/10 bg-white/[0.02] p-4 sm:p-5">
-                <div className="grid grid-cols-2 gap-1 rounded-xl border border-white/10 bg-white/[0.03] p-1" role="tablist">
+                <div className="grid grid-cols-2 gap-1 rounded-xl border border-white/10 bg-white/[0.03] p-1" role="group" aria-label={sv ? "Kontotyp" : "Account type"}>
                   {tabs.map((tb) => (
                     <button
                       key={tb.id}
                       type="button"
-                      role="tab"
-                      aria-selected={accountType === tb.id}
+                      aria-pressed={accountType === tb.id}
                       onClick={() => setAccountType(tb.id)}
                       className={`flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-medium transition-colors ${
                         accountType === tb.id ? "bg-accent-cyan/15 text-accent-cyan" : "text-muted hover:text-white"
@@ -197,7 +198,7 @@ export default function Waitlist() {
                   ))}
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <input className={field} placeholder={sv ? "Namn" : "Name"} value={form.name} onChange={set("name")} autoComplete="name" />
+                  <input className={field} aria-label={sv ? "Namn" : "Name"} placeholder={sv ? "Namn" : "Name"} value={form.name} onChange={set("name")} autoComplete="name" />
                   <select className={field} value={form.interest} onChange={set("interest")} aria-label={sv ? "Användning" : "Use case"}>
                     <option value="" disabled>{sv ? "Vad ska du använda det till?" : "What will you use it for?"}</option>
                     {(sv ? interestsSv : interestsEn).map((i) => <option key={i} value={i}>{i}</option>)}
@@ -205,7 +206,7 @@ export default function Waitlist() {
                 </div>
                 {accountType === "company" && (
                   <div className="grid gap-3 sm:grid-cols-2">
-                    <input className={field} placeholder={sv ? "Företag" : "Company"} value={form.company} onChange={set("company")} autoComplete="organization" />
+                    <input className={field} aria-label={sv ? "Företag" : "Company"} placeholder={sv ? "Företag" : "Company"} value={form.company} onChange={set("company")} autoComplete="organization" />
                     <select className={field} value={form.employees} onChange={set("employees")} aria-label={sv ? "Teamstorlek" : "Team size"}>
                       <option value="" disabled>{sv ? "Teamstorlek" : "Team size"}</option>
                       {employeeRanges.map((r) => <option key={r} value={r}>{r}</option>)}
@@ -213,7 +214,7 @@ export default function Waitlist() {
                   </div>
                 )}
                 {showCode ? (
-                  <input className={field} placeholder={sv ? "Inbjudningskod" : "Invite code"} value={referral} onChange={(e) => setReferral(e.target.value)} />
+                  <input className={field} aria-label={sv ? "Inbjudningskod" : "Invite code"} placeholder={sv ? "Inbjudningskod" : "Invite code"} value={referral} onChange={(e) => setReferral(e.target.value)} />
                 ) : (
                   <button type="button" onClick={() => setShowCode(true)} className="text-xs text-muted transition-colors hover:text-accent-cyan">
                     {sv ? "Har du en inbjudningskod?" : "Have an invite code?"}

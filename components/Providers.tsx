@@ -1,5 +1,6 @@
 "use client";
 
+import { MotionConfig } from "framer-motion";
 import { LangProvider } from "@/components/ui/LanguageContext";
 import LoadingScreen from "@/components/effects/LoadingScreen";
 import CommandPalette from "@/components/ui/CommandPalette";
@@ -10,16 +11,18 @@ import AuthHashHandler from "@/components/auth/AuthHashHandler";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <LangProvider>
-      <LoadingScreen />
-      <AuthProvider>
-        <ToastProvider>
-          <AuthHashHandler />
-          {children}
-          <CommandPalette />
-          <AuthModal />
-        </ToastProvider>
-      </AuthProvider>
-    </LangProvider>
+    <MotionConfig reducedMotion="user">
+      <LangProvider>
+        <LoadingScreen />
+        <AuthProvider>
+          <ToastProvider>
+            <AuthHashHandler />
+            {children}
+            <CommandPalette />
+            <AuthModal />
+          </ToastProvider>
+        </AuthProvider>
+      </LangProvider>
+    </MotionConfig>
   );
 }

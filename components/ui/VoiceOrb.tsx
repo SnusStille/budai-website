@@ -101,6 +101,8 @@ export default function VoiceOrb({ open, sv, busy, reply, onSend, onClose }: {
       stream?.getTracks().forEach((t) => t.stop());
       ctx?.close().catch(() => {});
     };
+    // listen reads only stable refs; reopening is the intentional recognition lifecycle.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   useEffect(() => {

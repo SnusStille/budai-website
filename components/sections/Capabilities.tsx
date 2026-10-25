@@ -22,6 +22,7 @@ import SpotlightCard from "@/components/ui/SpotlightCard";
 import { Check as CheckIcon, X as XIcon, User as UserIcon, Building2 as BuildingIcon, Sparkles as SparkIcon } from "lucide-react";
 import { useLang } from "@/components/ui/LanguageContext";
 import BudAILogo from "@/components/ui/BudAILogo";
+import CapabilityMap from "@/components/experience/CapabilityMap";
 
 const capabilities = [
   {
@@ -228,12 +229,12 @@ export default function Capabilities() {
   ];
 
   return (
-    <section id="capabilities" className="relative section-hairline py-20 sm:py-24 md:py-32">
+    <section id="capabilities" className="capabilities-universe relative section-hairline py-20 sm:py-24 md:py-32">
       <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[min(90vw,700px)] h-[400px] bg-accent-cyan/[0.04] rounded-full blur-[120px] pointer-events-none" />
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <ScrollReveal className="text-center mb-12">
-          <span className="section-badge text-accent-cyan mb-5">{t.capabilities.badge}</span>
+          <span className="chapter-label mb-6 inline-flex"><i />02 / {t.capabilities.badge}</span>
           <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-[-0.03em] mb-5 text-white">
             {t.capabilities.title} <span className="text-gradient">{t.capabilities.titleHighlight}</span>
           </h2>
@@ -244,6 +245,8 @@ export default function Capabilities() {
           </p>
         </ScrollReveal>
 
+        <CapabilityMap />
+        <div className="plans-heading"><span>{sv ? "Välj din väg" : "Choose your way in"}</span><p>{sv ? "Börja gratis. Väx när du är redo." : "Start free. Grow when you’re ready."}</p></div>
         <div className="grid md:grid-cols-3 gap-4 mb-5 bud-3d-in">
           {plans.map((pl, i) => (
             <ScrollReveal key={pl.key} delay={i * 0.05}>
@@ -297,28 +300,7 @@ export default function Capabilities() {
             : "Same AI in every plan. Basic has the fewest credits and the shortest memory. Paid plans unlock more usage, longer memory and team features."}
         </p>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-16 bud-3d-in">
-          {[
-            { i: FileText, t: sv ? "Skriv" : "Write", d: sv ? "Mejl, rapporter, förslag." : "Emails, reports, proposals." },
-            { i: Workflow, t: sv ? "Automatisera" : "Automate", d: sv ? "Rutiner till tydliga steg." : "Routines into clear steps." },
-            { i: BarChart3, t: sv ? "Besluta" : "Decide", d: sv ? "Sammanfatta, risker, nästa steg." : "Summaries, risks, next steps." },
-            { i: Languages, t: sv ? "Svenska + engelska" : "Swedish + English", d: sv ? "Byt språk utan tapp i ton." : "Switch language, keep the tone." },
-            { i: BrainCircuit, t: sv ? "Minne" : "Memory", d: sv ? "Kommer ihåg det du väljer." : "Remembers what you choose." },
-            { i: ImageIcon, t: sv ? "Bild och röst" : "Vision and voice", d: sv ? "Ladda upp bilder, prata in." : "Upload images, speak prompts." },
-          ].map((x) => (
-            <SpotlightCard key={x.t} className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-4 transition-colors hover:border-accent-cyan/30">
-              <div className="flex items-center gap-3.5">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-accent-cyan/20 bg-accent-cyan/10 text-accent-cyan">
-                  <x.i className="h-5 w-5" />
-                </div>
-                <div>
-                  <p className="text-[15px] font-semibold text-white">{x.t}</p>
-                  <p className="text-[13px] text-muted">{x.d}</p>
-                </div>
-              </div>
-            </SpotlightCard>
-          ))}
-        </div>
+
 
       </div>
     </section>

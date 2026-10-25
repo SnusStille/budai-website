@@ -1,7 +1,4 @@
-/**
- * Tiny shared flag: the intro (LoadingScreen) marks itself done, and the hero waits for it.
- * Lets the hero animate in as the intro flies away, instead of hidden underneath it.
- */
+/** One-way intro handoff, consumed only by the lazy world. No section starts a loader. */
 let done = false;
 const listeners = new Set<() => void>();
 

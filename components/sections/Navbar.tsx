@@ -5,9 +5,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, Globe, Bell } from "lucide-react";
 import { useLang } from "@/components/ui/LanguageContext";
 import BudAILogo from "@/components/ui/BudAILogo";
-import TypeWordmark from "@/components/ui/TypeWordmark";
+import { subscribeJourney } from "@/lib/experience/scroll";
 
-const SECTION_IDS = ["playground", "capabilities", "about", "waitlist", "roadmap"] as const;
 
 export default function Navbar() {
   const [busy, setBusy] = useState(false);
@@ -20,104 +19,43 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [active, setActive] = useState("");
   const { lang, setLang, t } = useLang();
-  const ratios = useRef<Record<string, number>>({});
-  const logoClicks = useRef<number[]>([]);
+  const mobileMenu = useRef<HTMLDivElement>(null);
+  const menuToggle = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => subscribeJourney((frame) => {
+    setScrolled(frame.y > 40);
+    setActive(frame.active);
+  }), []);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 40);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  useEffect(() => {
-    document.body.style.overflow = mobileOpen ? "hidden" : "";
-    return () => {
-      document.body.style.overflow = "";
-    };
+    const previous = document.body.style.overflow;
+    if (mobileOpen) document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = previous; };
   }, [mobileOpen]);
 
-  // Reliable scroll-spy: pick section with highest intersection ratio near viewport center
   useEffect(() => {
-    const els = SECTION_IDS.map((id) => document.getElementById(id)).filter(
-      (el): el is HTMLElement => !!el
-    );
-    if (!els.length) {
-      // Sections may mount late (dynamic) — retry shortly
-      const t = setTimeout(() => setActive((a) => a), 400);
-      return () => clearTimeout(t);
-    }
-
-    ratios.current = {};
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const e of entries) {
-          ratios.current[e.target.id] = e.isIntersecting ? e.intersectionRatio : 0;
-        }
-        let best = "";
-        let bestR = 0;
-        for (const id of SECTION_IDS) {
-          const r = ratios.current[id] ?? 0;
-          if (r > bestR) {
-            bestR = r;
-            best = id;
-          }
-        }
-        // Fallback: scroll position based if ratios all zero
-        if (bestR < 0.05) {
-          const mid = window.scrollY + window.innerHeight * 0.35;
-          let closest = "";
-          let dist = Infinity;
-          for (const id of SECTION_IDS) {
-            const el = document.getElementById(id);
-            if (!el) continue;
-            const d = Math.abs(el.offsetTop - mid);
-            if (d < dist) {
-              dist = d;
-              closest = id;
-            }
-          }
-          if (closest) setActive(closest);
-        } else if (best) {
-          setActive(best);
-        }
-      },
-      {
-        // Center-weighted band so only one section "owns" the indicator
-        rootMargin: "-35% 0px -50% 0px",
-        threshold: [0, 0.1, 0.2, 0.35, 0.5, 0.7, 1],
-      }
-    );
-
-    els.forEach((el) => observer.observe(el));
-
-    // Also update on scroll for edge cases (fast scroll / dynamic mount)
-    const onScroll = () => {
-      const mid = window.scrollY + window.innerHeight * 0.35;
-      let closest = "";
-      let dist = Infinity;
-      for (const id of SECTION_IDS) {
-        const el = document.getElementById(id);
-        if (!el) continue;
-        const top = el.offsetTop;
-        const bottom = top + el.offsetHeight;
-        if (mid >= top - 80 && mid <= bottom + 40) {
-          const d = Math.abs(top - mid);
-          if (d < dist) {
-            dist = d;
-            closest = id;
-          }
-        }
-      }
-      if (closest) setActive(closest);
+    if (!mobileOpen) return;
+    const toggle = menuToggle.current;
+    const wide = window.matchMedia("(min-width: 1024px)");
+    const focusable = () => [toggle, ...Array.from(mobileMenu.current?.querySelectorAll<HTMLElement>("a[href], button:not([disabled])") ?? [])].filter((element): element is HTMLElement => !!element);
+    mobileMenu.current?.querySelector<HTMLElement>("a[href]")?.focus({ preventScroll: true });
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") { event.preventDefault(); setMobileOpen(false); }
+      if (event.key !== "Tab") return;
+      const items = focusable();
+      const first = items[0], last = items[items.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
     };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    onScroll();
-
+    const onWide = () => { if (wide.matches) setMobileOpen(false); };
+    window.addEventListener("keydown", onKey);
+    wide.addEventListener("change", onWide);
     return () => {
-      observer.disconnect();
-      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("keydown", onKey);
+      wide.removeEventListener("change", onWide);
+      toggle?.focus({ preventScroll: true });
     };
-  }, [lang, mobileOpen]);
+  }, [mobileOpen]);
 
   const links = [
     { label: t.nav.playground, href: "#playground", id: "playground" },
@@ -133,7 +71,7 @@ export default function Navbar() {
         initial={{ y: -80, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.6, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
-        className={`fixed top-0 left-0 right-0 z-[60] transition-all duration-400 ${
+        className={`site-navigation fixed top-0 left-0 right-0 z-[60] transition-all duration-400 ${
           scrolled
             ? "glass-strong shadow-lg shadow-black/30 border-b border-white/[0.07] backdrop-blur-xl"
             : "bg-transparent"
@@ -149,7 +87,7 @@ export default function Navbar() {
               onClick={(e) => {
                 e.preventDefault();
                 (e.currentTarget as HTMLElement).blur();
-                if (window.scrollY > 300) window.scrollTo({ top: 0, behavior: "smooth" });
+                if (window.scrollY > 300) window.scrollTo({ top: 0, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
                 // Progressive easter egg: every click advances the sequence (see LogoEasterEgg)
                 window.dispatchEvent(new CustomEvent("budai:logo-click", { detail: { el: e.currentTarget } }));
               }}
@@ -158,7 +96,7 @@ export default function Navbar() {
                 <BudAILogo size="sm" animated mode={busy ? "thinking" : "idle"} />
               </span>
               <span className="flex flex-col leading-none">
-                <TypeWordmark />
+                <span className="nav-wordmark">Bud<span>AI</span></span>
                 <span className="mt-1.5 hidden items-center gap-1.5 font-mono text-[9px] uppercase tracking-[0.2em] text-white/40 sm:flex">
                   DEVELOPED BY <b className="font-bold text-accent-cyan [text-shadow:0_0_12px_rgba(0,229,255,0.55)]">STILLEDEV</b>
                 </span>
@@ -249,6 +187,8 @@ export default function Navbar() {
                 {lang === "sv" ? "Prova" : "Try"}
               </a>
               <button
+              ref={menuToggle}
+              aria-controls="mobile-navigation"
               onClick={() => setMobileOpen(!mobileOpen)}
               className="p-2 text-white rounded-lg hover:bg-white/5 transition-colors"
               aria-label={mobileOpen ? "Close menu" : "Open menu"}
@@ -273,7 +213,7 @@ export default function Navbar() {
               className="absolute inset-0 bg-[#020205]/95 backdrop-blur-2xl"
               onClick={() => setMobileOpen(false)}
             />
-            <div className="relative pt-24 px-6 flex flex-col gap-1 max-h-screen overflow-y-auto pb-10">
+            <div ref={mobileMenu} id="mobile-navigation" role="navigation" aria-label="Mobile navigation" className="relative pt-24 px-6 flex flex-col gap-1 max-h-screen overflow-y-auto pb-10">
               {links.map((l, i) => (
                 <motion.a
                   key={l.href}

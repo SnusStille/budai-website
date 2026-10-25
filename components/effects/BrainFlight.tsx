@@ -22,6 +22,9 @@ type Props = {
   interactive?: boolean;
   onRegionHover?: (region: number) => void;
   onFail?: () => void;
+  onReady?: () => void;
+  settled?: boolean;
+  active?: boolean;
 };
 type Mat = Float32Array;
 type Target = { fbo: WebGLFramebuffer; tex: WebGLTexture; w: number; h: number };
@@ -219,22 +222,41 @@ function compile(gl: WebGL2RenderingContext, type: number, src: string) {
   if (!s) throw new Error("createShader failed");
   gl.shaderSource(s, src);
   gl.compileShader(s);
-  if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s) || "shader");
+  if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+    const message = gl.getShaderInfoLog(s) || "shader";
+    gl.deleteShader(s);
+    throw new Error(message);
+  }
   return s;
 }
 function link(gl: WebGL2RenderingContext, vs: string, fs: string) {
   const p = gl.createProgram();
   if (!p) throw new Error("createProgram failed");
-  gl.attachShader(p, compile(gl, gl.VERTEX_SHADER, vs));
-  gl.attachShader(p, compile(gl, gl.FRAGMENT_SHADER, fs));
-  gl.linkProgram(p);
-  if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p) || "link");
-  return p;
+  let vertex: WebGLShader | null = null;
+  let fragment: WebGLShader | null = null;
+  let linked = false;
+  try {
+    vertex = compile(gl, gl.VERTEX_SHADER, vs);
+    fragment = compile(gl, gl.FRAGMENT_SHADER, fs);
+    gl.attachShader(p, vertex);
+    gl.attachShader(p, fragment);
+    gl.linkProgram(p);
+    if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p) || "link");
+    linked = true;
+    return p;
+  } finally {
+    if (vertex) gl.deleteShader(vertex);
+    if (fragment) gl.deleteShader(fragment);
+    if (!linked) gl.deleteProgram(p);
+  }
 }
 function makeTarget(gl: WebGL2RenderingContext, w: number, h: number): Target {
   const tex = gl.createTexture();
   const fbo = gl.createFramebuffer();
-  if (!tex || !fbo) throw new Error("target alloc failed");
+  if (!tex || !fbo) {
+    gl.deleteTexture(tex); gl.deleteFramebuffer(fbo);
+    throw new Error("target alloc failed");
+  }
   gl.bindTexture(gl.TEXTURE_2D, tex);
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
@@ -243,7 +265,12 @@ function makeTarget(gl: WebGL2RenderingContext, w: number, h: number): Target {
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
   gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
   gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
+  const complete = gl.checkFramebufferStatus(gl.FRAMEBUFFER) === gl.FRAMEBUFFER_COMPLETE;
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  if (!complete) {
+    gl.deleteTexture(tex); gl.deleteFramebuffer(fbo);
+    throw new Error("incomplete framebuffer");
+  }
   return { fbo, tex, w, h };
 }
 function freeTarget(gl: WebGL2RenderingContext, t: Target | null) {
@@ -393,20 +420,29 @@ export default function BrainFlight({
   interactive = false,
   onRegionHover,
   onFail,
+  onReady,
+  settled = true,
+  active = true,
 }: Props) {
   const ref = useRef<HTMLCanvasElement>(null);
   const progRef = useRef(progress);
+  const settledRef = useRef(settled);
+  const activeRef = useRef(active);
   const focusRef = useRef(focus);
   const activityRef = useRef(activity);
   const hoverCbRef = useRef(onRegionHover);
   const failCbRef = useRef(onFail);
+  const readyCbRef = useRef(onReady);
   const kickRef = useRef<(() => void) | null>(null);
 
+  useEffect(() => { activeRef.current = active; if (active) kickRef.current?.(); }, [active]);
+  useEffect(() => { settledRef.current = settled; }, [settled]);
   useEffect(() => { progRef.current = progress; }, [progress]);
   useEffect(() => { focusRef.current = focus; kickRef.current?.(); }, [focus]);
   useEffect(() => { activityRef.current = activity; kickRef.current?.(); }, [activity]);
   useEffect(() => { hoverCbRef.current = onRegionHover; }, [onRegionHover]);
   useEffect(() => { failCbRef.current = onFail; }, [onFail]);
+  useEffect(() => { readyCbRef.current = onReady; }, [onReady]);
 
   useEffect(() => {
     const canvas = ref.current;
@@ -437,12 +473,26 @@ export default function BrainFlight({
     let bA: Target | null = null;
     let bB: Target | null = null;
 
+    const disposeResources = () => {
+      freeTarget(gl, scene); freeTarget(gl, bA); freeTarget(gl, bB);
+      if (pointProg) gl.deleteProgram(pointProg);
+      if (lineProg) gl.deleteProgram(lineProg);
+      if (blurProg) gl.deleteProgram(blurProg);
+      if (compProg) gl.deleteProgram(compProg);
+      if (pointBuf) gl.deleteBuffer(pointBuf);
+      if (lineBuf) gl.deleteBuffer(lineBuf);
+      if (pointVao) gl.deleteVertexArray(pointVao);
+      if (lineVao) gl.deleteVertexArray(lineVao);
+      if (emptyVao) gl.deleteVertexArray(emptyVao);
+    };
+
     // hover picking data (brain surface points that belong to a region)
     let pickPos = new Float32Array(0);
     let pickReg = new Int8Array(0);
     let lastMvp: Mat | null = null;
     let lastHover = -2;
     let curAct = activityRef.current;
+    let departure = settledRef.current ? 1 : 0;
     let tgtFocus = focusRef.current;
 
     try {
@@ -452,6 +502,8 @@ export default function BrainFlight({
       compProg = link(gl, VS_FULL, FS_COMPOSITE);
 
       const mobile = window.innerWidth < 768;
+      const debug = gl.getExtension("WEBGL_debug_renderer_info");
+      const software = !!debug && /swiftshader|llvmpipe|software/i.test(String(gl.getParameter(debug.UNMASKED_RENDERER_WEBGL)));
       const { pointData, N, dustCount, lineData, E } = buildBrain(mobile);
       const totalPoints = N + dustCount;
 
@@ -524,7 +576,7 @@ export default function BrainFlight({
       const uComp = { amt: gl.getUniformLocation(compProg, "uBloomAmt") };
 
       const resize = () => {
-        const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+        const dpr = Math.min(window.devicePixelRatio || 1, software ? .75 : mobile ? 1 : 1.25);
         const w = Math.max(2, Math.round(canvas.clientWidth * dpr));
         const h = Math.max(2, Math.round(canvas.clientHeight * dpr));
         if (w === canvas.width && h === canvas.height && scene) return;
@@ -534,8 +586,8 @@ export default function BrainFlight({
         freeTarget(gl, bA);
         freeTarget(gl, bB);
         scene = makeTarget(gl, w, h);
-        bA = makeTarget(gl, Math.max(2, w >> 1), Math.max(2, h >> 1));
-        bB = makeTarget(gl, Math.max(2, w >> 1), Math.max(2, h >> 1));
+        bA = makeTarget(gl, Math.max(2, w >> 2), Math.max(2, h >> 2));
+        bB = makeTarget(gl, Math.max(2, w >> 2), Math.max(2, h >> 2));
       };
 
       const blurPass = (src: WebGLTexture, dst: Target, dx: number, dy: number) => {
@@ -553,9 +605,9 @@ export default function BrainFlight({
         const H = canvas.height;
 
         const fly = ambient ? 0 : Math.pow(Math.min(1, p / 0.92), 2.0);
-        const camZ = ambient ? 4.4 : 5.2 - 5.6 * fly;
+        const camZ = ambient ? 3.95 + departure * .65 : 5.2 - 5.6 * fly;
         const camX = ambient ? Math.sin(t * 0.15) * 0.25 : Math.sin(fly * Math.PI) * 0.55;
-        const yaw = t * (ambient ? 0.09 : 0.12) + fly * 1.1;
+        const yaw = t * (ambient ? 0.09 : 0.12) + fly * 1.1 + departure * .24;
         const tilt = ambient ? 0.12 : 0.22 - 0.18 * fly;
         const proj = perspective(0.87, W / H, 0.05, 50);
         const mvp = mul(proj, mul(translate(-camX, -0.25, -camZ), mul(rotX(tilt), rotY(yaw))));
@@ -599,8 +651,7 @@ export default function BrainFlight({
         gl.bindVertexArray(emptyVao);
         blurPass(scene.tex, bA, 2 / scene.w, 0);
         blurPass(bA.tex, bB, 0, 2 / bA.h);
-        blurPass(bB.tex, bA, 4 / bB.w, 0);
-        blurPass(bA.tex, bB, 0, 4 / bA.h);
+
 
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
         gl.viewport(0, 0, W, H);
@@ -617,16 +668,33 @@ export default function BrainFlight({
       };
 
       const start = performance.now();
+      let last = 0;
+      let reportedReady = false;
       const frame = (now: number) => {
         if (!alive) return;
-        if (!visible && !reduced) {
+        if ((!visible || document.hidden || !activeRef.current) && !reduced) {
           running = false;
           return;
         }
-        resize();
-        tgtFocus = focusRef.current;
-        curAct += (activityRef.current - curAct) * 0.06;
-        render((now - start) / 1000, progRef.current);
+        if (!reduced && now - last < 30) { raf = requestAnimationFrame(frame); return; }
+        last = now;
+        try {
+          resize();
+          tgtFocus = focusRef.current;
+          curAct += (activityRef.current - curAct) * 0.06;
+          departure += ((settledRef.current ? 1 : 0) - departure) * .13;
+          render(reduced ? 2 : (now - start) / 1000, progRef.current);
+          if (!reportedReady) {
+            reportedReady = true;
+            canvas.dataset.rendered = "true";
+            readyCbRef.current?.();
+          }
+        } catch {
+          alive = false;
+          running = false;
+          failCbRef.current?.();
+          return;
+        }
         if (reduced) {
           running = false;
           return;
@@ -636,26 +704,46 @@ export default function BrainFlight({
       };
 
       kickRef.current = () => {
-        if (alive && reduced && !running) raf = requestAnimationFrame(frame);
+        if (alive && visible && !document.hidden && activeRef.current && !running) {
+          running = true;
+          raf = requestAnimationFrame(frame);
+        }
       };
 
       running = true;
       raf = requestAnimationFrame(frame);
-      if (reduced) running = false;
+
     } catch (err) {
+      alive = false;
+      running = false;
+      cancelAnimationFrame(raf);
+      kickRef.current = null;
+      disposeResources();
       console.warn("BrainFlight disabled:", err);
       failCbRef.current?.();
+      return;
     }
 
     // pause when offscreen, resume when visible
     const io = new IntersectionObserver(([entry]) => {
       visible = entry.isIntersecting;
-      if (visible && alive && !running && !reduced) {
-        running = true;
-        raf = requestAnimationFrame(() => kickRef.current?.());
-      }
+      if (visible && alive && !running) kickRef.current?.();
     });
     io.observe(canvas);
+    const onVisibility = () => {
+      if (document.hidden) { cancelAnimationFrame(raf); running = false; }
+      else kickRef.current?.();
+    };
+    const onLost = (event: Event) => {
+      event.preventDefault();
+      cancelAnimationFrame(raf);
+      running = false;
+      failCbRef.current?.();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    canvas.addEventListener("webglcontextlost", onLost);
+    const resizeObserver = new ResizeObserver(() => kickRef.current?.());
+    resizeObserver.observe(canvas);
 
     // interaction: project brain regions and report the nearest one under the pointer
     const onMove = (e: PointerEvent) => {
@@ -702,28 +790,21 @@ export default function BrainFlight({
       cancelAnimationFrame(raf);
       kickRef.current = null;
       io.disconnect();
+      resizeObserver.disconnect();
+      document.removeEventListener("visibilitychange", onVisibility);
+      canvas.removeEventListener("webglcontextlost", onLost);
       if (interactive) {
         canvas.removeEventListener("pointermove", onMove);
         canvas.removeEventListener("pointerleave", onLeave);
       }
-      freeTarget(gl, scene);
-      freeTarget(gl, bA);
-      freeTarget(gl, bB);
-      if (pointProg) gl.deleteProgram(pointProg);
-      if (lineProg) gl.deleteProgram(lineProg);
-      if (blurProg) gl.deleteProgram(blurProg);
-      if (compProg) gl.deleteProgram(compProg);
-      if (pointBuf) gl.deleteBuffer(pointBuf);
-      if (lineBuf) gl.deleteBuffer(lineBuf);
-      if (pointVao) gl.deleteVertexArray(pointVao);
-      if (lineVao) gl.deleteVertexArray(lineVao);
-      if (emptyVao) gl.deleteVertexArray(emptyVao);
+      disposeResources();
     };
   }, [mode, interactive]);
 
   return (
     <canvas
       ref={ref}
+      data-brain-canvas
       aria-hidden
       className={`${interactive ? "pointer-events-auto" : "pointer-events-none"} absolute inset-0 h-full w-full ${className}`}
     />

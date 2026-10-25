@@ -1,157 +1,182 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import BrainFlight from "@/components/effects/BrainFlight";
+import { usePathname } from "next/navigation";
+import dynamic from "next/dynamic";
 import { markIntroDone } from "@/components/effects/introState";
+import { INTRO_MS, INTRO_REVEAL_MS, INTRO_SESSION_KEY, introLetters } from "@/lib/experience/intro";
+import BrainFallback from "./BrainFallback";
 
-const WORD = "BudAI";
-const GLYPHS = "01<>{}/=+*#";
-const BOOT = ["init core", "load models", "warm up playground", "ready"];
-const DURATION = 5600;
+const BrainFlight = dynamic(() => import("./BrainFlight"), { ssr: false });
+type Phase = "pending" | "playing" | "revealing" | "done";
 
-/** Each letter of the wordmark scrambles through code characters, then locks in. */
-function Scramble({ start }: { start: number }) {
-  const [out, setOut] = useState<string[]>(() => WORD.split("").map(() => ""));
-  useEffect(() => {
-    let raf = 0;
-    const t0 = performance.now();
-    const tick = (t: number) => {
-      const el = t - t0;
-      setOut(WORD.split("").map((c, i) => {
-        const s = start + i * 300;
-        if (el < s) return "";
-        if (el > s + 520) return c;
-        return GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
-      }));
-      if (el < start + WORD.length * 300 + 600) raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [start]);
-
-  return (
-    <span aria-label={WORD}>
-      {WORD.split("").map((c, i) => (
-        <span key={i} className="relative inline-block" aria-hidden>
-          <span className="invisible">{c}</span>
-          <span className={`absolute inset-0 flex items-center justify-center ${i >= 3 ? "text-accent-cyan" : ""} ${out[i] && out[i] !== c ? "opacity-60 font-mono" : ""}`}>
-            {out[i]}
-          </span>
-        </span>
-      ))}
-    </span>
-  );
-}
-
+/**
+ * One owner, one canvas, one clock. The brain is NOT unmounted at the handoff:
+ * the very same canvas moves into the landing page. No section can launch an intro.
+ */
 export default function LoadingScreen() {
-  const [show, setShow] = useState(true);
-  const [out, setOut] = useState(false);
-  const [p, setP] = useState(0);
+  const pathname = usePathname();
+  const [phase, setPhase] = useState<Phase>("pending");
+  const [letters, setLetters] = useState(0);
+  const [fallback, setFallback] = useState(false);
+  const [renderBrain, setRenderBrain] = useState(false);
+  const [ready, setReady] = useState(false);
+  const [coreVisible, setCoreVisible] = useState(true);
+  const coreVisibleRef = useRef(true);
+  const readyRef = useRef(false);
+  const stage = useRef<HTMLDivElement>(null);
+  const progressBar = useRef<HTMLSpanElement>(null);
   const finish = useRef<() => void>(() => {});
 
   useEffect(() => {
-    let fresh = true;
-    try {
-      const ts = Number(localStorage.getItem("budai_intro_ts") || 0);
-      fresh = !ts || Date.now() - ts > 30 * 60 * 1000;
-    } catch {
-      /* ignore */
-    }
-    const nav = navigator as Navigator & { connection?: { saveData?: boolean }; deviceMemory?: number };
-    const slow = !!nav.connection?.saveData || (!!nav.deviceMemory && nav.deviceMemory <= 2);
-    if (!fresh || slow) {
-      markIntroDone();
-      setShow(false);
-      return;
-    }
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const duration = reduced ? 1800 : DURATION;
-    document.body.style.overflow = "hidden";
+    if (pathname !== "/") { document.documentElement.dataset.budaiIntro = "done"; return; }
+    let alive = true;
     let raf = 0;
+    let exitTimer = 0;
+    let assetTimer = 0;
+    let safety = 0;
     let closing = false;
-    finish.current = () => {
-      if (closing) return;
+    let completed = false;
+    let returnFocus = false;
+    const root = document.documentElement;
+    const win = window as Window & { __budaiIntroGuard?: number };
+    clearTimeout(win.__budaiIntroGuard);
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const nav = navigator as Navigator & { connection?: { saveData?: boolean } };
+    setRenderBrain(!media.matches && !nav.connection?.saveData);
+    setFallback(media.matches || !!nav.connection?.saveData);
+
+    const complete = () => {
+      if (!alive || completed) return;
+      completed = true;
       closing = true;
       cancelAnimationFrame(raf);
-      try {
-        localStorage.setItem("budai_intro_ts", String(Date.now()));
-      } catch {
-        /* ignore */
+      clearTimeout(exitTimer);
+      clearTimeout(assetTimer);
+      clearTimeout(safety);
+      finish.current = () => {};
+      root.dataset.budaiIntro = "done";
+      if (returnFocus) {
+        const main = document.getElementById("main");
+        if (main) { main.inert = false; main.focus({ preventScroll: true }); }
       }
-      setP(1);
-      setOut(true);
-      markIntroDone(); // hero starts entering as the intro flies away
-      window.setTimeout(() => {
-        document.body.style.overflow = "";
-        setShow(false);
-      }, 900);
+      setPhase("done");
+      markIntroDone();
     };
-    const start = performance.now();
-    const tick = (t: number) => {
-      const v = Math.min(1, (t - start) / duration);
-      setP(v);
-      if (v < 1) raf = requestAnimationFrame(tick);
-      else finish.current();
-    };
-    raf = requestAnimationFrame(tick);
-    return () => {
+    const end = () => {
+      if (closing || !alive) return;
+      closing = true;
+      returnFocus = !!document.activeElement?.closest("[data-global-loader]");
       cancelAnimationFrame(raf);
-      document.body.style.overflow = "";
+      clearTimeout(assetTimer);
+      try { sessionStorage.setItem(INTRO_SESSION_KEY, "1"); } catch { /* storage is optional */ }
+      setLetters(5);
+      setPhase("revealing");
+      root.dataset.budaiIntro = "revealing";
+      exitTimer = window.setTimeout(complete, media.matches ? 0 : INTRO_REVEAL_MS);
     };
-  }, []);
+    finish.current = end;
 
-  if (!show) return null;
-  const thresholds = [0.1, 0.36, 0.62, 0.9];
+    if (root.dataset.budaiIntro !== "playing" || media.matches) {
+      complete();
+    } else {
+      setPhase("playing");
+      const start = performance.now();
+      let previousLetters = -1;
+      // Only the brain is relevant to this intro. Neither the developer room nor
+      // the Playground is an asset dependency. A failed/slow GPU never gates entry.
+      assetTimer = window.setTimeout(() => {
+        if (!readyRef.current && alive) setFallback(true);
+      }, 1600);
+      const tick = (now: number) => {
+        if (!alive || closing) return;
+        const elapsed = now - start;
+        const n = introLetters(elapsed);
+        if (n !== previousLetters) { previousLetters = n; setLetters(n); }
+        progressBar.current?.style.setProperty("transform", `scaleX(${Math.min(1, elapsed / INTRO_MS)})`);
+        if (elapsed >= INTRO_MS) end();
+        else raf = requestAnimationFrame(tick);
+      };
+      raf = requestAnimationFrame(tick);
+    }
+
+    const onKey = (event: KeyboardEvent) => { if (event.key === "Escape") end(); };
+    const onMotion = () => { if (media.matches) { setRenderBrain(false); setFallback(true); end(); } };
+    window.addEventListener("keydown", onKey);
+    media.addEventListener("change", onMotion);
+    // A timeout, not just rAF: the page is released even in a background tab.
+    if (!completed) safety = window.setTimeout(complete, INTRO_MS + INTRO_REVEAL_MS + 500);
+    return () => {
+      alive = false;
+      cancelAnimationFrame(raf);
+      clearTimeout(exitTimer);
+      clearTimeout(assetTimer);
+      clearTimeout(safety);
+      window.removeEventListener("keydown", onKey);
+      media.removeEventListener("change", onMotion);
+      finish.current = () => {};
+    };
+  }, [pathname]);
+
+  useEffect(() => {
+    if (pathname !== "/") return;
+    // This uses the shared scroll signal, not a second scroll listener.
+    let unsubscribe = () => {};
+    let alive = true;
+    import("@/lib/experience/scroll").then(({ subscribeJourney }) => {
+      if (!alive) return;
+      unsubscribe = subscribeJourney((frame) => {
+        if (!stage.current) return;
+        const p = Math.min(1, frame.y / Math.max(1, frame.height * .82));
+        if ((p < 1) !== coreVisibleRef.current) { coreVisibleRef.current = p < 1; setCoreVisible(p < 1); }
+        stage.current.style.setProperty("--core-scroll", String(p));
+        stage.current.style.setProperty("--core-offset", `${-frame.y * .42}px`);
+      });
+    });
+    return () => { alive = false; unsubscribe(); };
+  }, [pathname]);
+
+  useEffect(() => {
+    const main = document.getElementById("main");
+    if (!main || pathname !== "/") return;
+    const active = document.documentElement.dataset.budaiIntro === "playing";
+    main.inert = active;
+    if (active) main.setAttribute("aria-busy", "true");
+    else main.removeAttribute("aria-busy");
+    return () => { main.inert = false; main.removeAttribute("aria-busy"); };
+  }, [pathname, phase]);
+
+  if (pathname !== "/") return null;
 
   return (
-    <div
-      role="status"
-      aria-label="Loading BudAI"
-      onClick={() => finish.current()}
-      className={`fixed inset-0 z-[200] flex items-center justify-center overflow-hidden bg-[#020205] transition-[opacity,transform,filter] duration-[900ms] ease-out ${
-        out ? "opacity-0 scale-110 blur-md pointer-events-none" : "opacity-100"
-      }`}
-    >
-      <div className="ai-grid absolute inset-0 opacity-30" aria-hidden />
-      <div
-        className={`absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,229,255,0.35),transparent_55%)] transition-opacity duration-700 ${out ? "opacity-100" : "opacity-0"}`}
-        aria-hidden
-      />
-      <BrainFlight progress={p} activity={Math.max(0, (p - 0.7) / 0.3)} />
-      <div className="absolute h-[620px] w-[620px] rounded-full bg-accent-cyan/[0.08] blur-[140px]" aria-hidden />
-      <div className="absolute h-[380px] w-[380px] translate-x-24 translate-y-20 rounded-full bg-accent-purple/[0.12] blur-[120px]" aria-hidden />
-
-      {/* top: credit, tagline, wordmark */}
-      <div className="absolute inset-x-0 top-[6%] sm:top-[8%] flex flex-col items-center gap-2 text-center">
-        <p className="bud-pop font-mono text-[11px] uppercase tracking-[0.35em] text-white/40" style={{ animationDelay: "0.3s" }}>
-          DEVELOPED BY <b className="font-bold text-accent-cyan [text-shadow:0_0_14px_rgba(0,229,255,0.6)]">STILLEDEV</b>
-        </p>
-        <p className="bud-pop text-base sm:text-xl font-medium tracking-wide text-white/80" style={{ animationDelay: "1.6s" }}>
-          Your new <span className="bg-gradient-to-r from-accent-cyan to-accent-purple bg-clip-text text-transparent">ChatGPT</span>
-        </p>
-        <h1 className="text-5xl sm:text-7xl font-bold tracking-tight text-white [text-shadow:0_0_50px_rgba(0,229,255,0.45)]">
-          <Scramble start={2200} />
-        </h1>
-      </div>
-
-      {/* bottom: progress + boot log */}
-      <div className="absolute inset-x-0 bottom-[4%] flex flex-col items-center">
-        <div className="relative h-px w-64 bg-white/10 sm:w-72">
-          <div className="h-px bg-gradient-to-r from-accent-cyan to-accent-purple" style={{ width: `${p * 100}%` }} />
-          <span className="absolute -top-[3px] h-[7px] w-[7px] -translate-x-1/2 rounded-full bg-white shadow-[0_0_12px_rgba(0,229,255,1)]" style={{ left: `${p * 100}%` }} />
-        </div>
-        <ul className="mt-3 h-[68px] w-64 space-y-1 font-mono text-[11px] text-white/45 sm:w-72">
-          {BOOT.map((b, i) =>
-            p >= thresholds[i] ? (
-              <li key={b} className="bud-pop flex justify-between" style={{ animationDuration: "0.5s" }}>
-                <span>&gt; {b}</span>
-                <span className="text-accent-green">ok</span>
-              </li>
-            ) : null
+    <>
+      <div className="intro-backdrop" aria-hidden="true" />
+      <div ref={stage} className="intelligence-stage" data-intelligence-stage data-phase={phase} aria-hidden="true">
+        <div className="intelligence-frame">
+          <div className="intelligence-halo" />
+          <div className="intelligence-orbit intelligence-orbit-a" />
+          <div className="intelligence-orbit intelligence-orbit-b" />
+          {(fallback || !renderBrain) && <BrainFallback />}
+          {renderBrain && !fallback && (
+            <BrainFlight mode="ambient" active={coreVisible || phase === "playing" || phase === "revealing"} settled={phase === "revealing" || phase === "done"} activity={phase === "playing" && letters >= 3 ? .5 : .08} onReady={() => { readyRef.current = true; setReady(true); }} onFail={() => setFallback(true)} />
           )}
-        </ul>
-        <p className="bud-pop text-[11px] text-white/25" style={{ animationDelay: "1.5s" }}>click to skip</p>
+          <span className="core-coordinate core-coordinate-a">NEURAL ARCHITECTURE / 001</span>
+          <span className="core-coordinate core-coordinate-b">INTELLIGENCE → CREATION</span>
+          <div className="core-caption"><span />{ready ? "CORE ACTIVE" : "INTELLIGENCE CORE"}<small>BUILT BY STILLEDEV · SWEDEN</small></div>
+        </div>
       </div>
-    </div>
+      {phase !== "done" && (
+        <div className="intro-interface" data-global-loader role="status" aria-label="Initializing BudAI" aria-live="polite">
+          <div className="intro-topline"><span>STILLEDEV</span><span>INTELLIGENCE, INITIALIZED.</span></div>
+          <div className="intro-wordmark" aria-label="BUDAI">
+            <span data-intro-word aria-hidden="true">{"BUDAI".slice(0, letters)}</span><i aria-hidden="true" />
+          </div>
+          <div className="intro-bottomline">
+            <div className="intro-progress"><span ref={progressBar} /></div>
+            <div><span>{letters < 5 ? "AWAKENING THE CORE" : "FROM INTELLIGENCE TO CREATION"}</span><button type="button" onClick={() => finish.current()}>Skip intro <kbd>esc</kbd></button></div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
