@@ -37,6 +37,7 @@ export default function Hero() {
           {chips.map(({ icon: Icon, label, region }) => (
             <span
               key={label}
+              data-hero-brain-region={region}
               onPointerEnter={() => focusRegion(region)}
               onPointerLeave={() => focusRegion(-1)}
             >
