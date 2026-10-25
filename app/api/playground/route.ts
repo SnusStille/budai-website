@@ -1,3 +1,4 @@
+import { resolveModelTier } from "@/lib/ai-models";
 import Anthropic from "@anthropic-ai/sdk";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
@@ -142,6 +143,8 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
+    const model=resolveModelTier(body?.modelTier);
+    if(!model)return NextResponse.json({error:"That model tier is not configured."},{status:400});
     const rawMessages = body?.messages;
     const lang = body?.lang === "sv" ? "sv" : "en";
     const concise = body?.concise === true;
@@ -280,7 +283,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid message" }, { status: 400 });
     }
 
-    const model = process.env.ANTHROPIC_MODEL || "claude-sonnet-4-20250514";
+
 
     if (wantStream) {
       const enc = new TextEncoder();

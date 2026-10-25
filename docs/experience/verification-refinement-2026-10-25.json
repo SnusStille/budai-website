@@ -1,0 +1,602 @@
+{
+  "date": "2026-10-25",
+  "implementation": "Critical first-frame/hero fix; sparse information field; one signal; existing-footer outro",
+  "sourceBase": "3547f2e plus default promotional-card/toast removal and final focus restoration",
+  "environment": "Optimized Next.js production build, Chromium 153 / SwiftShader, one worker, zero retries",
+  "stats": {
+    "total": 69,
+    "expected": 69,
+    "unexpected": 0,
+    "flaky": 0,
+    "skipped": 0,
+    "ok": true
+  },
+  "durationMs": 247929.70700000002,
+  "browserTests": 55,
+  "pureTests": 14,
+  "build": {
+    "status": "pass",
+    "staticPages": 19,
+    "homeRouteKB": 64.7,
+    "homeFirstLoadKB": 271,
+    "startingFirstLoadKB": 272,
+    "newRuntimeDependencies": 0
+  },
+  "criticalGateBeforeSecondary": {
+    "developmentStrictMode": 9,
+    "optimizedProduction": 9
+  },
+  "layoutShiftObservations": {
+    "fresh visit: readiness-gated actual brain, one surface, no hero renderer and bounded layout shift": {
+      "sum": 0.0025090169270833335,
+      "values": [
+        0.0025090169270833335
+      ],
+      "scope": "Lab observations during this test, not field CLS"
+    },
+    "mobile 390px: intro, normal scrolling, 3D Builder, menu and form fit": {
+      "sum": 0.01595719522161538,
+      "values": [
+        0.01595719522161538
+      ],
+      "scope": "Lab observations during this test, not field CLS"
+    },
+    "mobile 360px: intro, normal scrolling, 3D Builder, menu and form fit": {
+      "sum": 0,
+      "values": [],
+      "scope": "Lab observations during this test, not field CLS"
+    }
+  },
+  "criticalCases": [
+    {
+      "title": "critical opening 1440: same intended model, one surface, no logo/SVG flash, disposed stable hero",
+      "samples": 116,
+      "maxBrainCanvases": 1,
+      "maxOpeningSurfaces": 1,
+      "alternateBrainObserved": false,
+      "openingOrHeroLogoObserved": false,
+      "restingHeroBrainObserved": false,
+      "liveModelIDs": [
+        "budai-neural-43f44c9"
+      ]
+    },
+    {
+      "title": "critical opening 390: same intended model, one surface, no logo/SVG flash, disposed stable hero",
+      "samples": 184,
+      "maxBrainCanvases": 1,
+      "maxOpeningSurfaces": 1,
+      "alternateBrainObserved": false,
+      "openingOrHeroLogoObserved": false,
+      "restingHeroBrainObserved": false,
+      "liveModelIDs": [
+        "budai-neural-43f44c9"
+      ]
+    },
+    {
+      "title": "critical opening 360: same intended model, one surface, no logo/SVG flash, disposed stable hero",
+      "samples": 185,
+      "maxBrainCanvases": 1,
+      "maxOpeningSurfaces": 1,
+      "alternateBrainObserved": false,
+      "openingOrHeroLogoObserved": false,
+      "restingHeroBrainObserved": false,
+      "liveModelIDs": [
+        "budai-neural-43f44c9"
+      ]
+    },
+    {
+      "title": "delayed hydration first paint uses only a capture of the canonical model, never an alternate SVG",
+      "samples": 104,
+      "maxBrainCanvases": 1,
+      "maxOpeningSurfaces": 1,
+      "alternateBrainObserved": false,
+      "openingOrHeroLogoObserved": false,
+      "restingHeroBrainObserved": false,
+      "liveModelIDs": [
+        "budai-neural-43f44c9"
+      ]
+    },
+    {
+      "title": "late brain import finishes preparation without a replacement brain and cannot wake up on the hero",
+      "samples": 37,
+      "maxBrainCanvases": 0,
+      "maxOpeningSurfaces": 1,
+      "alternateBrainObserved": false,
+      "openingOrHeroLogoObserved": false,
+      "restingHeroBrainObserved": false,
+      "liveModelIDs": []
+    },
+    {
+      "title": "normal and cache-disabled hard refresh never replay or initialise a hero brain",
+      "samples": 33,
+      "maxBrainCanvases": 0,
+      "maxOpeningSurfaces": 1,
+      "alternateBrainObserved": false,
+      "openingOrHeroLogoObserved": false,
+      "restingHeroBrainObserved": false,
+      "liveModelIDs": []
+    },
+    {
+      "title": "WebGL failure releases the single opening and never swaps in a different brain or logo",
+      "samples": 37,
+      "maxBrainCanvases": 1,
+      "maxOpeningSurfaces": 1,
+      "alternateBrainObserved": false,
+      "openingOrHeroLogoObserved": false,
+      "restingHeroBrainObserved": false,
+      "liveModelIDs": []
+    },
+    {
+      "title": "reduced motion has no opening or hero graphics; story, product and navigation remain available",
+      "samples": 32,
+      "maxBrainCanvases": 0,
+      "maxOpeningSurfaces": 1,
+      "alternateBrainObserved": false,
+      "openingOrHeroLogoObserved": false,
+      "restingHeroBrainObserved": false,
+      "liveModelIDs": []
+    },
+    {
+      "title": "scroll story is separate: it appears once only in its section, and cannot return with the hero or history",
+      "samples": 30,
+      "maxBrainCanvases": 0,
+      "maxOpeningSurfaces": 1,
+      "alternateBrainObserved": false,
+      "openingOrHeroLogoObserved": false,
+      "restingHeroBrainObserved": false,
+      "liveModelIDs": []
+    },
+    {
+      "title": "pristine visitor defaults stay clean after timers: no promotional logo card or automatic outro toast",
+      "samples": 109,
+      "maxBrainCanvases": 1,
+      "maxOpeningSurfaces": 1,
+      "alternateBrainObserved": false,
+      "openingOrHeroLogoObserved": false,
+      "restingHeroBrainObserved": false,
+      "liveModelIDs": [
+        "budai-neural-43f44c9"
+      ]
+    }
+  ],
+  "throttledEntry": {
+    "cpuSlowdown": 4,
+    "latencyMs": 150,
+    "downloadBytesPerSecond": 220000,
+    "releaseObservationMs": 7193,
+    "maxOpeningSurfaces": 1,
+    "maxBrainCanvases": 1,
+    "roomInitializedAtEntry": false
+  },
+  "separateDevelopmentMockSignupSuccess": true,
+  "externalDatabaseWrites": false,
+  "results": [
+    {
+      "file": "arrival.spec.ts",
+      "title": "the opening enters the intended cortex and gives up all scene ownership on the landing",
+      "outcome": "expected",
+      "durationMs": 5026
+    },
+    {
+      "file": "arrival.spec.ts",
+      "title": "real Playground arrival 1440: one projected DOM surface, matched information signal, reversible, editable and expandable",
+      "outcome": "expected",
+      "durationMs": 8898
+    },
+    {
+      "file": "arrival.spec.ts",
+      "title": "real Playground arrival 834: one projected DOM surface, matched information signal, reversible, editable and expandable",
+      "outcome": "expected",
+      "durationMs": 7606
+    },
+    {
+      "file": "arrival.spec.ts",
+      "title": "real Playground arrival 390: one projected DOM surface, matched information signal, reversible, editable and expandable",
+      "outcome": "expected",
+      "durationMs": 5491
+    },
+    {
+      "file": "arrival.spec.ts",
+      "title": "Confluence contains a real travelling signal and pauses on reduced motion without another logo canvas",
+      "outcome": "expected",
+      "durationMs": 1569
+    },
+    {
+      "file": "brand.spec.ts",
+      "title": "one living Confluence identity reaches the real UI, installed icons and both social metadata paths",
+      "outcome": "expected",
+      "durationMs": 1461
+    },
+    {
+      "file": "cinematic-mobile.spec.ts",
+      "title": "mobile 390: full-height neural perspective, information field, plans and Next Signal",
+      "outcome": "expected",
+      "durationMs": 8083
+    },
+    {
+      "file": "cinematic-mobile.spec.ts",
+      "title": "mobile 360: full-height neural perspective, information field, plans and Next Signal",
+      "outcome": "expected",
+      "durationMs": 7835
+    },
+    {
+      "file": "cinematic-mobile.spec.ts",
+      "title": "throttled fresh entry stays bounded, never mounts competing loaders, and does not fetch the room",
+      "outcome": "expected",
+      "durationMs": 7790
+    },
+    {
+      "file": "cinematic.spec.ts",
+      "title": "restored neural journey is after landing and before the REAL Playground; one reversible 3D camera",
+      "outcome": "expected",
+      "durationMs": 10361
+    },
+    {
+      "file": "cinematic.spec.ts",
+      "title": "one sparse information register organises six capabilities and three accurate access levels",
+      "outcome": "expected",
+      "durationMs": 4881
+    },
+    {
+      "file": "cinematic.spec.ts",
+      "title": "Next Signal has a real approach but the waitlist anchor goes straight to the usable form",
+      "outcome": "expected",
+      "durationMs": 3592
+    },
+    {
+      "file": "experience.spec.ts",
+      "title": "fresh visit: readiness-gated actual brain, one surface, no hero renderer and bounded layout shift",
+      "outcome": "expected",
+      "durationMs": 4823
+    },
+    {
+      "file": "experience.spec.ts",
+      "title": "the story sleeps under settled interaction, resumes the same warm scene, and is disposed before hero",
+      "outcome": "expected",
+      "durationMs": 3774
+    },
+    {
+      "file": "experience.spec.ts",
+      "title": "brain shader failure frees partial GPU allocations and leaves a usable fallback",
+      "outcome": "expected",
+      "durationMs": 1872
+    },
+    {
+      "file": "experience.spec.ts",
+      "title": "keyboard users can reach Skip, leave the intro and focus the real page",
+      "outcome": "expected",
+      "durationMs": 2418
+    },
+    {
+      "file": "experience.spec.ts",
+      "title": "a stalled animation clock cannot hold the page or restart a completed intro",
+      "outcome": "expected",
+      "durationMs": 9345
+    },
+    {
+      "file": "experience.spec.ts",
+      "title": "a slow brain bundle falls back; unrelated assets never gate the reveal",
+      "outcome": "expected",
+      "durationMs": 3407
+    },
+    {
+      "file": "experience.spec.ts",
+      "title": "reload, ordinary anchors, legal navigation, and history do not replay the intro",
+      "outcome": "expected",
+      "durationMs": 3096
+    },
+    {
+      "file": "experience.spec.ts",
+      "title": "Builder is real 3D; native scroll drives the camera and code, including exact reverse reconstruction",
+      "outcome": "expected",
+      "durationMs": 13507
+    },
+    {
+      "file": "experience.spec.ts",
+      "title": "capabilities, waitlist and roadmap evolve the same background without hiding content",
+      "outcome": "expected",
+      "durationMs": 7537
+    },
+    {
+      "file": "experience.spec.ts",
+      "title": "reduced motion: no intro, no WebGL, full static code and accessible forms",
+      "outcome": "expected",
+      "durationMs": 2792
+    },
+    {
+      "file": "experience.spec.ts",
+      "title": "no WebGL degrades without trapping the page",
+      "outcome": "expected",
+      "durationMs": 2782
+    },
+    {
+      "file": "experience.spec.ts",
+      "title": "context loss and changing reduced motion clean up the shared world",
+      "outcome": "expected",
+      "durationMs": 5869
+    },
+    {
+      "file": "experience.spec.ts",
+      "title": "partial world construction failure releases the canvas and DOM renderer",
+      "outcome": "expected",
+      "durationMs": 1655
+    },
+    {
+      "file": "experience.spec.ts",
+      "title": "mobile 390px: intro, normal scrolling, 3D Builder, menu and form fit",
+      "outcome": "expected",
+      "durationMs": 6442
+    },
+    {
+      "file": "experience.spec.ts",
+      "title": "mobile 360px: intro, normal scrolling, 3D Builder, menu and form fit",
+      "outcome": "expected",
+      "durationMs": 6090
+    },
+    {
+      "file": "experience.spec.ts",
+      "title": "resizing preserves one world and realigns the editor to its physical monitor",
+      "outcome": "expected",
+      "durationMs": 3097
+    },
+    {
+      "file": "experience.spec.ts",
+      "title": "no JavaScript still exposes product content and navigation, never a blocking loader",
+      "outcome": "expected",
+      "durationMs": 901
+    },
+    {
+      "file": "experience.spec.ts",
+      "title": "an already-loaded world actually stops GPU draws on reverse-to-landing and resumes the SAME scene",
+      "outcome": "expected",
+      "durationMs": 3725
+    },
+    {
+      "file": "experience.spec.ts",
+      "title": "save-data mode keeps static anatomy and all actions without downloading a heavy world",
+      "outcome": "expected",
+      "durationMs": 1953
+    },
+    {
+      "file": "loading-lifecycle.spec.ts",
+      "title": "critical opening 1440: same intended model, one surface, no logo/SVG flash, disposed stable hero",
+      "outcome": "expected",
+      "durationMs": 5961
+    },
+    {
+      "file": "loading-lifecycle.spec.ts",
+      "title": "critical opening 390: same intended model, one surface, no logo/SVG flash, disposed stable hero",
+      "outcome": "expected",
+      "durationMs": 5215
+    },
+    {
+      "file": "loading-lifecycle.spec.ts",
+      "title": "critical opening 360: same intended model, one surface, no logo/SVG flash, disposed stable hero",
+      "outcome": "expected",
+      "durationMs": 5200
+    },
+    {
+      "file": "loading-lifecycle.spec.ts",
+      "title": "delayed hydration first paint uses only a capture of the canonical model, never an alternate SVG",
+      "outcome": "expected",
+      "durationMs": 4496
+    },
+    {
+      "file": "loading-lifecycle.spec.ts",
+      "title": "late brain import finishes preparation without a replacement brain and cannot wake up on the hero",
+      "outcome": "expected",
+      "durationMs": 5564
+    },
+    {
+      "file": "loading-lifecycle.spec.ts",
+      "title": "normal and cache-disabled hard refresh never replay or initialise a hero brain",
+      "outcome": "expected",
+      "durationMs": 5907
+    },
+    {
+      "file": "loading-lifecycle.spec.ts",
+      "title": "WebGL failure releases the single opening and never swaps in a different brain or logo",
+      "outcome": "expected",
+      "durationMs": 2180
+    },
+    {
+      "file": "loading-lifecycle.spec.ts",
+      "title": "reduced motion has no opening or hero graphics; story, product and navigation remain available",
+      "outcome": "expected",
+      "durationMs": 1349
+    },
+    {
+      "file": "loading-lifecycle.spec.ts",
+      "title": "scroll story is separate: it appears once only in its section, and cannot return with the hero or history",
+      "outcome": "expected",
+      "durationMs": 2670
+    },
+    {
+      "file": "loading-lifecycle.spec.ts",
+      "title": "pristine visitor defaults stay clean after timers: no promotional logo card or automatic outro toast",
+      "outcome": "expected",
+      "durationMs": 10626
+    },
+    {
+      "file": "outro.spec.ts",
+      "title": "the signal continues 1440: same roadmap, calm reversible retreat, settled GPU and usable footer",
+      "outcome": "expected",
+      "durationMs": 7635
+    },
+    {
+      "file": "outro.spec.ts",
+      "title": "the signal continues 390: same roadmap, calm reversible retreat, settled GPU and usable footer",
+      "outcome": "expected",
+      "durationMs": 5021
+    },
+    {
+      "file": "outro.spec.ts",
+      "title": "reduced-motion ending is immediately readable and every existing footer destination remains",
+      "outcome": "expected",
+      "durationMs": 1279
+    },
+    {
+      "file": "product.spec.ts",
+      "title": "real Playground UI sends persona/language/history and consumes progressive streaming + trailer",
+      "outcome": "expected",
+      "durationMs": 4969
+    },
+    {
+      "file": "product.spec.ts",
+      "title": "Stop response cancels the existing stream reader and releases the composer",
+      "outcome": "expected",
+      "durationMs": 2210
+    },
+    {
+      "file": "product.spec.ts",
+      "title": "Playground error/retry state remains functional without a configured model provider",
+      "outcome": "expected",
+      "durationMs": 1411
+    },
+    {
+      "file": "product.spec.ts",
+      "title": "image upload retains the existing account gate and auth UI",
+      "outcome": "expected",
+      "durationMs": 1520
+    },
+    {
+      "file": "product.spec.ts",
+      "title": "capability actions prefill the REAL Playground instead of a second Hero Ask interface",
+      "outcome": "expected",
+      "durationMs": 1254
+    },
+    {
+      "file": "product.spec.ts",
+      "title": "waitlist keeps native validation, company details, referral controls, and honest failure",
+      "outcome": "expected",
+      "durationMs": 1971
+    },
+    {
+      "file": "product.spec.ts",
+      "title": "SV / EN changes existing product content without mounting another intro",
+      "outcome": "expected",
+      "durationMs": 1529
+    },
+    {
+      "file": "product.spec.ts",
+      "title": "existing routes and safe API contracts remain available",
+      "outcome": "expected",
+      "durationMs": 2105
+    },
+    {
+      "file": "product.spec.ts",
+      "title": "configured model picker sends only the selected public tier through the real composer",
+      "outcome": "expected",
+      "durationMs": 2349
+    },
+    {
+      "file": "product.spec.ts",
+      "title": "voice dictation keeps SV/EN, permission errors and thrown recognition failures usable",
+      "outcome": "expected",
+      "durationMs": 2413
+    },
+    {
+      "file": "product.spec.ts",
+      "title": "voice-mode permission failure stays closable above navigation and never starts an auto-retry loop",
+      "outcome": "expected",
+      "durationMs": 2018
+    },
+    {
+      "file": "unit.spec.ts",
+      "title": "one readiness deadline and camera/reveal timing stay bounded without a logo timeline",
+      "outcome": "expected",
+      "durationMs": 1
+    },
+    {
+      "file": "unit.spec.ts",
+      "title": "camera path is finite, continuous at all chapter boundaries, and exactly reversible",
+      "outcome": "expected",
+      "durationMs": 963
+    },
+    {
+      "file": "unit.spec.ts",
+      "title": "native scroll reconstructs every chapter in both directions",
+      "outcome": "expected",
+      "durationMs": 6
+    },
+    {
+      "file": "unit.spec.ts",
+      "title": "code reveal is deterministic, monotonic, bounded, and preserves every source character",
+      "outcome": "expected",
+      "durationMs": 45
+    },
+    {
+      "file": "unit.spec.ts",
+      "title": "brain travel is absolute, continuous, enters the anatomy and reverses exactly",
+      "outcome": "expected",
+      "durationMs": 43
+    },
+    {
+      "file": "unit.spec.ts",
+      "title": "mobile brain uses one full-height target and a finite reversible perspective lens",
+      "outcome": "expected",
+      "durationMs": 11
+    },
+    {
+      "file": "unit.spec.ts",
+      "title": "world departure is reversible and its invisible landing state is genuinely dormant",
+      "outcome": "expected",
+      "durationMs": 1
+    },
+    {
+      "file": "unit.spec.ts",
+      "title": "opening actually crosses the cortex without any branding target or hero renderer",
+      "outcome": "expected",
+      "durationMs": 2
+    },
+    {
+      "file": "unit.spec.ts",
+      "title": "the recovered story retains all four original stages and the identity volume is real, finite geometry",
+      "outcome": "expected",
+      "durationMs": 566
+    },
+    {
+      "file": "unit.spec.ts",
+      "title": "DOM-to-world unprojection follows the actual projection matrix",
+      "outcome": "expected",
+      "durationMs": 17
+    },
+    {
+      "file": "unit.spec.ts",
+      "title": "model choices are configuration-aware public IDs; arbitrary or unavailable provider models are rejected",
+      "outcome": "expected",
+      "durationMs": 27
+    },
+    {
+      "file": "unit.spec.ts",
+      "title": "closing is continuous/reversible and reaches a stable end even on a short desktop footer",
+      "outcome": "expected",
+      "durationMs": 23
+    },
+    {
+      "file": "unit.spec.ts",
+      "title": "information records are finite, sparse and grouped by the six actual capability labels",
+      "outcome": "expected",
+      "durationMs": 22
+    },
+    {
+      "file": "unit.spec.ts",
+      "title": "handoff dolly remains forward and angularly restrained, without a tiny distant product",
+      "outcome": "expected",
+      "durationMs": 17
+    }
+  ],
+  "dependencyAudit": {
+    "exitCode": 1,
+    "moderate": 3,
+    "high": 4,
+    "critical": 1,
+    "total": 8,
+    "unchangedBaseline": true
+  },
+  "externalInspection": {
+    "production": "curl 35 / TLS SSL_ERROR_SYSCALL",
+    "suppliedPreview": "curl 35 / TLS SSL_ERROR_SYSCALL",
+    "visuallyVerified": false
+  }
+}

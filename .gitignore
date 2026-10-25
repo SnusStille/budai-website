@@ -24,3 +24,11 @@ npm-debug.log*
 
 # keep dependency install result out of source control
 node_modules
+
+# browser QA artifacts (regenerate with npm test)
+/test-results/
+/playwright-report/
+/blob-report/
+
+# Reproducible authoring bundles (not application assets)
+.cache/

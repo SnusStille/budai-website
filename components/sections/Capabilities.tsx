@@ -22,6 +22,8 @@ import SpotlightCard from "@/components/ui/SpotlightCard";
 import { Check as CheckIcon, X as XIcon, User as UserIcon, Building2 as BuildingIcon, Sparkles as SparkIcon } from "lucide-react";
 import { useLang } from "@/components/ui/LanguageContext";
 import BudAILogo from "@/components/ui/BudAILogo";
+import CapabilityMap from "@/components/experience/CapabilityMap";
+import Waitlist from "@/components/sections/Waitlist";
 
 const capabilities = [
   {
@@ -228,12 +230,12 @@ export default function Capabilities() {
   ];
 
   return (
-    <section id="capabilities" className="relative section-hairline py-20 sm:py-24 md:py-32">
+    <section id="capabilities" className="capabilities-universe relative section-hairline py-20 sm:py-24 md:py-32">
       <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[min(90vw,700px)] h-[400px] bg-accent-cyan/[0.04] rounded-full blur-[120px] pointer-events-none" />
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <ScrollReveal className="text-center mb-12">
-          <span className="section-badge text-accent-cyan mb-5">{t.capabilities.badge}</span>
+          <span className="chapter-label mb-6 inline-flex"><i />03 / {t.capabilities.badge}</span>
           <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-[-0.03em] mb-5 text-white">
             {t.capabilities.title} <span className="text-gradient">{t.capabilities.titleHighlight}</span>
           </h2>
@@ -244,10 +246,63 @@ export default function Capabilities() {
           </p>
         </ScrollReveal>
 
-        <div className="grid md:grid-cols-3 gap-4 mb-5 bud-3d-in">
+        <CapabilityMap />
+        <div className="plans-heading">
+          <span>{sv ? "Välj din väg" : "Choose your way in"}</span>
+          <p>{sv ? "Från rådata till färdigt svar — börja gratis och väx när du är redo." : "From raw input to structured output — start free and grow when you’re ready."}</p>
+        </div>
+        <div className="access-architecture" data-access-architecture data-ai-assembly-line aria-hidden="true">
+          <div className="access-code-header">
+            <span>{sv ? "03B / THE AI ASSEMBLY LINE · FLÖDE & NIVÅER" : "03B / THE AI ASSEMBLY LINE · WORKFLOW & ACCESS TIERS"}</span>
+            <code>{`input(chat | image | voice) -> context.memory() -> model.stream() -> output`}</code>
+          </div>
+          <div className="access-fallback">
+            <svg viewBox="-5 -2.1 10 4.2" width="100%" height="100%">
+              <path d="M -3.3 0 Q -1.65 -0.18 0 0 T 3.3 0" fill="none" stroke="#7ee0f4" strokeOpacity="0.48" strokeWidth="0.024" />
+              {[0, 1, 2].map(band => {
+                const cx = (band - 1) * 3.3;
+                const coreSize = 0.28 + band * 0.05;
+                return (
+                  <g key={band} opacity={band === 0 ? 0.96 : 0.86}>
+                    <ellipse cx={cx} cy={0.78} rx={0.68 + band * 0.12} ry="0.16" fill="#143246" fillOpacity="0.78" stroke="#8ce8fa" strokeOpacity="0.55" strokeWidth="0.016" />
+                    {Array.from({ length: band + 1 }, (_, r) => (
+                      <ellipse key={r} cx={cx} cy={0} rx={0.56 + r * 0.22} ry={0.34 + r * 0.14} fill="none" stroke={band === 2 ? "#a9b8ff" : "#8ce8fa"} strokeOpacity={0.62 - r * 0.12} strokeWidth="0.016" transform={`rotate(${(r - 0.5) * 18} ${cx} 0)`} />
+                    ))}
+                    <polygon points={`${cx},${-coreSize} ${cx + coreSize},0 ${cx},${coreSize} ${cx - coreSize},0`} fill="#16384c" fillOpacity="0.92" stroke="#b0f5ff" strokeOpacity="0.88" strokeWidth="0.02" />
+                    <circle cx={cx} cy={0} r="0.10" fill="#ecfcff" fillOpacity="0.98" />
+                    {band === 2 && [-0.75, 0.75].map(dx => [-0.42, 0.42].map(dy => (
+                      <g key={`${dx}-${dy}`}>
+                        <line x1={cx} y1={0} x2={cx + dx} y2={dy} stroke="#a9b8ff" strokeOpacity="0.55" strokeWidth="0.014" />
+                        <circle cx={cx + dx} cy={dy} r="0.07" fill="#d8e2ff" fillOpacity="0.92" />
+                      </g>
+                    )))}
+                  </g>
+                );
+              })}
+            </svg>
+          </div>
+          <div className="access-labels">
+            <span>
+              <code>01 · INTAKE (CHAT · VISION · VOICE)</code>
+              01 / BASIC
+              <small>{sv ? "Tillgänglig nu · Direkt inmatning & svar" : "Available now · Direct intake & chat"}</small>
+            </span>
+            <span>
+              <code>02 · CONTEXT &amp; MEMORY PIPELINE</code>
+              02 / CONSUMER
+              <small>{sv ? "Kommer snart · Strukturerat minne & modeller" : "Coming soon · Structured memory & models"}</small>
+            </span>
+            <span>
+              <code>03 · COHERENT TEAM OUTPUT</code>
+              03 / BUSINESS
+              <small>{sv ? "Kommer snart · Gemensamt resultat & flöden" : "Coming soon · Coherent shared output"}</small>
+            </span>
+          </div>
+        </div>
+        <div className="plan-comparison grid md:grid-cols-3 gap-4 mb-5" data-plan-comparison>
           {plans.map((pl, i) => (
             <ScrollReveal key={pl.key} delay={i * 0.05}>
-              <SpotlightCard className={`h-full rounded-2xl border ${pl.card}`}>
+              <SpotlightCard tilt={false} className={`plan-card plan-${pl.key} h-full rounded-2xl border ${pl.card}`}>
                 <div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${pl.bar}`} />
                 <div className={`pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full blur-3xl ${pl.blob}`} />
                 <div className="relative flex h-full flex-col p-6 pt-7">
@@ -291,34 +346,13 @@ export default function Capabilities() {
             </ScrollReveal>
           ))}
         </div>
-        <p className="mb-16 text-center text-sm text-muted/80 max-w-2xl mx-auto">
+        <p className="mb-10 text-center text-sm text-muted/80 max-w-2xl mx-auto">
           {sv
             ? "Samma AI i alla paket. Basic har minst credits och kortast minne. Betalpaketen låser upp mer användning, längre minne och teamfunktioner."
             : "Same AI in every plan. Basic has the fewest credits and the shortest memory. Paid plans unlock more usage, longer memory and team features."}
         </p>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-16 bud-3d-in">
-          {[
-            { i: FileText, t: sv ? "Skriv" : "Write", d: sv ? "Mejl, rapporter, förslag." : "Emails, reports, proposals." },
-            { i: Workflow, t: sv ? "Automatisera" : "Automate", d: sv ? "Rutiner till tydliga steg." : "Routines into clear steps." },
-            { i: BarChart3, t: sv ? "Besluta" : "Decide", d: sv ? "Sammanfatta, risker, nästa steg." : "Summaries, risks, next steps." },
-            { i: Languages, t: sv ? "Svenska + engelska" : "Swedish + English", d: sv ? "Byt språk utan tapp i ton." : "Switch language, keep the tone." },
-            { i: BrainCircuit, t: sv ? "Minne" : "Memory", d: sv ? "Kommer ihåg det du väljer." : "Remembers what you choose." },
-            { i: ImageIcon, t: sv ? "Bild och röst" : "Vision and voice", d: sv ? "Ladda upp bilder, prata in." : "Upload images, speak prompts." },
-          ].map((x) => (
-            <SpotlightCard key={x.t} className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-4 transition-colors hover:border-accent-cyan/30">
-              <div className="flex items-center gap-3.5">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-accent-cyan/20 bg-accent-cyan/10 text-accent-cyan">
-                  <x.i className="h-5 w-5" />
-                </div>
-                <div>
-                  <p className="text-[15px] font-semibold text-white">{x.t}</p>
-                  <p className="text-[13px] text-muted">{x.d}</p>
-                </div>
-              </div>
-            </SpotlightCard>
-          ))}
-        </div>
+        <Waitlist />
 
       </div>
     </section>

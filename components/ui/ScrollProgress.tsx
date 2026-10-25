@@ -1,31 +1,15 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { subscribeJourney } from "@/lib/experience/scroll";
 
 /** Transform-based progress bar — no React re-renders on every scroll tick */
 export default function ScrollProgress() {
   const barRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    let raf = 0;
-    const update = () => {
-      const h = document.documentElement.scrollHeight - window.innerHeight;
-      const p = h > 0 ? window.scrollY / h : 0;
-      if (barRef.current) {
-        barRef.current.style.transform = `scaleX(${Math.min(1, Math.max(0, p))})`;
-      }
-    };
-    const onScroll = () => {
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(update);
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    update();
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-      cancelAnimationFrame(raf);
-    };
-  }, []);
+  useEffect(() => subscribeJourney((frame) => {
+    if (barRef.current) barRef.current.style.transform = `scaleX(${frame.progress})`;
+  }), []);
 
   return (
     <div

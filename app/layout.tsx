@@ -1,8 +1,11 @@
 import type { Metadata, Viewport } from "next";
-import { Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
+import "@fontsource-variable/plus-jakarta-sans";
+import "@fontsource-variable/jetbrains-mono";
 import "./globals.css";
+import "./experience.css";
 import Providers from "@/components/Providers";
 import VercelAnalytics from "@/components/VercelAnalytics";
+import { introBootstrap } from "@/lib/experience/intro";
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -16,19 +19,6 @@ const jsonLd = {
   author: { "@type": "Organization", name: "Stilledev" },
   offers: { "@type": "Offer", price: "0", priceCurrency: "SEK", description: "Developer preview" },
 };
-
-const jakarta = Plus_Jakarta_Sans({
-  subsets: ["latin", "latin-ext"],
-  variable: "--font-jakarta",
-  display: "swap",
-  weight: ["400", "500", "600", "700", "800"],
-});
-
-const jetbrains = JetBrains_Mono({
-  subsets: ["latin", "latin-ext"],
-  variable: "--font-jetbrains",
-  display: "swap",
-});
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://stilledev.se";
 
@@ -82,7 +72,8 @@ export const metadata: Metadata = {
     images: ["/og.png"],
   },
   icons: {
-    icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
+    icon: [{ url: "/favicon.svg", type: "image/svg+xml" }, { url: "/favicon-32.png", sizes: "32x32", type: "image/png" }],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
   },
   alternates: {
     canonical: siteUrl,
@@ -101,12 +92,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html
       lang="en"
-      className={`${jakarta.variable} ${jetbrains.variable} font-sans`}
+      className="font-sans"
       suppressHydrationWarning
     >
+      <head>
+        <script id="budai-intro-policy" dangerouslySetInnerHTML={{ __html: introBootstrap }} />
+      </head>
       <body className="antialiased noise-overlay bg-background text-white">
         <a
-          href="#playground"
+          href="#main"
           className="absolute left-3 top-3 z-[200] -translate-y-16 focus:translate-y-0 px-4 py-2 rounded-lg bg-accent-cyan text-black text-sm font-semibold transition-transform"
         >
           Skip to content
@@ -116,22 +110,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
         <Providers>{children}</Providers>
-        <VercelAnalytics />
-      <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "SoftwareApplication",
-              name: "BudAI",
-              applicationCategory: "BusinessApplication",
-              operatingSystem: "Web",
-              description: "BudAI is an AI assistant for everyday work in Swedish and English.",
-              offers: { "@type": "Offer", price: "0", priceCurrency: "SEK" },
-              creator: { "@type": "Organization", name: "Stilledev" },
-            }),
-          }}
-        />
+        <VercelAnalytics enabled={process.env.VERCEL === "1"} />
       </body>
     </html>
   );

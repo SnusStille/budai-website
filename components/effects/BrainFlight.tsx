@@ -1,6 +1,9 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type MutableRefObject } from "react";
+import { brainCameraAt, brainFovAt, brainVisualAt, playgroundArrivalAt, BRAIN_STORY_ORIGIN, type BrainMotion } from "@/lib/experience/brain";
+
+import { SIGNAL_VERTICES, writePlaygroundSignal } from "@/lib/experience/playground-signal";
 
 /**
  * Neural brain, raw WebGL2, no dependencies.
@@ -13,8 +16,12 @@ import { useEffect, useRef } from "react";
  *    and releases all GPU resources on unmount.
  */
 
+export type BrainDriver={draw:(now:number)=>void;canvas:HTMLCanvasElement};
+
 type Props = {
+  driver?:MutableRefObject<BrainDriver|null>;
   progress?: number;
+  motion?: MutableRefObject<BrainMotion>;
   className?: string;
   mode?: "intro" | "ambient";
   focus?: number;
@@ -22,6 +29,9 @@ type Props = {
   interactive?: boolean;
   onRegionHover?: (region: number) => void;
   onFail?: () => void;
+  onReady?: () => void;
+  settled?: boolean;
+  active?: boolean;
 };
 type Mat = Float32Array;
 type Target = { fbo: WebGLFramebuffer; tex: WebGLTexture; w: number; h: number };
@@ -34,6 +44,7 @@ in float aR;
 in float aNode;
 in float aSize;
 in float aRegion;
+uniform float uOffset;
 uniform mat4 uMVP;
 uniform float uTime;
 uniform float uSize;
@@ -41,17 +52,25 @@ out float vSeed;
 out float vGlow;
 out float vR;
 out float vRegion;
+out float vDepth;
+out float vRim;
 void main() {
-  vec4 clip = uMVP * vec4(aPos, 1.0);
+  float breath = aRegion > -1.5 ? 1.0 + 0.007 * sin(uTime * 1.15 + aR * 3.2) : 1.0;
+  vec3 world = aPos * breath + vec3(0.0, 0.0, uOffset);
+  vec4 clip = uMVP * vec4(world, 1.0);
   gl_Position = clip;
   float front = fract(uTime * 0.26) * 1.4;
   float wave = exp(-pow((aR - front) * 10.0, 2.0));
+  float front2 = fract(uTime * 0.18 + 0.5) * 1.35;
+  float wave2 = exp(-pow((aR - front2) * 12.0, 2.0)) * 0.45;
   float flick = 0.5 + 0.5 * sin(uTime * (1.4 + aSeed * 1.6) + aSeed * 60.0);
-  vGlow = 0.22 + 0.9 * wave + 0.12 * flick * aNode + 0.25 * aNode;
+  vRim = clamp(abs(aPos.x) * 0.58 + max(0.0, aPos.y + 0.2) * 0.42 + abs(aPos.z) * 0.25, 0.0, 1.0);
+  vGlow = 0.26 + 0.68 * (wave + wave2) + 0.13 * flick * aNode + 0.28 * aNode + 0.16 * vRim;
   vSeed = aSeed;
   vR = aR;
   vRegion = aRegion;
-  gl_PointSize = clamp(uSize * aSize / max(clip.w, 0.05), 1.0, 46.0);
+  vDepth = clamp((5.4 - clip.w) / 3.8, 0.0, 1.0);
+  gl_PointSize = clamp(uSize * aSize / max(clip.w, 0.05), 1.0, aRegion < -1.5 ? 4.4 : 14.8);
 }`;
 
 const FS_POINTS = `#version 300 es
@@ -60,24 +79,36 @@ in float vSeed;
 in float vGlow;
 in float vR;
 in float vRegion;
+in float vDepth;
+in float vRim;
 uniform float uGain;
 uniform float uFocus;
 uniform float uActivity;
+uniform float uJourney;
+uniform float uCortex;
 out vec4 outColor;
 void main() {
   vec2 c = gl_PointCoord * 2.0 - 1.0;
   float r2 = dot(c, c);
   if (r2 > 1.0) discard;
-  float core = exp(-r2 * 5.0);
-  float halo = smoothstep(1.0, 0.4, r2) * 0.3;
-  vec3 cyan = vec3(0.0, 0.9, 1.0);
-  vec3 purple = vec3(0.55, 0.36, 1.0);
-  vec3 white = vec3(0.9, 1.0, 1.0);
-  vec3 col = mix(cyan, purple, smoothstep(0.3, 0.9, vSeed + vR * 0.25));
-  col = mix(col, white, clamp(vGlow - 0.9, 0.0, 1.0) * 0.7);
-  float fg = uFocus < -0.5 ? 1.0 : (abs(vRegion - uFocus) < 0.5 ? 1.8 : 0.35);
+  float core = exp(-r2 * 4.8);
+  float halo = smoothstep(1.0, 0.35, r2) * 0.36;
+  vec3 cyan = vec3(0.32, 0.82, 0.90);
+  vec3 purple = vec3(0.48, 0.58, 0.86);
+  vec3 white = vec3(0.93, 1.0, 1.0);
+  vec3 col = mix(cyan, purple, smoothstep(0.26, 0.88, vSeed + vR * 0.25));
+  col = mix(col, vec3(0.70, 0.95, 1.0), (vDepth * 0.24 + vRim * 0.18));
+  col = mix(col, white, clamp(vGlow - 0.84, 0.0, 1.0) * 0.76);
+  float fg = uFocus < -0.5 ? 1.0 : (abs(vRegion - uFocus) < 0.5 ? 1.95 : 0.38);
   float act = 1.0 + uActivity * 0.5;
   float I = (core + halo) * vGlow * uGain * fg * act;
+  if (vRegion < -1.5) {
+    vec3 digCol = mix(vec3(0.40, 0.90, 0.99), vec3(0.80, 0.97, 1.0), vDepth);
+    col = mix(col, digCol, 0.76);
+    I *= smoothstep(0.04, 0.32, uJourney) * (1.55 + 0.32 * smoothstep(0.42, 0.82, uJourney));
+  } else {
+    I *= uCortex;
+  }
   vec3 rgb = col * I;
   outColor = vec4(rgb, max(max(rgb.r, rgb.g), rgb.b));
 }`;
@@ -91,12 +122,14 @@ in float aR;
 in float aRegion;
 uniform mat4 uMVP;
 uniform float uTime;
+uniform float uOffset;
 out float vT;
 out float vC;
 out float vR;
 out float vRegion;
 void main() {
-  gl_Position = uMVP * vec4(aPos, 1.0);
+  gl_Position = uMVP * vec4(aPos + vec3(0.0,0.0,aRegion < -2.5 ? 0.0 : uOffset), 1.0);
+  gl_PointSize=4.0;
   vT = aT;
   vC = fract(uTime * 0.34 + aSeed);
   vR = aR;
@@ -111,20 +144,36 @@ in float vR;
 in float vRegion;
 uniform float uGain;
 uniform float uTime;
+uniform float uJourney;
 uniform float uFocus;
 uniform float uActivity;
+uniform float uArrival;
+uniform float uCortex;uniform float uSignalT;uniform float uPointMark;
 out vec4 outColor;
 void main() {
   float front = fract(uTime * 0.26) * 1.4;
   float dw = vR - front;
   float wave = exp(-dw * dw * 90.0);
   float dt = vT - vC;
-  float travel = exp(-180.0 * dt * dt) * (1.0 + uActivity * 1.5);
-  vec3 base = vec3(0.0, 0.30, 0.36) * 0.28;
-  vec3 wcol = vec3(0.45, 0.98, 1.0);
-  vec3 tcol = vec3(0.6, 0.42, 1.0);
-  float fg = uFocus < -0.5 ? 1.0 : (abs(vRegion - uFocus) < 0.5 ? 1.8 : 0.35);
-  vec3 rgb = (base + wcol * wave * 0.8 + tcol * travel * 0.5) * uGain * fg;
+  float dt2 = (1.0 - vT) - fract(vC + 0.47);
+  float travel = (exp(-180.0 * dt * dt) + 0.45 * exp(-210.0 * dt2 * dt2)) * (1.0 + uActivity * 1.5);
+  vec3 base = vec3(0.04, 0.34, 0.42) * 0.30;
+  vec3 wcol = vec3(0.48, 0.98, 1.0);
+  vec3 tcol = vec3(0.62, 0.48, 1.0);
+  float fg = uFocus < -0.5 ? 1.0 : (abs(vRegion - uFocus) < 0.5 ? 1.95 : 0.38);
+  vec3 rgb = (base + wcol * wave * 0.86 + tcol * travel * 0.62) * uGain * fg;
+  if (vRegion < -1.5 && vRegion > -2.5) {
+    vec3 dBase = vec3(0.10, 0.48, 0.62) * 0.42;
+    vec3 dPulse = vec3(0.62, 0.96, 1.0) * (wave * 0.95 + travel * 0.85);
+    rgb = (dBase + dPulse) * uGain * smoothstep(0.05, 0.36, uJourney) * 1.55;
+  } else if (vRegion > -1.5) {
+    rgb *= uCortex;
+  }
+  if (vRegion < -2.5) {
+    float signal=exp(-pow((vT-uSignalT)*22.0,2.0));
+    rgb=vec3(.68,.92,.98)*(.08+.85*signal)*uArrival*uGain;
+    if(uPointMark>.5){vec2 q=gl_PointCoord*2.0-1.0;if(dot(q,q)>1.0)discard;rgb=vec3(.84,.97,1.0)*exp(-dot(q,q)*1.8)*uArrival;}
+  }
   outColor = vec4(rgb, max(max(rgb.r, rgb.g), rgb.b));
 }`;
 
@@ -219,22 +268,41 @@ function compile(gl: WebGL2RenderingContext, type: number, src: string) {
   if (!s) throw new Error("createShader failed");
   gl.shaderSource(s, src);
   gl.compileShader(s);
-  if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s) || "shader");
+  if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+    const message = gl.getShaderInfoLog(s) || "shader";
+    gl.deleteShader(s);
+    throw new Error(message);
+  }
   return s;
 }
 function link(gl: WebGL2RenderingContext, vs: string, fs: string) {
   const p = gl.createProgram();
   if (!p) throw new Error("createProgram failed");
-  gl.attachShader(p, compile(gl, gl.VERTEX_SHADER, vs));
-  gl.attachShader(p, compile(gl, gl.FRAGMENT_SHADER, fs));
-  gl.linkProgram(p);
-  if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p) || "link");
-  return p;
+  let vertex: WebGLShader | null = null;
+  let fragment: WebGLShader | null = null;
+  let linked = false;
+  try {
+    vertex = compile(gl, gl.VERTEX_SHADER, vs);
+    fragment = compile(gl, gl.FRAGMENT_SHADER, fs);
+    gl.attachShader(p, vertex);
+    gl.attachShader(p, fragment);
+    gl.linkProgram(p);
+    if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p) || "link");
+    linked = true;
+    return p;
+  } finally {
+    if (vertex) gl.deleteShader(vertex);
+    if (fragment) gl.deleteShader(fragment);
+    if (!linked) gl.deleteProgram(p);
+  }
 }
 function makeTarget(gl: WebGL2RenderingContext, w: number, h: number): Target {
   const tex = gl.createTexture();
   const fbo = gl.createFramebuffer();
-  if (!tex || !fbo) throw new Error("target alloc failed");
+  if (!tex || !fbo) {
+    gl.deleteTexture(tex); gl.deleteFramebuffer(fbo);
+    throw new Error("target alloc failed");
+  }
   gl.bindTexture(gl.TEXTURE_2D, tex);
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
@@ -243,7 +311,12 @@ function makeTarget(gl: WebGL2RenderingContext, w: number, h: number): Target {
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
   gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
   gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
+  const complete = gl.checkFramebufferStatus(gl.FRAMEBUFFER) === gl.FRAMEBUFFER_COMPLETE;
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  if (!complete) {
+    gl.deleteTexture(tex); gl.deleteFramebuffer(fbo);
+    throw new Error("incomplete framebuffer");
+  }
   return { fbo, tex, w, h };
 }
 function freeTarget(gl: WebGL2RenderingContext, t: Target | null) {
@@ -282,13 +355,13 @@ function sdfBrain(x: number, y: number, z: number) {
   return Math.min(dBrain, dStem, dCer);
 }
 
-function sampleBrain(surfTarget: number, innerTarget: number) {
+function sampleBrain(surfTarget: number, innerTarget: number, random:()=>number) {
   const surf: number[] = [];
   const inner: number[] = [];
   for (let it = 0; it < 500000 && (surf.length / 3 < surfTarget || inner.length / 3 < innerTarget); it++) {
-    const x = (Math.random() * 2 - 1) * 1.15;
-    const y = (Math.random() * 2 - 1) * 1.0 - 0.2;
-    const z = (Math.random() * 2 - 1) * 1.0;
+    const x = (random() * 2 - 1) * 1.15;
+    const y = (random() * 2 - 1) * 1.0 - 0.2;
+    const z = (random() * 2 - 1) * 1.0;
     const d = sdfBrain(x, y, z);
     if (Math.abs(d) < 0.026 && surf.length / 3 < surfTarget) surf.push(x, y, z);
     else if (d < -0.14 && inner.length / 3 < innerTarget) inner.push(x, y, z);
@@ -296,7 +369,7 @@ function sampleBrain(surfTarget: number, innerTarget: number) {
   return { surf, inner };
 }
 
-/** Anatomical region of a point (-1 = none). 0 write, 1 memory, 2 decide, 3 voice & vision. */
+/** Illustrative product focus regions, not neuroanatomical labels (-1 = none). 0 write, 1 memory, 2 decide, 3 voice & vision. */
 function regionOf(x: number, y: number, z: number) {
   if (z > 0.35) return 0;
   if (Math.abs(x) > 0.6 && y < 0.1 && Math.abs(z) < 0.5) return 1;
@@ -306,10 +379,38 @@ function regionOf(x: number, y: number, z: number) {
 }
 
 function buildBrain(mobile: boolean) {
-  const { surf, inner } = sampleBrain(mobile ? 820 : 1280, mobile ? 260 : 460);
+  let seed=43044;
+  const random=()=>{seed=(Math.imul(seed,1664525)+1013904223)|0;return(seed>>>0)/4294967296;};
+  const { surf, inner } = sampleBrain(mobile ? 820 : 1280, mobile ? 260 : 460,random);
   const nSurf = surf.length / 3;
   const nInner = inner.length / 3;
-  const all = [...surf, ...inner];
+  // Continue the interior axons through the exit: camera flight never resolves
+  // into an empty screen on a narrow portrait frustum. These are original,
+  // illustrative connections, not imported biological data.
+  // Fine depth samples become ordered information, not six long neural rails.
+  // Full-frustum 3D Digital Intelligence Environment (aRegion = -2):
+  // Multi-plane architectural lattice + relay gate nodes that surround the camera
+  // as the organic brain transforms into structured digital intelligence.
+  const volume:number[]=[];
+  for(let plane=0;plane<6;plane++){
+    const z=-1.1-plane*1.18;
+    const rx=1.85-plane*0.14;
+    const ry=1.18-plane*0.09;
+    // Octagonal relay ring nodes around the flight corridor
+    for(let k=0;k<16;k++){
+      const ang=(k/16)*Math.PI*2;
+      volume.push(Math.cos(ang)*rx,Math.sin(ang)*ry,z);
+    }
+    // Structured inner data strata across the frustum
+    for(let row=-2;row<=2;row++){
+      for(let col=-4;col<=4;col++){
+        if((Math.abs(row)+Math.abs(col)+plane)%2===0)continue;
+        volume.push(col*0.36*(1-plane*0.06),row*0.34*(1-plane*0.06),z-0.35);
+      }
+    }
+  }
+  const volumeCount=volume.length/3;
+  const all = [...surf, ...inner, ...volume];
 
   const deg = new Uint8Array(nSurf);
   const edges: number[] = [];
@@ -321,7 +422,7 @@ function buildBrain(mobile: boolean) {
       const dx = surf[i * 3] - surf[j * 3];
       const dy = surf[i * 3 + 1] - surf[j * 3 + 1];
       const dz = surf[i * 3 + 2] - surf[j * 3 + 2];
-      if (dx * dx + dy * dy + dz * dz < thr2 && Math.random() < 0.85) {
+      if (dx * dx + dy * dy + dz * dz < thr2 && random() < 0.85) {
         edges.push(i, j);
         deg[i]++;
         deg[j]++;
@@ -330,8 +431,8 @@ function buildBrain(mobile: boolean) {
   }
 
   // point record: x y z seed r node size region (8 floats)
-  const N = nSurf + nInner;
-  const dustCount = mobile ? 320 : 620;
+  const N = nSurf + nInner + volumeCount;
+  const dustCount = 0;
   const pointData = new Float32Array((N + dustCount) * 8);
   for (let i = 0; i < N; i++) {
     const o = i * 8;
@@ -339,22 +440,22 @@ function buildBrain(mobile: boolean) {
     pointData[o] = x;
     pointData[o + 1] = y;
     pointData[o + 2] = z;
-    pointData[o + 3] = Math.random();
+    pointData[o + 3] = random();
     pointData[o + 4] = Math.hypot(x, y, z);
-    pointData[o + 5] = i < nSurf && deg[i] >= 2 ? 1 : 0;
-    pointData[o + 6] = i < nSurf && deg[i] >= 2 ? 1.7 : 1.0;
-    pointData[o + 7] = regionOf(x, y, z);
+    pointData[o + 5] = (i < nSurf && deg[i] >= 2) || i >= nSurf + nInner ? 1 : 0;
+    pointData[o + 6] = i >= nSurf + nInner ? 1.5 : i < nSurf && deg[i] >= 2 ? 1.7 : 1.0;
+    pointData[o + 7] = i >= nSurf + nInner ? -2 : regionOf(x, y, z);
   }
   for (let k = 0; k < dustCount; k++) {
     const o = (N + k) * 8;
-    const u = Math.random() * 2 - 1;
-    const t = Math.random() * Math.PI * 2;
+    const u = random() * 2 - 1;
+    const t = random() * Math.PI * 2;
     const sq = Math.sqrt(1 - u * u);
-    const r = 2.2 + Math.random() * 4.5;
+    const r = 2.2 + random() * 4.5;
     pointData[o] = sq * Math.cos(t) * r;
     pointData[o + 1] = u * r;
     pointData[o + 2] = sq * Math.sin(t) * r;
-    pointData[o + 3] = Math.random();
+    pointData[o + 3] = random();
     pointData[o + 4] = 9;
     pointData[o + 5] = 0;
     pointData[o + 6] = 0.8;
@@ -363,9 +464,56 @@ function buildBrain(mobile: boolean) {
 
   // synapse vertex: x y z t seed r region (7 floats), two per edge
   const E = edges.length / 2;
-  const lineData = new Float32Array(E * 2 * 7);
+  const interiorEdges: number[][] = [];
+  for (let i = 0; i < nInner - 3; i++) {
+    for (let j = i + 1; j < Math.min(nInner, i + 18); j++) {
+      const a = inner.slice(i * 3, i * 3 + 3), b = inner.slice(j * 3, j * 3 + 3);
+      if (Math.hypot(...a.map((v, k) => v - b[k])) < .48) { interiorEdges.push([...a, ...b]); break; }
+    }
+  }
+  // 1) Concentric 3D Digital Intelligence Relay Gates (octagonal frames across 5 depth planes)
+  for (let plane = 0; plane < 5; plane++) {
+    const z = -1.4 - plane * 1.25;
+    const rx = 1.75 - plane * 0.15;
+    const ry = 1.10 - plane * 0.09;
+    const segs = 12;
+    for (let k = 0; k < segs; k++) {
+      const a0 = (k / segs) * Math.PI * 2;
+      const a1 = ((k + 1) / segs) * Math.PI * 2;
+      interiorEdges.push([
+        Math.cos(a0) * rx, Math.sin(a0) * ry, z,
+        Math.cos(a1) * rx, Math.sin(a1) * ry, z,
+      ]);
+    }
+  }
+  // 2) Converging Longitudinal Digital Intelligence Pathways guiding the camera to the Playground
+  for (let k = 0; k < 12; k++) {
+    const ang = (k / 12) * Math.PI * 2;
+    for (let s = 0; s < 5; s++) {
+      const z0 = -0.6 - s * 1.35;
+      const z1 = -0.6 - (s + 1) * 1.35;
+      const r0x = 1.65 - s * 0.21;
+      const r0y = 1.05 - s * 0.13;
+      const r1x = 1.65 - (s + 1) * 0.21;
+      const r1y = 1.05 - (s + 1) * 0.13;
+      interiorEdges.push([
+        Math.cos(ang) * r0x, Math.sin(ang) * r0y, z0,
+        Math.cos(ang) * r1x, Math.sin(ang) * r1y, z1,
+      ]);
+    }
+  }
+  // 3) Horizontal Digital Data Bus Rungs across the intelligence field
+  for (let plane = 0; plane < 5; plane++) {
+    const z = -1.75 - plane * 1.22;
+    for (const y of [-0.68, -0.24, 0.24, 0.68]) {
+      const span = 1.35 - plane * 0.12;
+      interiorEdges.push([-span, y, z, -0.28, y, z]);
+      interiorEdges.push([0.28, y, z, span, y, z]);
+    }
+  }
+  const lineData = new Float32Array(((E + interiorEdges.length) * 2 + SIGNAL_VERTICES) * 7);
   for (let e = 0; e < E; e++) {
-    const seed = Math.random();
+    const seed = random();
     for (let v = 0; v < 2; v++) {
       const idx = edges[e * 2 + v];
       const o = (e * 2 + v) * 7;
@@ -379,13 +527,21 @@ function buildBrain(mobile: boolean) {
       lineData[o + 6] = regionOf(x, y, z);
     }
   }
-  return { pointData, N, dustCount, lineData, E };
+  interiorEdges.forEach((edge, i) => {
+    for (let v = 0; v < 2; v++) {
+      const o = ((E + i) * 2 + v) * 7;
+      lineData.set([edge[v * 3], edge[v * 3 + 1], edge[v * 3 + 2], v, (i * .618) % 1, .3, -2], o);
+    }
+  });
+  return { pointData, N, volumeCount, dustCount, lineData, surfaceEdges: E, E: E + interiorEdges.length };
 }
 
 /* ---------- component ---------- */
 
 export default function BrainFlight({
+  driver,
   progress = 0,
+  motion,
   className = "",
   mode = "intro",
   focus = -1,
@@ -393,20 +549,31 @@ export default function BrainFlight({
   interactive = false,
   onRegionHover,
   onFail,
+  onReady,
+  settled = true,
+  active = true,
 }: Props) {
   const ref = useRef<HTMLCanvasElement>(null);
   const progRef = useRef(progress);
+  const motionRef = useRef(motion);
+  motionRef.current = motion;
+  const settledRef = useRef(settled);
+  const activeRef = useRef(active);
   const focusRef = useRef(focus);
   const activityRef = useRef(activity);
   const hoverCbRef = useRef(onRegionHover);
   const failCbRef = useRef(onFail);
+  const readyCbRef = useRef(onReady);
   const kickRef = useRef<(() => void) | null>(null);
 
+  useEffect(() => { activeRef.current = active; if (active) kickRef.current?.(); }, [active]);
+  useEffect(() => { settledRef.current = settled; }, [settled]);
   useEffect(() => { progRef.current = progress; }, [progress]);
   useEffect(() => { focusRef.current = focus; kickRef.current?.(); }, [focus]);
   useEffect(() => { activityRef.current = activity; kickRef.current?.(); }, [activity]);
   useEffect(() => { hoverCbRef.current = onRegionHover; }, [onRegionHover]);
   useEffect(() => { failCbRef.current = onFail; }, [onFail]);
+  useEffect(() => { readyCbRef.current = onReady; }, [onReady]);
 
   useEffect(() => {
     const canvas = ref.current;
@@ -437,13 +604,33 @@ export default function BrainFlight({
     let bA: Target | null = null;
     let bB: Target | null = null;
 
+    const disposeResources = () => {
+      freeTarget(gl, scene); freeTarget(gl, bA); freeTarget(gl, bB);
+      if (pointProg) gl.deleteProgram(pointProg);
+      if (lineProg) gl.deleteProgram(lineProg);
+      if (blurProg) gl.deleteProgram(blurProg);
+      if (compProg) gl.deleteProgram(compProg);
+      if (pointBuf) gl.deleteBuffer(pointBuf);
+      if (lineBuf) gl.deleteBuffer(lineBuf);
+      if (pointVao) gl.deleteVertexArray(pointVao);
+      if (lineVao) gl.deleteVertexArray(lineVao);
+      if (emptyVao) gl.deleteVertexArray(emptyVao);
+    };
+
     // hover picking data (brain surface points that belong to a region)
     let pickPos = new Float32Array(0);
     let pickReg = new Int8Array(0);
     let lastMvp: Mat | null = null;
     let lastHover = -2;
     let curAct = activityRef.current;
+    let departure = settledRef.current ? 1 : 0;
     let tgtFocus = focusRef.current;
+    let heroFocus = -1;
+    const onHeroRegion = (event: Event) => {
+      heroFocus = (event as CustomEvent<number>).detail;
+      kickRef.current?.();
+    };
+    window.addEventListener("budai:brain-region", onHeroRegion);
 
     try {
       pointProg = link(gl, VS_POINTS, FS_POINTS);
@@ -452,7 +639,9 @@ export default function BrainFlight({
       compProg = link(gl, VS_FULL, FS_COMPOSITE);
 
       const mobile = window.innerWidth < 768;
-      const { pointData, N, dustCount, lineData, E } = buildBrain(mobile);
+      const debug = gl.getExtension("WEBGL_debug_renderer_info");
+      const software = !!debug && /swiftshader|llvmpipe|software/i.test(String(gl.getParameter(debug.UNMASKED_RENDERER_WEBGL)));
+      const { pointData, N, volumeCount, dustCount, lineData, surfaceEdges, E } = buildBrain(mobile);
       const totalPoints = N + dustCount;
 
       const picks: number[] = [];
@@ -482,6 +671,8 @@ export default function BrainFlight({
         }
       };
 
+      const product=document.querySelector<HTMLElement>("[data-playground-surface]");
+      const signalData=new Float32Array(SIGNAL_VERTICES*7);
       const STRIDE_P = 32;
       gl.bindVertexArray(pointVao);
       gl.bindBuffer(gl.ARRAY_BUFFER, pointBuf);
@@ -496,7 +687,7 @@ export default function BrainFlight({
       const STRIDE_L = 28;
       gl.bindVertexArray(lineVao);
       gl.bindBuffer(gl.ARRAY_BUFFER, lineBuf);
-      gl.bufferData(gl.ARRAY_BUFFER, lineData, gl.STATIC_DRAW);
+      gl.bufferData(gl.ARRAY_BUFFER, lineData, gl.DYNAMIC_DRAW);
       attr(lineProg, "aPos", 3, STRIDE_L, 0);
       attr(lineProg, "aT", 1, STRIDE_L, 12);
       attr(lineProg, "aSeed", 1, STRIDE_L, 16);
@@ -514,17 +705,17 @@ export default function BrainFlight({
       const lU = (name: string) => gl.getUniformLocation(lineProg!, name);
       const uPoint = {
         mvp: pU("uMVP"), time: pU("uTime"), size: pU("uSize"), gain: pU("uGain"),
-        focus: pU("uFocus"), activity: pU("uActivity"),
+        focus: pU("uFocus"), activity: pU("uActivity"), journey: pU("uJourney"),cortex:pU("uCortex"), offset:pU("uOffset"),
       };
       const uLine = {
         mvp: lU("uMVP"), time: lU("uTime"), gain: lU("uGain"),
-        focus: lU("uFocus"), activity: lU("uActivity"),
+        focus: lU("uFocus"), activity: lU("uActivity"), journey: lU("uJourney"), offset:lU("uOffset"),arrival:lU("uArrival"),cortex:lU("uCortex"),signalT:lU("uSignalT"),pointMark:lU("uPointMark"),
       };
       const uBlur = { step: gl.getUniformLocation(blurProg, "uStep") };
       const uComp = { amt: gl.getUniformLocation(compProg, "uBloomAmt") };
 
       const resize = () => {
-        const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+        const dpr = Math.min(window.devicePixelRatio || 1, software ? .75 : window.innerWidth < 768 ? 1 : 1.25);
         const w = Math.max(2, Math.round(canvas.clientWidth * dpr));
         const h = Math.max(2, Math.round(canvas.clientHeight * dpr));
         if (w === canvas.width && h === canvas.height && scene) return;
@@ -534,8 +725,8 @@ export default function BrainFlight({
         freeTarget(gl, bA);
         freeTarget(gl, bB);
         scene = makeTarget(gl, w, h);
-        bA = makeTarget(gl, Math.max(2, w >> 1), Math.max(2, h >> 1));
-        bB = makeTarget(gl, Math.max(2, w >> 1), Math.max(2, h >> 1));
+        bA = makeTarget(gl, Math.max(2, w >> 2), Math.max(2, h >> 2));
+        bB = makeTarget(gl, Math.max(2, w >> 2), Math.max(2, h >> 2));
       };
 
       const blurPass = (src: WebGLTexture, dst: Target, dx: number, dy: number) => {
@@ -553,17 +744,34 @@ export default function BrainFlight({
         const H = canvas.height;
 
         const fly = ambient ? 0 : Math.pow(Math.min(1, p / 0.92), 2.0);
-        const camZ = ambient ? 4.4 : 5.2 - 5.6 * fly;
-        const camX = ambient ? Math.sin(t * 0.15) * 0.25 : Math.sin(fly * Math.PI) * 0.55;
-        const yaw = t * (ambient ? 0.09 : 0.12) + fly * 1.1;
-        const tilt = ambient ? 0.12 : 0.22 - 0.18 * fly;
-        const proj = perspective(0.87, W / H, 0.05, 50);
-        const mvp = mul(proj, mul(translate(-camX, -0.25, -camZ), mul(rotX(tilt), rotY(yaw))));
+        const controlled = motionRef.current?.current;
+        const pose = controlled ? brainCameraAt(controlled) : null;
+        const visual=controlled?brainVisualAt(controlled):{offset:0,neural:0,focus:-1,cortex:1};
+        canvas.dataset.brainModel="budai-neural-43f44c9";
+        canvas.dataset.anatomyCameraZ=(pose?pose.z-visual.offset:0).toFixed(4);
+        let camZ = pose?.z ?? (ambient ? 3.95 + departure * .65 : 5.2 - 5.6 * fly);
+
+        const camX = pose?.x ?? (ambient ? Math.sin(t * 0.15) * .25 : Math.sin(fly * Math.PI) * .55);
+        const yaw = pose?.yaw ?? (t * (ambient ? .09 : .12) + fly * 1.1 + departure * .24);
+        const tilt = pose?.tilt ?? (ambient ? .12 : .22 - .18 * fly);
+        canvas.dataset.cameraZ = camZ.toFixed(4);
+        canvas.dataset.sequence = controlled?.kind ?? mode;
+        canvas.dataset.cameraPose = [camX, pose?.y ?? .25, camZ, yaw, tilt].map(n => n.toFixed(5)).join(",");
+        const fov = brainFovAt(controlled, canvas.clientHeight, window.innerWidth < 768);
+        canvas.dataset.fov = fov.toFixed(5);
+        const proj = perspective(fov, W / H, 0.05, 50);
+        const pivot = visual.offset;
+        const view = mul(translate(-camX, -(pose?.y ?? .25), -(camZ - pivot)), mul(mul(rotX(tilt), rotY(yaw)), translate(0, 0, -pivot)));
+        const mvp = mul(proj, view);
         lastMvp = mvp;
 
         const intro = ambient ? 0.7 : 0.35 + 0.65 * Math.min(1, t / 0.9);
-        const gain = Math.min(1, t * 1.4) * intro * (1 + 1.0 * fly);
-        const focusNow = tgtFocus;
+        const gain = .85; // Readiness means a visible frame, never the old zero-gain first frame.
+        const focusNow = controlled?.kind === "journey"
+          ? visual.focus
+          : controlled?.kind === "hero" && heroFocus >= 0
+            ? heroFocus
+            : tgtFocus;
 
         gl.bindFramebuffer(gl.FRAMEBUFFER, scene.fbo);
         gl.viewport(0, 0, scene.w, scene.h);
@@ -572,26 +780,50 @@ export default function BrainFlight({
         gl.enable(gl.BLEND);
         gl.blendFunc(gl.ONE, gl.ONE);
 
+        let signal=false;
+        if(controlled?.kind==="journey" && controlled.progress>.68 && product) {
+          const box=product.getBoundingClientRect();
+          if(box.width>0 && box.top<innerHeight+350) {
+            const endpoint=writePlaygroundSignal(signalData,mvp,canvas.getBoundingClientRect(),box);
+            gl.bindBuffer(gl.ARRAY_BUFFER,lineBuf);gl.bufferSubData(gl.ARRAY_BUFFER,E*2*7*4,signalData);
+            canvas.dataset.signalBounds=[box.left,box.top,box.width,box.height].map(v=>v.toFixed(2)).join(",");
+            canvas.dataset.signalMatrix=Array.from(mvp).map(v=>v.toFixed(7)).join(",");
+            canvas.dataset.signalWorld=endpoint.map(v=>v.toFixed(4)).join(",");
+            signal=true;
+          }
+        }
         gl.useProgram(lineProg);
+        gl.uniform1f(uLine.journey,visual.neural);
+        gl.uniform1f(uLine.offset,visual.offset);
+        gl.uniform1f(uLine.arrival,signal?playgroundArrivalAt(controlled!.progress):0);
+        gl.uniform1f(uLine.cortex,visual.cortex);
+        gl.uniform1f(uLine.signalT,controlled?playgroundArrivalAt(controlled.progress):0);
+        gl.uniform1f(uLine.pointMark,0);
         gl.bindVertexArray(lineVao);
         gl.uniformMatrix4fv(uLine.mvp, false, mvp);
         gl.uniform1f(uLine.time, t);
         gl.uniform1f(uLine.gain, gain * 0.9);
         gl.uniform1f(uLine.focus, focusNow);
         gl.uniform1f(uLine.activity, curAct);
-        gl.drawArrays(gl.LINES, 0, E * 2);
+        gl.drawArrays(gl.LINES, 0, (controlled?.kind === "journey" ? E : surfaceEdges) * 2 + (signal?SIGNAL_VERTICES:0));
 
+        if(signal){
+          gl.uniform1f(uLine.pointMark,1);
+          gl.drawArrays(gl.POINTS,E*2+Math.min(23,Math.floor(playgroundArrivalAt(controlled!.progress)*24))*2,1);
+        }
         gl.useProgram(pointProg);
+        gl.uniform1f(uPoint.cortex,visual.cortex);
+        gl.uniform1f(uPoint.journey, visual.neural);
+        gl.uniform1f(uPoint.offset,visual.offset);
         gl.bindVertexArray(pointVao);
         gl.uniformMatrix4fv(uPoint.mvp, false, mvp);
         gl.uniform1f(uPoint.time, t);
-        gl.uniform1f(uPoint.size, 15 * (H / 900));
+        gl.uniform1f(uPoint.size, 15 * (H / 900) * Math.tan(.87 / 2) / Math.tan(fov / 2));
         gl.uniform1f(uPoint.focus, focusNow);
         gl.uniform1f(uPoint.activity, curAct);
         gl.uniform1f(uPoint.gain, gain);
-        gl.drawArrays(gl.POINTS, 0, N);
+        gl.drawArrays(gl.POINTS, 0, controlled?.kind === "journey" ? N : N - volumeCount);
         gl.uniform1f(uPoint.gain, gain * 0.55);
-        gl.drawArrays(gl.POINTS, N, totalPoints - N);
         gl.bindVertexArray(null);
 
         gl.disable(gl.BLEND);
@@ -599,8 +831,7 @@ export default function BrainFlight({
         gl.bindVertexArray(emptyVao);
         blurPass(scene.tex, bA, 2 / scene.w, 0);
         blurPass(bA.tex, bB, 0, 2 / bA.h);
-        blurPass(bB.tex, bA, 4 / bB.w, 0);
-        blurPass(bA.tex, bB, 0, 4 / bA.h);
+
 
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
         gl.viewport(0, 0, W, H);
@@ -611,51 +842,66 @@ export default function BrainFlight({
         gl.bindTexture(gl.TEXTURE_2D, scene.tex);
         gl.activeTexture(gl.TEXTURE1);
         gl.bindTexture(gl.TEXTURE_2D, bB.tex);
-        gl.uniform1f(uComp.amt, ambient ? 0.7 : 1.1 + fly * 0.5);
+        gl.uniform1f(uComp.amt,.28);
         gl.drawArrays(gl.TRIANGLES, 0, 3);
         gl.bindVertexArray(null);
       };
 
-      const start = performance.now();
-      const frame = (now: number) => {
-        if (!alive) return;
-        if (!visible && !reduced) {
-          running = false;
-          return;
-        }
-        resize();
-        tgtFocus = focusRef.current;
-        curAct += (activityRef.current - curAct) * 0.06;
-        render((now - start) / 1000, progRef.current);
-        if (reduced) {
-          running = false;
-          return;
-        }
-        running = true;
-        raf = requestAnimationFrame(frame);
+      const start=performance.now();let reportedReady=false,heroOrigin=0;
+      const draw=(now:number)=>{
+        if(!alive||!visible||document.hidden||!activeRef.current)return;
+        try{
+          resize();tgtFocus=focusRef.current;curAct+=(activityRef.current-curAct)*.06;
+          departure+=((settledRef.current?1:0)-departure)*.13;
+          const control=motionRef.current?.current;
+          if(control?.kind!=="intro"&&!heroOrigin)heroOrigin=now;
+          const waveTime=control?.kind==="intro"
+            ?1.9+control.progress*2.3
+            :4.2+Math.max(0,(now-heroOrigin)*.0006)+(control?.progress??0)*2.3;
+          render(waveTime,progRef.current);
+          if(!reportedReady){reportedReady=true;canvas.dataset.rendered="true";readyCbRef.current?.();}
+        }catch{alive=false;running=false;failCbRef.current?.();}
       };
+      if(driver){
+        driver.current={draw,canvas};kickRef.current=()=>draw(performance.now());draw(start);
+      }else{
+        // Authoring/standalone use only. The application always supplies a driver.
+        const frame=(now:number)=>{running=false;draw(now);if(alive&&visible&&!document.hidden&&activeRef.current&&!reduced){running=true;raf=requestAnimationFrame(frame);}};
+        kickRef.current=()=>{if(alive&&!running){running=true;raf=requestAnimationFrame(frame);}};
+        kickRef.current();
+      }
 
-      kickRef.current = () => {
-        if (alive && reduced && !running) raf = requestAnimationFrame(frame);
-      };
-
-      running = true;
-      raf = requestAnimationFrame(frame);
-      if (reduced) running = false;
     } catch (err) {
+      alive = false;
+      running = false;
+      cancelAnimationFrame(raf);
+      kickRef.current = null;
+      disposeResources();
       console.warn("BrainFlight disabled:", err);
       failCbRef.current?.();
+      return;
     }
 
     // pause when offscreen, resume when visible
     const io = new IntersectionObserver(([entry]) => {
       visible = entry.isIntersecting;
-      if (visible && alive && !running && !reduced) {
-        running = true;
-        raf = requestAnimationFrame(() => kickRef.current?.());
-      }
+      if (visible && alive && !running) kickRef.current?.();
     });
     io.observe(canvas);
+    const onVisibility = () => {
+      if (document.hidden) { cancelAnimationFrame(raf); running = false; }
+      else kickRef.current?.();
+    };
+    const onLost = (event: Event) => {
+      event.preventDefault();
+      cancelAnimationFrame(raf);
+      running = false;
+      failCbRef.current?.();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    canvas.addEventListener("webglcontextlost", onLost);
+    const resizeObserver = new ResizeObserver(() => kickRef.current?.());
+    resizeObserver.observe(canvas);
 
     // interaction: project brain regions and report the nearest one under the pointer
     const onMove = (e: PointerEvent) => {
@@ -702,28 +948,27 @@ export default function BrainFlight({
       cancelAnimationFrame(raf);
       kickRef.current = null;
       io.disconnect();
+      resizeObserver.disconnect();
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("budai:brain-region", onHeroRegion);
+      canvas.removeEventListener("webglcontextlost", onLost);
       if (interactive) {
         canvas.removeEventListener("pointermove", onMove);
         canvas.removeEventListener("pointerleave", onLeave);
       }
-      freeTarget(gl, scene);
-      freeTarget(gl, bA);
-      freeTarget(gl, bB);
-      if (pointProg) gl.deleteProgram(pointProg);
-      if (lineProg) gl.deleteProgram(lineProg);
-      if (blurProg) gl.deleteProgram(blurProg);
-      if (compProg) gl.deleteProgram(compProg);
-      if (pointBuf) gl.deleteBuffer(pointBuf);
-      if (lineBuf) gl.deleteBuffer(lineBuf);
-      if (pointVao) gl.deleteVertexArray(pointVao);
-      if (lineVao) gl.deleteVertexArray(lineVao);
-      if (emptyVao) gl.deleteVertexArray(emptyVao);
+      if(driver?.current?.canvas===canvas)driver.current=null;
+      disposeResources();
+      // StrictMode replays effects on a connected canvas; only an actual DOM
+      // unmount releases the context. No dormant hero context survives completion.
+      if(!canvas.isConnected)gl.getExtension("WEBGL_lose_context")?.loseContext();
     };
-  }, [mode, interactive]);
+  }, [mode, interactive,driver]);
 
   return (
     <canvas
       ref={ref}
+      data-brain-canvas
+      data-render-driver={driver?"shared":"standalone"}
       aria-hidden
       className={`${interactive ? "pointer-events-auto" : "pointer-events-none"} absolute inset-0 h-full w-full ${className}`}
     />

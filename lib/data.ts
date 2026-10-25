@@ -228,6 +228,7 @@ export async function addWaitlistUser(
 
   const supabase = getSupabase();
   if (!supabase) {
+    if (process.env.NODE_ENV !== "development") throw new Error("Waitlist is not configured");
     const newUser: WaitlistUser = {
       id: String(Date.now()),
       ...payload,
@@ -281,9 +282,9 @@ export async function deleteUser(id: string): Promise<void> {
   await adminApi("DELETE", undefined, `?id=${encodeURIComponent(id)}`);
 }
 
-export async function getWaitlistCount(): Promise<number> {
+export async function getWaitlistCount(): Promise<number | null> {
   const supabase = getSupabase();
-  if (!supabase) return mockUsers.length;
+  if (!supabase) return process.env.NODE_ENV === "development" ? mockUsers.length : null;
   const { data, error } = await supabase.rpc("waitlist_count");
   return error || typeof data !== "number" ? 0 : data;
 }

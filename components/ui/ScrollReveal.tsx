@@ -1,7 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { ReactNode } from "react";
+import { useEffect, useRef, type CSSProperties, type ReactNode } from "react";
 
 interface Props {
   children: ReactNode;
@@ -11,24 +10,18 @@ interface Props {
   duration?: number;
 }
 
-export default function ScrollReveal({ children, className = "", delay = 0, direction = "up", duration = 0.55 }: Props) {
-  const dirs = {
-    up: { y: 36, x: 0, scale: 1 },
-    down: { y: -36, x: 0, scale: 1 },
-    left: { x: 36, y: 0, scale: 1 },
-    right: { x: -36, y: 0, scale: 1 },
-    scale: { x: 0, y: 0, scale: 0.96 },
-  };
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, ...dirs[direction] }}
-      whileInView={{ opacity: 1, x: 0, y: 0, scale: 1 }}
-      viewport={{ once: true, margin: "-40px", amount: 0.15 }}
-      transition={{ duration, delay, ease: [0.22, 1, 0.36, 1] }}
-      className={className}
-    >
-      {children}
-    </motion.div>
-  );
+/** HTML is visible by default; only offscreen, motion-enabled elements opt in. */
+export default function ScrollReveal({ children, className = "", delay = 0, direction = "up", duration = .7 }: Props) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const observer = new IntersectionObserver(([entry]) => { if (entry.isIntersecting) { el.dataset.reveal = "visible"; observer.disconnect(); } }, { rootMargin: "0px 0px -25px", threshold: .06 });
+    const show = () => { if (media.matches) { el.dataset.reveal = "visible"; observer.disconnect(); } };
+    if (!media.matches && el.getBoundingClientRect().top > window.innerHeight) { el.dataset.reveal = "pending"; observer.observe(el); }
+    media.addEventListener("change", show);
+    return () => { observer.disconnect(); media.removeEventListener("change", show); };
+  }, []);
+  return <div ref={ref} className={`journey-reveal ${className}`} data-direction={direction} style={{ "--reveal-delay": `${delay}s`, "--reveal-duration": `${duration}s` } as CSSProperties}>{children}</div>;
 }
