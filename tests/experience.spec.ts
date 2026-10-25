@@ -279,7 +279,7 @@ test("reduced motion: no intro, no WebGL, full static code and accessible forms"
   await expect(page.locator(".intelligence-frame [data-brain-fallback]")).toBeVisible();
   await scrollSection(page, "signal", 0);
   await expect(page.locator(".brain-journey-fallback [data-brain-fallback]")).toBeVisible();
-  await expect(page.locator("#signal")).toHaveCSS("height", "650px");
+  await expect(page.locator("#signal")).toHaveCSS("height", "1000px");
   await scrollSection(page, "about", 0);
   await expect(page.locator("[data-world-canvas], [data-brain-canvas]")).toHaveCount(0);
   await expect(page.locator(".fallback-central-screen [data-code-characters]")).toHaveAttribute("data-code-characters", String((await import("../lib/experience/code")).CODE_LENGTH));

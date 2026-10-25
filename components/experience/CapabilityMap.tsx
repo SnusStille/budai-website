@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowUpRight, AudioLines, BarChart3, FileText, Languages, Network, Workflow } from "lucide-react";
 import { useLang } from "@/components/ui/LanguageContext";
 import { subscribeJourney } from "@/lib/experience/scroll";
+import { BUDAI_MARK_PATH } from "@/lib/brand";
 import { clamp } from "@/lib/experience/timeline";
 
 export default function CapabilityMap() {
@@ -65,8 +66,8 @@ export default function CapabilityMap() {
           <p className="capability-matrix-note">{sv ? "Utforska i den riktiga Playground" : "Explore in the real Playground"}<ArrowUpRight size={12} /></p>
         </div>
         <div className="capability-viewport" aria-hidden="true" data-capability-viewport>
-          <div className="capability-drawing-fallback"><span /><span /><span /><span /><span /><span /><i /></div>
-          <div className="capability-viewport-top"><span>BUDAI / LAMINAR ENGINE</span><span>001 — 006</span></div>
+          <div className="capability-drawing-fallback"><svg viewBox="0 0 360 480" fill="none"><path d={BUDAI_MARK_PATH} transform="translate(28 192) scale(2.3)" fill="#a8c5ce"/>{[0,1,2,3,4,5].map(i=><g key={i}><path d={`M65 228C180 228 190 ${55+i*74} 280 ${55+i*74}`} stroke="#729aa9" strokeWidth="1.5"/><path d={`M65 228C180 228 190 ${55+i*74} 280 ${55+i*74}`} stroke="#b5d6df" strokeWidth=".5"/><rect x="279" y={40+i*74} width="34" height="30" rx="2" stroke="#96bac8"/><path d={`M286 ${51+i*74}h20m-20 7h14`} stroke="#96bac8"/></g>)}</svg></div>
+          <div className="capability-viewport-top"><span>BUDAI / SIGNAL MANIFOLD</span><span>001 — 006</span></div>
           <div className="capability-viewport-bottom"><span>{sv ? "EN GEMENSAM INTELLIGENS" : "ONE SHARED INTELLIGENCE"}</span><span>SCROLL TO ASSEMBLE</span></div>
         </div>
       </div>

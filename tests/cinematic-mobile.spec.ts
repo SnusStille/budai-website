@@ -32,13 +32,13 @@ for (const width of [390, 360]) test(`mobile ${width}: full-height neural perspe
   };
   await dive(.1);
   await page.screenshot({ path:`test-results/neural-entry-${width}.png` });
-  await dive(.65);
+  await dive(.86);
   await expect(brain).toHaveAttribute("data-sequence", "journey");
   const pose = await brain.getAttribute("data-camera-pose");
   expect(Number(await brain.getAttribute("data-camera-z"))).toBeLessThan(0);
   expect(await brain.evaluate(el => el.getBoundingClientRect().height)).toBeGreaterThan(844);
   await page.screenshot({ path:`test-results/neural-interior-${width}.png` });
-  await dive(.92); await dive(.65);
+  await dive(.92); await dive(.86);
   await expect(brain).toHaveAttribute("data-camera-pose", pose!);
   await to(page, "[data-capability-viewport]");
   const world = page.locator("[data-world-canvas]");

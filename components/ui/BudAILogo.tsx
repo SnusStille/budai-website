@@ -1,13 +1,15 @@
 "use client";
 
-import { useId } from "react";
+import { useEffect, useId, useRef } from "react";
 import Wordmark from "./BudAIWordmark";
-import { BUDAI_BRAND, BUDAI_MARK_PATH } from "@/lib/brand";
+import { BUDAI_BRAND, BUDAI_MARK_PATH, BUDAI_SIGNAL_PATHS } from "@/lib/brand";
+
+import { observeMark } from "@/lib/experience/mark-motion";
 
 type Size = "xs" | "sm" | "md" | "lg" | "xl" | "hero";
 const SIZES: Record<Size, number> = { xs: 28, sm: 42, md: 48, lg: 76, xl: 120, hero: 220 };
 
-/** A solid, cut geometric B: two routed planes, one shared spine. No orbit/filter/gradient. */
+/** Confluence: two continuous ribbons and one shared intelligence cell. */
 export default function BudAILogo({ size = "sm", className = "", animated = true, interactive = false, onClick, label = "BudAI", variant = "dark", mode = "idle" }: {
   size?: Size;
   className?: string;
@@ -18,14 +20,22 @@ export default function BudAILogo({ size = "sm", className = "", animated = true
   variant?: "dark" | "light";
   mode?: "idle" | "thinking";
 }) {
+  const ref = useRef<HTMLButtonElement & HTMLSpanElement>(null);
+  useEffect(() => animated && ref.current ? observeMark(ref.current) : undefined, [animated]);
   const Tag = interactive || onClick ? "button" : "span";
   const px = SIZES[size];
   return (
-    <Tag type={Tag === "button" ? "button" : undefined} role={Tag === "span" ? "img" : undefined} onClick={onClick} aria-label={label}
-      data-budai-mark="fold" data-mode={mode}
-      className={`budai-mark relative inline-flex shrink-0 items-center justify-center ${animated && mode === "thinking" ? "budai-mark-thinking" : ""} ${Tag === "button" ? "rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-cyan" : ""} ${className}`}
+    <Tag ref={ref} type={Tag === "button" ? "button" : undefined} role={Tag === "span" ? "img" : undefined} onClick={onClick} aria-label={label}
+      data-budai-mark="confluence" data-mode={mode} data-variant={variant} data-animated={animated}
+      className={`budai-mark relative inline-flex shrink-0 items-center justify-center ${animated ? "budai-mark-living" : ""} ${Tag === "button" ? "rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-cyan" : ""} ${className}`}
       style={{ width: px, height: px, color: variant === "light" ? BUDAI_BRAND.ink : BUDAI_BRAND.light }}>
-      <svg viewBox="0 0 32 32" fill="currentColor" className="h-full w-full" aria-hidden="true"><path d={BUDAI_MARK_PATH} fillRule="evenodd" /></svg>
+      <svg viewBox="0 0 32 32" fill="currentColor" className="h-full w-full" aria-hidden="true">
+        <path data-mark-body d={BUDAI_MARK_PATH} fillRule="nonzero" />
+        {animated && <g className="confluence-signal" fill="none" stroke="currentColor" strokeWidth=".95" strokeLinecap="round">
+          {BUDAI_SIGNAL_PATHS.map((path,i)=><path key={path} d={path} pathLength="100" className={`confluence-trace confluence-trace-${i}`} />)}
+          <path className="confluence-cell" d="M14.2 15L16 14L17.8 15V17L16 18L14.2 17Z" fill="currentColor" stroke="none" />
+        </g>}
+      </svg>
     </Tag>
   );
 }

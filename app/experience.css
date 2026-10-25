@@ -8,7 +8,7 @@
 }
 html { background: #020205; }
 body { overflow-x: clip; }
-#main { isolation: isolate; }
+#main { isolation:auto; } /* Root brain 3 / actual page content 10 / opening 200+: one shared stacking contract. */
 /* Animated sticky / CSS3D descendants must never become browser scroll anchors.
    Native wheel, touch, keyboard, hash and history scrolling remain unchanged. */
 .journey-page { overflow-anchor: none; }
@@ -42,7 +42,7 @@ html[data-budai-intro="revealing"] .intro-interface { opacity: 0; }
 .intelligence-stage { position: fixed; inset: 0; z-index: 3; overflow: clip; pointer-events: none; --core-scroll: 0; --core-offset: 0px; opacity: calc(1 - var(--core-scroll)); transform: translateY(var(--core-offset)); }
 /* Stable render-target geometry: the handoff is composite-only, not a resize
    on every frame. Uniform scale preserves the actual 3D brain's proportions. */
-.intelligence-frame { --intro-x: -25.5vw; --intro-y: calc(31.5vh - min(39vh, 410px)); --intro-scale: .86; position: absolute; top: 9vh; left: 75.5%; width: 100vw; height: 78vh; max-height: 820px; transform: translateX(-50%); transform-origin: center; transition: transform 1000ms var(--motion-ease); }
+.intelligence-frame { --intro-x: -25.5vw; --intro-y: calc(31.5vh - min(39vh, 410px)); --intro-scale: .86; position: absolute; top: 9vh; left: 75.5%; width: 100vw; height: 78vh; max-height: 820px; transform: translateX(-50%); transform-origin: center; transition: transform 650ms var(--motion-ease); }
 html[data-budai-intro="playing"] .intelligence-stage { z-index: 201; opacity: 1; transform: none; }
 html[data-budai-intro="revealing"] .intelligence-stage { z-index: 201; }
 html[data-budai-intro="playing"] .intelligence-frame { transform: translate(calc(-50% + var(--intro-x)), var(--intro-y)) scale(var(--intro-scale)); }
@@ -404,7 +404,7 @@ html[data-budai-intro="done"] .core-coordinate, html[data-budai-intro="done"] .c
 .neural-crosshair i:nth-child(1) { top:0;left:0;border-width:1px 0 0 1px; } .neural-crosshair i:nth-child(2) { top:0;right:0;border-width:1px 1px 0 0; } .neural-crosshair i:nth-child(3) { bottom:0;right:0;border-width:0 1px 1px 0; } .neural-crosshair i:nth-child(4) { bottom:0;left:0;border-width:0 0 1px 1px; }
 .brain-journey-fallback { position: absolute; inset: 20% 15%; }
 html[data-core-positioned="true"] .brain-journey-fallback { display: none; }
-#playground { background: linear-gradient(#02020500, #020205 13%, #020205 90%, #02020500); }
+#playground { background:transparent; }
 @media (min-width:1800px) { html[data-budai-intro="done"] .intelligence-frame { transform: translate(calc(-50% - 23vw * var(--core-entry, 0)), 0) scale(calc(1 + .16 * var(--core-entry, 0))); } }
 @media (max-width:767px) {
  html[data-budai-intro="done"] .intelligence-frame { transform: translate(-50%, calc(14svh * var(--core-entry, 0))) scale(calc(1 + .28 * var(--core-entry, 0))); }
@@ -513,12 +513,23 @@ html[data-world-state="ready"] .capability-drawing-fallback, html[data-world-sta
 .core-coordinate-a { left:33%; }.core-coordinate-b { right:33%; }
 @media(max-width:767px) { .core-coordinate-a { left:7%; }.core-coordinate-b { right:7%; }.intelligence-halo { inset:10%; } }
 
-/* Fold identity — monochrome, solid silhouette at every scale. */
+/* Confluence — one living signal through two continuous ribbons. */
 .budai-wordmark { font-family:"Plus Jakarta Sans Variable",sans-serif; font-weight:650; letter-spacing:-.055em; line-height:1; }
 .intro-brand-status,.editor-brand { display:inline-flex; align-items:center; justify-content:center; gap:12px; }
-.budai-mark-thinking { animation:budai-signal 1.8s ease-in-out infinite; }
-@keyframes budai-signal { 0%,100% { opacity:1; } 50% { opacity:.42; } }
-@media(prefers-reduced-motion:reduce) { .budai-mark-thinking { animation:none; } }
+
+.confluence-signal { color:#fff;mix-blend-mode:screen;pointer-events:none; }
+.confluence-trace { stroke-dasharray:8 92;stroke-dashoffset:108;opacity:0;animation:confluence-transmit 8s linear infinite;animation-play-state:paused; }
+.confluence-trace-1 { animation-delay:.45s; }
+.confluence-cell { opacity:0;animation:confluence-receive 8s ease infinite;animation-play-state:paused; }
+.budai-mark[data-mark-motion="running"] .confluence-trace,
+.budai-mark[data-mark-motion="running"] .confluence-cell { animation-play-state:running; }
+.budai-mark[data-mode="thinking"] .confluence-trace,
+.budai-mark[data-mode="thinking"] .confluence-cell { animation-duration:2s; }
+.budai-mark[data-variant="light"] .confluence-signal { color:#497e8b;mix-blend-mode:multiply; }
+@keyframes confluence-transmit { 0%,68% {opacity:0;stroke-dashoffset:108} 70% {opacity:.85} 85% {opacity:.85;stroke-dashoffset:-8} 87%,100% {opacity:0;stroke-dashoffset:-8} }
+@keyframes confluence-receive { 0%,84%,97%,100% {opacity:0} 88% {opacity:.9} }
+@media(prefers-reduced-motion:reduce) { .confluence-signal {display:none} }
+
 
 .chapter-label:has([data-budai-mark]) { display:inline-flex;align-items:center;gap:10px; }
 
@@ -527,3 +538,81 @@ html[data-world-state="ready"] .capability-drawing-fallback, html[data-world-sta
  .core-coordinate-b { bottom:calc(50% - 130px); }
  .core-caption { top:calc(50% + 140px);bottom:auto; }
 }
+
+/* Original tour restored; the real product overlaps the final camera flight.
+   These dimensions are present in SSR, not introduced after hydration. */
+.brain-journey { height:320svh; }
+.neural-entry-title { max-width:490px;bottom:13%;opacity:clamp(0,calc(1 - var(--neural-progress)*8),1); }
+.neural-entry-title h2 { font-size:clamp(35px,4.2vw,60px); }
+.neural-entry-title .signal-meaning { display:block;max-width:385px;font-size:13px;line-height:1.85;color:#91a7b5; }
+.signal-meaning-chips { display:flex;gap:16px;margin-top:20px;font:8px var(--font-jetbrains),monospace;letter-spacing:.08em;color:#90b0be; }
+.signal-meaning-chips>span+span::before {content:"·";margin-right:16px;color:#506677;}
+.original-brain-tour { position:absolute;left:6vw;right:6vw;bottom:11%;height:150px;pointer-events:none; }
+.original-brain-stage { position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:var(--stage-opacity,0);transform:translateY(calc((1 - var(--stage-opacity,0))*16px));text-align:center; }
+.original-brain-stage>span { font:8px var(--font-jetbrains),monospace;letter-spacing:.2em;color:#a0c4ce; }
+.original-brain-stage h3 {font-size:clamp(30px,4vw,54px);font-weight:450;letter-spacing:-.045em;margin:13px 0 8px;}
+.original-brain-stage p {font-size:13px;color:#94aab5;}
+.neural-exit-title { top:24%;bottom:auto;opacity:clamp(0,calc((var(--neural-progress) - .63)*13),1);mask-image:linear-gradient(black,black); }
+.neural-exit-title>p {font-size:clamp(30px,4vw,52px);margin:12px 0;}
+.neural-exit-title>svg {margin:auto;color:#a0c4ce;}
+.neural-exit-title { visibility:hidden; } /* Arrival's real heading is the destination, not another interstitial. */
+.brain-journey-sticky {pointer-events:none;}
+.neural-hud-top>a {pointer-events:auto;min-height:32px;}
+.neural-hud-top,.neural-hud-bottom {opacity:clamp(0,calc((.79 - var(--neural-progress))*9),1);}
+.playground-experience {margin-top:-110svh;position:relative;z-index:7;padding-bottom:0;}
+.playground-introduction {position:relative;max-width:640px;margin-left:auto;margin-right:auto;padding-top:15px;}
+.playground-introduction .section-badge {background:transparent;border:0;font:9px var(--font-jetbrains),monospace;letter-spacing:.1em;gap:8px;margin-bottom:12px;}
+.playground-introduction h2 {font-weight:450;font-size:clamp(26px,3.2vw,44px);letter-spacing:-.045em;}
+.playground-introduction p {font-size:12px;max-width:570px;color:#93a8b5;}
+.playground-arrival-anchor {position:relative;--product-arrival:1;}
+.playground-plane {transform-origin:50% 0;backface-visibility:hidden;}
+.playground-surface {border-color:#a8d3de4a!important;background:#070d13fa!important;box-shadow:0 0 0 1px #8cb9c714,0 28px 110px #000a!important;}
+.playground-surface>div:first-child {background:linear-gradient(90deg,transparent,#b4d7df66,transparent);}
+.product-ambient-light {position:absolute;left:12%;right:12%;top:5%;height:70%;background:radial-gradient(ellipse,#38627912,transparent 66%);pointer-events:none;}
+.product-output {display:flex;align-items:center;justify-content:center;gap:25px;max-width:760px;margin:70px auto 0;padding-bottom:65px;font:8px var(--font-jetbrains),monospace;letter-spacing:.1em;color:#6f8b99;}
+.product-output>div {display:flex;gap:9px;align-items:center;}
+.product-output i {width:3px;height:24px;background:linear-gradient(#a6cdd575,transparent);transform:skew(-22deg);}
+.identity-fallback {inset:30% 34%;filter:none;}
+html[data-budai-intro="done"] .intelligence-stage[data-fallback="true"] {position:absolute;height:100svh;opacity:1;transform:none;}
+html[data-budai-intro="done"] .intelligence-stage[data-fallback="true"] .intelligence-frame {transform:translateX(-50%);--core-entry:0!important;}
+html:not([data-brain-state="ready"]) .brain-journey-fallback {display:block;}
+.brain-journey[data-enhanced="false"] {height:320svh;}
+.brain-journey[data-enhanced="false"] .brain-journey-sticky {position:sticky;height:100svh;min-height:780px;overflow:clip;}
+.brain-journey[data-enhanced="false"] .neural-entry-title {position:relative;left:auto;bottom:auto;max-width:560px;padding-top:160px;margin:0 6vw;opacity:1;transform:none;}
+.brain-journey[data-enhanced="false"] .brain-journey-fallback {inset:270px 25% auto;height:240px;}
+.brain-journey[data-enhanced="false"] .original-brain-tour {position:relative;inset:auto;display:grid;grid-template-columns:repeat(2,1fr);height:auto;margin:265px 6vw 80px;gap:30px;}
+.brain-journey[data-enhanced="false"] .original-brain-stage {position:relative;opacity:1;transform:none;align-items:flex-start;text-align:left;}
+
+@media(max-width:767px) {
+ .neural-entry-title {max-width:320px;bottom:14%;}
+ .neural-entry-title h2 {font-size:35px;}
+ .neural-entry-title .signal-meaning {font-size:11px;max-width:290px;line-height:1.8;}
+ .signal-meaning-chips {font-size:7px;gap:12px;}
+ .signal-meaning-chips>span+span::before {margin-right:12px;}
+ .original-brain-tour {left:24px;right:24px;bottom:12%;}
+ .original-brain-stage h3 {font-size:37px;}
+ .original-brain-stage p {max-width:270px;font-size:12px;line-height:1.75;}
+ .playground-experience {margin-top:-110svh;}
+ .playground-introduction p {font-size:11px;max-width:310px;line-height:1.7;}
+ .product-output {gap:12px;font-size:6px;margin-top:45px;padding-bottom:40px;}
+ .identity-fallback {inset:calc(50% - 82px) 25% auto;height:164px;}
+ .brain-journey[data-enhanced="false"] .original-brain-tour {gap:25px;margin-left:24px;margin-right:24px;}
+ .brain-journey[data-enhanced="false"] .original-brain-stage h3 {font-size:26px;}
+ .brain-journey[data-enhanced="false"] .original-brain-stage p {font-size:11px;}
+}
+@media(prefers-reduced-motion:reduce) {
+ .brain-journey,.brain-journey[data-enhanced="false"] {height:auto;min-height:1000px;}
+ .brain-journey[data-enhanced="false"] .brain-journey-sticky {position:relative;height:auto;min-height:1000px;overflow:visible;}
+ .playground-experience {margin-top:0;}
+ .playground-plane {transform:none!important;}
+ .neural-hud-top,.neural-hud-bottom {opacity:1;}
+}
+@media(scripting:none) { .playground-experience {margin-top:0;} .brain-journey {height:auto;} .original-brain-stage {position:relative;opacity:1;} }
+
+.playground-introduction::before {content:"";position:absolute;inset:-30px -80px;z-index:-1;background:radial-gradient(ellipse,#020205e8,transparent 72%);pointer-events:none;}
+.capability-drawing-fallback {inset:0;width:100%;height:100%;padding:0;transform:none;border:0;display:block;}
+.capability-drawing-fallback svg {width:100%;height:100%;}
+
+@media(max-width:767px) { .playground-surface:not(.fixed) {height:min(88dvh,calc(100svh - 175px));min-height:520px;} }
+html[data-budai-intro="playing"] #main .confluence-trace,
+html[data-budai-intro="playing"] #main .confluence-cell {animation-play-state:paused;}

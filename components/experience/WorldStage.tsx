@@ -29,9 +29,9 @@ export default function WorldStage() {
     return () => media.removeEventListener("change", update);
   }, []);
   useEffect(() => subscribeJourney((frame) => {
-    // The world waits until the neural passage approaches its exit; the intro/hero never
+    // The world waits until the actual Playground approaches its output; the intro/hero never
     // waits for Three.js, PMREM, the room or its editor.
-    if (frame.chapter > 1.5 || (frame.sections.signal ?? 0) > .35) setNear(true);
+    if (frame.chapter > 2.08 || (frame.sections.playground ?? 0) > .65) setNear(true);
   }), []);
 
   useEffect(() => {

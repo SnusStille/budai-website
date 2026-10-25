@@ -1,10 +1,12 @@
 import { useId } from "react";
+import { BUDAI_MARK_PATH } from "@/lib/brand";
 
 /** Deliberately static anatomical illustration for unavailable WebGL / reduced motion. */
-export default function BrainFallback() {
+export default function BrainFallback({identity=false}:{identity?:boolean}) {
   const id = `brain-fallback-light-${useId().replace(/:/g, "")}`;
+  if(identity) return <div className="brain-fallback identity-fallback" data-brain-fallback data-fallback-kind="identity" aria-hidden="true"><svg viewBox="0 0 32 32" fill="#dcebf0"><path d={BUDAI_MARK_PATH} /></svg></div>;
   return (
-    <div className="brain-fallback" data-brain-fallback aria-hidden="true">
+    <div className="brain-fallback" data-brain-fallback data-fallback-kind="anatomy" aria-hidden="true">
       <svg viewBox="0 0 400 360" fill="none">
         <defs>
           <linearGradient id={id} x1="65" y1="60" x2="320" y2="300" gradientUnits="userSpaceOnUse">

@@ -47,5 +47,5 @@ try {
     return canvas.toDataURL("image/png").split(",")[1];
   }, { colors: BUDAI_BRAND, svg: budaiMarkSvg() });
   await writeFile("public/og.png", Buffer.from(social, "base64"));
-  console.log("Generated Fold SVGs, 32/180/192/512px PNG icons and 1200×630 social image from the shared brand path.");
+  console.log("Generated Confluence SVGs, 32/180/192/512px PNG icons and 1200×630 social image from the shared brand path.");
 } finally { await browser.close(); }

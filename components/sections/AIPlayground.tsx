@@ -57,7 +57,7 @@ import {
   Globe2,
   Command,
 } from "lucide-react";
-import ScrollReveal from "@/components/ui/ScrollReveal";
+import PlaygroundArrival from "@/components/experience/PlaygroundArrival";
 import BudAIWordmark from "@/components/ui/BudAIWordmark";
 import BudAILogo from "@/components/ui/BudAILogo";
 import { useLang } from "@/components/ui/LanguageContext";
@@ -1718,12 +1718,12 @@ export default function AIPlayground() {
   return (
     <section
       id="playground"
-      className="relative section-hairline py-8 sm:py-10 md:py-12 overflow-hidden [overflow-anchor:none]"
+      className="playground-experience relative py-8 sm:py-10 md:py-12 [overflow-anchor:none]"
     >
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(100vw,720px)] h-[min(100vw,720px)] bg-accent-purple/5 rounded-full blur-[140px] pointer-events-none" />
+      <div className="product-ambient-light" aria-hidden="true" />
 
       <div className="max-w-[1500px] mx-auto px-2 sm:px-4 lg:px-6 relative z-10">
-        <ScrollReveal className="text-center mb-4 sm:mb-5">
+        <div className="playground-introduction text-center mb-4 sm:mb-5">
           <span className="section-badge text-accent-cyan mb-4"><span className="font-mono text-[10px]" aria-hidden="true">02 /</span>{t.playground.badge}</span>
           <h2 className="text-2xl sm:text-3xl font-bold tracking-tight mb-1">
             {t.playground.title}{" "}
@@ -1732,11 +1732,12 @@ export default function AIPlayground() {
           <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-muted">{lang === "sv"
             ? "Din AI-assistent för vardagligt arbete. Skriv, planera, sammanfatta eller analysera på svenska och engelska. Prova gratis, utan registrering."
             : "Your AI assistant for everyday work. Write, plan, summarize or analyze in Swedish and English. Try it free, without signing up."}</p>
-        </ScrollReveal>
+        </div>
 
-        <ScrollReveal>
+        <PlaygroundArrival expanded={expanded}>
           <div
-            className={`rounded-2xl sm:rounded-3xl overflow-hidden border border-white/[0.12] bg-[#05050a]/98 shadow-[0_0_100px_rgba(0,229,255,0.12),0_40px_80px_rgba(0,0,0,0.45)] flex ${
+            data-playground-surface
+            className={`playground-surface rounded-2xl sm:rounded-3xl overflow-hidden border border-white/[0.12] bg-[#05050a]/98 shadow-[0_0_100px_rgba(0,229,255,0.12),0_40px_80px_rgba(0,0,0,0.45)] flex ${
               expanded
                 ? "fixed inset-0 sm:inset-3 z-[80] rounded-none sm:rounded-3xl"
                 : "h-[min(88dvh,940px)] min-h-[520px]"
@@ -1777,7 +1778,7 @@ export default function AIPlayground() {
                   >
                     <PanelLeft className="w-4 h-4" />
                   </button>
-                  <BudAILogo size="sm" animated mode={activity !== "idle" ? "thinking" : "idle"} />
+                  <BudAILogo size="xs" animated mode={activity !== "idle" ? "thinking" : "idle"} />
                   <div className="min-w-0">
                     <div className="text-sm font-semibold text-white truncate flex items-center gap-1.5">
                       <BudAIWordmark />
@@ -1888,8 +1889,9 @@ export default function AIPlayground() {
                   )}
                   <button
                     type="button"
+                    aria-label={expanded ? "Minimize Playground" : "Expand Playground"}
                     onClick={() => setExpanded((e) => !e)}
-                    className="p-2 rounded-lg border border-white/[0.06] text-muted hover:text-white hidden sm:inline-flex"
+                    className="p-2 rounded-lg border border-white/[0.06] text-muted hover:text-white inline-flex"
                   >
                     {expanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
                   </button>
@@ -1993,7 +1995,7 @@ export default function AIPlayground() {
                     </div>
                     <div className="inline-flex items-center gap-1.5 mb-3 px-2.5 py-1 rounded-full border border-accent-green/25 bg-accent-green/10 text-[10px] font-mono text-accent-green">
                       <span className="w-1.5 h-1.5 rounded-full bg-accent-green animate-pulse" />
-                      {lang === "sv" ? "LIVE · BudAI Core" : "LIVE · BudAI Core"}
+                      {lang === "sv" ? "UTVECKLARPREVIEW" : "DEVELOPER PREVIEW"}
                     </div>
                     <h3 className="text-xl sm:text-2xl font-bold text-white mb-1.5 tracking-tight relative">
                       {lang === "sv" ? "Vad ska vi få gjort?" : "What should we ship?"}
@@ -2852,7 +2854,8 @@ export default function AIPlayground() {
               )}
             </div>
           </div>
-        </ScrollReveal>
+        </PlaygroundArrival>
+        <div className="product-output" aria-hidden="true"><span>ONE INTELLIGENCE</span><div>{[0,1,2,3,4,5].map(i=><i key={i}/>)}</div><span>{lang==="sv"?"SEX SÄTT ATT ARBETA":"SIX WAYS TO WORK"}</span></div>
       </div>
 
 

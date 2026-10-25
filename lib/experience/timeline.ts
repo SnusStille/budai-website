@@ -81,5 +81,5 @@ export function worldChapterAt({ chapter, departure = 0 }: Pick<JourneyFrame, "c
 }
 export function worldOpacityAt(frame: Pick<JourneyFrame, "chapter" | "departure" | "sections">) {
   const chapter = worldChapterAt(frame);
-  return chapter < 2 ? .25 * smooth((frame.sections.signal ?? 0) * 1.2) : chapter > 4.6 ? .65 : .95;
+  return chapter < 2.8 ? .95 * smooth((chapter-2.05)/.75) : chapter > 4.6 ? .65 : .95;
 }

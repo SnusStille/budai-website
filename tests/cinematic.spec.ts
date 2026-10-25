@@ -49,6 +49,7 @@ test("restored neural journey is after landing and before the REAL Playground; o
   await dive(page, .55);
   await expect.poll(() => brain.getAttribute("data-camera-pose")).toBe(b);
   await move(page, "#playground");
+  await dive(page, 1);
   await expect(page.locator("#playground textarea")).toBeVisible();
   await expect(page.locator("[data-global-loader]")).toHaveCount(0);
   expect(await page.locator("[data-intelligence-stage]").evaluate(el => Number(getComputedStyle(el).opacity))).toBeLessThan(.01);
@@ -68,7 +69,7 @@ test("capabilities assemble a six-module machine, then three honest access archi
   await page.goto("/#capabilities");
   await move(page, "[data-capability-system]", 180);
   const canvas = page.locator("[data-world-canvas]");
-  await expect(canvas).toHaveAttribute("data-capability-architecture", "laminar");
+  await expect(canvas).toHaveAttribute("data-capability-architecture", "confluence-manifold");
   await expect(canvas).toHaveAttribute("data-capability-modules", "6");
   expect(Number(await canvas.getAttribute("data-draw-calls"))).toBeGreaterThan(5);
   await expect(page.locator(".capability-network")).toHaveCount(0);

@@ -143,7 +143,9 @@ export default function LoadingScreen() {
       const signal = frame.bounds.signal;
       const p = frame.sections.signal ?? 0;
       const entering = signal ? smooth(clamp((frame.y - signal.top + frame.height * .9) / (frame.height * .9))) : 0;
-      const opacity = 1 - smooth(clamp((p - .77) / .23));
+      const focused = frame.active === "playground" && !!document.activeElement?.closest("[data-playground-arrival]");
+      const direct = location.hash === "#playground" && frame.y >= (frame.bounds.playground?.top ?? Infinity) - frame.height*.4;
+      const opacity = focused || direct ? 0 : 1 - smooth(clamp((p - .86) / .14));
       stage.current.style.setProperty("--core-entry", String(entering));
       stage.current.style.setProperty("--core-scroll", String(1 - opacity));
       stage.current.style.setProperty("--core-offset", "0px");
@@ -168,21 +170,28 @@ export default function LoadingScreen() {
     return () => { main.inert = false; main.removeAttribute("aria-busy"); };
   }, [pathname, phase]);
 
+  useEffect(() => {
+    if (pathname !== "/") return;
+    document.documentElement.dataset.brainState = fallback || !renderBrain ? "fallback" : ready ? "ready" : "pending";
+    refreshJourney();
+    return () => { delete document.documentElement.dataset.brainState; };
+  },[fallback,renderBrain,ready,pathname]);
+
   if (pathname !== "/") return null;
 
   return (
     <>
       <div className="intro-backdrop" aria-hidden="true" />
-      <div ref={stage} className="intelligence-stage" data-intelligence-stage data-phase={phase} aria-hidden="true">
+      <div ref={stage} className="intelligence-stage" data-intelligence-stage data-phase={phase} data-fallback={fallback || !renderBrain} aria-hidden="true">
         <div className="intelligence-frame">
           <div className="intelligence-halo" />
-          {(fallback || !renderBrain) && <BrainFallback />}
+          {(fallback || !renderBrain) && <BrainFallback identity={phase === "done"} />}
           {renderBrain && !fallback && (
             <BrainFlight mode="ambient" motion={motion} active={coreVisible || phase === "playing" || phase === "revealing"} settled={phase === "revealing" || phase === "done"} activity={phase === "playing" && letters >= 3 ? .5 : .08} onReady={() => { readyRef.current = true; setReady(true); }} onFail={() => setFallback(true)} />
           )}
           <span className="core-coordinate core-coordinate-a">NEURAL ARCHITECTURE / 001</span>
           <span className="core-coordinate core-coordinate-b">INTELLIGENCE → CREATION</span>
-          <div className="core-caption"><span />{ready ? "CORE ACTIVE" : "INTELLIGENCE CORE"}<small>BUILT BY STILLEDEV · SWEDEN</small></div>
+          <div className="core-caption"><span />{phase === "done" ? "CONFLUENCE / A LIVING IDENTITY" : ready ? "NEURAL SYSTEM" : "INITIALIZING"}<small>BUILT BY STILLEDEV · SWEDEN</small></div>
         </div>
       </div>
       {phase !== "done" && (

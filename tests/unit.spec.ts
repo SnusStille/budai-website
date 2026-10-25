@@ -1,12 +1,12 @@
 import { test, expect } from "@playwright/test";
 import { INTRO_MS, INTRO_REVEAL_MS, introLetters, nextIntroLetter } from "../lib/experience/intro";
 import { cameraAt, CHAPTERS, journeyAt, worldChapterAt, worldOpacityAt } from "../lib/experience/timeline";
-import { brainCameraAt, brainFovAt, brainJourneyProgress } from "../lib/experience/brain";
+import { brainCameraAt, brainFovAt, brainJourneyProgress, brainVisualAt, playgroundProjectionAt, BRAIN_STORY_ORIGIN } from "../lib/experience/brain";
 import { codeCharactersAt, CODE_LENGTH, EXAMPLE_SOURCE, tokenizeLine } from "../lib/experience/code";
 
 test("intro has five deliberate letters and a bounded, short duration", () => {
   expect([0, 850, 1060, 1270, 1480, 1690, 9000].map(introLetters)).toEqual([0, 1, 2, 3, 4, 5, 5]);
-  expect(INTRO_MS + INTRO_REVEAL_MS).toBeLessThanOrEqual(3100);
+  expect(INTRO_MS + INTRO_REVEAL_MS).toBeLessThanOrEqual(4000);
   let previous = 0, lastAt = 0;
   const observed = [];
   for (const elapsed of [0, 1100, 1160, 1280, 1460, 1640, 1820, 2100, 2350]) {
@@ -88,4 +88,36 @@ test("world departure is reversible and its invisible landing state is genuinely
   const values = [0,.1,.5,.9,1].map(departure=>worldChapterAt({chapter:4,departure}));
   expect([...values].sort((a,b)=>a-b)).toEqual(values);
   expect([1,.9,.5,.1,0].map(departure=>worldChapterAt({chapter:4,departure})).reverse()).toEqual(values);
+});
+
+test("opening actually crosses the cortex and resolves into the SAME final hero pose",()=>{
+  const poses=Array.from({length:101},(_,i)=>brainCameraAt({kind:"intro",progress:i/100}));
+  expect(poses.some(p=>p.z<.8&&p.z>-.8)).toBe(true);
+  expect(poses.at(-1)!.z).toBeLessThan(-1);
+  const end=poses.at(-1)!,hero=brainCameraAt({kind:"hero",progress:0});
+  for(const key of ["x","y","z","yaw","tilt"] as const)expect(end[key]).toBeCloseTo(hero[key],8);
+  expect(brainVisualAt({kind:"intro",progress:1}).identity).toBe(1);
+  expect(brainCameraAt({kind:"journey",progress:.86}).z-BRAIN_STORY_ORIGIN).toBeLessThan(0);
+  expect(playgroundProjectionAt(1)).toEqual({depth:0,tilt:0});
+});
+
+test("the recovered story retains all four original stages and the identity volume is real, finite geometry",async()=>{
+  const {ORIGINAL_BRAIN_STAGES}=await import("../lib/experience/brain-story");
+  const {identityVolume}=await import("../lib/experience/identity-volume");
+  const {sampleBrandVolume,brandContours}=await import("../lib/brand");
+  expect(ORIGINAL_BRAIN_STAGES.map(s=>s.en.title)).toEqual(["Write","Memory","Decide","Voice & vision"]);
+  expect(brandContours()).toHaveLength(3);
+  const vertices=identityVolume();expect(vertices.length).toBeGreaterThan(3000);expect(vertices.length%18).toBe(0);
+  expect(Array.from(vertices).every(Number.isFinite)).toBe(true);
+  for(let i=0;i<vertices.length;i+=6)expect(Math.hypot(vertices[i+3],vertices[i+4],vertices[i+5])).toBeCloseTo(1,5);
+  expect(sampleBrandVolume(100)).toEqual(sampleBrandVolume(100));
+});
+
+test("DOM-to-world unprojection follows the actual projection matrix",async()=>{
+  const {worldAtNdc}=await import("../lib/experience/projection");
+  const f=2.2,aspect=1.44,m=[f/aspect,0,0,0,0,f,0,0,0,0,-1,-1,0,0,-.1,0];
+  for(const x of [-.8,0,.7])for(const y of [-.6,0,.9]){
+    const [a,b,z]=worldAtNdc(m,x,y,-8),w=-z;
+    expect((m[0]*a)/w).toBeCloseTo(x,7);expect((m[5]*b)/w).toBeCloseTo(y,7);
+  }
 });

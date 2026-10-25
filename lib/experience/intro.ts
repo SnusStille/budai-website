@@ -1,7 +1,7 @@
 /** The only intro policy. The pre-hydration guard and React owner use the same key. */
 export const INTRO_SESSION_KEY = "budai:cinematic-intro:v1";
-export const INTRO_MS = 2350;
-export const INTRO_REVEAL_MS = 700;
+export const INTRO_MS = 2800;
+export const INTRO_REVEAL_MS = 650;
 
 // Run before first paint: return visits/deep links never flash an overlay. If the
 // application bundle fails, the independent safety guard still releases the page.

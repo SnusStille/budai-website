@@ -96,21 +96,18 @@ export function createWorld(host: HTMLElement, editor: HTMLElement, onFailure: (
     };
     const tube = (points: THREE.Vector3[], material: THREE.Material, radius = .012) => new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points), 32, radius, 4, false), material);
 
-    // 00 / A spatial aperture, not another brain. The recovered brain lives above it.
-    const core = addEnvironment(0);
-    for (let i = 0; i < 3; i++) {
-      const ring = new THREE.Mesh(new THREE.TorusGeometry(3 + i * .7, .012, 4, 80), i % 2 ? secondary : signal); ring.position.set(2, 1.2, -i * 1.5); ring.rotation.y = .35; core.add(ring);
-    }
-
-    // 01 / Neural rails open into an architectural corridor behind the real product.
-    const corridor = addEnvironment(1);
-    for (let i = 0; i < (lite ? 7 : 12); i++) {
-      const portal = new THREE.Group(); portal.position.z = -i * 2.8;
-      for (const x of [-6, 6]) {
-        const beam = new THREE.Mesh(new THREE.BoxGeometry(.04, 8, .05), signal); beam.position.set(x, 2, 0); portal.add(beam);
-      }
-      const lintel = new THREE.Mesh(new THREE.BoxGeometry(12, .025, .05), secondary); lintel.position.y = 6; portal.add(lintel);
-      corridor.add(portal);
+    // No second hero core: the one root renderer owns brain and identity.
+    addEnvironment(0);
+    // The real product's six output channels converge into the capability core.
+    const corridor=addEnvironment(1);
+    const outputCurves:THREE.CubicBezierCurve3[]=[],outputPackets:THREE.Mesh[]=[];
+    for(let i=0;i<6;i++) {
+      const start=(i-2.5)*.3;
+      const curve=new THREE.CubicBezierCurve3(new THREE.Vector3(-1,start,0),new THREE.Vector3(6,start,-3),new THREE.Vector3(16,1.4+start*.6,-11),new THREE.Vector3(23.04,1.4,-16));
+      outputCurves.push(curve);
+      const geometry=new THREE.BufferGeometry().setFromPoints(curve.getPoints(40));
+      corridor.add(new THREE.Line(geometry,new THREE.LineBasicMaterial({color:i%2?"#829da7":"#a7ced4",transparent:true,opacity:.22})));
+      const packet=new THREE.Mesh(new THREE.BoxGeometry(.035,.035,.1),signal);corridor.add(packet);outputPackets.push(packet);
     }
 
     // 02 / Six functional cartridges assemble into a single physical engine.
@@ -171,19 +168,6 @@ export function createWorld(host: HTMLElement, editor: HTMLElement, onFailure: (
       if (i === 1) { const beacon = new THREE.Mesh(new THREE.CylinderGeometry(.015, .015, 2.3, 5), signal); beacon.position.copy(point).add(new THREE.Vector3(0, 1.3, 0)); roadmap.add(beacon); }
     });
 
-    // One connecting structure for the whole world, not five copies of a particle field.
-    for (const side of [-1, 1]) {
-      const points = groups.map((group, i) => group.position.clone().add(new THREE.Vector3(side * (6 + Math.sin(i) * 1.5), -1.5, 0)));
-      scene.add(tube(points, new THREE.MeshBasicMaterial({ color: "#83a3bf", transparent: true, opacity: .1 }), .01));
-    }
-    const dustGeometry = new THREE.BufferGeometry();
-    const dustPositions = new Float32Array((lite ? 45 : 100) * 3);
-    let seed = 82;
-    const random = () => { seed = (Math.imul(seed, 1664525) + 1013904223) | 0; return (seed >>> 0) / 4294967296; };
-    for (let i = 0; i < dustPositions.length; i += 3) { dustPositions[i] = random() * 144 - 8; dustPositions[i + 1] = random() * 11 - 3; dustPositions[i + 2] = -dustPositions[i] * .67 + (random() - .5) * 16; }
-    dustGeometry.setAttribute("position", new THREE.BufferAttribute(dustPositions, 3));
-    scene.add(new THREE.Points(dustGeometry, new THREE.PointsMaterial({ color: "#a7d1df", size: .025, transparent: true, opacity: .4, depthWrite: false })));
-
     let width = 0;
     let height = 0;
     let focus = -1;
@@ -239,7 +223,8 @@ export function createWorld(host: HTMLElement, editor: HTMLElement, onFailure: (
         engine.root.visible = inWindow;
         const capProgress = Number(capSystem?.dataset.progress ?? 0);
         const activeModule = focus >= 0 ? focus : Math.min(5, Math.floor(capProgress * 6));
-        engine.update(capProgress, activeModule, morph);
+        engine.update(capProgress, activeModule, morph, frame.time);
+        outputPackets.forEach((packet,i)=>packet.position.copy(outputCurves[i].getPoint(smooth(clamp((chapter-2.05)/.9)))));
         if (targetRect && inWindow && capWeight > .001) {
           const units = worldUnitsPerPixel(camera.position.distanceTo(engineCenter), camera.fov, frame.height);
           const scale = units * Math.min(targetRect.height * .84 / lerp(6.5, 3.6, morph), targetRect.width * .9 / lerp(4.5, 10.1, morph));
@@ -248,12 +233,13 @@ export function createWorld(host: HTMLElement, editor: HTMLElement, onFailure: (
           const offset = domViewOffset(projected, targetRect, frame.width, frame.height);
           camera.setViewOffset(frame.width, frame.height, offset.x * capWeight, offset.y * capWeight, frame.width, frame.height);
         }
-        renderer.domElement.dataset.capabilityArchitecture = "laminar";
+        renderer.domElement.dataset.capabilityArchitecture = "confluence-manifold";
         renderer.domElement.dataset.capabilityModules = "6";
+        renderer.domElement.dataset.capabilityPaths = "6";
         renderer.domElement.dataset.capabilityFocus = String(activeModule);
         renderer.domElement.dataset.accessMorph = morph.toFixed(3);
         key.position.copy(camera.position).add(new THREE.Vector3(-3, 6, 3)); key.target.position.fromArray(pose.target); key.target.updateMatrixWorld();
-        groups.forEach((group, i) => { group.visible = i === 1 ? chapter > .4 && chapter < 2.8 : Math.abs(chapter - (i === 0 ? 0 : i + 1)) < 1.15; });
+        groups.forEach((group, i) => { group.visible = i === 1 ? chapter > 2.03 && chapter < 2.85 : Math.abs(chapter - (i === 0 ? 0 : i + 1)) < 1.15; });
         const activeRoadNode = roadmapFocus >= 0 ? roadmapFocus : Math.min(3, Math.floor((frame.sections.roadmap ?? 0) * 4));
         roadNodes.forEach((material, i) => { material.emissiveIntensity = i === activeRoadNode ? 1.4 : .3; });
         roadGlows.forEach((material, i) => { material.opacity = i === activeRoadNode ? .7 : .22; });
