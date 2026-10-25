@@ -79,14 +79,13 @@ export default function Journey() {
         </ScrollReveal>
 
         <div className="grid lg:grid-cols-[1fr_1.05fr] gap-8 lg:gap-12 items-center" onMouseEnter={() => setAuto(false)}>
-          <div className="order-2 lg:order-1 space-y-2.5" role="list">
+          <div className="order-2 lg:order-1 space-y-2.5">
             {stages.map((s, i) => {
               const on = active === i;
               return (
                 <button
                   key={s.title}
                   type="button"
-                  role="listitem"
                   aria-pressed={on}
                   onClick={() => {
                     setAuto(false);

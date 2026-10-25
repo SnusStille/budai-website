@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
 
 type Rec = {
@@ -32,7 +32,7 @@ export default function VoiceOrb({ open, sv, busy, reply, onSend, onClose }: {
   latest.current = { sv, onSend, reply };
   st.current = state;
 
-  const listen = () => {
+  const listen = useCallback(() => {
     if (!live.current) return;
     const w = window as unknown as { SpeechRecognition?: new () => Rec; webkitSpeechRecognition?: new () => Rec };
     const Ctor = w.SpeechRecognition || w.webkitSpeechRecognition;
@@ -63,7 +63,7 @@ export default function VoiceOrb({ open, sv, busy, reply, onSend, onClose }: {
     } catch {
       /* already started */
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -101,7 +101,7 @@ export default function VoiceOrb({ open, sv, busy, reply, onSend, onClose }: {
       stream?.getTracks().forEach((t) => t.stop());
       ctx?.close().catch(() => {});
     };
-  }, [open]);
+  }, [open, listen]);
 
   useEffect(() => {
     if (!open || !awaiting.current || busy || !reply || reply === spoken.current) return;
@@ -116,8 +116,7 @@ export default function VoiceOrb({ open, sv, busy, reply, onSend, onClose }: {
     u.onerror = done;
     setState("speaking");
     window.speechSynthesis.speak(u);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [reply, busy, open]);
+  }, [reply, busy, open, sv, listen]);
 
   if (!open) return null;
   const label =

@@ -636,7 +636,10 @@ export default function BrainFlight({
       };
 
       kickRef.current = () => {
-        if (alive && reduced && !running) raf = requestAnimationFrame(frame);
+        if (alive && !running) {
+          running = true;
+          raf = requestAnimationFrame(frame);
+        }
       };
 
       running = true;
@@ -650,10 +653,7 @@ export default function BrainFlight({
     // pause when offscreen, resume when visible
     const io = new IntersectionObserver(([entry]) => {
       visible = entry.isIntersecting;
-      if (visible && alive && !running && !reduced) {
-        running = true;
-        raf = requestAnimationFrame(() => kickRef.current?.());
-      }
+      if (visible && alive && !running && !reduced) kickRef.current?.();
     });
     io.observe(canvas);
 

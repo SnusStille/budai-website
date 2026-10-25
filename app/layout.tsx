@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import { Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/Providers";
 import VercelAnalytics from "@/components/VercelAnalytics";
@@ -16,19 +15,6 @@ const jsonLd = {
   author: { "@type": "Organization", name: "Stilledev" },
   offers: { "@type": "Offer", price: "0", priceCurrency: "SEK", description: "Developer preview" },
 };
-
-const jakarta = Plus_Jakarta_Sans({
-  subsets: ["latin", "latin-ext"],
-  variable: "--font-jakarta",
-  display: "swap",
-  weight: ["400", "500", "600", "700", "800"],
-});
-
-const jetbrains = JetBrains_Mono({
-  subsets: ["latin", "latin-ext"],
-  variable: "--font-jetbrains",
-  display: "swap",
-});
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://stilledev.se";
 
@@ -99,11 +85,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html
-      lang="en"
-      className={`${jakarta.variable} ${jetbrains.variable} font-sans`}
-      suppressHydrationWarning
-    >
+    <html lang="en" className="font-sans" suppressHydrationWarning>
       <body className="antialiased noise-overlay bg-background text-white">
         <a
           href="#playground"
@@ -117,21 +99,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
         <Providers>{children}</Providers>
         <VercelAnalytics />
-      <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "SoftwareApplication",
-              name: "BudAI",
-              applicationCategory: "BusinessApplication",
-              operatingSystem: "Web",
-              description: "BudAI is an AI assistant for everyday work in Swedish and English.",
-              offers: { "@type": "Offer", price: "0", priceCurrency: "SEK" },
-              creator: { "@type": "Organization", name: "Stilledev" },
-            }),
-          }}
-        />
       </body>
     </html>
   );

@@ -6,7 +6,6 @@ import { ArrowRight, FileText, Languages, Zap, ChevronDown } from "lucide-react"
 import { useLang } from "@/components/ui/LanguageContext";
 import Magnetic from "@/components/ui/Magnetic";
 import dynamic from "next/dynamic";
-const ParticleCore = dynamic(() => import("@/components/effects/ParticleCore"), { ssr: false });
 const HeroBrainPanel = dynamic(() => import("@/components/sections/HeroBrainPanel"), { ssr: false });
 import { StilledevLink } from "@/components/ui/BudAILogo";
 
@@ -42,7 +41,6 @@ export default function Hero() {
 
   return (
     <section className="relative min-h-[100svh] flex items-center justify-center overflow-hidden pt-24 pb-16">
-      <ParticleCore />
       <motion.div
         className="absolute inset-0"
         initial={{ opacity: 0, scale: 1.08 }}
