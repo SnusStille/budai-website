@@ -16,6 +16,12 @@ export default function BrainScrollStory() {
   const sv=lang==="sv";
   const section=useRef<HTMLElement>(null);
   const [poster,setPoster]=useState(true);
+  const stageModules = [
+    "core.module(\"01-write.ts\")",
+    "core.module(\"05-memory.ts\")",
+    "core.module(\"03-decide.ts\")",
+    "core.module(\"06-multimodal.ts\")",
+  ];
   useEffect(()=>subscribeJourney(frame=>{
     const node=section.current;if(!node)return;
     const p=frame.sections.signal??0;
@@ -35,6 +41,12 @@ export default function BrainScrollStory() {
       element.style.setProperty("--stage-opacity",String(opacity));
       element.setAttribute("aria-hidden",String(enhanced&&opacity<.15));
     });
+    const synth=node.querySelector<HTMLElement>("[data-digital-synthesis]");
+    if(synth){
+      const sOpacity=smooth(1-Math.abs(p-.69)/.07);
+      synth.style.setProperty("--stage-opacity",String(sOpacity));
+      synth.setAttribute("aria-hidden",String(enhanced&&sOpacity<.15));
+    }
   }),[]);
   return (
     <section ref={section} id="signal" className="brain-journey" aria-labelledby="signal-title" data-brain-journey data-original-source="43f44c9">
@@ -51,9 +63,18 @@ export default function BrainScrollStory() {
           {ORIGINAL_BRAIN_STAGES.map((stage,i)=>{
             const copy=sv?stage.sv:stage.en;
             return <div key={i} className="original-brain-stage" data-original-stage={i}>
-              <span>0{i+1} / 04 · {sv?"NEURAL RUNDTUR":"NEURAL TOUR"}</span><h3>{copy.title}</h3><p>{copy.body}</p>
+              <span>0{i+1} / 04 · {sv?"NEURAL RUNDTUR":"NEURAL TOUR"}</span>
+              <h3>{copy.title}</h3>
+              <p>{copy.body}</p>
+              <code className="neural-stage-module">{stageModules[i]}</code>
             </div>;
           })}
+          <div className="original-brain-stage neural-digital-synthesis" data-digital-synthesis aria-hidden="true">
+            <span>{sv?"NEURAL SYNTES → DIGITAL INTELLIGENS":"NEURAL SYNTHESIS → DIGITAL INTELLIGENCE"}</span>
+            <h3>{sv?"Från organisk tanke till levande system.":"From organic signal to live intelligence."}</h3>
+            <p>{sv?"Synaptiska spår konvergerar till den interaktiva AI Playground nedan.":"Synaptic pathways converge into the interactive AI Playground ahead."}</p>
+            <code className="neural-stage-module">{"budai.playground.connect({ stream: true })"}</code>
+          </div>
         </div>
 
         <div className="neural-hud-bottom"><span>{sv?"FÖLJ SIGNALEN":"FOLLOW THE SIGNAL"}</span><div><i/></div><span>INPUT → OUTPUT</span></div>

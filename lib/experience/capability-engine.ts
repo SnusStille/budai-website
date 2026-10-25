@@ -337,7 +337,7 @@ function createTokenTexture(text: string, idx: number): THREE.CanvasTexture {
  */
 export function createCapabilityEngine(parent?: THREE.Object3D) {
   const root = new THREE.Group();
-  root.position.set(24, 1.4, -16);
+  root.position.set(0, 1.4, 0);
   parent?.add(root);
 
   const engineGroup = new THREE.Group();
@@ -402,6 +402,55 @@ export function createCapabilityEngine(parent?: THREE.Object3D) {
     group.add(glowBar);
 
     codeSlates.push({ group, mat, edgeMat, glowBarMat, spec });
+  });
+
+  // 3D Architectural Perspective Depth Grid + 6 Code-to-Core Synaptic Compiler Filaments
+  const depthGridPts: THREE.Vector3[] = [];
+  for (let gx = -3.6; gx <= 2.8; gx += 0.8) {
+    depthGridPts.push(new THREE.Vector3(gx, -2.5, -2.05), new THREE.Vector3(gx, 2.5, -2.05));
+  }
+  for (let gy = -2.2; gy <= 2.2; gy += 0.55) {
+    depthGridPts.push(new THREE.Vector3(-3.6, gy, -2.05), new THREE.Vector3(2.8, gy, -2.05));
+  }
+  const depthGridMat = new THREE.LineBasicMaterial({
+    color: CYAN,
+    transparent: true,
+    opacity: 0.11,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+  });
+  const depthGrid = new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(depthGridPts), depthGridMat);
+  codePanelGroup.add(depthGrid);
+
+  const slateBeamCurves: THREE.CatmullRomCurve3[] = [];
+  const slateBeamMats: THREE.MeshBasicMaterial[] = [];
+  const slatePulses: THREE.Mesh[] = [];
+  const slatePulseGeo = new THREE.SphereGeometry(0.044, 10, 10);
+
+  CODE_SLATES.forEach((spec, idx) => {
+    const sPos = new THREE.Vector3(...spec.basePos);
+    const mid = new THREE.Vector3(
+      (sPos.x - 2.28) * 0.5,
+      sPos.y * 0.58,
+      sPos.z * 0.5 - 0.25
+    );
+    const cEnd = new THREE.Vector3(-2.28, (2.5 - idx) * 0.12, 0);
+    const sCurve = new THREE.CatmullRomCurve3([sPos, mid, cEnd]);
+    slateBeamCurves.push(sCurve);
+
+    const sbMat = new THREE.MeshBasicMaterial({
+      color: idx % 2 === 0 ? CYAN : LAVENDER,
+      transparent: true,
+      opacity: 0.24,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+    slateBeamMats.push(sbMat);
+    codePanelGroup.add(new THREE.Mesh(new THREE.TubeGeometry(sCurve, 28, 0.009, 6, false), sbMat));
+
+    const spMesh = new THREE.Mesh(slatePulseGeo, sbMat);
+    codePanelGroup.add(spMesh);
+    slatePulses.push(spMesh);
   });
 
   // ============================================================================
@@ -760,6 +809,37 @@ export function createCapabilityEngine(parent?: THREE.Object3D) {
   const tierAccentMats: THREE.MeshBasicMaterial[] = [];
   const tierCores: THREE.Object3D[] = [];
   const tierOrbits: THREE.Object3D[][] = [[], [], []];
+  const tierSlateMats: THREE.MeshBasicMaterial[] = [];
+  const tierSlateEdges: THREE.LineBasicMaterial[] = [];
+  const tierSlateGroups: THREE.Group[] = [];
+
+  tierX.forEach((tx, tIdx) => {
+    const sGroup = new THREE.Group();
+    sGroup.position.set(tx, 0.58, -1.15);
+    sGroup.rotation.set(0.05, tIdx === 0 ? 0.18 : tIdx === 2 ? -0.18 : 0, 0);
+    sGroup.scale.setScalar(0.84);
+    accessGroup.add(sGroup);
+    tierSlateGroups.push(sGroup);
+
+    const sMat = new THREE.MeshBasicMaterial({
+      map: codeSlates[tIdx * 2].mat.map,
+      transparent: true,
+      opacity: 0,
+      depthWrite: false,
+    });
+    tierSlateMats.push(sMat);
+    sGroup.add(new THREE.Mesh(slateGeo, sMat));
+
+    const sEdge = new THREE.LineBasicMaterial({
+      color: tIdx === 2 ? LAVENDER : CYAN,
+      transparent: true,
+      opacity: 0,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+    tierSlateEdges.push(sEdge);
+    sGroup.add(new THREE.LineSegments(slateEdgeGeo, sEdge));
+  });
 
   const tierBridgeCurve = new THREE.CatmullRomCurve3([
     new THREE.Vector3(-3.1, 0.08, 0),
@@ -974,7 +1054,14 @@ export function createCapabilityEngine(parent?: THREE.Object3D) {
           slate.mat.opacity = (isFocused ? 0.82 : 0.22) * engineVis;
           slate.edgeMat.opacity = (isFocused ? 0.88 : 0.24) * engineVis;
           slate.glowBarMat.opacity = (isFocused ? 0.95 : 0.25) * engineVis;
+
+          slateBeamMats[idx].opacity = (isFocused ? 0.76 : 0.14) * engineVis;
+          const su = (time * (isFocused ? 0.56 : 0.24) + idx * 0.17) % 1;
+          slateBeamCurves[idx].getPointAt(su, slatePulses[idx].position);
+          slatePulses[idx].scale.setScalar(isFocused ? 1.45 : 0.75);
         });
+        depthGrid.rotation.y = (clamp(progress) - 0.5) * 0.14;
+        depthGridMat.opacity = 0.12 * engineVis;
 
         // 1B. Animate Floating 3D Syntax Token Streams flowing from Code Panels into Core
         tokenMeshes.forEach(tk => {
@@ -1051,6 +1138,9 @@ export function createCapabilityEngine(parent?: THREE.Object3D) {
           tierWireMats[t].opacity = 0.88 * accessVis;
           tierSolidMats[t].opacity = 0.86 * accessVis;
           tierAccentMats[t].opacity = 0.68 * accessVis;
+          tierSlateMats[t].opacity = 0.46 * accessVis;
+          tierSlateEdges[t].opacity = 0.52 * accessVis;
+          tierSlateGroups[t].position.y = 0.58 + Math.sin(time * 1.1 + t * 1.3) * 0.035;
 
           tierCores[t].rotation.y = time * (0.35 + t * 0.1);
           tierCores[t].rotation.x = time * 0.2;

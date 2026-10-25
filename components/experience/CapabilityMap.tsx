@@ -5,6 +5,7 @@ import { ArrowUpRight, AudioLines, BarChart3, FileText, Languages, Network, Work
 import { useLang } from "@/components/ui/LanguageContext";
 import { subscribeJourney } from "@/lib/experience/scroll";
 import { capabilityRecords } from "@/lib/experience/information-patterns";
+import { tokenizeLine } from "@/lib/experience/code";
 import { clamp } from "@/lib/experience/timeline";
 
 const BACKDROP_CODE_LINES = [
@@ -192,12 +193,22 @@ export default function CapabilityMap() {
           <div className="capability-code-depth-backdrop">
             <div className="code-depth-plane code-depth-far">
               {BACKDROP_CODE_LINES.map((line, idx) => (
-                <span key={idx}>{line}</span>
+                <span key={idx}>
+                  {tokenizeLine(line).map((tk, tIdx) => (
+                    <span key={tIdx} className={`token-${tk.tone}`}>{tk.text}</span>
+                  ))}
+                </span>
               ))}
             </div>
             <div className="code-depth-plane code-depth-mid">
-              <span>{`// ACTIVE MODULE: ${currentCap.file}`}</span>
-              <span>{currentCap.codeLines[0]}</span>
+              <span className="token-comment">{`// ACTIVE MODULE: ${currentCap.file}`}</span>
+              {currentCap.codeLines.map((line, idx) => (
+                <span key={idx}>
+                  {tokenizeLine(line).map((tk, tIdx) => (
+                    <span key={tIdx} className={`token-${tk.tone}`}>{tk.text}</span>
+                  ))}
+                </span>
+              ))}
             </div>
           </div>
 
@@ -258,7 +269,11 @@ export default function CapabilityMap() {
               {currentCap.codeLines.map((line, lIdx) => (
                 <div key={lIdx} className="capability-code-row">
                   <b>0{lIdx + 1}</b>
-                  <span>{line}</span>
+                  <span>
+                    {tokenizeLine(line).map((tk, tIdx) => (
+                      <span key={tIdx} className={`token-${tk.tone}`}>{tk.text}</span>
+                    ))}
+                  </span>
                 </div>
               ))}
             </div>

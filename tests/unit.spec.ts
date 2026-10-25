@@ -150,3 +150,15 @@ test("handoff dolly remains forward and angularly restrained, without a tiny dis
   expect(playgroundProjectionAt(.68).depth).toBeLessThan(500);expect(playgroundProjectionAt(.68).tilt).toBeLessThan(2);
   for(let i=1;i<poses.length;i++)expect(poses[i].z).toBeLessThan(poses[i-1].z);
 });
+
+test("CHAPTERS renumbers Roadmap to 05 and omits the removed standalone 05 Next Signal chapter",()=>{
+  expect(CHAPTERS.map(c=>({id:c.id,number:c.number}))).toEqual([
+    {id:"intelligence",number:"00"},
+    {id:"signal",number:"01"},
+    {id:"playground",number:"02"},
+    {id:"capabilities",number:"03"},
+    {id:"about",number:"04"},
+    {id:"roadmap",number:"05"},
+  ]);
+  expect(CHAPTERS.some(c=>String(c.id)==="waitlist")).toBe(false);
+});
