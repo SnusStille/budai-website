@@ -540,14 +540,16 @@ export default function AIPlayground() {
   const [savedBranch, setSavedBranch] = useState<ChatMessage[] | null>(null);
 
   useEffect(() => {
+    let focusTimer: ReturnType<typeof setTimeout>;
     const onPrompt = (e: Event) => {
       const text = (e as CustomEvent<string>).detail;
       if (typeof text !== "string") return;
       setInput(text);
-      window.setTimeout(() => document.querySelector<HTMLTextAreaElement>("#playground textarea")?.focus({ preventScroll: true }), 450);
+      clearTimeout(focusTimer);
+      focusTimer = setTimeout(() => document.querySelector<HTMLTextAreaElement>("#playground textarea")?.focus({ preventScroll: true }), 450);
     };
     window.addEventListener("budai:prompt", onPrompt);
-    return () => window.removeEventListener("budai:prompt", onPrompt);
+    return () => { clearTimeout(focusTimer); window.removeEventListener("budai:prompt", onPrompt); };
   }, []);
   const [activity, setActivity] = useState<AiActivity>("idle");
   useEffect(() => {
@@ -1726,6 +1728,9 @@ export default function AIPlayground() {
             {t.playground.title}{" "}
             <span className="text-gradient">{t.playground.titleHighlight}</span>
           </h2>
+          <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-muted">{lang === "sv"
+            ? "Din AI-assistent för vardagligt arbete. Skriv, planera, sammanfatta eller analysera på svenska och engelska. Prova gratis, utan registrering."
+            : "Your AI assistant for everyday work. Write, plan, summarize or analyze in Swedish and English. Try it free, without signing up."}</p>
         </ScrollReveal>
 
         <ScrollReveal>

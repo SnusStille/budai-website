@@ -1,7 +1,8 @@
 import * as THREE from "three";
 import { CSS3DObject, CSS3DRenderer } from "three/examples/jsm/renderers/CSS3DRenderer.js";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
-import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
+import { createCapabilityEngine } from "./capability-engine";
+import { domViewOffset, worldUnitsPerPixel } from "./projection";
 import { createDeveloperRoom } from "./developer-room";
 import { cameraAt, clamp, lerp, smooth, type JourneyFrame } from "./timeline";
 
@@ -87,7 +88,6 @@ export function createWorld(host: HTMLElement, editor: HTMLElement, onFailure: (
     const key = new THREE.DirectionalLight("#bddfea", 3); key.position.set(2, 8, 10); scene.add(key);
 
     const metal = new THREE.MeshStandardMaterial({ color: "#28394d", roughness: .26, metalness: .83 });
-    const dark = new THREE.MeshStandardMaterial({ color: "#111f2d", roughness: .4, metalness: .7 });
     const signal = new THREE.MeshBasicMaterial({ color: CYAN, transparent: true, opacity: .65 });
     const secondary = new THREE.MeshBasicMaterial({ color: LAVENDER, transparent: true, opacity: .35 });
     const groups: THREE.Group[] = [];
@@ -113,22 +113,14 @@ export function createWorld(host: HTMLElement, editor: HTMLElement, onFailure: (
       corridor.add(portal);
     }
 
-    // 02 / Six machined capability modules wired to one shared core.
+    // 02 / Six functional cartridges assemble into a single physical engine.
     const capabilities = addEnvironment(2);
-    const capabilityMaterials: THREE.MeshStandardMaterial[] = [];
-    const nodePositions = [[-4.5, 3.2, 0], [0, 4.5, -1], [4.5, 3.2, 0], [-4.5, -.1, .5], [0, -1.2, -.5], [4.5, -.1, .5]];
-    const capabilityCore = new THREE.Mesh(new THREE.OctahedronGeometry(.8, 1), metal); capabilityCore.position.set(0, 1.5, 0); capabilities.add(capabilityCore);
-    nodePositions.forEach(([x, y, z], i) => {
-      const material = new THREE.MeshStandardMaterial({ color: "#244154", emissive: i % 2 ? LAVENDER : CYAN, emissiveIntensity: .08, metalness: .75, roughness: .22 }); capabilityMaterials.push(material);
-      const node = new THREE.Group(); node.position.set(x, y, z); node.rotation.y = (i % 3 - 1) * -.17;
-      node.add(new THREE.Mesh(new RoundedBoxGeometry(1.65, 1.05, .5, 2, .06), material));
-      const glass = new THREE.Mesh(new THREE.PlaneGeometry(1.3, .72), dark); glass.position.z = .26; node.add(glass);
-      for (let j = 0; j < 4; j++) {
-        const pin = new THREE.Mesh(new THREE.BoxGeometry(.035, .1 + j * .04, .01), j % 2 ? secondary : signal); pin.position.set(-.45 + j * .3, 0, .27); node.add(pin);
-      }
-      capabilities.add(node);
-      capabilities.add(tube([new THREE.Vector3(0, 1.5, 0), new THREE.Vector3(x * .45, 1.5, -.5), new THREE.Vector3(x, y, z)], i % 2 ? secondary : signal));
-    });
+    const engine = createCapabilityEngine(capabilities);
+    const capViewport = document.querySelector<HTMLElement>("[data-capability-viewport]");
+    const capSystem = document.querySelector<HTMLElement>("[data-capability-system]");
+    const accessViewport = document.querySelector<HTMLElement>("[data-access-architecture]");
+    const engineCenter = new THREE.Vector3(48, 1.4, -32);
+    const projected = new THREE.Vector3();
 
     // 03 / Genuine modelled developer workspace + readable DOM central display.
     const builder = addEnvironment(3);
@@ -139,17 +131,22 @@ export function createWorld(host: HTMLElement, editor: HTMLElement, onFailure: (
     screen.scale.setScalar(room.screenScale);
     cssScene.add(screen);
 
-    // 04 / A quiet threshold. Four nested, volumetric frames draw the eye to the form.
+    // 04 / The next signal: leave the workspace for a distant, quiet beacon.
     const waitlist = addEnvironment(4);
-    const portalMaterials: THREE.MeshBasicMaterial[] = [];
+    const stone = new THREE.MeshStandardMaterial({ color: "#101d28", roughness: .55, metalness: .5 });
     for (let i = 0; i < 5; i++) {
-      const group = new THREE.Group(); group.position.set(0, 1, -i * 2.6);
-      const material = new THREE.MeshBasicMaterial({ color: i % 2 ? LAVENDER : CYAN, transparent: true, opacity: .3 - i * .04 }); portalMaterials.push(material);
-      for (const x of [-5.5, 5.5]) { const bar = new THREE.Mesh(new THREE.BoxGeometry(.035, 10, .04), material); bar.position.x = x; group.add(bar); }
-      for (const y of [-5, 5]) { const bar = new THREE.Mesh(new THREE.BoxGeometry(11, .035, .04), material); bar.position.y = y; group.add(bar); }
-      waitlist.add(group);
+      for (const side of [-1, 1]) {
+        const height = .7 + i * .8;
+        const wall = new THREE.Mesh(new THREE.BoxGeometry(2, height, 3.5), stone);
+        wall.position.set(side * (6.4 + i * .18), height / 2 - 2.1, -i * 4); waitlist.add(wall);
+      }
     }
-    const horizon = new THREE.Mesh(new THREE.PlaneGeometry(24, .012), signal); horizon.position.set(0, -2, -8); waitlist.add(horizon);
+    const signalBase = new THREE.Mesh(new THREE.BoxGeometry(3, .2, 3), metal); signalBase.position.set(0, -2, -15); waitlist.add(signalBase);
+    const beaconBody = new THREE.Mesh(new THREE.BoxGeometry(.3, 7, .35), metal); beaconBody.position.set(0, 1.5, -15); waitlist.add(beaconBody);
+    const beaconMaterial = new THREE.MeshStandardMaterial({ color: "#e2d4b7", emissive: "#e9cf9b", emissiveIntensity: 1.2, roughness: .3 });
+    const beacon = new THREE.Mesh(new THREE.BoxGeometry(.065, 6.4, .02), beaconMaterial); beacon.position.set(0, 1.5, -14.81); waitlist.add(beacon);
+    const beaconLight = new THREE.PointLight("#edce9b", 16, 22, 2); beaconLight.position.set(0, 1, -13); waitlist.add(beaconLight);
+    const horizon = new THREE.Mesh(new THREE.BoxGeometry(27, .018, .03), secondary); horizon.position.set(0, -2, -7); waitlist.add(horizon);
 
     // 05 / A real spatial timeline. Nodes correspond ONLY to the four existing stages.
     const roadmap = addEnvironment(5);
@@ -218,21 +215,46 @@ export function createWorld(host: HTMLElement, editor: HTMLElement, onFailure: (
           renderer.setSize(width, height); cssRenderer?.setSize(width, height);
           camera.aspect = width / height; camera.updateProjectionMatrix();
         }
-        const pose = cameraAt(frame.chapter, frame.sections.about ?? 0, mobile);
+        const chapter = frame.chapter >= 4 && frame.chapter < 5 ? Math.max(frame.chapter, 4 + smooth(frame.departure ?? 0)) : frame.chapter;
+        const pose = cameraAt(chapter, frame.sections.about ?? 0, mobile);
+        camera.clearViewOffset();
         camera.position.fromArray(pose.position); camera.lookAt(new THREE.Vector3(...pose.target));
+        camera.updateMatrixWorld();
+        const engineRect = capViewport?.getBoundingClientRect();
+        const accessRect = accessViewport?.getBoundingClientRect();
+        const morph = accessRect ? smooth(clamp((frame.height * .95 - accessRect.top) / (frame.height * .6))) : 0;
+        const targetRect = morph > .05 ? accessRect : engineRect;
+        const capWeight = smooth(clamp((1 - Math.abs(frame.chapter - 3) - .25) / .75));
+        const inWindow = !!targetRect && targetRect.bottom > -50 && targetRect.top < frame.height + 100;
+        engine.root.visible = inWindow;
+        const capProgress = Number(capSystem?.dataset.progress ?? 0);
+        const activeModule = focus >= 0 ? focus : Math.min(5, Math.floor(capProgress * 6));
+        engine.update(capProgress, activeModule, morph);
+        if (targetRect && inWindow && capWeight > .001) {
+          const units = worldUnitsPerPixel(camera.position.distanceTo(engineCenter), camera.fov, frame.height);
+          const scale = units * Math.min(targetRect.height * .84 / lerp(6.5, 3.6, morph), targetRect.width * .9 / lerp(4.5, 10.1, morph));
+          engine.root.scale.setScalar(scale);
+          projected.copy(engineCenter).project(camera);
+          const offset = domViewOffset(projected, targetRect, frame.width, frame.height);
+          camera.setViewOffset(frame.width, frame.height, offset.x * capWeight, offset.y * capWeight, frame.width, frame.height);
+        }
+        renderer.domElement.dataset.capabilityArchitecture = "laminar";
+        renderer.domElement.dataset.capabilityModules = "6";
+        renderer.domElement.dataset.capabilityFocus = String(activeModule);
+        renderer.domElement.dataset.accessMorph = morph.toFixed(3);
         key.position.copy(camera.position).add(new THREE.Vector3(-3, 6, 3)); key.target.position.fromArray(pose.target); key.target.updateMatrixWorld();
-        groups.forEach((group, i) => { group.visible = Math.abs(frame.chapter - i) < 1.15; });
-        capabilityMaterials.forEach((material, i) => { material.emissiveIntensity = i === focus ? .7 : .1 + .045 * Math.sin(frame.time + i); });
+        groups.forEach((group, i) => { group.visible = i === 1 ? chapter > .4 && chapter < 3.1 : Math.abs(chapter - (i === 0 ? 0 : i + 1)) < 1.15; });
         const activeRoadNode = roadmapFocus >= 0 ? roadmapFocus : Math.min(3, Math.floor((frame.sections.roadmap ?? 0) * 4));
         roadNodes.forEach((material, i) => { material.emissiveIntensity = i === activeRoadNode ? 1.4 : .3; });
         roadGlows.forEach((material, i) => { material.opacity = i === activeRoadNode ? .7 : .22; });
-        portalMaterials.forEach((material, i) => { material.opacity = (.28 - i * .04) * (.85 + .15 * Math.sin(frame.time * .5 - i * .3)); });
+        beaconMaterial.emissiveIntensity = 1.05 - .3 * smooth(frame.sections.waitlist ?? 0);
+        beaconLight.intensity = 16 - 7 * smooth(frame.sections.waitlist ?? 0);
         room.lamps[0].intensity = 32 + Math.sin(frame.time * .6) * 2;
-        const builderWeight = smooth(1 - Math.abs(frame.chapter - 3));
+        const builderWeight = smooth(1 - Math.abs(chapter - 4));
         screen.visible = builderWeight > .02;
         editor.style.opacity = String(builderWeight);
         cssRenderer!.domElement.style.visibility = screen.visible ? "visible" : "hidden";
-        host.style.opacity = String(frame.chapter < 1.5 ? lerp(.06, .2, clamp(frame.chapter)) : frame.chapter > 3.6 ? .65 : .95);
+        host.style.opacity = String(frame.chapter < 2 ? .25 * smooth((frame.sections.signal ?? 0) * 1.2) : frame.chapter > 4.6 ? .65 : .95);
         renderer.render(scene, camera);
         cssRenderer?.render(cssScene, camera);
         renderer.domElement.dataset.camera = pose.position.map((v) => v.toFixed(2)).join(",");

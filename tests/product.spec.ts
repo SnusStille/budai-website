@@ -113,12 +113,12 @@ test("image upload retains the existing account gate and auth UI", async ({ page
   await expect(page.locator("[data-global-loader]")).toHaveCount(0);
 });
 
-test("Hero Ask still hands the actual prompt to the actual Playground", async ({ page }) => {
+test("capability actions prefill the REAL Playground instead of a second Hero Ask interface", async ({ page }) => {
   await page.goto("/");
-  const question = "Plan a focused Swedish workday.";
-  await page.getByRole("textbox", { name: "Ask BudAI", exact: true }).fill(question);
-  await page.getByRole("button", { name: "Send", exact: true }).click();
-  await expect(page.getByRole("textbox", { name: "Message BudAI", exact: true })).toHaveValue(question);
+  await expect(page.locator("#signal").getByRole("textbox")).toHaveCount(0);
+  await expect(page.getByRole("textbox", { name: "Ask BudAI", exact: true })).toHaveCount(0);
+  await page.locator(".capability-module").first().click();
+  await expect(page.getByRole("textbox", { name: "Message BudAI", exact: true })).toHaveValue("Help me write a clear, friendly email.");
 });
 
 test("waitlist keeps native validation, company details, referral controls, and honest failure", async ({ page }) => {

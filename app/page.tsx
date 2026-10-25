@@ -13,9 +13,8 @@ import Navbar from "@/components/sections/Navbar";
 import Hero from "@/components/sections/Hero";
 import Capabilities from "@/components/sections/Capabilities";
 import Waitlist from "@/components/sections/Waitlist";
-import WhatIsBudAI from "@/components/sections/WhatIsBudAI";
+import BrainScrollStory from "@/components/sections/BrainScrollStory";
 import ErrorBoundary from "@/components/ui/ErrorBoundary";
-import HeroAsk from "@/components/sections/HeroAsk";
 import LazyEgg from "@/components/effects/LazyEgg";
 import FeedbackButton from "@/components/ui/FeedbackButton";
 import Journey from "@/components/sections/Journey";
@@ -90,8 +89,7 @@ export default function Home() {
         <FeedbackButton />
         <LazyEgg />
         <Hero />
-        <HeroAsk />
-        <WhatIsBudAI />
+        <BrainScrollStory />
         <ErrorBoundary>
           <AIPlayground />
         </ErrorBoundary>

@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type MutableRefObject } from "react";
+import { brainCameraAt, type BrainMotion } from "@/lib/experience/brain";
 
 /**
  * Neural brain, raw WebGL2, no dependencies.
@@ -15,6 +16,7 @@ import { useEffect, useRef } from "react";
 
 type Props = {
   progress?: number;
+  motion?: MutableRefObject<BrainMotion>;
   className?: string;
   mode?: "intro" | "ambient";
   focus?: number;
@@ -114,6 +116,7 @@ in float vR;
 in float vRegion;
 uniform float uGain;
 uniform float uTime;
+uniform float uJourney;
 uniform float uFocus;
 uniform float uActivity;
 out vec4 outColor;
@@ -128,6 +131,7 @@ void main() {
   vec3 tcol = vec3(0.6, 0.42, 1.0);
   float fg = uFocus < -0.5 ? 1.0 : (abs(vRegion - uFocus) < 0.5 ? 1.8 : 0.35);
   vec3 rgb = (base + wcol * wave * 0.8 + tcol * travel * 0.5) * uGain * fg;
+  if (vRegion < -1.5) rgb *= smoothstep(0.12, 0.46, uJourney);
   outColor = vec4(rgb, max(max(rgb.r, rgb.g), rgb.b));
 }`;
 
@@ -390,7 +394,22 @@ function buildBrain(mobile: boolean) {
 
   // synapse vertex: x y z t seed r region (7 floats), two per edge
   const E = edges.length / 2;
-  const lineData = new Float32Array(E * 2 * 7);
+  const interiorEdges: number[][] = [];
+  for (let i = 0; i < nInner - 3; i++) {
+    for (let j = i + 1; j < Math.min(nInner, i + 18); j++) {
+      const a = inner.slice(i * 3, i * 3 + 3), b = inner.slice(j * 3, j * 3 + 3);
+      if (Math.hypot(...a.map((v, k) => v - b[k])) < .48) { interiorEdges.push([...a, ...b]); break; }
+    }
+  }
+  for (let rail = 0; rail < 8; rail++) {
+    const angle = rail * Math.PI / 4;
+    for (let k = 0; k < 20; k++) {
+      const r = .28 + k * .075;
+      const nextR = .28 + (k + 1) * .075;
+      interiorEdges.push([Math.cos(angle) * r, Math.sin(angle) * r, -.4 - k * .8, Math.cos(angle) * nextR, Math.sin(angle) * nextR, -1.2 - k * .8]);
+    }
+  }
+  const lineData = new Float32Array((E + interiorEdges.length) * 2 * 7);
   for (let e = 0; e < E; e++) {
     const seed = Math.random();
     for (let v = 0; v < 2; v++) {
@@ -406,13 +425,20 @@ function buildBrain(mobile: boolean) {
       lineData[o + 6] = regionOf(x, y, z);
     }
   }
-  return { pointData, N, dustCount, lineData, E };
+  interiorEdges.forEach((edge, i) => {
+    for (let v = 0; v < 2; v++) {
+      const o = ((E + i) * 2 + v) * 7;
+      lineData.set([edge[v * 3], edge[v * 3 + 1], edge[v * 3 + 2], v, (i * .618) % 1, .3, -2], o);
+    }
+  });
+  return { pointData, N, dustCount, lineData, E: E + interiorEdges.length };
 }
 
 /* ---------- component ---------- */
 
 export default function BrainFlight({
   progress = 0,
+  motion,
   className = "",
   mode = "intro",
   focus = -1,
@@ -426,6 +452,8 @@ export default function BrainFlight({
 }: Props) {
   const ref = useRef<HTMLCanvasElement>(null);
   const progRef = useRef(progress);
+  const motionRef = useRef(motion);
+  motionRef.current = motion;
   const settledRef = useRef(settled);
   const activeRef = useRef(active);
   const focusRef = useRef(focus);
@@ -570,7 +598,7 @@ export default function BrainFlight({
       };
       const uLine = {
         mvp: lU("uMVP"), time: lU("uTime"), gain: lU("uGain"),
-        focus: lU("uFocus"), activity: lU("uActivity"),
+        focus: lU("uFocus"), activity: lU("uActivity"), journey: lU("uJourney"),
       };
       const uBlur = { step: gl.getUniformLocation(blurProg, "uStep") };
       const uComp = { amt: gl.getUniformLocation(compProg, "uBloomAmt") };
@@ -605,12 +633,18 @@ export default function BrainFlight({
         const H = canvas.height;
 
         const fly = ambient ? 0 : Math.pow(Math.min(1, p / 0.92), 2.0);
-        const camZ = ambient ? 3.95 + departure * .65 : 5.2 - 5.6 * fly;
-        const camX = ambient ? Math.sin(t * 0.15) * 0.25 : Math.sin(fly * Math.PI) * 0.55;
-        const yaw = t * (ambient ? 0.09 : 0.12) + fly * 1.1 + departure * .24;
-        const tilt = ambient ? 0.12 : 0.22 - 0.18 * fly;
+        const controlled = motionRef.current?.current;
+        const pose = controlled ? brainCameraAt(controlled) : null;
+        let camZ = pose?.z ?? (ambient ? 3.95 + departure * .65 : 5.2 - 5.6 * fly);
+        if (controlled?.kind === "intro") camZ += (4.6 - camZ) * departure;
+        const camX = pose?.x ?? (ambient ? Math.sin(t * 0.15) * .25 : Math.sin(fly * Math.PI) * .55);
+        const yaw = pose?.yaw ?? (t * (ambient ? .09 : .12) + fly * 1.1 + departure * .24);
+        const tilt = pose?.tilt ?? (ambient ? .12 : .22 - .18 * fly);
+        canvas.dataset.cameraZ = camZ.toFixed(4);
+        canvas.dataset.sequence = controlled?.kind ?? mode;
+        canvas.dataset.cameraPose = [camX, pose?.y ?? .25, camZ, yaw, tilt].map(n => n.toFixed(5)).join(",");
         const proj = perspective(0.87, W / H, 0.05, 50);
-        const mvp = mul(proj, mul(translate(-camX, -0.25, -camZ), mul(rotX(tilt), rotY(yaw))));
+        const mvp = mul(proj, mul(translate(-camX, -(pose?.y ?? .25), -camZ), mul(rotX(tilt), rotY(yaw))));
         lastMvp = mvp;
 
         const intro = ambient ? 0.7 : 0.35 + 0.65 * Math.min(1, t / 0.9);
@@ -625,6 +659,7 @@ export default function BrainFlight({
         gl.blendFunc(gl.ONE, gl.ONE);
 
         gl.useProgram(lineProg);
+        gl.uniform1f(uLine.journey, controlled?.kind === "journey" ? controlled.progress : 0);
         gl.bindVertexArray(lineVao);
         gl.uniformMatrix4fv(uLine.mvp, false, mvp);
         gl.uniform1f(uLine.time, t);

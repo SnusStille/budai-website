@@ -223,7 +223,7 @@ test("Builder is real 3D; native scroll drives the camera and code, including ex
   const canvas = page.locator("[data-world-canvas]");
   await expect(canvas).toHaveCount(1);
 
-  await expect(canvas).toHaveAttribute("data-chapter", "3.000");
+  await expect(canvas).toHaveAttribute("data-chapter", "4.000");
   const a = await canvas.getAttribute("data-camera");
   const first = Number(await page.locator(".world-editor-mount [data-code-characters]").getAttribute("data-code-characters"));
   await scrollSection(page, "about", 900);

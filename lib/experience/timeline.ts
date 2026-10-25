@@ -1,5 +1,6 @@
 export const CHAPTERS = [
   { id: "intelligence", label: "Intelligence", number: "00" },
+  { id: "signal", label: "Neural journey", number: "01" },
   { id: "playground", label: "Playground", number: "01" },
   { id: "capabilities", label: "Capabilities", number: "02" },
   { id: "about", label: "Builder", number: "03" },
@@ -16,8 +17,10 @@ export type JourneyFrame = {
   chapter: number;
   active: ChapterId;
   sections: Partial<Record<ChapterId, number>>;
+  bounds: Partial<Record<ChapterId, SectionBounds>>;
   reduced: boolean;
   time: number;
+  departure?: number;
 };
 
 export const clamp = (n: number, min = 0, max = 1) => Math.min(max, Math.max(min, n));
@@ -29,19 +32,22 @@ export function journeyAt(y: number, height: number, documentHeight: number, bou
   let chapter = 0;
   let active: ChapterId = "intelligence";
   const sections: JourneyFrame["sections"] = {};
+  const sectionBounds: JourneyFrame["bounds"] = {};
   for (const section of bounds) {
-    sections[section.id] = clamp((y - section.top + height * .35) / Math.max(height * .65, section.height - height * .55));
+    sectionBounds[section.id] = section;
+    sections[section.id] = section.id === "signal" ? clamp((y - section.top) / Math.max(1, section.height - height)) : clamp((y - section.top + height * .35) / Math.max(height * .65, section.height - height * .55));
     if (y + height * .4 >= section.top) active = section.id;
     if (section.id !== "intelligence") {
       chapter += smooth((y - section.top + height * .85) / (height * .7));
     }
   }
-  return { chapter, active, sections, progress: clamp(y / Math.max(1, documentHeight - height)) };
+  return { chapter, active, sections, bounds: sectionBounds, progress: clamp(y / Math.max(1, documentHeight - height)) };
 }
 
 export type CameraPose = { position: [number, number, number]; target: [number, number, number] };
 const POSES: CameraPose[] = [
   { position: [0, 2.5, 10], target: [0, 1, 0] },
+  { position: [24, 2.4, -3], target: [24, 1, -16] },
   { position: [24, 3.2, -3], target: [24, 1, -16] },
   { position: [49, 3.5, -18], target: [48, 1, -32] },
   { position: [73.5, 3.4, -34], target: [72, 1.6, -48] },
@@ -51,13 +57,13 @@ const POSES: CameraPose[] = [
 
 /** Dwell at each environment; deliberate camera approach inside the Builder. */
 export function cameraAt(chapter: number, builderProgress: number, mobile = false): CameraPose {
-  const c = clamp(chapter, 0, 5);
-  const a = Math.min(4, Math.floor(c));
+  const c = clamp(chapter, 0, 6);
+  const a = Math.min(5, Math.floor(c));
   const b = a + 1;
   const k = smooth(c - a);
   const position = POSES[a].position.map((v, i) => lerp(v, POSES[b].position[i], k)) as CameraPose["position"];
   const target = POSES[a].target.map((v, i) => lerp(v, POSES[b].target[i], k)) as CameraPose["target"];
-  const builderWeight = Math.max(0, 1 - Math.abs(c - 3));
+  const builderWeight = Math.max(0, 1 - Math.abs(c - 4));
   const p = smooth(builderProgress);
   position[0] -= (1.5 + p * .9) * builderWeight;
   position[1] -= p * 1.05 * builderWeight;

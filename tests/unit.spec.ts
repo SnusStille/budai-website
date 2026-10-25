@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { INTRO_MS, INTRO_REVEAL_MS, introLetters, nextIntroLetter } from "../lib/experience/intro";
 import { cameraAt, CHAPTERS, journeyAt } from "../lib/experience/timeline";
+import { brainCameraAt, brainJourneyProgress } from "../lib/experience/brain";
 import { codeCharactersAt, CODE_LENGTH, EXAMPLE_SOURCE, tokenizeLine } from "../lib/experience/code";
 
 test("intro has five deliberate letters and a bounded, short duration", () => {
@@ -17,7 +18,7 @@ test("intro has five deliberate letters and a bounded, short duration", () => {
 
 test("camera path is finite, continuous at all chapter boundaries, and exactly reversible", () => {
   for (const mobile of [false, true]) {
-    for (let i = 0; i <= 500; i++) {
+    for (let i = 0; i <= (CHAPTERS.length - 1) * 100; i++) {
       const p = i / 100;
       const a = cameraAt(p, .4, mobile);
       expect([...a.position, ...a.target].every(Number.isFinite)).toBe(true);
@@ -35,7 +36,7 @@ test("native scroll reconstructs every chapter in both directions", () => {
   const forward = Array.from({ length: 121 }, (_, i) => journeyAt(i * 100, 900, 12000, bounds));
   const reverse = Array.from({ length: 121 }, (_, i) => journeyAt((120 - i) * 100, 900, 12000, bounds)).reverse();
   expect(forward).toEqual(reverse);
-  expect(forward.at(-1)?.chapter).toBe(5);
+  expect(forward.at(-1)?.chapter).toBe(CHAPTERS.length - 1);
   expect(forward[0].chapter).toBe(0);
 });
 
@@ -51,3 +52,17 @@ test("code reveal is deterministic, monotonic, bounded, and preserves every sour
   expect(codeCharactersAt(1)).toBe(CODE_LENGTH);
   expect(EXAMPLE_SOURCE.split("\n").map((line) => tokenizeLine(line).map(t => t.text).join("")).join("\n")).toBe(EXAMPLE_SOURCE);
 });
+
+ test("brain travel is absolute, continuous, enters the anatomy and reverses exactly", () => {
+  expect(brainCameraAt({kind:"intro",progress:1}).z).toBeLessThan(brainCameraAt({kind:"intro",progress:0}).z);
+  for (let i=0;i<=100;i++) {
+    const p=i/100;
+    const pose=brainCameraAt({kind:"journey",progress:p});
+    expect(Object.values(pose).every(Number.isFinite)).toBe(true);
+    expect(pose).toEqual(brainCameraAt({kind:"journey",progress:p}));
+    if(i>0) expect(pose.z).toBeLessThan(brainCameraAt({kind:"journey",progress:p-.01}).z);
+  }
+  expect(brainCameraAt({kind:"journey",progress:1}).z).toBeLessThan(-2);
+  expect(brainJourneyProgress(2800,1000,2800,1000)).toBe(1);
+  expect(brainJourneyProgress(500,1000,2800,1000)).toBe(0);
+ });

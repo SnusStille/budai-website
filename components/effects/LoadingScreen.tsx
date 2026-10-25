@@ -6,6 +6,9 @@ import dynamic from "next/dynamic";
 import { markIntroDone } from "@/components/effects/introState";
 import { INTRO_MS, INTRO_REVEAL_MS, INTRO_SESSION_KEY, nextIntroLetter } from "@/lib/experience/intro";
 import BrainFallback from "./BrainFallback";
+import { subscribeJourney, refreshJourney } from "@/lib/experience/scroll";
+import { smooth, clamp } from "@/lib/experience/timeline";
+import type { BrainMotion } from "@/lib/experience/brain";
 
 const BrainFlight = dynamic(() => import("./BrainFlight"), { ssr: false });
 type Phase = "pending" | "playing" | "revealing" | "done";
@@ -25,6 +28,7 @@ export default function LoadingScreen() {
   const coreVisibleRef = useRef(true);
   const readyRef = useRef(false);
   const stage = useRef<HTMLDivElement>(null);
+  const motion = useRef<BrainMotion>({ kind: "hero", progress: 0 });
   const progressBar = useRef<HTMLSpanElement>(null);
   const finish = useRef<() => void>(() => {});
 
@@ -62,8 +66,10 @@ export default function LoadingScreen() {
         const main = document.getElementById("main");
         if (main) { main.inert = false; main.focus({ preventScroll: true }); }
       }
+      motion.current = { kind: "hero", progress: 0 };
       setPhase("done");
       markIntroDone();
+      refreshJourney();
     };
     const end = () => {
       if (closing || !alive) return;
@@ -83,6 +89,7 @@ export default function LoadingScreen() {
       complete();
     } else {
       setPhase("playing");
+      motion.current = { kind: "intro", progress: 0 };
       const start = performance.now();
       let previousLetters = 0;
       let lastLetterAt = 0;
@@ -95,6 +102,7 @@ export default function LoadingScreen() {
       const tick = (now: number) => {
         if (!alive || closing) return;
         const elapsed = now - start;
+        motion.current = { kind: "intro", progress: clamp(elapsed / INTRO_MS) };
         const n = nextIntroLetter(previousLetters, elapsed, elapsed - lastLetterAt);
         if (n !== previousLetters) { previousLetters = n; lastLetterAt = elapsed; setLetters(n); }
         progressBar.current?.style.setProperty("transform", `scaleX(${Math.min(1, elapsed / INTRO_MS)})`);
@@ -124,20 +132,24 @@ export default function LoadingScreen() {
 
   useEffect(() => {
     if (pathname !== "/") return;
-    // This uses the shared scroll signal, not a second scroll listener.
-    let unsubscribe = () => {};
-    let alive = true;
-    import("@/lib/experience/scroll").then(({ subscribeJourney }) => {
-      if (!alive) return;
-      unsubscribe = subscribeJourney((frame) => {
-        if (!stage.current) return;
-        const p = Math.min(1, frame.y / Math.max(1, frame.height * .82));
-        if ((p < 1) !== coreVisibleRef.current) { coreVisibleRef.current = p < 1; setCoreVisible(p < 1); }
-        stage.current.style.setProperty("--core-scroll", String(p));
-        stage.current.style.setProperty("--core-offset", `${-frame.y * .42}px`);
-      });
+    return subscribeJourney(frame => {
+      if (!stage.current || !frame.time) return;
+      const signal = frame.bounds.signal;
+      const p = frame.sections.signal ?? 0;
+      const entering = signal ? smooth(clamp((frame.y - signal.top + frame.height * .9) / (frame.height * .9))) : 0;
+      const opacity = 1 - smooth(clamp((p - .77) / .23));
+      stage.current.style.setProperty("--core-entry", String(entering));
+      stage.current.style.setProperty("--core-scroll", String(1 - opacity));
+      stage.current.style.setProperty("--core-offset", "0px");
+      stage.current.dataset.positioned = "true";
+      document.documentElement.dataset.corePositioned = "true";
+      const visible = opacity > .001;
+      if (visible !== coreVisibleRef.current) { coreVisibleRef.current = visible; setCoreVisible(visible); }
+      if (document.documentElement.dataset.budaiIntro === "done") {
+        motion.current = { kind: entering > .001 ? "journey" : "hero", progress: p };
+        stage.current.dataset.coreScene = entering > .001 ? "journey" : "hero";
+      }
     });
-    return () => { alive = false; unsubscribe(); };
   }, [pathname]);
 
   useEffect(() => {
@@ -158,11 +170,9 @@ export default function LoadingScreen() {
       <div ref={stage} className="intelligence-stage" data-intelligence-stage data-phase={phase} aria-hidden="true">
         <div className="intelligence-frame">
           <div className="intelligence-halo" />
-          <div className="intelligence-orbit intelligence-orbit-a" />
-          <div className="intelligence-orbit intelligence-orbit-b" />
           {(fallback || !renderBrain) && <BrainFallback />}
           {renderBrain && !fallback && (
-            <BrainFlight mode="ambient" active={coreVisible || phase === "playing" || phase === "revealing"} settled={phase === "revealing" || phase === "done"} activity={phase === "playing" && letters >= 3 ? .5 : .08} onReady={() => { readyRef.current = true; setReady(true); }} onFail={() => setFallback(true)} />
+            <BrainFlight mode="ambient" motion={motion} active={coreVisible || phase === "playing" || phase === "revealing"} settled={phase === "revealing" || phase === "done"} activity={phase === "playing" && letters >= 3 ? .5 : .08} onReady={() => { readyRef.current = true; setReady(true); }} onFail={() => setFallback(true)} />
           )}
           <span className="core-coordinate core-coordinate-a">NEURAL ARCHITECTURE / 001</span>
           <span className="core-coordinate core-coordinate-b">INTELLIGENCE → CREATION</span>

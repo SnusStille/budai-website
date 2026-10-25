@@ -120,16 +120,20 @@ export default function Waitlist() {
   ];
 
   return (
+    <>
+    <div className="next-signal-approach" aria-label={sv ? "Nästa signal" : "The next signal"}>
+      <div><span className="chapter-label"><i />04 / THE NEXT SIGNAL</span><h2>{sv ? "Vissa signaler" : "Some signals"}<br /><span>{sv ? "är värda att följa." : "are worth following."}</span></h2><p>{sv ? "Vi bygger nästa kapitel. Hjälp oss forma det." : "The next chapter is being built. Help shape what comes next."}</p><a href="#waitlist">{sv ? "Följ signalen" : "Follow the signal"}<span>↓</span></a></div>
+    </div>
     <section id="waitlist" className="waitlist-universe relative section-hairline overflow-hidden py-24 md:py-32">
       <Confetti active={confetti} />
-      <div className="waitlist-threshold" aria-hidden="true"><span /><span /><span /><span /></div>
+      <div className="waitlist-horizon" aria-hidden="true"><i /><span /></div>
 
       <div className="relative z-10 mx-auto max-w-3xl px-4 text-center sm:px-6">
         <ScrollReveal>
-          <span className="chapter-label mb-7 inline-flex"><i />04 / {sv ? "NÄSTA KAPITEL" : "THE NEXT CHAPTER"}</span>
+          <span className="chapter-label mb-7 inline-flex"><i />04 / {sv ? "NÄSTA SIGNAL" : "THE NEXT SIGNAL"}</span>
           <h2 className="mb-4 text-4xl font-bold tracking-tight text-white sm:text-6xl">
-            {sv ? "Var först i " : "Be first in "}
-            <span className="text-gradient">{sv ? "kön." : "line."}</span>
+            {sv ? "En del av " : "Be part of "}
+            <span className="text-gradient">{sv ? "nästa kapitel." : "what’s next."}</span>
           </h2>
           <p className="mx-auto max-w-md text-base text-muted sm:text-lg">
             {sv ? "Gratis under preview. Grundare låser 10 % rabatt när paketen lanseras." : "Free during the preview. Founding members lock 10% off when plans launch."}
@@ -144,8 +148,7 @@ export default function Waitlist() {
 
         {!submitted ? (
           <form onSubmit={handleSubmit} className="mx-auto mt-9 max-w-xl text-left">
-            <div className="relative overflow-hidden rounded-2xl p-px shadow-[0_0_70px_-20px_rgba(124,92,255,0.6)] sm:rounded-full">
-              <div aria-hidden className="bud-spin-conic absolute -inset-[60%]" />
+            <div className="waitlist-composer relative overflow-hidden rounded-xl border border-white/15">
               <div className="relative flex flex-col gap-2 rounded-[15px] bg-[#07070e] p-2 sm:flex-row sm:items-center sm:rounded-full sm:p-1.5 sm:pl-5">
                 <label className="flex flex-1 items-center gap-3 px-3 py-2 sm:px-0 sm:py-0">
                   <Mail className="h-5 w-5 shrink-0 text-accent-cyan" />
@@ -253,5 +256,6 @@ export default function Waitlist() {
         </ul>
       </div>
     </section>
+    </>
   );
 }

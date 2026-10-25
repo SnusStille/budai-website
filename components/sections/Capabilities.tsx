@@ -247,10 +247,11 @@ export default function Capabilities() {
 
         <CapabilityMap />
         <div className="plans-heading"><span>{sv ? "Välj din väg" : "Choose your way in"}</span><p>{sv ? "Börja gratis. Väx när du är redo." : "Start free. Grow when you’re ready."}</p></div>
-        <div className="grid md:grid-cols-3 gap-4 mb-5 bud-3d-in">
+        <div className="access-architecture" data-access-architecture aria-hidden="true"><div className="access-fallback"><i /><i /><i /></div><div className="access-labels"><span>01 / BASIC<small>{sv ? "Tillgänglig nu" : "Available now"}</small></span><span>02 / CONSUMER<small>Coming soon</small></span><span>03 / BUSINESS<small>Coming soon</small></span></div></div>
+        <div className="plan-comparison grid md:grid-cols-3 gap-4 mb-5" data-plan-comparison>
           {plans.map((pl, i) => (
             <ScrollReveal key={pl.key} delay={i * 0.05}>
-              <SpotlightCard className={`h-full rounded-2xl border ${pl.card}`}>
+              <SpotlightCard tilt={false} className={`plan-card plan-${pl.key} h-full rounded-2xl border ${pl.card}`}>
                 <div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${pl.bar}`} />
                 <div className={`pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full blur-3xl ${pl.blob}`} />
                 <div className="relative flex h-full flex-col p-6 pt-7">

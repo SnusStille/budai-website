@@ -42,7 +42,7 @@ html[data-budai-intro="revealing"] .intro-interface { opacity: 0; }
 .intelligence-stage { position: fixed; inset: 0; z-index: 3; overflow: clip; pointer-events: none; --core-scroll: 0; --core-offset: 0px; opacity: calc(1 - var(--core-scroll)); transform: translateY(var(--core-offset)); }
 /* Stable render-target geometry: the handoff is composite-only, not a resize
    on every frame. Uniform scale preserves the actual 3D brain's proportions. */
-.intelligence-frame { --intro-x: -25.5vw; --intro-y: calc(31.5vh - min(39vh, 410px)); --intro-scale: .86; position: absolute; top: 9vh; left: 75.5%; width: max(49vw, min(70vw, 74vh)); height: 78vh; max-height: 820px; transform: translateX(-50%); transform-origin: center; transition: transform 1000ms var(--motion-ease); }
+.intelligence-frame { --intro-x: -25.5vw; --intro-y: calc(31.5vh - min(39vh, 410px)); --intro-scale: .86; position: absolute; top: 9vh; left: 75.5%; width: 100vw; height: 78vh; max-height: 820px; transform: translateX(-50%); transform-origin: center; transition: transform 1000ms var(--motion-ease); }
 html[data-budai-intro="playing"] .intelligence-stage { z-index: 201; opacity: 1; transform: none; }
 html[data-budai-intro="revealing"] .intelligence-stage { z-index: 201; }
 html[data-budai-intro="playing"] .intelligence-frame { transform: translate(calc(-50% + var(--intro-x)), var(--intro-y)) scale(var(--intro-scale)); }
@@ -94,7 +94,7 @@ html[data-budai-intro="playing"] .core-coordinate { opacity: 0; }
 .hero-content > * { transition: opacity 900ms ease, transform 1000ms var(--motion-ease); }
 html[data-budai-intro="playing"] .hero-content > * { opacity: 0; transform: translateY(18px); }
 
-@media (min-width: 1800px) { .intelligence-frame { --intro-x: -23vw; left: 73%; width: max(44vw, min(70vw, 74vh)); } }
+@media (min-width: 1800px) { .intelligence-frame { --intro-x: -23vw; left: 73%; width: 100vw; } }
 @media (max-width: 1000px) and (min-width: 768px) {
   .hero-universe { padding-left: 5vw; padding-right: 5vw; }
   .hero-content { width: 56%; }
@@ -432,3 +432,135 @@ html[data-budai-intro="playing"] body > a[href="#main"] { visibility: hidden; }
 .world-editor-mount[data-editor-layout="mobile"] .editor-line > span:last-child { white-space: pre-wrap; overflow-wrap: anywhere; }
 .world-editor-mount[data-editor-layout="mobile"] .editor-line-number { width: 42px; font-size: 12px; padding-right: 12px; }
 .world-editor-mount[data-editor-layout="mobile"] .editor-statusbar { height: 18px; font-size: 5px; padding: 0 10px; }
+
+/* 01 / One recovered renderer: landing → cortical surface → interior → product. */
+.intelligence-stage { visibility: hidden; }
+.intelligence-stage[data-positioned="true"], html[data-budai-intro="playing"] .intelligence-stage, html[data-budai-intro="revealing"] .intelligence-stage { visibility: visible; }
+html[data-budai-intro="done"] .intelligence-frame { transition: none; transform: translate(calc(-50% - 25.5vw * var(--core-entry, 0)), 0) scale(calc(1 + .16 * var(--core-entry, 0))); }
+html[data-budai-intro="done"] .core-coordinate, html[data-budai-intro="done"] .core-caption { opacity: calc(1 - var(--core-entry, 0)); }
+.brain-journey { position: relative; height: 285svh; --neural-progress: 0; z-index: 4; }
+.brain-journey-sticky { position: sticky; top: 0; height: 100svh; min-height: 620px; overflow: clip; }
+.neural-hud-top, .neural-hud-bottom { position: absolute; left: max(6vw, calc((100vw - 1200px)/2)); right: max(6vw, calc((100vw - 1200px)/2)); display: flex; align-items: center; justify-content: space-between; }
+.neural-hud-top { top: 110px; }
+.neural-hud-top > a { display: inline-flex; align-items: center; gap: 10px; color: #8195a3; font-size: 10px; }
+.neural-entry-title { position: absolute; left: 6vw; bottom: 14%; opacity: clamp(0, calc(1 - var(--neural-progress)*4), 1); transform: translateY(calc(var(--neural-progress)*-45px)); }
+.neural-entry-title > span, .neural-exit-title > span { font: 9px var(--font-jetbrains), monospace; color: #a1c4d3; letter-spacing: .19em; }
+.neural-entry-title h2 { font-weight: 400; letter-spacing: -.05em; font-size: clamp(36px, 4.5vw, 66px); margin: 12px 0; }
+.neural-entry-title p { display: flex; gap: 15px; align-items: center; color: #8298a6; font-size: 12px; }
+.neural-hud-bottom { bottom: 28px; font: 8px var(--font-jetbrains), monospace; color: #5a7b8c; letter-spacing: .1em; gap: 30px; }
+.neural-hud-bottom > div { height: 1px; flex: 1; background: #a8c2d21a; }
+.neural-hud-bottom i { display: block; height: 100%; background: #99d5e2; transform: scaleX(var(--neural-progress)); transform-origin: left; }
+.neural-exit-title { position: absolute; inset: auto 24px 23%; text-align: center; opacity: clamp(0, calc((var(--neural-progress) - .65)*4), 1); transform: translateY(calc((1 - var(--neural-progress))*35px)); }
+.neural-exit-title p { font-size: clamp(34px, 5vw, 68px); letter-spacing: -.045em; margin: 14px 0 25px; font-weight: 400; }
+.neural-exit-title a { display: inline-flex; align-items: center; gap: 16px; font-size: 12px; color: #b4d7e4; padding: 12px 0; border-bottom: 1px solid #9ecdd544; }
+.neural-crosshair { position: absolute; width: 54%; height: 55%; left: 23%; top: 23%; opacity: calc(.3*(1 - var(--neural-progress))); }
+.neural-crosshair i { width: 12px; height: 12px; position: absolute; border: solid #83bace55; }
+.neural-crosshair i:nth-child(1) { top:0;left:0;border-width:1px 0 0 1px; } .neural-crosshair i:nth-child(2) { top:0;right:0;border-width:1px 1px 0 0; } .neural-crosshair i:nth-child(3) { bottom:0;right:0;border-width:0 1px 1px 0; } .neural-crosshair i:nth-child(4) { bottom:0;left:0;border-width:0 0 1px 1px; }
+.brain-journey-fallback { position: absolute; inset: 20% 15%; }
+html[data-core-positioned="true"] .brain-journey-fallback { display: none; }
+#playground { background: linear-gradient(#02020500, #020205 13%, #020205 90%, #02020500); }
+@media (min-width:1800px) { html[data-budai-intro="done"] .intelligence-frame { transform: translate(calc(-50% - 23vw * var(--core-entry, 0)), 0) scale(calc(1 + .16 * var(--core-entry, 0))); } }
+@media (max-width:767px) {
+ html[data-budai-intro="done"] .intelligence-frame { transform: translate(-50%, calc(14svh * var(--core-entry, 0))) scale(calc(1 + .28 * var(--core-entry, 0))); }
+ .brain-journey { height: 250svh; }
+ .brain-journey-sticky { min-height: 580px; }
+ .neural-hud-top { top:90px;left:24px;right:24px;align-items:flex-start;gap:20px; }
+ .neural-hud-top .chapter-label { font-size:8px; }
+ .neural-hud-top>a { font-size:9px;max-width:75px; }
+ .neural-entry-title { left:24px;bottom:18%; }
+ .neural-entry-title h2 { font-size:36px; }
+ .neural-hud-bottom { left:24px;right:24px;gap:14px;font-size:6px; }
+ .neural-crosshair { width:82%;left:9%;height:42%;top:28%; }
+}
+@media (prefers-reduced-motion:reduce) {
+ .intelligence-stage { display:none; }
+ .brain-journey { height:650px; }
+ .brain-journey-sticky { position:relative;min-height:650px;height:650px; }
+ html[data-core-positioned="true"] .brain-journey-fallback { display:block; }
+ .neural-entry-title { opacity:1;transform:none; }
+ .neural-exit-title { display:none; }
+}
+
+/* 02 / Intelligence assembled. A readable index beside a tracked, real 3D machine. */
+.capabilities-universe { padding-bottom: 120px; background: linear-gradient(#02020500, #02020555 6%, #02020533 95%, transparent); }
+.capabilities-universe > div:first-child { display:none; }
+.capability-system { height: 230svh; position:relative; margin:70px 0 80px; --capability-progress:0; }
+.capability-sticky { position:sticky; top:95px; min-height:calc(100svh - 130px); display:grid; grid-template-columns:42% 58%; align-items:center; }
+.capability-index { position:relative; z-index:2; padding:12px 0; }
+.capability-index h3 { font-size:clamp(28px,3vw,43px); font-weight:400; letter-spacing:-.05em; line-height:1.15; margin:25px 0; }
+.capability-index h3 > span { color:#90acbb; }
+.capability-matrix-header { font-size:7px; padding:12px 0; border-top:1px solid #a5becb22; }
+.capability-modules { display:flex; flex-direction:column; padding:0; gap:0; }
+.capability-module { display:flex; flex-direction:row; gap:15px; align-items:center; padding:13px 12px; border:0; border-bottom:1px solid #a5becb1a; border-radius:0; min-height:62px; background:transparent; transform:none; }
+.capability-module > b { font:8px var(--font-jetbrains),monospace; color:#587180; font-weight:400; }
+.capability-module > svg:not(.capability-arrow) { color:#7196a8; stroke-width:1.3; flex-shrink:0; }
+.capability-module > span { flex:1; }
+.capability-module strong { display:block; font-size:13px; font-weight:500; }
+.capability-module small { display:block; font-size:10px; color:#718999; margin-top:4px; }
+.capability-module:hover, .capability-module:focus-visible, .capability-module.is-active { transform:none; background:linear-gradient(90deg,#152735a8,transparent); border-color:#93c8dc44; }
+.capability-module.is-active > b, .capability-module.is-active > svg { color:#bddeea; }
+.capability-arrow { position:static; }
+.capability-matrix-note { font-size:9px; color:#8eaebf; margin-top:23px; display:flex; align-items:center; gap:12px; }
+.capability-viewport { position:relative; height: min(72svh,690px); margin-left:20px; pointer-events:none; }
+.capability-viewport-top, .capability-viewport-bottom { position:absolute; left:28px; right:0; display:flex; justify-content:space-between; color:#657f8f; font:7px var(--font-jetbrains),monospace; letter-spacing:.1em; }
+.capability-viewport-top { top:0; }.capability-viewport-bottom { bottom:0; }
+.capability-drawing-fallback { position:absolute; width:42%; height:70%; top:15%; left:31%; transform:perspective(700px) rotateY(-25deg) rotateX(6deg); display:flex; flex-direction:column; justify-content:space-evenly; border-left:3px solid #83a6b866;border-right:3px solid #83a6b866; padding:8px; }
+.capability-drawing-fallback>span { height:11%; background:linear-gradient(120deg,#293f50,#0c1923); border:1px solid #92bfce44; box-shadow:12px 7px #0b1727,13px 8px #89adc92a; }
+html[data-world-state="ready"] .capability-drawing-fallback, html[data-world-state="ready"] .access-fallback { display:none; }
+.plans-heading { border-top:1px solid #8daebc22; padding-top:48px; margin-bottom:0; }
+.plans-heading > span { font-weight:400; }
+.access-architecture { width:min(960px,100%); height:300px; margin:0 auto 28px; position:relative; }
+.access-labels { position:absolute; bottom:0; left:0; right:0; display:grid; grid-template-columns:repeat(3,1fr); text-align:center; font:8px var(--font-jetbrains),monospace; letter-spacing:.08em; color:#b4cdd6; }
+.access-labels small { display:block; color:#6b8391; font-size:8px; margin-top:7px; letter-spacing:0; }
+.access-fallback { position:absolute; inset:40px 5% 50px; display:flex; justify-content:space-around; perspective:700px; }
+.access-fallback i { width:20%; border:4px double #b4d0db55; border-bottom-width:12px; transform:rotateY(-12deg); box-shadow:6px 6px #112432; }
+.plan-comparison .plan-card { background:#09121bed; border-color:#8aa9b32c; box-shadow:none; border-radius:8px; }
+.plan-comparison .plan-basic { border-top-color:#abd9d4aa; }
+.plan-comparison .plan-card > .relative > .absolute { opacity:.18; }
+.plan-comparison .plan-card .rounded-full { border-radius:4px; }
+@media (max-width:767px) {
+ .capability-system { height:auto;margin:45px 0 60px; }
+ .capability-sticky { position:relative;top:auto;display:flex;flex-direction:column;min-height:0; }
+ .capability-index { width:100%;order:2; }
+ .capability-viewport { width:100%;height:400px;margin:0 0 22px;order:1; }
+ .capability-index h3 { font-size:32px; margin:18px 0; }
+ .capability-module { min-height:64px; padding:12px; background:#07101ae6; }
+ .capability-module strong { font-size:14px; }
+ .capability-module small { font-size:11px; }
+ .capability-viewport-top, .capability-viewport-bottom { left:0;font-size:6px; }
+ .access-architecture { height:230px; }
+ .access-labels { font-size:7px; }
+ .plans-heading { padding-top:28px; }
+}
+@media (prefers-reduced-motion:reduce) {
+ .capability-system { height:auto; }
+ .capability-sticky { position:relative;top:auto;min-height:700px; }
+}
+
+/* 04 / A signal in the distance. The form's anchor deliberately skips the approach. */
+.next-signal-approach { position:relative; min-height:68svh; display:flex; align-items:center; padding:100px max(6vw,calc((100vw - 1150px)/2)); background:linear-gradient(#02020500,#02020544); }
+.next-signal-approach>div { max-width:600px; }
+.next-signal-approach h2 { font-size:clamp(38px,4.5vw,66px); letter-spacing:-.05em; font-weight:400; line-height:1.12; margin:28px 0 24px; }
+.next-signal-approach h2>span { color:#a9b8c2; }
+.next-signal-approach p { color:#7f96a7; font-size:13px; max-width:350px; line-height:1.8; }
+.next-signal-approach a { display:inline-flex; align-items:center; gap:22px; color:#b2cbd3; font-size:11px; margin-top:30px; padding-bottom:12px; border-bottom:1px solid #9ec2d144; }
+.waitlist-universe { background:linear-gradient(#02020555,#020205dd 18%,#020205ee 68%,#02020544); padding-top:80px; }
+.waitlist-universe h2 { font-weight:400; letter-spacing:-.045em; }
+.waitlist-universe form { max-width:590px; }
+.waitlist-composer { background:#0b151e; box-shadow:0 16px 70px #0006; }
+.waitlist-composer>div { border-radius:10px; padding:9px 10px 9px 20px; }
+.waitlist-universe .btn-primary { border-radius:6px; }
+.waitlist-horizon { position:absolute; inset:0; pointer-events:none; }
+.waitlist-horizon>i { position:absolute; left:15%;right:15%;top:0;height:1px;background:linear-gradient(90deg,transparent,#d5bb8066,transparent); }
+.waitlist-horizon>span { position:absolute; width:1px;height:100px;top:0;left:50%;background:linear-gradient(#bba37344,transparent); }
+@media(max-width:767px) {
+ .next-signal-approach { min-height:570px;padding:90px 24px;background:linear-gradient(#02020511,#02020555); }
+ .next-signal-approach h2 { font-size:40px; }
+ .waitlist-universe { padding-top:70px; }
+ .waitlist-composer>div { padding:9px; }
+}
+
+.intelligence-frame canvas { mask-image:linear-gradient(180deg,transparent,black 5%,black 90%,transparent); }
+.intelligence-halo { inset:10% 28%; }
+.core-coordinate-a { left:33%; }.core-coordinate-b { right:33%; }
+@media(max-width:767px) { .core-coordinate-a { left:7%; }.core-coordinate-b { right:7%; }.intelligence-halo { inset:10%; } }
