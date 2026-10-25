@@ -57,7 +57,7 @@ export default function WorldStage() {
         document.documentElement.dataset.worldState = "ready";
         unsubscribe = subscribeJourney((frame) => {
           try { world?.update(frame); } catch { fail(); }
-        }, { continuous: frame => worldOpacityAt(frame) > .001 });
+        }, { continuous: frame => worldOpacityAt(frame) > .001&&(frame.closing??0)<.999,phase:"render" });
       } catch { fail(); }
     }).catch(fail);
     return () => {

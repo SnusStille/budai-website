@@ -21,6 +21,7 @@ import ScrollReveal from "@/components/ui/ScrollReveal";
 import SpotlightCard from "@/components/ui/SpotlightCard";
 import { Check as CheckIcon, X as XIcon, User as UserIcon, Building2 as BuildingIcon, Sparkles as SparkIcon } from "lucide-react";
 import { useLang } from "@/components/ui/LanguageContext";
+import {capabilityRecords} from "@/lib/experience/information-patterns";
 import BudAILogo from "@/components/ui/BudAILogo";
 import CapabilityMap from "@/components/experience/CapabilityMap";
 
@@ -247,7 +248,7 @@ export default function Capabilities() {
 
         <CapabilityMap />
         <div className="plans-heading"><span>{sv ? "Välj din väg" : "Choose your way in"}</span><p>{sv ? "Börja gratis. Väx när du är redo." : "Start free. Grow when you’re ready."}</p></div>
-        <div className="access-architecture" data-access-architecture aria-hidden="true"><div className="access-fallback"><i /><i /><i /></div><div className="access-labels"><span>01 / BASIC<small>{sv ? "Tillgänglig nu" : "Available now"}</small></span><span>02 / CONSUMER<small>Coming soon</small></span><span>03 / BUSINESS<small>Coming soon</small></span></div></div>
+        <div className="access-architecture" data-access-architecture aria-hidden="true"><div className="access-fallback"><svg viewBox="-5 -2.1 10 4.2" width="100%" height="100%"><g transform="scale(1,-1)">{[0,1,2].map(band=><g key={band} opacity={band===0?.8:.45}>{capabilityRecords().map((p,i)=><circle key={i} cx={(band-1)*3.3+p.x*.6} cy={p.y*.62} r=".025" fill="#9ebfca"/>)}</g>)}</g></svg></div><div className="access-labels"><span>01 / BASIC<small>{sv ? "Tillgänglig nu" : "Available now"}</small></span><span>02 / CONSUMER<small>Coming soon</small></span><span>03 / BUSINESS<small>Coming soon</small></span></div></div>
         <div className="plan-comparison grid md:grid-cols-3 gap-4 mb-5" data-plan-comparison>
           {plans.map((pl, i) => (
             <ScrollReveal key={pl.key} delay={i * 0.05}>

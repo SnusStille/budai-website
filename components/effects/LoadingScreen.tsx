@@ -7,6 +7,7 @@ import BrainPoster from "./BrainPoster";
 import { INTRO_MS, INTRO_REVEAL_MS, INTRO_READY_MS, INTRO_SESSION_KEY } from "@/lib/experience/intro";
 import { refreshJourney, subscribeJourney } from "@/lib/experience/scroll";
 import { clamp, smooth } from "@/lib/experience/timeline";
+import type {BrainDriver} from "./BrainFlight";
 import type { BrainMotion } from "@/lib/experience/brain";
 
 const useClientLayoutEffect=typeof window!=="undefined"?useLayoutEffect:useEffect;
@@ -26,6 +27,8 @@ export default function LoadingScreen() {
   const [role,setRole]=useState<Role>(null),roleRef=useRef<Role>(null);
   const [Renderer,setRenderer]=useState<Renderer|null>(null);
   const [ready,setReady]=useState(false);
+  const gpu=useRef<BrainDriver|null>(null);
+  const [sceneVisible,setSceneVisible]=useState(false),visibleRef=useRef(false);
   const readyRef=useRef(false),disabled=useRef(false),failed=useRef(false);
   const stage=useRef<HTMLDivElement|null>(null);
   const motion=useRef<BrainMotion>({kind:"intro",progress:0});
@@ -33,6 +36,13 @@ export default function LoadingScreen() {
   const requestRole=(next:Role)=>{
     if(roleRef.current===next)return;
     roleRef.current=next;readyRef.current=false;setReady(false);setRole(next);
+    if(next==="intro"){visibleRef.current=true;setSceneVisible(true);}else if(next===null){visibleRef.current=false;setSceneVisible(false);}
+  };
+
+  const drive=(now:number)=>{
+    const context=gpu.current;if(!context)return;
+    const owner=context.canvas.closest(roleRef.current==="intro"?"[data-global-loader]":"[data-scene-role=journey]");
+    if(owner)context.draw(now);
   };
 
   useEffect(()=>{
@@ -74,7 +84,7 @@ export default function LoadingScreen() {
       const tick=(now:number)=>{
         if(!live||closing)return;
         const p=clamp((now-started)/INTRO_MS);
-        motion.current={kind:"intro",progress:p};
+        motion.current={kind:"intro",progress:p};drive(now);
         if(p>=1)end();else raf=requestAnimationFrame(tick);
       };
       raf=requestAnimationFrame(tick);
@@ -115,7 +125,10 @@ export default function LoadingScreen() {
       const engaged=!!document.activeElement?.closest("[data-playground-arrival]")&&frame.active==="playground";
       const direct=location.hash==="#playground"&&frame.y>=(frame.bounds.playground?.top??Infinity)-frame.height*.4;
       const opacity=engaged||direct?0:1-smooth((p-.86)/.14);
-      const wanted=inStory&&opacity>.002&&!disabled.current&&!failed.current;
+      const warm=roleRef.current==="journey"&&readyRef.current;
+      const wanted=inStory&&(opacity>.002||warm)&&!disabled.current&&!failed.current;
+      const visible=wanted&&opacity>.002;
+      if(visible!==visibleRef.current){visibleRef.current=visible;setSceneVisible(visible);}
       if(wanted)motion.current={kind:"journey",progress:p,entry:1};
       requestRole(wanted?"journey":null);
       rootState(wanted?readyRef.current?"ready":"pending":failed.current||disabled.current?"fallback":"idle");
@@ -123,7 +136,8 @@ export default function LoadingScreen() {
         stage.current.style.opacity=String(opacity);
         stage.current.style.clipPath=`inset(${Math.max(0,rect.top)}px 0 ${Math.max(0,innerHeight-rect.bottom)}px 0)`;
       }
-    });
+      if(visible)drive(frame.time*1000);
+    },{phase:"render",continuous:()=>roleRef.current==="journey"&&visibleRef.current});
   },[pathname]);
 
   useClientLayoutEffect(()=>{
@@ -161,7 +175,7 @@ export default function LoadingScreen() {
   };
   if(pathname!=="/")return null;
   const Scene=Renderer;
-  const canvas=Scene?<Scene mode="intro" motion={motion} active onReady={onReady} onFail={onFail}/>:null;
+  const canvas=Scene?<Scene mode="intro" motion={motion} driver={gpu} active={sceneVisible} onReady={onReady} onFail={onFail}/>:null;
   return <>
     {phase!=="done"&&<div className="opening-surface" data-global-loader data-opening-phase={phase} role="status" aria-label="Entering BudAI" aria-live="polite">
       <div className="opening-brain-frame">
@@ -175,7 +189,7 @@ export default function LoadingScreen() {
       stage.current=node;
       const rect=document.getElementById("signal")?.getBoundingClientRect();
       if(node&&rect)node.style.clipPath=`inset(${Math.max(0,rect.top)}px 0 ${Math.max(0,innerHeight-rect.bottom)}px 0)`;
-    }} className="brain-passage-stage" data-intelligence-stage data-scene-role="journey" aria-hidden="true">{canvas}</div>}
+    }} className="brain-passage-stage" data-intelligence-stage data-scene-role="journey" data-scene-sleeping={!sceneVisible} aria-hidden="true">{canvas}</div>}
   </>;
 }
 function rootState(state:string){document.documentElement.dataset.brainState=state;}

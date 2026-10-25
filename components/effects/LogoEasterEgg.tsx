@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Logo3D from "@/components/ui/Logo3D";
 
 /**
  * BudAI logo easter egg. Every click on the menu logo advances a 15-step sequence
@@ -403,7 +402,7 @@ const lock = (r: DOMRect): Fx => ({
 });
 
 /* ---------- component ---------- */
-export default function LogoEasterEgg() {
+export default function LogoEasterEgg({initialIntent}:{initialIntent?:{el?:HTMLElement|null}}) {
   const fxRef = useRef<HTMLCanvasElement>(null);
   const bgRef = useRef<HTMLCanvasElement>(null);
   const size = useRef({ w: 0, h: 0, dpr: 1 });
@@ -617,6 +616,7 @@ export default function LogoEasterEgg() {
     };
 
     window.addEventListener("budai:logo-click", onClick);
+    if(initialIntent)onClick(new CustomEvent("budai:logo-click",{detail:initialIntent}));
     return () => {
       window.removeEventListener("budai:logo-click", onClick);
       window.removeEventListener("resize", resize);
@@ -625,7 +625,7 @@ export default function LogoEasterEgg() {
       ownedTimers.forEach((id) => window.clearTimeout(id));
       ownedTimers.length = 0;
     };
-  }, []);
+  }, [initialIntent]);
 
   return (
     <>
@@ -659,19 +659,7 @@ export default function LogoEasterEgg() {
         </svg>
       )}
 
-      {reward && (
-        <div aria-hidden className={`pointer-events-none fixed inset-0 z-[80] flex flex-col items-center justify-center transition-opacity duration-500 ${reward.out ? "opacity-0" : "opacity-100"}`}>
-          <div className="absolute inset-0 bg-[radial-gradient(circle,rgba(2,2,5,0.45),rgba(2,2,5,0.88))]" />
-          <div className="relative scale-[1.7] sm:scale-[2.3]">
-            <Logo3D />
-          </div>
-          <div className="relative mt-24 space-y-2 text-center font-mono sm:mt-32">
-            {reward.stage >= 1 && <p className="bud-pop text-xs tracking-[0.35em] text-white/60">10 YEARS OF CODE</p>}
-            {reward.stage >= 2 && <p className="bud-pop text-xs tracking-[0.35em] text-white/60">2 YEARS OF BUDAI</p>}
-            {reward.stage >= 3 && <p className="bud-pop bg-gradient-to-r from-accent-cyan to-accent-purple bg-clip-text text-2xl font-bold tracking-[0.3em] text-transparent sm:text-3xl">WE MADE IT.</p>}
-          </div>
-        </div>
-      )}
+      {reward&&<div aria-hidden className={`pointer-events-none fixed bottom-6 right-6 z-[80] border border-white/15 rounded-xl bg-[#071017]/95 px-6 py-5 font-mono text-xs tracking-widest transition-opacity ${reward.out?"opacity-0":"opacity-100"}`}>BUDAI · DEVELOPED BY STILLEDEV</div>}
 
       {dev && (
         <div aria-hidden className={`pointer-events-none fixed inset-0 z-[80] flex items-center justify-center transition-opacity duration-500 ${dev.out ? "opacity-0" : "opacity-100"}`}>

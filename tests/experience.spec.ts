@@ -48,66 +48,31 @@ async function scrollSection(page: Page, id: string, offset = 0) {
   await page.waitForTimeout(400);
 }
 
-test("fresh visit: one original WebGL brain, five typed letters, one reveal; the SAME canvas survives", async ({ page }) => {
-  await quietChrome(page, false);
-  await observeLayout(page);
-  const errors: string[] = [];
-  page.on("pageerror", e => errors.push(e.message));
-  page.on("console", message => { if (message.type() === "error") errors.push(message.text()); });
-  await page.addInitScript(() => {
-    window.__introSamples = [];
-    window.__firstBrain = null;
-    document.addEventListener("DOMContentLoaded", () => {
-      const sample = () => {
-        window.__firstBrain ||= document.querySelector<HTMLCanvasElement>("[data-brain-canvas]");
-        const next = { t: performance.now(), word: document.querySelector("[data-intro-word]")?.textContent ?? null, loaders: document.querySelectorAll("[data-global-loader]").length, brains: document.querySelectorAll("[data-brain-canvas]").length, phase: document.documentElement.dataset.budaiIntro };
-        const previous = window.__introSamples.at(-1);
-        if (!previous || previous.word !== next.word || previous.loaders !== next.loaders || previous.brains !== next.brains || previous.phase !== next.phase) window.__introSamples.push(next);
-      };
-      window.__introObserver = new MutationObserver(sample);
-      window.__introObserver.observe(document, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ["data-budai-intro", "data-rendered"] });
-      sample();
-    });
-  });
-  await page.goto("/", { waitUntil: "domcontentloaded" });
-  await expect(page.locator("[data-brain-canvas]")).toHaveAttribute("data-rendered", "true");
-  await expect(page.locator("[data-intro-word]")).toHaveText("BUDAI", { timeout: 7_000 });
-  await page.screenshot({ path: "test-results/intro-desktop.png" });
-  await expect(page.locator("[data-global-loader]")).toHaveCount(0, { timeout: 8_000 });
-  const samples = await page.evaluate(() => window.__introSamples);
-  await test.info().attach("intro-observations", { body: JSON.stringify(samples, null, 2), contentType: "application/json" });
-  expect(Math.max(...samples.map(s => s.loaders))).toBe(1);
-  expect(Math.max(...samples.map(s => s.brains))).toBe(1);
-  expect(Array.from(new Set(samples.map(s => s.word).filter((s): s is string => s !== null)))).toEqual(["", "B", "BU", "BUD", "BUDA", "BUDAI"]);
-  expect(await page.evaluate(() => window.__firstBrain === document.querySelector("[data-brain-canvas]"))).toBe(true);
-  expect(await page.evaluate(() => document.body.style.overflow)).not.toBe("hidden");
-  await expect(page.locator("#main")).not.toHaveAttribute("inert");
-  await expect(page.locator("[data-world-canvas]")).toHaveCount(0); // The room was NOT an intro dependency.
-  await page.screenshot({ path: "test-results/hero-desktop.png" });
-  await assertSmallLayoutShift(page);
-  expect(errors).toEqual([]);
+test("fresh visit: readiness-gated actual brain, one surface, no hero renderer and bounded layout shift",async({page})=>{
+  await quietChrome(page,false);await observeLayout(page);
+  const errors:string[]=[];page.on("pageerror",e=>errors.push(e.message));page.on("console",m=>{if(m.type()==="error")errors.push(m.text());});
+  await page.goto("/",{waitUntil:"domcontentloaded"});
+  const brain=page.locator("[data-brain-canvas]");await expect(brain).toHaveAttribute("data-rendered","true");
+  const canvas=await brain.elementHandle();await expect(brain).toHaveAttribute("data-render-driver","shared");
+  await expect(page.locator("[data-global-loader] svg,[data-global-loader] [data-budai-mark]")).toHaveCount(0);
+  await page.screenshot({path:"test-results/intro-desktop.png"});
+  await expect(page.locator("[data-global-loader]")).toHaveCount(0);
+  await expect(page.locator("canvas")).toHaveCount(0);expect(await canvas!.evaluate(el=>el.isConnected)).toBe(false);
+  expect(await page.evaluate(()=>document.body.style.overflow)).not.toBe("hidden");await expect(page.locator("#main")).not.toHaveAttribute("inert");
+  await page.screenshot({path:"test-results/hero-desktop.png"});await assertSmallLayoutShift(page);expect(errors).toEqual([]);
 });
 
-test("the persistent brain sleeps when faded out and actually resumes on reverse scroll", async ({ page }) => {
+test("the story sleeps under settled interaction, resumes the same warm scene, and is disposed before hero",async({page})=>{
   await quietChrome(page);
-  await page.addInitScript(() => {
-    window.__brainDraws = 0;
-    const original = WebGL2RenderingContext.prototype.drawArrays;
-    WebGL2RenderingContext.prototype.drawArrays = function (this: WebGL2RenderingContext, ...args: Parameters<typeof original>) {
-      if ((this.canvas as HTMLCanvasElement).hasAttribute("data-brain-canvas")) window.__brainDraws++;
-      return original.apply(this, args);
-    };
-  });
-  await page.goto("/");
-  await expect(page.locator("[data-brain-canvas]")).toHaveAttribute("data-rendered", "true");
-  await page.locator("#about").evaluate(el => window.scrollTo({ top: el.getBoundingClientRect().top + scrollY + 500, behavior: "instant" as ScrollBehavior }));
-  await page.waitForTimeout(800);
-  const stopped = await page.evaluate(() => window.__brainDraws);
-  await page.waitForTimeout(500);
-  expect(await page.evaluate(() => window.__brainDraws)).toBe(stopped);
-  await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior }));
-  await expect.poll(() => page.evaluate(() => window.__brainDraws)).toBeGreaterThan(stopped);
-  await expect(page.locator("[data-brain-canvas]")).toHaveCount(1);
+  await page.addInitScript(()=>{window.__brainDraws=0;const original=WebGL2RenderingContext.prototype.drawArrays;WebGL2RenderingContext.prototype.drawArrays=function(this:WebGL2RenderingContext,...args:Parameters<typeof original>){if((this.canvas as HTMLCanvasElement).hasAttribute("data-brain-canvas"))window.__brainDraws++;return original.apply(this,args);};});
+  await page.goto("/#signal");
+  const dive=async(p:number)=>{await page.locator("#signal").evaluate((el,p)=>scrollTo({top:el.getBoundingClientRect().top+scrollY+(el.clientHeight-innerHeight)*p,behavior:"instant" as ScrollBehavior}),p);await page.waitForTimeout(400);};
+  await dive(.55);await expect(page.locator("[data-brain-canvas]")).toHaveAttribute("data-rendered","true");
+  const canvas=await page.locator("[data-brain-canvas]").elementHandle();
+  await dive(1);await expect(page.locator("[data-scene-role=journey]")).toHaveAttribute("data-scene-sleeping","true");
+  const stopped=await page.evaluate(()=>window.__brainDraws);await page.waitForTimeout(500);expect(await page.evaluate(()=>window.__brainDraws)).toBe(stopped);
+  await dive(.55);await expect.poll(()=>page.evaluate(()=>window.__brainDraws)).toBeGreaterThan(stopped);expect(await canvas!.evaluate(el=>el.isConnected)).toBe(true);
+  await page.evaluate(()=>scrollTo({top:0,behavior:"instant" as ScrollBehavior}));await expect(page.locator("[data-brain-canvas]")).toHaveCount(0);
 });
 
 test("brain shader failure frees partial GPU allocations and leaves a usable fallback", async ({ page }) => {
@@ -127,7 +92,7 @@ test("brain shader failure frees partial GPU allocations and leaves a usable fal
   });
   await page.goto("/");
   await expect(page.locator("[data-global-loader]")).toHaveCount(0);
-  await expect(page.locator(".intelligence-frame [data-brain-fallback]")).toBeVisible();
+  await expect(page.locator("[data-brain-canvas],#intelligence [data-brain-poster],#intelligence [data-budai-mark]")).toHaveCount(0);
   const gpu = await page.evaluate(() => window.__gpuQA);
   expect(gpu.programs).toBeGreaterThan(0);
   expect(gpu.freedPrograms).toBe(gpu.programs);
@@ -189,7 +154,7 @@ test("a slow brain bundle falls back; unrelated assets never gate the reveal", a
   await page.goto("/", { waitUntil: "domcontentloaded" });
   await expect(page.locator("[data-global-loader]")).toHaveCount(0, { timeout: 8_000 });
   expect(delayed).toBe(true);
-  await expect(page.locator(".intelligence-frame [data-brain-fallback]")).toBeVisible();
+  await expect(page.locator("[data-brain-canvas],#intelligence [data-brain-poster],#intelligence [data-budai-mark]")).toHaveCount(0);
   await expect(page.locator("[data-world-canvas]")).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Open Playground", exact: true })).toBeEnabled();
 });
@@ -276,9 +241,9 @@ test("reduced motion: no intro, no WebGL, full static code and accessible forms"
   await quietChrome(page, false);
   await page.goto("/");
   await expect(page.locator("[data-global-loader]")).toHaveCount(0);
-  await expect(page.locator(".intelligence-frame [data-brain-fallback]")).toBeVisible();
+  await expect(page.locator("[data-brain-canvas],#intelligence [data-brain-poster],#intelligence [data-budai-mark]")).toHaveCount(0);
   await scrollSection(page, "signal", 0);
-  await expect(page.locator(".brain-journey-fallback [data-brain-fallback]")).toBeVisible();
+  await expect(page.locator(".brain-journey-fallback [data-brain-poster]")).toBeVisible();
   await expect(page.locator("#signal")).toHaveCSS("height", "1000px");
   await scrollSection(page, "about", 0);
   await expect(page.locator("[data-world-canvas], [data-brain-canvas]")).toHaveCount(0);
@@ -300,7 +265,7 @@ test("no WebGL degrades without trapping the page", async ({ page }) => {
   });
   await page.goto("/");
   await expect(page.locator("[data-global-loader]")).toHaveCount(0, { timeout: 9_000 });
-  await expect(page.locator(".intelligence-frame [data-brain-fallback]")).toBeVisible();
+  await expect(page.locator("[data-brain-canvas],#intelligence [data-brain-poster],#intelligence [data-budai-mark]")).toHaveCount(0);
   await scrollSection(page, "about", 500);
   await expect(page.locator(".universe-world")).toHaveAttribute("data-world-state", "fallback");
   await expect(page.locator(".builder-fallback-workspace")).toBeVisible();
@@ -327,7 +292,7 @@ test("context loss and changing reduced motion clean up the shared world", async
   await page.emulateMedia({ reducedMotion: "no-preference" });
   await expect(page.locator(".universe-world")).toHaveAttribute("data-world-state", "ready");
   await page.evaluate(() => scrollTo({top:0,behavior:"instant" as ScrollBehavior}));
-  await expect(page.locator("[data-brain-canvas]")).toHaveAttribute("data-rendered","true");
+  await expect(page.locator("[data-brain-canvas]")).toHaveCount(0);
   await expect(page.locator("[data-global-loader]")).toHaveCount(0);
 
 });
@@ -413,6 +378,8 @@ test("an already-loaded world actually stops GPU draws on reverse-to-landing and
   await quietChrome(page);
   await page.addInitScript(() => {
     window.__worldDraws = 0;
+    const arrays=WebGL2RenderingContext.prototype.drawArrays;
+    WebGL2RenderingContext.prototype.drawArrays=function(this:WebGL2RenderingContext,...args:Parameters<typeof arrays>){if((this.canvas as HTMLCanvasElement).hasAttribute("data-world-canvas"))window.__worldDraws++;return arrays.apply(this,args);};
     const original = WebGL2RenderingContext.prototype.drawElements;
     WebGL2RenderingContext.prototype.drawElements = function (this:WebGL2RenderingContext,...args:Parameters<typeof original>) {
       if ((this.canvas as HTMLCanvasElement).hasAttribute("data-world-canvas")) window.__worldDraws++;
@@ -440,7 +407,7 @@ test("save-data mode keeps static anatomy and all actions without downloading a 
   await page.addInitScript(()=>Object.defineProperty(navigator,"connection",{configurable:true,value:{saveData:true}}));
   await page.goto("/");
   await expect(page.locator("[data-global-loader]")).toHaveCount(0);
-  await expect(page.locator(".intelligence-frame [data-brain-fallback]")).toBeVisible();
+  await expect(page.locator("[data-brain-canvas],#intelligence [data-brain-poster],#intelligence [data-budai-mark]")).toHaveCount(0);
   await scrollSection(page,"capabilities",0);
   await expect(page.locator(".universe-world")).toHaveAttribute("data-world-state","fallback");
   await expect(page.locator("[data-brain-canvas],[data-world-canvas]")).toHaveCount(0);

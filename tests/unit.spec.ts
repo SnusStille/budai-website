@@ -1,19 +1,12 @@
 import { test, expect } from "@playwright/test";
-import { INTRO_MS, INTRO_REVEAL_MS, introLetters, nextIntroLetter } from "../lib/experience/intro";
+import { INTRO_MS, INTRO_REVEAL_MS, INTRO_READY_MS } from "../lib/experience/intro";
 import { cameraAt, CHAPTERS, journeyAt, worldChapterAt, worldOpacityAt } from "../lib/experience/timeline";
 import { brainCameraAt, brainFovAt, brainJourneyProgress, brainVisualAt, playgroundProjectionAt, BRAIN_STORY_ORIGIN } from "../lib/experience/brain";
 import { codeCharactersAt, CODE_LENGTH, EXAMPLE_SOURCE, tokenizeLine } from "../lib/experience/code";
 
-test("intro has five deliberate letters and a bounded, short duration", () => {
-  expect([0, 850, 1060, 1270, 1480, 1690, 9000].map(introLetters)).toEqual([0, 1, 2, 3, 4, 5, 5]);
-  expect(INTRO_MS + INTRO_REVEAL_MS).toBeLessThanOrEqual(4000);
-  let previous = 0, lastAt = 0;
-  const observed = [];
-  for (const elapsed of [0, 1100, 1160, 1280, 1460, 1640, 1820, 2100, 2350]) {
-    const next = nextIntroLetter(previous, elapsed, elapsed - lastAt);
-    if (next !== previous) { observed.push(next); previous = next; lastAt = elapsed; }
-  }
-  expect(observed).toEqual([1, 2, 3, 4, 5]);
+test("one readiness deadline and camera/reveal timing stay bounded without a logo timeline",()=>{
+  expect(INTRO_MS+INTRO_REVEAL_MS).toBeLessThanOrEqual(4000);
+  expect(INTRO_READY_MS+INTRO_MS+INTRO_REVEAL_MS).toBeLessThanOrEqual(4500);
 });
 
 test("camera path is finite, continuous at all chapter boundaries, and exactly reversible", () => {
@@ -68,11 +61,11 @@ test("code reveal is deterministic, monotonic, bounded, and preserves every sour
  });
 
 test("mobile brain uses one full-height target and a finite reversible perspective lens", () => {
-  const hero = brainFovAt({ kind:"hero", progress:0 }, 844, true);
+  const hero = brainFovAt({ kind:"intro", progress:0 }, 844, true);
   expect(hero).toBeGreaterThan(.87);
   expect(brainFovAt({ kind:"journey", progress:0, entry:0 },844,true)).toBe(.87);
   expect(brainFovAt({ kind:"journey", progress:.5, entry:1 },844,true)).toBe(.87);
-  expect(brainFovAt({ kind:"hero", progress:0 },1000,false)).toBe(.87);
+  expect(brainFovAt({ kind:"intro", progress:0 },1000,false)).toBe(.87);
   for (const height of [0, 370, 667, 844, 1200]) for (const entry of [0,.1,.5,.9,1]) {
     const fov = brainFovAt({ kind:"journey",progress:entry,entry },height,true);
     expect(Number.isFinite(fov)).toBe(true); expect(fov).toBeGreaterThan(0); expect(fov).toBeLessThan(Math.PI);
@@ -90,12 +83,10 @@ test("world departure is reversible and its invisible landing state is genuinely
   expect([1,.9,.5,.1,0].map(departure=>worldChapterAt({chapter:4,departure})).reverse()).toEqual(values);
 });
 
-test("opening actually crosses the cortex and resolves into the SAME final hero pose",()=>{
+test("opening actually crosses the cortex without any branding target or hero renderer",()=>{
   const poses=Array.from({length:101},(_,i)=>brainCameraAt({kind:"intro",progress:i/100}));
   expect(poses.some(p=>p.z<.8&&p.z>-.8)).toBe(true);
   expect(poses.at(-1)!.z).toBeLessThan(0);
-  const end=poses.at(-1)!,hero=brainCameraAt({kind:"hero",progress:0});
-  for(const key of ["x","y","z","yaw","tilt"] as const)expect(end[key]).toBeCloseTo(hero[key],8);
   expect(brainVisualAt({kind:"intro",progress:1})).not.toHaveProperty("identity");
   expect(brainCameraAt({kind:"journey",progress:.86}).z-BRAIN_STORY_ORIGIN).toBeLessThan(0);
   expect(playgroundProjectionAt(1)).toEqual({depth:0,tilt:0});
@@ -131,4 +122,25 @@ test("model choices are configuration-aware public IDs; arbitrary or unavailable
   expect(resolveModelTier("fast",env)).toBe("private-fast");expect(resolveModelTier("deep",env)).toBe("private-deep");
   expect(resolveModelTier(undefined,env)).toBe("private-quality");
   expect(resolveModelTier("fast",{})).toBeNull();expect(resolveModelTier("attacker-model",env)).toBeNull();expect(resolveModelTier({model:"private-fast"},env)).toBeNull();
+});
+
+test("closing is continuous/reversible and reaches a stable end even on a short desktop footer",async()=>{
+  const {closingProgressAt}=await import("../lib/experience/timeline");
+  expect(closingProgressAt(9000,10000,1000,9950)).toBe(0);expect(closingProgressAt(9950,10000,1000,9950)).toBe(1);
+  const forward=Array.from({length:101},(_,i)=>cameraAt(6,.4,false,i/100));
+  expect(forward).toEqual(Array.from({length:101},(_,i)=>cameraAt(6,.4,false,(100-i)/100)).reverse());
+  for(let i=1;i<forward.length;i++)expect(Math.hypot(...forward[i].position.map((v,k)=>v-forward[i-1].position[k]))).toBeLessThan(.04);
+});
+
+test("information records are finite, sparse and grouped by the six actual capability labels",async()=>{
+  const {capabilityRecords}=await import("../lib/experience/information-patterns");const rows=capabilityRecords();
+  expect(rows.length).toBeLessThan(150);for(let lane=0;lane<6;lane++)expect(rows.some(r=>r.lane===lane)).toBe(true);
+  expect(rows.every(r=>[r.x,r.y,r.z,r.lane].every(Number.isFinite))).toBe(true);expect(rows).toEqual(capabilityRecords());
+});
+
+test("handoff dolly remains forward and angularly restrained, without a tiny distant product",()=>{
+  const poses=Array.from({length:101},(_,i)=>brainCameraAt({kind:"journey",progress:i/100}));
+  expect(poses.every(p=>Math.abs(p.yaw)<=.15&&Math.abs(p.tilt)<=.14)).toBe(true);
+  expect(playgroundProjectionAt(.68).depth).toBeLessThan(500);expect(playgroundProjectionAt(.68).tilt).toBeLessThan(2);
+  for(let i=1;i<poses.length;i++)expect(poses[i].z).toBeLessThan(poses[i-1].z);
 });

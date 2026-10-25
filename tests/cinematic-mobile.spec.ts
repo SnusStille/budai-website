@@ -16,27 +16,28 @@ async function to(page: Page, selector: string) {
   await page.waitForTimeout(500);
 }
 
-for (const width of [390, 360]) test(`mobile ${width}: full-height neural perspective, assembled hardware, plans and Next Signal`, async ({ page }) => {
+for (const width of [390, 360]) test(`mobile ${width}: full-height neural perspective, information field, plans and Next Signal`, async ({ page }) => {
   await page.setViewportSize({ width, height:844 });
   await quiet(page);
   const errors: string[] = [];
   page.on("pageerror", e => errors.push(e.message));
   await page.goto("/");
   const brain = page.locator("[data-brain-canvas]");
-  await expect(brain).toHaveAttribute("data-rendered", "true");
-  await page.waitForTimeout(750);
+  await expect(brain).toHaveCount(0);
+  await page.waitForTimeout(300);
   await page.screenshot({ path:`test-results/hero-${width}.png` });
   const dive = async (p: number) => {
     await page.locator("#signal").evaluate((el,p) => scrollTo({ top:el.getBoundingClientRect().top+scrollY+(el.clientHeight-innerHeight)*p,behavior:"instant" as ScrollBehavior }),p);
     await page.waitForTimeout(450);
   };
   await dive(.1);
+  await expect(brain).toHaveAttribute("data-rendered","true");
   await page.screenshot({ path:`test-results/neural-entry-${width}.png` });
   await dive(.86);
   await expect(brain).toHaveAttribute("data-sequence", "journey");
   const pose = await brain.getAttribute("data-camera-pose");
   expect(Number(await brain.getAttribute("data-camera-z"))).toBeLessThan(0);
-  expect(await brain.evaluate(el => el.getBoundingClientRect().height)).toBeGreaterThan(844);
+  expect(await brain.evaluate(el => el.getBoundingClientRect().height)).toBeCloseTo(844,0);
   await page.screenshot({ path:`test-results/neural-interior-${width}.png` });
   await dive(.92); await dive(.86);
   await expect(brain).toHaveAttribute("data-camera-pose", pose!);

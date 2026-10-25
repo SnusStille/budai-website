@@ -1,6 +1,6 @@
 import { test, expect, type Page } from "@playwright/test";
 
-declare global { interface Window { __openingPoses:Array<{z:number;identity:number;phase:string;sequence:string;brains:number;loaders:number}>; } }
+declare global { interface Window { __openingPoses:Array<{z:number;phase:string;sequence:string;brains:number;loaders:number}>; } }
 async function quiet(page:Page,skip=true){
   await page.addInitScript(skip=>{
     if(skip)sessionStorage.setItem("budai:cinematic-intro:v1","1");
@@ -12,14 +12,14 @@ async function dive(page:Page,p:number){
   await page.waitForTimeout(400);
 }
 
-test("the only opening really enters the cortex, forms Confluence, then keeps the same pose/canvas on landing",async({page})=>{
+test("the opening enters the intended cortex and gives up all scene ownership on the landing",async({page})=>{
   await quiet(page,false);
   await page.addInitScript(()=>{
     window.__openingPoses=[];
     new MutationObserver(()=>{
       const el=document.querySelector<HTMLCanvasElement>("[data-brain-canvas]");
       if(!el?.dataset.cameraZ)return;
-      window.__openingPoses.push({z:Number(el.dataset.cameraZ),identity:Number(el.dataset.identityMorph),phase:document.documentElement.dataset.budaiIntro??"",sequence:el.dataset.sequence??"",brains:document.querySelectorAll("[data-brain-canvas]").length,loaders:document.querySelectorAll("[data-global-loader]").length});
+      window.__openingPoses.push({z:Number(el.dataset.cameraZ),phase:document.documentElement.dataset.budaiIntro??"",sequence:el.dataset.sequence??"",brains:document.querySelectorAll("[data-brain-canvas]").length,loaders:document.querySelectorAll("[data-global-loader]").length});
     }).observe(document,{subtree:true,childList:true,attributes:true,attributeFilter:["data-camera-z","data-budai-intro"]});
   });
   await page.goto("/");
@@ -27,23 +27,23 @@ test("the only opening really enters the cortex, forms Confluence, then keeps th
   await expect(brain).toHaveAttribute("data-rendered","true");
   const canvas=await brain.elementHandle();
   await expect(page.locator("html")).toHaveAttribute("data-budai-intro","done");
-  await expect(brain).toHaveAttribute("data-sequence","hero");
+  await expect(brain).toHaveCount(0);
   const poses=await page.evaluate(()=>window.__openingPoses),opening=poses.filter(p=>p.sequence==="intro");
-  expect(opening.some(p=>p.z<.8&&p.z>-.8&&p.identity<.5)).toBe(true);
-  expect(opening.some(p=>p.z<-1&&p.identity>.95)).toBe(true);
+  expect(opening.some(p=>p.z<.8&&p.z>-.8)).toBe(true);
+  expect(opening.some(p=>p.z<0)).toBe(true);
   expect(Math.max(...poses.map(p=>p.brains))).toBe(1);expect(Math.max(...poses.map(p=>p.loaders))).toBe(1);
-  expect(Number(await brain.getAttribute("data-camera-z"))).toBeCloseTo(opening.at(-1)!.z,3);
-  await expect(brain).toHaveAttribute("data-identity-morph","1.0000");
-  expect(await canvas!.evaluate(el=>el.isConnected)).toBe(true);
+  expect(await canvas!.evaluate(el=>el.isConnected)).toBe(false);
+  await expect(page.locator("#intelligence [data-budai-mark],#intelligence canvas")).toHaveCount(0);
   await page.screenshot({path:"test-results/confluence-landing-desktop.png"});
   await test.info().attach("actual-opening-camera",{body:JSON.stringify(poses),contentType:"application/json"});
 });
 
-for(const viewport of [{width:1440,height:1000},{width:834,height:1112},{width:390,height:844}])test(`real Playground arrival ${viewport.width}: one projected DOM surface, matched spatial frame, reversible, editable and expandable`,async({page})=>{
+for(const viewport of [{width:1440,height:1000},{width:834,height:1112},{width:390,height:844}])test(`real Playground arrival ${viewport.width}: one projected DOM surface, matched information signal, reversible, editable and expandable`,async({page})=>{
   await page.setViewportSize(viewport);await quiet(page);
   const errors:string[]=[];page.on("pageerror",e=>errors.push(e.message));page.on("console",m=>{if(m.type()==="error")errors.push(m.text());});
   await page.goto("/");
   const brain=page.locator("[data-brain-canvas]"),surface=page.locator("[data-playground-surface]"),anchor=page.locator("[data-playground-arrival]");
+  await dive(page,.15);
   await expect(brain).toHaveAttribute("data-rendered","true");
   await expect(page.locator("#signal")).toHaveAttribute("data-original-source","43f44c9");
   await expect(page.locator("[data-original-stage]")).toHaveCount(4);
@@ -51,17 +51,14 @@ for(const viewport of [{width:1440,height:1000},{width:834,height:1112},{width:3
   const widths:number[]=[];
   for(const p of [.78,.86,.94]){
     await dive(page,p);
-    await expect.poll(async()=>Math.abs(Number((await brain.getAttribute("data-portal-bounds"))?.split(",")[1])-((await surface.boundingBox())?.y??0))).toBeLessThan(2);
+    await expect.poll(async()=>Math.abs(Number((await brain.getAttribute("data-signal-bounds"))?.split(",")[1])-((await surface.boundingBox())?.y??0))).toBeLessThan(2);
     const box=(await surface.boundingBox())!;widths.push(box.width);
     const projection=await brain.evaluate(el=>{
-      const c=el.getBoundingClientRect(),m=el.getAttribute("data-portal-matrix")!.split(",").map(Number),w=el.getAttribute("data-portal-world")!.split(",").map(Number);
-      return Array.from({length:4},(_,i)=>{
-        const [x,y,z]=w.slice(i*3,i*3+3),cw=m[3]*x+m[7]*y+m[11]*z+m[15];
-        return {x:c.left+((m[0]*x+m[4]*y+m[8]*z+m[12])/cw*.5+.5)*c.width,y:c.top+(.5-(m[1]*x+m[5]*y+m[9]*z+m[13])/cw*.5)*c.height};
-      });
+      const c=el.getBoundingClientRect(),m=el.getAttribute("data-signal-matrix")!.split(",").map(Number),w=el.getAttribute("data-signal-world")!.split(",").map(Number);
+      const [x,y,z]=w,cw=m[3]*x+m[7]*y+m[11]*z+m[15];
+      return {x:c.left+((m[0]*x+m[4]*y+m[8]*z+m[12])/cw*.5+.5)*c.width,y:c.top+(.5-(m[1]*x+m[5]*y+m[9]*z+m[13])/cw*.5)*c.height};
     });
-    expect(projection[0].x).toBeCloseTo(box.x-5,0);expect(projection[0].y).toBeCloseTo(box.y-5,0);
-    expect(projection[2].x).toBeCloseTo(box.x+box.width+5,0);expect(projection[2].y).toBeCloseTo(box.y+box.height+5,0);
+    expect(projection.x).toBeCloseTo(box.x+box.width*.5,0);expect(projection.y).toBeCloseTo(box.y,0);
     await expect(surface).toHaveCount(1);await expect(page.locator("[data-global-loader]")).toHaveCount(0);
     await page.screenshot({path:`test-results/playground-arrival-${viewport.width}-${p}.png`});
   }
@@ -98,5 +95,5 @@ test("Confluence contains a real travelling signal and pauses on reduced motion 
   await expect(mark.locator(".confluence-signal")).toHaveCSS("display","none");
   await expect(page.locator("[data-brain-canvas],[data-world-canvas]")).toHaveCount(0);
   await page.emulateMedia({reducedMotion:"no-preference"});await expect(mark).toHaveAttribute("data-mark-motion","running");
-  await expect(page.locator("[data-brain-canvas]")).toHaveCount(1);await expect(page.locator("[data-global-loader]")).toHaveCount(0);
+  await expect(page.locator("[data-brain-canvas]")).toHaveCount(0);await expect(page.locator("[data-global-loader]")).toHaveCount(0);
 });

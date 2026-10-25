@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { CSS3DObject, CSS3DRenderer } from "three/examples/jsm/renderers/CSS3DRenderer.js";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
+import {createPointField} from "./information-field";
 import { createCapabilityEngine } from "./capability-engine";
 import { domViewOffset, worldUnitsPerPixel } from "./projection";
 import { createDeveloperRoom } from "./developer-room";
@@ -98,17 +99,12 @@ export function createWorld(host: HTMLElement, editor: HTMLElement, onFailure: (
 
     // No second hero core: the one root renderer owns brain and identity.
     addEnvironment(0);
-    // The real product's six output channels converge into the capability core.
+    // One information field, no outgoing cable fan or portal architecture.
     const corridor=addEnvironment(1);
-    const outputCurves:THREE.CubicBezierCurve3[]=[],outputPackets:THREE.Mesh[]=[];
-    for(let i=0;i<6;i++) {
-      const start=(i-2.5)*.3;
-      const curve=new THREE.CubicBezierCurve3(new THREE.Vector3(-1,start,0),new THREE.Vector3(6,start,-3),new THREE.Vector3(16,1.4+start*.6,-11),new THREE.Vector3(23.04,1.4,-16));
-      outputCurves.push(curve);
-      const geometry=new THREE.BufferGeometry().setFromPoints(curve.getPoints(40));
-      corridor.add(new THREE.Line(geometry,new THREE.LineBasicMaterial({color:i%2?"#829da7":"#a7ced4",transparent:true,opacity:.22})));
-      const packet=new THREE.Mesh(new THREE.BoxGeometry(.035,.035,.1),signal);corridor.add(packet);outputPackets.push(packet);
-    }
+    const fieldRecords=[];
+    for(let column=0;column<8;column++)for(let row=0;row<3;row++)fieldRecords.push({x:column*2.8,y:(row-1)*.65+.6,z:-column*1.87,lane:-1});
+    const outputField=createPointField(fieldRecords,2.0);outputField.material.uniforms.uOpacity.value=.32;corridor.add(outputField);
+    const outputSignal=createPointField([{x:0,y:0,z:0,lane:-1}],4.8);scene.add(outputSignal);
 
     // 02 / Six functional cartridges assemble into a single physical engine.
     const capabilities = addEnvironment(2);
@@ -130,24 +126,13 @@ export function createWorld(host: HTMLElement, editor: HTMLElement, onFailure: (
 
     // 04 / The next signal: leave the workspace for a distant, quiet beacon.
     const waitlist = addEnvironment(4);
-    const stone = new THREE.MeshStandardMaterial({ color: "#101d28", roughness: .55, metalness: .5 });
-    for (let i = 0; i < 5; i++) {
-      for (const side of [-1, 1]) {
-        const height = .7 + i * .8;
-        const wall = new THREE.Mesh(new THREE.BoxGeometry(2, height, 3.5), stone);
-        wall.position.set(side * (6.4 + i * .18), height / 2 - 2.1, -i * 4); waitlist.add(wall);
-      }
-    }
-    const signalBase = new THREE.Mesh(new THREE.BoxGeometry(3, .2, 3), metal); signalBase.position.set(0, -2, -15); waitlist.add(signalBase);
-    const beaconBody = new THREE.Mesh(new THREE.BoxGeometry(.3, 7, .35), metal); beaconBody.position.set(0, 1.5, -15); waitlist.add(beaconBody);
-    const beaconMaterial = new THREE.MeshStandardMaterial({ color: "#e2d4b7", emissive: "#e9cf9b", emissiveIntensity: 1.2, roughness: .3 });
-    const beacon = new THREE.Mesh(new THREE.BoxGeometry(.065, 6.4, .02), beaconMaterial); beacon.position.set(0, 1.5, -14.81); waitlist.add(beacon);
-    const beaconLight = new THREE.PointLight("#edce9b", 16, 22, 2); beaconLight.position.set(0, 1, -13); waitlist.add(beaconLight);
-    const horizon = new THREE.Mesh(new THREE.BoxGeometry(27, .018, .03), secondary); horizon.position.set(0, -2, -7); waitlist.add(horizon);
+    const beacon=createPointField([{x:0,y:1,z:-7,lane:-1}],5.2);waitlist.add(beacon);
 
     // 05 / A real spatial timeline. Nodes correspond ONLY to the four existing stages.
     const roadmap = addEnvironment(5);
     const roadNodes: THREE.MeshStandardMaterial[] = [];
+    const roadMeshes:THREE.Mesh[]=[];
+    const roadQuiet:Array<{material:THREE.MeshBasicMaterial|THREE.MeshStandardMaterial;opacity:number}>=[];
     const roadGlows: THREE.SpriteMaterial[] = [];
     const glowCanvas = document.createElement("canvas"); glowCanvas.width = glowCanvas.height = 64;
     const glowContext = glowCanvas.getContext("2d");
@@ -157,16 +142,25 @@ export function createWorld(host: HTMLElement, editor: HTMLElement, onFailure: (
     glowContext.fillStyle = gradient; glowContext.fillRect(0, 0, 64, 64);
     const glowTexture = new THREE.CanvasTexture(glowCanvas); glowTexture.colorSpace = THREE.SRGBColorSpace;
     const path = [new THREE.Vector3(-6, .2, 1), new THREE.Vector3(-2, .8, -1), new THREE.Vector3(2, .4, -3), new THREE.Vector3(6, 1, -5)];
-    roadmap.add(tube(path, secondary, .035));
+    const pathMaterial=secondary.clone();roadmap.add(tube(path,pathMaterial,.035));roadQuiet.push({material:pathMaterial,opacity:pathMaterial.opacity});
     path.forEach((point, i) => {
-      const base = new THREE.Mesh(new THREE.CylinderGeometry(.7, .85, .2, 32), metal); base.position.copy(point); roadmap.add(base);
-      const material = new THREE.MeshStandardMaterial({ color: i < 2 ? CYAN : LAVENDER, emissive: i < 2 ? CYAN : LAVENDER, emissiveIntensity: .1, roughness: .3, metalness: .6, fog: false, toneMapped: false }); roadNodes.push(material);
-      const node = new THREE.Mesh(new THREE.OctahedronGeometry(.35, 0), material); node.position.copy(point).add(new THREE.Vector3(0, .7, 0)); roadmap.add(node);
+      const baseMaterial=metal.clone();baseMaterial.transparent=true;roadQuiet.push({material:baseMaterial,opacity:1});
+      const base = new THREE.Mesh(new THREE.CylinderGeometry(.7, .85, .2, 32), baseMaterial); base.position.copy(point); roadmap.add(base);
+      const material = new THREE.MeshStandardMaterial({ color: i < 2 ? CYAN : LAVENDER, emissive: i < 2 ? CYAN : LAVENDER, emissiveIntensity: .1, roughness: .3, metalness: .6, fog: false, toneMapped: false,transparent:true }); roadNodes.push(material);
+      const node = new THREE.Mesh(new THREE.OctahedronGeometry(.35, 0), material); node.position.copy(point).add(new THREE.Vector3(0, .7, 0)); roadmap.add(node);roadMeshes.push(node);
       const glowMaterial = new THREE.SpriteMaterial({ map: glowTexture, color: i < 2 ? CYAN : LAVENDER, transparent: true, opacity: .2, blending: THREE.AdditiveBlending, depthWrite: false, fog: false, toneMapped: false }); roadGlows.push(glowMaterial);
       const glow = new THREE.Sprite(glowMaterial); glow.position.copy(node.position); glow.scale.set(3, 3, 1); roadmap.add(glow);
-      const orbit = new THREE.Mesh(new THREE.TorusGeometry(.7, .015, 4, 48), signal); orbit.rotation.x = Math.PI / 2; orbit.position.copy(point).add(new THREE.Vector3(0, .14, 0)); roadmap.add(orbit);
-      if (i === 1) { const beacon = new THREE.Mesh(new THREE.CylinderGeometry(.015, .015, 2.3, 5), signal); beacon.position.copy(point).add(new THREE.Vector3(0, 1.3, 0)); roadmap.add(beacon); }
+      const orbitMaterial=signal.clone();roadQuiet.push({material:orbitMaterial,opacity:orbitMaterial.opacity});
+      const orbit = new THREE.Mesh(new THREE.TorusGeometry(.7, .015, 4, 48), orbitMaterial); orbit.rotation.x = Math.PI / 2; orbit.position.copy(point).add(new THREE.Vector3(0, .14, 0)); roadmap.add(orbit);
+      if (i === 1) { const beacon = new THREE.Mesh(new THREE.CylinderGeometry(.015, .015, 2.3, 5), orbitMaterial); beacon.position.copy(point).add(new THREE.Vector3(0, 1.3, 0)); roadmap.add(beacon); }
     });
+
+    // The existing final milestone resolves into the same small information
+    // signal. It belongs to this roadmap environment, never a new outro scene.
+    const closingOrigin=path[3].clone().add(new THREE.Vector3(0,.7,0));
+    const closingSignal=createPointField([{x:0,y:0,z:0,lane:-1}],4.8);closingSignal.position.copy(closingOrigin);roadmap.add(closingSignal);
+    const closingAnchor=document.querySelector<HTMLElement>("[data-outro-anchor]");
+    const desiredClosing=new THREE.Vector3();
 
     let width = 0;
     let height = 0;
@@ -198,8 +192,10 @@ export function createWorld(host: HTMLElement, editor: HTMLElement, onFailure: (
           renderer.setPixelRatio(Math.min(window.devicePixelRatio, pixelCap, mobile ? 1 : 1.35));
           renderer.setSize(width, height); cssRenderer?.setSize(width, height);
           camera.aspect = width / height; camera.updateProjectionMatrix();
+          scene.traverse(object=>{const material=(object as THREE.Points).material;if(material instanceof THREE.ShaderMaterial&&material.uniforms.uPixelRatio)material.uniforms.uPixelRatio.value=renderer.getPixelRatio();});
         }
-        const opacity = worldOpacityAt(frame);
+        const close=smooth(frame.closing??0);
+        const opacity = worldOpacityAt(frame)*(1-.35*close);
         host.style.opacity = String(opacity);
         if (opacity <= .001) {
           // Opacity is not a GPU pause. Sleep completely on reverse-to-landing;
@@ -210,7 +206,7 @@ export function createWorld(host: HTMLElement, editor: HTMLElement, onFailure: (
           return;
         }
         const chapter = worldChapterAt(frame);
-        const pose = cameraAt(chapter, frame.sections.about ?? 0, mobile);
+        const pose = cameraAt(chapter, frame.sections.about ?? 0, mobile,frame.closing??0);
         camera.clearViewOffset();
         camera.position.fromArray(pose.position); camera.lookAt(new THREE.Vector3(...pose.target));
         camera.updateMatrixWorld();
@@ -223,28 +219,43 @@ export function createWorld(host: HTMLElement, editor: HTMLElement, onFailure: (
         engine.root.visible = inWindow;
         const capProgress = Number(capSystem?.dataset.progress ?? 0);
         const activeModule = focus >= 0 ? focus : Math.min(5, Math.floor(capProgress * 6));
-        engine.update(capProgress, activeModule, morph, frame.time);
-        outputPackets.forEach((packet,i)=>packet.position.copy(outputCurves[i].getPoint(smooth(clamp((chapter-2.05)/.9)))));
+        engine.update(capProgress,activeModule,morph);
+        const output=smooth((chapter-2.05)/.85);
+        outputSignal.position.set(lerp(24,48,output),lerp(.8,1.4,output),lerp(-16,-32,output));
+        outputSignal.visible=chapter>2.02&&chapter<2.9;
         if (targetRect && inWindow && capWeight > .001) {
           const units = worldUnitsPerPixel(camera.position.distanceTo(engineCenter), camera.fov, frame.height);
-          const scale = units * Math.min(targetRect.height * .84 / lerp(6.5, 3.6, morph), targetRect.width * .9 / lerp(4.5, 10.1, morph));
+          const scale = units * Math.min(targetRect.height * .84 / lerp(4.8, 3.6, morph), targetRect.width * .9 / lerp(3.7, 9.7, morph));
           engine.root.scale.setScalar(scale);
           projected.copy(engineCenter).project(camera);
           const offset = domViewOffset(projected, targetRect, frame.width, frame.height);
           camera.setViewOffset(frame.width, frame.height, offset.x * capWeight, offset.y * capWeight, frame.width, frame.height);
         }
-        renderer.domElement.dataset.capabilityArchitecture = "confluence-manifold";
+        renderer.domElement.dataset.capabilityArchitecture = "information-field";
         renderer.domElement.dataset.capabilityModules = "6";
-        renderer.domElement.dataset.capabilityPaths = "6";
+        renderer.domElement.dataset.capabilityPaths = "0";
+        renderer.domElement.dataset.informationRecords = "6";
         renderer.domElement.dataset.capabilityFocus = String(activeModule);
         renderer.domElement.dataset.accessMorph = morph.toFixed(3);
         key.position.copy(camera.position).add(new THREE.Vector3(-3, 6, 3)); key.target.position.fromArray(pose.target); key.target.updateMatrixWorld();
         groups.forEach((group, i) => { group.visible = i === 1 ? chapter > 2.03 && chapter < 2.85 : Math.abs(chapter - (i === 0 ? 0 : i + 1)) < 1.15; });
+        if(close>.001)groups.forEach((group,i)=>{if(i!==5)group.visible=false;});
+        roadQuiet.forEach(({material,opacity})=>{material.opacity=opacity*(1-.95*close);});
+        roadNodes.forEach((material,i)=>{material.opacity=1-(i===3?.8:.98)*close;});
+        roadMeshes.forEach((mesh,i)=>mesh.scale.setScalar(i===3?lerp(1,.07,close):lerp(1,.94,close)));
+        const anchor=closingAnchor?.getBoundingClientRect();
+        if(anchor){
+          desiredClosing.set((anchor.left+anchor.width/2)/width*2-1,1-(anchor.top+anchor.height/2)/height*2,.94).unproject(camera);
+          roadmap.worldToLocal(desiredClosing);
+          closingSignal.position.copy(closingOrigin).lerp(desiredClosing,close);
+        }
+        closingSignal.material.uniforms.uOpacity.value=close*.9;
+        renderer.domElement.dataset.outroProgress=(frame.closing??0).toFixed(4);
+        renderer.domElement.dataset.outroState=close>.999?"settled":close>0?"converging":"roadmap";
         const activeRoadNode = roadmapFocus >= 0 ? roadmapFocus : Math.min(3, Math.floor((frame.sections.roadmap ?? 0) * 4));
         roadNodes.forEach((material, i) => { material.emissiveIntensity = i === activeRoadNode ? 1.4 : .3; });
-        roadGlows.forEach((material, i) => { material.opacity = i === activeRoadNode ? .7 : .22; });
-        beaconMaterial.emissiveIntensity = 1.05 - .3 * smooth(frame.sections.waitlist ?? 0);
-        beaconLight.intensity = 16 - 7 * smooth(frame.sections.waitlist ?? 0);
+        roadGlows.forEach((material, i) => { material.opacity = (i === activeRoadNode ? .7 : .22)*(1-close); });
+        beacon.material.uniforms.uOpacity.value=.85-.3*smooth(frame.sections.waitlist??0);
         room.lamps[0].intensity = 32 + Math.sin(frame.time * .6) * 2;
         const builderWeight = smooth(1 - Math.abs(chapter - 4));
         screen.visible = builderWeight > .02;

@@ -16,6 +16,7 @@ async function instrument(page:Page,seen=false){
 async function settledHero(page:Page){
   await expect(page.locator("html")).toHaveAttribute("data-budai-intro","done");
   await expect(page.locator("[data-global-loader],[data-brain-canvas]")).toHaveCount(0);
+  await expect(page.locator("canvas")).toHaveCount(0);
   await expect(page.getByRole("heading",{level:1})).toBeVisible();
   await expect(page.locator("#main")).not.toHaveAttribute("inert");
   await expect(page.locator("#intelligence [data-budai-mark],#intelligence canvas,#intelligence [data-brain-poster]")).toHaveCount(0);

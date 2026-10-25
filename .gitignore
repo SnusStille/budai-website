@@ -29,3 +29,6 @@ node_modules
 /test-results/
 /playwright-report/
 /blob-report/
+
+# Reproducible authoring bundles (not application assets)
+.cache/

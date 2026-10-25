@@ -21,7 +21,8 @@ export default function BrainScrollStory() {
     const p=frame.sections.signal??0;
     const enhanced=!frame.reduced&&document.documentElement.dataset.brainState==="ready";
     node.dataset.enhanced=String(enhanced);
-    setPoster(previous=>previous===!enhanced?previous:!enhanced);
+    const showPoster=!enhanced&&p<.6;
+    setPoster(previous=>previous===showPoster?previous:showPoster);
     node.style.setProperty("--neural-progress",String(p));
     node.dataset.journeyProgress=p.toFixed(4);
     const skip=node.querySelector<HTMLAnchorElement>(".neural-hud-top>a");

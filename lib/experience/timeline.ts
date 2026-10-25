@@ -21,6 +21,7 @@ export type JourneyFrame = {
   reduced: boolean;
   time: number;
   departure?: number;
+  closing?:number;
 };
 
 export const clamp = (n: number, min = 0, max = 1) => Math.min(max, Math.max(min, n));
@@ -56,7 +57,7 @@ const POSES: CameraPose[] = [
 ];
 
 /** Dwell at each environment; deliberate camera approach inside the Builder. */
-export function cameraAt(chapter: number, builderProgress: number, mobile = false): CameraPose {
+export function cameraAt(chapter: number, builderProgress: number, mobile = false, closing=0): CameraPose {
   const c = clamp(chapter, 0, 6);
   const a = Math.min(5, Math.floor(c));
   const b = a + 1;
@@ -72,6 +73,9 @@ export function cameraAt(chapter: number, builderProgress: number, mobile = fals
   // Leave a quiet top third for the section heading. No DOM/code overlap.
   target[1] += 1.25 * builderWeight;
   if (mobile) position[2] += 5;
+  const retreat=smooth(closing)*smooth((c-5.5)/.5);
+  for(let i=0;i<3;i++)position[i]=target[i]+(position[i]-target[i])*(1+.12*retreat);
+  position[1]+=.35*retreat;
   return { position, target };
 }
 
@@ -82,4 +86,11 @@ export function worldChapterAt({ chapter, departure = 0 }: Pick<JourneyFrame, "c
 export function worldOpacityAt(frame: Pick<JourneyFrame, "chapter" | "departure" | "sections">) {
   const chapter = worldChapterAt(frame);
   return chapter < 2.8 ? .95 * smooth((chapter-2.05)/.75) : chapter > 4.6 ? .65 : .95;
+}
+
+/** Footer is part of the existing final chapter, never another loading scene. */
+export function closingProgressAt(y:number,top:number,height:number,maxScroll=Infinity){
+  const start=top-height*.8;
+  const span=Math.max(1,Math.min(height*.8,maxScroll-start));
+  return smooth((y-start)/span);
 }

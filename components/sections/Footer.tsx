@@ -1,9 +1,10 @@
 "use client";
 
 import StatusPill from "@/components/ui/StatusPill";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Github, MessageSquare, Linkedin, Mail, ArrowUpRight, X } from "lucide-react";
 import BudAIWordmark from "@/components/ui/BudAIWordmark";
+import {subscribeJourney} from "@/lib/experience/scroll";
 import BudAILogo, { StilledevLink, StilledevMark } from "@/components/ui/BudAILogo";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLang } from "@/components/ui/LanguageContext";
@@ -48,6 +49,8 @@ const socials = [
 ];
 
 export default function Footer() {
+  const footer=useRef<HTMLElement>(null);
+  useEffect(()=>subscribeJourney(frame=>{const el=footer.current;if(!el)return;const p=frame.closing??0;el.style.setProperty("--closing-progress",String(p));el.dataset.closingProgress=p.toFixed(4);}),[]);
   const { lang, t } = useLang();
   const [showLegal, setShowLegal] = useState<string | null>(null);
   const groupsData = groups(lang);
@@ -100,7 +103,14 @@ export default function Footer() {
   };
 
   return (
-    <footer className="relative border-t border-white/[0.04]">
+    <footer ref={footer} id="continuation" className="site-footer relative border-t border-white/[0.04]">
+      <div className="closing-composition">
+        <div className="closing-field" aria-hidden="true"><span/><i data-outro-anchor/><span/></div>
+        <span className="closing-kicker">{lang==="sv"?"SIGNALEN FORTSÄTTER":"THE SIGNAL CONTINUES"}</span>
+        <h2>{lang==="sv"?"Fortsätt samtalet.":"Continue the conversation."}</h2>
+        <p>{lang==="sv"?"Prova BudAI. Hjälp forma nästa steg.":"Try BudAI. Help shape what comes next."}</p>
+        <a href="#playground">{lang==="sv"?"Tillbaka till Playground":"Back to Playground"}<ArrowUpRight size={15}/></a>
+      </div>
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent-cyan/20 to-transparent" />
       <div className="max-w-7xl mx-auto px-6 lg:px-8 py-14 md:py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 lg:gap-8">
@@ -220,11 +230,7 @@ export default function Footer() {
         )}
       </AnimatePresence>
       <div className="flex justify-center pb-4"><StatusPill /></div>
-  <div className="relative h-20 sm:h-36 overflow-hidden select-none pointer-events-none" aria-hidden>
-        <span className="absolute inset-x-0 -bottom-3 sm:-bottom-6 text-center font-bold tracking-tighter leading-none text-[24vw] sm:text-[17vw] bg-gradient-to-b from-white/[0.12] via-accent-cyan/[0.05] to-transparent bg-clip-text text-transparent">
-          BudAI
-        </span>
-      </div>
+      <div className="closing-endline" aria-hidden="true"><i/></div>
     </footer>
   );
 }

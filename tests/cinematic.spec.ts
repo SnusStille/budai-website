@@ -60,18 +60,20 @@ test("restored neural journey is after landing and before the REAL Playground; o
   await page.mouse.wheel(0, -50_000);
   await expect.poll(() => page.evaluate(() => scrollY)).toBe(0);
   await expect(page.locator("[data-global-loader]")).toHaveCount(0);
-  await expect(page.locator("[data-brain-canvas]")).toHaveCount(1);
+  await expect(page.locator("[data-brain-canvas]")).toHaveCount(0);
   expect(errors).toEqual([]);
 });
 
-test("capabilities assemble a six-module machine, then three honest access architectures", async ({ page }) => {
+test("one sparse information register organises six capabilities and three accurate access levels", async ({ page }) => {
   await prepare(page);
   await page.goto("/#capabilities");
   await move(page, "[data-capability-system]", 180);
   const canvas = page.locator("[data-world-canvas]");
-  await expect(canvas).toHaveAttribute("data-capability-architecture", "confluence-manifold");
+  await expect(canvas).toHaveAttribute("data-capability-architecture", "information-field");
   await expect(canvas).toHaveAttribute("data-capability-modules", "6");
-  expect(Number(await canvas.getAttribute("data-draw-calls"))).toBeGreaterThan(5);
+  await expect(canvas).toHaveAttribute("data-capability-paths","0");
+  await expect(canvas).toHaveAttribute("data-information-records","6");
+  expect(Number(await canvas.getAttribute("data-draw-calls"))).toBeGreaterThan(0);
   await expect(page.locator(".capability-network")).toHaveCount(0);
   await expect(page.locator(".capability-module")).toHaveCount(6);
   await page.waitForTimeout(600);

@@ -35,7 +35,7 @@ export default function PlaygroundArrival({children,expanded,overlay=false}:{chi
       el.dataset.arrival=arrival.toFixed(4);
       el.dataset.expanded=String(expanded);
       el.style.setProperty("--product-arrival",String(arrival));
-      surface.style.transform=arrival>=.999?"none":`perspective(1400px) translate3d(0,${(1-arrival)*32}px,${-projection.depth}px) rotateX(${projection.tilt}deg)`;
+      surface.style.transform=arrival>=.999?"none":`perspective(1400px) translate3d(0,${(1-arrival)*12}px,${-projection.depth}px) rotateX(${projection.tilt}deg)`;
       // Expansion must escape its former transformed containing block and remain
       // above navigation. No interface remount: streams/history/input survive.
       const section=document.getElementById("playground");

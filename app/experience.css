@@ -414,7 +414,6 @@ html[data-world-state="ready"] .capability-drawing-fallback, html[data-world-sta
 .access-labels { position:absolute; bottom:0; left:50%; width:min(100%,740px); transform:translateX(-50%); display:grid; grid-template-columns:repeat(3,1fr); text-align:center; font:8px var(--font-jetbrains),monospace; letter-spacing:.08em; color:#b4cdd6; }
 .access-labels small { display:block; color:#6b8391; font-size:8px; margin-top:7px; letter-spacing:0; }
 .access-fallback { position:absolute; inset:40px 5% 50px; display:flex; justify-content:space-around; perspective:700px; }
-.access-fallback i { width:20%; border:4px double #b4d0db55; border-bottom-width:12px; transform:rotateY(-12deg); box-shadow:6px 6px #112432; }
 .plan-comparison .plan-card { background:#09121bed; border-color:#8aa9b32c; box-shadow:none; border-radius:8px; }
 .plan-comparison .plan-basic { border-top-color:#abd9d4aa; }
 .plan-comparison .plan-card > .relative > .absolute { opacity:.18; }
@@ -574,3 +573,30 @@ html[data-budai-intro="playing"] #main .confluence-cell {animation-play-state:pa
 @media(max-width:767px){.hero-signal{display:none;}}
 
 .brain-poster-story {mask-image:radial-gradient(ellipse,black 45%,transparent 76%);}
+
+.access-fallback {inset:15px 0 45px;display:block;perspective:none;}
+
+/* One ending, inside the existing footer. Nothing pins, blocks or waits. */
+.site-footer {background:linear-gradient(transparent,#03070b99 55%,#03070bcc);}
+.closing-composition {max-width:960px;margin:auto;padding:100px 24px 65px;text-align:center;}
+.closing-field {height:38px;display:flex;align-items:center;justify-content:center;gap:0;margin:0 auto 42px;max-width:580px;pointer-events:none;}
+.closing-field>span {width:48%;height:1px;background:linear-gradient(90deg,transparent,#89afbf33);transform:scaleX(calc(.55 + .45*var(--closing-progress,0)));transform-origin:right;}
+.closing-field>span:last-child {transform-origin:left;background:linear-gradient(90deg,#89afbf33,transparent);}
+.closing-field>i {display:block;flex:0 0 5px;width:5px;height:5px;border-radius:50%;background:#afcfd8;box-shadow:0 0 20px #9cc9d333;}
+html[data-world-state="ready"] .closing-field>i {background:transparent;box-shadow:none;}
+.closing-kicker {font:8px var(--font-jetbrains),monospace;letter-spacing:.2em;color:#8eaab8;}
+.closing-composition h2 {font-weight:400;letter-spacing:-.055em;font-size:clamp(34px,4.2vw,58px);line-height:1.15;margin:24px 0;}
+.closing-composition p {font-size:13px;line-height:1.8;color:#8ca1af;}
+.closing-composition>a {display:inline-flex;align-items:center;gap:18px;color:#c3d8df;border-bottom:1px solid #8fb2bf40;padding:15px 0;font-size:11px;margin-top:20px;min-height:44px;}
+.closing-composition>a:hover {color:white;}
+.closing-endline {height:44px;position:relative;max-width:1200px;margin:auto;border-top:1px solid #7895a11a;}
+.closing-endline>i {position:absolute;left:50%;top:-2px;width:3px;height:3px;border-radius:50%;background:#799da8;}
+@media(max-width:767px){.closing-composition {padding:80px 24px 45px;}.closing-field {margin-bottom:32px;max-width:260px;}.closing-composition h2 {font-size:36px;}.closing-composition p {font-size:12px;}}
+@media(prefers-reduced-motion:reduce){.closing-field>span {transform:none;}.closing-field>i {box-shadow:none;}}
+@media(scripting:none) {
+ .brain-journey,.brain-journey-sticky {height:auto;min-height:1000px;position:relative;overflow:visible;}
+ .neural-entry-title {position:relative;left:auto;bottom:auto;padding-top:150px;margin:0 6vw;opacity:1;transform:none;}
+ .brain-journey-fallback {inset:270px 25% auto;height:240px;}
+ .original-brain-tour {position:relative;inset:auto;display:grid;grid-template-columns:repeat(2,1fr);height:auto;margin:265px 6vw 70px;gap:24px;}
+ .original-brain-stage {position:relative;opacity:1;transform:none;align-items:flex-start;text-align:left;}
+}

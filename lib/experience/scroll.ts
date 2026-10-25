@@ -1,7 +1,7 @@
-import { CHAPTERS, journeyAt, type JourneyFrame, type SectionBounds } from "./timeline";
+import { CHAPTERS, closingProgressAt, journeyAt, type JourneyFrame, type SectionBounds } from "./timeline";
 
 type Continuous = boolean | ((frame: JourneyFrame) => boolean);
-type Subscriber = { callback: (frame: JourneyFrame) => void; continuous: Continuous };
+type Subscriber = { callback: (frame: JourneyFrame) => void; continuous: Continuous;phase:"update"|"render" };
 const subscribers = new Set<Subscriber>();
 let stop: (() => void) | null = null;
 let wake: (() => void) | null = null;
@@ -20,7 +20,7 @@ function start() {
   let last = 0;
   let bounds: SectionBounds[] = [];
   let dirty = true;
-  let approachTop = Infinity;
+  let approachTop = Infinity,footerTop=Infinity;
   let disposed = false;
   const media = window.matchMedia("(prefers-reduced-motion: reduce)");
   const measure = () => {
@@ -30,6 +30,8 @@ function start() {
     });
     const approach = document.querySelector(".next-signal-approach");
     approachTop = approach ? approach.getBoundingClientRect().top + window.scrollY : Infinity;
+    const footer=document.getElementById("continuation");
+    footerTop=footer?footer.getBoundingClientRect().top+scrollY:Infinity;
     dirty = false;
   };
   const frame = (now: number) => {
@@ -41,9 +43,12 @@ function start() {
       const y = window.scrollY;
       const height = window.innerHeight;
       current = { ...journeyAt(y, height, document.documentElement.scrollHeight, bounds), y, height, width: window.innerWidth, reduced: media.matches, time: now / 1000 };
+      current.closing=closingProgressAt(y,footerTop,height,document.documentElement.scrollHeight-height);
       current.departure = Math.max(0, Math.min(1, (y - approachTop + height * .85) / (height * .85)));
       if (y + height * .4 >= approachTop && current.active === "about") current.active = "waitlist";
-      subscribers.forEach((sub) => sub.callback(current));
+      // All DOM transforms settle before either renderer reads their bounds.
+      subscribers.forEach(sub=>{if(sub.phase==="update")sub.callback(current);});
+      subscribers.forEach(sub=>{if(sub.phase==="render")sub.callback(current);});
     }
     if (!media.matches && Array.from(subscribers).some((s) => typeof s.continuous === "function" ? s.continuous(current) : s.continuous)) schedule();
   };
@@ -61,6 +66,9 @@ function start() {
   media.addEventListener("change", onResize);
   const resize = new ResizeObserver(onResize);
   resize.observe(document.body);
+  // Never synchronously publish a previous route's cached bounds on re-entry.
+  measure();
+  current={...journeyAt(window.scrollY,innerHeight,document.documentElement.scrollHeight,bounds),y:scrollY,height:innerHeight,width:innerWidth,reduced:media.matches,time:performance.now()/1000,closing:closingProgressAt(scrollY,footerTop,innerHeight,document.documentElement.scrollHeight-innerHeight)};
   schedule();
   return () => {
     disposed = true;
@@ -74,11 +82,11 @@ function start() {
   };
 }
 
-export function subscribeJourney(callback: (frame: JourneyFrame) => void, options: { continuous?: Continuous } = {}) {
-  const subscriber = { callback, continuous: options.continuous ?? false };
+export function subscribeJourney(callback: (frame: JourneyFrame) => void, options: { continuous?: Continuous;phase?:"update"|"render" } = {}) {
+  const subscriber:Subscriber = { callback, continuous: options.continuous ?? false,phase:options.phase??"update" };
   subscribers.add(subscriber);
   if (!stop && typeof window !== "undefined") stop = start();
-  callback(current);
+  if(current.y===scrollY&&current.width===innerWidth&&current.height===innerHeight)callback(current);
   wake?.();
   return () => {
     subscribers.delete(subscriber);
