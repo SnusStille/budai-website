@@ -52,18 +52,22 @@ out float vSeed;
 out float vGlow;
 out float vR;
 out float vRegion;
+out float vDepth;
 void main() {
   vec3 world=aPos+vec3(0.0,0.0,uOffset);
   vec4 clip = uMVP * vec4(world, 1.0);
   gl_Position = clip;
   float front = fract(uTime * 0.26) * 1.4;
   float wave = exp(-pow((aR - front) * 10.0, 2.0));
+  float front2 = fract(uTime * 0.18 + 0.5) * 1.35;
+  float wave2 = exp(-pow((aR - front2) * 12.0, 2.0)) * 0.45;
   float flick = 0.5 + 0.5 * sin(uTime * (1.4 + aSeed * 1.6) + aSeed * 60.0);
-  vGlow = 0.22 + 0.65 * wave + 0.10 * flick * aNode + 0.25 * aNode;
+  vGlow = 0.24 + 0.66 * (wave + wave2) + 0.12 * flick * aNode + 0.26 * aNode;
   vSeed = aSeed;
   vR = aR;
   vRegion = aRegion;
-  gl_PointSize = clamp(uSize * aSize / max(clip.w, 0.05), 1.0, aRegion < -1.5 ? 3.2 : 14.0);
+  vDepth = clamp((5.4 - clip.w) / 3.8, 0.0, 1.0);
+  gl_PointSize = clamp(uSize * aSize / max(clip.w, 0.05), 1.0, aRegion < -1.5 ? 4.2 : 14.5);
 }`;
 
 const FS_POINTS = `#version 300 es
@@ -72,6 +76,7 @@ in float vSeed;
 in float vGlow;
 in float vR;
 in float vRegion;
+in float vDepth;
 uniform float uGain;
 uniform float uFocus;
 uniform float uActivity;
@@ -82,17 +87,18 @@ void main() {
   vec2 c = gl_PointCoord * 2.0 - 1.0;
   float r2 = dot(c, c);
   if (r2 > 1.0) discard;
-  float core = exp(-r2 * 5.0);
-  float halo = smoothstep(1.0, 0.4, r2) * 0.3;
-  vec3 cyan = vec3(0.28, 0.75, 0.82);
-  vec3 purple = vec3(0.45, 0.54, 0.78);
-  vec3 white = vec3(0.9, 1.0, 1.0);
-  vec3 col = mix(cyan, purple, smoothstep(0.3, 0.9, vSeed + vR * 0.25));
-  col = mix(col, white, clamp(vGlow - 0.9, 0.0, 1.0) * 0.7);
-  float fg = uFocus < -0.5 ? 1.0 : (abs(vRegion - uFocus) < 0.5 ? 1.8 : 0.35);
+  float core = exp(-r2 * 4.8);
+  float halo = smoothstep(1.0, 0.35, r2) * 0.34;
+  vec3 cyan = vec3(0.32, 0.80, 0.88);
+  vec3 purple = vec3(0.46, 0.56, 0.82);
+  vec3 white = vec3(0.92, 1.0, 1.0);
+  vec3 col = mix(cyan, purple, smoothstep(0.28, 0.88, vSeed + vR * 0.25));
+  col = mix(col, vec3(0.66, 0.94, 1.0), vDepth * 0.26);
+  col = mix(col, white, clamp(vGlow - 0.85, 0.0, 1.0) * 0.74);
+  float fg = uFocus < -0.5 ? 1.0 : (abs(vRegion - uFocus) < 0.5 ? 1.85 : 0.35);
   float act = 1.0 + uActivity * 0.5;
   float I = (core + halo) * vGlow * uGain * fg * act;
-  if (vRegion < -1.5) I *= smoothstep(0.12, 0.46, uJourney); else I *= uCortex;
+  if (vRegion < -1.5) I *= smoothstep(0.10, 0.44, uJourney) * 1.18; else I *= uCortex;
   vec3 rgb = col * I;
   outColor = vec4(rgb, max(max(rgb.r, rgb.g), rgb.b));
 }`;
@@ -139,13 +145,14 @@ void main() {
   float dw = vR - front;
   float wave = exp(-dw * dw * 90.0);
   float dt = vT - vC;
-  float travel = exp(-180.0 * dt * dt) * (1.0 + uActivity * 1.5);
-  vec3 base = vec3(0.0, 0.30, 0.36) * 0.28;
-  vec3 wcol = vec3(0.45, 0.98, 1.0);
-  vec3 tcol = vec3(0.6, 0.42, 1.0);
-  float fg = uFocus < -0.5 ? 1.0 : (abs(vRegion - uFocus) < 0.5 ? 1.8 : 0.35);
-  vec3 rgb = (base + wcol * wave * 0.8 + tcol * travel * 0.5) * uGain * fg;
-  if (vRegion < -1.5) rgb *= smoothstep(0.12, 0.46, uJourney);
+  float dt2 = (1.0 - vT) - fract(vC + 0.47);
+  float travel = (exp(-180.0 * dt * dt) + 0.45 * exp(-210.0 * dt2 * dt2)) * (1.0 + uActivity * 1.5);
+  vec3 base = vec3(0.04, 0.34, 0.42) * 0.30;
+  vec3 wcol = vec3(0.48, 0.98, 1.0);
+  vec3 tcol = vec3(0.62, 0.48, 1.0);
+  float fg = uFocus < -0.5 ? 1.0 : (abs(vRegion - uFocus) < 0.5 ? 1.85 : 0.35);
+  vec3 rgb = (base + wcol * wave * 0.84 + tcol * travel * 0.56) * uGain * fg;
+  if (vRegion < -1.5) rgb *= smoothstep(0.10, 0.44, uJourney) * 1.25;
   rgb *= uCortex;
   if (vRegion < -2.5) {
     float signal=exp(-pow((vT-uSignalT)*22.0,2.0));
@@ -367,9 +374,11 @@ function buildBrain(mobile: boolean) {
   // illustrative connections, not imported biological data.
   // Fine depth samples become ordered information, not six long neural rails.
   const volume:number[]=[];
-  for(let plane=0;plane<3;plane++)for(let row=0;row<4;row++)for(let column=0;column<10;column++){
+  for(let plane=0;plane<5;plane++)for(let row=0;row<4;row++)for(let column=0;column<10;column++){
     if((row+column+plane)%2)continue;
-    volume.push((column-4.5)*.16,(row-1.5)*.18,-1.4-plane*1.8);
+    const z=-0.9-plane*0.95;
+    const taper=1-plane*0.09;
+    volume.push((column-4.5)*.16*taper,(row-1.5)*.18*taper,z);
   }
   const volumeCount=volume.length/3;
   const all = [...surf, ...inner, ...volume];
@@ -431,6 +440,13 @@ function buildBrain(mobile: boolean) {
     for (let j = i + 1; j < Math.min(nInner, i + 18); j++) {
       const a = inner.slice(i * 3, i * 3 + 3), b = inner.slice(j * 3, j * 3 + 3);
       if (Math.hypot(...a.map((v, k) => v - b[k])) < .48) { interiorEdges.push([...a, ...b]); break; }
+    }
+  }
+  // Structured digital intelligence pathways that guide the camera from the organic core toward the Playground
+  for (const x of [-0.52, -0.24, 0.24, 0.52]) {
+    for (const y of [-0.22, 0.22]) {
+      interiorEdges.push([x, y, -0.5, x * 0.62, y * 0.62, -2.4]);
+      interiorEdges.push([x * 0.62, y * 0.62, -2.4, x * 0.28, y * 0.28, -4.4]);
     }
   }
   const lineData = new Float32Array(((E + interiorEdges.length) * 2 + SIGNAL_VERTICES) * 7);

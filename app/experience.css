@@ -616,8 +616,8 @@ html[data-world-state="ready"] .beacon-core { opacity:0; }
 .original-brain-tour { position:absolute;left:6vw;right:6vw;bottom:11%;height:150px;pointer-events:none; }
 .original-brain-stage { position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:var(--stage-opacity,0);transform:translateY(calc((1 - var(--stage-opacity,0))*16px));text-align:center; }
 .original-brain-stage>span { font:8px var(--font-jetbrains),monospace;letter-spacing:.2em;color:#a0c4ce; }
-.original-brain-stage h3 {font-size:clamp(30px,4vw,54px);font-weight:450;letter-spacing:-.045em;margin:13px 0 8px;}
-.original-brain-stage p {font-size:13px;color:#94aab5;}
+.original-brain-stage h3 {font-size:clamp(30px,4vw,54px);font-weight:450;letter-spacing:-.045em;margin:13px 0 8px;color:#e6f4f9;text-shadow:0 8px 32px #020205cc;}
+.original-brain-stage p {font-size:13px;color:#a8c0cc;text-shadow:0 4px 20px #020205cc;}
 .neural-exit-title { top:24%;bottom:auto;opacity:clamp(0,calc((var(--neural-progress) - .63)*13),1);mask-image:linear-gradient(black,black); }
 .neural-exit-title>p {font-size:clamp(30px,4vw,52px);margin:12px 0;}
 .neural-exit-title>svg {margin:auto;color:#a0c4ce;}
@@ -632,8 +632,8 @@ html[data-world-state="ready"] .beacon-core { opacity:0; }
 .playground-introduction p {font-size:12px;max-width:570px;color:#93a8b5;}
 .playground-arrival-anchor {position:relative;--product-arrival:1;}
 .playground-plane {transform-origin:50% 0;backface-visibility:hidden;}
-.playground-surface {border-color:#a8d3de4a!important;background:#070d13fa!important;box-shadow:0 0 0 1px #8cb9c714,0 28px 110px #000a!important;}
-.playground-surface>div:first-child {background:linear-gradient(90deg,transparent,#b4d7df66,transparent);}
+.playground-surface {border-color:#a8d3de4a!important;background:#070d13fa!important;box-shadow:0 0 0 1px #8cb9c714,0 -18px 54px rgba(114,209,230,calc(.11 * var(--product-arrival,1))),0 28px 110px #000a!important;}
+.playground-surface>div:first-child {background:linear-gradient(90deg,transparent,rgba(154,230,245,calc(.35 + .45 * var(--product-arrival,1))),transparent);}
 .product-ambient-light {position:absolute;left:12%;right:12%;top:5%;height:70%;background:radial-gradient(ellipse,#38627912,transparent 66%);pointer-events:none;}
 .product-output {display:flex;align-items:center;justify-content:center;gap:25px;max-width:760px;margin:70px auto 0;padding-bottom:65px;font:8px var(--font-jetbrains),monospace;letter-spacing:.1em;color:#6f8b99;}
 .product-output>div {display:flex;gap:9px;align-items:center;}
