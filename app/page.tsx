@@ -8,7 +8,6 @@ import BackToTop from "@/components/ui/BackToTop";
 import SurpriseToasts from "@/components/ui/SurpriseToasts";
 import Signature from "@/components/ui/Signature";
 import FocusMode from "@/components/ui/FocusMode";
-import BuddyCard from "@/components/sections/BuddyCard";
 import Navbar from "@/components/sections/Navbar";
 import Hero from "@/components/sections/Hero";
 import Capabilities from "@/components/sections/Capabilities";
@@ -104,7 +103,6 @@ export default function Home() {
       <SurpriseToasts />
       <Signature />
       <FocusMode />
-      <BuddyCard />
       <CookieConsent />
     </main>
   );

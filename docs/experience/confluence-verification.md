@@ -1,5 +1,7 @@
 # Confluence overhaul — finished implementation and verification
 
+> Superseded visual brief: the latest refinement explicitly removes the opening/hero logo reveal, alternate SVG brain and cable/portal scenes. See [critical refinement verification](./refinement-verification.md). Historical observations below are not the current acceptance result.
+
 **2026-10-25 · existing branch `arena/74ed593c-budai-website` · [PR #6](https://github.com/SnusStille/budai-website/pull/6)**
 
 The actual existing application is modified. The workspace preview runs its optimized production build on port 3000. No merge or external production deployment is claimed. Earlier reports of 41 tests/Fold describe a superseded iteration, not this result.

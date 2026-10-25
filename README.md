@@ -28,3 +28,5 @@ Never commit `.env.local`. If it was ever pushed, run `git rm --cached .env.loca
 ## Cinematic experience
 
 The current Confluence implementation, source recovery, ownership audit and reproducible browser checks are documented in [the implementation audit](docs/experience/current-overhaul.md) and [verification/release notes](docs/experience/confluence-verification.md).
+
+The latest critical loading/landing correction and information-field/outro refinement is documented in [refinement verification](docs/experience/refinement-verification.md). Use `npm run test:loading` for the focused opening/hero cases.

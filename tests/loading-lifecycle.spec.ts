@@ -1,17 +1,17 @@
 import {test,expect,type Page} from "@playwright/test";
 
 declare global {interface Window{__critical:Array<{phase:string;brains:number;loaders:number;wrong:number;logos:number;heroBrain:boolean;model:string|null;z:string|null;y:number}>;}}
-async function instrument(page:Page,seen=false){
-  await page.addInitScript(seen=>{
+async function instrument(page:Page,seen=false,quiet=true){
+  await page.addInitScript(({seen,quiet})=>{
     if(seen)sessionStorage.setItem("budai:cinematic-intro:v1","1");
-    localStorage.setItem("budai-cookies","declined");sessionStorage.setItem("budai-buddy-popup-dismissed","true");sessionStorage.setItem("budai-end-toast","1");
+    if(quiet){localStorage.setItem("budai-cookies","declined");sessionStorage.setItem("budai-buddy-popup-dismissed","true");sessionStorage.setItem("budai-end-toast","1");}
     window.__critical=[];
     const sample=()=>{
       const opening=document.querySelector("[data-global-loader]"),hero=document.querySelector("#intelligence"),brain=document.querySelector<HTMLCanvasElement>("[data-brain-canvas]");
       window.__critical.push({phase:document.documentElement?.dataset.budaiIntro??"",brains:document.querySelectorAll("[data-brain-canvas]").length,loaders:document.querySelectorAll("[data-global-loader]").length,wrong:document.querySelectorAll("[data-fallback-kind],.identity-fallback,.brain-fallback").length,logos:(opening?.querySelectorAll("[data-budai-mark],.intro-wordmark").length??0)+(hero?.querySelectorAll("[data-budai-mark],canvas,[data-brain-poster]").length??0),heroBrain:scrollY<2&&document.documentElement?.dataset.budaiIntro==="done"&&!!brain,model:brain?.dataset.brainModel??null,z:brain?.dataset.cameraZ??null,y:scrollY});
     };
     new MutationObserver(sample).observe(document,{subtree:true,childList:true,attributes:true,attributeFilter:["data-budai-intro","data-brain-model","data-camera-z"]});sample();
-  },seen);
+  },{seen,quiet});
 }
 async function settledHero(page:Page){
   await expect(page.locator("html")).toHaveAttribute("data-budai-intro","done");
@@ -97,4 +97,13 @@ test("scroll story is separate: it appears once only in its section, and cannot 
   await expect(page.locator("[data-brain-canvas]")).toHaveCount(1);await expect(page.locator("[data-global-loader]")).toHaveCount(0);
   await page.evaluate(()=>scrollTo({top:0,behavior:"instant" as ScrollBehavior}));await settledHero(page);
   await page.goto("/legal/privacy");await page.goBack();await settledHero(page);await verify(page);
+});
+
+test("pristine visitor defaults stay clean after timers: no promotional logo card or automatic outro toast",async({page})=>{
+  await instrument(page,false,false);await page.goto("/");await settledHero(page);await page.waitForTimeout(4700);
+  await expect(page.getByText("Try BudAI now",{exact:true})).toHaveCount(0);await settledHero(page);await verify(page);
+  await page.getByRole("button",{name:"Decline",exact:true}).click();
+  await page.locator("#continuation").scrollIntoViewIfNeeded();await page.waitForTimeout(700);
+  await expect(page.getByText("You made it to the end",{exact:true})).toHaveCount(0);
+  await expect(page.locator("#continuation").getByRole("link",{name:"Back to Playground",exact:true})).toBeEnabled();
 });

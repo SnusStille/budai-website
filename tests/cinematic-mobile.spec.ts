@@ -1,6 +1,6 @@
 import { test, expect, type Page } from "@playwright/test";
 
-declare global { interface Window { __throttled:Array<{t:number;phase?:string;loaders:number;brains:number;word?:string|null}>; } }
+declare global { interface Window { __throttled:Array<{t:number;phase?:string;loaders:number;brains:number}>; } }
 
 async function quiet(page: Page) {
   await page.route("**/va.vercel-scripts.com/**", route => route.fulfill({ contentType:"application/javascript", body:"" }));
@@ -72,7 +72,7 @@ test("throttled fresh entry stays bounded, never mounts competing loaders, and d
   await page.addInitScript(() => {
     localStorage.setItem("budai-cookies", "declined"); sessionStorage.setItem("budai-buddy-popup-dismissed", "true");
     window.__throttled = [];
-    const sample = () => window.__throttled.push({ t:performance.now(),phase:document.documentElement.dataset.budaiIntro,loaders:document.querySelectorAll("[data-global-loader]").length,brains:document.querySelectorAll("[data-brain-canvas]").length,word:document.querySelector("[data-intro-word]")?.textContent });
+    const sample = () => window.__throttled.push({ t:performance.now(),phase:document.documentElement?.dataset.budaiIntro,loaders:document.querySelectorAll("[data-global-loader]").length,brains:document.querySelectorAll("[data-brain-canvas]").length });
     new MutationObserver(sample).observe(document,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:["data-budai-intro"]}); sample();
   });
   const began = Date.now();

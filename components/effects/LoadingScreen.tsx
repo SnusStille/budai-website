@@ -58,6 +58,7 @@ export default function LoadingScreen() {
     const preparedAt=performance.now();
     const complete=()=>{
       if(!live||phaseRef.current==="done")return;
+      restoreFocus ||= !!document.activeElement?.closest("[data-global-loader]");
       closing=true;cancelAnimationFrame(raf);clearTimeout(readiness);clearTimeout(reveal);clearTimeout(watchdog);
       begin.current=()=>{};finish.current=()=>{};
       requestRole(null);change("done");root.dataset.brainState="idle";

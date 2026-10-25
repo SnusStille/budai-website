@@ -1,5 +1,7 @@
 # Current overhaul — ownership, recovery and implementation
 
+> Superseded visual brief: the latest refinement explicitly removes the opening/hero logo reveal, alternate SVG brain and cable/portal scenes. See [critical refinement verification](./refinement-verification.md). Historical observations below are not the current acceptance result.
+
 2026-10-25, starting at `bbf5e61` on the existing Arena branch. This supersedes the earlier Fold/small-approach implementation, not the existing application. Final verification is recorded separately after the optimized build.
 
 ## Audit: observed causes, not guessed mounts
