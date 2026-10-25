@@ -86,3 +86,13 @@ advances at most one character at a time, with a minimum visible character inter
 and a short completed-word dwell. Nominal timing is unchanged; the independent
 safety deadline still wins over a stalled clock. A pure regression test simulates
 the missed frame, and the actual development browser now captures all five prefixes.
+
+The final lab measurement also caught decorative CLS in the handoff itself:
+transitioning the frame's `left/top/width/height` registered about 0.196 desktop
+CLS and repeatedly reallocated GPU render targets. The frame now retains its
+geometry and moves with uniform scale/translation only; the title has a reserved,
+left-aligned field. The 12-second desktop measurement dropped to about **0.0024**
+and 390px mobile to **0.000025**, including the small font/caret shifts. Both
+mobile widths and desktop now have a real-browser layout-shift regression guard.
+The independent timeout also records the session completion, so a failed/stalled
+visual sequence cannot replay on the next reload.

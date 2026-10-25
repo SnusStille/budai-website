@@ -49,6 +49,8 @@ export default function LoadingScreen() {
     const complete = () => {
       if (!alive || completed) return;
       completed = true;
+      // Timeout / reduced-motion completion is an entry too, not a replay on reload.
+      try { sessionStorage.setItem(INTRO_SESSION_KEY, "1"); } catch { /* storage is optional */ }
       closing = true;
       cancelAnimationFrame(raf);
       clearTimeout(exitTimer);
