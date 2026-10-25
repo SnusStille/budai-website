@@ -1,0 +1,53 @@
+import { test, expect } from "@playwright/test";
+import { INTRO_MS, INTRO_REVEAL_MS, introLetters, nextIntroLetter } from "../lib/experience/intro";
+import { cameraAt, CHAPTERS, journeyAt } from "../lib/experience/timeline";
+import { codeCharactersAt, CODE_LENGTH, EXAMPLE_SOURCE, tokenizeLine } from "../lib/experience/code";
+
+test("intro has five deliberate letters and a bounded, short duration", () => {
+  expect([0, 850, 1060, 1270, 1480, 1690, 9000].map(introLetters)).toEqual([0, 1, 2, 3, 4, 5, 5]);
+  expect(INTRO_MS + INTRO_REVEAL_MS).toBeLessThanOrEqual(3100);
+  let previous = 0, lastAt = 0;
+  const observed = [];
+  for (const elapsed of [0, 1100, 1160, 1280, 1460, 1640, 1820, 2100, 2350]) {
+    const next = nextIntroLetter(previous, elapsed, elapsed - lastAt);
+    if (next !== previous) { observed.push(next); previous = next; lastAt = elapsed; }
+  }
+  expect(observed).toEqual([1, 2, 3, 4, 5]);
+});
+
+test("camera path is finite, continuous at all chapter boundaries, and exactly reversible", () => {
+  for (const mobile of [false, true]) {
+    for (let i = 0; i <= 500; i++) {
+      const p = i / 100;
+      const a = cameraAt(p, .4, mobile);
+      expect([...a.position, ...a.target].every(Number.isFinite)).toBe(true);
+      expect(a).toEqual(cameraAt(p, .4, mobile));
+      if (i > 0) {
+        const b = cameraAt(p - .0001, .4, mobile);
+        expect(Math.hypot(...a.position.map((n, j) => n - b.position[j]))).toBeLessThan(.02);
+      }
+    }
+  }
+});
+
+test("native scroll reconstructs every chapter in both directions", () => {
+  const bounds = CHAPTERS.map((s, i) => ({ id: s.id, top: i * 2000, height: 2000 }));
+  const forward = Array.from({ length: 121 }, (_, i) => journeyAt(i * 100, 900, 12000, bounds));
+  const reverse = Array.from({ length: 121 }, (_, i) => journeyAt((120 - i) * 100, 900, 12000, bounds)).reverse();
+  expect(forward).toEqual(reverse);
+  expect(forward.at(-1)?.chapter).toBe(5);
+  expect(forward[0].chapter).toBe(0);
+});
+
+test("code reveal is deterministic, monotonic, bounded, and preserves every source character", () => {
+  let previous = 0;
+  for (let i = 0; i <= 100; i++) {
+    const n = codeCharactersAt(i / 100);
+    expect(n).toBeGreaterThanOrEqual(previous);
+    expect(n).toBeLessThanOrEqual(CODE_LENGTH);
+    previous = n;
+  }
+  expect(codeCharactersAt(0)).toBe(0);
+  expect(codeCharactersAt(1)).toBe(CODE_LENGTH);
+  expect(EXAMPLE_SOURCE.split("\n").map((line) => tokenizeLine(line).map(t => t.text).join("")).join("\n")).toBe(EXAMPLE_SOURCE);
+});

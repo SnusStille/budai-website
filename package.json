@@ -6,7 +6,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "node scripts/test-browser.mjs",
+    "test:unit": "node scripts/test-browser.mjs unit.spec.ts",
+    "test:e2e": "node scripts/test-browser.mjs experience.spec.ts product.spec.ts",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",
