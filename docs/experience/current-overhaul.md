@@ -3,9 +3,11 @@
 ## 1. Git & Deployment Baseline Verification
 
 - **Repository**: `https://github.com/SnusStille/budai-website`
-- **Active Working Branch**: `arena/8ed4b39d-budai-website` (PR #7)
-- **Production Deployment Source**: Verified via GitHub Deployments API (`https://api.github.com/repos/SnusStille/budai-website/deployments`) that both the Production environment (`https://stilledev.se`) and the Vercel Preview environment (`https://budai-website-lfhpp3qq4-stilledev.vercel.app/`) are deployed from branch `arena/8ed4b39d-budai-website`.
-- **Branch Audit**: Inspected all 15 branches in the repository (`main` + 14 `arena/*` branches) and confirmed `arena/8ed4b39d-budai-website` is the newest, most complete branch in the repository.
+- **Active Working Branch**: `arena/8029c3b2-budai-website` (branched from `main` commit `4d151cd`)
+- **Deployment Root-Cause Investigation**:
+  - Inspected Vercel deployment `7320440330` (`https://budai-website-ogow77ops-stilledev.vercel.app`, commit `46a9451`) and `7320578304` (`https://budai-website-lrm1p8ikd-stilledev.vercel.app`, commit `4d151cd`).
+  - Confirmed that the previous `capability-engine.ts` retained the **same primary foreground 3D geometry** in both Capabilities scenes (a wireframe sphere on the left connected to 6 small icons on the right in Scene 1, and 3 wireframe spheres on circular pedestals in Scene 2), only adding faint background planes behind them.
+  - Replaced both 3D scenes completely in `lib/experience/capability-engine.ts` and `lib/experience/world.ts` with entirely new 3D geometry, materials, camera dolly/pan choreography, and scroll-driven assembly.
 
 ---
 
@@ -13,39 +15,46 @@
 
 | Repository | SPDX License | Evaluated Patterns & Takeaways | How Applied in BudAI |
 | --- | --- | --- | --- |
-| `itsjwill/motion-primitives-website` | `NOASSERTION` (`null`) — **inspected conceptually only; zero code copied** | Conceptual composition of `src/app/neural/page.tsx`, `src/components/cards/living-system.tsx`, and `src/app/_sections/code-preview.tsx` (pairing live telemetry badges with architectural preview panels). | Inspired our original `[data-living-code-console]` and multi-depth `.capability-code-depth-backdrop` inside `CapabilityMap.tsx`. |
-| `ibelick/motion-primitives` | `MIT` | Clean spring transitions and progressive disclosure micro-interactions. | Applied restrained spring/opacity transitions on module focus and code readout switching. |
-| `tengbao/vanta` (`src/vanta.net.js`) | `MIT` | Distance-thresholded 3D spatial node-and-edge graph with camera parallax and additive line blending. | Informed the 3D spatial node/synapse lattice and relay gate hierarchy in `capability-engine.ts` and `BrainFlight.tsx`. |
-| `mrdoob/three.js` | `MIT` | `RoomEnvironment` PMREM lighting, `CatmullRomCurve3` + `TubeGeometry`, `EdgesGeometry`, `CanvasTexture` on 3D planes, and `CSS3DRenderer`. | Powers the single-world `world.ts` and `capability-engine.ts` without extra runtime dependencies. |
+| `Dilip-kumar-22/orbit` | `MIT` | Inspected `src/scene.js`, `src/scroll.js`, `src/config.js`, and `src/shaders.js`: native passive scroll progress (`scrollY / max`) driving Z-axis camera travel (`zStart -> zEnd` with `easeInOut`), section-grade lighting shifts, `visibilitychange` loop pause, and `prefers-reduced-motion` single-frame fallback. | Applied in `lib/experience/capability-engine.ts` and `lib/experience/world.ts` for Z-axis camera dolly (`dollyZ`), dynamic `chamberLight` color/position grading, and reversible scroll-driven 3D assembly. |
+| `vercel-labs/web-interface-guidelines` | `MIT` | Accessibility, focus-visible states, compositor-friendly `transform`/`opacity` animations, and `prefers-reduced-motion` compliance. | Applied across `.opening-identity`, `CapabilityMap.tsx`, `About.tsx`, and reduced-motion fallbacks. |
+| `mrdoob/three.js` | `MIT` | `RoomEnvironment` PMREM lighting, `RoundedBoxGeometry`, `CatmullRomCurve3` + `TubeGeometry`, `EdgesGeometry`, `CanvasTexture` on 3D planes, and `CSS3DRenderer`. | Powers the single-world `world.ts`, `capability-engine.ts`, and `developer-room.ts` without extra runtime dependencies. |
 | `pmndrs/react-three-fiber` & `pmndrs/drei` | `MIT` | Demand-driven frame loops, view-offset projection alignment, and glass/emissive material layering. | Applied directly in `world.ts` (`domViewOffset` / `worldUnitsPerPixel` and sleep-when-hidden GPU loop). |
-| `pmndrs/postprocessing` | `Zlib` | Multi-tap Gaussian bloom and ACES Filmic tone mapping. | Used in `BrainFlight.tsx` (`FS_BLUR` / `FS_COMPOSITE`) and `world.ts` (`THREE.ACESFilmicToneMapping`). |
 | `greensock/GSAP` | Custom (`NOASSERTION`) — **not installed** | ScrollTrigger scrub math (`clamp`, `smoothstep`, reversible progress). | Implemented via zero-dependency deterministic math in `lib/experience/timeline.ts` and `lib/experience/scroll.ts`. |
-| `theatre-js/theatre` | `Apache-2.0` — **not installed** | Keyframed sequence envelopes (`packages/core/src/sequences`) and multi-phase normalized timeline choreography. | Applied in the 4-phase `BudAI` opening reveal (`--opening-progress` `0..1` envelopes) and the multi-stage AI Assembly Line (`intakeFactor`, `connectFactor`, `outputFocus`). |
-| `14islands/r3f-scroll-rig` | `MIT` | DOM-rect-to-WebGL viewport projection (`setViewOffset`) so 3D scenes track sticky DOM containers without scroll hijacking. | Used in `lib/experience/projection.ts` and `lib/experience/world.ts` to lock the 3D scenes to `[data-capability-viewport]` and `[data-access-architecture]`. |
 
 ---
 
-## 3. Capabilities Overhaul: Two Immersive 3D Experiences
+## 3. Capabilities Overhaul: Two Unmistakably New 3D Scroll Experiences
 
 ### Experience One: `03A / THE INFINITE CODE CHAMBER` (`[data-infinite-code-chamber]`)
 
-- **3D Chamber Architecture & Multi-Speed Depth Parallax**:
-  - Five concentric 3D architectural portal ribs (`chamberPortals`) and a 3D perspective coordinate grid (`depthGrid`) receding into the chamber (`0.55x` background parallax speed).
-  - Six high-DPI `THREE.CanvasTexture` 3D glass code slates (`01-write.ts` .. `06-multimodal.ts` at `1.0x` midground parallax speed), framed with `EdgesGeometry` borders that glide forward and illuminate when their corresponding capability is active or hovered.
-  - Twelve floating 3D syntax token plates (`1.35x` foreground parallax speed) drifting between the code panels and the Core.
-- **Code-to-Core Synaptic Compiler Filaments & Sculptural Capability Stations**:
-  - Six curved 3D `TubeGeometry` compiler filaments (`slateBeamCurves` + `slatePulses`) carry compilation pulses from each 3D Code Slate into the Central Intelligence Core (`IcosahedronGeometry` + 3 counter-rotating gimbals), which routes energy along six waveguides to the six sculptural capability assemblies (`Write`, `Automate`, `Decide`, `Swedish + English`, `Memory`, `Vision and voice`).
-- **Interactive Syntax-Highlighted Code Console (`[data-living-code-console]`)**:
-  - Displays the active module's live syntax-highlighted TypeScript code (`tokenizeLine`) and links directly to the real AI Playground.
+- **Complete Removal of Old Wireframe Sphere & 6-Icon Stack**:
+  - Removed the old left-hand wireframe sphere (`coreGroup`) and 6 small right-hand icons (`moduleGroups`) completely.
+- **3D Z-Axis Architectural Code Tunnel & Living Code Wall**:
+  - Seven concentric 3D rectangular portal arches (`chamberPortals` at `0.52x` parallax speed) with glowing corner brackets, floor/ceiling perspective blueprint rails (`chamberRails`), and a central Z-axis runway beam (`runwayCurve`).
+  - Six large, high-contrast 3D glass Code Monoliths (`2.24 x 1.30` `RoundedBoxGeometry` slabs + `768 x 440` `CanvasTexture` with illuminated active code line highlights and sweeping laser scan bars) arrayed along the left and right chamber walls.
+- **Living Code Wall -> 3D Blueprint Component Assembly**:
+  - As the visitor scrolls (`dollyZ = lerp(0.15, 2.65, p)`), the active 3D Code Monolith glides into the foreground left focal zone while 4 compiler projection beams (`compilerBeamCurves`) project across the aisle into a large **3D Assembled Blueprint Interface Component (`blueprintAssemblies[0..5]`)** on the right (`Bilingual Document UI`, `4-Stage Playbook Board`, `Decision Matrix Dashboard`, `Dual-Pane Bilingual UI`, `Context Vault Interface`, `Optical & Voice Studio`) with 3D extruded sub-cards floating in depth.
 
 ### Experience Two: `03B / THE AI ASSEMBLY LINE` (`[data-ai-assembly-line]`)
 
-- **Stage 01 — Raw Multimodal Intake (`x = -3.1`)**:
-  - Six separate 3D input pieces (`intakePieces`: Chat prompt, Image frame, Voice waveform, SV/EN locale, History thread, Memory fact) enter from scattered trajectories on the left and converge into the Intake Station as the user scrolls (`intakeFactor`).
-- **Stage 02 — Structured Context, Memory & Model Routing (`x = 0`)**:
-  - Three parallel 3D workflow conduits (`assemblyUpperCurve`, `tierBridgeCurve`, `assemblyLowerCurve`) with 9 synchronized traveling light packets connect Stage 01 through the central Context & Memory alignment station (`connectFactor`).
-- **Stage 03/04 — Coherent Streaming Output Focal Point (`x = +3.1`)**:
-  - Information synthesizes into the completed 3D Output Crystal (`tierCores[2]` + `outputFocalHalo` + 4 satellite nodes + 3D code architecture slates) which scales and illuminates (`outputFocus`) as the focal point of the scene before transitioning into `04 / THE BUILDER`.
+- **Complete Removal of Old 3 Pedestal Spheres**:
+  - Removed the 3 wireframe spheres on hexagonal pedestals completely.
+- **4-Stage Architectural Intelligence-to-Output Pipeline**:
+  - **Stage 01 (`x = -3.65 to -2.25`)**: Six labeled 3D multimodal input tiles (`01 CHAT PROMPT`, `02 VISION IMAGE`, `03 VOICE STREAM`, `04 2 ANGLES`, `05 AUTO MEMORY`, `06 PLAYBOOK`) converge through a rectangular 3D Intake Scanner Gate (`intakeGateGroup`) with an active vertical laser scan plane.
+  - **Stage 02 (`x = -0.45`)**: A 3-deck rectangular 3D Glass Context & Routing Matrix Rack (`matrixRackGroup`) where 9 3D data blocks (`matrixCells`) snap from scattered positions into an ordered 3x3 grid as scroll progresses (`matrixFactor`).
+  - **Stage 03 (`x = -0.45 to +2.55`)**: Four parallel 3D synthesis conduits (`conduitCurves`) carry dimensional 3D UI building blocks (`conduitPulses`) rightward.
+  - **Stage 04 (`x = +2.55`)**: A monumental 3D Assembled Product Output Showcase (`outputShowcaseGroup`: `2.34 x 1.48` 3D application interface + 4 exploded-to-assembled 3D UI component layers including a 3D Mobile Companion App frame) physically locks together as `assemblyProgress` scrubs from `0` to `1`.
+
+---
+
+## 4. Post-Playground Narrative: "FROM THOUGHT TO REALITY" (`#about` / `developer-room.ts`)
+
+- **Leaving the Abstract Brain for Tangible Creations**:
+  - In `lib/experience/developer-room.ts` and `components/sections/About.tsx`, scrolling through `04 / FROM THOUGHT TO REALITY · THE BUILDER` (`builderProgress: 0 -> 1`) drives `room.update(builderProgress, time)`:
+    1. **Left 3D Creation Assembly (`websiteAssemblyGroup`)**: Four separate 3D website & dashboard building blocks (`Website Nav Bar`, `Hero Interface Card`, `Analytics Card`, `KPI Chart Card`) fly in from exploded 3D coordinates and lock together in front of the live Website & Analytics Dashboard display.
+    2. **Center Display (`ProgressiveEditor`)**: Real CSS3D projected IDE composing the TypeScript source code in sync with scroll.
+    3. **Right 3D Creation Assembly (`mobileAssemblyGroup`)**: A 3D Smartphone chassis (`1.28 x 2.24`) and 3 floating mobile UI cards converge and snap into a completed Mobile Interface alongside the 4-step Structured Workflow display.
+    4. **Dynamic Studio Illumination**: Studio lighting (`cyanLamp`, `fillLamp`, `deskLamp`) brightens and clarifies as the creations lock into place.
 
 ---
 

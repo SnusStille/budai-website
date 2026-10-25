@@ -78,11 +78,18 @@ test("one sparse information register organises six capabilities and three accur
   await expect(page.locator(".capability-module")).toHaveCount(6);
   await expect(page.locator("[data-living-code-console]")).toBeVisible();
   await page.waitForTimeout(600);
+  const initialChamberProgress = Number(await canvas.getAttribute("data-chamber-progress"));
   await page.screenshot({ path: "test-results/capability-engine-desktop.png" });
+  await move(page, "[data-capability-system]", 680);
+  await expect.poll(async () => Number(await canvas.getAttribute("data-chamber-progress"))).toBeGreaterThan(initialChamberProgress + 0.15);
+  await page.screenshot({ path: "test-results/capability-engine-midscroll-desktop.png" });
+  await move(page, "[data-capability-system]", 180);
+  await expect.poll(async () => Number(await canvas.getAttribute("data-chamber-progress"))).toBeCloseTo(initialChamberProgress, 1);
   await page.locator(".capability-module").nth(4).hover();
   await expect(canvas).toHaveAttribute("data-capability-focus", "4");
   await move(page, "[data-access-architecture]", -120);
   await expect.poll(async () => Number(await canvas.getAttribute("data-access-morph"))).toBeGreaterThan(.9);
+  await expect.poll(async () => Number(await canvas.getAttribute("data-assembly-progress"))).toBeGreaterThan(0.2);
   await page.screenshot({ path: "test-results/access-architecture-desktop.png" });
   const plans = page.locator("[data-plan-comparison]");
   await expect(plans.getByRole("heading", { name: "Basic", exact: true })).toHaveCount(1);

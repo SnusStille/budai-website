@@ -213,47 +213,49 @@ export default function CapabilityMap() {
           </div>
 
           <div className="capability-drawing-fallback">
-            <svg viewBox="-1.9 -2.4 3.8 4.8" aria-hidden="true">
-              <defs>
-                <radialGradient id="cap-core-glow" cx="50%" cy="50%" r="50%">
-                  <stop offset="0%" stopColor="#9cecf9" stopOpacity="0.52" />
-                  <stop offset="60%" stopColor="#3c89a3" stopOpacity="0.18" />
-                  <stop offset="100%" stopColor="#020205" stopOpacity="0" />
-                </radialGradient>
-              </defs>
-              <g transform="scale(1,-1)">
-                <circle cx="-1.26" cy="0" r="1.05" fill="url(#cap-core-glow)" />
-                <line x1="-1.26" y1="-2.05" x2="-1.26" y2="2.05" stroke="#72cee3" strokeOpacity="0.36" strokeWidth="0.016" />
-                <ellipse cx="-1.26" cy="0" rx="0.62" ry="0.36" fill="none" stroke="#86e4f7" strokeOpacity="0.62" strokeWidth="0.016" transform="rotate(-22 -1.26 0)" />
-                <ellipse cx="-1.26" cy="0" rx="0.80" ry="0.46" fill="none" stroke="#a4b2ee" strokeOpacity="0.46" strokeWidth="0.013" transform="rotate(24 -1.26 0)" />
-                <polygon points="-1.26,-0.38 -0.90,0 -1.26,0.38 -1.62,0" fill="#143448" fillOpacity="0.92" stroke="#a8f3ff" strokeOpacity="0.88" strokeWidth="0.02" />
-                <circle cx="-1.26" cy="0" r="0.13" fill="#ecfcff" fillOpacity="0.98" />
-                {[0, 1, 2, 3, 4, 5].map(i => {
-                  const y = (2.5 - i) * 0.72;
-                  const isFocused = active === i;
-                  return (
-                    <g key={i}>
-                      <path
-                        d={`M -1.26 ${y * 0.16} C -0.88 ${y * 0.76}, -0.38 ${y}, 0.05 ${y}`}
-                        fill="none"
-                        stroke={isFocused ? "#b8f7ff" : "#6ecce2"}
-                        strokeOpacity={isFocused ? "0.95" : "0.42"}
-                        strokeWidth={isFocused ? "0.028" : "0.016"}
-                      />
-                      <circle cx="-0.38" cy={y} r={isFocused ? "0.16" : "0.12"} fill="none" stroke={isFocused ? "#d8faff" : "#8ce2f4"} strokeOpacity={isFocused ? "0.92" : "0.54"} strokeWidth="0.016" />
-                      <rect x="0.12" y={y - 0.16} width="0.82" height="0.32" rx="0.04" fill="#153245" fillOpacity={isFocused ? "0.75" : "0.38"} stroke={isFocused ? "#a8f3ff" : "#75a6b8"} strokeOpacity={isFocused ? "0.85" : "0.4"} strokeWidth="0.014" />
-                    </g>
-                  );
-                })}
-                {rows.map((p, i) => (
-                  <circle key={i} cx={p.x} cy={p.y} r={p.lane === active ? 0.032 : 0.02} fill={p.lane === active ? "#d4f7ff" : "#75a6b8"} fillOpacity={p.lane === active ? 0.95 : 0.45} />
-                ))}
-              </g>
+            <svg viewBox="-2.2 -1.8 4.4 3.6" aria-hidden="true">
+              {/* Concentric Chamber Portal Frames */}
+              {[0, 1, 2, 3].map(pIdx => {
+                const w = 4.0 - pIdx * 0.55;
+                const h = 3.0 - pIdx * 0.42;
+                return (
+                  <rect
+                    key={pIdx}
+                    x={-w / 2}
+                    y={-h / 2}
+                    width={w}
+                    height={h}
+                    rx="0.06"
+                    fill="none"
+                    stroke="#78d5ea"
+                    strokeOpacity={0.28 - pIdx * 0.05}
+                    strokeWidth="0.015"
+                  />
+                );
+              })}
+              {/* Left 3D Code Monolith */}
+              <rect x="-1.85" y="-0.72" width="1.62" height="1.32" rx="0.05" fill="#091d2e" fillOpacity="0.92" stroke="#78d5ea" strokeOpacity="0.88" strokeWidth="0.022" />
+              <rect x="-1.85" y="-0.22" width="1.62" height="0.22" fill="#6ee7b7" fillOpacity="0.24" />
+              {[0, 1, 2, 3].map(r => (
+                <line key={r} x1="-1.68" y1={-0.46 + r * 0.24} x2={-0.55 - (r % 2) * 0.25} y2={-0.46 + r * 0.24} stroke={r === 1 ? "#6ee7b7" : "#8ce8fa"} strokeOpacity="0.85" strokeWidth="0.03" />
+              ))}
+              {/* Compiler Beams */}
+              {[-0.25, 0, 0.25].map((by, bIdx) => (
+                <path key={bIdx} d={`M -0.23 ${by} C 0.05 ${by}, 0.15 ${by * 0.8}, 0.35 ${by * 0.8}`} fill="none" stroke="#6ee7b7" strokeOpacity="0.8" strokeWidth="0.02" />
+              ))}
+              {/* Right Assembled Blueprint UI Component */}
+              <rect x="0.35" y="-0.68" width="1.48" height="1.26" rx="0.05" fill="#0d263b" fillOpacity="0.92" stroke="#6ee7b7" strokeOpacity="0.9" strokeWidth="0.022" />
+              <rect x="0.52" y="-0.45" width="1.14" height="0.24" rx="0.03" fill="#163d58" stroke="#8ce8fa" strokeWidth="0.015" />
+              <rect x="0.52" y="-0.1" width="0.52" height="0.48" rx="0.03" fill="#14364e" stroke="#6ee7b7" strokeWidth="0.015" />
+              <rect x="1.12" y="-0.1" width="0.54" height="0.48" rx="0.03" fill="#14364e" stroke="#8ce8fa" strokeWidth="0.015" />
+              {rows.slice(0, 18).map((p, i) => (
+                <circle key={i} cx={p.x * 0.85} cy={p.y * 0.65} r={p.lane === active ? 0.032 : 0.018} fill={p.lane === active ? "#d4f7ff" : "#75a6b8"} fillOpacity={p.lane === active ? 0.9 : 0.38} />
+              ))}
             </svg>
           </div>
 
           <div className="capability-viewport-top">
-            <span>BUDAI / THE INFINITE CODE CHAMBER · DEPTH LAYER 01–06</span>
+            <span>BUDAI / THE INFINITE CODE CHAMBER · CODE WALL &amp; BLUEPRINT</span>
             <span>001 — 006</span>
           </div>
 

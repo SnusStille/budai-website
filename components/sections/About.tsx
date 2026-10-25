@@ -25,9 +25,15 @@ export default function About() {
       <div className="builder-scroll-track" id="builder-scene">
         <div className="builder-sticky">
           <div className="builder-heading">
-            <span className="chapter-label"><i />04 / {sv ? "BYGGAREN" : "THE BUILDER"}</span>
+            <span className="chapter-label"><i />04 / {sv ? "FRÅN TANKE TILL VERKLIGHET · BYGGAREN" : "FROM THOUGHT TO REALITY · THE BUILDER"}</span>
             <h2 id="builder-title">{sv ? "Från en tanke." : "From a thought."}<br /><span>{sv ? "Till något verkligt." : "To something real."}</span></h2>
-            <p>{sv ? "Ett skrivbord för idéer som inte stannar vid idéer. Skrolla och se ett förberett kodexempel växa fram." : "A workspace for ideas that don't stay ideas. Scroll to bring a prepared code example to life."}</p>
+            <p>{sv ? "Jag behövde bara föreställa mig vad jag ville ha — BudAI hjälpte till att göra det verkligt. Skrolla och se kod, gränssnitt, dashboards och flöden ta fysisk form." : "“I only had to imagine what I wanted. BudAI helped turn it into something real.” Scroll to watch code, interfaces, dashboards, and workflows assemble into tangible creations."}</p>
+            <div className="reality-creation-pills" data-thought-to-reality aria-hidden="true">
+              <span><b>01</b>{sv ? "Webbgränssnitt" : "Website interface"}</span>
+              <span><b>02</b>{sv ? "Live-dashboard" : "Live dashboard"}</span>
+              <span><b>03</b>{sv ? "Mobilvy" : "Mobile interface"}</span>
+              <span><b>04</b>{sv ? "Strukturerat flöde" : "Structured workflow"}</span>
+            </div>
           </div>
           <div className="builder-fallback-workspace" aria-hidden="true">
             <div className="fallback-side-screen"><Code2 /><span>BUDAI / CORE</span><i /><i /><i /></div>

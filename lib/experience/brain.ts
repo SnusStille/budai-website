@@ -60,11 +60,14 @@ export function brainVisualAt(motion: BrainMotion) {
     const p = clamp(motion.progress);
     const travel = smooth(clamp((p - 0.06) / 0.84));
     const dip = 1.35 * Math.sin(p * Math.PI);
+    // Stage 1 & 2 (0..0.38): quiet atmospheric depth with subtle structural glow while BudAI constructs.
+    // Stage 3 & 4 (0.38..1.0): neural environment emerges around the focal core and resolves into the hero brain.
+    const cortexEmergence = lerp(0.14, 1, smooth(clamp((p - 0.28) / 0.62)));
     return {
       offset: lerp(0, BRAIN_STORY_ORIGIN, travel) + dip,
-      neural: 0.22 * Math.sin(p * Math.PI),
+      neural: 0.46 * Math.sin(p * Math.PI),
       focus: -1,
-      cortex: 1,
+      cortex: cortexEmergence,
     };
   }
   if (motion.kind === "hero") {

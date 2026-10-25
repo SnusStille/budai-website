@@ -469,8 +469,10 @@ export function createWorld(host: HTMLElement, editor: HTMLElement, onFailure: (
         outputSignal.visible = chapter > 2.02 && chapter < 2.9;
         if (targetRect && inWindow && capWeight > 0.001) {
           const units = worldUnitsPerPixel(camera.position.distanceTo(engineCenter), camera.fov, frame.height);
-          const scale = units * Math.min((targetRect.height * 0.84) / lerp(4.8, 3.6, morph), (targetRect.width * 0.9) / lerp(3.7, 9.7, morph));
+          const scale = units * Math.min((targetRect.height * 0.88) / lerp(4.0, 3.0, morph), (targetRect.width * 0.94) / lerp(4.2, 8.1, morph));
           engine.root.scale.setScalar(scale);
+          engine.root.rotation.y = lerp((capProgress - 0.5) * -0.18, (assemblyProgress - 0.5) * 0.16, morph);
+          engine.root.rotation.x = lerp((capProgress - 0.5) * 0.08, (0.5 - assemblyProgress) * 0.06, morph);
           projected.copy(engineCenter).project(camera);
           const offset = domViewOffset(projected, targetRect, frame.width, frame.height);
           camera.setViewOffset(frame.width, frame.height, offset.x * capWeight, offset.y * capWeight, frame.width, frame.height);
@@ -481,6 +483,9 @@ export function createWorld(host: HTMLElement, editor: HTMLElement, onFailure: (
         renderer.domElement.dataset.informationRecords = "6";
         renderer.domElement.dataset.capabilityFocus = String(activeModule);
         renderer.domElement.dataset.accessMorph = morph.toFixed(3);
+        renderer.domElement.dataset.chamberProgress = capProgress.toFixed(3);
+        renderer.domElement.dataset.assemblyProgress = assemblyProgress.toFixed(3);
+        renderer.domElement.dataset.realityProgress = (frame.sections.about ?? 0).toFixed(3);
         key.position.copy(camera.position).add(new THREE.Vector3(-3, 6, 3));
         key.target.position.fromArray(pose.target);
         key.target.updateMatrixWorld();
@@ -514,7 +519,7 @@ export function createWorld(host: HTMLElement, editor: HTMLElement, onFailure: (
         roadNodes.forEach((material, i) => { material.emissiveIntensity = i === activeRoadNode ? 1.55 : 0.52; });
         roadGlows.forEach((material, i) => { material.opacity = (i === activeRoadNode ? 0.82 : 0.36) * (1 - close); });
 
-        room.lamps[0].intensity = 34 + Math.sin(frame.time * 0.6) * 2;
+        room.update(frame.sections.about ?? 0, frame.time);
         room.holo.core.rotation.y = frame.time * 0.7;
         room.holo.cage.rotation.y = -frame.time * 0.42;
         room.holo.orbit.rotation.z = frame.time * 0.55;
