@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import BudAILogo from "@/components/ui/BudAILogo";
 import { CODE_LENGTH, CODE_LINES, codeCharactersAt } from "@/lib/experience/code";
 import { subscribeJourney } from "@/lib/experience/scroll";
 
@@ -22,7 +23,7 @@ export default function ProgressiveEditor({ staticFrame = false }: { staticFrame
   let consumed = 0;
   return (
     <div className="builder-editor" data-code-characters={characters}>
-      <div className="editor-titlebar"><span className="editor-traffic"><i /><i /><i /></span><span>BUDAI — DEVELOPMENT ENVIRONMENT</span><span>⌘ K</span></div>
+      <div className="editor-titlebar"><span className="editor-traffic"><i /><i /><i /></span><span className="editor-brand"><BudAILogo size="xs" animated={false} className="!h-4 !w-4" />BUDAI — DEVELOPMENT ENVIRONMENT</span><span>⌘ K</span></div>
       <div className="editor-tabs"><span className="editor-file">TS <b>create.ts</b><i>×</i></span><span>src / intelligence / create.ts</span></div>
       <div ref={source} className="editor-source">
         {CODE_LINES.map((tokens, index) => {

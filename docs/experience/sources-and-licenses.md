@@ -1,12 +1,12 @@
 # Sources, licensing and implementation decisions
 
-Research date: 2026-10-24. Existing application: Next.js 14 / React 18 / TypeScript / Framer Motion. The implementation extends that application; it does not import a replacement website.
+Research dates: 2026-10-24 and 2026-10-25. The latest four-repository investigation, separated atlas rights and actual 14islands projection adaptation are documented in [rebuild-research.md](./rebuild-research.md). Existing application: Next.js 14 / React 18 / TypeScript / Framer Motion. The implementation extends that application; it does not import a replacement website.
 
 ## Recovery before reconstruction
 
-The anatomical brain is the repository's own procedural WebGL2 implementation, recovered against [43f44c9 — Add neural brain experience](https://github.com/SnusStille/budai-website/commit/43f44c9). Its signed-distance anatomy, two hemispheres, folds, brainstem, neural points and travelling connections are retained. Changes concern ownership, readiness, cleanup, bloom resolution, animation scheduling and the intro-to-hero camera departure. It is **not** a sphere, video or downloaded model.
+The anatomical brain is the repository's own procedural WebGL2 implementation, recovered against [43f44c9 — Add neural brain experience](https://github.com/SnusStille/budai-website/commit/43f44c9). Its signed-distance anatomy, two hemispheres, folds, brainstem, neural points and travelling connections are retained. Changes concern ownership, readiness, cleanup, bloom resolution, animation scheduling, the intro-to-hero departure and the restored scroll-linked flight into and through the anatomy. Original procedural axons extend that passage into the product environment. It is **not** a sphere, video or downloaded model.
 
-Existing BudAI logo artwork, Stilledev identity, biography, product plans and roadmap content remain repository-owned content. There was no Status section in this checkout; the existing Roadmap/Journey was upgraded instead of inventing one.
+The original BudAI Fold mark and [shared brand system](./brand.md) replace the previous code/orbit artwork. Stilledev identity, biography, exact product plans and roadmap content remain intact. There was no Status section in this checkout; the existing Roadmap/Journey was upgraded instead of inventing one.
 
 ## Requested candidate repositories
 
@@ -36,3 +36,7 @@ These are focused technique adaptations, not claims that those complete projects
 `LoadingScreen` in root Providers owns the entire intro and its one persistent brain. Hero owns only its content. `WorldStage` does not import Three or construct the room until the intro has completed and Capabilities approaches. Product UI stays in React; the decorative GPU world cannot submit forms or run the illustrative code.
 
 `scroll.ts` owns one passive native-scroll subscription and one reference-counted RAF scheduler for the cinematic layer. Normal wheel, touch, keyboard, hash links and browser history are not intercepted. Explicit reduced-motion/save-data/low-memory paths retain readable product content and an actual DOM code display. All established and partially constructed scenes release their geometry, materials, textures, render targets, listeners and DOM renderers.
+
+## Latest focused adaptation
+
+`lib/experience/projection.ts` adapts the perspective units-per-pixel and DOM projection approach from [14islands/r3f-scroll-rig's PerspectiveCamera](https://github.com/14islands/r3f-scroll-rig/blob/master/src/components/PerspectiveCamera.tsx). The [MIT notice](./licenses/r3f-scroll-rig-MIT.txt) is retained. No R3F/Drei/Lenis/Zustand runtime, anatomical dataset or unlicensed demo code was added. The capability hardware and access architecture use original procedural geometry with the existing Three.js dependency.

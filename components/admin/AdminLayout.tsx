@@ -2,6 +2,7 @@
 
 import { ReactNode, useEffect, useState } from "react";
 import { Users, BarChart3, Settings, LogOut, Terminal, Menu, X, KeyRound } from "lucide-react";
+import BudAIWordmark from "@/components/ui/BudAIWordmark";
 import BudAILogo from "@/components/ui/BudAILogo";
 
 const NAV_ITEMS = [
@@ -65,7 +66,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
               <BudAILogo size="sm" animated />
               <div>
                 <div className="font-bold text-sm leading-tight">
-                  Bud<span className="text-accent-cyan">AI</span>
+                  <BudAIWordmark />
                 </div>
                 <div className="text-[10px] text-muted font-mono">Control Center</div>
               </div>
@@ -120,7 +121,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           <div className="flex items-center gap-2.5">
             <BudAILogo size="xs" animated />
             <span className="font-bold text-sm">
-              Bud<span className="text-accent-cyan">AI</span> Admin
+              <BudAIWordmark /> Admin
             </span>
           </div>
           <button

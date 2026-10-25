@@ -1,6 +1,6 @@
 import { clamp, lerp, smooth } from "./timeline";
 
-export type BrainMotion = { kind: "intro" | "hero" | "journey"; progress: number };
+export type BrainMotion = { kind: "intro" | "hero" | "journey"; progress: number; entry?: number };
 /** Absolute, reversible camera travel. Decorative pulse time never changes this pose. */
 export function brainCameraAt({ kind, progress }: BrainMotion) {
   const p = clamp(progress);
@@ -11,4 +11,11 @@ export function brainCameraAt({ kind, progress }: BrainMotion) {
 }
 export function brainJourneyProgress(y: number, top: number, height: number, viewport: number) {
   return clamp((y - top) / Math.max(1, height - viewport));
+}
+
+/** Stable full-height mobile target, without enlarging the landing anatomy or resizing per scroll. */
+export function brainFovAt(motion: BrainMotion | undefined, height: number, mobile: boolean) {
+  const initial = Math.min(1, 370 / Math.max(1, height));
+  const lens = mobile ? lerp(initial, 1, motion?.kind === "journey" ? clamp(motion.entry ?? 1) : 0) : 1;
+  return 2 * Math.atan(Math.tan(.87 / 2) / lens);
 }

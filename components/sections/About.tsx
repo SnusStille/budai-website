@@ -25,7 +25,7 @@ export default function About() {
       <div className="builder-scroll-track" id="builder-scene">
         <div className="builder-sticky">
           <div className="builder-heading">
-            <span className="chapter-label"><i />03 / {sv ? "BYGGAREN" : "THE BUILDER"}</span>
+            <span className="chapter-label"><i />04 / {sv ? "BYGGAREN" : "THE BUILDER"}</span>
             <h2 id="builder-title">{sv ? "Från en tanke." : "From a thought."}<br /><span>{sv ? "Till något verkligt." : "To something real."}</span></h2>
             <p>{sv ? "Ett skrivbord för idéer som inte stannar vid idéer. Skrolla och se ett förberett kodexempel växa fram." : "A workspace for ideas that don't stay ideas. Scroll to bring a prepared code example to life."}</p>
           </div>

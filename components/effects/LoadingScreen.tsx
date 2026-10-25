@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import BudAILogo from "@/components/ui/BudAILogo";
 import { usePathname } from "next/navigation";
 import dynamic from "next/dynamic";
 import { markIntroDone } from "@/components/effects/introState";
@@ -146,7 +147,7 @@ export default function LoadingScreen() {
       const visible = opacity > .001;
       if (visible !== coreVisibleRef.current) { coreVisibleRef.current = visible; setCoreVisible(visible); }
       if (document.documentElement.dataset.budaiIntro === "done") {
-        motion.current = { kind: entering > .001 ? "journey" : "hero", progress: p };
+        motion.current = { kind: entering > .001 ? "journey" : "hero", progress: p, entry: entering };
         stage.current.dataset.coreScene = entering > .001 ? "journey" : "hero";
       }
     });
@@ -181,7 +182,7 @@ export default function LoadingScreen() {
       </div>
       {phase !== "done" && (
         <div className="intro-interface" data-global-loader role="status" aria-label="Initializing BudAI" aria-live="polite">
-          <div className="intro-topline"><span>STILLEDEV</span><span>INTELLIGENCE, INITIALIZED.</span></div>
+          <div className="intro-topline"><span>STILLEDEV</span><span className="intro-brand-status"><BudAILogo size="xs" animated={false} />INTELLIGENCE, INITIALIZED.</span></div>
           <div className="intro-wordmark" aria-label="BUDAI">
             <span data-intro-word aria-hidden="true">{"BUDAI".slice(0, letters)}</span><i aria-hidden="true" />
           </div>

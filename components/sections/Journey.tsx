@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Check, Rocket, Layers, Globe, ArrowUpRight } from "lucide-react";
 import ScrollReveal from "@/components/ui/ScrollReveal";
+import BudAILogo from "@/components/ui/BudAILogo";
 import { useLang } from "@/components/ui/LanguageContext";
 import { subscribeJourney } from "@/lib/experience/scroll";
 
@@ -30,7 +31,7 @@ export default function Journey() {
       <span id="vision" className="absolute top-0" aria-hidden="true" />
       <div className="roadmap-container">
         <ScrollReveal className="roadmap-heading">
-          <div><span className="chapter-label"><i />05 / {sv ? "SYSTEMET UTVECKLAS" : "THE SYSTEM EVOLVES"}</span><h2 id="roadmap-title">{sv ? "Bara början." : "Only the beginning."}</h2></div>
+          <div><span className="chapter-label"><BudAILogo size="xs" animated={false} className="!h-4 !w-4" />06 / {sv ? "SYSTEMET UTVECKLAS" : "THE SYSTEM EVOLVES"}</span><h2 id="roadmap-title">{sv ? "Bara början." : "Only the beginning."}</h2></div>
           <p>{sv ? "Dit BudAI är på väg. Från svenska arbetsdagar till allas vardags-AI. Inga datum, bara ärliga framsteg." : "Where BudAI is going. From Swedish workdays to everyone's everyday AI. No dates, just honest progress."}</p>
         </ScrollReveal>
         <div className="roadmap-spatial-window" aria-hidden="true"><span>SWEDEN <i /> NORDICS <i /> WORLD</span><div className="roadmap-fallback-path"><i /><i /><i /><i /></div><span>EVOLVING IN PUBLIC / BUDAI</span></div>

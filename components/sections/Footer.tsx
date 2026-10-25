@@ -3,6 +3,7 @@
 import StatusPill from "@/components/ui/StatusPill";
 import { useState } from "react";
 import { Github, MessageSquare, Linkedin, Mail, ArrowUpRight, X } from "lucide-react";
+import BudAIWordmark from "@/components/ui/BudAIWordmark";
 import BudAILogo, { StilledevLink, StilledevMark } from "@/components/ui/BudAILogo";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLang } from "@/components/ui/LanguageContext";
@@ -106,9 +107,7 @@ export default function Footer() {
           <div className="lg:col-span-2">
             <a href="#" className="flex items-center gap-2.5 mb-5 group">
               <BudAILogo size="md" animated />
-              <span className="text-xl font-bold tracking-tight">
-                Bud<span className="text-accent-cyan">AI</span>
-              </span>
+              <BudAIWordmark className="text-xl" />
             </a>
             <p className="text-sm text-muted leading-relaxed max-w-sm mb-6">
               {lang === "sv"

@@ -243,7 +243,7 @@ export function createWorld(host: HTMLElement, editor: HTMLElement, onFailure: (
         renderer.domElement.dataset.capabilityFocus = String(activeModule);
         renderer.domElement.dataset.accessMorph = morph.toFixed(3);
         key.position.copy(camera.position).add(new THREE.Vector3(-3, 6, 3)); key.target.position.fromArray(pose.target); key.target.updateMatrixWorld();
-        groups.forEach((group, i) => { group.visible = i === 1 ? chapter > .4 && chapter < 3.1 : Math.abs(chapter - (i === 0 ? 0 : i + 1)) < 1.15; });
+        groups.forEach((group, i) => { group.visible = i === 1 ? chapter > .4 && chapter < 2.8 : Math.abs(chapter - (i === 0 ? 0 : i + 1)) < 1.15; });
         const activeRoadNode = roadmapFocus >= 0 ? roadmapFocus : Math.min(3, Math.floor((frame.sections.roadmap ?? 0) * 4));
         roadNodes.forEach((material, i) => { material.emissiveIntensity = i === activeRoadNode ? 1.4 : .3; });
         roadGlows.forEach((material, i) => { material.opacity = i === activeRoadNode ? .7 : .22; });

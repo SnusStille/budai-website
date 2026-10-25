@@ -1,11 +1,11 @@
 export const CHAPTERS = [
   { id: "intelligence", label: "Intelligence", number: "00" },
   { id: "signal", label: "Neural journey", number: "01" },
-  { id: "playground", label: "Playground", number: "01" },
-  { id: "capabilities", label: "Capabilities", number: "02" },
-  { id: "about", label: "Builder", number: "03" },
-  { id: "waitlist", label: "Waitlist", number: "04" },
-  { id: "roadmap", label: "Roadmap", number: "05" },
+  { id: "playground", label: "Playground", number: "02" },
+  { id: "capabilities", label: "Capabilities", number: "03" },
+  { id: "about", label: "Builder", number: "04" },
+  { id: "waitlist", label: "Waitlist", number: "05" },
+  { id: "roadmap", label: "Roadmap", number: "06" },
 ] as const;
 export type ChapterId = (typeof CHAPTERS)[number]["id"];
 export type SectionBounds = { id: ChapterId; top: number; height: number };

@@ -55,10 +55,10 @@ export default function CapabilityMap() {
     <div ref={root} className="capability-system" data-active={active} data-capability-system>
       <div className="capability-sticky">
         <div className="capability-index">
-          <div className="capability-matrix-header"><span>02 / INTELLIGENCE, ASSEMBLED</span><span>06 MODULES</span></div>
+          <div className="capability-matrix-header"><span>03 / INTELLIGENCE, ASSEMBLED</span><span>06 MODULES</span></div>
           <h3>{sv ? "Ett system." : "One system."}<br /><span>{sv ? "Många möjligheter." : "Many possibilities."}</span></h3>
           <div className="capability-modules">{capabilities.map(({ icon: Icon, title, detail }, i) => (
-            <a href="#playground" className={`capability-module ${active === i ? "is-active" : ""}`} key={i} onPointerEnter={() => setHover(i)} onPointerLeave={() => setHover(-1)} onFocus={() => setHover(i)} onBlur={() => setHover(-1)}>
+            <a href="#playground" className={`capability-module ${active === i ? "is-active" : ""}`} key={i} onClick={() => window.dispatchEvent(new CustomEvent("budai:prompt", { detail: prompts[i] }))} onPointerEnter={() => setHover(i)} onPointerLeave={() => setHover(-1)} onFocus={() => setHover(i)} onBlur={() => setHover(-1)}>
               <b>0{i + 1}</b><Icon size={16} /><span><strong>{title}</strong><small>{detail}</small></span><ArrowUpRight className="capability-arrow" size={14} />
             </a>
           ))}</div>

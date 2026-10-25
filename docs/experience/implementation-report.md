@@ -1,8 +1,10 @@
 # BudAI — cinematic website upgrade
 
+> Historical 2026-10-24 baseline report. The 2026-10-25 rebuild adds a distinct neural passage, new physical Capabilities, Next Signal and a redesigned identity. See [rebuild-research.md](./rebuild-research.md), [brand.md](./brand.md) and the current rebuild report. The results below describe the earlier baseline, not the latest release.
+
 **2026-10-24 · `arena/74ed593c-budai-website`**
 
-This is an upgrade of the existing application, not a replacement template. The live workspace preview runs the optimized Next production build. No push, pull request or Vercel/production deployment has been performed.
+This is an upgrade of the existing application, not a replacement template. The live workspace preview runs the optimized Next production build. At the time of this baseline report no push or deployment had been performed; the five baseline commits were subsequently pushed. Deployment is not claimed.
 
 ## Delivered
 

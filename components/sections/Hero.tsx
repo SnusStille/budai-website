@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowDown, ArrowRight, FileText, Languages, Zap } from "lucide-react";
+import BudAILogo from "@/components/ui/BudAILogo";
 import { useLang } from "@/components/ui/LanguageContext";
 import { StilledevLink } from "@/components/ui/BudAILogo";
 
@@ -18,7 +19,7 @@ export default function Hero() {
     <section id="intelligence" className="hero-universe" aria-labelledby="hero-title">
       <div className="hero-architecture" aria-hidden="true"><span /><span /><span /></div>
       <div className="hero-content">
-        <div className="hero-eyebrow"><span className="signal-dot" />{t.hero.badge}<span className="hero-edition">BUDAI / 01</span></div>
+        <div className="hero-eyebrow"><BudAILogo size="xs" animated={false} className="!h-5 !w-5" />{t.hero.badge}<span className="hero-edition">BUDAI / 00</span></div>
         <h1 id="hero-title">
           <span>{t.hero.title1}</span>
           <span className="hero-title-accent">{t.hero.title2}</span>

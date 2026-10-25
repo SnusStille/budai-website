@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { INTRO_MS, INTRO_REVEAL_MS, introLetters, nextIntroLetter } from "../lib/experience/intro";
 import { cameraAt, CHAPTERS, journeyAt } from "../lib/experience/timeline";
-import { brainCameraAt, brainJourneyProgress } from "../lib/experience/brain";
+import { brainCameraAt, brainFovAt, brainJourneyProgress } from "../lib/experience/brain";
 import { codeCharactersAt, CODE_LENGTH, EXAMPLE_SOURCE, tokenizeLine } from "../lib/experience/code";
 
 test("intro has five deliberate letters and a bounded, short duration", () => {
@@ -66,3 +66,16 @@ test("code reveal is deterministic, monotonic, bounded, and preserves every sour
   expect(brainJourneyProgress(2800,1000,2800,1000)).toBe(1);
   expect(brainJourneyProgress(500,1000,2800,1000)).toBe(0);
  });
+
+test("mobile brain uses one full-height target and a finite reversible perspective lens", () => {
+  const hero = brainFovAt({ kind:"hero", progress:0 }, 844, true);
+  expect(hero).toBeGreaterThan(.87);
+  expect(brainFovAt({ kind:"journey", progress:0, entry:0 },844,true)).toBe(hero);
+  expect(brainFovAt({ kind:"journey", progress:.5, entry:1 },844,true)).toBe(.87);
+  expect(brainFovAt({ kind:"hero", progress:0 },1000,false)).toBe(.87);
+  for (const height of [0, 370, 667, 844, 1200]) for (const entry of [0,.1,.5,.9,1]) {
+    const fov = brainFovAt({ kind:"journey",progress:entry,entry },height,true);
+    expect(Number.isFinite(fov)).toBe(true); expect(fov).toBeGreaterThan(0); expect(fov).toBeLessThan(Math.PI);
+  }
+  expect(new Set(CHAPTERS.map(c=>c.number)).size).toBe(CHAPTERS.length);
+});

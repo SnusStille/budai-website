@@ -6,6 +6,7 @@ import ScrollReveal from "@/components/ui/ScrollReveal";
 import Confetti from "@/components/ui/Confetti";
 import { addWaitlistUser, getWaitlistCount, getWaitlistStatus } from "@/lib/data";
 import WaitlistStatus from "@/components/sections/WaitlistStatus";
+import BudAILogo from "@/components/ui/BudAILogo";
 import { useLang } from "@/components/ui/LanguageContext";
 
 const employeeRanges = ["1-10", "10-50", "50-200", "200-1000", "1000+"];
@@ -122,7 +123,7 @@ export default function Waitlist() {
   return (
     <>
     <div className="next-signal-approach" aria-label={sv ? "Nästa signal" : "The next signal"}>
-      <div><span className="chapter-label"><i />04 / THE NEXT SIGNAL</span><h2>{sv ? "Vissa signaler" : "Some signals"}<br /><span>{sv ? "är värda att följa." : "are worth following."}</span></h2><p>{sv ? "Vi bygger nästa kapitel. Hjälp oss forma det." : "The next chapter is being built. Help shape what comes next."}</p><a href="#waitlist">{sv ? "Följ signalen" : "Follow the signal"}<span>↓</span></a></div>
+      <div><span className="chapter-label"><BudAILogo size="xs" animated={false} className="!h-4 !w-4" />05 / THE NEXT SIGNAL</span><h2>{sv ? "Vissa signaler" : "Some signals"}<br /><span>{sv ? "är värda att följa." : "are worth following."}</span></h2><p>{sv ? "Vi bygger nästa kapitel. Hjälp oss forma det." : "The next chapter is being built. Help shape what comes next."}</p><a href="#waitlist">{sv ? "Följ signalen" : "Follow the signal"}<span>↓</span></a></div>
     </div>
     <section id="waitlist" className="waitlist-universe relative section-hairline overflow-hidden py-24 md:py-32">
       <Confetti active={confetti} />
@@ -130,7 +131,7 @@ export default function Waitlist() {
 
       <div className="relative z-10 mx-auto max-w-3xl px-4 text-center sm:px-6">
         <ScrollReveal>
-          <span className="chapter-label mb-7 inline-flex"><i />04 / {sv ? "NÄSTA SIGNAL" : "THE NEXT SIGNAL"}</span>
+          <span className="chapter-label mb-7 inline-flex"><i />05 / {sv ? "NÄSTA SIGNAL" : "THE NEXT SIGNAL"}</span>
           <h2 className="mb-4 text-4xl font-bold tracking-tight text-white sm:text-6xl">
             {sv ? "En del av " : "Be part of "}
             <span className="text-gradient">{sv ? "nästa kapitel." : "what’s next."}</span>

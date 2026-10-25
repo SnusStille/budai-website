@@ -126,7 +126,7 @@ test("brain shader failure frees partial GPU allocations and leaves a usable fal
   });
   await page.goto("/");
   await expect(page.locator("[data-global-loader]")).toHaveCount(0);
-  await expect(page.locator("[data-brain-fallback]")).toBeVisible();
+  await expect(page.locator(".intelligence-frame [data-brain-fallback]")).toBeVisible();
   const gpu = await page.evaluate(() => window.__gpuQA);
   expect(gpu.programs).toBeGreaterThan(0);
   expect(gpu.freedPrograms).toBe(gpu.programs);
@@ -188,7 +188,7 @@ test("a slow brain bundle falls back; unrelated assets never gate the reveal", a
   await page.goto("/", { waitUntil: "domcontentloaded" });
   await expect(page.locator("[data-global-loader]")).toHaveCount(0, { timeout: 8_000 });
   expect(delayed).toBe(true);
-  await expect(page.locator("[data-brain-fallback]")).toBeVisible();
+  await expect(page.locator(".intelligence-frame [data-brain-fallback]")).toBeVisible();
   await expect(page.locator("[data-world-canvas]")).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Open Playground", exact: true })).toBeEnabled();
 });
@@ -275,7 +275,10 @@ test("reduced motion: no intro, no WebGL, full static code and accessible forms"
   await quietChrome(page, false);
   await page.goto("/");
   await expect(page.locator("[data-global-loader]")).toHaveCount(0);
-  await expect(page.locator("[data-brain-fallback]")).toBeVisible();
+  await expect(page.locator(".intelligence-frame [data-brain-fallback]")).toBeVisible();
+  await scrollSection(page, "signal", 0);
+  await expect(page.locator(".brain-journey-fallback [data-brain-fallback]")).toBeVisible();
+  await expect(page.locator("#signal")).toHaveCSS("height", "650px");
   await scrollSection(page, "about", 0);
   await expect(page.locator("[data-world-canvas], [data-brain-canvas]")).toHaveCount(0);
   await expect(page.locator(".fallback-central-screen [data-code-characters]")).toHaveAttribute("data-code-characters", String((await import("../lib/experience/code")).CODE_LENGTH));
@@ -296,7 +299,7 @@ test("no WebGL degrades without trapping the page", async ({ page }) => {
   });
   await page.goto("/");
   await expect(page.locator("[data-global-loader]")).toHaveCount(0, { timeout: 9_000 });
-  await expect(page.locator("[data-brain-fallback]")).toBeVisible();
+  await expect(page.locator(".intelligence-frame [data-brain-fallback]")).toBeVisible();
   await scrollSection(page, "about", 500);
   await expect(page.locator(".universe-world")).toHaveAttribute("data-world-state", "fallback");
   await expect(page.locator(".builder-fallback-workspace")).toBeVisible();

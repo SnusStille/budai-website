@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, Globe, Bell } from "lucide-react";
 import { useLang } from "@/components/ui/LanguageContext";
+import BudAIWordmark from "@/components/ui/BudAIWordmark";
 import BudAILogo from "@/components/ui/BudAILogo";
 import { subscribeJourney } from "@/lib/experience/scroll";
 
@@ -92,11 +93,11 @@ export default function Navbar() {
                 window.dispatchEvent(new CustomEvent("budai:logo-click", { detail: { el: e.currentTarget } }));
               }}
             >
-              <span className="transition-transform duration-300 group-active:scale-95 group-hover:[transform:perspective(260px)_rotateY(16deg)_scale(1.08)] inline-flex">
+              <span className="transition-transform duration-300 group-active:scale-95 group-hover:scale-105 inline-flex">
                 <BudAILogo size="sm" animated mode={busy ? "thinking" : "idle"} />
               </span>
               <span className="flex flex-col leading-none">
-                <span className="nav-wordmark">Bud<span>AI</span></span>
+                <BudAIWordmark className="nav-wordmark" />
                 <span className="mt-1.5 hidden items-center gap-1.5 font-mono text-[9px] uppercase tracking-[0.2em] text-white/40 sm:flex">
                   DEVELOPED BY <b className="font-bold text-accent-cyan [text-shadow:0_0_12px_rgba(0,229,255,0.55)]">STILLEDEV</b>
                 </span>

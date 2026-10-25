@@ -13,8 +13,12 @@ export function createCapabilityEngine(parent: THREE.Group) {
   const silver = new THREE.MeshStandardMaterial({ color: "#9db6bd", roughness: .23, metalness: .85 });
   const signal = new THREE.MeshBasicMaterial({ color: "#99d8df" });
   const amber = new THREE.MeshBasicMaterial({ color: "#e4c598" });
+  const geometryCache = new Map<string, THREE.BufferGeometry>();
   const box = (group: THREE.Group, w: number, h: number, d: number, x: number, y: number, z: number, material: THREE.Material, round = false) => {
-    const mesh = new THREE.Mesh(round ? new RoundedBoxGeometry(w, h, d, 2, .045) : new THREE.BoxGeometry(w, h, d), material);
+    const key = `${w},${h},${d},${round}`;
+    let geometry = geometryCache.get(key);
+    if (!geometry) { geometry = round ? new RoundedBoxGeometry(w, h, d, 2, .045) : new THREE.BoxGeometry(w, h, d); geometryCache.set(key, geometry); }
+    const mesh = new THREE.Mesh(geometry, material);
     mesh.position.set(x, y, z); group.add(mesh); return mesh;
   };
   // Fixed, dimensional chassis: backplane, two precision uprights and a foot.

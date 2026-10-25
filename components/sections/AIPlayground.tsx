@@ -58,6 +58,7 @@ import {
   Command,
 } from "lucide-react";
 import ScrollReveal from "@/components/ui/ScrollReveal";
+import BudAIWordmark from "@/components/ui/BudAIWordmark";
 import BudAILogo from "@/components/ui/BudAILogo";
 import { useLang } from "@/components/ui/LanguageContext";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -1723,7 +1724,7 @@ export default function AIPlayground() {
 
       <div className="max-w-[1500px] mx-auto px-2 sm:px-4 lg:px-6 relative z-10">
         <ScrollReveal className="text-center mb-4 sm:mb-5">
-          <span className="section-badge text-accent-cyan mb-4">{t.playground.badge}</span>
+          <span className="section-badge text-accent-cyan mb-4"><span className="font-mono text-[10px]" aria-hidden="true">02 /</span>{t.playground.badge}</span>
           <h2 className="text-2xl sm:text-3xl font-bold tracking-tight mb-1">
             {t.playground.title}{" "}
             <span className="text-gradient">{t.playground.titleHighlight}</span>
@@ -1779,7 +1780,7 @@ export default function AIPlayground() {
                   <BudAILogo size="sm" animated mode={activity !== "idle" ? "thinking" : "idle"} />
                   <div className="min-w-0">
                     <div className="text-sm font-semibold text-white truncate flex items-center gap-1.5">
-                      Bud<span className="text-accent-cyan">AI</span>
+                      <BudAIWordmark />
                       <span
                         className={`text-[10px] font-mono px-1.5 py-0.5 rounded-md border ${
                           auth.isMember

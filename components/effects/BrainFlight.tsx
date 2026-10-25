@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, type MutableRefObject } from "react";
-import { brainCameraAt, type BrainMotion } from "@/lib/experience/brain";
+import { brainCameraAt, brainFovAt, type BrainMotion } from "@/lib/experience/brain";
 
 /**
  * Neural brain, raw WebGL2, no dependencies.
@@ -68,6 +68,7 @@ in float vRegion;
 uniform float uGain;
 uniform float uFocus;
 uniform float uActivity;
+uniform float uJourney;
 out vec4 outColor;
 void main() {
   vec2 c = gl_PointCoord * 2.0 - 1.0;
@@ -83,6 +84,7 @@ void main() {
   float fg = uFocus < -0.5 ? 1.0 : (abs(vRegion - uFocus) < 0.5 ? 1.8 : 0.35);
   float act = 1.0 + uActivity * 0.5;
   float I = (core + halo) * vGlow * uGain * fg * act;
+  if (vRegion < -1.5) I *= smoothstep(0.12, 0.46, uJourney);
   vec3 rgb = col * I;
   outColor = vec4(rgb, max(max(rgb.r, rgb.g), rgb.b));
 }`;
@@ -327,7 +329,7 @@ function sampleBrain(surfTarget: number, innerTarget: number) {
   return { surf, inner };
 }
 
-/** Anatomical region of a point (-1 = none). 0 write, 1 memory, 2 decide, 3 voice & vision. */
+/** Illustrative product focus regions, not neuroanatomical labels (-1 = none). 0 write, 1 memory, 2 decide, 3 voice & vision. */
 function regionOf(x: number, y: number, z: number) {
   if (z > 0.35) return 0;
   if (Math.abs(x) > 0.6 && y < 0.1 && Math.abs(z) < 0.5) return 1;
@@ -340,7 +342,16 @@ function buildBrain(mobile: boolean) {
   const { surf, inner } = sampleBrain(mobile ? 820 : 1280, mobile ? 260 : 460);
   const nSurf = surf.length / 3;
   const nInner = inner.length / 3;
-  const all = [...surf, ...inner];
+  // Continue the interior axons through the exit: camera flight never resolves
+  // into an empty screen on a narrow portrait frustum. These are original,
+  // illustrative connections, not imported biological data.
+  const volumeCount = mobile ? 300 : 420;
+  const volume: number[] = [];
+  for (let i = 0; i < volumeCount; i++) {
+    const angle = Math.random() * Math.PI * 2, radius = Math.sqrt(Math.random()) * .88;
+    volume.push(Math.cos(angle) * radius, Math.sin(angle) * radius, -.65 - Math.random() * 4.8);
+  }
+  const all = [...surf, ...inner, ...volume];
 
   const deg = new Uint8Array(nSurf);
   const edges: number[] = [];
@@ -361,7 +372,7 @@ function buildBrain(mobile: boolean) {
   }
 
   // point record: x y z seed r node size region (8 floats)
-  const N = nSurf + nInner;
+  const N = nSurf + nInner + volumeCount;
   const dustCount = mobile ? 320 : 620;
   const pointData = new Float32Array((N + dustCount) * 8);
   for (let i = 0; i < N; i++) {
@@ -372,9 +383,9 @@ function buildBrain(mobile: boolean) {
     pointData[o + 2] = z;
     pointData[o + 3] = Math.random();
     pointData[o + 4] = Math.hypot(x, y, z);
-    pointData[o + 5] = i < nSurf && deg[i] >= 2 ? 1 : 0;
-    pointData[o + 6] = i < nSurf && deg[i] >= 2 ? 1.7 : 1.0;
-    pointData[o + 7] = regionOf(x, y, z);
+    pointData[o + 5] = (i < nSurf && deg[i] >= 2) || i >= nSurf + nInner ? 1 : 0;
+    pointData[o + 6] = i >= nSurf + nInner ? 1.5 : i < nSurf && deg[i] >= 2 ? 1.7 : 1.0;
+    pointData[o + 7] = i >= nSurf + nInner ? -2 : regionOf(x, y, z);
   }
   for (let k = 0; k < dustCount; k++) {
     const o = (N + k) * 8;
@@ -399,6 +410,13 @@ function buildBrain(mobile: boolean) {
     for (let j = i + 1; j < Math.min(nInner, i + 18); j++) {
       const a = inner.slice(i * 3, i * 3 + 3), b = inner.slice(j * 3, j * 3 + 3);
       if (Math.hypot(...a.map((v, k) => v - b[k])) < .48) { interiorEdges.push([...a, ...b]); break; }
+    }
+  }
+  for (let i = 0; i < volumeCount - 1; i++) {
+    let count = 0;
+    for (let j = i + 1; j < volumeCount && count < 2; j++) {
+      const a = volume.slice(i * 3, i * 3 + 3), b = volume.slice(j * 3, j * 3 + 3);
+      if (Math.hypot(...a.map((v,k)=>v-b[k])) < .58) { interiorEdges.push([...a,...b]); count++; }
     }
   }
   for (let rail = 0; rail < 8; rail++) {
@@ -431,7 +449,7 @@ function buildBrain(mobile: boolean) {
       lineData.set([edge[v * 3], edge[v * 3 + 1], edge[v * 3 + 2], v, (i * .618) % 1, .3, -2], o);
     }
   });
-  return { pointData, N, dustCount, lineData, E: E + interiorEdges.length };
+  return { pointData, N, volumeCount, dustCount, lineData, surfaceEdges: E, E: E + interiorEdges.length };
 }
 
 /* ---------- component ---------- */
@@ -532,7 +550,7 @@ export default function BrainFlight({
       const mobile = window.innerWidth < 768;
       const debug = gl.getExtension("WEBGL_debug_renderer_info");
       const software = !!debug && /swiftshader|llvmpipe|software/i.test(String(gl.getParameter(debug.UNMASKED_RENDERER_WEBGL)));
-      const { pointData, N, dustCount, lineData, E } = buildBrain(mobile);
+      const { pointData, N, volumeCount, dustCount, lineData, surfaceEdges, E } = buildBrain(mobile);
       const totalPoints = N + dustCount;
 
       const picks: number[] = [];
@@ -594,7 +612,7 @@ export default function BrainFlight({
       const lU = (name: string) => gl.getUniformLocation(lineProg!, name);
       const uPoint = {
         mvp: pU("uMVP"), time: pU("uTime"), size: pU("uSize"), gain: pU("uGain"),
-        focus: pU("uFocus"), activity: pU("uActivity"),
+        focus: pU("uFocus"), activity: pU("uActivity"), journey: pU("uJourney"),
       };
       const uLine = {
         mvp: lU("uMVP"), time: lU("uTime"), gain: lU("uGain"),
@@ -604,7 +622,7 @@ export default function BrainFlight({
       const uComp = { amt: gl.getUniformLocation(compProg, "uBloomAmt") };
 
       const resize = () => {
-        const dpr = Math.min(window.devicePixelRatio || 1, software ? .75 : mobile ? 1 : 1.25);
+        const dpr = Math.min(window.devicePixelRatio || 1, software ? .75 : window.innerWidth < 768 ? 1 : 1.25);
         const w = Math.max(2, Math.round(canvas.clientWidth * dpr));
         const h = Math.max(2, Math.round(canvas.clientHeight * dpr));
         if (w === canvas.width && h === canvas.height && scene) return;
@@ -643,7 +661,9 @@ export default function BrainFlight({
         canvas.dataset.cameraZ = camZ.toFixed(4);
         canvas.dataset.sequence = controlled?.kind ?? mode;
         canvas.dataset.cameraPose = [camX, pose?.y ?? .25, camZ, yaw, tilt].map(n => n.toFixed(5)).join(",");
-        const proj = perspective(0.87, W / H, 0.05, 50);
+        const fov = brainFovAt(controlled, canvas.clientHeight, window.innerWidth < 768);
+        canvas.dataset.fov = fov.toFixed(5);
+        const proj = perspective(fov, W / H, 0.05, 50);
         const mvp = mul(proj, mul(translate(-camX, -(pose?.y ?? .25), -camZ), mul(rotX(tilt), rotY(yaw))));
         lastMvp = mvp;
 
@@ -666,17 +686,18 @@ export default function BrainFlight({
         gl.uniform1f(uLine.gain, gain * 0.9);
         gl.uniform1f(uLine.focus, focusNow);
         gl.uniform1f(uLine.activity, curAct);
-        gl.drawArrays(gl.LINES, 0, E * 2);
+        gl.drawArrays(gl.LINES, 0, (controlled?.kind === "journey" ? E : surfaceEdges) * 2);
 
         gl.useProgram(pointProg);
+        gl.uniform1f(uPoint.journey, controlled?.kind === "journey" ? controlled.progress : 0);
         gl.bindVertexArray(pointVao);
         gl.uniformMatrix4fv(uPoint.mvp, false, mvp);
         gl.uniform1f(uPoint.time, t);
-        gl.uniform1f(uPoint.size, 15 * (H / 900));
+        gl.uniform1f(uPoint.size, 15 * (H / 900) * Math.tan(.87 / 2) / Math.tan(fov / 2));
         gl.uniform1f(uPoint.focus, focusNow);
         gl.uniform1f(uPoint.activity, curAct);
         gl.uniform1f(uPoint.gain, gain);
-        gl.drawArrays(gl.POINTS, 0, N);
+        gl.drawArrays(gl.POINTS, 0, controlled?.kind === "journey" ? N : N - volumeCount);
         gl.uniform1f(uPoint.gain, gain * 0.55);
         gl.drawArrays(gl.POINTS, N, totalPoints - N);
         gl.bindVertexArray(null);
