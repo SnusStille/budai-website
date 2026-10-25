@@ -33,7 +33,6 @@ export default function Hero() {
         <p className="hero-product-note">{sv ? "En yta för dig hemma och för teamet på jobbet — inte ännu ett generiskt chatbot-skal." : "One surface for you at home and the team at work — not another generic chatbot shell."}</p>
         <p className="hero-credit">{sv ? "Utvecklad av " : "Built by "}<StilledevLink /> <span>·</span> Sweden</p>
       </div>
-      <div className="hero-signal" aria-hidden="true"><span>INTELLIGENCE</span><div><i/></div><span>INTERACTION</span></div>
       <div className="hero-bottom">
         <span><i /> 00 — {sv ? "INTELLIGENS" : "THE INTELLIGENCE CORE"}</span>
         <a href="#playground">{sv ? "Från tanke till handling" : "From intelligence to action"}<ArrowDown size={14} /></a>

@@ -248,7 +248,30 @@ export default function Capabilities() {
 
         <CapabilityMap />
         <div className="plans-heading"><span>{sv ? "Välj din väg" : "Choose your way in"}</span><p>{sv ? "Börja gratis. Väx när du är redo." : "Start free. Grow when you’re ready."}</p></div>
-        <div className="access-architecture" data-access-architecture aria-hidden="true"><div className="access-fallback"><svg viewBox="-5 -2.1 10 4.2" width="100%" height="100%"><g transform="scale(1,-1)">{[0,1,2].map(band=><g key={band} opacity={band===0?.8:.45}>{capabilityRecords().map((p,i)=><circle key={i} cx={(band-1)*3.3+p.x*.6} cy={p.y*.62} r=".025" fill="#9ebfca"/>)}</g>)}</g></svg></div><div className="access-labels"><span>01 / BASIC<small>{sv ? "Tillgänglig nu" : "Available now"}</small></span><span>02 / CONSUMER<small>Coming soon</small></span><span>03 / BUSINESS<small>Coming soon</small></span></div></div>
+        <div className="access-architecture" data-access-architecture aria-hidden="true">
+          <div className="access-fallback">
+            <svg viewBox="-5 -2.1 10 4.2" width="100%" height="100%">
+              <line x1="-3.3" y1="0" x2="3.3" y2="0" stroke="#75cfe4" strokeOpacity="0.32" strokeWidth="0.018" />
+              {[0, 1, 2].map(band => {
+                const cx = (band - 1) * 3.3;
+                return (
+                  <g key={band} opacity={band === 0 ? 0.92 : 0.72}>
+                    {Array.from({ length: band + 1 }, (_, r) => (
+                      <circle key={r} cx={cx} cy={0} r={0.44 + r * 0.18} fill="none" stroke={band === 1 ? "#a2eefc" : "#7fd5e8"} strokeOpacity={band === 1 ? 0.55 : 0.38} strokeWidth="0.015" />
+                    ))}
+                    <circle cx={cx} cy={0} r="0.09" fill="#d8f9ff" fillOpacity="0.9" />
+                    <g transform="scale(1,-1)">
+                      {capabilityRecords().map((p, i) => (
+                        <circle key={i} cx={cx + p.x * 0.6} cy={p.y * 0.62} r="0.028" fill="#a8e2ee" fillOpacity="0.65" />
+                      ))}
+                    </g>
+                  </g>
+                );
+              })}
+            </svg>
+          </div>
+          <div className="access-labels"><span>01 / BASIC<small>{sv ? "Tillgänglig nu" : "Available now"}</small></span><span>02 / CONSUMER<small>Coming soon</small></span><span>03 / BUSINESS<small>Coming soon</small></span></div>
+        </div>
         <div className="plan-comparison grid md:grid-cols-3 gap-4 mb-5" data-plan-comparison>
           {plans.map((pl, i) => (
             <ScrollReveal key={pl.key} delay={i * 0.05}>

@@ -676,9 +676,9 @@ export default function BrainFlight({
         const fov = brainFovAt(controlled, canvas.clientHeight, window.innerWidth < 768);
         canvas.dataset.fov = fov.toFixed(5);
         const proj = perspective(fov, W / H, 0.05, 50);
-        const pivot=controlled?.kind === "journey" ? BRAIN_STORY_ORIGIN : 0;
-        const view=mul(translate(-camX,-(pose?.y??.25),-(camZ-pivot)),mul(mul(rotX(tilt),rotY(yaw)),translate(0,0,-pivot)));
-        const mvp=mul(proj,view);
+        const pivot = visual.offset;
+        const view = mul(translate(-camX, -(pose?.y ?? .25), -(camZ - pivot)), mul(mul(rotX(tilt), rotY(yaw)), translate(0, 0, -pivot)));
+        const mvp = mul(proj, view);
         lastMvp = mvp;
 
         const intro = ambient ? 0.7 : 0.35 + 0.65 * Math.min(1, t / 0.9);
@@ -759,14 +759,18 @@ export default function BrainFlight({
         gl.bindVertexArray(null);
       };
 
-      const start=performance.now();let reportedReady=false;
+      const start=performance.now();let reportedReady=false,heroOrigin=0;
       const draw=(now:number)=>{
         if(!alive||!visible||document.hidden||!activeRef.current)return;
         try{
           resize();tgtFocus=focusRef.current;curAct+=(activityRef.current-curAct)*.06;
           departure+=((settledRef.current?1:0)-departure)*.13;
           const control=motionRef.current?.current;
-          render(control?.kind==="intro"?1.9+control.progress*2.3:1.9+(control?.progress??0)*2.3,progRef.current);
+          if(control?.kind!=="intro"&&!heroOrigin)heroOrigin=now;
+          const waveTime=control?.kind==="intro"
+            ?1.9+control.progress*2.3
+            :4.2+Math.max(0,(now-heroOrigin)*.0006)+(control?.progress??0)*2.3;
+          render(waveTime,progRef.current);
           if(!reportedReady){reportedReady=true;canvas.dataset.rendered="true";readyCbRef.current?.();}
         }catch{alive=false;running=false;failCbRef.current?.();}
       };

@@ -48,7 +48,7 @@ async function scrollSection(page: Page, id: string, offset = 0) {
   await page.waitForTimeout(400);
 }
 
-test("fresh visit: readiness-gated actual brain, one surface, no hero renderer and bounded layout shift",async({page})=>{
+test("fresh visit: readiness-gated actual brain, one surface, continuous hero brain and bounded layout shift",async({page})=>{
   await quietChrome(page,false);await observeLayout(page);
   const errors:string[]=[];page.on("pageerror",e=>errors.push(e.message));page.on("console",m=>{if(m.type()==="error")errors.push(m.text());});
   await page.goto("/",{waitUntil:"domcontentloaded"});
@@ -57,12 +57,12 @@ test("fresh visit: readiness-gated actual brain, one surface, no hero renderer a
   await expect(page.locator("[data-global-loader] svg,[data-global-loader] [data-budai-mark]")).toHaveCount(0);
   await page.screenshot({path:"test-results/intro-desktop.png"});
   await expect(page.locator("[data-global-loader]")).toHaveCount(0);
-  await expect(page.locator("canvas")).toHaveCount(0);expect(await canvas!.evaluate(el=>el.isConnected)).toBe(false);
+  await expect(brain).toHaveAttribute("data-sequence","hero");expect(await canvas!.evaluate(el=>el.isConnected)).toBe(true);
   expect(await page.evaluate(()=>document.body.style.overflow)).not.toBe("hidden");await expect(page.locator("#main")).not.toHaveAttribute("inert");
   await page.screenshot({path:"test-results/hero-desktop.png"});await assertSmallLayoutShift(page);expect(errors).toEqual([]);
 });
 
-test("the story sleeps under settled interaction, resumes the same warm scene, and is disposed before hero",async({page})=>{
+test("the story sleeps under settled interaction, resumes the same warm scene, and returns to the hero pose",async({page})=>{
   await quietChrome(page);
   await page.addInitScript(()=>{window.__brainDraws=0;const original=WebGL2RenderingContext.prototype.drawArrays;WebGL2RenderingContext.prototype.drawArrays=function(this:WebGL2RenderingContext,...args:Parameters<typeof original>){if((this.canvas as HTMLCanvasElement).hasAttribute("data-brain-canvas"))window.__brainDraws++;return original.apply(this,args);};});
   await page.goto("/#signal");
@@ -72,7 +72,7 @@ test("the story sleeps under settled interaction, resumes the same warm scene, a
   await dive(1);await expect(page.locator("[data-scene-role=journey]")).toHaveAttribute("data-scene-sleeping","true");
   const stopped=await page.evaluate(()=>window.__brainDraws);await page.waitForTimeout(500);expect(await page.evaluate(()=>window.__brainDraws)).toBe(stopped);
   await dive(.55);await expect.poll(()=>page.evaluate(()=>window.__brainDraws)).toBeGreaterThan(stopped);expect(await canvas!.evaluate(el=>el.isConnected)).toBe(true);
-  await page.evaluate(()=>scrollTo({top:0,behavior:"instant" as ScrollBehavior}));await expect(page.locator("[data-brain-canvas]")).toHaveCount(0);
+  await page.evaluate(()=>scrollTo({top:0,behavior:"instant" as ScrollBehavior}));await expect(page.locator("[data-brain-canvas]")).toHaveAttribute("data-sequence","hero");expect(await canvas!.evaluate(el=>el.isConnected)).toBe(true);
 });
 
 test("brain shader failure frees partial GPU allocations and leaves a usable fallback", async ({ page }) => {
@@ -292,7 +292,7 @@ test("context loss and changing reduced motion clean up the shared world", async
   await page.emulateMedia({ reducedMotion: "no-preference" });
   await expect(page.locator(".universe-world")).toHaveAttribute("data-world-state", "ready");
   await page.evaluate(() => scrollTo({top:0,behavior:"instant" as ScrollBehavior}));
-  await expect(page.locator("[data-brain-canvas]")).toHaveCount(0);
+  await expect(page.locator("[data-brain-canvas]")).toHaveAttribute("data-sequence", "hero");
   await expect(page.locator("[data-global-loader]")).toHaveCount(0);
 
 });

@@ -123,11 +123,23 @@ export default function Waitlist() {
   return (
     <>
     <div className="next-signal-approach" aria-label={sv ? "Nästa signal" : "The next signal"}>
-      <div><span className="chapter-label"><BudAILogo size="xs" animated={false} className="!h-4 !w-4" />05 / THE NEXT SIGNAL</span><h2>{sv ? "Vissa signaler" : "Some signals"}<br /><span>{sv ? "är värda att följa." : "are worth following."}</span></h2><p>{sv ? "Vi bygger nästa kapitel. Hjälp oss forma det." : "The next chapter is being built. Help shape what comes next."}</p><a href="#waitlist">{sv ? "Följ signalen" : "Follow the signal"}<span>↓</span></a></div>
+      <div>
+        <span className="chapter-label"><BudAILogo size="xs" animated={false} className="!h-4 !w-4" />05 / THE NEXT SIGNAL</span>
+        <h2>{sv ? "Vissa signaler" : "Some signals"}<br /><span>{sv ? "är värda att följa." : "are worth following."}</span></h2>
+        <p>{sv ? "Vi bygger nästa kapitel. Hjälp oss forma det." : "The next chapter is being built. Help shape what comes next."}</p>
+        <a href="#waitlist">{sv ? "Följ signalen" : "Follow the signal"}<span>↓</span></a>
+      </div>
+      <div className="next-signal-beacon" aria-hidden="true">
+        <div className="beacon-ring beacon-ring-outer" />
+        <div className="beacon-ring beacon-ring-mid" />
+        <div className="beacon-ring beacon-ring-inner" />
+        <div className="beacon-core" />
+        <span className="beacon-meta">SIGNAL RELAY / 005 · FOUNDING COHORT</span>
+      </div>
     </div>
     <section id="waitlist" className="waitlist-universe relative section-hairline overflow-hidden py-24 md:py-32">
       <Confetti active={confetti} />
-      <div className="waitlist-horizon" aria-hidden="true"><i /><span /></div>
+      <div className="waitlist-horizon" aria-hidden="true"><i /><span /><b /></div>
 
       <div className="relative z-10 mx-auto max-w-3xl px-4 text-center sm:px-6">
         <ScrollReveal>

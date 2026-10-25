@@ -12,7 +12,7 @@ async function dive(page:Page,p:number){
   await page.waitForTimeout(400);
 }
 
-test("the opening enters the intended cortex and gives up all scene ownership on the landing",async({page})=>{
+test("the opening enters the intended cortex and keeps the same pose and connected canvas on the landing hero",async({page})=>{
   await quiet(page,false);
   await page.addInitScript(()=>{
     window.__openingPoses=[];
@@ -20,19 +20,20 @@ test("the opening enters the intended cortex and gives up all scene ownership on
       const el=document.querySelector<HTMLCanvasElement>("[data-brain-canvas]");
       if(!el?.dataset.cameraZ)return;
       window.__openingPoses.push({z:Number(el.dataset.cameraZ),phase:document.documentElement.dataset.budaiIntro??"",sequence:el.dataset.sequence??"",brains:document.querySelectorAll("[data-brain-canvas]").length,loaders:document.querySelectorAll("[data-global-loader]").length});
-    }).observe(document,{subtree:true,childList:true,attributes:true,attributeFilter:["data-camera-z","data-budai-intro"]});
+    }).observe(document,{subtree:true,childList:true,attributes:true,attributeFilter:["data-camera-z","data-budai-intro","data-sequence"]});
   });
   await page.goto("/");
   const brain=page.locator("[data-brain-canvas]");
   await expect(brain).toHaveAttribute("data-rendered","true");
   const canvas=await brain.elementHandle();
   await expect(page.locator("html")).toHaveAttribute("data-budai-intro","done");
-  await expect(brain).toHaveCount(0);
+  await expect(brain).toHaveAttribute("data-sequence","hero");
   const poses=await page.evaluate(()=>window.__openingPoses),opening=poses.filter(p=>p.sequence==="intro");
   expect(opening.some(p=>p.z<.8&&p.z>-.8)).toBe(true);
   expect(opening.some(p=>p.z<0)).toBe(true);
   expect(Math.max(...poses.map(p=>p.brains))).toBe(1);expect(Math.max(...poses.map(p=>p.loaders))).toBe(1);
-  expect(await canvas!.evaluate(el=>el.isConnected)).toBe(false);
+  expect(Number(await brain.getAttribute("data-camera-z"))).toBeCloseTo(opening.at(-1)!.z,3);
+  expect(await canvas!.evaluate(el=>el.isConnected)).toBe(true);
   await expect(page.locator("#intelligence [data-budai-mark],#intelligence canvas")).toHaveCount(0);
   await page.screenshot({path:"test-results/confluence-landing-desktop.png"});
   await test.info().attach("actual-opening-camera",{body:JSON.stringify(poses),contentType:"application/json"});
@@ -95,5 +96,5 @@ test("Confluence contains a real travelling signal and pauses on reduced motion 
   await expect(mark.locator(".confluence-signal")).toHaveCSS("display","none");
   await expect(page.locator("[data-brain-canvas],[data-world-canvas]")).toHaveCount(0);
   await page.emulateMedia({reducedMotion:"no-preference"});await expect(mark).toHaveAttribute("data-mark-motion","running");
-  await expect(page.locator("[data-brain-canvas]")).toHaveCount(0);await expect(page.locator("[data-global-loader]")).toHaveCount(0);
+  await expect(page.locator("[data-brain-canvas]")).toHaveCount(1);await expect(page.locator("[data-global-loader]")).toHaveCount(0);
 });

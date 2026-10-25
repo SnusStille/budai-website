@@ -111,21 +111,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
         <Providers>{children}</Providers>
         <VercelAnalytics enabled={process.env.VERCEL === "1"} />
-      <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "SoftwareApplication",
-              name: "BudAI",
-              applicationCategory: "BusinessApplication",
-              operatingSystem: "Web",
-              description: "BudAI is an AI assistant for everyday work in Swedish and English.",
-              offers: { "@type": "Offer", price: "0", priceCurrency: "SEK" },
-              creator: { "@type": "Organization", name: "Stilledev" },
-            }),
-          }}
-        />
       </body>
     </html>
   );

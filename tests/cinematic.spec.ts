@@ -60,7 +60,7 @@ test("restored neural journey is after landing and before the REAL Playground; o
   await page.mouse.wheel(0, -50_000);
   await expect.poll(() => page.evaluate(() => scrollY)).toBe(0);
   await expect(page.locator("[data-global-loader]")).toHaveCount(0);
-  await expect(page.locator("[data-brain-canvas]")).toHaveCount(0);
+  await expect(page.locator("[data-brain-canvas]")).toHaveAttribute("data-sequence", "hero");
   expect(errors).toEqual([]);
 });
 

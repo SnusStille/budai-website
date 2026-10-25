@@ -1,6 +1,6 @@
 # Critical fix and cinematic refinement — verified implementation
 
-**2026-10-25 · existing `arena/74ed593c-budai-website` branch · [PR #6](https://github.com/SnusStille/budai-website/pull/6)**
+**2026-10-25 · `arena/8ed4b39d-budai-website` branch · synchronized from production baseline `2d12f841b10eef8c0fb0ea3be9354c2010e927c2` (`https://stilledev.se`)**
 
 Actual existing source changed, not a replacement template. The workspace live preview runs the final optimized production build on port 3000. The supplied immutable Vercel URL and production domain were not deployed by this work; no merge or external deployment is claimed.
 
@@ -24,8 +24,8 @@ Detailed source investigation and first verification gate: [critical-loading-fix
 - Readiness means a visible rendered frame at the canonical initial camera. The actual camera starts only then; it crosses into the recovered model. Camera duration is **2,500ms + 500ms reveal after readiness**. Preparation is bounded at 1,400ms and degrades promptly; cold navigation is not promised to finish in three seconds.
 - Preparation/failure uses a small raster captured **from that actual deterministic renderer**, same `43f44c9` SDF anatomy, seed 43044, first pose, shader and light time. It is not a placeholder model or alternative SVG. Desktop/mobile files together are about **41kB**; reproduce with `npm run brain:poster` using existing tools/dependencies.
 - No initial zero-gain paint, no advancing camera before readiness, no late-import restart. Completion is published after React removes the opening DOM; timers/listeners/frames/resources are cleaned up. Actual unmount releases the context; connected-canvas StrictMode replay remains safe.
-- **No hero scene role exists.** The completed opening is unmounted. The separate narrative can request the same intended model only inside the currently visible `#signal` DOM bounds, clipped from insertion. A stale pre-route snapshot cannot initialise a hero brain.
-- Preference/resize/history changes never create a resting-hero brain. The hero is stable typography, existing product actions and one quiet editorial signal, with no brain/poster/animated mark. A default promotional logo card was removed from the homepage; privacy consent remains.
+- **Continuous Single-Canvas Brain Hero (`intro` → `hero` → `journey`).** The single WebGL2 `<BrainFlight />` canvas (`data-brain-model="budai-neural-43f44c9"`) stays mounted inside `.intelligence-stage` from the opening (`intro`) into the landing page hero (`#intelligence`, `data-sequence="hero"`, `HERO_POSE` at `z = -1.65`) and through the neural scroll passage (`#signal`, `data-sequence="journey"`), without unmounting, remounting, flashing, or creating a second brain. Once the user reaches `#playground`, the brain sleeps (`data-scene-sleeping="true"`), and in `#capabilities` and below it unmounts (`requestRole(null)`) so `WorldStage` owns the GPU alone.
+- **No logo in opening or hero.** The BudAI Confluence logo is never used as the opening loader or hero sculpture; it remains in the navbar, app branding, footer, and metadata while `DEVELOPED BY STILLEDEV` attribution is preserved throughout.
 
 The critical gate passed **9/9 development/StrictMode cases and 9/9 optimized-production cases before secondary visual work**. The final suite adds a pristine, unsuppressed-visitor check after delayed promotional timers.
 
@@ -45,13 +45,15 @@ The real surface retains its input node/state, settles at full readable size, ha
 
 The shared bus now has an explicit **DOM update → GPU render** order. The raw scene is driven directly by the opening clock or the same native narrative snapshot; it has no independent application RAF. Visibility/settled interaction pause GPU work; leaving for Hero disposes the narrative scene. No Lenis/GSAP/R3F runtime added.
 
-## 5. Cable replacement and remaining transitions
+## 5. Central Intelligence Core, Capability Pathways, Developer Room, and Next Signal
 
-The new **information register** contains sparse deterministic patterns for the existing six labels: text rows, repeatable steps, a comparison fork, paired language rows, retained ordered sets, image aperture/audio samples. One organising point and a few short meaningful guides replace tubes, machinery, logo sculpture and orbiting cards. Focus/scroll clarifies the corresponding records.
+The **Capabilities (`#capabilities`)** environment combines the sparse deterministic **information register** for all six modules (`Write`, `Automate`, `Decide`, `Swedish + English`, `Memory`, `Vision and voice`) with a 3D **Central Intelligence Core** (faceted icosahedral nucleus, wireframe lattice, counter-rotating gimballed signal rings, and axial spine), **six smooth architectural pathways**, station rings, and travelling signal pulses that intensify on the focused capability module.
 
-The same six records appear in all three access comparisons, replacing door-like gates. The real Basic/Consumer/Business facts, availability, credit/memory/account/team limits and existing offer remain the source of truth. No invented price/date/feature restriction.
+In **Access Architecture (`Choose your way in`)**, the same six capability constellations appear across all three tiers (`01 / BASIC`, `02 / CONSUMER`, `03 / BUSINESS`), joined by a shared-intelligence longitudinal pathway and three tier cores with 1, 2, and 3 concentric orbital capacity rings.
 
-Playground's exit gradually structures the same point vocabulary without another cinematic event. Builder's liked room, readable actual DOM editor and explicit illustrative-code labels remain. Waitlist's former walls/column set becomes a calm signal near the existing directly usable form. Its validation/submission/success/error behavior is unchanged. Roadmap retains its four actual milestones and content.
+In **The Builder (`#about`)**, instanced 3D keyboard keys, cylindrical puck, and dangling under-desk `TubeGeometry` cables were removed in favor of a sleek low-profile input deck with cyan lightbar and an updated left-monitor `BUDAI / INTELLIGENCE CORE` 6-pathway diagram alongside the real CSS3D `ProgressiveEditor`.
+
+In **Waitlist (`#waitlist`)**, the approach features a 3D **Next Signal Relay Core**, three concentric horizon wave rings, converging signal pathways, and a 37-point harmonic field while `#waitlist` anchor links go directly to the usable form. Roadmap (`#roadmap`) retains its four milestone stages and converges smoothly into the `#continuation` outro.
 
 ## 6. Outro: THE SIGNAL CONTINUES
 

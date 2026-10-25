@@ -83,11 +83,17 @@ test("world departure is reversible and its invisible landing state is genuinely
   expect([1,.9,.5,.1,0].map(departure=>worldChapterAt({chapter:4,departure})).reverse()).toEqual(values);
 });
 
-test("opening actually crosses the cortex without any branding target or hero renderer",()=>{
+test("opening actually crosses the cortex and resolves into the continuous hero brain pose without branding morph",()=>{
   const poses=Array.from({length:101},(_,i)=>brainCameraAt({kind:"intro",progress:i/100}));
   expect(poses.some(p=>p.z<.8&&p.z>-.8)).toBe(true);
   expect(poses.at(-1)!.z).toBeLessThan(0);
+  const end=poses.at(-1)!,hero=brainCameraAt({kind:"hero",progress:0}),journeyStart=brainCameraAt({kind:"journey",progress:0});
+  for(const key of ["x","y","z","yaw","tilt"] as const){
+    expect(end[key]).toBeCloseTo(hero[key],8);
+    expect(hero[key]).toBeCloseTo(journeyStart[key],8);
+  }
   expect(brainVisualAt({kind:"intro",progress:1})).not.toHaveProperty("identity");
+  expect(brainVisualAt({kind:"intro",progress:1}).offset).toBeCloseTo(brainVisualAt({kind:"hero",progress:0}).offset,8);
   expect(brainCameraAt({kind:"journey",progress:.86}).z-BRAIN_STORY_ORIGIN).toBeLessThan(0);
   expect(playgroundProjectionAt(1)).toEqual({depth:0,tilt:0});
 });
