@@ -10,3 +10,9 @@ export const introBootstrap = `(()=>{try{const n=navigator;const play=location.p
 export function introLetters(elapsed: number) {
   return Math.max(0, Math.min(5, Math.floor((elapsed - 850) / 210) + 1));
 }
+
+/** Never jump over a letter when a shader/JIT/slow frame crosses a clock boundary. */
+export function nextIntroLetter(previous: number, elapsed: number, sinceLast: number) {
+  const desired = introLetters(elapsed);
+  return desired > previous && sinceLast >= 160 ? Math.min(previous + 1, desired) : previous;
+}

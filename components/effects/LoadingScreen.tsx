@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import dynamic from "next/dynamic";
 import { markIntroDone } from "@/components/effects/introState";
-import { INTRO_MS, INTRO_REVEAL_MS, INTRO_SESSION_KEY, introLetters } from "@/lib/experience/intro";
+import { INTRO_MS, INTRO_REVEAL_MS, INTRO_SESSION_KEY, nextIntroLetter } from "@/lib/experience/intro";
 import BrainFallback from "./BrainFallback";
 
 const BrainFlight = dynamic(() => import("./BrainFlight"), { ssr: false });
@@ -82,7 +82,9 @@ export default function LoadingScreen() {
     } else {
       setPhase("playing");
       const start = performance.now();
-      let previousLetters = -1;
+      let previousLetters = 0;
+      let lastLetterAt = 0;
+      setLetters(0);
       // Only the brain is relevant to this intro. Neither the developer room nor
       // the Playground is an asset dependency. A failed/slow GPU never gates entry.
       assetTimer = window.setTimeout(() => {
@@ -91,10 +93,10 @@ export default function LoadingScreen() {
       const tick = (now: number) => {
         if (!alive || closing) return;
         const elapsed = now - start;
-        const n = introLetters(elapsed);
-        if (n !== previousLetters) { previousLetters = n; setLetters(n); }
+        const n = nextIntroLetter(previousLetters, elapsed, elapsed - lastLetterAt);
+        if (n !== previousLetters) { previousLetters = n; lastLetterAt = elapsed; setLetters(n); }
         progressBar.current?.style.setProperty("transform", `scaleX(${Math.min(1, elapsed / INTRO_MS)})`);
-        if (elapsed >= INTRO_MS) end();
+        if (elapsed >= INTRO_MS && previousLetters === 5 && elapsed - lastLetterAt >= 260) end();
         else raf = requestAnimationFrame(tick);
       };
       raf = requestAnimationFrame(tick);

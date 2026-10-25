@@ -79,3 +79,10 @@ explicit viewport change. Initial fragments/history now use native immediate
 settling; focused in-page links retain CSS smooth navigation for user actions.
 The expensive world remains lazy, while the lightweight Builder content and
 functional Playground retain stable server-rendered space during hydration.
+
+The final development/Strict Mode run exposed one more real timing edge case: a
+cold shader/JIT frame could cross two letter deadlines and skip `B`. The intro now
+advances at most one character at a time, with a minimum visible character interval
+and a short completed-word dwell. Nominal timing is unchanged; the independent
+safety deadline still wins over a stalled clock. A pure regression test simulates
+the missed frame, and the actual development browser now captures all five prefixes.
