@@ -1803,6 +1803,7 @@ export default function AIPlayground() {
                     <button
                       type="button"
                       onClick={stopAll}
+                      aria-label={lang === "sv" ? "Stoppa svaret" : "Stop response"}
                       className="p-2 rounded-lg border border-red-500/25 text-red-300"
                       title="Stop"
                     >
@@ -2699,6 +2700,7 @@ export default function AIPlayground() {
                       }
                     }}
                     rows={1}
+                    aria-label={lang === "sv" ? "Meddelande till BudAI" : "Message BudAI"}
                     placeholder={
                       genMode
                         ? lang === "sv"
@@ -2736,6 +2738,7 @@ export default function AIPlayground() {
                   ) : (
                     <button
                       type="submit"
+                      aria-label={lang === "sv" ? "Skicka meddelande" : "Send message"}
                       disabled={(!input.trim() && !attach) || busy}
                       className="shrink-0 h-11 px-3.5 sm:px-4 rounded-2xl bg-gradient-to-r from-accent-cyan to-accent-purple text-white disabled:opacity-40 flex items-center shadow-[0_0_20px_rgba(0,229,255,0.25)] hover:shadow-[0_0_28px_rgba(0,229,255,0.4)] transition-shadow"
                     >

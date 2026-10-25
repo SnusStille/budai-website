@@ -15,7 +15,7 @@ export default async function Shared({ params }: { params: { id: string } | Prom
   const msgs = data.messages as { role: string; content: string }[];
 
   return (
-    <main className="min-h-screen bg-background text-white">
+    <main id="main" tabIndex={-1} className="min-h-screen bg-background text-white">
       <div className="mx-auto max-w-2xl px-5 py-10">
         <a href="/" className="mb-8 inline-flex items-center gap-3">
           <BudAILogo size="sm" />

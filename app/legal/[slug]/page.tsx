@@ -95,7 +95,7 @@ export default function LegalPage() {
   const L = lang === "sv" ? "sv" : "en";
 
   return (
-    <main className="min-h-screen bg-background text-white pt-20 pb-16 px-4 sm:px-6">
+    <main id="main" tabIndex={-1} className="min-h-screen bg-background text-white pt-20 pb-16 px-4 sm:px-6">
       <div className="max-w-2xl mx-auto">
         <div className="flex items-center justify-between gap-3 mb-8">
           <Link
