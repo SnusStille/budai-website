@@ -53,8 +53,10 @@ out float vGlow;
 out float vR;
 out float vRegion;
 out float vDepth;
+out float vRim;
 void main() {
-  vec3 world=aPos+vec3(0.0,0.0,uOffset);
+  float breath = aRegion > -1.5 ? 1.0 + 0.007 * sin(uTime * 1.15 + aR * 3.2) : 1.0;
+  vec3 world = aPos * breath + vec3(0.0, 0.0, uOffset);
   vec4 clip = uMVP * vec4(world, 1.0);
   gl_Position = clip;
   float front = fract(uTime * 0.26) * 1.4;
@@ -62,12 +64,13 @@ void main() {
   float front2 = fract(uTime * 0.18 + 0.5) * 1.35;
   float wave2 = exp(-pow((aR - front2) * 12.0, 2.0)) * 0.45;
   float flick = 0.5 + 0.5 * sin(uTime * (1.4 + aSeed * 1.6) + aSeed * 60.0);
-  vGlow = 0.24 + 0.66 * (wave + wave2) + 0.12 * flick * aNode + 0.26 * aNode;
+  vRim = clamp(abs(aPos.x) * 0.58 + max(0.0, aPos.y + 0.2) * 0.42 + abs(aPos.z) * 0.25, 0.0, 1.0);
+  vGlow = 0.26 + 0.68 * (wave + wave2) + 0.13 * flick * aNode + 0.28 * aNode + 0.16 * vRim;
   vSeed = aSeed;
   vR = aR;
   vRegion = aRegion;
   vDepth = clamp((5.4 - clip.w) / 3.8, 0.0, 1.0);
-  gl_PointSize = clamp(uSize * aSize / max(clip.w, 0.05), 1.0, aRegion < -1.5 ? 4.2 : 14.5);
+  gl_PointSize = clamp(uSize * aSize / max(clip.w, 0.05), 1.0, aRegion < -1.5 ? 4.4 : 14.8);
 }`;
 
 const FS_POINTS = `#version 300 es
@@ -77,6 +80,7 @@ in float vGlow;
 in float vR;
 in float vRegion;
 in float vDepth;
+in float vRim;
 uniform float uGain;
 uniform float uFocus;
 uniform float uActivity;
@@ -88,20 +92,20 @@ void main() {
   float r2 = dot(c, c);
   if (r2 > 1.0) discard;
   float core = exp(-r2 * 4.8);
-  float halo = smoothstep(1.0, 0.35, r2) * 0.34;
-  vec3 cyan = vec3(0.32, 0.80, 0.88);
-  vec3 purple = vec3(0.46, 0.56, 0.82);
-  vec3 white = vec3(0.92, 1.0, 1.0);
-  vec3 col = mix(cyan, purple, smoothstep(0.28, 0.88, vSeed + vR * 0.25));
-  col = mix(col, vec3(0.66, 0.94, 1.0), vDepth * 0.26);
-  col = mix(col, white, clamp(vGlow - 0.85, 0.0, 1.0) * 0.74);
+  float halo = smoothstep(1.0, 0.35, r2) * 0.36;
+  vec3 cyan = vec3(0.32, 0.82, 0.90);
+  vec3 purple = vec3(0.48, 0.58, 0.86);
+  vec3 white = vec3(0.93, 1.0, 1.0);
+  vec3 col = mix(cyan, purple, smoothstep(0.26, 0.88, vSeed + vR * 0.25));
+  col = mix(col, vec3(0.70, 0.95, 1.0), (vDepth * 0.24 + vRim * 0.18));
+  col = mix(col, white, clamp(vGlow - 0.84, 0.0, 1.0) * 0.76);
   float fg = uFocus < -0.5 ? 1.0 : (abs(vRegion - uFocus) < 0.5 ? 1.95 : 0.38);
   float act = 1.0 + uActivity * 0.5;
   float I = (core + halo) * vGlow * uGain * fg * act;
   if (vRegion < -1.5) {
-    vec3 digCol = mix(vec3(0.38, 0.88, 0.98), vec3(0.76, 0.96, 1.0), vDepth);
-    col = mix(col, digCol, 0.72);
-    I *= smoothstep(0.05, 0.36, uJourney) * 1.55;
+    vec3 digCol = mix(vec3(0.40, 0.90, 0.99), vec3(0.80, 0.97, 1.0), vDepth);
+    col = mix(col, digCol, 0.76);
+    I *= smoothstep(0.04, 0.32, uJourney) * (1.55 + 0.32 * smoothstep(0.42, 0.82, uJourney));
   } else {
     I *= uCortex;
   }

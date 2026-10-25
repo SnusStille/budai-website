@@ -2,11 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { ArrowRight, Check, Copy, Building2, User, Gift, Zap, MessageCircle, Mail } from "lucide-react";
+import BudAILogo from "@/components/ui/BudAILogo";
 import ScrollReveal from "@/components/ui/ScrollReveal";
 import Confetti from "@/components/ui/Confetti";
 import { addWaitlistUser, getWaitlistCount, getWaitlistStatus } from "@/lib/data";
 import WaitlistStatus from "@/components/sections/WaitlistStatus";
-import BudAILogo from "@/components/ui/BudAILogo";
 import { useLang } from "@/components/ui/LanguageContext";
 
 const employeeRanges = ["1-10", "10-50", "50-200", "200-1000", "1000+"];
@@ -31,7 +31,7 @@ export default function Waitlist() {
   const [referral, setReferral] = useState("");
   const [showCode, setShowCode] = useState(false);
   const [details, setDetails] = useState(false);
-  const [status, setStatus] = useState<Awaited<ReturnType<typeof getWaitlistStatus>>>(null);
+  const [, setStatus] = useState<Awaited<ReturnType<typeof getWaitlistStatus>>>(null);
 
   useEffect(() => {
     try {
@@ -121,154 +121,138 @@ export default function Waitlist() {
   ];
 
   return (
-    <>
-    <div className="next-signal-approach" aria-label={sv ? "Nästa signal" : "The next signal"}>
-      <div>
-        <span className="chapter-label"><BudAILogo size="xs" animated={false} className="!h-4 !w-4" />05 / THE NEXT SIGNAL</span>
-        <h2>{sv ? "Vissa signaler" : "Some signals"}<br /><span>{sv ? "är värda att följa." : "are worth following."}</span></h2>
-        <p>{sv ? "Vi bygger nästa kapitel. Hjälp oss forma det." : "The next chapter is being built. Help shape what comes next."}</p>
-        <a href="#waitlist">{sv ? "Följ signalen" : "Follow the signal"}<span>↓</span></a>
-      </div>
-      <div className="next-signal-beacon" aria-hidden="true">
-        <div className="beacon-ring beacon-ring-outer" />
-        <div className="beacon-ring beacon-ring-mid" />
-        <div className="beacon-ring beacon-ring-inner" />
-        <div className="beacon-core" />
-        <span className="beacon-meta">SIGNAL RELAY / 005 · FOUNDING COHORT</span>
-      </div>
-    </div>
-    <section id="waitlist" className="waitlist-universe relative section-hairline overflow-hidden py-24 md:py-32">
+    <div id="waitlist" className="early-access-card relative mx-auto mt-10 max-w-3xl rounded-2xl border border-white/10 bg-white/[0.02] px-4 py-10 text-center sm:px-8">
       <Confetti active={confetti} />
-      <div className="waitlist-horizon" aria-hidden="true"><i /><span /><b /></div>
-
-      <div className="relative z-10 mx-auto max-w-3xl px-4 text-center sm:px-6">
-        <ScrollReveal>
-          <span className="chapter-label mb-7 inline-flex"><i />05 / {sv ? "NÄSTA SIGNAL" : "THE NEXT SIGNAL"}</span>
-          <h2 className="mb-4 text-4xl font-bold tracking-tight text-white sm:text-6xl">
-            {sv ? "En del av " : "Be part of "}
-            <span className="text-gradient">{sv ? "nästa kapitel." : "what’s next."}</span>
-          </h2>
-          <p className="mx-auto max-w-md text-base text-muted sm:text-lg">
-            {sv ? "Gratis under preview. Grundare låser 10 % rabatt när paketen lanseras." : "Free during the preview. Founding members lock 10% off when plans launch."}
+      <ScrollReveal>
+        <span className="inline-flex items-center gap-2 rounded-full border border-accent-cyan/25 bg-accent-cyan/10 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.16em] text-accent-cyan">
+          <BudAILogo size="xs" />
+          {sv ? "TIDIG TILLGÅNG · KONSUMENT & FÖRETAG" : "EARLY ACCESS · CONSUMER & BUSINESS"}
+        </span>
+        <h3 className="mt-4 mb-2 text-2xl font-bold tracking-tight text-white sm:text-3xl">
+          {sv ? "Få besked när " : "Get notified when "}
+          <span className="text-gradient">{sv ? "paketen öppnar." : "paid plans launch."}</span>
+        </h3>
+        <p className="mx-auto max-w-md text-sm text-muted sm:text-base">
+          {sv
+            ? "Gratis under preview. Grundare låser 10 % rabatt när paketen lanseras."
+            : "Free during the preview. Founding members lock 10% off when plans launch."}
+        </p>
+        {count !== null && count > 0 && (
+          <p className="mt-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-xs text-white/70">
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent-green" />
+            {sv ? `${count} står redan på listan` : `${count} already on the list`}
           </p>
-          {count !== null && count > 0 && (
-            <p className="mt-5 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-xs text-white/70">
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent-green" />
-              {sv ? `${count} står redan på listan` : `${count} already on the list`}
-            </p>
-          )}
-        </ScrollReveal>
+        )}
+      </ScrollReveal>
 
-        {!submitted ? (
-          <form onSubmit={handleSubmit} aria-busy={loading} className="mx-auto mt-9 max-w-xl text-left">
-            <div className="waitlist-composer relative overflow-hidden rounded-xl border border-white/15">
-              <div className="relative flex flex-col gap-2 rounded-[15px] bg-[#07070e] p-2 sm:flex-row sm:items-center sm:rounded-full sm:p-1.5 sm:pl-5">
-                <label className="flex flex-1 items-center gap-3 px-3 py-2 sm:px-0 sm:py-0">
-                  <Mail className="h-5 w-5 shrink-0 text-accent-cyan" />
-                  <input
-                    required
-                    type="email"
-                    value={form.email}
-                    onChange={set("email")}
-                    autoComplete="email"
-                    placeholder={sv ? "din@epost.se" : "you@email.com"}
-                    aria-label={sv ? "E-post" : "Email"}
-                    className="w-full min-w-0 bg-transparent text-base text-white outline-none placeholder:text-muted/60"
-                  />
-                </label>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="group flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-accent-cyan to-accent-purple px-6 py-3.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60 sm:rounded-full"
-                >
-                  {loading ? (sv ? "Skickar…" : "Sending…") : sv ? "Gå med" : "Join the waitlist"}
-                  {!loading && <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />}
-                </button>
-              </div>
-            </div>
-
-            {error && <p role="alert" className="mt-3 text-center text-sm text-red-300">{error}</p>}
-
-            <div className="mt-4 text-center">
-              <button type="button" onClick={() => setDetails((d) => !d)} aria-expanded={details} className="text-xs text-muted transition-colors hover:text-accent-cyan">
-                {details ? "−" : "+"} {sv ? "Lägg till detaljer (valfritt)" : "Add details (optional)"}
+      {!submitted ? (
+        <form onSubmit={handleSubmit} aria-busy={loading} className="mx-auto mt-7 max-w-xl text-left">
+          <div className="waitlist-composer relative overflow-hidden rounded-xl border border-white/15">
+            <div className="relative flex flex-col gap-2 rounded-[15px] bg-[#07070e] p-2 sm:flex-row sm:items-center sm:rounded-full sm:p-1.5 sm:pl-5">
+              <label className="flex flex-1 items-center gap-3 px-3 py-2 sm:px-0 sm:py-0">
+                <Mail className="h-5 w-5 shrink-0 text-accent-cyan" />
+                <input
+                  required
+                  type="email"
+                  value={form.email}
+                  onChange={set("email")}
+                  autoComplete="email"
+                  placeholder={sv ? "din@epost.se" : "you@email.com"}
+                  aria-label={sv ? "E-post" : "Email"}
+                  className="w-full min-w-0 bg-transparent text-base text-white outline-none placeholder:text-muted/60"
+                />
+              </label>
+              <button
+                type="submit"
+                disabled={loading}
+                className="group flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-accent-cyan to-accent-purple px-6 py-3.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60 sm:rounded-full"
+              >
+                {loading ? (sv ? "Skickar…" : "Sending…") : sv ? "Gå med" : "Join the waitlist"}
+                {!loading && <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />}
               </button>
             </div>
+          </div>
 
-            {details && (
-              <div className="bud-pop mt-4 space-y-3 rounded-2xl border border-white/10 bg-white/[0.02] p-4 sm:p-5">
-                <div className="grid grid-cols-2 gap-1 rounded-xl border border-white/10 bg-white/[0.03] p-1" role="group" aria-label={sv ? "Kontotyp" : "Account type"}>
-                  {tabs.map((tb) => (
-                    <button
-                      key={tb.id}
-                      type="button"
-                      aria-pressed={accountType === tb.id}
-                      onClick={() => setAccountType(tb.id)}
-                      className={`flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-medium transition-colors ${
-                        accountType === tb.id ? "bg-accent-cyan/15 text-accent-cyan" : "text-muted hover:text-white"
-                      }`}
-                    >
-                      <tb.icon className="h-4 w-4" />
-                      {tb.label}
-                    </button>
-                  ))}
-                </div>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <input className={field} aria-label={sv ? "Namn" : "Name"} placeholder={sv ? "Namn" : "Name"} value={form.name} onChange={set("name")} autoComplete="name" />
-                  <select className={field} value={form.interest} onChange={set("interest")} aria-label={sv ? "Användning" : "Use case"}>
-                    <option value="" disabled>{sv ? "Vad ska du använda det till?" : "What will you use it for?"}</option>
-                    {(sv ? interestsSv : interestsEn).map((i) => <option key={i} value={i}>{i}</option>)}
-                  </select>
-                </div>
-                {accountType === "company" && (
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <input className={field} aria-label={sv ? "Företag" : "Company"} placeholder={sv ? "Företag" : "Company"} value={form.company} onChange={set("company")} autoComplete="organization" />
-                    <select className={field} value={form.employees} onChange={set("employees")} aria-label={sv ? "Teamstorlek" : "Team size"}>
-                      <option value="" disabled>{sv ? "Teamstorlek" : "Team size"}</option>
-                      {employeeRanges.map((r) => <option key={r} value={r}>{r}</option>)}
-                    </select>
-                  </div>
-                )}
-                {showCode ? (
-                  <input className={field} aria-label={sv ? "Inbjudningskod" : "Invite code"} placeholder={sv ? "Inbjudningskod" : "Invite code"} value={referral} onChange={(e) => setReferral(e.target.value)} />
-                ) : (
-                  <button type="button" onClick={() => setShowCode(true)} className="text-xs text-muted transition-colors hover:text-accent-cyan">
-                    {sv ? "Har du en inbjudningskod?" : "Have an invite code?"}
-                  </button>
-                )}
-              </div>
-            )}
-            <p className="mt-4 text-center text-[11px] text-muted/70">{sv ? "Ingen spam. Ingen betalning krävs." : "No spam. No payment needed."}</p>
-          </form>
-        ) : (
-          <div role="status" aria-live="polite" className="bud-pop mx-auto mt-9 max-w-md rounded-2xl border border-white/10 bg-[#07070e]/90 p-6 shadow-[0_0_70px_-20px_rgba(124,92,255,0.6)]">
-            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full border border-accent-green/40 bg-accent-green/10">
-              <Check className="h-6 w-6 text-accent-green" />
-            </div>
-            <h3 className="mb-1 text-xl font-semibold text-white">{sv ? "Du är med!" : "You're in!"}</h3>
-            <p className="mb-5 text-sm text-muted">{sv ? "Vi hör av oss när det är din tur." : "We'll be in touch when it's your turn."}</p>
-            <WaitlistStatus email={form.email} sv={sv} refParam="ref" />
-            <button
-              type="button"
-              onClick={copyCode}
-              className="inline-flex items-center gap-2 rounded-full border border-white/15 px-4 py-2 font-mono text-xs text-white transition-colors hover:border-accent-cyan/40"
-            >
-              {copied ? <Check className="h-3.5 w-3.5 text-accent-green" /> : <Copy className="h-3.5 w-3.5" />}
-              BUDAI-EARLY-10
+          {error && <p role="alert" className="mt-3 text-center text-sm text-red-300">{error}</p>}
+
+          <div className="mt-4 text-center">
+            <button type="button" onClick={() => setDetails((d) => !d)} aria-expanded={details} className="text-xs text-muted transition-colors hover:text-accent-cyan">
+              {details ? "−" : "+"} {sv ? "Lägg till detaljer (valfritt)" : "Add details (optional)"}
             </button>
           </div>
-        )}
 
-        <ul className="mt-10 flex flex-wrap justify-center gap-x-6 gap-y-2 text-xs text-muted">
-          {perks.map((p) => (
-            <li key={p.t} className="flex items-center gap-1.5">
-              <p.i className="h-3.5 w-3.5 text-accent-cyan" />
-              {p.t}
-            </li>
-          ))}
-        </ul>
-      </div>
-    </section>
-    </>
+          {details && (
+            <div className="bud-pop mt-4 space-y-3 rounded-2xl border border-white/10 bg-white/[0.02] p-4 sm:p-5">
+              <div className="grid grid-cols-2 gap-1 rounded-xl border border-white/10 bg-white/[0.03] p-1" role="group" aria-label={sv ? "Kontotyp" : "Account type"}>
+                {tabs.map((tb) => (
+                  <button
+                    key={tb.id}
+                    type="button"
+                    aria-pressed={accountType === tb.id}
+                    onClick={() => setAccountType(tb.id)}
+                    className={`flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-medium transition-colors ${
+                      accountType === tb.id ? "bg-accent-cyan/15 text-accent-cyan" : "text-muted hover:text-white"
+                    }`}
+                  >
+                    <tb.icon className="h-4 w-4" />
+                    {tb.label}
+                  </button>
+                ))}
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <input className={field} aria-label={sv ? "Namn" : "Name"} placeholder={sv ? "Namn" : "Name"} value={form.name} onChange={set("name")} autoComplete="name" />
+                <select className={field} value={form.interest} onChange={set("interest")} aria-label={sv ? "Användning" : "Use case"}>
+                  <option value="" disabled>{sv ? "Vad ska du använda det till?" : "What will you use it for?"}</option>
+                  {(sv ? interestsSv : interestsEn).map((i) => <option key={i} value={i}>{i}</option>)}
+                </select>
+              </div>
+              {accountType === "company" && (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <input className={field} aria-label={sv ? "Företag" : "Company"} placeholder={sv ? "Företag" : "Company"} value={form.company} onChange={set("company")} autoComplete="organization" />
+                  <select className={field} value={form.employees} onChange={set("employees")} aria-label={sv ? "Teamstorlek" : "Team size"}>
+                    <option value="" disabled>{sv ? "Teamstorlek" : "Team size"}</option>
+                    {employeeRanges.map((r) => <option key={r} value={r}>{r}</option>)}
+                  </select>
+                </div>
+              )}
+              {showCode ? (
+                <input className={field} aria-label={sv ? "Inbjudningskod" : "Invite code"} placeholder={sv ? "Inbjudningskod" : "Invite code"} value={referral} onChange={(e) => setReferral(e.target.value)} />
+              ) : (
+                <button type="button" onClick={() => setShowCode(true)} className="text-xs text-muted transition-colors hover:text-accent-cyan">
+                  {sv ? "Har du en inbjudningskod?" : "Have an invite code?"}
+                </button>
+              )}
+            </div>
+          )}
+          <p className="mt-4 text-center text-[11px] text-muted/70">{sv ? "Ingen spam. Ingen betalning krävs." : "No spam. No payment needed."}</p>
+        </form>
+      ) : (
+        <div role="status" aria-live="polite" className="bud-pop mx-auto mt-7 max-w-md rounded-2xl border border-white/10 bg-[#07070e]/90 p-6 shadow-[0_0_70px_-20px_rgba(124,92,255,0.6)]">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full border border-accent-green/40 bg-accent-green/10">
+            <Check className="h-6 w-6 text-accent-green" />
+          </div>
+          <h3 className="mb-1 text-xl font-semibold text-white">{sv ? "Du är med!" : "You're in!"}</h3>
+          <p className="mb-5 text-sm text-muted">{sv ? "Vi hör av oss när det är din tur." : "We'll be in touch when it's your turn."}</p>
+          <WaitlistStatus email={form.email} sv={sv} refParam="ref" />
+          <button
+            type="button"
+            onClick={copyCode}
+            className="inline-flex items-center gap-2 rounded-full border border-white/15 px-4 py-2 font-mono text-xs text-white transition-colors hover:border-accent-cyan/40"
+          >
+            {copied ? <Check className="h-3.5 w-3.5 text-accent-green" /> : <Copy className="h-3.5 w-3.5" />}
+            BUDAI-EARLY-10
+          </button>
+        </div>
+      )}
+
+      <ul className="mt-8 flex flex-wrap justify-center gap-x-6 gap-y-2 text-xs text-muted">
+        {perks.map((p) => (
+          <li key={p.t} className="flex items-center gap-1.5">
+            <p.i className="h-3.5 w-3.5 text-accent-cyan" />
+            {p.t}
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }

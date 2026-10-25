@@ -62,7 +62,6 @@ export default function Navbar() {
     { label: t.nav.playground, href: "#playground", id: "playground" },
     { label: t.nav.capabilities, href: "#capabilities", id: "capabilities" },
     { label: lang === "sv" ? "Byggaren" : "Builder", href: "#about", id: "about" },
-    { label: t.nav.waitlist, href: "#waitlist", id: "waitlist" },
     { label: t.nav.roadmap, href: "#roadmap", id: "roadmap" },
   ];
 

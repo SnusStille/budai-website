@@ -214,14 +214,15 @@ test("Builder is real 3D; native scroll drives the camera and code, including ex
   expect(errors).toEqual([]);
 });
 
-test("capabilities, waitlist and roadmap evolve the same background without hiding content", async ({ page }) => {
+test("capabilities, builder and roadmap evolve the same background without hiding content", async ({ page }) => {
   await quietChrome(page);
   await page.goto("/#capabilities");
   await scrollSection(page, "capabilities", 0);
   await expect(page.locator(".universe-world")).toHaveAttribute("data-world-state", "ready");
+  await expect(page.locator(".next-signal-approach, .next-signal-beacon")).toHaveCount(0);
   const camera = page.locator("[data-world-canvas]");
   const values: (string | null)[] = [];
-  for (const id of ["capabilities", "waitlist", "roadmap"]) {
+  for (const id of ["capabilities", "about", "roadmap"]) {
     await scrollSection(page, id, 20);
     await expect(page.locator("html")).toHaveAttribute("data-chapter", id);
     values.push(await camera.getAttribute("data-camera"));
@@ -230,6 +231,7 @@ test("capabilities, waitlist and roadmap evolve the same background without hidi
     await page.screenshot({ path: `test-results/${id}-desktop.png` });
   }
   expect(new Set(values).size).toBe(3);
+  await expect(page.locator("#waitlist")).toBeVisible();
   await expect(page.locator(".roadmap-milestone")).toHaveCount(4);
   await expect(page.locator(".roadmap-milestone > ul:visible")).toHaveCount(4);
   await page.getByRole("button", { name: /Next/ }).click();

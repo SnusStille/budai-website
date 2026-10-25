@@ -76,6 +76,7 @@ test("one sparse information register organises six capabilities and three accur
   expect(Number(await canvas.getAttribute("data-draw-calls"))).toBeGreaterThan(0);
   await expect(page.locator(".capability-network")).toHaveCount(0);
   await expect(page.locator(".capability-module")).toHaveCount(6);
+  await expect(page.locator("[data-living-code-console]")).toBeVisible();
   await page.waitForTimeout(600);
   await page.screenshot({ path: "test-results/capability-engine-desktop.png" });
   await page.locator(".capability-module").nth(4).hover();
@@ -90,11 +91,12 @@ test("one sparse information register organises six capabilities and three accur
   await expect(plans.getByText("Free", { exact: false }).first()).toBeVisible();
 });
 
-test("Next Signal has a real approach but the waitlist anchor goes straight to the usable form", async ({ page }) => {
+test("05 / THE NEXT SIGNAL standalone section remains removed while early-access waitlist form and 05 Roadmap work cleanly", async ({ page }) => {
   await prepare(page);
   await page.goto("/#waitlist");
-  await move(page, ".next-signal-approach");
-  await page.screenshot({ path: "test-results/next-signal-desktop.png" });
+  await expect(page.locator(".next-signal-approach, .next-signal-beacon")).toHaveCount(0);
+  await expect(page.getByText("05 / THE NEXT SIGNAL", { exact: false })).toHaveCount(0);
+  await expect(page.locator("#roadmap")).toContainText("05 / THE SYSTEM EVOLVES");
   await move(page, "#waitlist");
   const email = page.locator("#waitlist input[type=email]");
   await expect(email).toBeVisible();

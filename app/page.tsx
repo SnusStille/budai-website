@@ -11,7 +11,6 @@ import FocusMode from "@/components/ui/FocusMode";
 import Navbar from "@/components/sections/Navbar";
 import Hero from "@/components/sections/Hero";
 import Capabilities from "@/components/sections/Capabilities";
-import Waitlist from "@/components/sections/Waitlist";
 import BrainScrollStory from "@/components/sections/BrainScrollStory";
 import ErrorBoundary from "@/components/ui/ErrorBoundary";
 import LazyEgg from "@/components/effects/LazyEgg";
@@ -94,7 +93,6 @@ export default function Home() {
         </ErrorBoundary>
         <Capabilities />
         <About />
-        <Waitlist />
         <Journey />
         <Footer />
       </div>

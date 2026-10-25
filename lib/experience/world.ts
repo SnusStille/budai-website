@@ -93,9 +93,6 @@ export function createWorld(host: HTMLElement, editor: HTMLElement, onFailure: (
     key.position.set(2, 8, 10);
     scene.add(key);
 
-    const metal = new THREE.MeshStandardMaterial({ color: "#28394d", roughness: 0.26, metalness: 0.83 });
-    const signal = new THREE.MeshBasicMaterial({ color: CYAN, transparent: true, opacity: 0.65 });
-    const secondary = new THREE.MeshBasicMaterial({ color: LAVENDER, transparent: true, opacity: 0.35 });
     const groups: THREE.Group[] = [];
     const addEnvironment = (index: number) => {
       const group = new THREE.Group();
@@ -104,8 +101,6 @@ export function createWorld(host: HTMLElement, editor: HTMLElement, onFailure: (
       groups.push(group);
       return group;
     };
-    const tube = (points: THREE.Vector3[], material: THREE.Material, radius = 0.012) =>
-      new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points), 32, radius, 6, false), material);
 
     // 00 & 01 / Owned by the single persistent brain renderer in LoadingScreen.
     addEnvironment(0);
@@ -172,7 +167,7 @@ export function createWorld(host: HTMLElement, editor: HTMLElement, onFailure: (
     const outputSignal = createPointField([{ x: 0, y: 0, z: 0, lane: -1 }], 5.4);
     scene.add(outputSignal);
 
-    // 03 / Cohesive Capability Intelligence Core, 6 Pathways & Access Architecture.
+    // 03 / THE LIVING INTELLIGENCE ENGINE: Dimensional 3D Code Panels, Core, 6 Pathways & Access Stations.
     const capabilities = addEnvironment(2);
     const engine = createCapabilityEngine(capabilities);
     const capViewport = document.querySelector<HTMLElement>("[data-capability-viewport]");
@@ -190,147 +185,8 @@ export function createWorld(host: HTMLElement, editor: HTMLElement, onFailure: (
     screen.scale.setScalar(room.screenScale);
     cssScene.add(screen);
 
-    // 05 / The Next Signal: Monumental 3D Horizon Signal Beacon, Concentric Waves & Converging Waveguides.
-    const waitlist = addEnvironment(4);
-    const waitlistPoints = [
-      { x: 0, y: 1, z: -7, lane: -1 },
-      ...Array.from({ length: 48 }, (_, i) => {
-        const ring = (i % 4) + 1;
-        const angle = (i / 12) * Math.PI * 2;
-        const r = ring * 1.05;
-        return {
-          x: Math.cos(angle) * r * 1.3,
-          y: 1 + Math.sin(angle) * r * 0.45,
-          z: -7 + Math.sin(angle * 2) * 0.72,
-          lane: -1,
-        };
-      }),
-    ];
-    const beacon = createPointField(waitlistPoints, 4.8);
-    waitlist.add(beacon);
-
-    const relayGroup = new THREE.Group();
-    relayGroup.position.set(0, 1.05, -7);
-    waitlist.add(relayGroup);
-
-    // Hexagonal base pedestal under the Signal Relay Core
-    const relayPedestalMat = new THREE.MeshStandardMaterial({
-      color: "#102536",
-      emissive: "#1b556e",
-      emissiveIntensity: 0.65,
-      metalness: 0.78,
-      roughness: 0.25,
-      transparent: true,
-      opacity: 0.85,
-    });
-    const relayPedestal = new THREE.Mesh(new THREE.CylinderGeometry(1.15, 1.38, 0.16, 6), relayPedestalMat);
-    relayPedestal.position.y = -1.45;
-    relayGroup.add(relayPedestal);
-
-    const relayWireMat = new THREE.LineBasicMaterial({
-      color: "#94ecfc",
-      transparent: true,
-      opacity: 0.85,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-    });
-    const relayPedestalEdges = new THREE.LineSegments(
-      new THREE.EdgesGeometry(new THREE.CylinderGeometry(1.16, 1.39, 0.17, 6)),
-      relayWireMat
-    );
-    relayPedestalEdges.position.y = -1.45;
-    relayGroup.add(relayPedestalEdges);
-
-    // Outer geodesic lattice + inner glowing octahedral core + bright nucleus
-    const relayCoreMat = new THREE.MeshStandardMaterial({
-      color: "#123246",
-      emissive: "#2f8cab",
-      emissiveIntensity: 0.95,
-      metalness: 0.82,
-      roughness: 0.2,
-      transparent: true,
-      opacity: 0.9,
-    });
-    const relayCrystal = new THREE.Mesh(new THREE.OctahedronGeometry(0.54, 1), relayCoreMat);
-    relayGroup.add(relayCrystal);
-
-    const relayNucleusMat = new THREE.MeshBasicMaterial({
-      color: "#dcf9ff",
-      transparent: true,
-      opacity: 0.92,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-    });
-    const relayNucleus = new THREE.Mesh(new THREE.OctahedronGeometry(0.26, 0), relayNucleusMat);
-    relayGroup.add(relayNucleus);
-
-    const relayWire = new THREE.LineSegments(
-      new THREE.EdgesGeometry(new THREE.IcosahedronGeometry(0.84, 1)),
-      relayWireMat
-    );
-    relayGroup.add(relayWire);
-
-    const relayInnerWire = new THREE.LineSegments(
-      new THREE.EdgesGeometry(new THREE.OctahedronGeometry(0.58, 1)),
-      relayWireMat
-    );
-    relayGroup.add(relayInnerWire);
-
-    // Vertical beacon spire & repeater rings
-    const relaySpireMat = new THREE.MeshBasicMaterial({
-      color: "#84e3f7",
-      transparent: true,
-      opacity: 0.52,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-    });
-    const relaySpire = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 3.6, 8), relaySpireMat);
-    relaySpire.position.y = 0.2;
-    relayGroup.add(relaySpire);
-
-    const relayRings: THREE.Mesh[] = [];
-    const relayRingMats: THREE.MeshBasicMaterial[] = [];
-    [1.22, 1.98, 2.82, 3.68].forEach((radius, idx) => {
-      const rMat = new THREE.MeshBasicMaterial({
-        color: idx === 0 ? "#9cf0ff" : idx === 1 ? "#7ce0f5" : idx === 2 ? "#74cfe5" : "#9aa8e4",
-        transparent: true,
-        opacity: 0.68 - idx * 0.12,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false,
-      });
-      relayRingMats.push(rMat);
-      const ring = new THREE.Mesh(new THREE.TorusGeometry(radius, idx === 0 ? 0.018 : 0.013, 12, 84), rMat);
-      ring.rotation.x = 1.18 - idx * 0.11;
-      ring.rotation.y = (idx - 1.5) * 0.18;
-      relayRings.push(ring);
-      relayGroup.add(ring);
-    });
-
-    const relayPathMat = new THREE.MeshBasicMaterial({
-      color: "#76d4e8",
-      transparent: true,
-      opacity: 0.42,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-    });
-    const relayCurves: THREE.CatmullRomCurve3[] = [];
-    const relayPulses: THREE.Mesh[] = [];
-    const relayPulseGeo = new THREE.SphereGeometry(0.055, 10, 10);
-    [-2.8, -1.65, -0.65, 0.65, 1.65, 2.8].forEach((x, idx) => {
-      const curve = new THREE.CatmullRomCurve3([
-        new THREE.Vector3(x, -1.35 + (idx % 2) * 0.25, 5.8),
-        new THREE.Vector3(x * 0.48, -0.38, 2.1),
-        new THREE.Vector3(0, 0, 0),
-      ]);
-      relayCurves.push(curve);
-      relayGroup.add(new THREE.Mesh(new THREE.TubeGeometry(curve, 28, 0.011, 6, false), relayPathMat));
-      const pulse = new THREE.Mesh(relayPulseGeo, relayNucleusMat);
-      relayGroup.add(pulse);
-      relayPulses.push(pulse);
-    });
-
-    // 06 / Roadmap (4 Sculptural Milestone Stations) & Continuation Outro.
-    const roadmap = addEnvironment(5);
+    // 05 / Roadmap (4 Sculptural Milestone Stations) & Continuation Outro.
+    const roadmap = addEnvironment(4);
     const roadNodes: THREE.MeshStandardMaterial[] = [];
     const roadMeshes: THREE.Object3D[] = [];
     const roadQuiet: Array<{ material: THREE.Material & { opacity: number }; opacity: number }> = [];
@@ -365,7 +221,6 @@ export function createWorld(host: HTMLElement, editor: HTMLElement, onFailure: (
     roadmap.add(new THREE.Mesh(new THREE.TubeGeometry(roadCurve, 48, 0.038, 8, false), pathMaterial));
     roadQuiet.push({ material: pathMaterial, opacity: pathMaterial.opacity });
 
-    // Parallel auxiliary guide rails along the roadmap spine
     [-0.18, 0.18].forEach(offsetY => {
       const railPts = path.map(p => p.clone().add(new THREE.Vector3(0, offsetY + 0.35, 0)));
       const railMat = new THREE.LineBasicMaterial({
@@ -384,7 +239,6 @@ export function createWorld(host: HTMLElement, editor: HTMLElement, onFailure: (
       roadQuiet.push({ material: railMat, opacity: railMat.opacity });
     });
 
-    // Travelling 3D signal pulses along the Roadmap spine
     const roadPulseMat = new THREE.MeshBasicMaterial({
       color: "#d4f9ff",
       transparent: true,
@@ -402,7 +256,6 @@ export function createWorld(host: HTMLElement, editor: HTMLElement, onFailure: (
     }
 
     path.forEach((point, i) => {
-      // Hexagonal architectural pedestal + wireframe rim
       const baseMaterial = new THREE.MeshStandardMaterial({
         color: "#172d40",
         emissive: i < 2 ? "#1e5b73" : "#2b3760",
@@ -444,7 +297,6 @@ export function createWorld(host: HTMLElement, editor: HTMLElement, onFailure: (
       });
       roadNodes.push(material);
 
-      // Station sculpture group at y + 0.72
       const stationGroup = new THREE.Group();
       stationGroup.position.copy(point).add(new THREE.Vector3(0, 0.72, 0));
       roadmap.add(stationGroup);
@@ -471,7 +323,6 @@ export function createWorld(host: HTMLElement, editor: HTMLElement, onFailure: (
       roadQuiet.push({ material: cageMat, opacity: 0.75 });
       stationGroup.add(new THREE.LineSegments(new THREE.EdgesGeometry(coreGeo), cageMat));
 
-      // Distinct architectural rings/satellites per milestone
       const orbitMaterial = new THREE.MeshBasicMaterial({
         color: i < 2 ? CYAN : LAVENDER,
         transparent: true,
@@ -482,7 +333,6 @@ export function createWorld(host: HTMLElement, editor: HTMLElement, onFailure: (
       roadQuiet.push({ material: orbitMaterial, opacity: orbitMaterial.opacity });
 
       if (i === 1) {
-        // 02 / Developer Preview (We Are Here): Dual tilted gimbal rings + tall active beacon spire
         for (let r = 0; r < 2; r++) {
           const gimbal = new THREE.Mesh(new THREE.TorusGeometry(0.62 + r * 0.14, 0.014, 8, 56), orbitMaterial);
           gimbal.rotation.set(0.9 + r * 0.5, r * 0.7, 0.3);
@@ -492,7 +342,6 @@ export function createWorld(host: HTMLElement, editor: HTMLElement, onFailure: (
         pillar.position.copy(point).add(new THREE.Vector3(0, 1.35, 0));
         roadmap.add(pillar);
       } else if (i === 2) {
-        // 03 / Plans and teams: 3 orbiting team satellite nodes around the core
         const teamRing = new THREE.Mesh(new THREE.TorusGeometry(0.68, 0.013, 8, 56), orbitMaterial);
         teamRing.rotation.x = 1.25;
         stationGroup.add(teamRing);
@@ -503,14 +352,12 @@ export function createWorld(host: HTMLElement, editor: HTMLElement, onFailure: (
           stationGroup.add(satMesh);
         }
       } else if (i === 3) {
-        // 04 / AI for everyone: 3 equatorial/meridian horizon rings
         for (let r = 0; r < 3; r++) {
           const hRing = new THREE.Mesh(new THREE.TorusGeometry(0.68 + r * 0.12, 0.013, 8, 60), orbitMaterial);
           hRing.rotation.set(r * 0.55, r * 0.8, 0.25);
           stationGroup.add(hRing);
         }
       } else {
-        // 01 / The foundation: Locked structural halo
         const fRing = new THREE.Mesh(new THREE.TorusGeometry(0.58, 0.015, 8, 52), orbitMaterial);
         fRing.rotation.x = Math.PI / 2;
         stationGroup.add(fRing);
@@ -611,7 +458,6 @@ export function createWorld(host: HTMLElement, editor: HTMLElement, onFailure: (
         const activeModule = focus >= 0 ? focus : Math.min(5, Math.floor(capProgress * 6));
         engine.update(capProgress, activeModule, morph, frame.time);
 
-        // Animate Playground -> Capabilities Corridor pulses
         corridorPulses.forEach((pulse, idx) => {
           const u = (frame.time * 0.32 + idx * 0.19) % 1;
           corridorCurves[idx].getPointAt(u, pulse.position);
@@ -640,7 +486,7 @@ export function createWorld(host: HTMLElement, editor: HTMLElement, onFailure: (
         groups.forEach((group, i) => {
           group.visible = i === 1 ? chapter > 2.03 && chapter < 2.85 : Math.abs(chapter - (i === 0 ? 0 : i + 1)) < 1.15;
         });
-        if (close > 0.001) groups.forEach((group, i) => { if (i !== 5) group.visible = false; });
+        if (close > 0.001) groups.forEach((group, i) => { if (i !== 4) group.visible = false; });
         roadQuiet.forEach(({ material, opacity: baseOpacity }) => {
           material.opacity = baseOpacity * (1 - 0.95 * close);
         });
@@ -667,30 +513,6 @@ export function createWorld(host: HTMLElement, editor: HTMLElement, onFailure: (
         roadNodes.forEach((material, i) => { material.emissiveIntensity = i === activeRoadNode ? 1.55 : 0.52; });
         roadGlows.forEach((material, i) => { material.opacity = (i === activeRoadNode ? 0.82 : 0.36) * (1 - close); });
 
-        // Animate Next Signal Relay Core, Horizon Rings & Converging Waveguide Pulses
-        const waitlistFade = 0.92 - 0.26 * smooth(frame.sections.waitlist ?? 0);
-        beacon.material.uniforms.uOpacity.value = waitlistFade;
-        relayCoreMat.opacity = waitlistFade;
-        relayPedestalMat.opacity = waitlistFade * 0.88;
-        relayNucleusMat.opacity = waitlistFade;
-        relayWireMat.opacity = waitlistFade * 0.9;
-        relaySpireMat.opacity = waitlistFade * 0.52;
-        relayPathMat.opacity = waitlistFade * 0.44;
-        relayCrystal.rotation.y = frame.time * 0.38;
-        relayCrystal.rotation.x = frame.time * 0.22;
-        relayNucleus.rotation.y = -frame.time * 0.6;
-        relayWire.rotation.y = -frame.time * 0.28;
-        relayInnerWire.rotation.z = frame.time * 0.32;
-        relayRings.forEach((ring, idx) => {
-          ring.rotation.z = frame.time * (0.3 - idx * 0.05) * (idx % 2 === 0 ? 1 : -1);
-          relayRingMats[idx].opacity = waitlistFade * (0.68 - idx * 0.12);
-        });
-        relayPulses.forEach((pulse, idx) => {
-          const u = (frame.time * 0.36 + idx * 0.16) % 1;
-          relayCurves[idx].getPointAt(u, pulse.position);
-        });
-
-        // Animate Builder Room desk holographic core and ambient light
         room.lamps[0].intensity = 34 + Math.sin(frame.time * 0.6) * 2;
         room.holo.core.rotation.y = frame.time * 0.7;
         room.holo.cage.rotation.y = -frame.time * 0.42;

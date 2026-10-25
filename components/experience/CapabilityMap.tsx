@@ -7,6 +7,14 @@ import { subscribeJourney } from "@/lib/experience/scroll";
 import { capabilityRecords } from "@/lib/experience/information-patterns";
 import { clamp } from "@/lib/experience/timeline";
 
+const BACKDROP_CODE_LINES = [
+  "async function routeSignal(input: PromptSignal, core: IntelligenceCore) {",
+  '  const locale = input.detectLanguage(["sv-SE", "en-US"]);',
+  "  const context = await core.memory.recall({ owner: input.userId });",
+  "  return core.dispatchWaveguide(input.capability, { locale, context });",
+  "}",
+];
+
 export default function CapabilityMap() {
   const { lang } = useLang();
   const sv = lang === "sv";
@@ -15,78 +23,123 @@ export default function CapabilityMap() {
   const [scrollActive, setScrollActive] = useState(0);
   const [hover, setHover] = useState(-1);
   const active = hover >= 0 ? hover : scrollActive;
+
   const capabilities = [
     {
       icon: FileText,
       title: sv ? "Skriv" : "Write",
       detail: sv ? "Mejl, rapporter, förslag." : "Emails, reports, proposals.",
+      file: "src/engine/01-write.ts",
       telemetry: sv ? "MODUL 01 · REDAKTIONELL SYNTES" : "MODULE 01 · EDITORIAL SYNTHESIS",
       architecture: sv ? "Skiktade dokumentplan + strukturflöde" : "Layered document planes + structural flow",
+      codeLines: [
+        'const draft = await budai.write({ lang: "sv-SE", format: "proposal" });',
+        "return draft.streamToWorkspace({ tone: memory.preferredVoice });",
+      ],
     },
     {
       icon: Workflow,
       title: sv ? "Automatisera" : "Automate",
       detail: sv ? "Rutiner till tydliga steg." : "Routines into clear steps.",
+      file: "src/engine/02-automate.ts",
       telemetry: sv ? "MODUL 02 · SEKVENTIELL PIPELINE" : "MODULE 02 · SEQUENTIAL PIPELINE",
       architecture: sv ? "Fyra kopplade exekveringssteg" : "Four interlocked execution stages",
+      codeLines: [
+        'export const flow = budai.automate({ trigger: "inbox.routine" });',
+        "await flow.runSteps([parseContext, verifyPolicy, dispatchSummary]);",
+      ],
     },
     {
       icon: BarChart3,
       title: sv ? "Besluta" : "Decide",
       detail: sv ? "Sammanfattningar och nästa steg." : "Summaries and next steps.",
+      file: "src/engine/03-decide.ts",
       telemetry: sv ? "MODUL 03 · ANALYTISKT PRISMA" : "MODULE 03 · ANALYTICAL PRISM",
       architecture: sv ? "Konvergerande val → rekommenderad väg" : "Converging options → recommended vector",
+      codeLines: [
+        "const matrix = await budai.decide({ options: thread.scenarios });",
+        'return matrix.rankRecommendations(["impact", "risk", "reversible"]);',
+      ],
     },
     {
       icon: Languages,
       title: sv ? "Svenska + engelska" : "Swedish + English",
       detail: sv ? "Byt språk. Behåll tonen." : "Switch language. Keep the tone.",
+      file: "src/engine/04-bilingual.ts",
       telemetry: sv ? "MODUL 04 · TVÅSPRÅKIG RESONANS" : "MODULE 04 · BILINGUAL RESONANCE",
       architecture: sv ? "Synkroniserad SV / EN dubbelhelix" : "Synchronized SV / EN double-helix bridge",
+      codeLines: [
+        'const bridge = await budai.bilingual({ pair: ["sv-SE", "en-US"] });',
+        'return bridge.preserveTone({ register: "nordic_professional" });',
+      ],
     },
     {
       icon: Network,
       title: sv ? "Minne" : "Memory",
       detail: sv ? "Sparar det du väljer." : "Keeps what you choose.",
+      file: "src/engine/05-memory.ts",
       telemetry: sv ? "MODUL 05 · KRISTALLINT MINNESVALV" : "MODULE 05 · CRYSTALLINE MEMORY VAULT",
       architecture: sv ? "Fyra lagrade kontextskikt med konto" : "Four retained context strata with account",
+      codeLines: [
+        "const ctx = await budai.memory.recall({ owner: auth.uid() });",
+        'return ctx.applyExplicitFacts({ rls: "strict_owner_only" });',
+      ],
     },
     {
       icon: AudioLines,
       title: sv ? "Bild och röst" : "Vision and voice",
       detail: sv ? "Ladda upp bilder, prata in." : "Upload images, speak prompts.",
+      file: "src/engine/06-multimodal.ts",
       telemetry: sv ? "MODUL 06 · OPTISK APERTUR & RÖSTVÅG" : "MODULE 06 · OPTICAL APERTURE & VOICE WAVE",
       architecture: sv ? "Visuell analys + direkt röstinmatning" : "Visual analysis + direct voice dictation",
+      codeLines: [
+        'const signal = await budai.perceive({ image, voice: stream("sv-SE") });',
+        "return signal.synthesizeMultimodalReply({ stream: true });",
+      ],
     },
   ];
-  const prompts = sv ? [
-    "Hjälp mig skriva ett tydligt och vänligt mejl.",
-    "Hjälp mig göra en återkommande arbetsuppgift till tydliga steg.",
-    "Hjälp mig jämföra två alternativ och välja nästa steg.",
-    "Hjälp mig skriva om en kort text på svenska och engelska med samma ton.",
-    "Hjälp mig formulera hur jag vill att mina svar ska vara.",
-    "Vad kan du hjälpa mig förstå från en bild? Jag bifogar den sedan.",
-  ] : [
-    "Help me write a clear, friendly email.",
-    "Help me turn a recurring work task into clear steps.",
-    "Help me compare two options and choose a next step.",
-    "Help me rewrite a short text in Swedish and English with the same tone.",
-    "Help me describe how I like my responses to be written.",
-    "What can you help me understand from an image? I will attach one next.",
-  ];
-  useEffect(() => subscribeJourney(frame => {
-    const el = root.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const p = clamp(-rect.top / Math.max(1, rect.height - frame.height + 100));
-    el.dataset.progress = p.toFixed(4);
-    el.style.setProperty("--capability-progress", String(p));
-    const i = Math.min(5, Math.floor(p * 6));
-    if (i !== previous.current) { previous.current = i; setScrollActive(i); }
-  }), []);
+
+  const prompts = sv
+    ? [
+        "Hjälp mig skriva ett tydligt och vänligt mejl.",
+        "Hjälp mig göra en återkommande arbetsuppgift till tydliga steg.",
+        "Hjälp mig jämföra två alternativ och välja nästa steg.",
+        "Hjälp mig skriva om en kort text på svenska och engelska med samma ton.",
+        "Hjälp mig formulera hur jag vill att mina svar ska vara.",
+        "Vad kan du hjälpa mig förstå från en bild? Jag bifogar den sedan.",
+      ]
+    : [
+        "Help me write a clear, friendly email.",
+        "Help me turn a recurring work task into clear steps.",
+        "Help me compare two options and choose a next step.",
+        "Help me rewrite a short text in Swedish and English with the same tone.",
+        "Help me describe how I like my responses to be written.",
+        "What can you help me understand from an image? I will attach one next.",
+      ];
+
+  useEffect(
+    () =>
+      subscribeJourney(frame => {
+        const el = root.current;
+        if (!el) return;
+        const rect = el.getBoundingClientRect();
+        const p = clamp(-rect.top / Math.max(1, rect.height - frame.height + 100));
+        el.dataset.progress = p.toFixed(4);
+        el.style.setProperty("--capability-progress", String(p));
+        const i = Math.min(5, Math.floor(p * 6));
+        if (i !== previous.current) {
+          previous.current = i;
+          setScrollActive(i);
+        }
+      }),
+    []
+  );
+
   useEffect(() => {
     window.dispatchEvent(new CustomEvent("budai:capability-focus", { detail: active }));
-    return () => { window.dispatchEvent(new CustomEvent("budai:capability-focus", { detail: -1 })); };
+    return () => {
+      window.dispatchEvent(new CustomEvent("budai:capability-focus", { detail: -1 }));
+    };
   }, [active]);
 
   const rows = capabilityRecords();
@@ -96,16 +149,58 @@ export default function CapabilityMap() {
     <div ref={root} className="capability-system" data-active={active} data-capability-system>
       <div className="capability-sticky">
         <div className="capability-index">
-          <div className="capability-matrix-header"><span>03 / INTELLIGENCE, ASSEMBLED</span><span>06 MODULES</span></div>
-          <h3>{sv ? "Ett system." : "One system."}<br /><span>{sv ? "Många möjligheter." : "Many possibilities."}</span></h3>
-          <div className="capability-modules">{capabilities.map(({ icon: Icon, title, detail }, i) => (
-            <a href="#playground" className={`capability-module ${active === i ? "is-active" : ""}`} key={i} onClick={() => window.dispatchEvent(new CustomEvent("budai:prompt", { detail: prompts[i] }))} onPointerEnter={() => setHover(i)} onPointerLeave={() => setHover(-1)} onFocus={() => setHover(i)} onBlur={() => setHover(-1)}>
-              <b>0{i + 1}</b><Icon size={16} /><span><strong>{title}</strong><small>{detail}</small></span><ArrowUpRight className="capability-arrow" size={14} />
-            </a>
-          ))}</div>
-          <p className="capability-matrix-note">{sv ? "Utforska i den riktiga Playground" : "Explore in the real Playground"}<ArrowUpRight size={12} /></p>
+          <div className="capability-matrix-header">
+            <span>03 / THE LIVING INTELLIGENCE ENGINE</span>
+            <span>06 MODULES</span>
+          </div>
+          <h3>
+            {sv ? "Ett system." : "One system."}
+            <br />
+            <span>{sv ? "Många möjligheter." : "Many possibilities."}</span>
+          </h3>
+          <div className="capability-modules">
+            {capabilities.map(({ icon: Icon, title, detail, file }, i) => (
+              <a
+                href="#playground"
+                className={`capability-module ${active === i ? "is-active" : ""}`}
+                key={i}
+                onClick={() => window.dispatchEvent(new CustomEvent("budai:prompt", { detail: prompts[i] }))}
+                onPointerEnter={() => setHover(i)}
+                onPointerLeave={() => setHover(-1)}
+                onFocus={() => setHover(i)}
+                onBlur={() => setHover(-1)}
+              >
+                <b>0{i + 1}</b>
+                <Icon size={16} />
+                <span>
+                  <strong>{title}</strong>
+                  <small>{detail}</small>
+                </span>
+                <code className="capability-module-file">{file.replace("src/engine/", "")}</code>
+                <ArrowUpRight className="capability-arrow" size={14} />
+              </a>
+            ))}
+          </div>
+          <p className="capability-matrix-note">
+            {sv ? "Utforska i den riktiga Playground" : "Explore in the real Playground"}
+            <ArrowUpRight size={12} />
+          </p>
         </div>
+
         <div className="capability-viewport" aria-hidden="true" data-capability-viewport>
+          {/* Dimensional 3D Code Depth Backdrop behind the 3D Living Intelligence Core */}
+          <div className="capability-code-depth-backdrop">
+            <div className="code-depth-plane code-depth-far">
+              {BACKDROP_CODE_LINES.map((line, idx) => (
+                <span key={idx}>{line}</span>
+              ))}
+            </div>
+            <div className="code-depth-plane code-depth-mid">
+              <span>{`// ACTIVE MODULE: ${currentCap.file}`}</span>
+              <span>{currentCap.codeLines[0]}</span>
+            </div>
+          </div>
+
           <div className="capability-drawing-fallback">
             <svg viewBox="-1.9 -2.4 3.8 4.8" aria-hidden="true">
               <defs>
@@ -145,13 +240,38 @@ export default function CapabilityMap() {
               </g>
             </svg>
           </div>
-          <div className="capability-viewport-top"><span>BUDAI / INTELLIGENCE CORE &amp; PATHWAYS</span><span>001 — 006</span></div>
-          <div className="capability-active-readout">
-            <span className="capability-readout-kicker"><i />{currentCap.telemetry}</span>
-            <strong>{currentCap.title}</strong>
-            <small>{currentCap.architecture}</small>
+
+          <div className="capability-viewport-top">
+            <span>BUDAI / LIVING INTELLIGENCE ENGINE · CODE &amp; PATHWAYS</span>
+            <span>001 — 006</span>
           </div>
-          <div className="capability-viewport-bottom"><span>{sv ? "EN GEMENSAM INTELLIGENSKÄRNA" : "ONE SHARED INTELLIGENCE CORE"}</span><span>CORE → PATHWAY → MODULE</span></div>
+
+          <div className="capability-active-readout" data-living-code-console>
+            <div className="capability-readout-head">
+              <span className="capability-readout-kicker">
+                <i />
+                {currentCap.telemetry}
+              </span>
+              <code className="capability-readout-file">{currentCap.file}</code>
+            </div>
+            <div className="capability-readout-code">
+              {currentCap.codeLines.map((line, lIdx) => (
+                <div key={lIdx} className="capability-code-row">
+                  <b>0{lIdx + 1}</b>
+                  <span>{line}</span>
+                </div>
+              ))}
+            </div>
+            <div className="capability-readout-foot">
+              <strong>{currentCap.title}</strong>
+              <small>{currentCap.architecture}</small>
+            </div>
+          </div>
+
+          <div className="capability-viewport-bottom">
+            <span>{sv ? "KOD → INTELLIGENSKÄRNA → MODUL" : "CODE → INTELLIGENCE CORE → MODULE"}</span>
+            <span>SV / EN · LIVE ENGINE</span>
+          </div>
         </div>
       </div>
     </div>

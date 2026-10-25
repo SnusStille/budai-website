@@ -53,8 +53,7 @@ for (const width of [390, 360]) test(`mobile ${width}: full-height neural perspe
   await to(page, "[data-access-architecture]");
   await expect.poll(async () => Number(await world.getAttribute("data-access-morph"))).toBeGreaterThan(.9);
   await page.screenshot({ path:`test-results/access-architecture-${width}.png` });
-  await to(page,".next-signal-approach");
-  await page.screenshot({ path:`test-results/next-signal-${width}.png` });
+  await expect(page.locator(".next-signal-approach, .next-signal-beacon")).toHaveCount(0);
   await to(page,"#waitlist");
   await expect(page.getByRole("textbox", { name:"Email",exact:true })).toBeVisible();
   await expect(page.getByRole("button",{ name:"Join the waitlist",exact:true })).toBeEnabled();

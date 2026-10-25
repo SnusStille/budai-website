@@ -23,6 +23,7 @@ import { Check as CheckIcon, X as XIcon, User as UserIcon, Building2 as Building
 import { useLang } from "@/components/ui/LanguageContext";
 import BudAILogo from "@/components/ui/BudAILogo";
 import CapabilityMap from "@/components/experience/CapabilityMap";
+import Waitlist from "@/components/sections/Waitlist";
 
 const capabilities = [
   {
@@ -248,6 +249,10 @@ export default function Capabilities() {
         <CapabilityMap />
         <div className="plans-heading"><span>{sv ? "Välj din väg" : "Choose your way in"}</span><p>{sv ? "Börja gratis. Väx när du är redo." : "Start free. Grow when you’re ready."}</p></div>
         <div className="access-architecture" data-access-architecture aria-hidden="true">
+          <div className="access-code-header">
+            <span>BUDAI / UNIFIED CORE ARCHITECTURE · 03 TIERS</span>
+            <code>{`export const tier = budai.scale({ core: "shared", mode: "basic" | "consumer" | "business" });`}</code>
+          </div>
           <div className="access-fallback">
             <svg viewBox="-5 -2.1 10 4.2" width="100%" height="100%">
               <path d="M -3.3 0 Q -1.65 -0.18 0 0 T 3.3 0" fill="none" stroke="#7ee0f4" strokeOpacity="0.48" strokeWidth="0.024" />
@@ -273,7 +278,23 @@ export default function Capabilities() {
               })}
             </svg>
           </div>
-          <div className="access-labels"><span>01 / BASIC<small>{sv ? "Tillgänglig nu · Personlig kärna" : "Available now · Personal core"}</small></span><span>02 / CONSUMER<small>{sv ? "Kommer snart · Utökat minne" : "Coming soon · Deep memory"}</small></span><span>03 / BUSINESS<small>{sv ? "Kommer snart · Teamkonstellation" : "Coming soon · Team constellation"}</small></span></div>
+          <div className="access-labels">
+            <span>
+              <code>core.tier(&quot;basic&quot;)</code>
+              01 / BASIC
+              <small>{sv ? "Tillgänglig nu · Personlig kärna" : "Available now · Personal core"}</small>
+            </span>
+            <span>
+              <code>core.tier(&quot;consumer&quot;)</code>
+              02 / CONSUMER
+              <small>{sv ? "Kommer snart · Utökat minne" : "Coming soon · Deep memory"}</small>
+            </span>
+            <span>
+              <code>core.tier(&quot;business&quot;)</code>
+              03 / BUSINESS
+              <small>{sv ? "Kommer snart · Teamkonstellation" : "Coming soon · Team constellation"}</small>
+            </span>
+          </div>
         </div>
         <div className="plan-comparison grid md:grid-cols-3 gap-4 mb-5" data-plan-comparison>
           {plans.map((pl, i) => (
@@ -322,13 +343,13 @@ export default function Capabilities() {
             </ScrollReveal>
           ))}
         </div>
-        <p className="mb-16 text-center text-sm text-muted/80 max-w-2xl mx-auto">
+        <p className="mb-10 text-center text-sm text-muted/80 max-w-2xl mx-auto">
           {sv
             ? "Samma AI i alla paket. Basic har minst credits och kortast minne. Betalpaketen låser upp mer användning, längre minne och teamfunktioner."
             : "Same AI in every plan. Basic has the fewest credits and the shortest memory. Paid plans unlock more usage, longer memory and team features."}
         </p>
 
-
+        <Waitlist />
 
       </div>
     </section>
