@@ -1,11 +1,10 @@
 "use client";
 
 import { ArrowDown, ArrowRight, FileText, Languages, Zap } from "lucide-react";
-import BudAILogo from "@/components/ui/BudAILogo";
 import { useLang } from "@/components/ui/LanguageContext";
 import { StilledevLink } from "@/components/ui/BudAILogo";
 
-/** Semantic landing content; the single persistent brain is owned by LoadingScreen. */
+/** Stable editorial landing. No brain, logo scene, canvas or opening controller. */
 export default function Hero() {
   const { t, lang } = useLang();
   const sv = lang === "sv";
@@ -17,9 +16,9 @@ export default function Hero() {
 
   return (
     <section id="intelligence" className="hero-universe" aria-labelledby="hero-title">
-      <div className="hero-architecture" aria-hidden="true"><span /><span /><span /></div>
+      <div className="hero-light" aria-hidden="true"/>
       <div className="hero-content">
-        <div className="hero-eyebrow"><BudAILogo size="xs" animated={false} className="!h-5 !w-5" />{t.hero.badge}<span className="hero-edition">BUDAI / 00</span></div>
+        <div className="hero-eyebrow"><i className="signal-dot" aria-hidden="true"/>{t.hero.badge}<span className="hero-edition">BUDAI / 00</span></div>
         <h1 id="hero-title">
           <span>{t.hero.title1}</span>
           <span className="hero-title-accent">{t.hero.title2}</span>
@@ -34,6 +33,7 @@ export default function Hero() {
         <p className="hero-product-note">{sv ? "En yta för dig hemma och för teamet på jobbet — inte ännu ett generiskt chatbot-skal." : "One surface for you at home and the team at work — not another generic chatbot shell."}</p>
         <p className="hero-credit">{sv ? "Utvecklad av " : "Built by "}<StilledevLink /> <span>·</span> Sweden</p>
       </div>
+      <div className="hero-signal" aria-hidden="true"><span>INTELLIGENCE</span><div><i/></div><span>INTERACTION</span></div>
       <div className="hero-bottom">
         <span><i /> 00 — {sv ? "INTELLIGENS" : "THE INTELLIGENCE CORE"}</span>
         <a href="#playground">{sv ? "Från tanke till handling" : "From intelligence to action"}<ArrowDown size={14} /></a>

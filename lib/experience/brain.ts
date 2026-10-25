@@ -4,7 +4,7 @@ import { ORIGINAL_REGION_POSES } from "./brain-story";
 export type BrainMotion = { kind:"intro"|"hero"|"journey"; progress:number; entry?:number };
 export const BRAIN_STORY_ORIGIN = -6.25;
 export const PLAYGROUND_PLANE_Z = -12.8;
-const HERO = { x:0, y:.18, z:-1.65, yaw:-.25, tilt:.10 };
+const INTRO_END = { x:0, y:.18, z:-.38, yaw:.03, tilt:.02 };
 export function originalStageAt(progress:number) {
   return Math.min(3,Math.floor(clamp((progress-.075)/.55)*4));
 }
@@ -13,10 +13,10 @@ export function originalStageAt(progress:number) {
  */
 export function brainCameraAt({ kind, progress, entry=1 }: BrainMotion) {
   const p=clamp(progress);
-  if (kind==="hero") return {...HERO};
+  if (kind==="hero") return {...INTRO_END};
   if (kind==="intro") {
     const travel=smooth(clamp((p-.12)/.76));
-    return {x:.1*Math.sin(p*Math.PI),y:lerp(.25,HERO.y,smooth(p)),z:lerp(4.9,HERO.z,travel),yaw:lerp(-.14,HERO.yaw,smooth(p)),tilt:lerp(.12,HERO.tilt,smooth(p))};
+    return {x:.1*Math.sin(p*Math.PI),y:lerp(.25,INTRO_END.y,smooth(p)),z:lerp(4.9,INTRO_END.z,travel),yaw:lerp(-.14,INTRO_END.yaw,smooth(p)),tilt:lerp(.12,INTRO_END.tilt,smooth(p))};
   }
   const tour=clamp((p-.075)/.55)*3;
   const a=Math.min(2,Math.floor(tour)), t=smooth(tour-a);
@@ -26,25 +26,24 @@ export function brainCameraAt({ kind, progress, entry=1 }: BrainMotion) {
   const settle=smooth(clamp((p-.57)/.2));
   return {
     x:.075*Math.sin(p*Math.PI*2),
-    y:lerp(lerp(HERO.y,.25,smooth(entry)),.03,flight),
+    y:lerp(lerp(INTRO_END.y,.25,smooth(entry)),.03,flight),
     z:BRAIN_STORY_ORIGIN+lerp(lerp(4.6,4.1,smooth(p/.56)),-2.8,flight),
-    yaw:lerp(lerp(HERO.yaw,yaw,smooth(entry)),0,settle),
-    tilt:lerp(lerp(HERO.tilt,tilt,smooth(entry)),0,settle),
+    yaw:lerp(lerp(INTRO_END.yaw,yaw,smooth(entry)),0,settle),
+    tilt:lerp(lerp(INTRO_END.tilt,tilt,smooth(entry)),0,settle),
   };
 }
+/** Only the recovered brain. Branding is never a render target for this scene. */
 export function brainVisualAt(motion:BrainMotion) {
-  if (motion.kind==="hero") return {identity:1,offset:0,neural:0,focus:-1};
-  if (motion.kind==="intro") return {identity:smooth((motion.progress-.57)/.38),offset:0,neural:smooth((motion.progress-.3)/.3),focus:-1};
-  return {identity:1-smooth(motion.entry??1),offset:BRAIN_STORY_ORIGIN,neural:smooth((motion.progress-.58)/.25),focus:motion.progress<.67?originalStageAt(motion.progress):-1};
+  if(motion.kind!=="journey")return {offset:0,neural:0,focus:-1};
+  return {offset:BRAIN_STORY_ORIGIN,neural:smooth((motion.progress-.58)/.25),focus:motion.progress<.67?originalStageAt(motion.progress):-1};
 }
 export function brainJourneyProgress(y:number,top:number,height:number,viewport:number) {
   return clamp((y-top)/Math.max(1,height-viewport));
 }
 /** Stable target: lens changes, never framebuffers on every scroll tick. */
 export function brainFovAt(motion:BrainMotion|undefined,height:number,mobile:boolean) {
-  const initial=Math.min(1,370/Math.max(1,height));
-  const lens=mobile?lerp(initial,1,motion?.kind==="journey"?clamp(motion.entry??1):0):1;
-  return 2*Math.atan(Math.tan(.87/2)/lens);
+  if(motion?.kind!=="journey")return mobile?1.35:.87;
+  return .87;
 }
 export function playgroundArrivalAt(progress:number) {
   return smooth((progress-.68)/.32);

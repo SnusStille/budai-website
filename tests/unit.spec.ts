@@ -70,7 +70,7 @@ test("code reveal is deterministic, monotonic, bounded, and preserves every sour
 test("mobile brain uses one full-height target and a finite reversible perspective lens", () => {
   const hero = brainFovAt({ kind:"hero", progress:0 }, 844, true);
   expect(hero).toBeGreaterThan(.87);
-  expect(brainFovAt({ kind:"journey", progress:0, entry:0 },844,true)).toBe(hero);
+  expect(brainFovAt({ kind:"journey", progress:0, entry:0 },844,true)).toBe(.87);
   expect(brainFovAt({ kind:"journey", progress:.5, entry:1 },844,true)).toBe(.87);
   expect(brainFovAt({ kind:"hero", progress:0 },1000,false)).toBe(.87);
   for (const height of [0, 370, 667, 844, 1200]) for (const entry of [0,.1,.5,.9,1]) {
@@ -93,10 +93,10 @@ test("world departure is reversible and its invisible landing state is genuinely
 test("opening actually crosses the cortex and resolves into the SAME final hero pose",()=>{
   const poses=Array.from({length:101},(_,i)=>brainCameraAt({kind:"intro",progress:i/100}));
   expect(poses.some(p=>p.z<.8&&p.z>-.8)).toBe(true);
-  expect(poses.at(-1)!.z).toBeLessThan(-1);
+  expect(poses.at(-1)!.z).toBeLessThan(0);
   const end=poses.at(-1)!,hero=brainCameraAt({kind:"hero",progress:0});
   for(const key of ["x","y","z","yaw","tilt"] as const)expect(end[key]).toBeCloseTo(hero[key],8);
-  expect(brainVisualAt({kind:"intro",progress:1}).identity).toBe(1);
+  expect(brainVisualAt({kind:"intro",progress:1})).not.toHaveProperty("identity");
   expect(brainCameraAt({kind:"journey",progress:.86}).z-BRAIN_STORY_ORIGIN).toBeLessThan(0);
   expect(playgroundProjectionAt(1)).toEqual({depth:0,tilt:0});
 });

@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowUpRight } from "lucide-react";
 import { useLang } from "@/components/ui/LanguageContext";
 import { subscribeJourney } from "@/lib/experience/scroll";
 import { ORIGINAL_BRAIN_STAGES } from "@/lib/experience/brain-story";
 import { smooth } from "@/lib/experience/timeline";
-import BrainFallback from "@/components/effects/BrainFallback";
+import BrainPoster from "@/components/effects/BrainPoster";
 
 /** Original four-stage tour recovered from 43f44c9, with the shared camera owner.
  * Semantic copy only: no private renderer, opening state, scroll listener or RAF.
@@ -15,11 +15,13 @@ export default function BrainScrollStory() {
   const {lang}=useLang();
   const sv=lang==="sv";
   const section=useRef<HTMLElement>(null);
+  const [poster,setPoster]=useState(true);
   useEffect(()=>subscribeJourney(frame=>{
     const node=section.current;if(!node)return;
     const p=frame.sections.signal??0;
     const enhanced=!frame.reduced&&document.documentElement.dataset.brainState==="ready";
     node.dataset.enhanced=String(enhanced);
+    setPoster(previous=>previous===!enhanced?previous:!enhanced);
     node.style.setProperty("--neural-progress",String(p));
     node.dataset.journeyProgress=p.toFixed(4);
     const skip=node.querySelector<HTMLAnchorElement>(".neural-hud-top>a");
@@ -41,7 +43,7 @@ export default function BrainScrollStory() {
           <p className="signal-meaning">{sv?"BudAI läser frågan, håller tråden och svarar på svenska eller engelska. Med ett konto minns det vad som är värt att minnas.":"BudAI reads the question, keeps the thread and answers in Swedish or English. With an account, it remembers what is worth remembering."}</p>
           <div className="signal-meaning-chips"><span>{sv?"Kontext":"Context"}</span><span>{sv?"Minne":"Memory"}</span><span>{sv?"Två språk":"Two languages"}</span></div>
         </div>
-        <div className="brain-journey-fallback" aria-hidden="true"><BrainFallback/></div>
+        {poster&&<div className="brain-journey-fallback" aria-hidden="true"><BrainPoster/></div>}
         <div className="original-brain-tour" data-original-brain-tour>
           {ORIGINAL_BRAIN_STAGES.map((stage,i)=>{
             const copy=sv?stage.sv:stage.en;

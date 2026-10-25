@@ -1,211 +1,181 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import BudAILogo from "@/components/ui/BudAILogo";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
-import dynamic from "next/dynamic";
-import { markIntroDone } from "@/components/effects/introState";
-import { INTRO_MS, INTRO_REVEAL_MS, INTRO_SESSION_KEY, nextIntroLetter } from "@/lib/experience/intro";
-import BrainFallback from "./BrainFallback";
-import { subscribeJourney, refreshJourney } from "@/lib/experience/scroll";
-import { smooth, clamp } from "@/lib/experience/timeline";
+import { markIntroDone } from "./introState";
+import BrainPoster from "./BrainPoster";
+import { INTRO_MS, INTRO_REVEAL_MS, INTRO_READY_MS, INTRO_SESSION_KEY } from "@/lib/experience/intro";
+import { refreshJourney, subscribeJourney } from "@/lib/experience/scroll";
+import { clamp, smooth } from "@/lib/experience/timeline";
 import type { BrainMotion } from "@/lib/experience/brain";
 
-const BrainFlight = dynamic(() => import("./BrainFlight"), { ssr: false });
-type Phase = "pending" | "playing" | "revealing" | "done";
+const useClientLayoutEffect=typeof window!=="undefined"?useLayoutEffect:useEffect;
 
-/**
- * One owner, one canvas, one clock. The brain is NOT unmounted at the handoff:
- * the very same canvas moves into the landing page. No section can launch an intro.
+type Phase="pending"|"preparing"|"playing"|"revealing"|"done";
+type Role="intro"|"journey"|null;
+type Renderer=typeof import("./BrainFlight")["default"];
+
+/** One opening owner. There is deliberately NO hero scene state.
+ * The opening is disposed at completion; only the separate, visible #signal
+ * narrative can subsequently request the same canonical brain renderer.
  */
 export default function LoadingScreen() {
-  const pathname = usePathname();
-  const [phase, setPhase] = useState<Phase>("pending");
-  const [letters, setLetters] = useState(0);
-  const [fallback, setFallback] = useState(false);
-  const [renderBrain, setRenderBrain] = useState(false);
-  const [ready, setReady] = useState(false);
-  const [coreVisible, setCoreVisible] = useState(true);
-  const coreVisibleRef = useRef(true);
-  const readyRef = useRef(false);
-  const stage = useRef<HTMLDivElement>(null);
-  const motion = useRef<BrainMotion>({ kind: "hero", progress: 0 });
-  const progressBar = useRef<HTMLSpanElement>(null);
-  const finish = useRef<() => void>(() => {});
+  const pathname=usePathname();
+  const [phase,setPhase]=useState<Phase>("pending");
+  const phaseRef=useRef<Phase>("pending");
+  const [role,setRole]=useState<Role>(null),roleRef=useRef<Role>(null);
+  const [Renderer,setRenderer]=useState<Renderer|null>(null);
+  const [ready,setReady]=useState(false);
+  const readyRef=useRef(false),disabled=useRef(false),failed=useRef(false);
+  const stage=useRef<HTMLDivElement|null>(null);
+  const motion=useRef<BrainMotion>({kind:"intro",progress:0});
+  const finish=useRef<(immediate?:boolean)=>void>(()=>{}),begin=useRef<()=>void>(()=>{});
+  const requestRole=(next:Role)=>{
+    if(roleRef.current===next)return;
+    roleRef.current=next;readyRef.current=false;setReady(false);setRole(next);
+  };
 
-  useEffect(() => {
-    if (pathname !== "/") { document.documentElement.dataset.budaiIntro = "done"; return; }
-    let alive = true;
-    let raf = 0;
-    let exitTimer = 0;
-    let assetTimer = 0;
-    let safety = 0;
-    let closing = false;
-    let completed = false;
-    let returnFocus = false;
-    const root = document.documentElement;
-    const win = window as Window & { __budaiIntroGuard?: number };
-    clearTimeout(win.__budaiIntroGuard);
-    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const nav = navigator as Navigator & { connection?: { saveData?: boolean } };
-    setRenderBrain(!media.matches && !nav.connection?.saveData);
-    setFallback(media.matches || !!nav.connection?.saveData);
+  useEffect(()=>{
+    if(pathname!=="/")return;
+    let live=true,raf=0,readiness=0,reveal=0,watchdog=0,closing=false;
+    const root=document.documentElement;
+    const media=matchMedia("(prefers-reduced-motion: reduce)");
+    const nav=navigator as Navigator&{connection?:{saveData?:boolean}};
+    const bootstrap=(window as Window&{__budaiIntroGuard?:number}).__budaiIntroGuard;
+    clearTimeout(bootstrap);
+    const change=(next:Phase)=>{phaseRef.current=next;setPhase(next);if(next!=="done")root.dataset.budaiIntro=next;};
+    let restoreFocus=false;
+    const preparedAt=performance.now();
+    const complete=()=>{
+      if(!live||phaseRef.current==="done")return;
+      closing=true;cancelAnimationFrame(raf);clearTimeout(readiness);clearTimeout(reveal);clearTimeout(watchdog);
+      begin.current=()=>{};finish.current=()=>{};
+      requestRole(null);change("done");root.dataset.brainState="idle";
+      try{sessionStorage.setItem(INTRO_SESSION_KEY,"1");}catch{/* optional */}
+      const main=document.getElementById("main");
+      if(main){main.inert=false;main.removeAttribute("aria-busy");if(restoreFocus)main.focus({preventScroll:true});}
 
-    const complete = () => {
-      if (!alive || completed) return;
-      completed = true;
-      // Timeout / reduced-motion completion is an entry too, not a replay on reload.
-      try { sessionStorage.setItem(INTRO_SESSION_KEY, "1"); } catch { /* storage is optional */ }
-      closing = true;
-      cancelAnimationFrame(raf);
-      clearTimeout(exitTimer);
-      clearTimeout(assetTimer);
-      clearTimeout(safety);
-      finish.current = () => {};
-      root.dataset.budaiIntro = "done";
-      if (returnFocus) {
-        const main = document.getElementById("main");
-        if (main) { main.inert = false; main.focus({ preventScroll: true }); }
-      }
-      motion.current = { kind: "hero", progress: 0 };
-      setPhase("done");
-      markIntroDone();
+    };
+    const end=(immediate=false)=>{
+      if(!live||closing||phaseRef.current==="done")return;
+      closing=true;cancelAnimationFrame(raf);clearTimeout(readiness);
+      restoreFocus=!!document.activeElement?.closest("[data-global-loader]");
+      change("revealing");
+      reveal=window.setTimeout(complete,immediate?0:INTRO_REVEAL_MS);
+    };
+    finish.current=end;
+    begin.current=()=>{
+      // A late shader/import cannot restart a completed or timed-out opening.
+      if(!live||closing||phaseRef.current!=="preparing")return;
+      if(root.dataset.budaiIntro==="done"){complete();return;}
+      if(performance.now()-preparedAt>INTRO_READY_MS){requestRole(null);end();return;}
+      clearTimeout(readiness);change("playing");
+      const started=performance.now();
+      const tick=(now:number)=>{
+        if(!live||closing)return;
+        const p=clamp((now-started)/INTRO_MS);
+        motion.current={kind:"intro",progress:p};
+        if(p>=1)end();else raf=requestAnimationFrame(tick);
+      };
+      raf=requestAnimationFrame(tick);
+    };
+    const preferences=()=>{
+      disabled.current=media.matches||!!nav.connection?.saveData;
+      if(disabled.current){requestRole(null);end(true);}
       refreshJourney();
     };
-    const end = () => {
-      if (closing || !alive) return;
-      closing = true;
-      returnFocus = !!document.activeElement?.closest("[data-global-loader]");
-      cancelAnimationFrame(raf);
-      clearTimeout(assetTimer);
-      try { sessionStorage.setItem(INTRO_SESSION_KEY, "1"); } catch { /* storage is optional */ }
-      setLetters(5);
-      setPhase("revealing");
-      root.dataset.budaiIntro = "revealing";
-      exitTimer = window.setTimeout(complete, media.matches ? 0 : INTRO_REVEAL_MS);
+    disabled.current=media.matches||!!nav.connection?.saveData;
+    const shouldOpen=(root.dataset.budaiIntro==="preparing"||root.dataset.budaiIntro==="playing")&&!disabled.current;
+    if(shouldOpen){
+      change("preparing");motion.current={kind:"intro",progress:0};requestRole("intro");
+      // Preparation uses a raster of THIS seeded model at THIS exact first pose,
+      // not the former, unrelated hand-drawn SVG or a logo/suspense fallback.
+      readiness=window.setTimeout(()=>{requestRole(null);end();},INTRO_READY_MS);
+      watchdog=window.setTimeout(complete,INTRO_READY_MS+INTRO_MS+INTRO_REVEAL_MS+250);
+    }else complete();
+    const key=(e:KeyboardEvent)=>{if(e.key==="Escape")end(disabled.current);};
+    window.addEventListener("keydown",key);media.addEventListener("change",preferences);
+    return()=>{
+      live=false;cancelAnimationFrame(raf);clearTimeout(readiness);clearTimeout(reveal);clearTimeout(watchdog);
+      window.removeEventListener("keydown",key);media.removeEventListener("change",preferences);
+      begin.current=()=>{};finish.current=()=>{};requestRole(null);
     };
-    finish.current = end;
+  },[pathname]);
 
-    if (root.dataset.budaiIntro !== "playing" || media.matches) {
-      complete();
-    } else {
-      setPhase("playing");
-      motion.current = { kind: "intro", progress: 0 };
-      const start = performance.now();
-      let previousLetters = 0;
-      let lastLetterAt = 0;
-      setLetters(0);
-      // Only the brain is relevant to this intro. Neither the developer room nor
-      // the Playground is an asset dependency. A failed/slow GPU never gates entry.
-      assetTimer = window.setTimeout(() => {
-        if (!readyRef.current && alive) setFallback(true);
-      }, 1600);
-      const tick = (now: number) => {
-        if (!alive || closing) return;
-        const elapsed = now - start;
-        motion.current = { kind: "intro", progress: clamp(elapsed / INTRO_MS) };
-        const n = nextIntroLetter(previousLetters, elapsed, elapsed - lastLetterAt);
-        if (n !== previousLetters) { previousLetters = n; lastLetterAt = elapsed; setLetters(n); }
-        progressBar.current?.style.setProperty("transform", `scaleX(${Math.min(1, elapsed / INTRO_MS)})`);
-        if (elapsed >= INTRO_MS && previousLetters === 5 && elapsed - lastLetterAt >= 260) end();
-        else raf = requestAnimationFrame(tick);
-      };
-      raf = requestAnimationFrame(tick);
-    }
-
-    const onKey = (event: KeyboardEvent) => { if (event.key === "Escape") end(); };
-    const onMotion = () => {
-      const disabled = media.matches || !!nav.connection?.saveData;
-      setRenderBrain(!disabled); setFallback(disabled);
-      readyRef.current = false; setReady(false);
-      if (media.matches) end();
-    };
-    window.addEventListener("keydown", onKey);
-    media.addEventListener("change", onMotion);
-    // A timeout, not just rAF: the page is released even in a background tab.
-    if (!completed) safety = window.setTimeout(complete, INTRO_MS + INTRO_REVEAL_MS + 500);
-    return () => {
-      alive = false;
-      cancelAnimationFrame(raf);
-      clearTimeout(exitTimer);
-      clearTimeout(assetTimer);
-      clearTimeout(safety);
-      window.removeEventListener("keydown", onKey);
-      media.removeEventListener("change", onMotion);
-      finish.current = () => {};
-    };
-  }, [pathname]);
-
-  useEffect(() => {
-    if (pathname !== "/") return;
-    return subscribeJourney(frame => {
-      if (!stage.current || !frame.time) return;
-      const signal = frame.bounds.signal;
-      const p = frame.sections.signal ?? 0;
-      const entering = signal ? smooth(clamp((frame.y - signal.top + frame.height * .9) / (frame.height * .9))) : 0;
-      const focused = frame.active === "playground" && !!document.activeElement?.closest("[data-playground-arrival]");
-      const direct = location.hash === "#playground" && frame.y >= (frame.bounds.playground?.top ?? Infinity) - frame.height*.4;
-      const opacity = focused || direct ? 0 : 1 - smooth(clamp((p - .86) / .14));
-      stage.current.style.setProperty("--core-entry", String(entering));
-      stage.current.style.setProperty("--core-scroll", String(1 - opacity));
-      stage.current.style.setProperty("--core-offset", "0px");
-      stage.current.dataset.positioned = "true";
-      document.documentElement.dataset.corePositioned = "true";
-      const visible = opacity > .001;
-      if (visible !== coreVisibleRef.current) { coreVisibleRef.current = visible; setCoreVisible(visible); }
-      if (document.documentElement.dataset.budaiIntro === "done") {
-        motion.current = { kind: entering > .001 ? "journey" : "hero", progress: p, entry: entering };
-        stage.current.dataset.coreScene = entering > .001 ? "journey" : "hero";
+  useEffect(()=>{
+    if(pathname!=="/")return;
+    return subscribeJourney(frame=>{
+      if(phaseRef.current!=="done")return;
+      const section=document.getElementById("signal");
+      // Eligibility is based on the actual current DOM, not a cached pre-route
+      // journey frame. No stale scroll restoration can wake a hero brain.
+      const rect=section?.getBoundingClientRect();
+      const inStory=!!rect&&scrollY>1&&frame.active!=="intelligence"&&rect.top<innerHeight*.72&&rect.bottom>innerHeight*.08;
+      const p=frame.sections.signal??0;
+      const engaged=!!document.activeElement?.closest("[data-playground-arrival]")&&frame.active==="playground";
+      const direct=location.hash==="#playground"&&frame.y>=(frame.bounds.playground?.top??Infinity)-frame.height*.4;
+      const opacity=engaged||direct?0:1-smooth((p-.86)/.14);
+      const wanted=inStory&&opacity>.002&&!disabled.current&&!failed.current;
+      if(wanted)motion.current={kind:"journey",progress:p,entry:1};
+      requestRole(wanted?"journey":null);
+      rootState(wanted?readyRef.current?"ready":"pending":failed.current||disabled.current?"fallback":"idle");
+      if(stage.current&&rect){
+        stage.current.style.opacity=String(opacity);
+        stage.current.style.clipPath=`inset(${Math.max(0,rect.top)}px 0 ${Math.max(0,innerHeight-rect.bottom)}px 0)`;
       }
     });
-  }, [pathname]);
+  },[pathname]);
 
-  useEffect(() => {
-    const main = document.getElementById("main");
-    if (!main || pathname !== "/") return;
-    const active = document.documentElement.dataset.budaiIntro === "playing";
-    main.inert = active;
-    if (active) main.setAttribute("aria-busy", "true");
-    else main.removeAttribute("aria-busy");
-    return () => { main.inert = false; main.removeAttribute("aria-busy"); };
-  }, [pathname, phase]);
+  useClientLayoutEffect(()=>{
+    if(pathname!=="/"||phase!=="done")return;
+    // Publish completion only AFTER React removes the opening canvas/surface.
+    // DOM observers, route subscribers and the browser see one atomic handoff.
+    document.documentElement.dataset.budaiIntro="done";
+    markIntroDone();refreshJourney();
+  },[phase,pathname]);
 
-  useEffect(() => {
-    if (pathname !== "/") return;
-    document.documentElement.dataset.brainState = fallback || !renderBrain ? "fallback" : ready ? "ready" : "pending";
-    refreshJourney();
-    return () => { delete document.documentElement.dataset.brainState; };
-  },[fallback,renderBrain,ready,pathname]);
+  const needRenderer=role!==null;
+  useEffect(()=>{
+    if(!needRenderer||Renderer)return;
+    let live=true;
+    import("./BrainFlight").then(module=>{if(live)setRenderer(()=>module.default);}).catch(()=>{
+      if(!live)return;failed.current=true;requestRole(null);rootState("fallback");finish.current();
+    });
+    return()=>{live=false;};
+  },[needRenderer,Renderer]);
 
-  if (pathname !== "/") return null;
+  useEffect(()=>{
+    const main=document.getElementById("main");if(!main||pathname!=="/")return;
+    const busy=phase==="preparing"||phase==="playing";
+    main.inert=busy;if(busy)main.setAttribute("aria-busy","true");else main.removeAttribute("aria-busy");
+    return()=>{main.inert=false;main.removeAttribute("aria-busy");};
+  },[phase,pathname]);
 
-  return (
-    <>
-      <div className="intro-backdrop" aria-hidden="true" />
-      <div ref={stage} className="intelligence-stage" data-intelligence-stage data-phase={phase} data-fallback={fallback || !renderBrain} aria-hidden="true">
-        <div className="intelligence-frame">
-          <div className="intelligence-halo" />
-          {(fallback || !renderBrain) && <BrainFallback identity={phase === "done"} />}
-          {renderBrain && !fallback && (
-            <BrainFlight mode="ambient" motion={motion} active={coreVisible || phase === "playing" || phase === "revealing"} settled={phase === "revealing" || phase === "done"} activity={phase === "playing" && letters >= 3 ? .5 : .08} onReady={() => { readyRef.current = true; setReady(true); }} onFail={() => setFallback(true)} />
-          )}
-          <span className="core-coordinate core-coordinate-a">NEURAL ARCHITECTURE / 001</span>
-          <span className="core-coordinate core-coordinate-b">INTELLIGENCE → CREATION</span>
-          <div className="core-caption"><span />{phase === "done" ? "CONFLUENCE / A LIVING IDENTITY" : ready ? "NEURAL SYSTEM" : "INITIALIZING"}<small>BUILT BY STILLEDEV · SWEDEN</small></div>
-        </div>
+  const onReady=()=>{
+    readyRef.current=true;setReady(true);
+    if(roleRef.current==="intro")begin.current();
+    else if(roleRef.current==="journey"){rootState("ready");refreshJourney();}
+  };
+  const onFail=()=>{
+    failed.current=true;requestRole(null);rootState("fallback");finish.current();refreshJourney();
+  };
+  if(pathname!=="/")return null;
+  const Scene=Renderer;
+  const canvas=Scene?<Scene mode="intro" motion={motion} active onReady={onReady} onFail={onFail}/>:null;
+  return <>
+    {phase!=="done"&&<div className="opening-surface" data-global-loader data-opening-phase={phase} role="status" aria-label="Entering BudAI" aria-live="polite">
+      <div className="opening-brain-frame">
+        {!ready&&<BrainPoster opening/>}
+        {role==="intro"&&canvas}
       </div>
-      {phase !== "done" && (
-        <div className="intro-interface" data-global-loader role="status" aria-label="Initializing BudAI" aria-live="polite">
-          <div className="intro-topline"><span>STILLEDEV</span><span className="intro-brand-status"><BudAILogo size="xs" animated={false} />INTELLIGENCE, INITIALIZED.</span></div>
-          <div className="intro-wordmark" aria-label="BUDAI">
-            <span data-intro-word aria-hidden="true">{"BUDAI".slice(0, letters)}</span><i aria-hidden="true" />
-          </div>
-          <div className="intro-bottomline">
-            <div className="intro-progress"><span ref={progressBar} /></div>
-            <div><span>{letters < 5 ? "AWAKENING THE CORE" : "FROM INTELLIGENCE TO CREATION"}</span><button type="button" onClick={() => finish.current()}>Skip intro <kbd>esc</kbd></button></div>
-          </div>
-        </div>
-      )}
-    </>
-  );
+      <div className="opening-credit"><span>STILLEDEV</span><span>NEURAL SYSTEM / 001</span></div>
+      <div className="opening-caption"><span>INTELLIGENCE → INTERACTION</span><button type="button" onClick={()=>finish.current()}>Skip intro <kbd>esc</kbd></button></div>
+    </div>}
+    {role==="journey"&&<div ref={node=>{
+      stage.current=node;
+      const rect=document.getElementById("signal")?.getBoundingClientRect();
+      if(node&&rect)node.style.clipPath=`inset(${Math.max(0,rect.top)}px 0 ${Math.max(0,innerHeight-rect.bottom)}px 0)`;
+    }} className="brain-passage-stage" data-intelligence-stage data-scene-role="journey" aria-hidden="true">{canvas}</div>}
+  </>;
 }
+function rootState(state:string){document.documentElement.dataset.brainState=state;}

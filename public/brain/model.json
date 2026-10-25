@@ -1,0 +1,10 @@
+{
+  "id": "budai-neural-43f44c9",
+  "seed": 43044,
+  "source": "Original repository BrainFlight SDF; deterministic sampling; no imported atlas/model",
+  "poster": "Actual BrainFlight first frame, fixed intro progress 0 and light time 1.9",
+  "variants": [
+    "entry-desktop.webp",
+    "entry-mobile.webp"
+  ]
+}

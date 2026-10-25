@@ -11,7 +11,8 @@
     "test:unit": "node scripts/test-browser.mjs unit.spec.ts",
     "test:e2e": "node scripts/test-browser.mjs experience.spec.ts arrival.spec.ts cinematic.spec.ts cinematic-mobile.spec.ts brand.spec.ts product.spec.ts",
     "typecheck": "tsc --noEmit",
-    "brand:generate": "node --experimental-strip-types scripts/generate-brand.mjs"
+    "brand:generate": "node --experimental-strip-types scripts/generate-brand.mjs",
+    "brain:poster": "node scripts/generate-brain-poster.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",
