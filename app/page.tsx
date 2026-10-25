@@ -95,11 +95,11 @@ export default function Home() {
         <FeedbackButton />
         <LazyEgg />
         <Hero />
-        <HeroAsk />
-        <WhatIsBudAI />
         <ErrorBoundary>
           <AIPlayground />
         </ErrorBoundary>
+        <HeroAsk />
+        <WhatIsBudAI />
         <Capabilities />
         <About />
         <Waitlist />

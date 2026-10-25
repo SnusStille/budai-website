@@ -5,20 +5,14 @@ import { motion } from "framer-motion";
 import { ArrowRight, FileText, Languages, Zap, ChevronDown } from "lucide-react";
 import { useLang } from "@/components/ui/LanguageContext";
 import Magnetic from "@/components/ui/Magnetic";
-import { isIntroDone, subscribeIntro } from "@/components/effects/introState";
-import AICore from "@/components/effects/AICore";
 import dynamic from "next/dynamic";
 const ParticleCore = dynamic(() => import("@/components/effects/ParticleCore"), { ssr: false });
 const HeroBrainPanel = dynamic(() => import("@/components/sections/HeroBrainPanel"), { ssr: false });
-import Tilt3D from "@/components/ui/Tilt3D";
 import { StilledevLink } from "@/components/ui/BudAILogo";
 
 export default function Hero() {
   const { t, lang } = useLang();
   const [isMobile, setIsMobile] = useState(false);
-  const [introReady, setIntroReady] = useState(isIntroDone);
-  useEffect(() => subscribeIntro(() => setIntroReady(true)), []);
-
   useEffect(() => {
     const onResize = () => setIsMobile(window.innerWidth < 768);
     onResize();
@@ -46,25 +40,17 @@ export default function Hero() {
         ? "Sverige"
         : "Sweden";
 
-  if (!introReady) {
-    return <section className="relative min-h-[100svh]" aria-hidden />;
-  }
-
   return (
     <section className="relative min-h-[100svh] flex items-center justify-center overflow-hidden pt-24 pb-16">
       <ParticleCore />
-      {!isMobile ? (
-        <motion.div
-          className="absolute inset-0"
-          initial={{ opacity: 0, scale: 1.18 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 1.6, ease: [0.22, 1, 0.36, 1] }}
-        >
-          <HeroBrainPanel />
-        </motion.div>
-      ) : (
-        <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_50%_35%,rgba(0,229,255,0.12),transparent_60%)]" aria-hidden />
-      )}
+      <motion.div
+        className="absolute inset-0"
+        initial={{ opacity: 0, scale: 1.08 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
+      >
+        <HeroBrainPanel />
+      </motion.div>
       {!isMobile && (
         <>
           <div className="absolute top-[18%] left-1/2 -translate-x-1/2 w-[70vw] max-w-[900px] h-[50vw] max-h-[520px] bg-accent-cyan/[0.07] rounded-full blur-[120px] pointer-events-none" />
@@ -99,18 +85,6 @@ export default function Hero() {
             <span>{lang === "sv" ? "early access vid join" : "early access on join"}</span>
           </span>
         </motion.a>
-
-        {/* Single product mark — no rotating headline words */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.86 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.7, delay: 0.45, ease: [0.22, 1, 0.36, 1] }}
-          className="flex justify-center mb-5 sm:mb-7"
-        >
-          <Tilt3D max={isMobile ? 0 : 14}>
-            <AICore isMobile={isMobile} />
-          </Tilt3D>
-        </motion.div>
 
         <motion.h1
           initial={{ opacity: 0, y: 24 }}

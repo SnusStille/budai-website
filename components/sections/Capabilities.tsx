@@ -22,6 +22,7 @@ import SpotlightCard from "@/components/ui/SpotlightCard";
 import { Check as CheckIcon, X as XIcon, User as UserIcon, Building2 as BuildingIcon, Sparkles as SparkIcon } from "lucide-react";
 import { useLang } from "@/components/ui/LanguageContext";
 import BudAILogo from "@/components/ui/BudAILogo";
+import IntelligenceCore from "@/components/effects/IntelligenceCore";
 
 const capabilities = [
   {
@@ -243,6 +244,13 @@ export default function Capabilities() {
               : "BudAI is being built to become one of the best AIs ever, and that takes time. Free to try today. More credits, longer memory and team accounts when you need them."}
           </p>
         </ScrollReveal>
+
+        <div className="mb-14 overflow-hidden rounded-[2rem] border border-white/[0.08] bg-[#05050a]/70 px-4 py-8 sm:px-8">
+          <p className="text-center font-mono text-[11px] uppercase tracking-[0.3em] text-accent-cyan/70">
+            {sv ? "En kärna · många möjligheter" : "One core · many possibilities"}
+          </p>
+          <IntelligenceCore />
+        </div>
 
         <div className="grid md:grid-cols-3 gap-4 mb-5 bud-3d-in">
           {plans.map((pl, i) => (

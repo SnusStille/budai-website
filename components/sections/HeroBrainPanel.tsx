@@ -34,7 +34,16 @@ export default function HeroBrainPanel() {
   const { lang } = useLang();
   const [hovered, setHovered] = useState(-1);
   const [activity, setActivity] = useState(0);
+  const [progress, setProgress] = useState(0);
   const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    const update = () => setProgress(Math.max(0, Math.min(1, window.scrollY / (window.innerHeight * 0.9))));
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update, { passive: true });
+    return () => { window.removeEventListener("scroll", update); window.removeEventListener("resize", update); };
+  }, []);
 
   useEffect(() => {
     const onActivity = (e: Event) => {
@@ -55,9 +64,10 @@ export default function HeroBrainPanel() {
       {failed ? (
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_40%,rgba(0,229,255,0.14),transparent_60%)]" />
       ) : (
-        <div className="absolute inset-0 opacity-[0.6] [mask-image:radial-gradient(ellipse_at_center,black_40%,transparent_78%)]">
+        <div className="absolute inset-0 opacity-[0.86] [mask-image:radial-gradient(ellipse_at_center,black_42%,transparent_82%)]">
           <BrainFlight
-            mode="ambient"
+            mode="intro"
+            progress={progress}
             focus={hovered}
             activity={activity}
             interactive

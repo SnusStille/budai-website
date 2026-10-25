@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { ArrowRight, Check, Copy, Building2, User, Gift, Zap, MessageCircle, Mail } from "lucide-react";
 import ScrollReveal from "@/components/ui/ScrollReveal";
 import Confetti from "@/components/ui/Confetti";
+import IntelligenceCore from "@/components/effects/IntelligenceCore";
 import { addWaitlistUser, getWaitlistCount, getWaitlistStatus } from "@/lib/data";
 import WaitlistStatus from "@/components/sections/WaitlistStatus";
 import { useLang } from "@/components/ui/LanguageContext";
@@ -120,6 +121,7 @@ export default function Waitlist() {
   return (
     <section id="waitlist" className="relative section-hairline overflow-hidden py-24 md:py-32">
       <Confetti active={confetti} />
+      <div className="pointer-events-none absolute inset-0 opacity-45"><IntelligenceCore quiet /></div>
       <div className="pointer-events-none absolute left-1/2 top-1/2 h-[520px] w-[min(95vw,820px)] -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-r from-accent-cyan/[0.1] to-accent-purple/[0.12] blur-[130px]" />
 
       <div className="relative z-10 mx-auto max-w-3xl px-4 text-center sm:px-6">
