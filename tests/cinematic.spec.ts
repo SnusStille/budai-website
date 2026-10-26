@@ -98,6 +98,27 @@ test("one sparse information register organises six capabilities and three accur
   await expect(plans.getByText("Free", { exact: false }).first()).toBeVisible();
 });
 
+test("scrolling past Playground into Capabilities is smooth, pre-warmed, and free of back-and-forth jumps", async ({ page }) => {
+  await prepare(page);
+  await page.goto("/");
+  await move(page, "#playground", 60);
+  // WorldStage should pre-warm as soon as the user is in the Playground
+  await expect(page.locator("html")).toHaveAttribute("data-world-state", "ready", { timeout: 15000 });
+  const startY = await page.evaluate(() => window.scrollY);
+  const topsDown: number[] = [];
+  for (let step = 1; step <= 8; step++) {
+    await page.evaluate(y => window.scrollTo(0, y), startY + step * 140);
+    await page.waitForTimeout(35);
+    const rectTop = await page.locator("[data-capability-viewport]").evaluate(el => el.getBoundingClientRect().top);
+    topsDown.push(rectTop);
+  }
+  // Every downward scroll step must move the viewport up monotonically (or hold when sticky) without jumping backward
+  for (let i = 1; i < topsDown.length; i++) {
+    expect(topsDown[i]).toBeLessThanOrEqual(topsDown[i - 1] + 0.5);
+  }
+  await page.screenshot({ path: "test-results/post-playground-scroll-transition.png" });
+});
+
 test("05 / THE NEXT SIGNAL standalone section remains removed while early-access waitlist form and 05 Roadmap work cleanly", async ({ page }) => {
   await prepare(page);
   await page.goto("/#waitlist");

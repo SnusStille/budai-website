@@ -29,9 +29,10 @@ export default function WorldStage() {
     return () => media.removeEventListener("change", update);
   }, []);
   useEffect(() => subscribeJourney((frame) => {
-    // The world waits until the actual Playground approaches its output; the intro/hero never
-    // waits for Three.js, PMREM, the room or its editor.
-    if (frame.chapter > 2.08 || (frame.sections.playground ?? 0) > .65) setNear(true);
+    // Pre-warm the 3D world as soon as the visitor enters the neural story or Playground
+    // (while worldOpacityAt is still 0) so Capabilities never flashes a fallback-to-WebGL swap.
+    // At Hero (scrollY = 0), chapter is 0 so the intro/hero never downloads Three.js.
+    if (frame.chapter > 1.15 || (frame.sections.signal ?? 0) > .55 || (frame.sections.playground ?? 0) > .02) setNear(true);
   }), []);
 
   useEffect(() => {

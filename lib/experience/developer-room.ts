@@ -112,11 +112,12 @@ export function createDeveloperRoom(parent?: THREE.Object3D, editorWidth = 1080)
   };
 
   // Tangible product canvases for the Left (Live Website & Analytics Dashboard) and Right (Workflow & Mobile Build) displays
-  const createProductDisplayTexture = (variant: "dashboard" | "workflow") => {
-    const canvas = document.createElement("canvas");
-    canvas.width = 768;
-    canvas.height = 576;
-    const ctx = canvas.getContext("2d")!;
+  const drawProductDisplay = (
+    ctx: CanvasRenderingContext2D,
+    variant: "dashboard" | "workflow",
+    progress: number
+  ) => {
+    const p = clamp(progress, 0.15, 1);
     ctx.fillStyle = "#071320";
     ctx.fillRect(0, 0, 768, 576);
 
@@ -139,8 +140,8 @@ export function createDeveloperRoom(parent?: THREE.Object3D, editorWidth = 1080)
     ctx.fillStyle = "#d8f8ff";
     ctx.fillText(
       variant === "dashboard"
-        ? "CREATED PRODUCT 01 · WEBSITE & ANALYTICS DASHBOARD"
-        : "CREATED PRODUCT 02 · WORKFLOW & MOBILE INTERFACE",
+        ? `CREATED PRODUCT 01 · WEBSITE & ANALYTICS (${Math.round(p * 100)}%)`
+        : `CREATED PRODUCT 02 · WORKFLOW & MOBILE (${Math.round(p * 100)}%)`,
       48,
       34
     );
@@ -184,15 +185,16 @@ export function createDeveloperRoom(parent?: THREE.Object3D, editorWidth = 1080)
         ctx.fillText(k.val, kx + 18, 314);
       });
 
-      // Bottom Analytics Bar Chart
+      // Bottom Analytics Bar Chart growing progressively with scroll
       ctx.fillStyle = "#0a1c2e";
       ctx.fillRect(28, 368, 712, 178);
       ctx.strokeStyle = "#2b5872";
       ctx.strokeRect(28, 368, 712, 178);
       const bars = [68, 92, 84, 118, 108, 132, 144, 126, 148, 154];
       bars.forEach((bh, bIdx) => {
+        const scaledH = bh * 0.85 * clamp(p * 1.15, 0.3, 1);
         ctx.fillStyle = bIdx % 2 === 0 ? "#78d5ea" : "#6ee7b7";
-        ctx.fillRect(58 + bIdx * 66, 526 - bh, 42, bh * 0.85);
+        ctx.fillRect(58 + bIdx * 66, 526 - scaledH, 42, scaledH);
       });
     } else {
       // Structured 4-Step Workflow Board + Mobile App Companion Preview
@@ -203,10 +205,11 @@ export function createDeveloperRoom(parent?: THREE.Object3D, editorWidth = 1080)
         ["04 · REALITY", "Ready-to-ship output"],
       ];
       steps.forEach(([title, sub], sIdx) => {
+        const activeStep = p >= sIdx * 0.24;
         const sy = 84 + sIdx * 108;
-        ctx.fillStyle = "#0e263c";
+        ctx.fillStyle = activeStep ? "#0e263c" : "#091826";
         ctx.fillRect(28, sy, 430, 88);
-        ctx.strokeStyle = sIdx === 3 ? "#6ee7b7" : "#78d5ea";
+        ctx.strokeStyle = activeStep ? (sIdx === 3 ? "#6ee7b7" : "#78d5ea") : "#244358";
         ctx.lineWidth = 1.6;
         ctx.strokeRect(28, sy, 430, 88);
         ctx.fillStyle = "#e4fbff";
@@ -228,129 +231,29 @@ export function createDeveloperRoom(parent?: THREE.Object3D, editorWidth = 1080)
       ctx.fillText("MOBILE INTERFACE", 542, 118);
       for (let c = 0; c < 4; c++) {
         ctx.fillStyle = c === 0 ? "rgba(110, 231, 183, 0.28)" : "rgba(120, 213, 234, 0.2)";
-        ctx.fillRect(508, 144 + c * 92, 208, 74);
+        ctx.fillRect(508, 144 + c * 92, Math.round(208 * clamp(p * 1.2, 0.4, 1)), 74);
       }
     }
+  };
+
+  const createProductDisplay = (variant: "dashboard" | "workflow") => {
+    const canvas = document.createElement("canvas");
+    canvas.width = 768;
+    canvas.height = 576;
+    const ctx = canvas.getContext("2d")!;
+    drawProductDisplay(ctx, variant, 0.5);
     const texture = new THREE.CanvasTexture(canvas);
     texture.colorSpace = THREE.SRGBColorSpace;
-    return texture;
+    return { ctx, texture, lastStep: -1 };
   };
+
+  const leftDisplay = createProductDisplay("dashboard");
+  const rightDisplay = createProductDisplay("workflow");
 
   // Central display hosts the real DOM ProgressiveEditor via CSS3DRenderer.
   const central = makeMonitor(0, 2.05, -0.85, 6.5, 3.64, 0);
-  makeMonitor(-5.15, 1.85, -1.05, 3.4, 2.8, 0.36, createProductDisplayTexture("dashboard"));
-  makeMonitor(5.15, 1.85, -1.05, 3.4, 2.8, -0.36, createProductDisplayTexture("workflow"));
-
-  // ============================================================================
-  // FROM THOUGHT TO REALITY: 3D ASSEMBLING PRODUCT CREATIONS (Scroll-Driven)
-  // ============================================================================
-  const creationWireMat = new THREE.LineBasicMaterial({
-    color: "#9cf4ff",
-    transparent: true,
-    opacity: 0.85,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false,
-  });
-  const creationSolidMat = new THREE.MeshStandardMaterial({
-    color: "#102a3f",
-    emissive: "#1f6c88",
-    emissiveIntensity: 0.85,
-    metalness: 0.78,
-    roughness: 0.2,
-    transparent: true,
-    opacity: 0.9,
-  });
-  const creationEmeraldMat = new THREE.MeshBasicMaterial({
-    color: "#6ee7b7",
-    transparent: true,
-    opacity: 0.88,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false,
-  });
-
-  // 1. Left 3D Creation Assembly: Website Interface & Dashboard Cards assembling in 3D space
-  const websiteAssemblyGroup = new THREE.Group();
-  websiteAssemblyGroup.position.set(-4.35, 1.95, 0.45);
-  websiteAssemblyGroup.rotation.y = 0.34;
-  room.add(websiteAssemblyGroup);
-
-  const websiteParts: Array<{
-    mesh: THREE.Group;
-    startPos: [number, number, number];
-    endPos: [number, number, number];
-  }> = [];
-
-  const webSpecs: Array<{
-    w: number;
-    h: number;
-    startPos: [number, number, number];
-    endPos: [number, number, number];
-    accent?: boolean;
-  }> = [
-    { w: 2.35, h: 0.24, startPos: [-0.85, 1.45, 0.95], endPos: [0, 0.72, 0.12], accent: true }, // Website Nav Bar
-    { w: 2.35, h: 0.62, startPos: [-1.15, 0.45, 1.25], endPos: [0, 0.18, 0.16] },              // Hero Interface Card
-    { w: 1.1, h: 0.56, startPos: [-0.95, -0.85, 1.1], endPos: [-0.62, -0.52, 0.2] },            // Left Analytics Card
-    { w: 1.1, h: 0.56, startPos: [0.65, -0.95, 1.3], endPos: [0.62, -0.52, 0.2], accent: true }, // Right KPI Chart Card
-  ];
-
-  webSpecs.forEach(ws => {
-    const pGroup = new THREE.Group();
-    const pGeo = new RoundedBoxGeometry(ws.w, ws.h, 0.05, 2, 0.018);
-    pGroup.add(new THREE.Mesh(pGeo, creationSolidMat));
-    pGroup.add(new THREE.LineSegments(new THREE.EdgesGeometry(pGeo), creationWireMat));
-    if (ws.accent) {
-      const strip = new THREE.Mesh(new THREE.BoxGeometry(ws.w * 0.82, 0.035, 0.02), creationEmeraldMat);
-      strip.position.z = 0.032;
-      pGroup.add(strip);
-    }
-    pGroup.position.set(...ws.startPos);
-    websiteAssemblyGroup.add(pGroup);
-    websiteParts.push({ mesh: pGroup, startPos: ws.startPos, endPos: ws.endPos });
-  });
-
-  // 2. Right 3D Creation Assembly: Mobile Application Chassis & 3 Assembling UI Cards + Workflow Nodes
-  const mobileAssemblyGroup = new THREE.Group();
-  mobileAssemblyGroup.position.set(4.35, 1.88, 0.52);
-  mobileAssemblyGroup.rotation.y = -0.34;
-  room.add(mobileAssemblyGroup);
-
-  const phoneChassisGeo = new RoundedBoxGeometry(1.28, 2.24, 0.08, 3, 0.06);
-  const phoneChassis = new THREE.Mesh(phoneChassisGeo, graphite);
-  mobileAssemblyGroup.add(phoneChassis);
-  mobileAssemblyGroup.add(new THREE.LineSegments(new THREE.EdgesGeometry(phoneChassisGeo), creationWireMat));
-
-  const mobileParts: Array<{
-    mesh: THREE.Group;
-    startPos: [number, number, number];
-    endPos: [number, number, number];
-  }> = [];
-
-  const mobSpecs: Array<{
-    w: number;
-    h: number;
-    startPos: [number, number, number];
-    endPos: [number, number, number];
-  }> = [
-    { w: 1.08, h: 0.36, startPos: [0.95, 1.25, 1.05], endPos: [0, 0.68, 0.07] },
-    { w: 1.08, h: 0.62, startPos: [1.25, 0.15, 1.2], endPos: [0, 0.06, 0.09] },
-    { w: 1.08, h: 0.42, startPos: [0.85, -1.05, 0.95], endPos: [0, -0.62, 0.07] },
-  ];
-
-  mobSpecs.forEach((ms, idx) => {
-    const mGroup = new THREE.Group();
-    const mGeo = new RoundedBoxGeometry(ms.w, ms.h, 0.04, 2, 0.015);
-    mGroup.add(new THREE.Mesh(mGeo, creationSolidMat));
-    mGroup.add(new THREE.LineSegments(new THREE.EdgesGeometry(mGeo), creationWireMat));
-    const badge = new THREE.Mesh(
-      new THREE.BoxGeometry(ms.w * 0.72, 0.032, 0.015),
-      idx === 1 ? creationEmeraldMat : light
-    );
-    badge.position.z = 0.028;
-    mGroup.add(badge);
-    mGroup.position.set(...ms.startPos);
-    mobileAssemblyGroup.add(mGroup);
-    mobileParts.push({ mesh: mGroup, startPos: ms.startPos, endPos: ms.endPos });
-  });
+  makeMonitor(-5.15, 1.85, -1.05, 3.4, 2.8, 0.36, leftDisplay.texture);
+  makeMonitor(5.15, 1.85, -1.05, 3.4, 2.8, -0.36, rightDisplay.texture);
 
   // 3. Desk Holographic Creation Pedestal (Left foreground of desk)
   const holoGroup = new THREE.Group();
@@ -444,41 +347,20 @@ export function createDeveloperRoom(parent?: THREE.Object3D, editorWidth = 1080)
     holo: { core: holoCore, cage: holoCage, orbit: holoOrbit },
     update(builderProgress: number, time: number) {
       const p = smooth(clamp(builderProgress));
-      // 1. Assemble the 3D Website & Dashboard blocks on the left as scroll progresses
-      websiteParts.forEach((part, idx) => {
-        const localP = smooth(clamp((p - idx * 0.12) / 0.55));
-        part.mesh.position.set(
-          lerp(part.startPos[0], part.endPos[0], localP),
-          lerp(part.startPos[1], part.endPos[1], localP) + Math.sin(time * 1.3 + idx) * 0.02 * (1 - localP),
-          lerp(part.startPos[2], part.endPos[2], localP)
-        );
-        part.mesh.rotation.set(
-          (1 - localP) * 0.25,
-          (1 - localP) * -0.32,
-          (1 - localP) * 0.12
-        );
-      });
-
-      // 2. Assemble the 3D Mobile Interface & Workflow blocks on the right as scroll progresses
-      mobileParts.forEach((part, idx) => {
-        const localP = smooth(clamp((p - idx * 0.14) / 0.55));
-        part.mesh.position.set(
-          lerp(part.startPos[0], part.endPos[0], localP),
-          lerp(part.startPos[1], part.endPos[1], localP) + Math.cos(time * 1.4 + idx) * 0.02 * (1 - localP),
-          lerp(part.startPos[2], part.endPos[2], localP)
-        );
-        part.mesh.rotation.set(
-          (1 - localP) * -0.22,
-          (1 - localP) * 0.35,
-          0
-        );
-      });
-
-      // 3. Brighten and clarify studio lighting as creations materialize into reality
-      creationSolidMat.emissiveIntensity = lerp(0.65, 1.25, p);
-      cyanLamp.intensity = lerp(30, 46, p) + Math.sin(time * 0.6) * 2;
-      fillLamp.intensity = lerp(24, 38, p);
-      deskLamp.intensity = lerp(12, 24, p);
+      const step = Math.round(p * 20);
+      if (step !== leftDisplay.lastStep) {
+        leftDisplay.lastStep = step;
+        drawProductDisplay(leftDisplay.ctx, "dashboard", step / 20);
+        leftDisplay.texture.needsUpdate = true;
+      }
+      if (step !== rightDisplay.lastStep) {
+        rightDisplay.lastStep = step;
+        drawProductDisplay(rightDisplay.ctx, "workflow", step / 20);
+        rightDisplay.texture.needsUpdate = true;
+      }
+      cyanLamp.intensity = lerp(30, 44, p) + Math.sin(time * 0.6) * 2;
+      fillLamp.intensity = lerp(24, 36, p);
+      deskLamp.intensity = lerp(12, 22, p);
     },
   };
 }

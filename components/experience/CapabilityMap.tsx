@@ -8,20 +8,14 @@ import { capabilityRecords } from "@/lib/experience/information-patterns";
 import { tokenizeLine } from "@/lib/experience/code";
 import { clamp } from "@/lib/experience/timeline";
 
-const BACKDROP_CODE_LINES = [
-  "async function routeSignal(input: PromptSignal, core: IntelligenceCore) {",
-  '  const locale = input.detectLanguage(["sv-SE", "en-US"]);',
-  "  const context = await core.memory.recall({ owner: input.userId });",
-  "  return core.dispatchWaveguide(input.capability, { locale, context });",
-  "}",
-];
-
 export default function CapabilityMap() {
   const { lang } = useLang();
   const sv = lang === "sv";
   const root = useRef<HTMLDivElement>(null);
   const previous = useRef(-1);
+  const previousChars = useRef(-1);
   const [scrollActive, setScrollActive] = useState(0);
+  const [typedRatio, setTypedRatio] = useState(0.65);
   const [hover, setHover] = useState(-1);
   const active = hover >= 0 ? hover : scrollActive;
 
@@ -34,8 +28,9 @@ export default function CapabilityMap() {
       telemetry: sv ? "MODUL 01 · REDAKTIONELL SYNTES" : "MODULE 01 · EDITORIAL SYNTHESIS",
       architecture: sv ? "Skiktade dokumentplan + strukturflöde" : "Layered document planes + structural flow",
       codeLines: [
+        "import { BudAI, DocumentCard } from '@budai/studio';",
         'const draft = await budai.write({ lang: "sv-SE", format: "proposal" });',
-        "return draft.streamToWorkspace({ tone: memory.preferredVoice });",
+        "return <DocumentCard status='VERIFIED' payload={draft} />;",
       ],
     },
     {
@@ -46,6 +41,7 @@ export default function CapabilityMap() {
       telemetry: sv ? "MODUL 02 · SEKVENTIELL PIPELINE" : "MODULE 02 · SEQUENTIAL PIPELINE",
       architecture: sv ? "Fyra kopplade exekveringssteg" : "Four interlocked execution stages",
       codeLines: [
+        "import { Playbook, StageGate } from '@budai/workflows';",
         'export const flow = budai.automate({ trigger: "inbox.routine" });',
         "await flow.runSteps([parseContext, verifyPolicy, dispatchSummary]);",
       ],
@@ -58,6 +54,7 @@ export default function CapabilityMap() {
       telemetry: sv ? "MODUL 03 · ANALYTISKT PRISMA" : "MODULE 03 · ANALYTICAL PRISM",
       architecture: sv ? "Konvergerande val → rekommenderad väg" : "Converging options → recommended vector",
       codeLines: [
+        "import { MatrixEngine, Telemetry } from '@budai/research';",
         "const matrix = await budai.decide({ options: thread.scenarios });",
         'return matrix.rankRecommendations(["impact", "risk", "reversible"]);',
       ],
@@ -70,6 +67,7 @@ export default function CapabilityMap() {
       telemetry: sv ? "MODUL 04 · TVÅSPRÅKIG RESONANS" : "MODULE 04 · BILINGUAL RESONANCE",
       architecture: sv ? "Synkroniserad SV / EN dubbelhelix" : "Synchronized SV / EN double-helix bridge",
       codeLines: [
+        "import { LocaleBridge, DualPane } from '@budai/i18n';",
         'const bridge = await budai.bilingual({ pair: ["sv-SE", "en-US"] });',
         'return bridge.preserveTone({ register: "nordic_professional" });',
       ],
@@ -82,6 +80,7 @@ export default function CapabilityMap() {
       telemetry: sv ? "MODUL 05 · KRISTALLINT MINNESVALV" : "MODULE 05 · CRYSTALLINE MEMORY VAULT",
       architecture: sv ? "Fyra lagrade kontextskikt med konto" : "Four retained context strata with account",
       codeLines: [
+        "import { ContextVault, RLSPolicy } from '@budai/memory';",
         "const ctx = await budai.memory.recall({ owner: auth.uid() });",
         'return ctx.applyExplicitFacts({ rls: "strict_owner_only" });',
       ],
@@ -94,6 +93,7 @@ export default function CapabilityMap() {
       telemetry: sv ? "MODUL 06 · OPTISK APERTUR & RÖSTVÅG" : "MODULE 06 · OPTICAL APERTURE & VOICE WAVE",
       architecture: sv ? "Visuell analys + direkt röstinmatning" : "Visual analysis + direct voice dictation",
       codeLines: [
+        "import { VisionParser, VoiceStream } from '@budai/multimodal';",
         'const signal = await budai.perceive({ image, voice: stream("sv-SE") });',
         "return signal.synthesizeMultimodalReply({ stream: true });",
       ],
@@ -132,6 +132,12 @@ export default function CapabilityMap() {
           previous.current = i;
           setScrollActive(i);
         }
+        const local = clamp((p - i / 6) * 6, 0.25, 1);
+        const step = Math.round(local * 24);
+        if (step !== previousChars.current) {
+          previousChars.current = step;
+          setTypedRatio(step / 24);
+        }
       }),
     []
   );
@@ -145,9 +151,25 @@ export default function CapabilityMap() {
 
   const rows = capabilityRecords();
   const currentCap = capabilities[active] ?? capabilities[0];
+  const fullCode = currentCap.codeLines.join("\n");
+  const charBudget = hover >= 0 ? fullCode.length : Math.max(8, Math.floor(typedRatio * fullCode.length));
+  let remainingChars = charBudget;
+  let activeCodeLine = 0;
+  const typedCodeLines = currentCap.codeLines.map((line, idx) => {
+    if (remainingChars <= 0) return "";
+    if (remainingChars >= line.length) {
+      remainingChars -= line.length + 1;
+      activeCodeLine = idx;
+      return line;
+    }
+    const partial = line.slice(0, remainingChars);
+    remainingChars = 0;
+    activeCodeLine = idx;
+    return partial;
+  });
 
   return (
-    <div ref={root} className="capability-system" data-active={active} data-capability-system data-infinite-code-chamber>
+    <div ref={root} className="capability-system" data-active={active} data-progress="0.0000" data-capability-system data-infinite-code-chamber>
       <div className="capability-sticky">
         <div className="capability-index">
           <div className="capability-matrix-header">
@@ -189,29 +211,6 @@ export default function CapabilityMap() {
         </div>
 
         <div className="capability-viewport" aria-hidden="true" data-capability-viewport>
-          {/* Dimensional 3D Code Depth Backdrop behind the 3D Living Intelligence Core */}
-          <div className="capability-code-depth-backdrop">
-            <div className="code-depth-plane code-depth-far">
-              {BACKDROP_CODE_LINES.map((line, idx) => (
-                <span key={idx}>
-                  {tokenizeLine(line).map((tk, tIdx) => (
-                    <span key={tIdx} className={`token-${tk.tone}`}>{tk.text}</span>
-                  ))}
-                </span>
-              ))}
-            </div>
-            <div className="code-depth-plane code-depth-mid">
-              <span className="token-comment">{`// ACTIVE MODULE: ${currentCap.file}`}</span>
-              {currentCap.codeLines.map((line, idx) => (
-                <span key={idx}>
-                  {tokenizeLine(line).map((tk, tIdx) => (
-                    <span key={tIdx} className={`token-${tk.tone}`}>{tk.text}</span>
-                  ))}
-                </span>
-              ))}
-            </div>
-          </div>
-
           <div className="capability-drawing-fallback">
             <svg viewBox="-2.2 -1.8 4.4 3.6" aria-hidden="true">
               {/* Concentric Chamber Portal Frames */}
@@ -268,13 +267,14 @@ export default function CapabilityMap() {
               <code className="capability-readout-file">{currentCap.file}</code>
             </div>
             <div className="capability-readout-code">
-              {currentCap.codeLines.map((line, lIdx) => (
+              {typedCodeLines.map((line, lIdx) => (
                 <div key={lIdx} className="capability-code-row">
                   <b>0{lIdx + 1}</b>
                   <span>
                     {tokenizeLine(line).map((tk, tIdx) => (
                       <span key={tIdx} className={`token-${tk.tone}`}>{tk.text}</span>
                     ))}
+                    {lIdx === activeCodeLine && <i className="editor-cursor" />}
                   </span>
                 </div>
               ))}

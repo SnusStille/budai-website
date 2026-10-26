@@ -167,12 +167,12 @@ export function createWorld(host: HTMLElement, editor: HTMLElement, onFailure: (
     const outputSignal = createPointField([{ x: 0, y: 0, z: 0, lane: -1 }], 5.4);
     scene.add(outputSignal);
 
-    // 03 / THE LIVING INTELLIGENCE ENGINE: Dimensional 3D Code Panels, Core, 6 Pathways & Access Stations.
+    // 03 / CAPABILITIES 3D EXPERIENCES: 03A Infinite Code Chamber & 03B AI Assembly Line.
     const capabilities = addEnvironment(2);
     const engine = createCapabilityEngine(capabilities);
-    const capViewport = document.querySelector<HTMLElement>("[data-capability-viewport]");
-    const capSystem = document.querySelector<HTMLElement>("[data-capability-system]");
-    const accessViewport = document.querySelector<HTMLElement>("[data-access-architecture]");
+    let capViewport = document.querySelector<HTMLElement>("[data-capability-viewport]");
+    let capSystem = document.querySelector<HTMLElement>("[data-capability-system]");
+    let accessViewport = document.querySelector<HTMLElement>("[data-access-architecture]");
     const engineCenter = new THREE.Vector3(48, 1.4, -32);
     const projected = new THREE.Vector3();
 
@@ -447,14 +447,30 @@ export function createWorld(host: HTMLElement, editor: HTMLElement, onFailure: (
         camera.position.fromArray(pose.position);
         camera.lookAt(new THREE.Vector3(...pose.target));
         camera.updateMatrixWorld();
+        if (!capViewport?.isConnected) capViewport = document.querySelector<HTMLElement>("[data-capability-viewport]");
+        if (!capSystem?.isConnected) capSystem = document.querySelector<HTMLElement>("[data-capability-system]");
+        if (!accessViewport?.isConnected) accessViewport = document.querySelector<HTMLElement>("[data-access-architecture]");
         const engineRect = capViewport?.getBoundingClientRect();
         const accessRect = accessViewport?.getBoundingClientRect();
         const morph = accessRect ? smooth(clamp((frame.height * 0.95 - accessRect.top) / (frame.height * 0.6))) : 0;
         const assemblyProgress = accessRect ? clamp((frame.height * 0.85 - accessRect.top) / Math.max(1, accessRect.height + frame.height * 0.35)) : 0;
-        const targetRect = morph > 0.05 ? accessRect : engineRect;
-        const capWeight = smooth(clamp((1 - Math.abs(frame.chapter - 3) - 0.25) / 0.75));
+        const targetRect =
+          engineRect && accessRect
+            ? {
+                left: lerp(engineRect.left, accessRect.left, morph),
+                top: lerp(engineRect.top, accessRect.top, morph),
+                width: lerp(engineRect.width, accessRect.width, morph),
+                height: lerp(engineRect.height, accessRect.height, morph),
+                bottom: Math.max(engineRect.bottom, accessRect.bottom),
+              }
+            : accessRect ?? engineRect;
+        const capWeight = smooth(clamp((3.85 - frame.chapter) / 0.65));
         const inWindow = !!targetRect && targetRect.bottom > -50 && targetRect.top < frame.height + 100;
-        engine.root.visible = inWindow;
+        const anchorX = chapter < 3 ? pose.target[0] : 48;
+        const anchorZ = chapter < 3 ? pose.target[2] : -32;
+        capabilities.position.set(anchorX, 0, anchorZ);
+        engineCenter.set(anchorX, 1.4, anchorZ);
+        engine.root.visible = inWindow && capWeight > 0.001;
         const capProgress = Number(capSystem?.dataset.progress ?? 0);
         const activeModule = focus >= 0 ? focus : Math.min(5, Math.floor(capProgress * 6));
         engine.update(capProgress, activeModule, morph, frame.time, assemblyProgress);
@@ -466,13 +482,15 @@ export function createWorld(host: HTMLElement, editor: HTMLElement, onFailure: (
 
         const output = smooth((chapter - 2.05) / 0.85);
         outputSignal.position.set(lerp(24, 48, output), lerp(0.8, 1.4, output), lerp(-16, -32, output));
-        outputSignal.visible = chapter > 2.02 && chapter < 2.9;
+        outputSignal.visible = chapter > 2.02 && chapter < 2.35 && !inWindow;
         if (targetRect && inWindow && capWeight > 0.001) {
           const units = worldUnitsPerPixel(camera.position.distanceTo(engineCenter), camera.fov, frame.height);
-          const scale = units * Math.min((targetRect.height * 0.88) / lerp(4.0, 3.0, morph), (targetRect.width * 0.94) / lerp(4.2, 8.1, morph));
+          const scale = units * Math.min((targetRect.height * 0.88) / lerp(4.1, 3.1, morph), (targetRect.width * 0.94) / lerp(5.35, 8.6, morph));
           engine.root.scale.setScalar(scale);
-          engine.root.rotation.y = lerp((capProgress - 0.5) * -0.18, (assemblyProgress - 0.5) * 0.16, morph);
-          engine.root.rotation.x = lerp((capProgress - 0.5) * 0.08, (0.5 - assemblyProgress) * 0.06, morph);
+          engine.root.position.x = lerp(0.24, 0, morph) * scale;
+          engine.root.position.y = 1.4 + lerp(0.26, 0.04, morph) * scale;
+          engine.root.rotation.y = lerp((capProgress - 0.5) * -0.1, (assemblyProgress - 0.5) * 0.12, morph);
+          engine.root.rotation.x = lerp((capProgress - 0.5) * 0.04, (0.5 - assemblyProgress) * 0.04, morph);
           projected.copy(engineCenter).project(camera);
           const offset = domViewOffset(projected, targetRect, frame.width, frame.height);
           camera.setViewOffset(frame.width, frame.height, offset.x * capWeight, offset.y * capWeight, frame.width, frame.height);
@@ -490,7 +508,12 @@ export function createWorld(host: HTMLElement, editor: HTMLElement, onFailure: (
         key.target.position.fromArray(pose.target);
         key.target.updateMatrixWorld();
         groups.forEach((group, i) => {
-          group.visible = i === 1 ? chapter > 2.03 && chapter < 2.85 : Math.abs(chapter - (i === 0 ? 0 : i + 1)) < 1.15;
+          group.visible =
+            i === 1
+              ? chapter > 2.03 && chapter < 2.35 && !inWindow
+              : i === 2
+              ? inWindow && capWeight > 0.001
+              : Math.abs(chapter - (i === 0 ? 0 : i + 1)) < 1.15;
         });
         if (close > 0.001) groups.forEach((group, i) => { if (i !== 4) group.visible = false; });
         roadQuiet.forEach(({ material, opacity: baseOpacity }) => {
