@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { MessageSquare, X } from "lucide-react";
 import { useLang } from "@/components/ui/LanguageContext";
 
@@ -17,6 +17,22 @@ export default function FeedbackButton() {
   const [kind, setKind] = useState("idea");
   const [msg, setMsg] = useState("");
   const [state, setState] = useState<"idle" | "sending" | "done" | "error">("idle");
+
+  useEffect(() => {
+    const show = () => {
+      setOpen(true);
+      setState("idle");
+    };
+    const esc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("budai:feedback", show);
+    window.addEventListener("keydown", esc);
+    return () => {
+      window.removeEventListener("budai:feedback", show);
+      window.removeEventListener("keydown", esc);
+    };
+  }, []);
 
   const send = async () => {
     if (msg.trim().length < 3) return;

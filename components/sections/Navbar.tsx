@@ -260,6 +260,30 @@ export default function Navbar() {
                 </div>
               </div>
 
+              <div className="flex flex-wrap items-center gap-2 mt-3 px-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileOpen(false);
+                    window.dispatchEvent(new Event("budai:whats-new"));
+                  }}
+                  className="inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.03] px-3.5 py-2 text-xs font-medium text-white/85 hover:text-white"
+                >
+                  <Bell className="h-3.5 w-3.5 text-accent-cyan" />
+                  {lang === "sv" ? "Vad är nytt" : "What's new"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileOpen(false);
+                    window.dispatchEvent(new Event("budai:feedback"));
+                  }}
+                  className="inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.03] px-3.5 py-2 text-xs font-medium text-white/85 hover:text-white"
+                >
+                  {lang === "sv" ? "Skicka feedback" : "Send feedback"}
+                </button>
+              </div>
+
               <a
                 href="#waitlist"
                 onClick={() => setMobileOpen(false)}

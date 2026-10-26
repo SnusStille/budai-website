@@ -224,11 +224,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid message" }, { status: 400 });
     }
 
-    // Soft server quota when tables exist (single clean upsert after input validation)
+    // Soft server quota when tables exist: check before calling upstream AI, increment only on success
     const sb = adminSb();
+    const day = dayKey();
+    let userUsageRow: { messages?: number; images?: number; generations?: number } | null = null;
+    let guestUsageRow: { messages?: number; images?: number; generations?: number } | null = null;
     if (sb) {
       try {
-        const day = dayKey();
         if (user) {
           const { data: full } = await sb
             .from("usage_daily")
@@ -236,6 +238,7 @@ export async function POST(req: NextRequest) {
             .eq("user_id", user.id)
             .eq("day", day)
             .maybeSingle();
+          userUsageRow = full;
           const used = full?.messages ?? 0;
           if (used >= limitFor(tier, "messages")) {
             return NextResponse.json(
@@ -252,13 +255,6 @@ export async function POST(req: NextRequest) {
               );
             }
           }
-          await sb.from("usage_daily").upsert({
-            user_id: user.id,
-            day,
-            messages: used + 1,
-            images: (full?.images ?? 0) + (imageBase64 ? 1 : 0),
-            generations: full?.generations ?? 0,
-          });
         } else if (guestKey) {
           const { data } = await sb
             .from("usage_guest_daily")
@@ -266,6 +262,7 @@ export async function POST(req: NextRequest) {
             .eq("guest_key", guestKey)
             .eq("day", day)
             .maybeSingle();
+          guestUsageRow = data;
           const used = data?.messages ?? 0;
           if (used >= limitFor("guest", "messages")) {
             return NextResponse.json(
@@ -276,18 +273,36 @@ export async function POST(req: NextRequest) {
               { status: 429 }
             );
           }
-          await sb.from("usage_guest_daily").upsert({
-            guest_key: guestKey,
-            day,
-            messages: used + 1,
-            images: data?.images ?? 0,
-            generations: data?.generations ?? 0,
-          });
         }
       } catch {
         /* tables may not exist yet */
       }
     }
+
+    const commitUsage = async () => {
+      if (!sb) return;
+      try {
+        if (user) {
+          await sb.from("usage_daily").upsert({
+            user_id: user.id,
+            day,
+            messages: (userUsageRow?.messages ?? 0) + 1,
+            images: (userUsageRow?.images ?? 0) + (imageBase64 ? 1 : 0),
+            generations: userUsageRow?.generations ?? 0,
+          });
+        } else if (guestKey) {
+          await sb.from("usage_guest_daily").upsert({
+            guest_key: guestKey,
+            day,
+            messages: (guestUsageRow?.messages ?? 0) + 1,
+            images: guestUsageRow?.images ?? 0,
+            generations: guestUsageRow?.generations ?? 0,
+          });
+        }
+      } catch {
+        /* tables may not exist yet */
+      }
+    };
 
     if (wantStream) {
       const enc = new TextEncoder();
@@ -329,6 +344,7 @@ export async function POST(req: NextRequest) {
               }
             });
             await s.finalMessage();
+            await commitUsage();
             if (closed) return;
             const { clean, memory } = stripMemoryTag(full);
             if (clean.length > sent && !closed) {
@@ -385,6 +401,7 @@ export async function POST(req: NextRequest) {
       system: SYSTEM_PROMPT(lang, dual, concise, contextBlock + personaLine, !!imageBase64),
       messages: messages as Anthropic.MessageParam[],
     });
+    await commitUsage();
 
     const textBlock = response.content.find((c) => c.type === "text");
     let text = textBlock && textBlock.type === "text" ? textBlock.text : "";

@@ -55,27 +55,36 @@ export default function Footer() {
   const [showLegal, setShowLegal] = useState<string | null>(null);
   const groupsData = groups(lang);
 
+  useEffect(() => {
+    if (!showLegal) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setShowLegal(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [showLegal]);
+
   const legalContent: Record<string, { title: string; content: string[] }> = {
     privacy: {
       title: lang === "sv" ? "Integritetspolicy" : "Privacy Policy",
       content: [
         lang === "sv"
-          ? "BudAI värnar om din integritet. Vi samlar endast in data som är nödvändig för att tillhandahålla våra tjänster. All personlig information behandlas i enlighet med GDPR och lagras säkert på servrar inom EU."
-          : "BudAI values your privacy. We only collect data necessary to provide our services. All personal information is processed in accordance with GDPR and stored securely on servers within the EU.",
+          ? "BudAI värnar din integritet. Vi samlar bara in data som behövs för att leverera tjänsten (såsom väntelisteuppgifter, konto-e-post vid inloggning och kortlivade driftloggar). Personuppgifter behandlas enligt GDPR och lagras på säker infrastruktur."
+          : "BudAI values your privacy. We only collect data necessary to provide the service (such as waitlist details, account email if you sign in, and short-lived operational logs). Personal information is processed in line with GDPR and stored on secure infrastructure.",
         lang === "sv"
-          ? "Vi delar aldrig din data med tredje part utan ditt uttryckliga samtycke. Du har rätt att begära radering av dina data när som helst genom att kontakta oss på Stilleinc@hotmail.com."
-          : "We never share your data with third parties without your explicit consent. You have the right to request deletion of your data at any time by contacting us at Stilleinc@hotmail.com.",
+          ? "Vi säljer inte dina data och delar aldrig personuppgifter med tredje part utan laglig grund eller ditt samtycke. Du kan när som helst begära tillgång, rättelse eller radering genom att kontakta Stilleinc@hotmail.com."
+          : "We do not sell your data and never share personal data with third parties without a lawful basis or your consent. You can request access, correction, or deletion at any time by contacting Stilleinc@hotmail.com.",
       ],
     },
     terms: {
       title: lang === "sv" ? "Användarvillkor" : "Terms of Service",
       content: [
         lang === "sv"
-          ? "Genom att använda BudAI godkänner du dessa villkor. Tjänsten tillhandahålls i befintligt skick och vi garanterar inte att den alltid är tillgänglig eller felfri."
-          : "By using BudAI, you agree to these terms. The service is provided as-is and we do not guarantee that it will always be available or error-free.",
+          ? "Genom att använda BudAI godkänner du dessa villkor. Utvecklarförhandsvisningen tillhandahålls i befintligt skick och kan ändras, pausas eller ha dagliga kvoter utan föregående meddelande."
+          : "By using BudAI, you agree to these terms. The developer preview is provided as-is and may change, pause, or enforce daily quotas without prior notice.",
         lang === "sv"
-          ? "Du får inte använda BudAI för olagliga aktiviteter eller på ett sätt som skadar vår infrastruktur. Vi förbehåller oss rätten att stänga av konton som bryter mot dessa villkor."
-          : "You may not use BudAI for illegal activities or in a way that damages our infrastructure. We reserve the right to terminate accounts that violate these terms.",
+          ? "AI-svar kan innehålla fel — du ansvarar själv för hur du använder genererat innehåll. Använd inte BudAI för olaglig verksamhet eller för att missbruka infrastrukturen."
+          : "AI output can contain mistakes — you are responsible for how you use generated content. Do not use BudAI for illegal activities or to abuse the infrastructure.",
       ],
     },
     cookies: {
