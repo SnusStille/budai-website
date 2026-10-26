@@ -349,8 +349,15 @@ export async function POST(req: NextRequest) {
             }
           } catch (err) {
             if (!closed) {
-              console.error("Playground stream error:", err);
-              controller.enqueue(enc.encode("\u0000" + JSON.stringify({ error: "Generation failed" })));
+              const status = (err as { status?: number })?.status;
+              const errMsg =
+                status === 429 || status === 529
+                  ? "Provider rate limit or high load — please retry in a moment."
+                  : status === 401 || status === 403
+                  ? "AI provider credential error on server."
+                  : "Generation failed";
+              console.error("Playground stream error:", status || err);
+              controller.enqueue(enc.encode("\u0000" + JSON.stringify({ error: errMsg })));
             }
           } finally {
             if (!closed) {
@@ -420,7 +427,20 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ dual: false, reply: text || "…", memory });
   } catch (err) {
-    console.error("Playground error:", err);
+    const status = (err as { status?: number })?.status;
+    console.error("Playground error:", status || err);
+    if (status === 429 || status === 529) {
+      return NextResponse.json(
+        { error: "Provider is busy right now. Please try again in a moment." },
+        { status: 429 }
+      );
+    }
+    if (status === 401 || status === 403) {
+      return NextResponse.json(
+        { error: "AI provider credential error on server." },
+        { status: 503 }
+      );
+    }
     return NextResponse.json({ error: "Generation failed" }, { status: 500 });
   }
 }

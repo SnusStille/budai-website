@@ -2038,7 +2038,7 @@ export default function AIPlayground() {
                       (lang === "sv" ? "Välj läge ovan" : "Pick a mode above")}
                   </span>
                   <span className="ml-auto font-mono text-muted/40 hidden sm:inline">
-                    {lang === "sv" ? "⌘/ för fokus" : "⌘/ for tips"}
+                    {lang === "sv" ? "? för genvägar · ⌘K meny" : "? for shortcuts · ⌘K menu"}
                   </span>
                 </div>
               </div>
@@ -2068,15 +2068,15 @@ export default function AIPlayground() {
                     </div>
                     <div className="inline-flex items-center gap-1.5 mb-3 px-2.5 py-1 rounded-full border border-accent-green/25 bg-accent-green/10 text-[10px] font-mono text-accent-green">
                       <span className="w-1.5 h-1.5 rounded-full bg-accent-green animate-pulse" />
-                      {lang === "sv" ? "UTVECKLARPREVIEW" : "DEVELOPER PREVIEW"}
+                      {lang === "sv" ? "UTVECKLARPREVIEW · SV / EN" : "DEVELOPER PREVIEW · SV / EN"}
                     </div>
                     <h3 className="text-xl sm:text-2xl font-bold text-white mb-1.5 tracking-tight relative">
-                      {lang === "sv" ? "Vad ska vi få gjort?" : "What should we ship?"}
+                      {lang === "sv" ? "Vad arbetar vi med idag?" : "What are we working on?"}
                     </h3>
                     <p className="text-sm text-muted mb-6 text-center max-w-md leading-relaxed">
                       {lang === "sv"
-                        ? "Text, vision, röst, minne — och Workspace för längre resultat."
-                        : "Text, vision, voice, memory — and Workspace for longer outputs."}
+                        ? "Skriv, analysera, planera eller bifoga en bild på svenska och engelska — längre strukturerade svar öppnas i Workspace."
+                        : "Write, analyze, plan, or attach an image in Swedish and English — longer structured outputs open in Workspace."}
                     </p>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 w-full max-w-xl">
                       {caps.map((c) => (
@@ -3006,11 +3006,30 @@ export default function AIPlayground() {
         </PlaygroundArrival>
         <div className="product-output" data-playground-bridge aria-hidden="true">
           <div className="product-bridge-head">
-            <span>{lang === "sv" ? "02 → 03 · ETT SAMTAL DELAS UPP I SEX VERKTYG" : "02 → 03 · ONE CONVERSATION DIVERGES INTO SIX INSTRUMENTS"}</span>
-            <span>{lang === "sv" ? "FRÅN PLAYGROUND TILL VERKSTADEN" : "FROM PLAYGROUND TO THE WORKSHOP"}</span>
+            <span className="product-bridge-kicker">
+              {lang === "sv" ? "02 → 03 · SIGNALÖVERFÖRING · LIVE ARBETSYTA → FÖRMÅGEARKITEKTUR" : "02 → 03 · SIGNAL HANDOFF · LIVE WORKSPACE → CAPABILITY ARCHITECTURE"}
+            </span>
+            <span className="product-bridge-target">
+              {lang === "sv" ? "FRÅN PLAYGROUND TILL VERKSTADEN" : "FROM PLAYGROUND TO THE WORKSHOP"}
+            </span>
           </div>
           <div className="product-bridge-spine">
-            <b className="product-bridge-node" />
+            <span className="product-bridge-node">
+              <b className="product-bridge-dot" />
+              {lang === "sv" ? "02 · PLAYGROUND · LIVE-SESSION" : "02 · PLAYGROUND · LIVE SESSION"}
+            </span>
+            <div className="product-bridge-ticks">
+              <i />
+              <i />
+              <i />
+              <i />
+              <i />
+              <i />
+            </div>
+            <span className="product-bridge-node">
+              <b className="product-bridge-dot" />
+              {lang === "sv" ? "03 · VERKSTADEN · 6 INSTRUMENT" : "03 · THE WORKSHOP · 6 INSTRUMENTS"}
+            </span>
           </div>
           <div className="product-bridge-channels">
             {(lang === "sv"
@@ -3018,9 +3037,8 @@ export default function AIPlayground() {
               : ["Write", "Automate", "Decide", "SV / EN", "Memory", "Vision & voice"]
             ).map((label, i) => (
               <span key={i} className="product-bridge-channel">
-                <i />
                 <b>0{i + 1}</b>
-                <em>{label}</em>
+                <span>{label}</span>
               </span>
             ))}
           </div>

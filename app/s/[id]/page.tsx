@@ -32,9 +32,11 @@ export default async function Shared({ params }: { params: { id: string } | Prom
             </div>
           ))}
         </div>
-        <div className="mt-12 rounded-2xl border border-white/10 bg-gradient-to-r from-accent-cyan/10 to-accent-purple/10 p-6 text-center">
-          <p className="text-lg font-semibold">Your new ChatGPT, in Swedish and English</p>
-          <a href="/#playground" className="mt-4 inline-block rounded-full bg-accent-cyan px-6 py-2.5 text-sm font-semibold text-[#020205]">Try BudAI free</a>
+        <div className="mt-12 rounded-2xl border border-accent-cyan/20 bg-gradient-to-r from-accent-cyan/10 to-accent-purple/10 p-6 text-center">
+          <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-accent-cyan mb-2">BudAI · Stilledev · Sweden</p>
+          <p className="text-lg font-semibold text-white">AI built in Sweden for real work in Swedish and English</p>
+          <p className="mt-1 text-xs text-muted">Write, analyze, plan, and turn messy context into clear action.</p>
+          <a href="/#playground" className="mt-4 inline-block rounded-full bg-accent-cyan px-6 py-2.5 text-sm font-semibold text-[#020205] hover:opacity-90 transition-opacity">Open the Playground</a>
         </div>
       </div>
     </main>

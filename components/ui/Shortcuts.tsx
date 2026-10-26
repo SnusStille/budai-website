@@ -13,7 +13,7 @@ export default function Shortcuts() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null;
-      const typing = !!t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable);
+      const typing = !!t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT" || t.isContentEditable);
       if (e.key === "Escape") return setOpen(false);
       if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
       if (e.key === "?") {

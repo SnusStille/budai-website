@@ -1079,8 +1079,9 @@ html[data-world-state="ready"] .closing-field>i {background:transparent;box-shad
 .closing-kicker {font:8px var(--font-jetbrains),monospace;letter-spacing:.2em;color:#8eaab8;}
 .closing-composition h2 {font-weight:400;letter-spacing:-.055em;font-size:clamp(34px,4.2vw,58px);line-height:1.15;margin:24px 0;}
 .closing-composition p {font-size:13px;line-height:1.8;color:#8ca1af;}
-.closing-composition>a {display:inline-flex;align-items:center;gap:18px;color:#c3d8df;border-bottom:1px solid #8fb2bf40;padding:15px 0;font-size:11px;margin-top:20px;min-height:44px;}
-.closing-composition>a:hover {color:white;}
+.closing-composition>a {display:inline-flex;align-items:center;gap:14px;color:#d6eef8;border:1px solid rgba(132,208,230,.28);background:rgba(9,22,34,.68);border-radius:8px;padding:11px 20px;font-size:11.5px;margin-top:22px;min-height:44px;transition:color 220ms ease,border-color 220ms ease,background 220ms ease;}
+.closing-composition>a:hover,.closing-composition>a:focus-visible {color:white;border-color:rgba(142,232,250,.6);background:rgba(15,36,54,.85);outline:none;}
+.hero-features>span:focus-visible,.builder-links a:focus-visible,.roadmap-milestone>button:focus-visible {outline:1px solid rgba(136,226,246,.75);outline-offset:3px;}
 .closing-endline {height:44px;position:relative;max-width:1200px;margin:auto;border-top:1px solid #7895a11a;}
 .closing-endline>i {position:absolute;left:50%;top:-2px;width:3px;height:3px;border-radius:50%;background:#799da8;}
 @media(max-width:767px){.closing-composition {padding:80px 24px 45px;}.closing-field {margin-bottom:32px;max-width:260px;}.closing-composition h2 {font-size:36px;}.closing-composition p {font-size:12px;}}

@@ -37,36 +37,77 @@ export default function CommandPalette() {
     }
   };
 
+  const sv = lang === "sv";
+
   const commands: CommandItem[] = useMemo(
     () => [
-      { id: "capabilities", label: "Go to Capabilities", icon: Sparkles, action: () => goTo("capabilities"), keywords: "features what budai does" },
-      { id: "playground", label: "Try the Playground", icon: MessageCircle, action: () => goTo("playground"), keywords: "chat demo try ai" },
-      { id: "roadmap", label: "View Roadmap", icon: Map, action: () => goTo("roadmap"), keywords: "timeline plan future" },
-      { id: "whatsnew", label: "What's new", icon: Sparkles, action: () => window.dispatchEvent(new Event("budai:whats-new")), keywords: "changelog updates releases" },
-      { id: "about", label: "About the builder", icon: Sparkles, action: () => goTo("about"), keywords: "stilledev developer github contact" },
-      { id: "waitlist", label: "Join the Waitlist", icon: Users, action: () => goTo("waitlist"), keywords: "signup access request join" },
+      {
+        id: "playground",
+        label: sv ? "Öppna AI Playground" : "Try the Playground",
+        icon: MessageCircle,
+        action: () => goTo("playground"),
+        keywords: "chat demo try ai playground skriva chatt",
+      },
+      {
+        id: "capabilities",
+        label: sv ? "Utforska Förmågor & Atlas" : "Go to Capabilities & Atlas",
+        icon: Sparkles,
+        action: () => goTo("capabilities"),
+        keywords: "features what budai does workshop atlas förmågor paket",
+      },
+      {
+        id: "about",
+        label: sv ? "Möt Byggaren (Stilledev)" : "About the Builder (Stilledev)",
+        icon: Cpu,
+        action: () => goTo("about"),
+        keywords: "stilledev developer github contact byggaren kod",
+      },
+      {
+        id: "roadmap",
+        label: sv ? "Se Roadmap" : "View Roadmap",
+        icon: Map,
+        action: () => goTo("roadmap"),
+        keywords: "timeline plan future roadmap framtid",
+      },
+      {
+        id: "waitlist",
+        label: sv ? "Gå med på väntelistan (10 %)" : "Join the Waitlist (10% off)",
+        icon: Users,
+        action: () => goTo("waitlist"),
+        keywords: "signup access request join väntelista early access",
+      },
+      {
+        id: "whatsnew",
+        label: sv ? "Vad är nytt" : "What's new",
+        icon: Sparkles,
+        action: () => {
+          setOpen(false);
+          window.dispatchEvent(new Event("budai:whats-new"));
+        },
+        keywords: "changelog updates releases nyheter",
+      },
       {
         id: "lang",
-        label: lang === "sv" ? "Switch to English" : "Byt till svenska",
+        label: sv ? "Switch to English" : "Byt till svenska",
         icon: Languages,
         action: () => {
-          setLang(lang === "sv" ? "en" : "sv");
+          setLang(sv ? "en" : "sv");
           setOpen(false);
         },
-        keywords: "language svenska english translate",
+        keywords: "language svenska english translate språk",
       },
       {
         id: "discord",
-        label: "Message Stilledev on Discord",
+        label: sv ? "Kontakta Stilledev på Discord" : "Message Stilledev on Discord",
         icon: Cpu,
         action: () => {
           window.open("https://discord.com/users/353944097301594123", "_blank", "noopener,noreferrer");
           setOpen(false);
         },
-        keywords: "developer contact discord stilledev",
+        keywords: "developer contact discord stilledev kontakt",
       },
     ],
-    [lang, setLang]
+    [sv, setLang]
   );
 
   const filtered = useMemo(() => {
@@ -75,16 +116,12 @@ export default function CommandPalette() {
     return commands.filter((c) => c.label.toLowerCase().includes(q) || c.keywords?.includes(q));
   }, [query, commands]);
 
-  // Global ⌘K / Ctrl+K listener, plus "/" as a quick alternative — Esc closes.
+  // Global ⌘K / Ctrl+K listener — Esc closes. ("/" is reserved for Shortcuts -> focus Playground input.)
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      const isTypingTarget = ["INPUT", "TEXTAREA"].includes((e.target as HTMLElement)?.tagName);
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
         setOpen((v) => !v);
-      } else if (e.key === "/" && !isTypingTarget && !open) {
-        e.preventDefault();
-        setOpen(true);
       } else if (e.key === "Escape" && open) {
         setOpen(false);
       }

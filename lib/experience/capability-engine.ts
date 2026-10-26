@@ -1025,6 +1025,10 @@ export function createCapabilityEngine(
     const hubBeacon = new THREE.Mesh(new THREE.OctahedronGeometry(0.055, 0), tc.emMat);
     hubBeacon.position.y = 0.38;
     tGrp.add(hubBeacon);
+    const hubCollar = new THREE.Mesh(new THREE.TorusGeometry(0.11, 0.004, 8, 24), tc.emMat);
+    hubCollar.rotation.x = Math.PI / 2;
+    hubCollar.position.y = 0.38;
+    tGrp.add(hubCollar);
 
     // Polestar Meridian Beam linking the elevated Synthesis Core to this terrace's Regional Hub
     const beamGeo = new THREE.BufferGeometry().setFromPoints([
