@@ -7,17 +7,19 @@ export const CHANGELOG: Entry[] = [
     titleSv: "Arkitektur & 3D-världar",
     items: [
       "The Impossible Workshop & The Atlas of Possibility — connected 3D capability and route architecture",
-      "6-channel signal bridge connecting the live Playground directly into the 6 core capabilities",
+      "Interactive 6-channel signal patchbay and 3-terrace 3D/SVG Atlas tier focus",
+      "Direct viewport readout launch ('Try ↗') and command palette (⌘K) actions across all chapters",
       "Confluence identity mark and calibrated neural cortex opening stage",
       "3D Builder studio with progressive TypeScript composition and dual preview displays",
-      "Hardened AI streaming, upstream stream cancellation, and accurate single-pass daily quotas",
+      "Hardened AI streaming, upstream stream cancellation, and post-completion daily quotas",
     ],
     itemsSv: [
       "Den Omöjliga Verkstaden & Möjligheternas Atlas — sammanhängande 3D-arkitektur för förmågor och vägval",
-      "6-kanalig signalbrygga som kopplar live Playground direkt till de sex kärnförmågorna",
+      "Interaktiv 6-kanalig signalpatchbay och 3-terrassig 3D/SVG Atlas-fokus",
+      "Direktstart ('Prova ↗') från 3D-vyns kodutläsning samt kommandopalett (⌘K) över hela sidan",
       "Confluence-identitet och kalibrerad neural öppningsscen",
       "3D Builder-studio med progressiv TypeScript-komposition och dubbla skärmvyer",
-      "Förbättrad AI-strömning, omedelbar avbrytning av ström och exakt daglig kvoträkning",
+      "Förbättrad AI-strömning, omedelbar avbrytning av ström och kvoträkning efter slutfört svar",
     ],
   },
   {

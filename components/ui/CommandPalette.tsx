@@ -44,6 +44,7 @@ export default function CommandPalette() {
       {
         id: "playground",
         label: sv ? "Öppna AI Playground" : "Try the Playground",
+        hint: "/",
         icon: MessageCircle,
         action: () => goTo("playground"),
         keywords: "chat demo try ai playground skriva chatt",
@@ -51,6 +52,7 @@ export default function CommandPalette() {
       {
         id: "capabilities",
         label: sv ? "Utforska Förmågor & Atlas" : "Go to Capabilities & Atlas",
+        hint: "03",
         icon: Sparkles,
         action: () => goTo("capabilities"),
         keywords: "features what budai does workshop atlas förmågor paket",
@@ -58,6 +60,7 @@ export default function CommandPalette() {
       {
         id: "about",
         label: sv ? "Möt Byggaren (Stilledev)" : "About the Builder (Stilledev)",
+        hint: "04",
         icon: Cpu,
         action: () => goTo("about"),
         keywords: "stilledev developer github contact byggaren kod",
@@ -65,6 +68,7 @@ export default function CommandPalette() {
       {
         id: "roadmap",
         label: sv ? "Se Roadmap" : "View Roadmap",
+        hint: "05",
         icon: Map,
         action: () => goTo("roadmap"),
         keywords: "timeline plan future roadmap framtid",
@@ -72,9 +76,28 @@ export default function CommandPalette() {
       {
         id: "waitlist",
         label: sv ? "Gå med på väntelistan (10 %)" : "Join the Waitlist (10% off)",
+        hint: "-10%",
         icon: Users,
         action: () => goTo("waitlist"),
         keywords: "signup access request join väntelista early access",
+      },
+      {
+        id: "prompt-bilingual",
+        label: sv ? "Starta tvåspråkig SV / EN-prompt i Playground" : "Launch bilingual SV / EN prompt in Playground",
+        hint: "SV/EN",
+        icon: Languages,
+        action: () => {
+          setOpen(false);
+          window.dispatchEvent(
+            new CustomEvent("budai:prompt", {
+              detail: sv
+                ? "Skriv ett kort lanseringsmeddelande på både svenska och engelska med samma ton."
+                : "Write a short launch note in both Swedish and English keeping the exact same tone.",
+            })
+          );
+          goTo("playground");
+        },
+        keywords: "prompt bilingual swedish english svenska engelska",
       },
       {
         id: "whatsnew",
@@ -87,8 +110,30 @@ export default function CommandPalette() {
         keywords: "changelog updates releases nyheter",
       },
       {
+        id: "shortcuts",
+        label: sv ? "Tangentbordsgenvägar" : "Keyboard shortcuts",
+        hint: "?",
+        icon: CornerDownLeft,
+        action: () => {
+          setOpen(false);
+          window.dispatchEvent(new Event("budai:shortcuts"));
+        },
+        keywords: "keyboard shortcuts hotkeys genvägar tangentbord",
+      },
+      {
+        id: "feedback",
+        label: sv ? "Skicka feedback" : "Send feedback",
+        icon: MessageCircle,
+        action: () => {
+          setOpen(false);
+          window.dispatchEvent(new Event("budai:feedback"));
+        },
+        keywords: "feedback bug idea förslag",
+      },
+      {
         id: "lang",
         label: sv ? "Switch to English" : "Byt till svenska",
+        hint: sv ? "EN" : "SV",
         icon: Languages,
         action: () => {
           setLang(sv ? "en" : "sv");
@@ -116,7 +161,7 @@ export default function CommandPalette() {
     return commands.filter((c) => c.label.toLowerCase().includes(q) || c.keywords?.includes(q));
   }, [query, commands]);
 
-  // Global ⌘K / Ctrl+K listener — Esc closes. ("/" is reserved for Shortcuts -> focus Playground input.)
+  // Global ⌘K / Ctrl+K listener + custom budai:command-palette event — Esc closes.
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
@@ -126,8 +171,13 @@ export default function CommandPalette() {
         setOpen(false);
       }
     };
+    const onOpenPalette = () => setOpen(true);
     window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
+    window.addEventListener("budai:command-palette", onOpenPalette);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("budai:command-palette", onOpenPalette);
+    };
   }, [open]);
 
   useEffect(() => {
@@ -202,6 +252,11 @@ export default function CommandPalette() {
                     >
                       <cmd.icon className={`w-4 h-4 shrink-0 ${i === activeIndex ? "text-accent-cyan" : "text-muted"}`} />
                       <span className="flex-1 text-left">{cmd.label}</span>
+                      {cmd.hint && (
+                        <kbd className="rounded border border-white/10 bg-white/[0.04] px-1.5 py-0.5 font-mono text-[10px] text-muted/75">
+                          {cmd.hint}
+                        </kbd>
+                      )}
                       {i === activeIndex && <ArrowRight className="w-3.5 h-3.5 text-accent-cyan" />}
                     </button>
                   ))

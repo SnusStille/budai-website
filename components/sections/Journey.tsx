@@ -66,19 +66,37 @@ export default function Journey() {
           <div><span className="chapter-label"><BudAILogo size="xs" animated={false} className="!h-4 !w-4" />05 / {sv ? "SYSTEMET UTVECKLAS" : "THE SYSTEM EVOLVES"}</span><h2 id="roadmap-title">{sv ? "Bara början." : "Only the beginning."}</h2></div>
           <p>{sv ? "Från dagens öppna förhandsvisning till utökade paket för individer och team. Inga påhittade datum — bara ärliga framsteg i den ordning de byggs." : "From today's open preview to expanded plans for individuals and teams. No invented launch dates — just transparent progress in the order it is built."}</p>
         </ScrollReveal>
-        <div className="roadmap-spatial-window" aria-hidden="true">
-          <span>SWEDEN <i /> NORDICS <i /> WORLD</span>
-          <div className="roadmap-telemetry-rail">
-            <span><b>01</b> FOUNDATION · LIVE</span>
-            <i />
-            <span><b>02</b> PREVIEW · OPEN</span>
-            <i />
-            <span><b>03</b> PLANS · IN DEV</span>
-            <i />
-            <span><b>04</b> WORKSPACE · HORIZON</span>
+        <div className="roadmap-spatial-window">
+          <span aria-hidden="true">SWEDEN <i /> NORDICS <i /> WORLD</span>
+          <div className="roadmap-telemetry-rail" role="group" aria-label={sv ? "Milstolpar i färdplanen" : "Roadmap milestones"}>
+            {[
+              { idx: 0, num: "01", label: "FOUNDATION · LIVE" },
+              { idx: 1, num: "02", label: "PREVIEW · OPEN" },
+              { idx: 2, num: "03", label: "PLANS · IN DEV" },
+              { idx: 3, num: "04", label: "WORKSPACE · HORIZON" },
+            ].map((node, idx) => (
+              <span
+                key={node.num}
+                role="button"
+                tabIndex={0}
+                className={active === node.idx ? "is-active" : undefined}
+                onClick={() => setSelected(selected === node.idx ? null : node.idx)}
+                onPointerEnter={() => setSelected(node.idx)}
+                onPointerLeave={() => setSelected(null)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    setSelected(selected === node.idx ? null : node.idx);
+                  }
+                }}
+              >
+                <b>{node.num}</b> {node.label}
+                {idx < 3 && <i aria-hidden="true" />}
+              </span>
+            ))}
           </div>
-          <div className="roadmap-fallback-path"><i /><i /><i /><i /></div>
-          <span>EVOLVING IN PUBLIC / BUDAI</span>
+          <div className="roadmap-fallback-path" aria-hidden="true"><i /><i /><i /><i /></div>
+          <span aria-hidden="true">EVOLVING IN PUBLIC / BUDAI</span>
         </div>
         <ol className="roadmap-milestones" data-active={active}>
           {stages.map((stage, i) => (

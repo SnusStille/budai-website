@@ -542,8 +542,9 @@ html[data-budai-intro="playing"] .hero-content > * { opacity: 0; transform: tran
 .builder-heading h2 { font-size: clamp(35px, 3.65vw, 54px); line-height: 1.12; letter-spacing: -.045em; font-weight: 500; margin-top: 19px; }
 .builder-heading h2 > span { color: #9cbfce; }
 .builder-heading p { max-width: 490px; margin: 14px auto 0; font-size: 11px; line-height: 1.75; color: #8da6b7; }
-.reality-creation-pills { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 14px; pointer-events: none; }
-.reality-creation-pills > span { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; border: 1px solid rgba(118, 213, 234, 0.25); background: rgba(7, 20, 32, 0.78); font: 8px var(--font-jetbrains), monospace; letter-spacing: .08em; color: #bdecf8; }
+.reality-creation-pills { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 14px; pointer-events: auto; }
+.reality-creation-pills > span { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; border: 1px solid rgba(118, 213, 234, 0.25); background: rgba(7, 20, 32, 0.78); font: 8px var(--font-jetbrains), monospace; letter-spacing: .08em; color: #bdecf8; cursor: pointer; transition: border-color 200ms ease, background 200ms ease, color 200ms ease, transform 200ms ease; }
+.reality-creation-pills > span:hover { border-color: rgba(136, 226, 246, 0.65); background: rgba(16, 42, 64, 0.92); color: #fff; transform: translateY(-1px); }
 .reality-creation-pills > span > b { color: #6ee7b7; font-weight: 600; }
 .builder-scene-caption { position: absolute; bottom: 140px; left: 7vw; right: 7vw; display: flex; align-items: center; justify-content: space-between; gap: 20px; font: 8px var(--font-jetbrains), monospace; letter-spacing: .1em; color: #7b9baf; }
 .builder-scene-caption span:first-child { display: inline-flex; align-items: center; gap: 9px; }
@@ -671,7 +672,9 @@ html[data-world-state="ready"] .builder-fallback-workspace { display: none; }
 .roadmap-spatial-window > span:first-child { display: inline-flex; align-items: center; gap: 14px; }
 .roadmap-spatial-window > span > i { width: 20px; height: 1px; display: inline-block; background: #729cb654; }
 .roadmap-telemetry-rail { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 14px; border-radius: 6px; border: 1px solid rgba(126, 206, 232, 0.14); background: rgba(6, 15, 25, 0.62); color: #8ab4c8; font-size: 7.5px; letter-spacing: .12em; }
-.roadmap-telemetry-rail > span > b { color: #7fe0f6; font-weight: 500; margin-right: 6px; }
+.roadmap-telemetry-rail > span { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; padding: 3px 7px; border-radius: 4px; transition: color 200ms ease, background 200ms ease; }
+.roadmap-telemetry-rail > span:hover, .roadmap-telemetry-rail > span.is-active { color: #fff; background: rgba(114, 215, 236, 0.16); }
+.roadmap-telemetry-rail > span > b { color: #7fe0f6; font-weight: 500; margin-right: 2px; }
 .roadmap-telemetry-rail > i { flex: 1; height: 1px; background: linear-gradient(90deg, rgba(126, 224, 246, 0.35), rgba(110, 231, 183, 0.25)); }
 .roadmap-fallback-path { position: absolute; inset: 42% 7% 35%; display: flex; align-items: center; justify-content: space-between; transform: perspective(500px) rotateY(-15deg) rotateX(35deg); border-top: 1px solid #88b2ce50; }
 .roadmap-fallback-path i { display: block; width: 22px; height: 22px; border: 1px solid #86c6db70; background: #122738; transform: translateY(-35px) rotate(45deg); box-shadow: 6px 6px #06101c, 7px 7px #5a8fab50; }

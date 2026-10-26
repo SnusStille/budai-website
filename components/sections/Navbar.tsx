@@ -154,6 +154,15 @@ export default function Navbar() {
 
               <button
                 type="button"
+                onClick={() => window.dispatchEvent(new Event("budai:command-palette"))}
+                aria-label={lang === "sv" ? "Öppna kommandopalett (⌘K)" : "Open command palette (⌘K)"}
+                title={lang === "sv" ? "Kommandopalett (⌘K)" : "Command palette (⌘K)"}
+                className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.08] bg-black/30 px-2.5 py-1.5 font-mono text-[10px] text-white/70 transition-colors hover:border-accent-cyan/40 hover:text-white"
+              >
+                <span>⌘K</span>
+              </button>
+              <button
+                type="button"
                 onClick={() => window.dispatchEvent(new Event("budai:whats-new"))}
                 aria-label={lang === "sv" ? "Vad är nytt" : "What's new"}
                 className="relative rounded-full border border-white/[0.08] p-2 text-white/70 transition-colors hover:border-accent-cyan/40 hover:text-white"
@@ -261,6 +270,17 @@ export default function Navbar() {
               </div>
 
               <div className="flex flex-wrap items-center gap-2 mt-3 px-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileOpen(false);
+                    window.dispatchEvent(new Event("budai:command-palette"));
+                  }}
+                  className="inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.03] px-3.5 py-2 text-xs font-medium text-white/85 hover:text-white"
+                >
+                  <span className="font-mono text-[10px] text-accent-cyan">⌘K</span>
+                  {lang === "sv" ? "Kommandopalett" : "Command palette"}
+                </button>
                 <button
                   type="button"
                   onClick={() => {
