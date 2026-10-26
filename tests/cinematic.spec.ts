@@ -70,6 +70,7 @@ test("one sparse information register organises six capabilities and three accur
   await move(page, "[data-capability-system]", 180);
   const canvas = page.locator("[data-world-canvas]");
   await expect(canvas).toHaveAttribute("data-capability-architecture", "information-field");
+  await expect(canvas).toHaveAttribute("data-capability-world", "impossible-workshop");
   await expect(canvas).toHaveAttribute("data-capability-modules", "6");
   await expect(canvas).toHaveAttribute("data-capability-paths","0");
   await expect(canvas).toHaveAttribute("data-information-records","6");
@@ -77,6 +78,7 @@ test("one sparse information register organises six capabilities and three accur
   await expect(page.locator(".capability-network")).toHaveCount(0);
   await expect(page.locator(".capability-module")).toHaveCount(6);
   await expect(page.locator("[data-living-code-console]")).toBeVisible();
+  await expect(page.locator("[data-workshop-choreography]")).toBeVisible();
   const studioScreen = page.locator(".world-capability-mount [data-capability-studio-screen]");
   await expect(studioScreen).toHaveAttribute("data-studio-mode", "capability");
   await expect(studioScreen).toHaveAttribute("data-pathway-mode", "personal");
@@ -96,6 +98,7 @@ test("one sparse information register organises six capabilities and three accur
   await expect(canvas).toHaveAttribute("data-capability-focus", "4");
   await move(page, "[data-access-architecture]", -120);
   await expect.poll(async () => Number(await canvas.getAttribute("data-access-morph"))).toBeGreaterThan(.9);
+  await expect(canvas).toHaveAttribute("data-capability-world", "atlas-of-possibility");
   await expect.poll(async () => Number(await canvas.getAttribute("data-assembly-progress"))).toBeGreaterThan(0.2);
   await expect(studioScreen).toHaveAttribute("data-studio-mode", "pipeline");
   await page.screenshot({ path: "test-results/access-architecture-desktop.png" });

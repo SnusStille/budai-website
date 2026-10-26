@@ -16,9 +16,14 @@ export default function CapabilityMap() {
   const previousChars = useRef(-1);
   const [scrollActive, setScrollActive] = useState(0);
   const [typedRatio, setTypedRatio] = useState(0.65);
+  const [choreoStage, setChoreoStage] = useState(0);
   const [hover, setHover] = useState(-1);
   const [pathway, setPathway] = useState<"personal" | "business">("personal");
   const active = hover >= 0 ? hover : scrollActive;
+
+  const workshopStages = sv
+    ? ["01 Upptäckt", "02 Aktivering", "03 Omvandling", "04 Sammansättning", "05 Utveckling"]
+    : ["01 Discovery", "02 Activation", "03 Transformation", "04 Composition", "05 Unfolding"];
 
   const selectPathway = (mode: "personal" | "business") => {
     setPathway(mode);
@@ -138,6 +143,8 @@ export default function CapabilityMap() {
           previous.current = i;
           setScrollActive(i);
         }
+        const nextStage = p < 0.12 ? 0 : p < 0.25 ? 1 : p < 0.76 ? 2 : p < 0.9 ? 3 : 4;
+        setChoreoStage(prev => (prev === nextStage ? prev : nextStage));
         const local = clamp((p - i / 6) * 6, 0.25, 1);
         const step = Math.round(local * 24);
         if (step !== previousChars.current) {
@@ -177,14 +184,19 @@ export default function CapabilityMap() {
       <div className="capability-sticky">
         <div className="capability-index">
           <div className="capability-matrix-header">
-            <span>{sv ? "03 / INTELLIGENS I RÖRELSE · SIGNALTRANSFORMATION" : "03 / INTELLIGENCE IN MOTION · SIGNAL TRANSFORMATION"}</span>
-            <span>06 MODULES</span>
+            <span>{sv ? "VÄRLD I · DEN OMÖJLIGA VERKSTADEN" : "WORLD I · THE IMPOSSIBLE WORKSHOP"}</span>
+            <span>06 INSTRUMENTS</span>
           </div>
           <h3>
-            {sv ? "Ett system." : "One system."}
+            {sv ? "Idéer är råmaterial." : "Ideas are raw material."}
             <br />
-            <span>{sv ? "Sex transformationer." : "Six transformations."}</span>
+            <span>{sv ? "Här formas de till verktyg." : "Shaped into precision tools."}</span>
           </h3>
+          <p className="mb-3.5 text-xs text-muted/85 italic leading-relaxed">
+            {sv
+              ? "”Idéer är inte färdiga produkter. De är material som väntar på att formas.”"
+              : "“Ideas are not finished products. They are materials waiting to be shaped.”"}
+          </p>
           <div className="capability-pathway-switch" role="group" aria-label={sv ? "Välj visuell väg" : "Choose visual pathway"} data-pathway-toggle>
             <button
               type="button"
@@ -276,8 +288,8 @@ export default function CapabilityMap() {
           </div>
 
           <div className="capability-viewport-top">
-            <span>{sv ? "BUDAI / SIGNALSTUDIO · KOD, KONTEXT & RESULTAT" : "BUDAI / SIGNAL STUDIO · CODE, CONTEXT & OUTPUT"}</span>
-            <span>001 — 006</span>
+            <span>{sv ? "VÄRLD I / DEN OMÖJLIGA VERKSTADEN · ARKITEKTONISKT INSTRUMENT" : "WORLD I / THE IMPOSSIBLE WORKSHOP · PRECISION CRUCIBLE"}</span>
+            <span data-workshop-choreography>{workshopStages[choreoStage]}</span>
           </div>
 
           <div className="capability-active-readout" data-living-code-console>
@@ -324,8 +336,8 @@ export default function CapabilityMap() {
           </div>
 
           <div className="capability-viewport-bottom">
-            <span>{sv ? "ILLUSTRETIV 3D-TRANSFORMATION · KLICKA EN MODUL FÖR ATT PROVA LIVE" : "ILLUSTRATIVE 3D TRANSFORMATION · CLICK ANY MODULE TO TRY LIVE"}</span>
-            <span>SV / EN · SIGNAL STUDIO</span>
+            <span>{sv ? "VERKSTADENS STRUKTUR VIKS UT TILL MÖJLIGHETERNAS ATLAS NEDAN" : "THE WORKSHOP STRUCTURE UNFOLDS INTO THE ATLAS OF POSSIBILITY BELOW"}</span>
+            <span>SV / EN · 0{active + 1} / 06</span>
           </div>
         </div>
       </div>

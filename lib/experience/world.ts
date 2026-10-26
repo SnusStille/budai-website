@@ -358,17 +358,24 @@ export function createWorld(
     let height = 0;
     let focus = -1;
     let roadmapFocus = -1;
+    let pathwayMode: "personal" | "business" = "personal";
     let lastTime = 0;
     let slowFrames = 0;
     const onCapability = (event: Event) => { focus = (event as CustomEvent<number>).detail; };
     const onRoadmap = (event: Event) => { roadmapFocus = (event as CustomEvent<number>).detail; };
+    const onPathway = (event: Event) => {
+      const next = (event as CustomEvent<"personal" | "business">).detail;
+      if (next === "personal" || next === "business") pathwayMode = next;
+    };
     const onLost = (event: Event) => { event.preventDefault(); if (!disposed) onFailure(); };
     window.addEventListener("budai:capability-focus", onCapability);
     window.addEventListener("budai:roadmap-focus", onRoadmap);
+    window.addEventListener("budai:pathway-mode", onPathway);
     renderer.domElement.addEventListener("webglcontextlost", onLost);
     unlisten = () => {
       window.removeEventListener("budai:capability-focus", onCapability);
       window.removeEventListener("budai:roadmap-focus", onRoadmap);
+      window.removeEventListener("budai:pathway-mode", onPathway);
       renderer.domElement.removeEventListener("webglcontextlost", onLost);
     };
 
@@ -429,12 +436,16 @@ export function createWorld(
         host.style.opacity = String(visualOpacity);
         const inWindow = studioPresence > 0.001;
         engine.root.visible = inWindow;
-        engine.root.position.set(0, -0.35 - (1 - sysEntry) * 0.24, 3.15);
         const capProgress = Number(capSystem?.dataset.progress ?? 0);
         const activeModule = focus >= 0 ? focus : Math.min(5, Math.floor(capProgress * 6));
         const px = frame.pointerX ?? 0;
         const py = frame.pointerY ?? 0;
-        engine.update(capProgress, activeModule, morph, frame.time, assemblyProgress, px, py);
+        engine.root.position.set(
+          0,
+          lerp(-0.22, -0.05, morph) - (1 - sysEntry) * 0.24,
+          lerp(3.25, 2.85, morph)
+        );
+        engine.update(capProgress, activeModule, morph, frame.time, assemblyProgress, px, py, pathwayMode);
 
         const corridorAlpha = smooth((chapter - 2.04) / 0.28) * (1 - smooth((chapter - 2.42) / 0.3)) * 0.22;
         outputField.material.uniforms.uOpacity.value = corridorAlpha;
@@ -446,24 +457,26 @@ export function createWorld(
         // Deterministic viewport-ratio framing for Capabilities (zero horizontal whip or vertical jump)
         if (capWeight > 0.001) {
           const exitWeight = chapter > 3 ? capWeight : 1;
-          const offsetX = mobile ? 0 : lerp(-frame.width * 0.215, 0, morph) * exitWeight;
-          const offsetY = (mobile ? frame.height * 0.12 : lerp(-frame.height * 0.015, frame.height * 0.115, morph)) * exitWeight;
+          const offsetX = mobile ? 0 : lerp(-frame.width * 0.238, 0, morph) * exitWeight;
+          const offsetY = (mobile ? lerp(frame.height * 0.12, frame.height * 0.16, morph) : lerp(-frame.height * 0.04, frame.height * 0.15, morph)) * exitWeight;
           camera.setViewOffset(frame.width, frame.height, offsetX, offsetY, frame.width, frame.height);
         }
-        const studioScale = (mobile ? 0.72 : lerp(0.88, 0.78, morph)) * lerp(0.94, 1, sysEntry);
+        const studioScale = (mobile ? 0.72 : lerp(0.92, 0.88, morph)) * lerp(0.94, 1, sysEntry);
         engine.root.scale.setScalar(studioScale);
-        engine.root.rotation.y = lerp((capProgress - 0.5) * -0.08, (assemblyProgress - 0.5) * 0.1, morph);
+        engine.root.rotation.x = lerp(0.04, 0.26, morph);
+        engine.root.rotation.y = lerp((capProgress - 0.5) * -0.1, (assemblyProgress - 0.5) * 0.14, morph);
         if (capScreen && capabilityEditor) {
           capScreen.position
             .copy(capabilities.position)
             .add(engine.root.position)
             .addScaledVector(engine.screenPosition, studioScale);
           capScreen.rotation.y = engine.root.rotation.y;
-          capScreen.scale.setScalar((6.5 / (mobile ? 640 : 1080)) * studioScale);
+          capScreen.scale.setScalar((4.35 / (mobile ? 640 : 1080)) * studioScale);
           capScreen.visible = studioPresence > 0.02 && !mobile;
-          capabilityEditor.style.opacity = String(capScreen.visible ? studioPresence : 0);
+          capabilityEditor.style.opacity = "0";
         }
         renderer.domElement.dataset.capabilityArchitecture = "information-field";
+        renderer.domElement.dataset.capabilityWorld = morph >= 0.48 ? "atlas-of-possibility" : "impossible-workshop";
         renderer.domElement.dataset.capabilityModules = "6";
         renderer.domElement.dataset.capabilityPaths = "0";
         renderer.domElement.dataset.informationRecords = "6";
