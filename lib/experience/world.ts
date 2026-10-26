@@ -109,7 +109,7 @@ export function createWorld(
     // 00 & 01 / Owned by the single persistent brain renderer in LoadingScreen.
     addEnvironment(0);
 
-    // 02 / Structured 3D Signal Corridor connecting Playground to Capabilities Core.
+    // 02 / Quiet spatial bridge between Playground and Capabilities Core.
     const corridor = addEnvironment(1);
     const fieldRecords = [];
     for (let column = 0; column < 8; column++) {
@@ -117,58 +117,12 @@ export function createWorld(
         fieldRecords.push({ x: column * 2.8, y: (row - 1.5) * 0.65 + 0.75, z: -column * 1.87, lane: -1 });
       }
     }
-    const outputField = createPointField(fieldRecords, 3.2);
-    outputField.material.uniforms.uOpacity.value = 0.56;
+    const outputField = createPointField(fieldRecords, 2.4);
+    outputField.material.uniforms.uOpacity.value = 0;
     corridor.add(outputField);
 
-    const corridorTubeMat = new THREE.MeshBasicMaterial({
-      color: "#76d3e8",
-      transparent: true,
-      opacity: 0.34,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-    });
-    const corridorGateMat = new THREE.LineBasicMaterial({
-      color: "#8ce7fa",
-      transparent: true,
-      opacity: 0.32,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-    });
-    const corridorCurves: THREE.CatmullRomCurve3[] = [];
-    const corridorPulses: THREE.Mesh[] = [];
-    const corridorPulseGeo = new THREE.SphereGeometry(0.055, 10, 10);
-    const corridorPulseMat = new THREE.MeshBasicMaterial({
-      color: "#c8f7ff",
-      transparent: true,
-      opacity: 0.85,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-    });
-    for (const row of [-0.95, -0.45, 0, 0.45, 0.95]) {
-      const curve = new THREE.CatmullRomCurve3([
-        new THREE.Vector3(0, row + 0.7, 0),
-        new THREE.Vector3(11, row * 0.65 + 1.0, -7.4),
-        new THREE.Vector3(22.5, 1.4 + row * 0.25, -15.2),
-      ]);
-      corridorCurves.push(curve);
-      corridor.add(new THREE.Mesh(new THREE.TubeGeometry(curve, 32, 0.012, 6, false), corridorTubeMat));
-      const pulse = new THREE.Mesh(corridorPulseGeo, corridorPulseMat);
-      corridor.add(pulse);
-      corridorPulses.push(pulse);
-    }
-    [2, 4, 6].forEach(col => {
-      const gate = new THREE.LineSegments(
-        new THREE.EdgesGeometry(new THREE.CylinderGeometry(1.35, 1.35, 0.06, 6)),
-        corridorGateMat
-      );
-      gate.rotation.x = Math.PI / 2;
-      gate.rotation.z = 0.58;
-      gate.position.set(col * 2.8, 0.95, -col * 1.87);
-      corridor.add(gate);
-    });
-
-    const outputSignal = createPointField([{ x: 0, y: 0, z: 0, lane: -1 }], 5.4);
+    const outputSignal = createPointField([{ x: 0, y: 0, z: 0, lane: -1 }], 4.2);
+    outputSignal.material.uniforms.uOpacity.value = 0;
     scene.add(outputSignal);
 
     // 03 / CAPABILITIES UNIFIED 3D SYNTHESIS STUDIO + real CSS3D projected CapabilityStudioScreen.
@@ -446,8 +400,8 @@ export function createWorld(
         }
         const close = smooth(frame.closing ?? 0);
         const opacity = worldOpacityAt(frame) * (1 - 0.35 * close);
-        host.style.opacity = String(opacity);
         if (opacity <= 0.001) {
+          host.style.opacity = "0";
           editor.style.opacity = "0";
           if (capabilityEditor) capabilityEditor.style.opacity = "0";
           cssRenderer!.domElement.style.visibility = "hidden";
@@ -462,34 +416,41 @@ export function createWorld(
         camera.updateMatrixWorld();
         if (!capSystem?.isConnected) capSystem = document.querySelector<HTMLElement>("[data-capability-system]");
         if (!accessViewport?.isConnected) accessViewport = document.querySelector<HTMLElement>("[data-access-architecture]");
+        const sysRect = capSystem?.getBoundingClientRect();
+        const sysEntry = sysRect
+          ? smooth(clamp((frame.height * 0.68 - sysRect.top) / (frame.height * 0.42)))
+          : 1;
         const accessRect = accessViewport?.getBoundingClientRect();
         const morph = accessRect ? smooth(clamp((frame.height * 0.95 - accessRect.top) / (frame.height * 0.6))) : 0;
         const assemblyProgress = accessRect ? clamp((frame.height * 0.85 - accessRect.top) / Math.max(1, accessRect.height + frame.height * 0.35)) : 0;
         const capWeight = smooth(clamp(1 - Math.abs(chapter - 3) / 0.88, 0, 1));
-        const inWindow = capWeight > 0.001;
+        const studioPresence = capWeight * sysEntry;
+        const visualOpacity = chapter < 3.3 ? Math.max(0.02, opacity * sysEntry) : opacity;
+        host.style.opacity = String(visualOpacity);
+        const inWindow = studioPresence > 0.001;
         engine.root.visible = inWindow;
+        engine.root.position.set(0, -0.35 - (1 - sysEntry) * 0.24, 3.15);
         const capProgress = Number(capSystem?.dataset.progress ?? 0);
         const activeModule = focus >= 0 ? focus : Math.min(5, Math.floor(capProgress * 6));
         const px = frame.pointerX ?? 0;
         const py = frame.pointerY ?? 0;
         engine.update(capProgress, activeModule, morph, frame.time, assemblyProgress, px, py);
 
-        corridorPulses.forEach((pulse, idx) => {
-          const u = (frame.time * 0.32 + idx * 0.19) % 1;
-          corridorCurves[idx].getPointAt(u, pulse.position);
-        });
-
+        const corridorAlpha = smooth((chapter - 2.04) / 0.28) * (1 - smooth((chapter - 2.42) / 0.3)) * 0.22;
+        outputField.material.uniforms.uOpacity.value = corridorAlpha;
         const output = smooth((chapter - 2.05) / 0.85);
         outputSignal.position.set(lerp(24, 48, output), lerp(0.8, 1.4, output), lerp(-16, -32, output));
-        outputSignal.visible = chapter > 2.02 && chapter < 2.65;
+        outputSignal.material.uniforms.uOpacity.value = corridorAlpha;
+        outputSignal.visible = corridorAlpha > 0.002;
 
-        // Deterministic viewport-ratio framing for Capabilities (zero vertical DOM-rect chasing or jumps)
+        // Deterministic viewport-ratio framing for Capabilities (zero horizontal whip or vertical jump)
         if (capWeight > 0.001) {
-          const offsetX = mobile ? 0 : lerp(-frame.width * 0.215, 0, morph) * capWeight;
-          const offsetY = (mobile ? frame.height * 0.12 : lerp(-frame.height * 0.015, frame.height * 0.115, morph)) * capWeight;
+          const exitWeight = chapter > 3 ? capWeight : 1;
+          const offsetX = mobile ? 0 : lerp(-frame.width * 0.215, 0, morph) * exitWeight;
+          const offsetY = (mobile ? frame.height * 0.12 : lerp(-frame.height * 0.015, frame.height * 0.115, morph)) * exitWeight;
           camera.setViewOffset(frame.width, frame.height, offsetX, offsetY, frame.width, frame.height);
         }
-        const studioScale = mobile ? 0.72 : lerp(0.88, 0.78, morph);
+        const studioScale = (mobile ? 0.72 : lerp(0.88, 0.78, morph)) * lerp(0.94, 1, sysEntry);
         engine.root.scale.setScalar(studioScale);
         engine.root.rotation.y = lerp((capProgress - 0.5) * -0.08, (assemblyProgress - 0.5) * 0.1, morph);
         if (capScreen && capabilityEditor) {
@@ -499,8 +460,8 @@ export function createWorld(
             .addScaledVector(engine.screenPosition, studioScale);
           capScreen.rotation.y = engine.root.rotation.y;
           capScreen.scale.setScalar((6.5 / (mobile ? 640 : 1080)) * studioScale);
-          capScreen.visible = capWeight > 0.02 && !mobile;
-          capabilityEditor.style.opacity = String(capScreen.visible ? capWeight : 0);
+          capScreen.visible = studioPresence > 0.02 && !mobile;
+          capabilityEditor.style.opacity = String(capScreen.visible ? studioPresence : 0);
         }
         renderer.domElement.dataset.capabilityArchitecture = "information-field";
         renderer.domElement.dataset.capabilityModules = "6";
@@ -517,7 +478,7 @@ export function createWorld(
         groups.forEach((group, i) => {
           group.visible =
             i === 1
-              ? chapter > 2.03 && chapter < 2.75
+              ? corridorAlpha > 0.002
               : i === 2
               ? inWindow
               : Math.abs(chapter - (i === 0 ? 0 : i + 1)) < 1.15;

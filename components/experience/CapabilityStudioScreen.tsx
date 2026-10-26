@@ -358,8 +358,8 @@ export default function CapabilityStudioScreen() {
                   {
                     tier: "01 / BASIC",
                     title: sv
-                      ? "Prova BudAI gratis (10/dag gäst · 35/dag med konto, minne & bild)"
-                      : "Try BudAI free (10/day guest · 35/day signed-in with memory & vision)",
+                      ? "Prova BudAI gratis (12/dag gäst · 80/dag med konto, minne & bild)"
+                      : "Try BudAI free (12/day guest · 80/day signed-in with memory & vision)",
                     state: sv ? "TILLGÄNGLIG NU" : "AVAILABLE NOW",
                     col: "#72d7ec",
                   },
