@@ -79,6 +79,11 @@ test("one sparse information register organises six capabilities and three accur
   await expect(page.locator("[data-living-code-console]")).toBeVisible();
   const studioScreen = page.locator(".world-capability-mount [data-capability-studio-screen]");
   await expect(studioScreen).toHaveAttribute("data-studio-mode", "capability");
+  await expect(studioScreen).toHaveAttribute("data-pathway-mode", "personal");
+  await page.locator("[data-pathway-toggle] button").nth(1).click();
+  await expect(studioScreen).toHaveAttribute("data-pathway-mode", "business");
+  await page.locator("[data-pathway-toggle] button").nth(0).click();
+  await expect(studioScreen).toHaveAttribute("data-pathway-mode", "personal");
   await page.waitForTimeout(600);
   const initialChamberProgress = Number(await canvas.getAttribute("data-chamber-progress"));
   await page.screenshot({ path: "test-results/capability-engine-desktop.png" });

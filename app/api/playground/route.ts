@@ -16,6 +16,11 @@ const WINDOW_MS = 60 * 60 * 1000;
 
 function isRateLimited(ip: string): boolean {
   const now = Date.now();
+  if (requestCounts.size > 500) {
+    requestCounts.forEach((val, key) => {
+      if (now > val.resetAt) requestCounts.delete(key);
+    });
+  }
   const entry = requestCounts.get(ip);
   if (!entry || now > entry.resetAt) {
     requestCounts.set(ip, { count: 1, resetAt: now + WINDOW_MS });

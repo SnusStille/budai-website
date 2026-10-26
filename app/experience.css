@@ -446,7 +446,7 @@ html[data-budai-intro="playing"] .hero-content > * { opacity: 0; transform: tran
 .builder-values { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 22px; list-style: none; }
 .builder-values li { color: #6b879b; font-size: 9px; }
 .builder-values li + li::before { content: "/"; margin-right: 12px; color: #3b596e; }
-.builder-links { display: flex; align-items: center; gap: 30px; margin-top: 32px; }
+.builder-links { display: flex; flex-wrap: wrap; align-items: center; gap: 16px 28px; margin-top: 32px; }
 .builder-links a { display: inline-flex; align-items: center; gap: 9px; font-size: 11px; color: #bbd5e4; }
 .builder-links a:hover { color: white; }
 .builder-source-details { border-top: 1px solid #8fb2cd25; margin-top: 30px; padding-top: 17px; }
@@ -704,11 +704,17 @@ html[data-budai-intro="playing"] body > a[href="#main"] { visibility: hidden; }
 /* 02 / Intelligence assembled. A readable index beside a tracked, real 3D machine. */
 .capabilities-universe { padding-bottom: 120px; background: linear-gradient(#02020500, #02020555 6%, #02020533 95%, transparent); }
 .capabilities-universe > div:first-child { display:none; }
+.capabilities-intro-header { position: relative; isolation: isolate; }
+.capabilities-intro-header::before { content: ""; position: absolute; z-index: -1; inset: -40px 0 -45px; background: radial-gradient(ellipse at 50% 50%, #020205f2 25%, #020205cc 62%, transparent 86%); pointer-events: none; }
 .capability-system { height: 230svh; position:relative; margin:70px 0 80px; --capability-progress:0; }
 .capability-sticky { position:sticky; top:95px; min-height:calc(100svh - 130px); display:grid; grid-template-columns:42% 58%; align-items:center; }
 .capability-index { position:relative; z-index:2; padding:12px 0; }
-.capability-index h3 { font-size:clamp(28px,3vw,43px); font-weight:400; letter-spacing:-.05em; line-height:1.15; margin:25px 0; }
+.capability-index h3 { font-size:clamp(28px,3vw,43px); font-weight:400; letter-spacing:-.05em; line-height:1.15; margin:20px 0 16px; }
 .capability-index h3 > span { color:#90acbb; }
+.capability-pathway-switch { display:inline-flex; gap:6px; margin-bottom:14px; padding:3px; border-radius:999px; border:1px solid #7fcbe026; background:#07131fd6; }
+.capability-pathway-switch > button { padding:5px 11px; border-radius:999px; font:8.5px var(--font-jetbrains),monospace; letter-spacing:.05em; color:#7c97aa; transition:background 220ms ease, color 220ms ease, border-color 220ms ease; border:1px solid transparent; }
+.capability-pathway-switch > button:hover { color:#d2eef8; }
+.capability-pathway-switch > button.is-active { background:#112b3f; color:#dff7ff; border-color:#78d6ec4d; }
 .capability-matrix-header { display:flex;justify-content:space-between;font:7px var(--font-jetbrains),monospace;letter-spacing:.13em;color:#7793a6; padding:12px 0; border-top:1px solid #a5becb22; }
 .capability-modules { position:relative;display:flex; flex-direction:column; padding:0; gap:0; }
 .capability-module { position:relative;transition:background 300ms,border-color 300ms;display:flex; flex-direction:row; gap:15px; align-items:center; padding:13px 12px; border:0; border-bottom:1px solid #a5becb1a; border-radius:0; min-height:62px; background:transparent; transform:none; }
