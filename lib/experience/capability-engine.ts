@@ -494,6 +494,41 @@ export function createCapabilityEngine(
     )
   );
 
+  // Central Synthesis Gyro-Core (heart of the Workshop -> rises to become the Polestar Compass Apex in the Atlas)
+  const synthesisCore = new THREE.Group();
+  synthesisCore.position.set(0, 0.08, -0.1);
+  crucibleGroup.add(synthesisCore);
+  const coreOctGeo = new THREE.OctahedronGeometry(0.16, 0);
+  const coreOctMesh = new THREE.Mesh(coreOctGeo, prismGlassMat);
+  coreOctMesh.add(new THREE.LineSegments(new THREE.EdgesGeometry(coreOctGeo), warmVernierMat));
+  synthesisCore.add(coreOctMesh);
+  const coreGimbalA = new THREE.Mesh(
+    new THREE.TorusGeometry(0.24, 0.007, 8, 36),
+    cyanEmissiveMat
+  );
+  const coreGimbalB = new THREE.Mesh(
+    new THREE.TorusGeometry(0.3, 0.006, 8, 36),
+    lavenderEmissiveMat
+  );
+  synthesisCore.add(coreGimbalA, coreGimbalB);
+
+  // Hexagonal Inter-Capability Relay Ring connecting the 6 instruments around the perimeter
+  const workshopRelayGeo = new THREE.BufferGeometry().setFromPoints(
+    Array.from({ length: 6 }, () => new THREE.Vector3())
+  );
+  const workshopRelayLoop = new THREE.LineLoop(workshopRelayGeo, lavenderLineMat);
+  root.add(workshopRelayLoop);
+  const workshopRelayPulses: THREE.Mesh[] = [];
+  const relayPulseGeo = new THREE.SphereGeometry(0.036, 8, 8);
+  for (let rp = 0; rp < 3; rp++) {
+    const rpMesh = new THREE.Mesh(
+      relayPulseGeo,
+      rp === 0 ? cyanEmissiveMat : rp === 1 ? lavenderEmissiveMat : emeraldEmissiveMat
+    );
+    root.add(rpMesh);
+    workshopRelayPulses.push(rpMesh);
+  }
+
   // ── TIER 3 (FOREGROUND): OPTICAL FRAMING CALIPERS ──
   const fgCalipers = new THREE.Group();
   fgCalipers.position.set(0, 1.05, 1.45);
@@ -549,16 +584,16 @@ export function createCapabilityEngine(
 
   // Target positions in World Two (The Atlas of Possibility):
   // Stepped across 3 distinct topographic regions:
-  // West Terrace (01 Basic - Available Now): Write (-3.2) & Vision/Voice (-1.85)
-  // Central Terrace (02 Consumer - Coming Soon): Bilingual (-0.55) & Memory (+0.68)
-  // East Terrace (03 Business - Coming Soon): Automate (+1.95) & Decide (+3.25)
+  // West Terrace (01 Basic - Available Now): Write (-3.22) & Vision/Voice (-2.10)
+  // Central Terrace (02 Consumer - Coming Soon): Bilingual (-0.58) & Memory (+0.62)
+  // East Terrace (03 Business - Coming Soon): Automate (+2.12) & Decide (+3.24)
   const atlasPlacements = [
-    { x: -3.2, y: 0.84, z: 0.52 },   // 01 Write -> Editorial Folio Tower (Basic)
-    { x: 1.95, y: 1.28, z: -0.22 },  // 02 Automate -> Workflow Aqueduct (Business)
-    { x: 3.25, y: 1.4, z: 0.45 },    // 03 Decide -> Executive Decision Citadel (Business)
-    { x: -0.55, y: 1.06, z: 0.36 },  // 04 Swedish + English -> Twin Suspension Span (Consumer)
-    { x: 0.68, y: 1.12, z: -0.28 },  // 05 Memory -> Curated Context Archive (Consumer)
-    { x: -1.85, y: 0.9, z: -0.2 },   // 06 Vision & Voice -> Multimodal Signal Observatory (Basic)
+    { x: -3.22, y: 0.82, z: 0.48 },   // 01 Write -> Editorial Folio Tower (Basic)
+    { x: 2.12, y: 1.3, z: -0.2 },     // 02 Automate -> Workflow Aqueduct (Business)
+    { x: 3.24, y: 1.38, z: 0.44 },    // 03 Decide -> Executive Decision Citadel (Business)
+    { x: -0.58, y: 1.06, z: 0.34 },   // 04 Swedish + English -> Twin Suspension Span (Consumer)
+    { x: 0.62, y: 1.1, z: -0.24 },    // 05 Memory -> Curated Context Archive (Consumer)
+    { x: -2.1, y: 0.88, z: -0.18 },   // 06 Vision & Voice -> Multimodal Signal Observatory (Basic)
   ];
 
   CAPABILITY_CHAMBER_MODULES.forEach((mod, idx) => {
@@ -956,11 +991,12 @@ export function createCapabilityEngine(
 
   // 3 Circular/Octagonal Architectural Topographic Terraces (West: Basic, Center: Consumer, East: Business)
   const terraceConfigs = [
-    { x: -2.52, y: 0.72, z: 0.16, r: 1.32, mat: cyanLineMat },
-    { x: 0.06, y: 0.98, z: 0.04, r: 1.36, mat: lavenderLineMat },
-    { x: 2.62, y: 1.24, z: 0.1, r: 1.38, mat: emeraldLineMat },
+    { x: -2.68, y: 0.7, z: 0.16, r: 1.32, mat: cyanLineMat, emMat: cyanEmissiveMat },
+    { x: 0.0, y: 0.96, z: 0.04, r: 1.36, mat: lavenderLineMat, emMat: lavenderEmissiveMat },
+    { x: 2.68, y: 1.22, z: 0.1, r: 1.4, mat: emeraldLineMat, emMat: emeraldEmissiveMat },
   ];
   const atlasTerraces: THREE.Group[] = [];
+  const polestarBeamGeos: THREE.BufferGeometry[] = [];
 
   terraceConfigs.forEach(tc => {
     const tGrp = new THREE.Group();
@@ -973,6 +1009,30 @@ export function createCapabilityEngine(
       frostedGlassMat
     );
     tGrp.add(deck);
+
+    // Stepped lower foundation plinth frame
+    const plinthFrame = new THREE.LineSegments(
+      new THREE.EdgesGeometry(new THREE.CylinderGeometry(tc.r * 1.06, tc.r * 1.1, 0.055, 8)),
+      tc.mat
+    );
+    plinthFrame.position.y = -0.05;
+    tGrp.add(plinthFrame);
+
+    // Central Regional Hub Pylon & Beacon
+    const hubPylon = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.018, 0.36, 6), titaniumMat);
+    hubPylon.position.y = 0.18;
+    tGrp.add(hubPylon);
+    const hubBeacon = new THREE.Mesh(new THREE.OctahedronGeometry(0.055, 0), tc.emMat);
+    hubBeacon.position.y = 0.38;
+    tGrp.add(hubBeacon);
+
+    // Polestar Meridian Beam linking the elevated Synthesis Core to this terrace's Regional Hub
+    const beamGeo = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(0, 1.74, -0.22),
+      new THREE.Vector3(tc.x, tc.y + 0.38, tc.z),
+    ]);
+    atlasGroup.add(new THREE.Line(beamGeo, tc.mat));
+    polestarBeamGeos.push(beamGeo);
 
     // 4 concentric topographic elevation contour rings + radial compass hairlines
     [0.38, 0.68, 0.98, 1.28].forEach((r, cIdx) => {
@@ -1194,11 +1254,22 @@ export function createCapabilityEngine(
       vernierRings[2].rotation.y = lerp(Math.cos(time * 0.22 + modIdx * 0.4) * 0.22, (asm - 0.5) * 0.24, morph);
       vernierRings[2].scale.setScalar(lerp(1, 1.32, morph));
 
+      // Central Synthesis Gyro-Core -> Polestar Compass Apex in World Two
+      synthesisCore.position.y = lerp(0.08, 1.18, morph);
+      synthesisCore.position.z = lerp(-0.1, -0.15, morph);
+      synthesisCore.scale.setScalar(lerp(1, 1.24, morph));
+      coreOctMesh.rotation.y = time * 0.85 + modIdx * 0.52;
+      coreOctMesh.rotation.x = Math.sin(time * 0.65) * 0.28;
+      coreGimbalA.rotation.set(time * 0.55, modIdx * 0.35, 0);
+      coreGimbalB.rotation.set(Math.PI / 3, -time * 0.48, time * 0.22);
+
       // ── 3. Tier 3 Foreground: Optical Framing Calipers Parallax ──
       fgCalipers.position.x = pointerX * 0.24;
       fgCalipers.position.y = 1.05 + pointerY * 0.1;
       fgCalipers.scale.setScalar(lerp(1, 1.32, morph));
       fgCalipers.visible = morph < 0.72;
+
+      const relayAttr = workshopRelayGeo.getAttribute("position") as THREE.BufferAttribute;
 
       // ── 4. Six Articulated Capability Armatures & Sculptural Mechanisms ──
       pods.forEach((pod, idx) => {
@@ -1228,24 +1299,29 @@ export function createCapabilityEngine(
         const targetX = lerp(workshopX, atlasTarget.x, morph) + pointerX * 0.1;
         const targetY = lerp(workshopY, atlasTarget.y + elevationLift, morph) + pointerY * 0.05;
         const targetZ = lerp(workshopZ, atlasTarget.z, morph);
-        const targetScale = lerp(workshopScale, 1.0, morph);
+        const targetScale = lerp(workshopScale, 0.86, morph);
 
         pod.group.position.x = lerp(pod.group.position.x || targetX, targetX, 0.24);
         pod.group.position.y = lerp(pod.group.position.y || targetY, targetY, 0.24);
         pod.group.position.z = lerp(pod.group.position.z || targetZ, targetZ, 0.24);
         pod.group.scale.setScalar(lerp(pod.group.scale.x || targetScale, targetScale, 0.24));
 
-        // Update the Articulated Radial Caliper Tether connecting the spine to this pod
+        // Update the Articulated Radial Caliper Tether connecting the Synthesis Gyro-Core to this pod
+        const coreWorldX = crucibleGroup.position.x + synthesisCore.position.x;
+        const coreWorldY = crucibleGroup.position.y + synthesisCore.position.y;
+        const coreWorldZ = crucibleGroup.position.z + synthesisCore.position.z;
         const tetherAttr = pod.tetherGeo.getAttribute("position") as THREE.BufferAttribute;
-        tetherAttr.setXYZ(0, crucibleGroup.position.x, crucibleGroup.position.y, crucibleGroup.position.z);
+        tetherAttr.setXYZ(0, coreWorldX, coreWorldY, coreWorldZ);
         tetherAttr.setXYZ(1, pod.group.position.x, pod.group.position.y, pod.group.position.z);
         tetherAttr.needsUpdate = true;
+
+        relayAttr.setXYZ(idx, pod.group.position.x, pod.group.position.y, pod.group.position.z);
 
         pod.cradleRingMat.opacity = morph >= 0.48 ? 0.88 : isActive ? 0.96 : 0.38;
 
         // Rising Architectural Outcome Monument in World Two
-        const monumentScale = smooth(clamp((morph - 0.32) / 0.55, 0, 1)) * (0.58 + 0.42 * asm);
-        pod.atlasMonument.scale.set(1, Math.max(0.001, monumentScale), 1);
+        const monumentScale = smooth(clamp((morph - 0.32) / 0.55, 0, 1)) * (0.64 + 0.52 * asm);
+        pod.atlasMonument.scale.set(1.12, Math.max(0.001, monumentScale), 1.12);
         pod.atlasMonument.visible = monumentScale > 0.02;
 
         // ── Meaningful Capability Transformations (PASS E — STORYTELLING) ──
@@ -1340,9 +1416,26 @@ export function createCapabilityEngine(
         }
       });
 
+      relayAttr.needsUpdate = true;
+      workshopRelayLoop.visible = morph < 0.65;
+      workshopRelayPulses.forEach((rpMesh, rpIdx) => {
+        const segFloat = ((time * 0.42 + rpIdx / 3) % 1) * 6;
+        const idxA = Math.floor(segFloat) % 6;
+        const idxB = (idxA + 1) % 6;
+        const segU = segFloat - Math.floor(segFloat);
+        const posA = pods[idxA].group.position;
+        const posB = pods[idxB].group.position;
+        rpMesh.position.lerpVectors(posA, posB, segU);
+        rpMesh.visible = morph < 0.65;
+      });
+
       // ── 5. World Two Atlas Terraces & Interconnected Routes Emergence ──
       const atlasVisibility = smooth(clamp((morph - 0.16) / 0.65, 0, 1));
       atlasGroup.visible = atlasVisibility > 0.01;
+
+      const polestarX = crucibleGroup.position.x + synthesisCore.position.x;
+      const polestarY = crucibleGroup.position.y + synthesisCore.position.y;
+      const polestarZ = crucibleGroup.position.z + synthesisCore.position.z;
 
       atlasTerraces.forEach((tGrp, tIdx) => {
         const tc = terraceConfigs[tIdx];
@@ -1354,6 +1447,11 @@ export function createCapabilityEngine(
         );
         tGrp.position.y = tc.y + Math.sin(time * 1.1 + tIdx) * 0.022 + (tIdx === 2 ? isTeam * 0.12 : 0);
         tGrp.rotation.y = (asm - 0.5) * 0.12 * (tIdx - 1);
+
+        const bAttr = polestarBeamGeos[tIdx].getAttribute("position") as THREE.BufferAttribute;
+        bAttr.setXYZ(0, polestarX, polestarY, polestarZ);
+        bAttr.setXYZ(1, tGrp.position.x, tGrp.position.y + 0.38, tGrp.position.z);
+        bAttr.needsUpdate = true;
       });
 
       routeLines.forEach((rLine, rIdx) => {

@@ -118,17 +118,17 @@ export default function Capabilities() {
       <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[min(90vw,700px)] h-[400px] bg-accent-cyan/[0.04] rounded-full blur-[120px] pointer-events-none" />
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <ScrollReveal className="capabilities-intro-header text-center mb-12">
+        <div className="capabilities-intro-header text-center mb-12">
           <span className="chapter-label mb-6 inline-flex"><i />03 / {t.capabilities.badge}</span>
           <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-[-0.03em] mb-5 text-white">
             {t.capabilities.title} <span className="text-gradient">{t.capabilities.titleHighlight}</span>
           </h2>
           <p className="text-base sm:text-lg text-muted max-w-2xl mx-auto leading-relaxed">
             {sv
-              ? "Byggd i Sverige för riktigt vardagsarbete — snabba utkast på svenska och engelska, strukturerad analys och användarstyrt minne i en sammanhållen arbetsyta. Gratis att prova i preview idag, med högre gränser och teamflöden under utveckling."
-              : "Built in Sweden for real everyday work — combining fast bilingual writing, structured analysis, and user-controlled memory in one focused workspace. Free to try in the preview today, with higher limits and shared team workflows in development."}
+              ? "I Playground ovan arbetar du i ett sammanhållet samtal. Under ytan samverkar sex förmågor för att forma råa anteckningar, dokument, bilder och röst till strukturerade resultat — på svenska och engelska, med minne du själv styr."
+              : "In the Playground above, you work in a single conversation. Beneath that surface, six connected capabilities turn rough notes, documents, images, and voice into structured outcomes — in Swedish and English, with memory you control."}
           </p>
-        </ScrollReveal>
+        </div>
 
         <CapabilityMap />
         <div className="plans-heading">
@@ -137,8 +137,8 @@ export default function Capabilities() {
           </span>
           <p>
             {sv
-              ? "”En förmåga är ett verktyg. Sammankopplade förmågor skapar möjligheter.” Verkstadens komponenter viks ut till en rumslig karta av dokument, beslut, planer och arbetsflöden."
-              : "“One capability is a tool. Connected capabilities create possibilities.” The workshop structure unfolds into a spatial map of documents, decisions, structured plans, and workflows."}
+              ? "En förmåga löser en uppgift. Tillsammans bär de hela arbetssättet — från öppen preview idag till utökad individuell kapacitet och gemensamma teamflöden under utveckling."
+              : "One capability solves a task. Combined, they support how you work — from open preview access today to extended individual capacity and shared team workflows in development."}
           </p>
         </div>
         <div className="access-architecture" data-access-architecture data-ai-assembly-line aria-hidden="true">

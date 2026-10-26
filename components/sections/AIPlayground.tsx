@@ -3011,7 +3011,27 @@ export default function AIPlayground() {
             </div>
           </div>
         </PlaygroundArrival>
-        <div className="product-output" aria-hidden="true"><span>ONE INTELLIGENCE</span><div>{[0,1,2,3,4,5].map(i=><i key={i}/>)}</div><span>{lang==="sv"?"SEX SÄTT ATT ARBETA":"SIX WAYS TO WORK"}</span></div>
+        <div className="product-output" data-playground-bridge aria-hidden="true">
+          <div className="product-bridge-head">
+            <span>{lang === "sv" ? "02 → 03 · ETT SAMTAL DELAS UPP I SEX VERKTYG" : "02 → 03 · ONE CONVERSATION DIVERGES INTO SIX INSTRUMENTS"}</span>
+            <span>{lang === "sv" ? "FRÅN PLAYGROUND TILL VERKSTADEN" : "FROM PLAYGROUND TO THE WORKSHOP"}</span>
+          </div>
+          <div className="product-bridge-spine">
+            <b className="product-bridge-node" />
+          </div>
+          <div className="product-bridge-channels">
+            {(lang === "sv"
+              ? ["Skriv", "Automatisera", "Besluta", "SV / EN", "Minne", "Syn & röst"]
+              : ["Write", "Automate", "Decide", "SV / EN", "Memory", "Vision & voice"]
+            ).map((label, i) => (
+              <span key={i} className="product-bridge-channel">
+                <i />
+                <b>0{i + 1}</b>
+                <em>{label}</em>
+              </span>
+            ))}
+          </div>
+        </div>
       </div>
 
 
