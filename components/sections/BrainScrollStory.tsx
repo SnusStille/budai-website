@@ -17,10 +17,10 @@ export default function BrainScrollStory() {
   const section=useRef<HTMLElement>(null);
   const [poster,setPoster]=useState(true);
   const stageModules = [
-    "core.module(\"01-write.ts\")",
-    "core.module(\"05-memory.ts\")",
-    "core.module(\"03-decide.ts\")",
-    "core.module(\"06-multimodal.ts\")",
+    "core.module(\"01-write.ts\") · SV ↔ EN",
+    "core.module(\"05-memory.ts\") · user-controlled",
+    "core.module(\"03-decide.ts\") · risk & next step",
+    "core.module(\"06-multimodal.ts\") · vision + voice",
   ];
   useEffect(()=>subscribeJourney(frame=>{
     const node=section.current;if(!node)return;
@@ -51,12 +51,12 @@ export default function BrainScrollStory() {
   return (
     <section ref={section} id="signal" className="brain-journey" aria-labelledby="signal-title" data-brain-journey data-original-source="43f44c9">
       <div className="brain-journey-sticky">
-        <div className="neural-hud-top"><span className="chapter-label"><i />01 · SIGNAL</span><a href="#playground">{sv?"Direkt till Playground":"Skip to Playground"}<ArrowUpRight size={12}/></a></div>
+        <div className="neural-hud-top"><span className="chapter-label"><i />02 · {sv?"KONTEXTEN · SIGNAL & MINNE":"THE CONTEXT · SIGNAL & MEMORY"}</span><a href="#playground">{sv?"Direkt till Playground":"Skip to Playground"}<ArrowUpRight size={12}/></a></div>
         <div className="neural-entry-title">
-          <span>{sv?"KONTEXT → MINNE → SVAR":"CONTEXT → MEMORY → RESPONSE"}</span>
-          <h2 id="signal-title">{sv?"Ett sinne som lyssnar.":"A mind that listens."}</h2>
-          <p className="signal-meaning">{sv?"BudAI läser frågan, håller tråden och svarar på svenska eller engelska. Med ett konto minns det vad som är värt att minnas.":"BudAI reads the question, keeps the thread and answers in Swedish or English. With an account, it remembers what is worth remembering."}</p>
-          <div className="signal-meaning-chips"><span>{sv?"Kontext":"Context"}</span><span>{sv?"Minne":"Memory"}</span><span>{sv?"Två språk":"Two languages"}</span></div>
+          <span>{sv?"SIGNAL → TVÅ SPRÅK → ANVÄNDARSTYRT MINNE":"SIGNAL → TWO LANGUAGES → USER-CONTROLLED MEMORY"}</span>
+          <h2 id="signal-title">{sv?"En signal får sammanhang.":"A signal gains context."}</h2>
+          <p className="signal-meaning">{sv?"Svenska och engelska möts naturligt i samma tråd utan att tappa ton. Med ett konto sparar det användarstyrda minnet bara det du själv väljer att behålla — aldrig allt automatiskt.":"Swedish and English flow naturally in the same thread without losing tone. With an account, user-controlled memory keeps only the facts you choose to save — never everything by default."}</p>
+          <div className="signal-meaning-chips"><span>{sv?"Svenska + Engelska":"Swedish + English"}</span><span>{sv?"Användarstyrt minne":"User-controlled memory"}</span><span>{sv?"Strukturerat svar":"Structured action"}</span></div>
         </div>
         {poster&&<div className="brain-journey-fallback" aria-hidden="true"><BrainPoster/></div>}
         <div className="original-brain-tour" data-original-brain-tour>
@@ -70,10 +70,10 @@ export default function BrainScrollStory() {
             </div>;
           })}
           <div className="original-brain-stage neural-digital-synthesis" data-digital-synthesis aria-hidden="true">
-            <span>{sv?"NEURAL SYNTES → DIGITAL INTELLIGENS":"NEURAL SYNTHESIS → DIGITAL INTELLIGENCE"}</span>
-            <h3>{sv?"Från organisk tanke till levande system.":"From organic signal to live intelligence."}</h3>
-            <p>{sv?"Synaptiska spår konvergerar till den interaktiva AI Playground nedan.":"Synaptic pathways converge into the interactive AI Playground ahead."}</p>
-            <code className="neural-stage-module">{"budai.playground.connect({ stream: true })"}</code>
+            <span>{sv?"KAPITEL 05 · DIN IDÉ BÖRJAR HÄR":"CHAPTER 05 · YOUR IDEA STARTS HERE"}</span>
+            <h3>{sv?"Du har sett vad som är möjligt.":"You've seen what's possible."}</h3>
+            <p>{sv?"Nu kan du skapa något eget direkt i den riktiga BudAI Playground nedan.":"Now make something of your own in the live BudAI Playground ahead."}</p>
+            <code className="neural-stage-module">{"budai.playground.connect({ stream: true, memory: 'user_controlled' })"}</code>
           </div>
         </div>
 

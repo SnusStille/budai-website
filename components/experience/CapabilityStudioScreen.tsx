@@ -2,30 +2,67 @@
 
 import { useEffect, useMemo, useState } from "react";
 import BudAILogo from "@/components/ui/BudAILogo";
+import { useLang } from "@/components/ui/LanguageContext";
 import { tokenizeLine } from "@/lib/experience/code";
 import { CAPABILITY_CHAMBER_MODULES } from "@/lib/experience/capability-engine";
 import { subscribeJourney } from "@/lib/experience/scroll";
 import { clamp, smooth } from "@/lib/experience/timeline";
 
 const PIPELINE_CODE_LINES = [
-  "// 03B · End-to-End BudAI Synthesis Pipeline",
-  "import { BudAI, TeamWorkspace } from '@budai/core';",
+  "// 03 -> 04 · From Signal to Structured Action",
+  "import { BudAI, Workspace } from '@budai/core';",
   "",
-  "export async function synthesizeProduct(signal: Input) {",
+  "export async function synthesizeSignal(signal: Input) {",
   "  const intake = await BudAI.intake(signal.multimodal);",
-  "  const context = await BudAI.memory.recall(intake);",
-  "  const workspace = await TeamWorkspace.assemble({",
-  "    tiers: ['Basic', 'Consumer', 'Business'],",
+  "  const context = await BudAI.memory.recallSelected(intake);",
+  "  const result = await Workspace.assemble({",
+  "    pathway: ['Basic', 'Consumer', 'Business'],",
   "    locales: ['sv-SE', 'en-US'],",
-  "    grounding: context.verifiedCitations,",
+  "    userControlledMemory: context.verifiedRows,",
   "  });",
-  "  return workspace.streamLiveOutput();",
+  "  return result.renderActionableOutput();",
   "}",
 ];
 
+const SV_TITLES: Record<string, { title: string; subtitle: string; comp: string }> = {
+  write: {
+    title: "Offerter, rapporter & mejl",
+    subtitle: "Kontextlåst skrivande på svenska och engelska.",
+    comp: "TVÅSPRÅKIG DOKUMENTBYGGARE",
+  },
+  workflows: {
+    title: "Playbooks & arbetsflöden",
+    subtitle: "Återkommande rutiner i tydliga steg.",
+    comp: "STRUKTURERAD PLAYBOOK",
+  },
+  research: {
+    title: "Underlag & beslutsmatriser",
+    subtitle: "Sammanfattning, risker och rekommenderat nästa steg.",
+    comp: "BESLUTSMATRIS",
+  },
+  bilingual: {
+    title: "Sömlös SV / EN-arbetsyta",
+    subtitle: "Samma nyans och precision på båda språken.",
+    comp: "SV ↔ EN SPRÅKBRYGGA",
+  },
+  memory: {
+    title: "Användarstyrt arbetsminne",
+    subtitle: "Spara endast de fakta du själv väljer att behålla.",
+    comp: "ANVÄNDARSTYRT MINNESVALV",
+  },
+  multimodal: {
+    title: "Skärmbilder, diagram & röst",
+    subtitle: "Visuell analys och röststyrning i samma tråd.",
+    comp: "SYN & RÖST-STUDIO",
+  },
+};
+
 export default function CapabilityStudioScreen() {
+  const { lang } = useLang();
+  const sv = lang === "sv";
   const [activeModule, setActiveModule] = useState(0);
   const [hoverFocus, setHoverFocus] = useState(-1);
+  const [pathway, setPathway] = useState<"personal" | "business">("personal");
   const [typedRatio, setTypedRatio] = useState(0.65);
   const [morph, setMorph] = useState(0);
   const [assemblyProgress, setAssemblyProgress] = useState(0.5);
@@ -34,8 +71,16 @@ export default function CapabilityStudioScreen() {
     const onFocus = (event: Event) => {
       setHoverFocus((event as CustomEvent<number>).detail);
     };
+    const onPathway = (event: Event) => {
+      const next = (event as CustomEvent<"personal" | "business">).detail;
+      if (next === "personal" || next === "business") setPathway(next);
+    };
     window.addEventListener("budai:capability-focus", onFocus);
-    return () => window.removeEventListener("budai:capability-focus", onFocus);
+    window.addEventListener("budai:pathway-mode", onPathway);
+    return () => {
+      window.removeEventListener("budai:capability-focus", onFocus);
+      window.removeEventListener("budai:pathway-mode", onPathway);
+    };
   }, []);
 
   useEffect(() => {
@@ -72,6 +117,10 @@ export default function CapabilityStudioScreen() {
 
   const focusedIdx = hoverFocus >= 0 ? hoverFocus : activeModule;
   const currentMod = CAPABILITY_CHAMBER_MODULES[focusedIdx] ?? CAPABILITY_CHAMBER_MODULES[0];
+  const svMeta = SV_TITLES[currentMod.id];
+  const displayTitle = sv && svMeta ? svMeta.title : currentMod.title;
+  const displaySubtitle = sv && svMeta ? svMeta.subtitle : currentMod.subtitle;
+  const displayComp = sv && svMeta ? svMeta.comp : currentMod.componentTitle;
   const isPipelineMode = morph >= 0.48;
 
   const tokenizedModules = useMemo(
@@ -113,6 +162,7 @@ export default function CapabilityStudioScreen() {
       className="builder-editor capability-studio-screen"
       data-capability-studio-screen
       data-studio-mode={isPipelineMode ? "pipeline" : "capability"}
+      data-pathway-mode={pathway}
     >
       <div className="editor-titlebar">
         <span className="editor-traffic">
@@ -123,10 +173,20 @@ export default function CapabilityStudioScreen() {
         <span className="editor-brand">
           <BudAILogo size="xs" animated={false} className="!h-4 !w-4" />
           {isPipelineMode
-            ? "BUDAI — END-TO-END SYNTHESIS PIPELINE"
-            : `BUDAI — CAPABILITY SYNTHESIS STUDIO · ${currentMod.index}`}
+            ? sv
+              ? "BUDAI — FRÅN SIGNAL TILL STRUKTURERAT RESULTAT"
+              : "BUDAI — FROM SIGNAL TO STRUCTURED OUTPUT"
+            : `BUDAI — SIGNAL TRANSFORMATION STUDIO · ${currentMod.index}`}
         </span>
-        <span>SV / EN · LIVE</span>
+        <span>
+          {pathway === "business"
+            ? sv
+              ? "TEAMVÄG · SV / EN"
+              : "TEAM PATHWAY · SV / EN"
+            : sv
+            ? "PRIVATVÄG · SV / EN"
+            : "PERSONAL PATHWAY · SV / EN"}
+        </span>
       </div>
 
       <div className="editor-tabs">
@@ -137,7 +197,7 @@ export default function CapabilityStudioScreen() {
         </span>
         <span>
           {isPipelineMode
-            ? "src / pipeline / intake-to-workspace.ts"
+            ? "src / signal / intake-to-action.ts"
             : `src / capabilities / ${currentMod.file}`}
         </span>
       </div>
@@ -185,21 +245,25 @@ export default function CapabilityStudioScreen() {
             <span className="studio-preview-badge">
               <i style={{ background: isPipelineMode ? "#6ee7b7" : currentMod.accent }} />
               {isPipelineMode
-                ? "CONNECTED 3-STAGE PIPELINE"
-                : currentMod.componentTitle}
+                ? sv
+                  ? "SAMMANHÅLLEN 3-STEGSVÄG"
+                  : "CONNECTED 3-STAGE PIPELINE"
+                : displayComp}
             </span>
             <span className="studio-preview-status">
               {effectiveRatio >= 0.92
-                ? "✓ VERIFIED READY"
-                : `SYNTHESIZING ${Math.round(effectiveRatio * 100)}%`}
+                ? sv
+                  ? "✓ REDO FÖR HANDLING"
+                  : "✓ ACTION READY"
+                : `SIGNAL ${Math.round(effectiveRatio * 100)}%`}
             </span>
           </div>
 
           {!isPipelineMode ? (
             <div className="studio-preview-card">
               <div className="studio-preview-title">
-                <h4>{currentMod.title}</h4>
-                <p>{currentMod.subtitle}</p>
+                <h4>{displayTitle}</h4>
+                <p>{displaySubtitle}</p>
               </div>
 
               <div className="studio-preview-surface">
@@ -224,21 +288,31 @@ export default function CapabilityStudioScreen() {
                   <div className="studio-bilingual-grid">
                     <div className="studio-locale-pane">
                       <b>SV-SE · SVENSKA</b>
-                      <span>Arkitektur &amp; sammanhang</span>
-                      <span>Verifierad företagsleverans</span>
+                      <span>Naturlig svensk ton &amp; kontext</span>
+                      <span>Användarstyrt minne &amp; struktur</span>
                     </div>
                     <div className="studio-locale-pane">
                       <b>EN-US · ENGLISH</b>
-                      <span>Architecture &amp; context</span>
-                      <span>Verified enterprise delivery</span>
+                      <span>Natural English tone &amp; context</span>
+                      <span>User-controlled memory &amp; clarity</span>
                     </div>
                   </div>
                 ) : (
                   <div className="studio-pipeline-rows">
                     {[
-                      `01 · ${currentMod.label} AST Initialized`,
-                      "02 · SV / EN Context & Memory Grounded",
-                      `03 · ${currentMod.componentTitle} Mounted`,
+                      sv
+                        ? `01 · Signal mottagen i ${currentMod.label}`
+                        : `01 · Signal structured in ${currentMod.label}`,
+                      pathway === "business"
+                        ? sv
+                          ? "02 · Teamkontext & SV/EN-ton synkroniserad"
+                          : "02 · Team context & SV/EN tone aligned"
+                        : sv
+                        ? "02 · Användarstyrt minne & SV/EN-kontext"
+                        : "02 · User-controlled memory & SV/EN context",
+                      sv
+                        ? `03 · ${displayComp} redo i Playground`
+                        : `03 · ${displayComp} ready for action`,
                     ].map((row, rIdx) => (
                       <div
                         key={rIdx}
@@ -249,7 +323,7 @@ export default function CapabilityStudioScreen() {
                       >
                         <i style={{ background: currentMod.accent }} />
                         <span>{row}</span>
-                        <b>READY</b>
+                        <b>{sv ? "KLAR" : "READY"}</b>
                       </div>
                     ))}
                   </div>
@@ -268,26 +342,40 @@ export default function CapabilityStudioScreen() {
           ) : (
             <div className="studio-preview-card">
               <div className="studio-preview-title">
-                <h4>From Raw Input to Shared Team Output</h4>
-                <p>One continuous AI engine across Basic, Consumer, and Business.</p>
+                <h4>
+                  {sv
+                    ? "Från första tanke till gemensamt resultat"
+                    : "From First Thought to Shared Team Action"}
+                </h4>
+                <p>
+                  {sv
+                    ? "Samma BudAI-kärna idag i Basic — och snart i Konsument och Företag."
+                    : "One BudAI core free in Basic today — scaling to Consumer and Business."}
+                </p>
               </div>
               <div className="studio-pipeline-rows">
                 {[
                   {
                     tier: "01 / BASIC",
-                    title: "Direct Multimodal Intake (Chat · Vision · Voice)",
-                    state: "AVAILABLE NOW",
+                    title: sv
+                      ? "Prova BudAI gratis (10/dag gäst · 35/dag med konto, minne & bild)"
+                      : "Try BudAI free (10/day guest · 35/day signed-in with memory & vision)",
+                    state: sv ? "TILLGÄNGLIG NU" : "AVAILABLE NOW",
                     col: "#72d7ec",
                   },
                   {
                     tier: "02 / CONSUMER",
-                    title: "Persistent Context Vault & Extended Models",
+                    title: sv
+                      ? "För dagligt bruk — fler dagliga credits och längre minne/historik"
+                      : "For daily individual work — higher limits & extended memory/history",
                     state: "COMING SOON",
                     col: "#99a8f0",
                   },
                   {
                     tier: "03 / BUSINESS",
-                    title: "Shared Team Playbooks, Workspaces & Admin",
+                    title: sv
+                      ? "För team — delade credits, gemensamma playbooks & administration"
+                      : "For teams — shared credit pools, team playbooks & admin controls",
                     state: "COMING SOON",
                     col: "#6ee7b7",
                   },
@@ -310,16 +398,16 @@ export default function CapabilityStudioScreen() {
               </div>
               <div className="studio-metrics-grid">
                 <div className="studio-metric-pill">
-                  <small>STAGE 01</small>
-                  <strong>FREE PREVIEW</strong>
+                  <small>BASIC</small>
+                  <strong>{sv ? "GRATIS PREVIEW" : "FREE PREVIEW"}</strong>
                 </div>
                 <div className="studio-metric-pill">
-                  <small>STAGE 02</small>
-                  <strong>DEEP MEMORY</strong>
+                  <small>CONSUMER</small>
+                  <strong>{sv ? "DAGLIGT ARBETE" : "DAILY WORK"}</strong>
                 </div>
                 <div className="studio-metric-pill">
-                  <small>STAGE 03</small>
-                  <strong>TEAM SCALE</strong>
+                  <small>BUSINESS</small>
+                  <strong>{sv ? "TEAM & ADMIN" : "TEAM SCALE"}</strong>
                 </div>
               </div>
             </div>
@@ -332,11 +420,11 @@ export default function CapabilityStudioScreen() {
           ⑂ main <i /> TypeScript 5.8
         </span>
         <span>
-          {effectiveRatio >= 0.95
-            ? "SYNTHESIS COMPLETE · COMPONENT ACTIVE"
-            : "SCROLL TO SYNTHESIZE"}
+          {sv
+            ? "ILLUSTRATIV 3D-DEMONSTRATION · EJ ETT LIVE-ANROP"
+            : "ILLUSTRATIVE 3D DEMONSTRATION · NOT A LIVE AI REQUEST"}
         </span>
-        <span>BUDAI UNIFIED 3D STUDIO · SV / EN</span>
+        <span>BUDAI SIGNAL STUDIO · SV / EN</span>
       </div>
     </div>
   );

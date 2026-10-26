@@ -470,7 +470,9 @@ export function createWorld(
         engine.root.visible = inWindow;
         const capProgress = Number(capSystem?.dataset.progress ?? 0);
         const activeModule = focus >= 0 ? focus : Math.min(5, Math.floor(capProgress * 6));
-        engine.update(capProgress, activeModule, morph, frame.time, assemblyProgress);
+        const px = frame.pointerX ?? 0;
+        const py = frame.pointerY ?? 0;
+        engine.update(capProgress, activeModule, morph, frame.time, assemblyProgress, px, py);
 
         corridorPulses.forEach((pulse, idx) => {
           const u = (frame.time * 0.32 + idx * 0.19) % 1;
@@ -548,9 +550,9 @@ export function createWorld(
         roadGlows.forEach((material, i) => { material.opacity = (i === activeRoadNode ? 0.82 : 0.36) * (1 - close); });
 
         room.update(frame.sections.about ?? 0, frame.time);
-        room.holo.core.rotation.y = frame.time * 0.7;
-        room.holo.cage.rotation.y = -frame.time * 0.42;
-        room.holo.orbit.rotation.z = frame.time * 0.55;
+        room.holo.core.rotation.y = frame.time * 0.7 + px * 0.35;
+        room.holo.cage.rotation.y = -frame.time * 0.42 - px * 0.2;
+        room.holo.orbit.rotation.z = frame.time * 0.55 + py * 0.25;
 
         const builderWeight = smooth(1 - Math.abs(chapter - 4));
         screen.visible = builderWeight > 0.02;

@@ -16,6 +16,8 @@ let current: JourneyFrame = {
   bounds: {},
   reduced: false,
   time: 0,
+  pointerX: 0,
+  pointerY: 0,
 };
 
 export function getJourneyFrame() {
@@ -36,6 +38,10 @@ function start() {
   let dirty = true;
   let footerTop = Infinity;
   let disposed = false;
+  let targetPointerX = 0;
+  let targetPointerY = 0;
+  let smoothPointerX = 0;
+  let smoothPointerY = 0;
   const media = window.matchMedia("(prefers-reduced-motion: reduce)");
   const measure = () => {
     bounds = CHAPTERS.flatMap(({ id }) => {
@@ -55,6 +61,8 @@ function start() {
       last = now;
       const y = window.scrollY;
       const height = window.innerHeight;
+      smoothPointerX += (targetPointerX - smoothPointerX) * 0.14;
+      smoothPointerY += (targetPointerY - smoothPointerY) * 0.14;
       current = {
         ...journeyAt(y, height, document.documentElement.scrollHeight, bounds),
         y,
@@ -62,6 +70,8 @@ function start() {
         width: window.innerWidth,
         reduced: media.matches,
         time: now / 1000,
+        pointerX: smoothPointerX,
+        pointerY: smoothPointerY,
       };
       current.closing = closingProgressAt(y, footerTop, height, document.documentElement.scrollHeight - height);
       current.departure = 0;
@@ -97,8 +107,13 @@ function start() {
     raf = 0;
     if (!document.hidden) onResize();
   };
+  const onPointerMove = (e: PointerEvent) => {
+    targetPointerX = (e.clientX / Math.max(1, window.innerWidth)) * 2 - 1;
+    targetPointerY = -((e.clientY / Math.max(1, window.innerHeight)) * 2 - 1);
+  };
   window.addEventListener("scroll", onScroll, { passive: true });
   window.addEventListener("resize", onResize, { passive: true });
+  window.addEventListener("pointermove", onPointerMove, { passive: true });
   document.addEventListener("visibilitychange", onVisibility);
   media.addEventListener("change", onResize);
   const resize = new ResizeObserver(onResize);
@@ -113,6 +128,8 @@ function start() {
     reduced: media.matches,
     time: performance.now() / 1000,
     closing: closingProgressAt(scrollY, footerTop, innerHeight, document.documentElement.scrollHeight - innerHeight),
+    pointerX: 0,
+    pointerY: 0,
   };
   schedule();
   return () => {
@@ -122,7 +139,8 @@ function start() {
     resize.disconnect();
     window.removeEventListener("scroll", onScroll);
     window.removeEventListener("resize", onResize);
-    window.removeEventListener("visibilitychange", onVisibility);
+    window.removeEventListener("pointermove", onPointerMove);
+    document.removeEventListener("visibilitychange", onVisibility);
     media.removeEventListener("change", onResize);
   };
 }

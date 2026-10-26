@@ -197,7 +197,9 @@ export interface CapabilityEngine {
     activeModule: number,
     accessMorph: number,
     time: number,
-    assemblyProgress?: number
+    assemblyProgress?: number,
+    pointerX?: number,
+    pointerY?: number
   ): void;
 }
 
@@ -590,6 +592,67 @@ export function createCapabilityEngine(
   busRail.position.set(0, -0.34, 1.35);
   root.add(busRail);
 
+  // Recurring BudAI Living Signal Core + Bilingual SV/EN Helical Ribbons on the foreground studio deck
+  const signalCoreGroup = new THREE.Group();
+  signalCoreGroup.position.set(0, 0.02, 1.35);
+  root.add(signalCoreGroup);
+
+  const signalOctaMat = new THREE.MeshStandardMaterial({
+    color: "#dff9ff",
+    emissive: "#72d7ec",
+    emissiveIntensity: 1.25,
+    metalness: 0.35,
+    roughness: 0.15,
+  });
+  const signalOcta = new THREE.Mesh(new THREE.OctahedronGeometry(0.16, 0), signalOctaMat);
+  signalCoreGroup.add(signalOcta);
+
+  const gimbalRingMat = new THREE.MeshBasicMaterial({
+    color: "#72d7ec",
+    transparent: true,
+    opacity: 0.65,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+  });
+  const gimbalA = new THREE.Mesh(new THREE.TorusGeometry(0.28, 0.01, 8, 48), gimbalRingMat);
+  const gimbalB = new THREE.Mesh(new THREE.TorusGeometry(0.36, 0.009, 8, 48), gimbalRingMat);
+  gimbalB.rotation.x = Math.PI / 2.4;
+  signalCoreGroup.add(gimbalA, gimbalB);
+
+  // Two intertwined 3D Signal Ribbons representing Swedish (Cyan) and English (Lavender) streams
+  const svPoints: THREE.Vector3[] = [];
+  const enPoints: THREE.Vector3[] = [];
+  for (let i = 0; i <= 24; i++) {
+    const u = i / 24;
+    const x = (u - 0.5) * 6.5;
+    const angle = u * Math.PI * 3;
+    svPoints.push(new THREE.Vector3(x, -0.12 + Math.sin(angle) * 0.14, 1.35 + Math.cos(angle) * 0.12));
+    enPoints.push(new THREE.Vector3(x, -0.12 - Math.sin(angle) * 0.14, 1.35 - Math.cos(angle) * 0.12));
+  }
+  const svRibbonMat = new THREE.MeshBasicMaterial({
+    color: "#72d7ec",
+    transparent: true,
+    opacity: 0.42,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+  });
+  const enRibbonMat = new THREE.MeshBasicMaterial({
+    color: "#a8b4f8",
+    transparent: true,
+    opacity: 0.42,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+  });
+  const svRibbon = new THREE.Mesh(
+    new THREE.TubeGeometry(new THREE.CatmullRomCurve3(svPoints), 48, 0.014, 6, false),
+    svRibbonMat
+  );
+  const enRibbon = new THREE.Mesh(
+    new THREE.TubeGeometry(new THREE.CatmullRomCurve3(enPoints), 48, 0.014, 6, false),
+    enRibbonMat
+  );
+  root.add(svRibbon, enRibbon);
+
   // Studio PointLights matching Builder (`developer-room.ts`)
   const cyanLamp = new THREE.PointLight("#71c9e7", 32, 18, 2);
   cyanLamp.position.set(-4.2, 3.2, 2.2);
@@ -614,7 +677,9 @@ export function createCapabilityEngine(
       activeModule: number,
       accessMorph: number,
       time: number,
-      assemblyProgress = 0
+      assemblyProgress = 0,
+      pointerX = 0,
+      pointerY = 0
     ) {
       const p = clamp(progress, 0, 1);
       const morph = clamp(accessMorph, 0, 1);
@@ -662,15 +727,72 @@ export function createCapabilityEngine(
       rightWing.scale.setScalar(lerp(0.55, 1.0, wingDeploy));
       rightWing.visible = wingDeploy > 0.04;
 
-      // Animate the 6 physical 3D desk nodes
+      // Animate the 6 physical 3D desk nodes with capability-specific geometric transformations:
+      // 0: Write (ordered stack), 1: Automate (pipeline wave), 2: Decide (converging arc),
+      // 3: SV/EN (bilingual pairs), 4: Memory (user-selected pinned layers), 5: Vision/Voice (harmonic wave)
       moduleNodes.forEach((node, idx) => {
         const isFocused = idx === modIdx;
-        const lift = morph < 0.48 ? (isFocused ? 0.16 : 0.0) : 0.08;
-        node.group.position.y =
-          -0.32 + lift + Math.sin(time * 1.6 + idx * 0.8) * 0.012;
-        node.coreMat.emissiveIntensity =
-          morph < 0.48 ? (isFocused ? 1.15 : 0.35) : 0.85;
+        let targetX = node.baseX;
+        let targetY = -0.32;
+        let targetZ = 1.35;
+        let emissive = isFocused ? 1.2 : 0.38;
+
+        if (morph < 0.48) {
+          if (modIdx === 0) {
+            // Write: organized editorial strata
+            targetY = -0.28 + (idx === 0 ? 0.2 : (5 - idx) * 0.025);
+          } else if (modIdx === 1) {
+            // Automate: sequential stage gates
+            const wave = Math.sin(time * 3.2 - idx * 0.9) * 0.04;
+            targetY = -0.26 + wave + (isFocused ? 0.14 : 0.03);
+            emissive = 0.65 + Math.max(0, Math.sin(time * 3.2 - idx * 0.9)) * 0.6;
+          } else if (modIdx === 2) {
+            // Decide: multiple paths converging toward the central decision vector
+            targetX = lerp(node.baseX, (idx - 2.5) * 0.82, 0.45);
+            targetY = -0.22 + (1 - Math.abs(idx - 2.5) / 2.5) * 0.16;
+          } else if (modIdx === 3) {
+            // Swedish + English: paired bilingual exchange
+            const pairOffset = idx % 2 === 0 ? 0.14 : -0.14;
+            targetX = node.baseX + pairOffset;
+            targetY = -0.24 + Math.sin(time * 2.2 + (idx % 2) * Math.PI) * 0.05;
+            emissive = 0.92;
+          } else if (modIdx === 4) {
+            // Memory: user-selected durable layers stay elevated & bright; transient fragments stay low
+            const durable = idx === 0 || idx === 2 || idx === 4;
+            targetY = durable ? -0.15 : -0.35;
+            emissive = durable ? 1.25 : 0.2;
+          } else {
+            // Vision & Voice: acoustic/visual harmonic spectrum
+            targetY = -0.24 + Math.abs(Math.sin(time * 2.8 + idx * 0.75)) * 0.18;
+            emissive = 0.8 + Math.abs(Math.sin(time * 2.8 + idx * 0.75)) * 0.45;
+          }
+        } else {
+          // Act II: 3-stage pipeline grouping (Basic / Consumer / Business)
+          const stageGroup = Math.floor(idx / 2) - 1; // -1, 0, +1
+          targetX = stageGroup * 2.35 + (idx % 2 === 0 ? -0.38 : 0.38);
+          targetY = -0.24 + Math.sin(time * 1.8 + stageGroup) * 0.02;
+          emissive = 0.95;
+        }
+
+        node.group.position.x = lerp(node.group.position.x, targetX + pointerX * 0.08, 0.18);
+        node.group.position.y = lerp(node.group.position.y, targetY + pointerY * 0.04, 0.18);
+        node.group.position.z = targetZ;
+        node.coreMat.emissiveIntensity = emissive;
       });
+
+      // Animate the recurring BudAI Living Signal Core & SV/EN Helical Ribbons
+      signalCoreGroup.position.x = pointerX * 0.22;
+      signalCoreGroup.position.y = 0.04 + Math.sin(time * 1.9) * 0.035 + pointerY * 0.08;
+      signalOcta.rotation.y = time * 0.85 + p * Math.PI * 2;
+      signalOcta.rotation.x = time * 0.45 + pointerY * 0.3;
+      gimbalA.rotation.y = -time * 0.65;
+      gimbalB.rotation.z = time * 0.55;
+
+      const bilingualBoost = modIdx === 3 || morph >= 0.48 ? 0.78 : 0.34;
+      svRibbonMat.opacity = bilingualBoost;
+      enRibbonMat.opacity = bilingualBoost;
+      svRibbon.rotation.x = Math.sin(time * 0.9) * 0.08;
+      enRibbon.rotation.x = -Math.sin(time * 0.9) * 0.08;
 
       cyanLamp.intensity = lerp(30, 42, effectiveRatio) + Math.sin(time * 0.7) * 1.5;
       fillLamp.intensity = lerp(24, 34, morph);

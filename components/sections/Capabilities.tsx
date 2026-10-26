@@ -177,9 +177,23 @@ export default function Capabilities() {
       tag: sv ? "Tillgänglig nu" : "Available now",
       price: sv ? "Gratis" : "Free",
       sub: sv ? "under preview" : "during the preview",
-      note: sv ? "Minsta versionen. Perfekt för att prova BudAI." : "The smallest version. Perfect for trying BudAI.",
-      pros: sv ? ["Playground på svenska och engelska", "Minne, historik och bilder med konto", "Röstinmatning"] : ["Playground in Swedish and English", "Memory, history and vision with an account", "Voice input"],
-      cons: sv ? ["Minst antal dagliga credits", "Kortast historik och minne", "Ingen prioriterad åtkomst"] : ["Fewest daily credits", "Shortest history and memory", "No priority access"],
+      note: sv
+        ? "Prova BudAI — öppen förhandsvisning utan konto eller med gratis konto."
+        : "Try BudAI — open preview experience as a guest or with a free account.",
+      pros: sv
+        ? [
+            "Playground på svenska och engelska (10/dag gäst)",
+            "Gratis konto: 35/dag, användarstyrt minne, historik & bildanalys",
+            "Röstinmatning och export i webbläsaren",
+          ]
+        : [
+            "Playground in Swedish and English (10/day guest)",
+            "Free account: 35/day, user-controlled memory, history & vision",
+            "Voice input and conversation export",
+          ],
+      cons: sv
+        ? ["Begränsad daglig kvot under preview", "Kortare kontext- och minnesfönster", "Ingen prioriterad kö vid hög last"]
+        : ["Preview daily message cap", "Shorter context and memory window", "Standard preview queue"],
       cta: sv ? "Prova Playground" : "Try the Playground",
       href: "#playground",
       card: "border-accent-cyan/40 bg-accent-cyan/[0.05] shadow-[0_0_70px_-25px_rgba(0,229,255,0.55)]",
@@ -195,10 +209,24 @@ export default function Capabilities() {
       name: sv ? "Konsument" : "Consumer",
       tag: "Coming soon",
       price: "Coming soon",
-      sub: sv ? "pris kommer" : "pricing soon",
-      note: sv ? "För dig som använder BudAI varje dag." : "For one person who uses BudAI every day.",
-      pros: sv ? ["Många fler dagliga credits", "Längre historik och minne", "Tidig tillgång till nya funktioner"] : ["Many more daily credits", "Longer history and memory", "Early access to new features"],
-      cons: sv ? ["Ett konto", "Ingen delad arbetsyta"] : ["One account", "No shared workspace"],
+      sub: sv ? "planerat privatpaket" : "planned individual plan",
+      note: sv
+        ? "Använd BudAI varje dag — under utveckling för regelbundet individuellt arbete."
+        : "Use BudAI every day — in development for regular individual work.",
+      pros: sv
+        ? [
+            "Högre daglig kapacitet för frekvent arbete",
+            "Längre konversationshistorik och utökat minne",
+            "Tidig tillgång till nya modeller och verktyg",
+          ]
+        : [
+            "Higher daily capacity for regular work",
+            "Extended conversation history and memory capacity",
+            "Early access to new models and capabilities",
+          ],
+      cons: sv
+        ? ["Avsett för en person (1 konto)", "Ingen delad teamarbetsyta"]
+        : ["Designed for one person (single account)", "No shared team workspace"],
       cta: sv ? "Gå med i väntelistan" : "Join the waitlist",
       href: "#waitlist",
       card: "border-accent-purple/30 bg-accent-purple/[0.04]",
@@ -214,10 +242,24 @@ export default function Capabilities() {
       name: sv ? "Företag" : "Business",
       tag: "Coming soon",
       price: "Coming soon",
-      sub: sv ? "pris per team" : "priced per team",
-      note: sv ? "För team. Ett paket, flera konton." : "For teams. One plan, many accounts.",
-      pros: sv ? ["Delade credits över flera konton", "Delade rutiner och arbetsytor", "Adminkontroll och prioriterad support"] : ["Credits shared across multiple accounts", "Shared playbooks and workspaces", "Admin controls and priority support"],
-      cons: sv ? ["Prissätts per team", "Kräver ett företagskonto"] : ["Priced per team", "Needs a company account"],
+      sub: sv ? "planerat teampaket" : "planned team plan",
+      note: sv
+        ? "Ta BudAI till ditt team — under utveckling för gemensamma arbetsflöden."
+        : "Bring BudAI to your team — in development for shared workflows and governance.",
+      pros: sv
+        ? [
+            "Planerat: delade credits över flera teamkonton",
+            "Planerat: gemensamma playbooks och arbetsytor",
+            "Planerat: administrationskontroller och prioriterad support",
+          ]
+        : [
+            "Planned: credits shared across multiple team accounts",
+            "Planned: shared playbooks and team workspaces",
+            "Planned: admin controls and priority support",
+          ],
+      cons: sv
+        ? ["Under utveckling (ej aktivt i preview än)", "Kommer kräva företagskonto"]
+        : ["In development (not yet active in preview)", "Will require a company account"],
       cta: sv ? "Gå med i väntelistan" : "Join the waitlist",
       href: "#waitlist",
       card: "border-white/20 bg-white/[0.04]",
@@ -241,20 +283,20 @@ export default function Capabilities() {
           </h2>
           <p className="text-base sm:text-lg text-muted max-w-2xl mx-auto leading-relaxed">
             {sv
-              ? "BudAI byggs för att bli en av de bästa AI:erna någonsin, och det tar tid. Gratis att prova idag. Mer credits, längre minne och teamkonton när du behöver det."
-              : "BudAI is being built to become one of the best AIs ever, and that takes time. Free to try today. More credits, longer memory and team accounts when you need them."}
+              ? "Byggd i Sverige för riktigt vardagsarbete — snabba utkast på svenska och engelska, strukturerad analys och användarstyrt minne i en sammanhållen arbetsyta. Gratis att prova i preview idag, med högre gränser och teamflöden under utveckling."
+              : "Built in Sweden for real everyday work — combining fast bilingual writing, structured analysis, and user-controlled memory in one focused workspace. Free to try in the preview today, with higher limits and shared team workflows in development."}
           </p>
         </ScrollReveal>
 
         <CapabilityMap />
         <div className="plans-heading">
           <span>{sv ? "Välj din väg" : "Choose your way in"}</span>
-          <p>{sv ? "Från rådata till färdigt svar — börja gratis och väx när du är redo." : "From raw input to structured output — start free and grow when you’re ready."}</p>
+          <p>{sv ? "Från första signal till gemensamt resultat — börja gratis i preview idag och väx med Konsument eller Företag när paketen lanseras." : "From first signal to shared team output — start free in the preview today and scale with Consumer or Business when paid plans launch."}</p>
         </div>
         <div className="access-architecture" data-access-architecture data-ai-assembly-line aria-hidden="true">
           <div className="access-code-header">
-            <span>{sv ? "03B / THE AI ASSEMBLY LINE · FLÖDE & NIVÅER" : "03B / THE AI ASSEMBLY LINE · WORKFLOW & ACCESS TIERS"}</span>
-            <code>{`input(chat | image | voice) -> context.memory() -> model.stream() -> output`}</code>
+            <span>{sv ? "03 → 04 / FRÅN SIGNAL TILL HANDLING · NIVÅER & ARBETSYTOR" : "03 → 04 / FROM SIGNAL TO ACTION · WORKFLOW & ACCESS TIERS"}</span>
+            <code>{`signal(chat | image | voice) -> memory.selected() -> model.stream() -> action`}</code>
           </div>
           <div className="access-fallback">
             <svg viewBox="-5 -2.1 10 4.2" width="100%" height="100%">
@@ -346,8 +388,8 @@ export default function Capabilities() {
         </div>
         <p className="mb-10 text-center text-sm text-muted/80 max-w-2xl mx-auto">
           {sv
-            ? "Samma AI i alla paket. Basic har minst credits och kortast minne. Betalpaketen låser upp mer användning, längre minne och teamfunktioner."
-            : "Same AI in every plan. Basic has the fewest credits and the shortest memory. Paid plans unlock more usage, longer memory and team features."}
+            ? "Samma kärnmodell i alla nivåer. Basic är gratis under preview (10 meddelanden/dag som gäst, 35/dag med gratis konto). Konsument och Företag är under utveckling — grundarmedlemmar på väntelistan låser 10 % rabatt vid lansering."
+            : "Same core intelligence across every tier. Basic is free during the preview (10 messages/day as guest, 35/day with a free account). Consumer and Business are in development — founding members on the waitlist lock 10% off at launch."}
         </p>
 
         <Waitlist />

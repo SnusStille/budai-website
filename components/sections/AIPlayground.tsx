@@ -1742,8 +1742,8 @@ export default function AIPlayground() {
             <span className="text-gradient">{t.playground.titleHighlight}</span>
           </h2>
           <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-muted">{lang === "sv"
-            ? "Din AI-assistent för vardagligt arbete. Skriv, planera, sammanfatta eller analysera på svenska och engelska. Prova gratis, utan registrering."
-            : "Your AI assistant for everyday work. Write, plan, summarize or analyze in Swedish and English. Try it free, without signing up."}</p>
+            ? "Du har sett vad som är möjligt — gör nu något eget. Skriv, planera, sammanfatta eller analysera på svenska och engelska. Prova direkt som gäst (10 meddelanden/dag) eller logga in gratis för användarstyrt minne, historik och bildanalys."
+            : "You've seen what's possible — now make something of your own. Write, plan, summarize, or analyze in Swedish and English. Try free right now as a guest (10 messages/day) or sign in for user-controlled memory, history, and image analysis."}</p>
         </div>
 
         <PlaygroundArrival expanded={expanded} overlay={voiceOpen||showShortcuts||!!lightbox||mobileDrawer||memoryOpen}>

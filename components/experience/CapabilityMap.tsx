@@ -17,7 +17,13 @@ export default function CapabilityMap() {
   const [scrollActive, setScrollActive] = useState(0);
   const [typedRatio, setTypedRatio] = useState(0.65);
   const [hover, setHover] = useState(-1);
+  const [pathway, setPathway] = useState<"personal" | "business">("personal");
   const active = hover >= 0 ? hover : scrollActive;
+
+  const selectPathway = (mode: "personal" | "business") => {
+    setPathway(mode);
+    window.dispatchEvent(new CustomEvent("budai:pathway-mode", { detail: mode }));
+  };
 
   const capabilities = [
     {
@@ -171,14 +177,32 @@ export default function CapabilityMap() {
       <div className="capability-sticky">
         <div className="capability-index">
           <div className="capability-matrix-header">
-            <span>{sv ? "03A / DEN OÄNDLIGA KODKAMMAREN" : "03A / THE INFINITE CODE CHAMBER"}</span>
+            <span>{sv ? "03 / INTELLIGENS I RÖRELSE · SIGNALTRANSFORMATION" : "03 / INTELLIGENCE IN MOTION · SIGNAL TRANSFORMATION"}</span>
             <span>06 MODULES</span>
           </div>
           <h3>
             {sv ? "Ett system." : "One system."}
             <br />
-            <span>{sv ? "Många möjligheter." : "Many possibilities."}</span>
+            <span>{sv ? "Sex transformationer." : "Six transformations."}</span>
           </h3>
+          <div className="capability-pathway-switch" role="group" aria-label={sv ? "Välj visuell väg" : "Choose visual pathway"} data-pathway-toggle>
+            <button
+              type="button"
+              className={pathway === "personal" ? "is-active" : ""}
+              aria-pressed={pathway === "personal"}
+              onClick={() => selectPathway("personal")}
+            >
+              {sv ? "Privat arbete · Basic & Konsument" : "Personal work · Basic & Consumer"}
+            </button>
+            <button
+              type="button"
+              className={pathway === "business" ? "is-active" : ""}
+              aria-pressed={pathway === "business"}
+              onClick={() => selectPathway("business")}
+            >
+              {sv ? "Teamarbete · Företag" : "Team work · Business"}
+            </button>
+          </div>
           <div className="capability-modules">
             {capabilities.map(({ icon: Icon, title, detail, file }, i) => (
               <a
@@ -252,7 +276,7 @@ export default function CapabilityMap() {
           </div>
 
           <div className="capability-viewport-top">
-            <span>BUDAI / THE INFINITE CODE CHAMBER · CODE WALL &amp; BLUEPRINT</span>
+            <span>{sv ? "BUDAI / SIGNALSTUDIO · KOD, KONTEXT & RESULTAT" : "BUDAI / SIGNAL STUDIO · CODE, CONTEXT & OUTPUT"}</span>
             <span>001 — 006</span>
           </div>
 
@@ -300,8 +324,8 @@ export default function CapabilityMap() {
           </div>
 
           <div className="capability-viewport-bottom">
-            <span>{sv ? "FÖRGRUND · MELLANPLAN · DJUP KODARKITEKTUR" : "FOREGROUND · MIDGROUND · DEEP CODE ARCHITECTURE"}</span>
-            <span>SV / EN · LIVE CHAMBER</span>
+            <span>{sv ? "ILLUSTRETIV 3D-TRANSFORMATION · KLICKA EN MODUL FÖR ATT PROVA LIVE" : "ILLUSTRATIVE 3D TRANSFORMATION · CLICK ANY MODULE TO TRY LIVE"}</span>
+            <span>SV / EN · SIGNAL STUDIO</span>
           </div>
         </div>
       </div>

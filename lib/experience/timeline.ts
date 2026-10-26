@@ -21,6 +21,8 @@ export type JourneyFrame = {
   time: number;
   departure?: number;
   closing?: number;
+  pointerX?: number;
+  pointerY?: number;
 };
 
 export const clamp = (n: number, min = 0, max = 1) => Math.min(max, Math.max(min, n));

@@ -62,10 +62,28 @@ export default function About() {
           <div className="builder-facts"><span><b>10</b>{sv ? "år av kodande" : "years of coding"}</span><span><b>02</b>{sv ? "år med BudAI" : "years on BudAI"}</span><span><b>SV / EN</b>{sv ? "Tvåspråkig" : "Bilingual"}</span></div>
         </ScrollReveal>
         <ScrollReveal delay={.1}>
-          <p>{sv ? "Jag är Stilledev. Jag har skrivit mjukvara i tio år, och de senaste två har jag lagt allt på en sak: BudAI, en AI som faktiskt fungerar i svenskt vardagsarbete. Idag är det en preview. Målet är att bli din nya ChatGPT." : "I'm Stilledev. I've been writing software for ten years, and for the last two I've put all of it into one thing: BudAI, an AI that actually works in everyday Swedish work. Today it's a preview. The goal is to become your new ChatGPT."}</p>
+          <p>{sv ? "Jag är Stilledev. Efter tio år som mjukvaruutvecklare — och de senaste två med fullt fokus på BudAI — har målet varit tydligt: att bygga en arbetsyta som hanterar svenska och engelska naturligt, respekterar din integritet med användarstyrt minne och förvandlar komplexa frågor till konkret handling. Idag är BudAI en öppen utvecklarförhandsvisning som vi bygger vidare steg för steg." : "I'm Stilledev. Over ten years of writing software — and the last two focused entirely on BudAI — my goal has been clear: build a workspace that handles Swedish and English naturally, respects your privacy with user-controlled memory, and turns complex questions into clear action. Today BudAI is an open developer preview, evolving step by step into the everyday AI workspace for individuals and teams."}</p>
           <div className="builder-stack">{STACK.map((item) => <span key={item}>{item}</span>)}</div>
           <ul className="builder-values">{(sv ? ["Kod i produktionskvalitet", "Integritet först", "Öppet på GitHub"] : ["Production-grade code", "Privacy first", "Open on GitHub"]).map((item) => <li key={item}>{item}</li>)}</ul>
-          <div className="builder-links"><a href="https://github.com/SnusStille/budai-website" target="_blank" rel="noopener noreferrer"><Github size={15} />GitHub<ArrowRight size={13} /></a><a href="mailto:Stilleinc@hotmail.com"><Mail size={15} />{sv ? "Kontakt" : "Contact"}</a></div>
+          <div className="builder-links">
+            <a
+              href="#playground"
+              onClick={() =>
+                window.dispatchEvent(
+                  new CustomEvent("budai:prompt", {
+                    detail: sv
+                      ? "Skapa en tydlig lanseringsplan på svenska och engelska med milstolpar, risker och nästa steg."
+                      : "Create a clear bilingual launch plan in Swedish and English with milestones, risks, and next steps.",
+                  })
+                )
+              }
+            >
+              {sv ? "Prova exemplet i Playground" : "Try this prompt in Playground"}
+              <ArrowRight size={13} />
+            </a>
+            <a href="https://github.com/SnusStille/budai-website" target="_blank" rel="noopener noreferrer"><Github size={15} />GitHub<ArrowRight size={13} /></a>
+            <a href="mailto:Stilleinc@hotmail.com"><Mail size={15} />{sv ? "Kontakt" : "Contact"}</a>
+          </div>
           <details className="builder-source-details"><summary>{sv ? "Läs kodexemplet" : "Read the code example"}<Code2 size={14} /></summary><p>{sv ? "Ett illustrativt anrop till Playground. Koden på skärmen körs inte och gör inga nätverksanrop." : "An illustrative request to the Playground. The code on the monitor is not executed and makes no network requests."}</p><pre tabIndex={0}><code>{EXAMPLE_SOURCE}</code></pre></details>
         </ScrollReveal>
       </div>
