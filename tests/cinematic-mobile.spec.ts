@@ -44,6 +44,9 @@ for (const width of [390, 360]) test(`mobile ${width}: full-height neural perspe
   await to(page, "[data-capability-viewport]");
   const world = page.locator("[data-world-canvas]");
   await expect(world).toHaveAttribute("data-capability-modules", "6");
+  await expect(page.locator(".universe-world")).toHaveAttribute("data-visual-mode", "mobile-3d");
+  await page.locator(".capability-stage-pill").nth(2).click();
+  await expect(world).toHaveAttribute("data-capability-focus", "2");
   await page.waitForTimeout(500);
   await page.screenshot({ path:`test-results/capability-engine-${width}.png` });
   await to(page, ".capability-index");
@@ -87,3 +90,19 @@ test("throttled fresh entry stays bounded, never mounts competing loaders, and d
   await test.info().attach("throttled-entry",{body:JSON.stringify({elapsed:Date.now()-began,samples},null,2),contentType:"application/json"});
   await cdp.detach();
 });
+
+test("mobile widths 320, 375, 390, 430 and Mode C fallback preserve layout, touch controls, and zero overflow", async ({ page }) => {
+  await quiet(page);
+  await page.goto("/#capabilities");
+  for (const width of [320, 375, 390, 430]) {
+    await page.setViewportSize({ width, height: 812 });
+    await to(page, "[data-capability-viewport]");
+    await expect(page.locator(".capability-stage-pill")).toHaveCount(6);
+    await expect(page.locator("[data-living-code-console]")).toBeVisible();
+    await to(page, "[data-access-architecture]");
+    await expect(page.locator(".access-labels > span")).toHaveCount(3);
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+    expect(overflow).toBeLessThanOrEqual(1);
+  }
+});
+

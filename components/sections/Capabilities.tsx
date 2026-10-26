@@ -151,17 +151,41 @@ export default function Capabilities() {
             <code>{`workshop.components(6) -> atlas.routes(document | decision | plan | workflow)`}</code>
           </div>
           <div className="access-fallback">
-            <svg viewBox="-5 -2.1 10 4.2" width="100%" height="100%">
-              {/* Cantilevered Meridian Arc & Topographic Compass Rose */}
-              <path d="M -4.2 0.85 Q 0 -2.15 4.2 0.85" fill="none" stroke="#7adbf0" strokeOpacity="0.65" strokeWidth="0.028" strokeDasharray="0.12 0.06" />
-              <ellipse cx="0" cy="0.35" rx="3.8" ry="1.05" fill="none" stroke="#a8b4f8" strokeOpacity="0.38" strokeWidth="0.02" />
-              <ellipse cx="0" cy="0.35" rx="2.4" ry="0.68" fill="none" stroke="#7adbf0" strokeOpacity="0.45" strokeWidth="0.02" />
-              {/* Three Unfolded Topographic Elevation Terraces (Basic, Consumer, Business) */}
-              <polygon points="-4.5,0.65 -1.8,0.65 -1.4,-0.25 -4.1,-0.25" fill="#0b2032" fillOpacity="0.82" stroke="#7adbf0" strokeWidth="0.024" />
-              <polygon points="-1.3,0.35 1.3,0.35 1.6,-0.55 -1.0,-0.55" fill="#0d2238" fillOpacity="0.86" stroke="#a8b4f8" strokeWidth="0.024" />
-              <polygon points="1.8,0.05 4.4,0.05 4.6,-0.85 2.0,-0.85" fill="#0d263b" fillOpacity="0.88" stroke="#6ee7b7" strokeWidth="0.024" />
-              {/* Interconnected Atlas Routes */}
-              <path d="M -3.1 0.2 Q -1.5 -0.65 0.1 -0.15 T 3.2 -0.45" fill="none" stroke="#6ee7b7" strokeOpacity="0.88" strokeWidth="0.026" />
+            <svg viewBox="-5.2 -2.3 10.4 4.5" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
+              {/* Outer Cartographic Horizon & Compass Vernier Ring */}
+              <ellipse cx="0" cy="0.32" rx="4.7" ry="1.38" fill="none" stroke="#578fae" strokeOpacity="0.28" strokeWidth="0.018" strokeDasharray="0.08 0.05" />
+              <ellipse cx="0" cy="0.32" rx="3.85" ry="1.08" fill="none" stroke="#a8b4f8" strokeOpacity="0.36" strokeWidth="0.02" />
+              <ellipse cx="0" cy="0.32" rx="2.45" ry="0.68" fill="none" stroke="#7adbf0" strokeOpacity="0.42" strokeWidth="0.02" />
+              <path d="M -4.35 0.85 Q 0 -2.1 4.35 0.85" fill="none" stroke="#7adbf0" strokeOpacity="0.62" strokeWidth="0.026" strokeDasharray="0.12 0.06" />
+
+              {/* Elevated Polestar Synthesis Apex & 3 Meridian Beams */}
+              <polygon points="0,-1.55 0.16,-1.35 0,-1.15 -0.16,-1.35" fill="#15344f" stroke="#dff6ff" strokeWidth="0.024" />
+              <circle cx="0" cy="-1.35" r="0.26" fill="none" stroke="#7adbf0" strokeOpacity="0.68" strokeWidth="0.016" />
+              <line x1="0" y1="-1.35" x2="-3.15" y2="0.15" stroke="#7adbf0" strokeOpacity="0.52" strokeWidth="0.02" />
+              <line x1="0" y1="-1.35" x2="0" y2="-0.15" stroke="#a8b4f8" strokeOpacity="0.52" strokeWidth="0.02" />
+              <line x1="0" y1="-1.35" x2="3.15" y2="-0.42" stroke="#6ee7b7" strokeOpacity="0.52" strokeWidth="0.02" />
+
+              {/* West Terrace: 01 Basic (Available Now) */}
+              <polygon points="-4.55,0.68 -1.75,0.68 -1.35,-0.22 -4.15,-0.22" fill="#0b2032" fillOpacity="0.86" stroke="#7adbf0" strokeWidth="0.026" />
+              <ellipse cx="-2.95" cy="0.22" rx="0.95" ry="0.28" fill="none" stroke="#7adbf0" strokeOpacity="0.45" strokeWidth="0.016" />
+              <circle cx="-3.35" cy="0.18" r="0.08" fill="#7adbf0" />
+              <circle cx="-2.45" cy="0.24" r="0.08" fill="#6ee7b7" />
+
+              {/* Central Terrace: 02 Consumer (Coming Soon) */}
+              <polygon points="-1.3,0.36 1.3,0.36 1.62,-0.54 -0.98,-0.54" fill="#0d2238" fillOpacity="0.88" stroke="#a8b4f8" strokeWidth="0.026" />
+              <ellipse cx="0.16" cy="-0.09" rx="0.95" ry="0.28" fill="none" stroke="#a8b4f8" strokeOpacity="0.45" strokeWidth="0.016" />
+              <circle cx="-0.32" cy="-0.1" r="0.08" fill="#a8b4f8" />
+              <circle cx="0.58" cy="-0.08" r="0.08" fill="#7adbf0" />
+
+              {/* East Terrace: 03 Business (Coming Soon) */}
+              <polygon points="1.8,0.06 4.45,0.06 4.65,-0.84 2.02,-0.84" fill="#0d263b" fillOpacity="0.9" stroke="#6ee7b7" strokeWidth="0.026" />
+              <ellipse cx="3.22" cy="-0.39" rx="0.95" ry="0.28" fill="none" stroke="#6ee7b7" strokeOpacity="0.45" strokeWidth="0.016" />
+              <circle cx="2.75" cy="-0.38" r="0.08" fill="#6ee7b7" />
+              <circle cx="3.68" cy="-0.4" r="0.08" fill="#dff6ff" />
+
+              {/* Interconnected Multi-Strand Atlas Routes */}
+              <path d="M -3.35 0.18 Q -2.9 -0.35 -2.45 0.24 Q -1.4 -0.45 -0.32 -0.1 Q 0.15 -0.55 0.58 -0.08 Q 1.65 -0.68 2.75 -0.38 Q 3.2 -0.82 3.68 -0.4" fill="none" stroke="#6ee7b7" strokeOpacity="0.88" strokeWidth="0.028" />
+              <path d="M -3.35 0.18 Q -1.8 -0.72 -0.32 -0.1 Q 1.6 -0.85 3.68 -0.4" fill="none" stroke="#7adbf0" strokeOpacity="0.58" strokeWidth="0.02" strokeDasharray="0.09 0.05" />
             </svg>
           </div>
           <div className="access-labels">

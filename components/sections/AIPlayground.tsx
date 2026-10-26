@@ -3042,6 +3042,14 @@ export default function AIPlayground() {
               </span>
             ))}
           </div>
+          <div className="product-bridge-conduit">
+            <span className="product-bridge-conduit-line">
+              <b className="product-bridge-conduit-pulse" />
+            </span>
+            <small className="product-bridge-conduit-label">
+              {lang === "sv" ? "6 KANALER KONVERGERAR I KAPITEL 03 ↓" : "6 CHANNELS CONVERGE INTO CHAPTER 03 ↓"}
+            </small>
+          </div>
         </div>
       </div>
 

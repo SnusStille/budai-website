@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { isIntroDone, subscribeIntro } from "@/components/effects/introState";
 import { subscribeJourney } from "@/lib/experience/scroll";
-import { worldOpacityAt } from "@/lib/experience/timeline";
+import { clamp, smooth, worldOpacityAt } from "@/lib/experience/timeline";
 import ProgressiveEditor from "./ProgressiveEditor";
 import CapabilityStudioScreen from "./CapabilityStudioScreen";
 
@@ -19,6 +19,7 @@ export default function WorldStage() {
   const [screen, setScreen] = useState<HTMLDivElement | null>(null);
   const [capScreen, setCapScreen] = useState<HTMLDivElement | null>(null);
   const [mode, setMode] = useState("poster");
+  const [visualMode, setVisualMode] = useState<"desktop-3d" | "mobile-3d" | "fallback">("fallback");
 
   useEffect(() => {
     setIntroDone(isIntroDone());
@@ -41,10 +42,18 @@ export default function WorldStage() {
   );
 
   useEffect(() => {
-    if (!introDone || !near || reduced || !host.current) return;
+    if (reduced) {
+      setVisualMode("fallback");
+      document.documentElement.dataset.visualMode = "fallback";
+      return;
+    }
+    if (!introDone || !near || !host.current) return;
     const nav = navigator as Navigator & { connection?: { saveData?: boolean }; deviceMemory?: number };
     if (nav.connection?.saveData || (nav.deviceMemory ?? 8) < 2) {
       setMode("fallback");
+      setVisualMode("fallback");
+      document.documentElement.dataset.worldState = "fallback";
+      document.documentElement.dataset.visualMode = "fallback";
       return;
     }
     let alive = true;
@@ -62,7 +71,9 @@ export default function WorldStage() {
       setScreen(null);
       setCapScreen(null);
       setMode("fallback");
+      setVisualMode("fallback");
       document.documentElement.dataset.worldState = "fallback";
+      document.documentElement.dataset.visualMode = "fallback";
     };
     import("@/lib/experience/world")
       .then(({ createWorld }) => {
@@ -72,11 +83,19 @@ export default function WorldStage() {
           setScreen(element);
           setCapScreen(capElement);
           setMode("ready");
+          const initialTier = window.innerWidth < 768 ? "mobile-3d" : "desktop-3d";
+          setVisualMode(initialTier);
           document.documentElement.dataset.worldState = "ready";
+          document.documentElement.dataset.visualMode = initialTier;
           unsubscribe = subscribeJourney(
             frame => {
               try {
                 world?.update(frame);
+                const tier = frame.width < 768 ? "mobile-3d" : "desktop-3d";
+                if (document.documentElement.dataset.visualMode !== tier) {
+                  document.documentElement.dataset.visualMode = tier;
+                  setVisualMode(tier);
+                }
               } catch {
                 fail();
               }
@@ -105,9 +124,11 @@ export default function WorldStage() {
     () =>
       subscribeJourney(frame => {
         const root = document.documentElement;
+        const bridge = smooth(clamp((frame.chapter - 2.02) / 0.86, 0, 1));
         root.style.setProperty("--journey-progress", String(frame.progress));
         root.style.setProperty("--journey-phase", String(frame.chapter));
         root.style.setProperty("--journey-shift", `${-frame.y * 0.025}px`);
+        root.style.setProperty("--bridge-progress", bridge.toFixed(4));
         root.dataset.chapter = frame.active;
       }),
     []
@@ -115,7 +136,13 @@ export default function WorldStage() {
 
   return (
     <>
-      <div ref={host} className="universe-world" data-world-state={reduced ? "reduced" : mode} aria-hidden="true" />
+      <div
+        ref={host}
+        className="universe-world"
+        data-world-state={reduced ? "reduced" : mode}
+        data-visual-mode={reduced || mode === "fallback" ? "fallback" : visualMode}
+        aria-hidden="true"
+      />
       {screen && createPortal(<ProgressiveEditor />, screen)}
       {capScreen && createPortal(<CapabilityStudioScreen />, capScreen)}
       <div className="universe-grade" aria-hidden="true" />

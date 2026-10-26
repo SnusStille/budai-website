@@ -282,20 +282,26 @@ export default function CapabilityMap() {
                 const a = ((idx - active + 6) % 6 / 6) * Math.PI * 2 - Math.PI / 2;
                 const cx = idx === active ? 0 : Math.cos(a) * 1.25;
                 const cy = idx === active ? 0.12 : Math.sin(a) * 0.92;
-                const cr = idx === active ? 0.48 : 0.28;
+                const cr = idx === active ? 0.5 : 0.27;
                 return (
                   <g key={idx}>
-                    <line x1="0" y1="0" x2={cx} y2={cy} stroke="#7adbf0" strokeOpacity="0.32" strokeWidth="0.014" />
+                    <line x1="0" y1="0" x2={cx} y2={cy} stroke={pathway === "business" ? "#6ee7b7" : "#7adbf0"} strokeOpacity={idx === active ? "0.62" : "0.3"} strokeWidth="0.016" />
                     <circle
                       cx={cx}
                       cy={cy}
                       r={cr}
                       fill="#081a2b"
-                      fillOpacity={idx === active ? 0.88 : 0.58}
+                      fillOpacity={idx === active ? 0.9 : 0.6}
                       stroke={idx === active ? "#6ee7b7" : "#7adbf0"}
-                      strokeOpacity={idx === active ? 0.92 : 0.45}
-                      strokeWidth={idx === active ? "0.024" : "0.016"}
+                      strokeOpacity={idx === active ? 0.95 : 0.48}
+                      strokeWidth={idx === active ? "0.026" : "0.016"}
                     />
+                    {idx === active && (
+                      <g>
+                        <circle cx={cx} cy={cy} r={0.34} fill="none" stroke="#a8b4f8" strokeOpacity="0.55" strokeWidth="0.012" strokeDasharray="0.05 0.03" />
+                        <polygon points={`${cx},${cy - 0.18} ${cx + 0.16},${cy} ${cx},${cy + 0.18} ${cx - 0.16},${cy}`} fill="#14324c" stroke="#dff6ff" strokeWidth="0.018" />
+                      </g>
+                    )}
                   </g>
                 );
               })}
@@ -308,6 +314,24 @@ export default function CapabilityMap() {
           <div className="capability-viewport-top">
             <span>{sv ? "VÄRLD I / DEN OMÖJLIGA VERKSTADEN · ARKITEKTONISKT INSTRUMENT" : "WORLD I / THE IMPOSSIBLE WORKSHOP · PRECISION CRUCIBLE"}</span>
             <span data-workshop-choreography>{workshopStages[choreoStage]}</span>
+          </div>
+
+          <div className="capability-stage-pills" role="group" aria-label={sv ? "Välj aktivt instrument" : "Select active instrument"}>
+            {capabilities.map((cap, idx) => (
+              <button
+                key={idx}
+                type="button"
+                className={`capability-stage-pill ${active === idx ? "is-active" : ""}`}
+                aria-pressed={active === idx}
+                onClick={() => {
+                  setHover(idx);
+                  setScrollActive(idx);
+                }}
+              >
+                <b>0{idx + 1}</b>
+                <span>{cap.title}</span>
+              </button>
+            ))}
           </div>
 
           <div className="capability-active-readout" data-living-code-console>
