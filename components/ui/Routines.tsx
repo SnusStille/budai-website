@@ -4,9 +4,13 @@ import { useEffect, useState } from "react";
 
 type R = { id: string; name: string; text: string };
 const KEY = "budai_routines";
-const SEED: R[] = [
+const SEED_EN: R[] = [
   { id: "seed1", name: "Customer follow-up", text: "Write a short, friendly follow-up email to {{customer}} about {{topic}}." },
   { id: "seed2", name: "Weekly report", text: "Turn these notes into a clear weekly report for {{team}}:\n{{notes}}" },
+];
+const SEED_SV: R[] = [
+  { id: "seed1", name: "Kunduppföljning", text: "Skriv ett kort, vänligt uppföljningsmejl till {{kund}} angående {{ämne}}." },
+  { id: "seed2", name: "Veckorapport", text: "Gör om de här anteckningarna till en tydlig veckorapport för {{team}}:\n{{anteckningar}}" },
 ];
 const fieldsOf = (t: string) => Array.from(new Set(Array.from(t.matchAll(/\{\{\s*([^{}]+?)\s*\}\}/g)).map((m) => m[1].trim())));
 
@@ -21,11 +25,11 @@ export default function Routines({ input, sv, onRun }: { input: string; sv: bool
   useEffect(() => {
     try {
       const raw = localStorage.getItem(KEY);
-      setList(raw ? (JSON.parse(raw) as R[]) : SEED);
+      setList(raw ? (JSON.parse(raw) as R[]) : sv ? SEED_SV : SEED_EN);
     } catch {
-      setList(SEED);
+      setList(sv ? SEED_SV : SEED_EN);
     }
-  }, []);
+  }, [sv]);
   const persist = (l: R[]) => {
     setList(l);
     try {

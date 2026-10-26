@@ -19,8 +19,8 @@ async function resolveUser(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const key = process.env.OPENAI_API_KEY;
-  if (!key) {
+  const key = process.env.OPENAI_API_KEY?.trim();
+  if (!key || key.length < 10 || key.includes("your-")) {
     return NextResponse.json(
       {
         error:

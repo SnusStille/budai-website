@@ -5,8 +5,8 @@ import { createClient } from "@supabase/supabase-js";
 import { dayKey, limitFor, type AccessTier } from "@/lib/limits";
 
 function getClient() {
-  const key = process.env.ANTHROPIC_API_KEY;
-  if (!key) return null;
+  const key = process.env.ANTHROPIC_API_KEY?.trim();
+  if (!key || key.length < 10 || key.includes("your-")) return null;
   return new Anthropic({ apiKey: key });
 }
 
@@ -170,14 +170,62 @@ export async function POST(req: NextRequest) {
     const user = await resolveUser(req);
     const tier: AccessTier = user ? "member" : "guest";
 
-    // Soft server quota when tables exist (single clean upsert)
-    const sb = adminSb();
     if (imageBase64 && tier === "guest") {
       return NextResponse.json(
         { error: "Image analysis requires a free account.", code: "auth" },
         { status: 403 }
       );
     }
+
+    if (!Array.isArray(rawMessages) || rawMessages.length === 0) {
+      return NextResponse.json({ error: "Invalid message" }, { status: 400 });
+    }
+
+    const recent = rawMessages.slice(-12);
+    type Msg = {
+      role: "user" | "assistant";
+      content: string | Anthropic.ContentBlockParam[];
+    };
+    const messages: Msg[] = [];
+
+    for (let i = 0; i < recent.length; i++) {
+      const m = recent[i];
+      if (
+        !m ||
+        (m.role !== "user" && m.role !== "assistant") ||
+        typeof m.content !== "string" ||
+        m.content.length === 0 ||
+        m.content.length > 4000
+      ) {
+        return NextResponse.json({ error: "Invalid message" }, { status: 400 });
+      }
+      const isLast = i === recent.length - 1;
+      if (m.role === "user" && isLast && imageBase64 && imageBase64.length < 6_000_000) {
+        messages.push({
+          role: "user",
+          content: [
+            {
+              type: "image",
+              source: {
+                type: "base64",
+                media_type: imageMediaType,
+                data: imageBase64.replace(/^data:image\/\w+;base64,/, ""),
+              },
+            },
+            { type: "text", text: m.content },
+          ],
+        });
+      } else {
+        messages.push({ role: m.role, content: m.content });
+      }
+    }
+
+    if (messages[messages.length - 1].role !== "user") {
+      return NextResponse.json({ error: "Invalid message" }, { status: 400 });
+    }
+
+    // Soft server quota when tables exist (single clean upsert after input validation)
+    const sb = adminSb();
     if (sb) {
       try {
         const day = dayKey();
@@ -241,57 +289,21 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    if (!Array.isArray(rawMessages) || rawMessages.length === 0) {
-      return NextResponse.json({ error: "Invalid message" }, { status: 400 });
-    }
-
-    const recent = rawMessages.slice(-12);
-    type Msg = {
-      role: "user" | "assistant";
-      content: string | Anthropic.ContentBlockParam[];
-    };
-    const messages: Msg[] = [];
-
-    for (let i = 0; i < recent.length; i++) {
-      const m = recent[i];
-      if (
-        !m ||
-        (m.role !== "user" && m.role !== "assistant") ||
-        typeof m.content !== "string" ||
-        m.content.length === 0 ||
-        m.content.length > 4000
-      ) {
-        return NextResponse.json({ error: "Invalid message" }, { status: 400 });
-      }
-      const isLast = i === recent.length - 1;
-      if (m.role === "user" && isLast && imageBase64 && imageBase64.length < 6_000_000) {
-        messages.push({
-          role: "user",
-          content: [
-            {
-              type: "image",
-              source: {
-                type: "base64",
-                media_type: imageMediaType,
-                data: imageBase64.replace(/^data:image\/\w+;base64,/, ""),
-              },
-            },
-            { type: "text", text: m.content },
-          ],
-        });
-      } else {
-        messages.push({ role: m.role, content: m.content });
-      }
-    }
-
-    if (messages[messages.length - 1].role !== "user") {
-      return NextResponse.json({ error: "Invalid message" }, { status: 400 });
-    }
-
-
-
     if (wantStream) {
       const enc = new TextEncoder();
+      let closed = false;
+      let activeStream: { abort: () => void } | null = null;
+      const abortUpstream = () => {
+        if (closed) return;
+        closed = true;
+        try {
+          activeStream?.abort();
+        } catch {
+          /* ignore */
+        }
+      };
+      req.signal.addEventListener("abort", abortUpstream, { once: true });
+
       const readable = new ReadableStream({
         async start(controller) {
           let full = "";
@@ -303,21 +315,26 @@ export async function POST(req: NextRequest) {
               system: SYSTEM_PROMPT(lang, dual, concise, contextBlock + personaLine, !!imageBase64),
               messages: messages as Anthropic.MessageParam[],
             });
+            activeStream = s;
             s.on("text", (d: string) => {
+              if (closed) return;
               full += d;
               // hold back a possible [[MEMORY: …]] tag so it never flashes on screen
               const cut = full.indexOf("[[");
               let limit = cut === -1 ? full.length : cut;
               if (cut === -1 && full.endsWith("[")) limit -= 1;
-              if (limit > sent) {
+              if (limit > sent && !closed) {
                 controller.enqueue(enc.encode(full.slice(sent, limit)));
                 sent = limit;
               }
             });
             await s.finalMessage();
+            if (closed) return;
             const { clean, memory } = stripMemoryTag(full);
-            if (clean.length > sent) controller.enqueue(enc.encode(clean.slice(Math.min(sent, clean.length))));
-            if (memory) {
+            if (clean.length > sent && !closed) {
+              controller.enqueue(enc.encode(clean.slice(Math.min(sent, clean.length))));
+            }
+            if (memory && !closed) {
               controller.enqueue(enc.encode("\u0000" + JSON.stringify({ memory })));
               if (user && sb && !temporary) {
                 try {
@@ -331,10 +348,30 @@ export async function POST(req: NextRequest) {
               }
             }
           } catch (err) {
-            console.error("Playground stream error:", err);
-            controller.enqueue(enc.encode("\u0000" + JSON.stringify({ error: "Generation failed" })));
+            if (!closed) {
+              const status = (err as { status?: number })?.status;
+              const errMsg =
+                status === 429 || status === 529
+                  ? "Provider rate limit or high load — please retry in a moment."
+                  : status === 401 || status === 403
+                  ? "AI provider credential error on server."
+                  : "Generation failed";
+              console.error("Playground stream error:", status || err);
+              controller.enqueue(enc.encode("\u0000" + JSON.stringify({ error: errMsg })));
+            }
+          } finally {
+            if (!closed) {
+              closed = true;
+              try {
+                controller.close();
+              } catch {
+                /* ignore */
+              }
+            }
           }
-          controller.close();
+        },
+        cancel() {
+          abortUpstream();
         },
       });
       return new Response(readable, {
@@ -390,7 +427,20 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ dual: false, reply: text || "…", memory });
   } catch (err) {
-    console.error("Playground error:", err);
+    const status = (err as { status?: number })?.status;
+    console.error("Playground error:", status || err);
+    if (status === 429 || status === 529) {
+      return NextResponse.json(
+        { error: "Provider is busy right now. Please try again in a moment." },
+        { status: 429 }
+      );
+    }
+    if (status === 401 || status === 403) {
+      return NextResponse.json(
+        { error: "AI provider credential error on server." },
+        { status: 503 }
+      );
+    }
     return NextResponse.json({ error: "Generation failed" }, { status: 500 });
   }
 }

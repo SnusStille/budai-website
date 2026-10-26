@@ -109,7 +109,7 @@ export function createWorld(
     // 00 & 01 / Owned by the single persistent brain renderer in LoadingScreen.
     addEnvironment(0);
 
-    // 02 / Quiet spatial bridge between Playground and Capabilities Core.
+    // 02 / Spatial 6-channel vernier signal bridge between Playground and Capabilities Core.
     const corridor = addEnvironment(1);
     const fieldRecords = [];
     for (let column = 0; column < 8; column++) {
@@ -120,6 +120,42 @@ export function createWorld(
     const outputField = createPointField(fieldRecords, 2.4);
     outputField.material.uniforms.uOpacity.value = 0;
     corridor.add(outputField);
+
+    const corridorRailMat = new THREE.LineBasicMaterial({
+      color: "#7adbf0",
+      transparent: true,
+      opacity: 0,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+    for (let lane = 0; lane < 6; lane++) {
+      const a = (lane / 6) * Math.PI * 2;
+      const rStart = 1.65;
+      const rEnd = 0.95;
+      const railCurve = new THREE.CatmullRomCurve3([
+        new THREE.Vector3(Math.cos(a) * rStart, 0.85 + Math.sin(a) * 0.55, 0),
+        new THREE.Vector3(11 + Math.cos(a + 0.45) * 1.25, 1.05 + Math.sin(a + 0.45) * 0.48, -7.5),
+        new THREE.Vector3(22 + Math.cos(a + 0.9) * rEnd, 1.15 + Math.sin(a + 0.9) * 0.42, -14.8),
+      ]);
+      corridor.add(
+        new THREE.Line(
+          new THREE.BufferGeometry().setFromPoints(railCurve.getPoints(32)),
+          corridorRailMat
+        )
+      );
+    }
+    [0.32, 0.68].forEach(u => {
+      const ringPts: THREE.Vector3[] = [];
+      const r = lerp(1.45, 1.1, u);
+      for (let s = 0; s <= 48; s++) {
+        const theta = (s / 48) * Math.PI * 2;
+        ringPts.push(new THREE.Vector3(Math.cos(theta) * r, Math.sin(theta) * r * 0.68, 0));
+      }
+      const gateLoop = new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(ringPts), corridorRailMat);
+      gateLoop.position.set(lerp(0, 22, u), lerp(0.88, 1.12, u), lerp(0, -14.8, u));
+      gateLoop.rotation.y = -0.58;
+      corridor.add(gateLoop);
+    });
 
     const outputSignal = createPointField([{ x: 0, y: 0, z: 0, lane: -1 }], 4.2);
     outputSignal.material.uniforms.uOpacity.value = 0;
@@ -432,7 +468,8 @@ export function createWorld(
         const assemblyProgress = accessRect ? clamp((frame.height * 0.85 - accessRect.top) / Math.max(1, accessRect.height + frame.height * 0.35)) : 0;
         const capWeight = smooth(clamp(1 - Math.abs(chapter - 3) / 0.88, 0, 1));
         const studioPresence = capWeight * sysEntry;
-        const visualOpacity = chapter < 3.3 ? Math.max(0.02, opacity * sysEntry) : opacity;
+        const corridorAlpha = smooth((chapter - 2.02) / 0.26) * (1 - smooth((chapter - 2.52) / 0.34)) * 0.32;
+        const visualOpacity = chapter < 3.3 ? Math.max(0.02, corridorAlpha * 2.2, opacity * sysEntry) : opacity;
         host.style.opacity = String(visualOpacity);
         const inWindow = studioPresence > 0.001;
         engine.root.visible = inWindow;
@@ -447,11 +484,11 @@ export function createWorld(
         );
         engine.update(capProgress, activeModule, morph, frame.time, assemblyProgress, px, py, pathwayMode);
 
-        const corridorAlpha = smooth((chapter - 2.04) / 0.28) * (1 - smooth((chapter - 2.42) / 0.3)) * 0.22;
         outputField.material.uniforms.uOpacity.value = corridorAlpha;
-        const output = smooth((chapter - 2.05) / 0.85);
+        corridorRailMat.opacity = corridorAlpha * 0.85;
+        const output = smooth((chapter - 2.04) / 0.84);
         outputSignal.position.set(lerp(24, 48, output), lerp(0.8, 1.4, output), lerp(-16, -32, output));
-        outputSignal.material.uniforms.uOpacity.value = corridorAlpha;
+        outputSignal.material.uniforms.uOpacity.value = corridorAlpha * 1.15;
         outputSignal.visible = corridorAlpha > 0.002;
 
         // Deterministic viewport-ratio framing for Capabilities (zero horizontal whip or vertical jump)

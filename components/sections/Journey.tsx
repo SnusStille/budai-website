@@ -20,10 +20,42 @@ export default function Journey() {
     return () => { window.dispatchEvent(new CustomEvent("budai:roadmap-focus", { detail: -1 })); };
   }, [active]);
   const stages = [
-    { icon: Check, chip: sv ? "Klart" : "Done", title: sv ? "Grunden" : "The foundation", lead: sv ? "Det som redan fungerar." : "What already works.", items: sv ? ["Playground med live-svar", "Konton, minne och historik", "Bild, röst och export"] : ["Playground with live replies", "Accounts, memory and history", "Vision, voice and export"] },
-    { icon: Rocket, chip: sv ? "Nu" : "Now", title: "Developer Preview", lead: sv ? "Gratis för alla att prova." : "Free for everyone to try.", items: sv ? ["Basic-paketet är gratis", "Din feedback styr nästa steg", "Förbättras varje vecka"] : ["The Basic plan is free", "Your feedback steers what's next", "Improved every week"] },
-    { icon: Layers, chip: sv ? "Härnäst" : "Next", title: sv ? "Paket och team" : "Plans and teams", lead: sv ? "Mer användning, för dig och ditt företag." : "More usage, for you and your company.", items: sv ? ["Konsument- och Företagspaket", "Flera konton på delade credits", "Nordisk integritet: du äger ditt minne"] : ["Consumer and Business plans", "Multiple accounts on shared credits", "Nordic-first privacy: you own your memory"] },
-    { icon: Globe, chip: sv ? "Målet" : "Goal", title: sv ? "AI för vardagen" : "AI for everyday work", lead: sv ? "Tillgänglig för varje individ och team." : "Accessible to every individual and team.", items: sv ? ["Vardagens AI-arbetsyta, flytande på ditt språk", "Växer steg för steg, ärligt och transparent", "Byggd i Sverige för att hålla"] : ["The everyday AI workspace, fluent in your language", "Growing step by step, honestly and transparently", "Built in Sweden to last"] },
+    {
+      icon: Check,
+      chip: sv ? "Klart" : "Done",
+      title: sv ? "Grunden" : "The foundation",
+      lead: sv ? "Live i utvecklarförhandsvisningen idag." : "Live in the developer preview today.",
+      items: sv
+        ? ["Playground med strömmande svar på SV / EN", "Gratis konto med användarstyrt minne & historik", "Bildanalys, röstdiktering och trådexport"]
+        : ["Playground with streaming replies in SV / EN", "Free account with user-controlled memory & history", "Image analysis, voice dictation, and thread export"],
+    },
+    {
+      icon: Rocket,
+      chip: sv ? "Nu" : "Now",
+      title: "Developer Preview",
+      lead: sv ? "Öppen Basic-nivå för alla att testa." : "Open Basic tier for everyone to test.",
+      items: sv
+        ? ["Basic är gratis (12/dag gäst · 80/dag med konto)", "Verklig användning styr vad som prioriteras", "Löpande förbättringar av kvalitet och flöden"]
+        : ["Basic is free (12/day guest · 80/day with account)", "Real usage steers what gets prioritized next", "Continuous improvements to quality and workflows"],
+    },
+    {
+      icon: Layers,
+      chip: sv ? "Härnäst" : "Next",
+      title: sv ? "Paket och team" : "Plans and teams",
+      lead: sv ? "Under utveckling för individer och företag." : "In development for individuals and teams.",
+      items: sv
+        ? ["Konsument- och Företagspaket med högre kapacitet", "Delade team-credits och gemensamma playbooks", "Samma integritetsprincip: du äger ditt minne"]
+        : ["Consumer and Business plans with higher capacity", "Shared team credits and reusable playbooks", "Same privacy principle: you own your memory"],
+    },
+    {
+      icon: Globe,
+      chip: sv ? "Målet" : "Goal",
+      title: sv ? "AI för vardagen" : "AI for everyday work",
+      lead: sv ? "En pålitlig arbetsyta för individ och team." : "A dependable workspace for individuals and teams.",
+      items: sv
+        ? ["Vardagens AI-arbetsyta på svenska och engelska", "Utvecklas steg för steg utan tomma löften", "Byggd i Sverige av Stilledev för långsiktig nytta"]
+        : ["The everyday AI workspace in Swedish and English", "Built step by step without empty hype", "Created in Sweden by Stilledev for lasting utility"],
+    },
   ];
 
   return (
@@ -32,9 +64,22 @@ export default function Journey() {
       <div className="roadmap-container">
         <ScrollReveal className="roadmap-heading">
           <div><span className="chapter-label"><BudAILogo size="xs" animated={false} className="!h-4 !w-4" />05 / {sv ? "SYSTEMET UTVECKLAS" : "THE SYSTEM EVOLVES"}</span><h2 id="roadmap-title">{sv ? "Bara början." : "Only the beginning."}</h2></div>
-          <p>{sv ? "Dit BudAI är på väg. Från svenska arbetsdagar till allas vardags-AI. Inga datum, bara ärliga framsteg." : "Where BudAI is going. From Swedish workdays to everyone's everyday AI. No dates, just honest progress."}</p>
+          <p>{sv ? "Från dagens öppna förhandsvisning till utökade paket för individer och team. Inga påhittade datum — bara ärliga framsteg i den ordning de byggs." : "From today's open preview to expanded plans for individuals and teams. No invented launch dates — just transparent progress in the order it is built."}</p>
         </ScrollReveal>
-        <div className="roadmap-spatial-window" aria-hidden="true"><span>SWEDEN <i /> NORDICS <i /> WORLD</span><div className="roadmap-fallback-path"><i /><i /><i /><i /></div><span>EVOLVING IN PUBLIC / BUDAI</span></div>
+        <div className="roadmap-spatial-window" aria-hidden="true">
+          <span>SWEDEN <i /> NORDICS <i /> WORLD</span>
+          <div className="roadmap-telemetry-rail">
+            <span><b>01</b> FOUNDATION · LIVE</span>
+            <i />
+            <span><b>02</b> PREVIEW · OPEN</span>
+            <i />
+            <span><b>03</b> PLANS · IN DEV</span>
+            <i />
+            <span><b>04</b> WORKSPACE · HORIZON</span>
+          </div>
+          <div className="roadmap-fallback-path"><i /><i /><i /><i /></div>
+          <span>EVOLVING IN PUBLIC / BUDAI</span>
+        </div>
         <ol className="roadmap-milestones" data-active={active}>
           {stages.map((stage, i) => (
             <li key={stage.title} className={active === i ? "roadmap-milestone is-active" : "roadmap-milestone"}>

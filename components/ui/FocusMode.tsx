@@ -15,8 +15,9 @@ export default function FocusMode() {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
       const tag = (e.target as HTMLElement)?.tagName;
-      if (tag === "INPUT" || tag === "TEXTAREA" || (e.target as HTMLElement)?.isContentEditable)
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || (e.target as HTMLElement)?.isContentEditable)
         return;
       if (e.key === "f" || e.key === "F") {
         e.preventDefault();

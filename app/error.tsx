@@ -4,14 +4,25 @@ import BudAILogo from "@/components/ui/BudAILogo";
 
 export default function ErrorPage({ reset }: { error: Error; reset: () => void }) {
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center gap-6 px-6 text-center bg-background text-white">
-      <BudAILogo size="lg" />
-      <p className="font-mono text-sm text-accent-pink">{"{ error }"}</p>
-      <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">Something went wrong</h1>
-      <p className="max-w-md text-muted">An unexpected error occurred. Try again, and if it keeps happening, reload the page.</p>
-      <button type="button" onClick={reset} className="rounded-full bg-accent-cyan px-6 py-3 text-sm font-semibold text-[#020205] hover:opacity-90">
-        Try again
-      </button>
+    <main className="min-h-screen flex flex-col items-center justify-center px-6 text-center bg-background text-white">
+      <div className="max-w-md w-full rounded-2xl border border-white/10 bg-[#060d17]/90 p-8 shadow-2xl">
+        <div className="flex justify-center mb-5">
+          <BudAILogo size="lg" />
+        </div>
+        <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent-pink mb-2">{"SYSTEM INTERRUPT · ERROR"}</p>
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mb-2">Something went wrong</h1>
+        <p className="text-sm text-muted leading-relaxed mb-6">
+          An unexpected error occurred while rendering this view. Try again, or return to the main BudAI workspace.
+        </p>
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          <button type="button" onClick={reset} className="rounded-full bg-accent-cyan px-5 py-2.5 text-sm font-semibold text-[#020205] hover:opacity-90 transition-opacity">
+            Try again
+          </button>
+          <a href="/" className="rounded-full border border-white/15 px-5 py-2.5 text-sm font-medium text-white/85 hover:text-white hover:border-accent-cyan/40 transition-colors">
+            Reload home
+          </a>
+        </div>
+      </div>
     </main>
   );
 }

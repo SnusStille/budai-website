@@ -34,10 +34,10 @@ export default function CapabilityMap() {
     {
       icon: FileText,
       title: sv ? "Skriv" : "Write",
-      detail: sv ? "Mejl, rapporter, förslag." : "Emails, reports, proposals.",
+      detail: sv ? "Forma råa anteckningar till mejl, rapporter och förslag." : "Turn rough notes into emails, reports, and proposals.",
       file: "src/engine/01-write.ts",
-      telemetry: sv ? "MODUL 01 · REDAKTIONELL SYNTES" : "MODULE 01 · EDITORIAL SYNTHESIS",
-      architecture: sv ? "Skiktade dokumentplan + strukturflöde" : "Layered document planes + structural flow",
+      telemetry: sv ? "MODUL 01 · REDAKTIONELL STRUKTUR · LIVE I PREVIEW" : "MODULE 01 · EDITORIAL STRUCTURE · LIVE IN PREVIEW",
+      architecture: sv ? "Anteckningar & utkast → strukturerat dokument" : "Notes & fragments → structured document",
       codeLines: [
         "import { BudAI, DocumentCard } from '@budai/studio';",
         'const draft = await budai.write({ lang: "sv-SE", format: "proposal" });',
@@ -47,10 +47,10 @@ export default function CapabilityMap() {
     {
       icon: Workflow,
       title: sv ? "Automatisera" : "Automate",
-      detail: sv ? "Rutiner till tydliga steg." : "Routines into clear steps.",
+      detail: sv ? "Bryt ner återkommande rutiner till tydliga steg." : "Break recurring routines into repeatable steps.",
       file: "src/engine/02-automate.ts",
-      telemetry: sv ? "MODUL 02 · SEKVENTIELL PIPELINE" : "MODULE 02 · SEQUENTIAL PIPELINE",
-      architecture: sv ? "Fyra kopplade exekveringssteg" : "Four interlocked execution stages",
+      telemetry: sv ? "MODUL 02 · ARBETSFLÖDEN · TEAMFLÖDEN UNDER UTVECKLING" : "MODULE 02 · WORKFLOW PLAYBOOKS · TEAM FLOWS IN DEV",
+      architecture: sv ? "Rörig rutin → ordnad handlingssekvens" : "Recurring routine → ordered action sequence",
       codeLines: [
         "import { Playbook, StageGate } from '@budai/workflows';",
         'export const flow = budai.automate({ trigger: "inbox.routine" });',
@@ -60,10 +60,10 @@ export default function CapabilityMap() {
     {
       icon: BarChart3,
       title: sv ? "Besluta" : "Decide",
-      detail: sv ? "Sammanfattningar och nästa steg." : "Summaries and next steps.",
+      detail: sv ? "Väg alternativ, se risker och välj nästa steg." : "Weigh options, surface trade-offs, and choose a next step.",
       file: "src/engine/03-decide.ts",
-      telemetry: sv ? "MODUL 03 · ANALYTISKT PRISMA" : "MODULE 03 · ANALYTICAL PRISM",
-      architecture: sv ? "Konvergerande val → rekommenderad väg" : "Converging options → recommended vector",
+      telemetry: sv ? "MODUL 03 · BESLUTSSYNTES · LIVE I PREVIEW" : "MODULE 03 · DECISION SYNTHESIS · LIVE IN PREVIEW",
+      architecture: sv ? "Flera vägval → vägd rekommendation" : "Competing options → weighed recommendation",
       codeLines: [
         "import { MatrixEngine, Telemetry } from '@budai/research';",
         "const matrix = await budai.decide({ options: thread.scenarios });",
@@ -73,10 +73,10 @@ export default function CapabilityMap() {
     {
       icon: Languages,
       title: sv ? "Svenska + engelska" : "Swedish + English",
-      detail: sv ? "Byt språk. Behåll tonen." : "Switch language. Keep the tone.",
+      detail: sv ? "Växla naturligt mellan svenska och engelska med samma ton." : "Move fluidly between Swedish and English with the same tone.",
       file: "src/engine/04-bilingual.ts",
-      telemetry: sv ? "MODUL 04 · TVÅSPRÅKIG RESONANS" : "MODULE 04 · BILINGUAL RESONANCE",
-      architecture: sv ? "Synkroniserad SV / EN dubbelhelix" : "Synchronized SV / EN double-helix bridge",
+      telemetry: sv ? "MODUL 04 · TVÅSPRÅKIG PRECISION · SV / EN" : "MODULE 04 · BILINGUAL FLUENCY · NATIVE SV / EN",
+      architecture: sv ? "Två språk → en sammanhållen röst" : "Two languages → one consistent voice",
       codeLines: [
         "import { LocaleBridge, DualPane } from '@budai/i18n';",
         'const bridge = await budai.bilingual({ pair: ["sv-SE", "en-US"] });',
@@ -86,10 +86,10 @@ export default function CapabilityMap() {
     {
       icon: Network,
       title: sv ? "Minne" : "Memory",
-      detail: sv ? "Sparar det du väljer." : "Keeps what you choose.",
+      detail: sv ? "Sparar det du själv väljer — ändra eller radera när som helst." : "Saves only what you choose — edit or clear anytime.",
       file: "src/engine/05-memory.ts",
-      telemetry: sv ? "MODUL 05 · KRISTALLINT MINNESVALV" : "MODULE 05 · CRYSTALLINE MEMORY VAULT",
-      architecture: sv ? "Fyra lagrade kontextskikt med konto" : "Four retained context strata with account",
+      telemetry: sv ? "MODUL 05 · ANVÄNDARSTYRT MINNE · GRATIS KONTO" : "MODULE 05 · USER-CONTROLLED MEMORY · FREE ACCOUNT",
+      architecture: sv ? "Ditt valda sammanhang → följer med i samtal" : "Your chosen context → carried across chats",
       codeLines: [
         "import { ContextVault, RLSPolicy } from '@budai/memory';",
         "const ctx = await budai.memory.recall({ owner: auth.uid() });",
@@ -99,10 +99,10 @@ export default function CapabilityMap() {
     {
       icon: AudioLines,
       title: sv ? "Bild och röst" : "Vision and voice",
-      detail: sv ? "Ladda upp bilder, prata in." : "Upload images, speak prompts.",
+      detail: sv ? "Bifoga bilder eller skärmklipp och prata in direkt." : "Attach images or screenshots and speak prompts directly.",
       file: "src/engine/06-multimodal.ts",
-      telemetry: sv ? "MODUL 06 · OPTISK APERTUR & RÖSTVÅG" : "MODULE 06 · OPTICAL APERTURE & VOICE WAVE",
-      architecture: sv ? "Visuell analys + direkt röstinmatning" : "Visual analysis + direct voice dictation",
+      telemetry: sv ? "MODUL 06 · BILD & RÖST · LIVE I PREVIEW" : "MODULE 06 · VISION & VOICE · LIVE IN PREVIEW",
+      architecture: sv ? "Bild + talad fråga → sammanhållet svar" : "Visual context + voice → unified answer",
       codeLines: [
         "import { VisionParser, VoiceStream } from '@budai/multimodal';",
         'const signal = await budai.perceive({ image, voice: stream("sv-SE") });',
@@ -192,10 +192,10 @@ export default function CapabilityMap() {
             <br />
             <span>{sv ? "Här formas de till verktyg." : "Shaped into precision tools."}</span>
           </h3>
-          <p className="mb-3.5 text-xs text-muted/85 italic leading-relaxed">
+          <p className="mb-3.5 text-xs text-muted/85 leading-relaxed">
             {sv
-              ? "”Idéer är inte färdiga produkter. De är material som väntar på att formas.”"
-              : "“Ideas are not finished products. They are materials waiting to be shaped.”"}
+              ? "Välj ett verktyg för att öppna det direkt i Playground ovan, eller skrolla genom verkstaden för att se hur varje förmåga formar rå kontext till tydlig handling."
+              : "Select any instrument to open its prompt in the Playground above, or scroll through the workshop to see how each capability shapes raw context into clear action."}
           </p>
           <div className="capability-pathway-switch" role="group" aria-label={sv ? "Välj visuell väg" : "Choose visual pathway"} data-pathway-toggle>
             <button

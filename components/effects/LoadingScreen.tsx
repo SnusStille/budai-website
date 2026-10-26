@@ -376,16 +376,27 @@ export default function LoadingScreen() {
             {!ready && <BrainPoster opening />}
           </div>
           <div className="opening-credit">
-            <span>STILLEDEV</span>
-            <span>NEURAL SYSTEM / 001</span>
+            <span>STILLEDEV · SWEDEN</span>
+            <span>BUDAI SYSTEM / 001</span>
           </div>
           <div className="opening-identity" data-opening-identity aria-hidden="true">
             <div className="opening-depth-grid" />
+            <div className="opening-astrolabe" data-opening-astrolabe>
+              <i className="opening-astrolabe-ring opening-astrolabe-ring-outer" />
+              <i className="opening-astrolabe-ring opening-astrolabe-ring-mid" />
+              <i className="opening-astrolabe-ring opening-astrolabe-ring-inner" />
+              <b className="opening-astrolabe-axis opening-astrolabe-axis-h" />
+              <b className="opening-astrolabe-axis opening-astrolabe-axis-v" />
+            </div>
             <div className="opening-focal-beacon">
               <i className="opening-emergence-ring opening-emergence-ring-a" />
               <i className="opening-emergence-ring opening-emergence-ring-b" />
             </div>
             <div className="opening-identity-stage">
+              <i className="opening-caliper opening-caliper-tl" />
+              <i className="opening-caliper opening-caliper-tr" />
+              <i className="opening-caliper opening-caliper-bl" />
+              <i className="opening-caliper opening-caliper-br" />
               <span className="opening-identity-kicker">BUDAI · INTELLIGENCE ENVIRONMENT</span>
               <div className="opening-identity-name" data-opening-name="BudAI">
                 <span className="opening-char opening-char-1">B</span>
@@ -397,11 +408,19 @@ export default function LoadingScreen() {
                 <i className="opening-identity-sweep" />
               </div>
               <i className="opening-identity-horizon" />
+              <div className="opening-instrument-rail">
+                <span><b>01</b>WRITE</span>
+                <span><b>02</b>AUTOMATE</span>
+                <span><b>03</b>DECIDE</span>
+                <span><b>04</b>SV / EN</span>
+                <span><b>05</b>MEMORY</span>
+                <span><b>06</b>VISION</span>
+              </div>
               <span className="opening-identity-sub">DEVELOPED BY STILLEDEV · SWEDEN</span>
             </div>
           </div>
           <div className="opening-caption">
-            <span>INTELLIGENCE → INTERACTION</span>
+            <span>01 SPARK → 02 PLAYGROUND → 03 WORKSHOP &amp; ATLAS</span>
             <button type="button" onClick={() => finish.current()}>
               Skip intro <kbd>esc</kbd>
             </button>
