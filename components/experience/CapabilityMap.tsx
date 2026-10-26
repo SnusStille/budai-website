@@ -376,6 +376,16 @@ export default function CapabilityMap() {
             <div className="capability-readout-foot">
               <strong>{currentCap.title}</strong>
               <small>{currentCap.architecture}</small>
+              <button
+                type="button"
+                className="capability-readout-launch"
+                onClick={() => {
+                  window.dispatchEvent(new CustomEvent("budai:prompt", { detail: prompts[active] ?? prompts[0] }));
+                  document.getElementById("playground")?.scrollIntoView({ behavior: "smooth" });
+                }}
+              >
+                {sv ? "Prova ↗" : "Try ↗"}
+              </button>
             </div>
           </div>
 

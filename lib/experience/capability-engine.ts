@@ -195,7 +195,8 @@ export interface CapabilityEngine {
     pointerX?: number,
     pointerY?: number,
     pathwayMode?: "personal" | "business",
-    arrival?: number
+    arrival?: number,
+    atlasTier?: number
   ): void;
 }
 
@@ -1233,7 +1234,8 @@ export function createCapabilityEngine(
       pointerX = 0,
       pointerY = 0,
       pathwayMode: "personal" | "business" = "personal",
-      arrival = 1
+      arrival = 1,
+      atlasTier = -1
     ) {
       const p = clamp(progress, 0, 1);
       const morph = clamp(accessMorph, 0, 1);
@@ -1350,12 +1352,15 @@ export function createCapabilityEngine(
           lerp(0.28, 1, podEmerge);
 
         const atlasTarget = atlasPlacements[idx];
-        const elevationLift = smooth(clamp((asm - idx * 0.08) / 0.55, 0, 1)) * 0.22;
+        const podTerrace = idx === 0 || idx === 5 ? 0 : idx === 3 || idx === 4 ? 1 : 2;
+        const tierFocused = atlasTier >= 0 && podTerrace === atlasTier;
+        const elevationLift =
+          smooth(clamp((asm - idx * 0.08) / 0.55, 0, 1)) * 0.22 + (tierFocused ? 0.08 * morph : 0);
 
         const targetX = lerp(workshopX, atlasTarget.x, morph) + pointerX * 0.1;
         const targetY = lerp(workshopY, atlasTarget.y + elevationLift, morph) + pointerY * 0.05;
         const targetZ = lerp(workshopZ, atlasTarget.z, morph);
-        const targetScale = lerp(workshopScale, 0.86, morph);
+        const targetScale = lerp(workshopScale, tierFocused ? 0.94 : 0.86, morph);
 
         const blend = emerge < 0.85 ? 0.68 : 0.36;
         pod.group.position.x = lerp(pod.group.position.x || targetX, targetX, blend);
@@ -1374,7 +1379,7 @@ export function createCapabilityEngine(
 
         relayAttr.setXYZ(idx, pod.group.position.x, pod.group.position.y, pod.group.position.z);
 
-        pod.cradleRingMat.opacity = morph >= 0.48 ? 0.88 : isActive ? 0.96 : 0.38;
+        pod.cradleRingMat.opacity = morph >= 0.48 ? (tierFocused ? 0.98 : 0.86) : isActive ? 0.96 : 0.38;
 
         // Rising Architectural Outcome Monument in World Two
         const monumentScale = smooth(clamp((morph - 0.32) / 0.55, 0, 1)) * (0.64 + 0.52 * asm);
@@ -1496,13 +1501,19 @@ export function createCapabilityEngine(
 
       atlasTerraces.forEach((tGrp, tIdx) => {
         const tc = terraceConfigs[tIdx];
-        const stageReveal = smooth(clamp((atlasVisibility - tIdx * 0.11) / 0.65, 0, 1));
+        const isFocusedTerrace = atlasTier === tIdx;
+        const stageReveal =
+          smooth(clamp((atlasVisibility - tIdx * 0.11) / 0.65, 0, 1)) * (isFocusedTerrace ? 1.05 : 1);
         tGrp.scale.set(
           Math.max(0.001, stageReveal),
           1,
           Math.max(0.001, stageReveal)
         );
-        tGrp.position.y = tc.y + Math.sin(time * 1.1 + tIdx) * 0.022 + (tIdx === 2 ? isTeam * 0.12 : 0);
+        tGrp.position.y =
+          tc.y +
+          Math.sin(time * 1.1 + tIdx) * 0.022 +
+          (tIdx === 2 ? isTeam * 0.12 : 0) +
+          (isFocusedTerrace ? 0.09 : 0);
         tGrp.rotation.y = (asm - 0.5) * 0.12 * (tIdx - 1);
 
         const bAttr = polestarBeamGeos[tIdx].getAttribute("position") as THREE.BufferAttribute;

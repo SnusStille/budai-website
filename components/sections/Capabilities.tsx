@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import ScrollReveal from "@/components/ui/ScrollReveal";
 import SpotlightCard from "@/components/ui/SpotlightCard";
 import { Check as CheckIcon, X as XIcon, User as UserIcon, Building2 as BuildingIcon, Sparkles as SparkIcon } from "lucide-react";
@@ -10,6 +11,14 @@ import Waitlist from "@/components/sections/Waitlist";
 export default function Capabilities() {
   const { t, lang } = useLang();
   const sv = lang === "sv";
+  const [activeTier, setActiveTier] = useState<number>(-1);
+
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("budai:atlas-tier", { detail: activeTier }));
+    return () => {
+      window.dispatchEvent(new CustomEvent("budai:atlas-tier", { detail: -1 }));
+    };
+  }, [activeTier]);
 
   const plans = [
     {
@@ -145,7 +154,7 @@ export default function Capabilities() {
               : "One capability solves a task. Combined, they support how you work — from open preview access today to extended individual capacity and shared team workflows in development."}
           </p>
         </div>
-        <div className="access-architecture" data-access-architecture data-ai-assembly-line aria-hidden="true">
+        <div className="access-architecture" data-access-architecture data-ai-assembly-line data-active-tier={activeTier >= 0 ? activeTier : undefined} aria-hidden="true">
           <div className="access-code-header">
             <span>
               {sv
@@ -165,25 +174,25 @@ export default function Capabilities() {
               {/* Elevated Polestar Synthesis Apex & 3 Meridian Beams */}
               <polygon points="0,-1.55 0.16,-1.35 0,-1.15 -0.16,-1.35" fill="#15344f" stroke="#dff6ff" strokeWidth="0.024" />
               <circle cx="0" cy="-1.35" r="0.26" fill="none" stroke="#7adbf0" strokeOpacity="0.68" strokeWidth="0.016" />
-              <line x1="0" y1="-1.35" x2="-3.15" y2="0.15" stroke="#7adbf0" strokeOpacity="0.52" strokeWidth="0.02" />
-              <line x1="0" y1="-1.35" x2="0" y2="-0.15" stroke="#a8b4f8" strokeOpacity="0.52" strokeWidth="0.02" />
-              <line x1="0" y1="-1.35" x2="3.15" y2="-0.42" stroke="#6ee7b7" strokeOpacity="0.52" strokeWidth="0.02" />
+              <line x1="0" y1="-1.35" x2="-3.15" y2="0.15" stroke="#7adbf0" strokeOpacity={activeTier === 0 ? "0.95" : "0.52"} strokeWidth={activeTier === 0 ? "0.032" : "0.02"} />
+              <line x1="0" y1="-1.35" x2="0" y2="-0.15" stroke="#a8b4f8" strokeOpacity={activeTier === 1 ? "0.95" : "0.52"} strokeWidth={activeTier === 1 ? "0.032" : "0.02"} />
+              <line x1="0" y1="-1.35" x2="3.15" y2="-0.42" stroke="#6ee7b7" strokeOpacity={activeTier === 2 ? "0.95" : "0.52"} strokeWidth={activeTier === 2 ? "0.032" : "0.02"} />
 
               {/* West Terrace: 01 Basic (Available Now) */}
-              <polygon points="-4.55,0.68 -1.75,0.68 -1.35,-0.22 -4.15,-0.22" fill="#0b2032" fillOpacity="0.86" stroke="#7adbf0" strokeWidth="0.026" />
-              <ellipse cx="-2.95" cy="0.22" rx="0.95" ry="0.28" fill="none" stroke="#7adbf0" strokeOpacity="0.45" strokeWidth="0.016" />
+              <polygon points="-4.55,0.68 -1.75,0.68 -1.35,-0.22 -4.15,-0.22" fill="#0b2032" fillOpacity={activeTier === 0 ? "0.96" : "0.86"} stroke="#7adbf0" strokeWidth={activeTier === 0 ? "0.04" : "0.026"} />
+              <ellipse cx="-2.95" cy="0.22" rx="0.95" ry="0.28" fill="none" stroke="#7adbf0" strokeOpacity={activeTier === 0 ? "0.8" : "0.45"} strokeWidth="0.016" />
               <circle cx="-3.35" cy="0.18" r="0.08" fill="#7adbf0" />
               <circle cx="-2.45" cy="0.24" r="0.08" fill="#6ee7b7" />
 
               {/* Central Terrace: 02 Consumer (Coming Soon) */}
-              <polygon points="-1.3,0.36 1.3,0.36 1.62,-0.54 -0.98,-0.54" fill="#0d2238" fillOpacity="0.88" stroke="#a8b4f8" strokeWidth="0.026" />
-              <ellipse cx="0.16" cy="-0.09" rx="0.95" ry="0.28" fill="none" stroke="#a8b4f8" strokeOpacity="0.45" strokeWidth="0.016" />
+              <polygon points="-1.3,0.36 1.3,0.36 1.62,-0.54 -0.98,-0.54" fill="#0d2238" fillOpacity={activeTier === 1 ? "0.96" : "0.88"} stroke="#a8b4f8" strokeWidth={activeTier === 1 ? "0.04" : "0.026"} />
+              <ellipse cx="0.16" cy="-0.09" rx="0.95" ry="0.28" fill="none" stroke="#a8b4f8" strokeOpacity={activeTier === 1 ? "0.8" : "0.45"} strokeWidth="0.016" />
               <circle cx="-0.32" cy="-0.1" r="0.08" fill="#a8b4f8" />
               <circle cx="0.58" cy="-0.08" r="0.08" fill="#7adbf0" />
 
               {/* East Terrace: 03 Business (Coming Soon) */}
-              <polygon points="1.8,0.06 4.45,0.06 4.65,-0.84 2.02,-0.84" fill="#0d263b" fillOpacity="0.9" stroke="#6ee7b7" strokeWidth="0.026" />
-              <ellipse cx="3.22" cy="-0.39" rx="0.95" ry="0.28" fill="none" stroke="#6ee7b7" strokeOpacity="0.45" strokeWidth="0.016" />
+              <polygon points="1.8,0.06 4.45,0.06 4.65,-0.84 2.02,-0.84" fill="#0d263b" fillOpacity={activeTier === 2 ? "0.96" : "0.9"} stroke="#6ee7b7" strokeWidth={activeTier === 2 ? "0.04" : "0.026"} />
+              <ellipse cx="3.22" cy="-0.39" rx="0.95" ry="0.28" fill="none" stroke="#6ee7b7" strokeOpacity={activeTier === 2 ? "0.8" : "0.45"} strokeWidth="0.016" />
               <circle cx="2.75" cy="-0.38" r="0.08" fill="#6ee7b7" />
               <circle cx="3.68" cy="-0.4" r="0.08" fill="#dff6ff" />
 
@@ -193,27 +202,46 @@ export default function Capabilities() {
             </svg>
           </div>
           <div className="access-labels">
-            <span>
+            <span
+              className={activeTier === 0 ? "is-active" : undefined}
+              onPointerEnter={() => setActiveTier(0)}
+              onPointerLeave={() => setActiveTier(-1)}
+            >
               <code>01 · DOCUMENT &amp; INTAKE ROUTE</code>
               01 / BASIC
               <small>{sv ? "Tillgänglig nu · Direkt skrivande, syn & röst i preview" : "Available now · Direct writing, vision & voice in preview"}</small>
             </span>
-            <span>
+            <span
+              className={activeTier === 1 ? "is-active" : undefined}
+              onPointerEnter={() => setActiveTier(1)}
+              onPointerLeave={() => setActiveTier(-1)}
+            >
               <code>02 · MEMORY &amp; BILINGUAL ROUTE</code>
               02 / CONSUMER
               <small>{sv ? "Kommer snart · Utökat minne, planer & djupanalys" : "Coming soon · Extended memory, plans & deep analysis"}</small>
             </span>
-            <span>
+            <span
+              className={activeTier === 2 ? "is-active" : undefined}
+              onPointerEnter={() => setActiveTier(2)}
+              onPointerLeave={() => setActiveTier(-1)}
+            >
               <code>03 · SHARED WORKFLOW &amp; DECISION ROUTE</code>
               03 / BUSINESS
               <small>{sv ? "Kommer snart · Gemensamma arbetsflöden för team" : "Coming soon · Shared team workflows & governance"}</small>
             </span>
           </div>
         </div>
-        <div className="plan-comparison grid md:grid-cols-3 gap-4 mb-5" data-plan-comparison>
+        <div className="plan-comparison grid md:grid-cols-3 gap-4 mb-5" data-plan-comparison data-active-tier={activeTier >= 0 ? activeTier : undefined}>
           {plans.map((pl, i) => (
             <ScrollReveal key={pl.key} delay={i * 0.05}>
-              <SpotlightCard tilt={false} className={`plan-card plan-${pl.key} h-full rounded-2xl border ${pl.card}`}>
+              <div
+                className="h-full"
+                onPointerEnter={() => setActiveTier(i)}
+                onPointerLeave={() => setActiveTier(-1)}
+                onFocus={() => setActiveTier(i)}
+                onBlur={() => setActiveTier(-1)}
+              >
+              <SpotlightCard tilt={false} className={`plan-card plan-${pl.key} ${activeTier === i ? "is-tier-active" : ""} h-full rounded-2xl border ${pl.card}`}>
                 <div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${pl.bar}`} />
                 <div className={`pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full blur-3xl ${pl.blob}`} />
                 <div className="relative flex h-full flex-col p-6 pt-7">
@@ -269,6 +297,7 @@ export default function Capabilities() {
                   </a>
                 </div>
               </SpotlightCard>
+              </div>
             </ScrollReveal>
           ))}
         </div>

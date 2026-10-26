@@ -86,7 +86,7 @@ import * as cloud from "@/lib/playground/cloudStore";
 /* ─── helpers ─────────────────────────────────────────── */
 
 function renderInlineMd(text: string, keyPrefix: string): ReactNode[] {
-  const pattern = /(\*\*.+?\*\*|`.+?`)/g;
+  const pattern = /(\*\*.+?\*\*|`.+?`|\*[^*\s][^*]*?\*|\[[^\]]+\]\((?:https?:\/\/|mailto:)[^)\s]+\))/g;
   return text.split(pattern).map((part, i) => {
     if (part.startsWith("**") && part.endsWith("**"))
       return (
@@ -102,6 +102,25 @@ function renderInlineMd(text: string, keyPrefix: string): ReactNode[] {
         >
           {part.slice(1, -1)}
         </code>
+      );
+    if (part.startsWith("*") && part.endsWith("*") && part.length > 2)
+      return (
+        <em key={`${keyPrefix}-em-${i}`} className="italic text-white/95">
+          {part.slice(1, -1)}
+        </em>
+      );
+    const linkMatch = part.match(/^\[([^\]]+)\]\(((?:https?:\/\/|mailto:)[^)\s]+)\)$/);
+    if (linkMatch)
+      return (
+        <a
+          key={`${keyPrefix}-a-${i}`}
+          href={linkMatch[2]}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-accent-cyan underline decoration-accent-cyan/40 underline-offset-2 hover:text-white transition-colors"
+        >
+          {linkMatch[1]}
+        </a>
       );
     return <span key={`${keyPrefix}-t-${i}`}>{part}</span>;
   });
@@ -2892,6 +2911,11 @@ export default function AIPlayground() {
                         : "Account"}
                   </span>
                   <span>{lang === "sv" ? "Skriv inga känsliga uppgifter under previewn" : "Don't enter sensitive data during the preview"}</span>
+                  {input.length > 100 && (
+                    <span className={`ml-auto font-mono ${input.length > 3600 ? "text-amber-300/80" : "text-muted/50"}`}>
+                      {input.length}/4000
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
@@ -3072,7 +3096,16 @@ export default function AIPlayground() {
               ? ["Skriv", "Automatisera", "Besluta", "SV / EN", "Minne", "Syn & röst"]
               : ["Write", "Automate", "Decide", "SV / EN", "Memory", "Vision & voice"]
             ).map((label, i) => (
-              <span key={i} className="product-bridge-channel">
+              <span
+                key={i}
+                className="product-bridge-channel"
+                onPointerEnter={() => window.dispatchEvent(new CustomEvent("budai:capability-focus", { detail: i }))}
+                onPointerLeave={() => window.dispatchEvent(new CustomEvent("budai:capability-focus", { detail: -1 }))}
+                onClick={() => {
+                  window.dispatchEvent(new CustomEvent("budai:capability-focus", { detail: i }));
+                  document.querySelector("[data-capability-system]")?.scrollIntoView({ behavior: "smooth" });
+                }}
+              >
                 <b>0{i + 1}</b>
                 <span>{label}</span>
               </span>

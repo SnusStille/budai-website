@@ -410,11 +410,13 @@ export function createWorld(
     let height = 0;
     let focus = -1;
     let roadmapFocus = -1;
+    let atlasTier = -1;
     let pathwayMode: "personal" | "business" = "personal";
     let lastTime = 0;
     let slowFrames = 0;
     const onCapability = (event: Event) => { focus = (event as CustomEvent<number>).detail; };
     const onRoadmap = (event: Event) => { roadmapFocus = (event as CustomEvent<number>).detail; };
+    const onAtlasTier = (event: Event) => { atlasTier = (event as CustomEvent<number>).detail; };
     const onPathway = (event: Event) => {
       const next = (event as CustomEvent<"personal" | "business">).detail;
       if (next === "personal" || next === "business") pathwayMode = next;
@@ -422,11 +424,13 @@ export function createWorld(
     const onLost = (event: Event) => { event.preventDefault(); if (!disposed) onFailure(); };
     window.addEventListener("budai:capability-focus", onCapability);
     window.addEventListener("budai:roadmap-focus", onRoadmap);
+    window.addEventListener("budai:atlas-tier", onAtlasTier);
     window.addEventListener("budai:pathway-mode", onPathway);
     renderer.domElement.addEventListener("webglcontextlost", onLost);
     unlisten = () => {
       window.removeEventListener("budai:capability-focus", onCapability);
       window.removeEventListener("budai:roadmap-focus", onRoadmap);
+      window.removeEventListener("budai:atlas-tier", onAtlasTier);
       window.removeEventListener("budai:pathway-mode", onPathway);
       renderer.domElement.removeEventListener("webglcontextlost", onLost);
     };
@@ -517,7 +521,7 @@ export function createWorld(
           lerp(-0.22, mobile ? -0.08 : -0.05, morph) - (1 - arrival) * 0.18,
           lerp(3.25, 2.85, morph) - (1 - arrival) * 0.45
         );
-        engine.update(capProgress, activeModule, morph, frame.time, assemblyProgress, px, py, pathwayMode, arrival);
+        engine.update(capProgress, activeModule, morph, frame.time, assemblyProgress, px, py, pathwayMode, arrival, atlasTier);
 
         outputField.material.uniforms.uOpacity.value = corridorAlpha;
         corridorRailMat.opacity = corridorAlpha * 0.88;
