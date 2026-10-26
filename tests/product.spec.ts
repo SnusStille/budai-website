@@ -49,6 +49,12 @@ test("real Playground UI sends persona/language/history and consumes progressive
   await page.getByRole("button", { name: "Send message", exact: true }).click();
   await expect(page.locator("#playground").getByText("A calmer", { exact: true })).toBeVisible();
   await expect(page.locator("#playground").getByText("A calmer Swedish workday.", { exact: true })).toBeVisible();
+  await expect(page.locator("#playground").getByRole("button", { name: "Action plan", exact: true })).toBeVisible();
+  await page.locator("#playground").getByRole("button", { name: /Memory\s+Account/i }).click();
+  const memHeading = page.locator("#playground").getByRole("heading", { name: "User-controlled memory" });
+  await expect(memHeading).toBeVisible();
+  await page.locator("#playground").getByRole("button", { name: "Close memory", exact: true }).click();
+  await expect(memHeading).toHaveCount(0);
   const request = await page.evaluate(() => window.__chatRequest);
   expect(request).toMatchObject({ persona: "coder", lang: "sv", stream: true, dual: false });
   expect(request?.messages).toEqual(expect.arrayContaining([expect.objectContaining({ role: "user", content: expect.stringContaining("TypeScript helper") })]));
