@@ -757,9 +757,9 @@ html[data-world-state="ready"] .capability-code-depth-backdrop { display:none; }
   html[data-world-state="ready"] .capability-active-readout { bottom: 16px; max-width: 390px; padding: 8px 12px; background: linear-gradient(135deg, #06111be0, #040910cc); }
   html[data-world-state="ready"] .capability-readout-code { max-height: 44px; }
 }
-.plans-heading { border-top:1px solid #8daebc22; padding-top:48px; margin-bottom:0; }
+.plans-heading { border-top:1px solid #8daebc22; padding-top:48px; margin-bottom:0; scroll-margin-top:110px; }
 .plans-heading > span { font-weight:400; }
-.access-architecture { width:min(1040px,100%); height:450px; margin:0 auto 38px; position:relative; }
+.access-architecture { width:min(1040px,100%); height:450px; margin:0 auto 38px; position:relative; scroll-margin-top:135px; }
 .access-code-header { position:absolute; top:0; left:0; right:0; display:flex; justify-content:space-between; align-items:center; gap:12px; font:7px var(--font-jetbrains),monospace; letter-spacing:.12em; color:#6b8ca0; padding-bottom:8px; border-bottom:1px solid #7fcbe018; }
 .access-code-header > code { font:8px var(--font-jetbrains),monospace; color:#8ad8ec; letter-spacing:.03em; background:#091926aa; border:1px solid #78d2e829; border-radius:4px; padding:2px 8px; }
 .access-labels { position:absolute; bottom:0; left:50%; width:min(100%,880px); transform:translateX(-50%); display:grid; grid-template-columns:repeat(3,1fr); gap:14px; text-align:center; font:9px var(--font-jetbrains),monospace; letter-spacing:.08em; color:#d0e4ee; }
@@ -786,9 +786,12 @@ html[data-world-state="ready"] .capability-code-depth-backdrop { display:none; }
  .code-depth-mid { display:none; }
  .capability-active-readout { left:0; right:0; bottom:18px; padding:8px 11px; max-width:none; }
  .capability-readout-code { display:none; }
- .access-architecture { height:245px; }
+ .access-architecture { height:310px; scroll-margin-top:115px; }
  .access-code-header > code { display:none; }
- .access-labels { font-size:7px; }
+ .access-labels { font-size:7px; gap:8px; }
+ .access-labels > span { padding:7px 8px; }
+ .access-labels > span > code { font-size:6px; padding:2px 5px; margin-bottom:4px; }
+ .access-labels small { font-size:7px; margin-top:4px; line-height:1.35; }
  .plans-heading { padding-top:28px;flex-direction:column;align-items:flex-start;gap:8px; }
 }
 @media (prefers-reduced-motion:reduce) {

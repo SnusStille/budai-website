@@ -246,41 +246,59 @@ export default function CapabilityMap() {
 
         <div className="capability-viewport" aria-hidden="true" data-capability-viewport>
           <div className="capability-drawing-fallback">
-            <svg viewBox="-2.2 -1.8 4.4 3.6" aria-hidden="true">
-              {/* Concentric Chamber Portal Frames */}
-              {[0, 1, 2, 3].map(pIdx => {
-                const w = 4.0 - pIdx * 0.55;
-                const h = 3.0 - pIdx * 0.42;
+            <svg viewBox="-2.4 -1.9 4.8 3.8" aria-hidden="true">
+              {/* Astrolabe Rotunda Meridian Rings */}
+              {[1.75, 1.38, 1.02].map((r, rIdx) => (
+                <circle
+                  key={rIdx}
+                  cx="0"
+                  cy="0"
+                  r={r}
+                  fill="none"
+                  stroke={rIdx === 1 ? "#a8b4f8" : "#7adbf0"}
+                  strokeOpacity={0.34 - rIdx * 0.06}
+                  strokeWidth="0.016"
+                  strokeDasharray={rIdx === 2 ? "0.08 0.04" : undefined}
+                />
+              ))}
+              {/* 8 Radial Stadia Meridian Ribs */}
+              {[0, 1, 2, 3, 4, 5, 6, 7].map(s => {
+                const a = (s / 8) * Math.PI * 2;
                 return (
-                  <rect
-                    key={pIdx}
-                    x={-w / 2}
-                    y={-h / 2}
-                    width={w}
-                    height={h}
-                    rx="0.06"
-                    fill="none"
-                    stroke="#78d5ea"
-                    strokeOpacity={0.28 - pIdx * 0.05}
-                    strokeWidth="0.015"
+                  <line
+                    key={s}
+                    x1={Math.cos(a) * 0.55}
+                    y1={Math.sin(a) * 0.55}
+                    x2={Math.cos(a) * 1.75}
+                    y2={Math.sin(a) * 1.75}
+                    stroke="#7adbf0"
+                    strokeOpacity="0.22"
+                    strokeWidth="0.012"
                   />
                 );
               })}
-              {/* Left 3D Code Monolith */}
-              <rect x="-1.85" y="-0.72" width="1.62" height="1.32" rx="0.05" fill="#091d2e" fillOpacity="0.92" stroke="#78d5ea" strokeOpacity="0.88" strokeWidth="0.022" />
-              <rect x="-1.85" y="-0.22" width="1.62" height="0.22" fill="#6ee7b7" fillOpacity="0.24" />
-              {[0, 1, 2, 3].map(r => (
-                <line key={r} x1="-1.68" y1={-0.46 + r * 0.24} x2={-0.55 - (r % 2) * 0.25} y2={-0.46 + r * 0.24} stroke={r === 1 ? "#6ee7b7" : "#8ce8fa"} strokeOpacity="0.85" strokeWidth="0.03" />
-              ))}
-              {/* Compiler Beams */}
-              {[-0.25, 0, 0.25].map((by, bIdx) => (
-                <path key={bIdx} d={`M -0.23 ${by} C 0.05 ${by}, 0.15 ${by * 0.8}, 0.35 ${by * 0.8}`} fill="none" stroke="#6ee7b7" strokeOpacity="0.8" strokeWidth="0.02" />
-              ))}
-              {/* Right Assembled Blueprint UI Component */}
-              <rect x="0.35" y="-0.68" width="1.48" height="1.26" rx="0.05" fill="#0d263b" fillOpacity="0.92" stroke="#6ee7b7" strokeOpacity="0.9" strokeWidth="0.022" />
-              <rect x="0.52" y="-0.45" width="1.14" height="0.24" rx="0.03" fill="#163d58" stroke="#8ce8fa" strokeWidth="0.015" />
-              <rect x="0.52" y="-0.1" width="0.52" height="0.48" rx="0.03" fill="#14364e" stroke="#6ee7b7" strokeWidth="0.015" />
-              <rect x="1.12" y="-0.1" width="0.54" height="0.48" rx="0.03" fill="#14364e" stroke="#8ce8fa" strokeWidth="0.015" />
+              {/* 6 Circular Gimbal Cradles around the Workshop Crucible */}
+              {[0, 1, 2, 3, 4, 5].map(idx => {
+                const a = ((idx - active + 6) % 6 / 6) * Math.PI * 2 - Math.PI / 2;
+                const cx = idx === active ? 0 : Math.cos(a) * 1.25;
+                const cy = idx === active ? 0.12 : Math.sin(a) * 0.92;
+                const cr = idx === active ? 0.48 : 0.28;
+                return (
+                  <g key={idx}>
+                    <line x1="0" y1="0" x2={cx} y2={cy} stroke="#7adbf0" strokeOpacity="0.32" strokeWidth="0.014" />
+                    <circle
+                      cx={cx}
+                      cy={cy}
+                      r={cr}
+                      fill="#081a2b"
+                      fillOpacity={idx === active ? 0.88 : 0.58}
+                      stroke={idx === active ? "#6ee7b7" : "#7adbf0"}
+                      strokeOpacity={idx === active ? 0.92 : 0.45}
+                      strokeWidth={idx === active ? "0.024" : "0.016"}
+                    />
+                  </g>
+                );
+              })}
               {rows.slice(0, 18).map((p, i) => (
                 <circle key={i} cx={p.x * 0.85} cy={p.y * 0.65} r={p.lane === active ? 0.032 : 0.018} fill={p.lane === active ? "#d4f7ff" : "#75a6b8"} fillOpacity={p.lane === active ? 0.9 : 0.38} />
               ))}

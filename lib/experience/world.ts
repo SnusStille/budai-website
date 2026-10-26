@@ -458,7 +458,7 @@ export function createWorld(
         if (capWeight > 0.001) {
           const exitWeight = chapter > 3 ? capWeight : 1;
           const offsetX = mobile ? 0 : lerp(-frame.width * 0.238, 0, morph) * exitWeight;
-          const offsetY = (mobile ? lerp(frame.height * 0.12, frame.height * 0.16, morph) : lerp(-frame.height * 0.04, frame.height * 0.15, morph)) * exitWeight;
+          const offsetY = (mobile ? lerp(frame.height * 0.12, frame.height * 0.21, morph) : lerp(-frame.height * 0.04, frame.height * 0.16, morph)) * exitWeight;
           camera.setViewOffset(frame.width, frame.height, offsetX, offsetY, frame.width, frame.height);
         }
         const studioScale = (mobile ? 0.72 : lerp(0.92, 0.88, morph)) * lerp(0.94, 1, sysEntry);

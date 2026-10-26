@@ -198,6 +198,18 @@ export interface CapabilityEngine {
   ): void;
 }
 
+/**
+ * Directed pacing helper: creates an intentional approach (0..0.24),
+ * a calm inspection plateau (0.24..0.78) so transformations can breathe,
+ * and a clean resolution handoff (0.78..1.0).
+ */
+function directedPacing(u: number): number {
+  const c = clamp(u, 0, 1);
+  if (c < 0.24) return smooth(c / 0.24) * 0.86;
+  if (c < 0.78) return 0.86 + ((c - 0.24) / 0.54) * 0.14;
+  return 1;
+}
+
 const DATUM_VERTEX_SHADER = /* glsl */ `
   uniform float uDiscovery;
   uniform float uMorph;
@@ -216,16 +228,19 @@ const DATUM_VERTEX_SHADER = /* glsl */ `
     // 3-state GPU spatial interpolation:
     // position (raw unshaped fragments) -> aWorkshopPos (World I crucible) -> aAtlasPos (World II topographic atlas)
     vec3 worldOne = mix(position, aWorkshopPos, uDiscovery);
+    // Parabolic arc during transition so points lift through an architectural meridian as they unfold
+    float arcLift = sin(uMorph * 3.14159265) * 0.38;
     vec3 morphed = mix(worldOne, aAtlasPos, uMorph);
+    morphed.y += arcLift * (0.4 + 0.6 * aTone);
 
-    float drift = sin(uTime * 1.15 + aPhase) * mix(0.045, 0.018, uMorph);
+    float drift = sin(uTime * 1.1 + aPhase) * mix(0.038, 0.015, uMorph);
     morphed.y += drift;
-    morphed.x += cos(uTime * 0.85 + aPhase * 1.3) * 0.02 * (1.0 - uMorph * 0.5);
+    morphed.x += cos(uTime * 0.8 + aPhase * 1.3) * 0.018 * (1.0 - uMorph * 0.5);
 
     vec4 mvPosition = modelViewMatrix * vec4(morphed, 1.0);
     float dist = max(1.5, -mvPosition.z);
-    gl_PointSize = clamp((2.6 + 1.1 * sin(uTime * 1.6 + aPhase)) * uPixelRatio * (8.5 / dist), 1.2, 7.5);
-    vAlpha = (0.38 + 0.34 * sin(uTime * 1.3 + aPhase)) * mix(0.88, 1.0, uMorph);
+    gl_PointSize = clamp((2.5 + 1.15 * sin(uTime * 1.5 + aPhase)) * uPixelRatio * (8.5 / dist), 1.1, 7.2);
+    vAlpha = (0.34 + 0.32 * sin(uTime * 1.25 + aPhase)) * mix(0.85, 1.0, uMorph);
     vTone = aTone;
     gl_Position = projectionMatrix * mvPosition;
   }
@@ -244,7 +259,7 @@ const DATUM_FRAGMENT_SHADER = /* glsl */ `
     vec2 uv = gl_PointCoord - vec2(0.5);
     float d = length(uv);
     if (d > 0.5) discard;
-    float soft = smoothstep(0.5, 0.08, d);
+    float soft = smoothstep(0.5, 0.06, d);
     vec3 col = vTone < 0.34
       ? uColorCyan
       : vTone < 0.67
@@ -259,16 +274,17 @@ const DATUM_FRAGMENT_SHADER = /* glsl */ `
  *
  * WORLD ONE — THE IMPOSSIBLE WORKSHOP (`accessMorph` 0.0 -> 0.5):
  *   "Ideas are not finished products. They are materials waiting to be shaped."
- *   An architectural precision instrument atelier where raw geometric fragments
- *   are shaped by 6 sculptural capability mechanisms around a calibrated vernier
- *   crucible.
+ *   A 3-tier architectural precision instrument atelier (Background Astrolabe Rotunda,
+ *   Midground Articulated Caliper Armatures & Vernier Crucible, Foreground Optical Reticle)
+ *   where raw fragments physically assemble into 6 bespoke capability mechanisms.
  *
  * WORLD TWO — THE ATLAS OF POSSIBILITY (`accessMorph` 0.5 -> 1.0):
  *   "One capability is a tool. Connected capabilities create possibilities."
- *   The workshop's enclosing architectural frames unlatch and hinge into horizontal
- *   topographic drafting decks, its 6 precision plates glide outward into a terraced
- *   spatial atlas, and its internal lines extend into illuminated 3D routes leading
- *   to recognizable outcome monuments (Document, Decision, Plan, Workflow).
+ *   The Workshop's Astrolabe Rotunda hinges 90° flat into the Great Cartographic Horizon,
+ *   its 6 Articulated Caliper Arms extend into structural suspension trusses across 3
+ *   stepped topographic terraces (01 Basic, 02 Consumer, 03 Business), and its 6 capability
+ *   mechanisms rise into interconnected Architectural Outcome Landmarks joined by luminous
+ *   3D spatial routes.
  */
 export function createCapabilityEngine(
   parent: THREE.Group,
@@ -278,161 +294,173 @@ export function createCapabilityEngine(
   root.position.set(0, 0, 0);
   parent.add(root);
 
-  // ── Shared Precision Materials (BudAI Nordic Ice, Obsidian, Lavender, Emerald) ──
-  const alloyMat = new THREE.MeshStandardMaterial({
-    color: "#223347",
-    metalness: 0.86,
-    roughness: 0.24,
+  // ── Shared Precision Materials (PASS C — Frosted Glass, Machined Titanium, Controlled Emissives) ──
+  const titaniumMat = new THREE.MeshStandardMaterial({
+    color: "#24374c",
+    metalness: 0.88,
+    roughness: 0.2,
   });
-  const slateMat = new THREE.MeshStandardMaterial({
-    color: "#0d1724",
-    metalness: 0.72,
-    roughness: 0.3,
+  const obsidianMat = new THREE.MeshStandardMaterial({
+    color: "#0b1420",
+    metalness: 0.76,
+    roughness: 0.28,
   });
-  const translucentGlassMat = new THREE.MeshStandardMaterial({
-    color: "#11283d",
-    emissive: "#0a2034",
-    emissiveIntensity: 0.4,
-    metalness: 0.3,
-    roughness: 0.14,
+  const frostedGlassMat = new THREE.MeshPhysicalMaterial({
+    color: "#15344f",
+    emissive: "#0c253b",
+    emissiveIntensity: 0.42,
+    metalness: 0.15,
+    roughness: 0.12,
+    transmission: 0.42,
     transparent: true,
-    opacity: 0.68,
+    opacity: 0.74,
+  });
+  const prismGlassMat = new THREE.MeshPhysicalMaterial({
+    color: "#1e3a5c",
+    emissive: "#233c6e",
+    emissiveIntensity: 0.58,
+    metalness: 0.22,
+    roughness: 0.08,
+    clearcoat: 1.0,
+    transparent: true,
+    opacity: 0.84,
   });
   const cyanEmissiveMat = new THREE.MeshBasicMaterial({
     color: "#7adbf0",
     transparent: true,
-    opacity: 0.88,
+    opacity: 0.9,
   });
   const lavenderEmissiveMat = new THREE.MeshBasicMaterial({
     color: "#a8b4f8",
     transparent: true,
-    opacity: 0.86,
+    opacity: 0.88,
   });
   const emeraldEmissiveMat = new THREE.MeshBasicMaterial({
     color: "#6ee7b7",
     transparent: true,
-    opacity: 0.88,
+    opacity: 0.9,
   });
+  const warmVernierMat = new THREE.MeshBasicMaterial({
+    color: "#dff6ff",
+    transparent: true,
+    opacity: 0.92,
+  });
+
   const cyanLineMat = new THREE.LineBasicMaterial({
     color: "#7adbf0",
     transparent: true,
-    opacity: 0.48,
+    opacity: 0.52,
     blending: THREE.AdditiveBlending,
     depthWrite: false,
   });
   const lavenderLineMat = new THREE.LineBasicMaterial({
     color: "#a8b4f8",
     transparent: true,
-    opacity: 0.44,
+    opacity: 0.48,
     blending: THREE.AdditiveBlending,
     depthWrite: false,
   });
   const emeraldLineMat = new THREE.LineBasicMaterial({
     color: "#6ee7b7",
     transparent: true,
-    opacity: 0.48,
+    opacity: 0.54,
     blending: THREE.AdditiveBlending,
     depthWrite: false,
   });
-  const subtleGridLineMat = new THREE.LineBasicMaterial({
-    color: "#5c97b4",
+  const bgArchitecturalLineMat = new THREE.LineBasicMaterial({
+    color: "#578fae",
     transparent: true,
-    opacity: 0.24,
+    opacity: 0.22,
     blending: THREE.AdditiveBlending,
     depthWrite: false,
   });
 
-  // ── 1. SHARED ARCHITECTURAL FRAMES: Workshop Portals -> Atlas Topographic Decks ──
-  // In World One, these 4 chamfered architectural frames stand vertically as a mysterious
-  // precision aperture corridor. In World Two, they hinge 90° flat into terraced horizontal
-  // drafting tables of The Atlas of Possibility!
-  const portalFrames: THREE.Group[] = [];
-  const frameConfigs = [
-    { w: 6.1, h: 4.1, z: 0.9, atlasY: 0.35, atlasZ: 0.85, atlasScaleX: 1.48 },
-    { w: 5.3, h: 3.6, z: -0.25, atlasY: 0.72, atlasZ: -0.05, atlasScaleX: 1.4 },
-    { w: 4.5, h: 3.1, z: -1.4, atlasY: 1.08, atlasZ: -0.95, atlasScaleX: 1.32 },
-    { w: 3.7, h: 2.6, z: -2.55, atlasY: 1.44, atlasZ: -1.85, atlasScaleX: 1.24 },
+  // ── TIER 1 (BACKGROUND): ARCHITECTURAL ASTROLABE ROTUNDA -> GREAT CARTOGRAPHIC HORIZON ──
+  // In World One, 3 concentric architectural meridian domes & 8 radial stadia ribs frame the
+  // deep background of The Impossible Workshop. In World Two, they hinge 90° flat into the
+  // expansive circular Cartographic Horizon of The Atlas of Possibility!
+  const rotundaRings: THREE.Group[] = [];
+  const rotundaConfigs = [
+    { radius: 3.15, z: -1.45, atlasY: 0.48, atlasScale: 1.48 },
+    { radius: 2.55, z: -2.05, atlasY: 0.72, atlasScale: 1.38 },
+    { radius: 1.95, z: -2.65, atlasY: 0.96, atlasScale: 1.28 },
   ];
 
-  frameConfigs.forEach((cfg, idx) => {
-    const fGroup = new THREE.Group();
-    fGroup.position.set(0, 0.95, cfg.z);
-    root.add(fGroup);
+  rotundaConfigs.forEach((cfg, rIdx) => {
+    const rGroup = new THREE.Group();
+    rGroup.position.set(0, 1.05, cfg.z);
+    root.add(rGroup);
 
-    const barThick = 0.065;
-    const barDepth = 0.09;
-    const topBeam = new THREE.Mesh(
-      new RoundedBoxGeometry(cfg.w, barThick, barDepth, 2, 0.02),
-      idx % 2 === 0 ? alloyMat : slateMat
+    // Chamfered architectural ring segments
+    const ringMesh = new THREE.Mesh(
+      new THREE.TorusGeometry(cfg.radius, 0.022, 8, 96),
+      rIdx % 2 === 0 ? titaniumMat : obsidianMat
     );
-    topBeam.position.y = cfg.h / 2;
-    const botBeam = new THREE.Mesh(
-      new RoundedBoxGeometry(cfg.w, barThick, barDepth, 2, 0.02),
-      idx % 2 === 0 ? alloyMat : slateMat
-    );
-    botBeam.position.y = -cfg.h / 2;
-    const leftPillar = new THREE.Mesh(
-      new RoundedBoxGeometry(barThick, cfg.h, barDepth, 2, 0.02),
-      alloyMat
-    );
-    leftPillar.position.x = -cfg.w / 2;
-    const rightPillar = new THREE.Mesh(
-      new RoundedBoxGeometry(barThick, cfg.h, barDepth, 2, 0.02),
-      alloyMat
-    );
-    rightPillar.position.x = cfg.w / 2;
-    fGroup.add(topBeam, botBeam, leftPillar, rightPillar);
+    rGroup.add(ringMesh);
 
-    // Precision technical hairline perimeter + corner vernier crosshairs
-    const rectPts = [
-      new THREE.Vector3(-cfg.w / 2 + 0.08, -cfg.h / 2 + 0.08, 0.05),
-      new THREE.Vector3(cfg.w / 2 - 0.08, -cfg.h / 2 + 0.08, 0.05),
-      new THREE.Vector3(cfg.w / 2 - 0.08, cfg.h / 2 - 0.08, 0.05),
-      new THREE.Vector3(-cfg.w / 2 + 0.08, cfg.h / 2 - 0.08, 0.05),
-    ];
-    fGroup.add(
-      new THREE.LineLoop(
-        new THREE.BufferGeometry().setFromPoints(rectPts),
-        idx % 2 === 0 ? cyanLineMat : lavenderLineMat
+    // Outer technical hairline & 96 graduation stadia marks
+    const gradPts: THREE.Vector3[] = [];
+    const count = 96;
+    for (let i = 0; i < count; i++) {
+      const a = (i / count) * Math.PI * 2;
+      const rIn = cfg.radius - (i % 8 === 0 ? 0.14 : 0.05);
+      const rOut = cfg.radius + (i % 8 === 0 ? 0.08 : 0.025);
+      gradPts.push(
+        new THREE.Vector3(Math.cos(a) * rIn, Math.sin(a) * rIn, 0),
+        new THREE.Vector3(Math.cos(a) * rOut, Math.sin(a) * rOut, 0)
+      );
+    }
+    // 8 radial meridian spokes connecting the rotunda
+    for (let s = 0; s < 8; s++) {
+      const a = (s / 8) * Math.PI * 2;
+      gradPts.push(
+        new THREE.Vector3(Math.cos(a) * (cfg.radius * 0.42), Math.sin(a) * (cfg.radius * 0.42), 0),
+        new THREE.Vector3(Math.cos(a) * cfg.radius, Math.sin(a) * cfg.radius, 0)
+      );
+    }
+    rGroup.add(
+      new THREE.LineSegments(
+        new THREE.BufferGeometry().setFromPoints(gradPts),
+        rIdx === 0 ? cyanLineMat : bgArchitecturalLineMat
       )
     );
-
-    // Internal coordinate drafting rulings (subtle in Workshop, topographic grid in Atlas)
-    const gridPts: THREE.Vector3[] = [];
-    for (let gx = -2; gx <= 2; gx++) {
-      const x = (gx / 3) * (cfg.w * 0.46);
-      gridPts.push(new THREE.Vector3(x, -cfg.h * 0.46, 0), new THREE.Vector3(x, cfg.h * 0.46, 0));
-    }
-    for (let gy = -1; gy <= 1; gy++) {
-      const y = (gy / 2) * (cfg.h * 0.42);
-      gridPts.push(new THREE.Vector3(-cfg.w * 0.46, y, 0), new THREE.Vector3(cfg.w * 0.46, y, 0));
-    }
-    fGroup.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(gridPts), subtleGridLineMat));
-
-    portalFrames.push(fGroup);
+    rotundaRings.push(rGroup);
   });
 
-  // ── 2. CENTRAL VERNIER CRUCIBLE -> ATLAS COMPASS ROSE & MERIDIAN ARC ──
-  // In World One, this precision multi-ring vernier gimbal surrounds the active capability
-  // sculpture. In World Two, the outer ring rises into a sweeping Cantilevered Meridian Arc
-  // while the inner rings flatten into the Topographic Compass Rose of the Atlas!
+  // ── TIER 2 (MIDGROUND): CENTRAL VERNIER CRUCIBLE -> ATLAS COMPASS ROSE & MERIDIAN ARC ──
   const crucibleGroup = new THREE.Group();
-  crucibleGroup.position.set(0, 0.92, 0.25);
+  crucibleGroup.position.set(0, 1.05, 0.25);
   root.add(crucibleGroup);
 
+  // Central Open Split-Stadia Axis (leaves the central focal aperture unobstructed)
+  const spinePts = [
+    new THREE.Vector3(-0.09, -1.75, -0.55),
+    new THREE.Vector3(-0.09, -0.35, -0.55),
+    new THREE.Vector3(0.09, -1.75, -0.55),
+    new THREE.Vector3(0.09, -0.35, -0.55),
+    new THREE.Vector3(-0.09, 0.65, -0.55),
+    new THREE.Vector3(-0.09, 1.65, -0.55),
+    new THREE.Vector3(0.09, 0.65, -0.55),
+    new THREE.Vector3(0.09, 1.65, -0.55),
+  ];
+  const centralSpine = new THREE.LineSegments(
+    new THREE.BufferGeometry().setFromPoints(spinePts),
+    bgArchitecturalLineMat
+  );
+  crucibleGroup.add(centralSpine);
+
   const vernierRings: THREE.Group[] = [];
-  [1.42, 1.82, 2.28].forEach((radius, rIdx) => {
+  [1.72, 2.08, 2.46].forEach((radius, rIdx) => {
     const rGroup = new THREE.Group();
     crucibleGroup.add(rGroup);
 
     const torusMat = rIdx === 0 ? cyanEmissiveMat : rIdx === 1 ? lavenderEmissiveMat : emeraldEmissiveMat;
     const torus = new THREE.Mesh(
-      new THREE.TorusGeometry(radius, rIdx === 2 ? 0.016 : 0.011, 10, 96),
+      new THREE.TorusGeometry(radius, rIdx === 2 ? 0.01 : 0.007, 10, 96),
       torusMat
     );
     rGroup.add(torus);
 
-    // 72 precision vernier degree ticks around each ring
     const tickPts: THREE.Vector3[] = [];
     const tickCount = 72;
     for (let t = 0; t < tickCount; t++) {
@@ -453,45 +481,65 @@ export function createCapabilityEngine(
     vernierRings.push(rGroup);
   });
 
-  // Architectural plumb-line & caliper crosshairs through the crucible center
   const axisPts = [
-    new THREE.Vector3(-3.2, 0, 0),
-    new THREE.Vector3(3.2, 0, 0),
-    new THREE.Vector3(0, -2.1, 0),
-    new THREE.Vector3(0, 2.1, 0),
-    new THREE.Vector3(0, 0, -2.6),
-    new THREE.Vector3(0, 0, 2.0),
+    new THREE.Vector3(-3.1, 0, 0),
+    new THREE.Vector3(3.1, 0, 0),
+    new THREE.Vector3(0, -2.0, 0),
+    new THREE.Vector3(0, 2.0, 0),
   ];
-  const crucibleAxes = new THREE.LineSegments(
-    new THREE.BufferGeometry().setFromPoints(axisPts),
-    subtleGridLineMat
+  crucibleGroup.add(
+    new THREE.LineSegments(
+      new THREE.BufferGeometry().setFromPoints(axisPts),
+      bgArchitecturalLineMat
+    )
   );
-  crucibleGroup.add(crucibleAxes);
 
-  // ── 3. SIX SCULPTURAL CAPABILITY INSTRUMENTS (Workshop -> Atlas Regions) ──
-  // Each capability is built on a precision-milled architectural base plate with its own
-  // unmistakable 3D mechanism. In World One, the active capability moves into the center
-  // of the Workshop Crucible while the other 5 orbit in calibrated formation.
-  // In World Two, the 6 plates unfold outward to form the 6 regions & outcome monuments
-  // across the 3 terraced horizons of The Atlas of Possibility!
+  // ── TIER 3 (FOREGROUND): OPTICAL FRAMING CALIPERS ──
+  const fgCalipers = new THREE.Group();
+  fgCalipers.position.set(0, 1.05, 1.45);
+  root.add(fgCalipers);
+  [-2.55, 2.55].forEach(bx => {
+    const sign = Math.sign(bx);
+    const bracketPts = [
+      new THREE.Vector3(bx - sign * 0.28, 1.25, 0),
+      new THREE.Vector3(bx, 1.25, 0),
+      new THREE.Vector3(bx, -1.05, 0),
+      new THREE.Vector3(bx - sign * 0.28, -1.05, 0),
+    ];
+    fgCalipers.add(
+      new THREE.Line(
+        new THREE.BufferGeometry().setFromPoints(bracketPts),
+        cyanLineMat
+      )
+    );
+  });
+
+  // ── 4. SIX ARTICULATED CAPABILITY ARMATURES & SCULPTURAL MECHANISMS ──
+  // Instead of floating on chunky gray rectangular slabs, each capability is mounted inside a
+  // circular Precision Gimbal Cradle (`gimbalCradle`) connected by an articulated truss arm
+  // (`tetherLine`) to the central spine!
 
   interface InstrumentPod {
     group: THREE.Group;
-    plateMat: THREE.MeshStandardMaterial;
-    rimMat: THREE.MeshBasicMaterial;
+    tetherGeo: THREE.BufferGeometry;
+    cradleRingMat: THREE.MeshBasicMaterial;
     sculpture: THREE.Group;
-    // Specific sub-elements for procedural animation
-    writeFolios?: THREE.Mesh[];
+    writeBlocks?: Array<{ mesh: THREE.Mesh; rawPos: THREE.Vector3; rawRot: THREE.Euler; targetPos: THREE.Vector3 }>;
+    writeScanner?: THREE.Mesh;
     automateGates?: THREE.Group[];
+    automateRods?: THREE.Mesh[];
     automatePulse?: THREE.Mesh;
     decideBranches?: THREE.Line[];
+    decideWeights?: THREE.Mesh[];
     decidePrism?: THREE.Mesh;
     decideBeam?: THREE.Mesh;
     bilingualHelixA?: THREE.Mesh;
     bilingualHelixB?: THREE.Mesh;
     bilingualRungs?: THREE.LineSegments;
-    memoryStrata?: Array<{ mesh: THREE.Mesh; durable: boolean }>;
+    bilingualFork?: THREE.Mesh;
+    memoryStrata?: Array<{ mesh: THREE.Mesh; clampMesh: THREE.Mesh; durable: boolean }>;
     visionBlades?: THREE.Mesh[];
+    visionFrustum?: THREE.LineSegments;
     voiceWaveRing?: THREE.LineLoop;
     voiceWaveGeo?: THREE.BufferGeometry;
     atlasMonument: THREE.Group;
@@ -500,290 +548,379 @@ export function createCapabilityEngine(
   const pods: InstrumentPod[] = [];
 
   // Target positions in World Two (The Atlas of Possibility):
-  // Arranged across 3 stepped elevation terraces:
-  // West Terrace (01 Basic - Available Now): Write (-3.25) & Vision/Voice (-1.85)
-  // Central Terrace (02 Consumer - Coming Soon): Bilingual (-0.58) & Memory (+0.68)
-  // East Terrace (03 Business - Coming Soon): Automate (+1.95) & Decide (+3.28)
+  // Stepped across 3 distinct topographic regions:
+  // West Terrace (01 Basic - Available Now): Write (-3.2) & Vision/Voice (-1.85)
+  // Central Terrace (02 Consumer - Coming Soon): Bilingual (-0.55) & Memory (+0.68)
+  // East Terrace (03 Business - Coming Soon): Automate (+1.95) & Decide (+3.25)
   const atlasPlacements = [
-    { x: -3.25, y: 0.82, z: 0.55 },  // 01 Write -> Document Monument (Basic)
-    { x: 1.95, y: 1.28, z: -0.25 },  // 02 Automate -> Workflow Conduit (Business)
-    { x: 3.28, y: 1.38, z: 0.45 },   // 03 Decide -> Decision Spire (Business)
-    { x: -0.58, y: 1.04, z: 0.38 },  // 04 Swedish + English -> Bilingual Bridge (Consumer)
-    { x: 0.68, y: 1.1, z: -0.32 },   // 05 Memory -> Curated Context Vault (Consumer)
-    { x: -1.85, y: 0.88, z: -0.22 }, // 06 Vision & Voice -> Multimodal Intake (Basic)
+    { x: -3.2, y: 0.84, z: 0.52 },   // 01 Write -> Editorial Folio Tower (Basic)
+    { x: 1.95, y: 1.28, z: -0.22 },  // 02 Automate -> Workflow Aqueduct (Business)
+    { x: 3.25, y: 1.4, z: 0.45 },    // 03 Decide -> Executive Decision Citadel (Business)
+    { x: -0.55, y: 1.06, z: 0.36 },  // 04 Swedish + English -> Twin Suspension Span (Consumer)
+    { x: 0.68, y: 1.12, z: -0.28 },  // 05 Memory -> Curated Context Archive (Consumer)
+    { x: -1.85, y: 0.9, z: -0.2 },   // 06 Vision & Voice -> Multimodal Signal Observatory (Basic)
   ];
 
   CAPABILITY_CHAMBER_MODULES.forEach((mod, idx) => {
     const group = new THREE.Group();
     root.add(group);
 
-    // Shared Precision Architectural Base Plate (reused in both Workshop and Atlas!)
-    const plateMat = new THREE.MeshStandardMaterial({
-      color: "#142436",
-      emissive: mod.accent,
-      emissiveIntensity: 0.28,
-      metalness: 0.82,
-      roughness: 0.22,
-    });
-    const basePlate = new THREE.Mesh(
-      new RoundedBoxGeometry(1.22, 0.07, 0.92, 2, 0.025),
-      plateMat
+    // Articulated Radial Caliper Tether connecting this instrument to the Central Crucible Spine
+    const tetherGeo = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(0, 1.05, 0.25),
+      new THREE.Vector3(0, 1.05, 0.25),
+    ]);
+    const tetherLine = new THREE.Line(
+      tetherGeo,
+      idx % 2 === 0 ? cyanLineMat : lavenderLineMat
     );
-    group.add(basePlate);
+    root.add(tetherLine);
 
-    const rimMat = new THREE.MeshBasicMaterial({
+    // Precision Circular Optical Stage & Gimbal Cradle (replaces the flat rectangular slab!)
+    const cradleOuter = new THREE.Mesh(
+      new THREE.TorusGeometry(0.56, 0.018, 10, 48),
+      titaniumMat
+    );
+    cradleOuter.rotation.x = Math.PI / 2;
+    group.add(cradleOuter);
+
+    const cradleRingMat = new THREE.MeshBasicMaterial({
       color: mod.accent,
       transparent: true,
-      opacity: 0.75,
+      opacity: 0.82,
     });
-    const rimFrame = new THREE.Mesh(
-      new THREE.BoxGeometry(1.25, 0.015, 0.95),
-      rimMat
+    const cradleInner = new THREE.Mesh(
+      new THREE.TorusGeometry(0.46, 0.01, 8, 48),
+      cradleRingMat
     );
-    rimFrame.position.y = 0.038;
-    group.add(rimFrame);
+    cradleInner.rotation.x = Math.PI / 2;
+    group.add(cradleInner);
+
+    // Translucent optical lens disc inside the gimbal cradle
+    const lensDisc = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.45, 0.45, 0.018, 36),
+      frostedGlassMat
+    );
+    group.add(lensDisc);
+
+    // Reticle crosshairs etched into the optical lens disc
+    const reticlePts = [
+      new THREE.Vector3(-0.44, 0.012, 0),
+      new THREE.Vector3(0.44, 0.012, 0),
+      new THREE.Vector3(0, 0.012, -0.44),
+      new THREE.Vector3(0, 0.012, 0.44),
+    ];
+    group.add(
+      new THREE.LineSegments(
+        new THREE.BufferGeometry().setFromPoints(reticlePts),
+        cyanLineMat
+      )
+    );
 
     const sculpture = new THREE.Group();
-    sculpture.position.y = 0.42;
+    sculpture.position.y = 0.38;
     group.add(sculpture);
 
-    // Rising Architectural Outcome Monument for World Two (The Atlas of Possibility)
+    // Rising Architectural Outcome Landmark for World Two (The Atlas of Possibility)
     const atlasMonument = new THREE.Group();
-    atlasMonument.position.y = 0.08;
+    atlasMonument.position.y = 0.04;
     group.add(atlasMonument);
 
     const pod: InstrumentPod = {
       group,
-      plateMat,
-      rimMat,
+      tetherGeo,
+      cradleRingMat,
       sculpture,
       atlasMonument,
     };
 
     if (idx === 0) {
-      // ── 01 WRITE: Fragments aligning into a layered architectural document folio ──
-      const folios: THREE.Mesh[] = [];
-      for (let f = 0; f < 5; f++) {
-        const sheet = new THREE.Mesh(
-          new RoundedBoxGeometry(0.76, 0.022, 0.56, 1, 0.008),
-          translucentGlassMat
-        );
-        // Etched cyan paragraph lines on each translucent sheet
-        const linePts = [
-          new THREE.Vector3(-0.28, 0.015, -0.16),
-          new THREE.Vector3(0.26, 0.015, -0.16),
-          new THREE.Vector3(-0.28, 0.015, -0.05),
-          new THREE.Vector3(0.22, 0.015, -0.05),
-          new THREE.Vector3(-0.28, 0.015, 0.06),
-          new THREE.Vector3(0.28, 0.015, 0.06),
-          new THREE.Vector3(-0.28, 0.015, 0.17),
-          new THREE.Vector3(0.12, 0.015, 0.17),
-        ];
-        sheet.add(
-          new THREE.LineSegments(
-            new THREE.BufferGeometry().setFromPoints(linePts),
-            cyanLineMat
-          )
-        );
-        sculpture.add(sheet);
-        folios.push(sheet);
-      }
-      // Vertical precision alignment rails
-      [-0.42, 0.42].forEach(rx => {
-        const rail = new THREE.Mesh(
-          new THREE.CylinderGeometry(0.012, 0.012, 0.78, 8),
-          alloyMat
-        );
-        rail.position.set(rx, 0, 0);
-        sculpture.add(rail);
-      });
-      pod.writeFolios = folios;
+      // ── 01 WRITING: 15 Raw Typographic Clauses & Translucent Folios Assembling ──
+      const blocks: Array<{
+        mesh: THREE.Mesh;
+        rawPos: THREE.Vector3;
+        rawRot: THREE.Euler;
+        targetPos: THREE.Vector3;
+      }> = [];
 
-      // Atlas Outcome: Cantilevered Document Spire
-      const docSpire = new THREE.LineSegments(
-        new THREE.EdgesGeometry(new THREE.BoxGeometry(0.62, 1.05, 0.44)),
-        cyanLineMat
-      );
-      docSpire.position.y = 0.55;
-      atlasMonument.add(docSpire);
+      for (let row = 0; row < 5; row++) {
+        // Backing translucent folio plane
+        const folioPlane = new THREE.Mesh(
+          new RoundedBoxGeometry(0.72, 0.018, 0.48, 1, 0.006),
+          frostedGlassMat
+        );
+        const targetY = (row - 2) * 0.1;
+        sculpture.add(folioPlane);
+        blocks.push({
+          mesh: folioPlane,
+          rawPos: new THREE.Vector3(
+            (row % 2 === 0 ? -1 : 1) * (0.42 + row * 0.08),
+            targetY + (row - 2) * 0.14,
+            (row % 3 - 1) * 0.26
+          ),
+          rawRot: new THREE.Euler((row - 2) * 0.35, (row % 2 ? 0.5 : -0.5), (row - 2) * 0.28),
+          targetPos: new THREE.Vector3(0, targetY, 0),
+        });
+
+        // 2 physical typographic clause bars per folio that snap into column alignment
+        for (let col = 0; col < 2; col++) {
+          const w = col === 0 ? 0.32 : 0.24;
+          const clause = new THREE.Mesh(
+            new THREE.BoxGeometry(w, 0.016, 0.045),
+            row === 2 ? emeraldEmissiveMat : cyanEmissiveMat
+          );
+          sculpture.add(clause);
+          blocks.push({
+            mesh: clause,
+            rawPos: new THREE.Vector3(
+              (col === 0 ? -0.55 : 0.55) + (row - 2) * 0.12,
+              targetY + 0.08 * (col === 0 ? 1 : -1),
+              0.28 * (col === 0 ? 1 : -1)
+            ),
+            rawRot: new THREE.Euler(0.4, col ? -0.6 : 0.6, 0.3),
+            targetPos: new THREE.Vector3(col === 0 ? -0.14 : 0.18, targetY + 0.016, (row % 2 - 0.5) * 0.14),
+          });
+        }
+      }
+
+      // Precision vertical typesetting guide rods & active scanning rule
+      [-0.4, 0.4].forEach(rx => {
+        const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.72, 8), titaniumMat);
+        rod.position.set(rx, 0, 0);
+        sculpture.add(rod);
+      });
+      const scanner = new THREE.Mesh(new THREE.BoxGeometry(0.82, 0.012, 0.54), warmVernierMat);
+      sculpture.add(scanner);
+
+      pod.writeBlocks = blocks;
+      pod.writeScanner = scanner;
+
+      // Atlas Outcome Landmark 01: Cantilevered Editorial Folio Tower
+      for (let t = 0; t < 4; t++) {
+        const tier = new THREE.LineSegments(
+          new THREE.EdgesGeometry(new THREE.BoxGeometry(0.66 - t * 0.08, 0.22, 0.46 - t * 0.05)),
+          cyanLineMat
+        );
+        tier.position.y = 0.24 + t * 0.24;
+        atlasMonument.add(tier);
+      }
     } else if (idx === 1) {
-      // ── 02 AUTOMATE: Separate components interlocking into a 4-gate escapement mechanism ──
+      // ── 02 AUTOMATION: Disconnected Components Interlocking into a Horological Workflow ──
       const gates: THREE.Group[] = [];
+      const rods: THREE.Mesh[] = [];
       for (let g = 0; g < 4; g++) {
         const gateGrp = new THREE.Group();
         const ring = new THREE.Mesh(
-          new THREE.TorusGeometry(0.26, 0.018, 8, 6),
-          g % 2 === 0 ? alloyMat : translucentGlassMat
+          new THREE.TorusGeometry(0.25, 0.02, 8, 6),
+          g % 2 === 0 ? titaniumMat : prismGlassMat
         );
         ring.rotation.y = Math.PI / 2;
         gateGrp.add(ring);
 
-        const edge = new THREE.LineLoop(
-          new THREE.BufferGeometry().setFromPoints(
-            [0, 1, 2, 3, 4, 5].map(k => {
-              const a = (k / 6) * Math.PI * 2;
-              return new THREE.Vector3(0, Math.cos(a) * 0.28, Math.sin(a) * 0.28);
-            })
-          ),
-          cyanLineMat
+        const innerGear = new THREE.Mesh(
+          new THREE.TorusGeometry(0.14, 0.01, 6, 12),
+          g === 3 ? emeraldEmissiveMat : cyanEmissiveMat
         );
-        gateGrp.add(edge);
+        innerGear.rotation.y = Math.PI / 2;
+        gateGrp.add(innerGear);
+
         sculpture.add(gateGrp);
         gates.push(gateGrp);
-      }
-      const shaft = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.014, 0.014, 1.05, 8),
-        cyanEmissiveMat
-      );
-      shaft.rotation.z = Math.PI / 2;
-      sculpture.add(shaft);
 
-      const pulse = new THREE.Mesh(
-        new THREE.SphereGeometry(0.055, 12, 12),
-        emeraldEmissiveMat
-      );
+        if (g < 3) {
+          const rod = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.009, 0.009, 0.28, 6),
+            cyanEmissiveMat
+          );
+          rod.rotation.z = Math.PI / 2;
+          rod.position.set((g - 1) * 0.26, (g % 2 === 0 ? 1 : -1) * 0.14, 0);
+          sculpture.add(rod);
+          rods.push(rod);
+        }
+      }
+      const pulse = new THREE.Mesh(new THREE.SphereGeometry(0.052, 12, 12), emeraldEmissiveMat);
       sculpture.add(pulse);
+
       pod.automateGates = gates;
+      pod.automateRods = rods;
       pod.automatePulse = pulse;
 
-      // Atlas Outcome: Synchronized Workflow Arches
-      for (let a = 0; a < 3; a++) {
+      // Atlas Outcome Landmark 02: Synchronized Workflow Aqueduct Arches
+      for (let a = 0; a < 4; a++) {
         const arch = new THREE.Mesh(
-          new THREE.TorusGeometry(0.32 + a * 0.06, 0.01, 8, 32, Math.PI),
+          new THREE.TorusGeometry(0.3 + a * 0.05, 0.011, 8, 36, Math.PI),
           emeraldEmissiveMat
         );
-        arch.position.set((a - 1) * 0.26, 0.35, 0);
+        arch.position.set((a - 1.5) * 0.22, 0.36, 0);
         atlasMonument.add(arch);
       }
     } else if (idx === 2) {
-      // ── 03 DECIDE: Branching structures converging into a crystalline decision prism ──
+      // ── 03 DECISION-MAKING: Branching Paths Converging into One Resolved Outcome Vector ──
       const branches: THREE.Line[] = [];
+      const weights: THREE.Mesh[] = [];
       for (let b = 0; b < 6; b++) {
         const angle = (b / 6) * Math.PI * 2;
-        const start = new THREE.Vector3(-0.48, Math.cos(angle) * 0.34, Math.sin(angle) * 0.34);
-        const mid = new THREE.Vector3(-0.18, Math.cos(angle) * 0.16, Math.sin(angle) * 0.16);
-        const end = new THREE.Vector3(0.02, 0, 0);
+        const start = new THREE.Vector3(-0.52, Math.cos(angle) * 0.36, Math.sin(angle) * 0.36);
+        const mid = new THREE.Vector3(-0.2, Math.cos(angle) * 0.18, Math.sin(angle) * 0.18);
+        const end = new THREE.Vector3(0.0, 0, 0);
         const curve = new THREE.CatmullRomCurve3([start, mid, end]);
         const line = new THREE.Line(
-          new THREE.BufferGeometry().setFromPoints(curve.getPoints(20)),
-          b % 2 === 0 ? lavenderLineMat : cyanLineMat
+          new THREE.BufferGeometry().setFromPoints(curve.getPoints(24)),
+          b === 0 ? emeraldLineMat : b % 2 === 0 ? lavenderLineMat : cyanLineMat
         );
         sculpture.add(line);
         branches.push(line);
+
+        const weightNode = new THREE.Mesh(
+          new THREE.OctahedronGeometry(0.04, 0),
+          b === 0 ? emeraldEmissiveMat : lavenderEmissiveMat
+        );
+        weightNode.position.copy(start);
+        sculpture.add(weightNode);
+        weights.push(weightNode);
       }
-      const prismGeo = new THREE.OctahedronGeometry(0.22, 0);
-      const prism = new THREE.Mesh(prismGeo, translucentGlassMat);
-      prism.add(new THREE.LineSegments(new THREE.EdgesGeometry(prismGeo), lavenderLineMat));
+      const prismGeo = new THREE.OctahedronGeometry(0.24, 0);
+      const prism = new THREE.Mesh(prismGeo, prismGlassMat);
+      prism.add(new THREE.LineSegments(new THREE.EdgesGeometry(prismGeo), warmVernierMat));
       sculpture.add(prism);
 
-      // Single resolved output vector
+      // Resolved forward outcome vector + target ring
       const beam = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.018, 0.006, 0.56, 8),
+        new THREE.CylinderGeometry(0.022, 0.006, 0.62, 8),
         emeraldEmissiveMat
       );
       beam.rotation.z = -Math.PI / 2;
-      beam.position.x = 0.3;
+      beam.position.x = 0.32;
       sculpture.add(beam);
 
       pod.decideBranches = branches;
+      pod.decideWeights = weights;
       pod.decidePrism = prism;
       pod.decideBeam = beam;
 
-      // Atlas Outcome: Elevated Decision Spire & Topographic Beacon
+      // Atlas Outcome Landmark 03: Executive Decision Citadel Spire
       const spire = new THREE.LineSegments(
-        new THREE.EdgesGeometry(new THREE.ConeGeometry(0.34, 0.95, 4)),
+        new THREE.EdgesGeometry(new THREE.ConeGeometry(0.36, 1.15, 4)),
         lavenderLineMat
       );
-      spire.position.y = 0.56;
+      spire.position.y = 0.64;
       atlasMonument.add(spire);
     } else if (idx === 3) {
-      // ── 04 SWEDISH & ENGLISH: Two independent streams aligning into a shared structure ──
+      // ── 04 SWEDISH & ENGLISH: Two Independent Streams Resonating into One Shared Structure ──
+      // Uniquely BudAI visual signature: Nordic Cyan (SV) & Evening Lavender (EN) streams
+      // entering through a central harmonic tuning bridge and aligning into phase-locked rails!
       const svPts: THREE.Vector3[] = [];
       const enPts: THREE.Vector3[] = [];
       const rungPts: THREE.Vector3[] = [];
-      for (let s = 0; s <= 28; s++) {
-        const u = s / 28;
-        const x = (u - 0.5) * 0.98;
-        // Left side: wide independent oscillation; Right side: aligned parallel structure
-        const spread = lerp(0.26, 0.08, smooth(u));
-        const theta = u * Math.PI * 3.5;
+      for (let s = 0; s <= 32; s++) {
+        const u = s / 32;
+        const x = (u - 0.5) * 1.04;
+        const spread = lerp(0.3, 0.085, smooth(u));
+        const theta = u * Math.PI * 4.0;
         const pSv = new THREE.Vector3(x, Math.sin(theta) * spread, Math.cos(theta) * spread);
         const pEn = new THREE.Vector3(x, -Math.sin(theta) * spread, -Math.cos(theta) * spread);
         svPts.push(pSv);
         enPts.push(pEn);
-        if (s % 4 === 0 && s > 4) {
+        if (s % 3 === 0 && s >= 6) {
           rungPts.push(pSv.clone(), pEn.clone());
         }
       }
       const helixA = new THREE.Mesh(
-        new THREE.TubeGeometry(new THREE.CatmullRomCurve3(svPts), 40, 0.018, 8, false),
+        new THREE.TubeGeometry(new THREE.CatmullRomCurve3(svPts), 48, 0.02, 8, false),
         cyanEmissiveMat
       );
       const helixB = new THREE.Mesh(
-        new THREE.TubeGeometry(new THREE.CatmullRomCurve3(enPts), 40, 0.018, 8, false),
+        new THREE.TubeGeometry(new THREE.CatmullRomCurve3(enPts), 48, 0.02, 8, false),
         lavenderEmissiveMat
       );
       const rungs = new THREE.LineSegments(
         new THREE.BufferGeometry().setFromPoints(rungPts),
         emeraldLineMat
       );
-      sculpture.add(helixA, helixB, rungs);
+      // Central Harmonic Tuning Ring where the two language streams lock phase
+      const tuningFork = new THREE.Mesh(
+        new THREE.TorusGeometry(0.22, 0.014, 8, 36),
+        warmVernierMat
+      );
+      tuningFork.rotation.y = Math.PI / 2;
+      sculpture.add(helixA, helixB, rungs, tuningFork);
+
       pod.bilingualHelixA = helixA;
       pod.bilingualHelixB = helixB;
       pod.bilingualRungs = rungs;
+      pod.bilingualFork = tuningFork;
 
-      // Atlas Outcome: Twin Parallel Suspension Span
-      const span = new THREE.LineSegments(
-        new THREE.EdgesGeometry(new THREE.BoxGeometry(0.88, 0.42, 0.32)),
-        cyanLineMat
-      );
-      span.position.y = 0.34;
-      atlasMonument.add(span);
+      // Atlas Outcome Landmark 04: Twin-Arch Bilingual Suspension Span
+      [-0.12, 0.12].forEach((zOff, sIdx) => {
+        const arch = new THREE.Mesh(
+          new THREE.TorusGeometry(0.42, 0.012, 8, 40, Math.PI),
+          sIdx === 0 ? cyanEmissiveMat : lavenderEmissiveMat
+        );
+        arch.position.set(0, 0.28, zOff);
+        atlasMonument.add(arch);
+      });
     } else if (idx === 4) {
-      // ── 05 MEMORY: Transparent layered strata where user-selected context is locked in ──
-      const strata: Array<{ mesh: THREE.Mesh; durable: boolean }> = [];
+      // ── 05 MEMORY: Transparent Context Strata with Explicit User-Controlled Clamps ──
+      const strata: Array<{ mesh: THREE.Mesh; clampMesh: THREE.Mesh; durable: boolean }> = [];
       for (let m = 0; m < 5; m++) {
         const durable = m === 0 || m === 2 || m === 4;
         const cassette = new THREE.Mesh(
-          new RoundedBoxGeometry(0.68, 0.045, 0.48, 2, 0.012),
-          durable ? translucentGlassMat : slateMat
+          new RoundedBoxGeometry(0.68, 0.042, 0.46, 2, 0.01),
+          durable ? frostedGlassMat : obsidianMat
         );
         cassette.add(
           new THREE.LineSegments(
-            new THREE.EdgesGeometry(new THREE.BoxGeometry(0.69, 0.048, 0.49)),
-            durable ? emeraldLineMat : subtleGridLineMat
+            new THREE.EdgesGeometry(new THREE.BoxGeometry(0.69, 0.045, 0.47)),
+            durable ? emeraldLineMat : bgArchitecturalLineMat
           )
         );
+        // Mechanical retention caliper clamp on user-selected layers
+        const clampMesh = new THREE.Mesh(
+          new THREE.BoxGeometry(0.08, 0.06, 0.52),
+          durable ? emeraldEmissiveMat : titaniumMat
+        );
+        clampMesh.position.x = -0.34;
+        cassette.add(clampMesh);
+
         sculpture.add(cassette);
-        strata.push({ mesh: cassette, durable });
+        strata.push({ mesh: cassette, clampMesh, durable });
       }
       pod.memoryStrata = strata;
 
-      // Atlas Outcome: Stepped Crystalline Context Vault
+      // Atlas Outcome Landmark 05: Stepped Crystalline Context Archive
       const vault = new THREE.LineSegments(
-        new THREE.EdgesGeometry(new THREE.CylinderGeometry(0.26, 0.38, 0.82, 6)),
+        new THREE.EdgesGeometry(new THREE.CylinderGeometry(0.28, 0.4, 0.92, 6)),
         lavenderLineMat
       );
-      vault.position.y = 0.48;
+      vault.position.y = 0.52;
       atlasMonument.add(vault);
     } else {
-      // ── 06 VISION & VOICE: Sculptural 8-blade optical aperture + acoustic wave geometry ──
+      // ── 06 VISION & VOICE: Dual Input Pathways (Optical Frustum + Acoustic Wave) -> 10-Blade Iris ──
       const blades: THREE.Mesh[] = [];
-      for (let b = 0; b < 8; b++) {
+      for (let b = 0; b < 10; b++) {
         const blade = new THREE.Mesh(
-          new RoundedBoxGeometry(0.24, 0.07, 0.022, 1, 0.006),
-          alloyMat
+          new RoundedBoxGeometry(0.24, 0.065, 0.02, 1, 0.006),
+          titaniumMat
         );
         blade.add(
           new THREE.LineSegments(
-            new THREE.EdgesGeometry(new THREE.BoxGeometry(0.245, 0.072, 0.025)),
+            new THREE.EdgesGeometry(new THREE.BoxGeometry(0.245, 0.068, 0.024)),
             cyanLineMat
           )
         );
         sculpture.add(blade);
         blades.push(blade);
       }
-      const waveCount = 48;
+
+      // Left Pathway: Optical Perspective Frustum (Vision Input)
+      const frustumGeo = new THREE.EdgesGeometry(new THREE.ConeGeometry(0.22, 0.42, 4));
+      const frustum = new THREE.LineSegments(frustumGeo, cyanLineMat);
+      frustum.rotation.z = -Math.PI / 2;
+      frustum.position.set(-0.34, 0, 0.12);
+      sculpture.add(frustum);
+
+      // Right Pathway: 3D Harmonic Standing-Wave Ring (Voice Input)
+      const waveCount = 56;
       const wavePositions = new Float32Array(waveCount * 3);
       for (let w = 0; w < waveCount; w++) {
         const a = (w / waveCount) * Math.PI * 2;
@@ -797,31 +934,31 @@ export function createCapabilityEngine(
       sculpture.add(waveRing);
 
       pod.visionBlades = blades;
+      pod.visionFrustum = frustum;
       pod.voiceWaveRing = waveRing;
       pod.voiceWaveGeo = waveGeo;
 
-      // Atlas Outcome: Optical & Acoustic Signal Beacon
+      // Atlas Outcome Landmark 06: Multimodal Signal Observatory
       const beacon = new THREE.LineSegments(
-        new THREE.EdgesGeometry(new THREE.OctahedronGeometry(0.32, 1)),
+        new THREE.EdgesGeometry(new THREE.OctahedronGeometry(0.34, 1)),
         emeraldLineMat
       );
-      beacon.position.y = 0.52;
+      beacon.position.y = 0.54;
       atlasMonument.add(beacon);
     }
 
     pods.push(pod);
   });
 
-  // ── 4. WORLD TWO EXCLUSIVE INFRASTRUCTURE: Terraced Topographic Plates & Interconnected Routes ──
-  // These emerge directly from the unfolded Workshop structure as `accessMorph` goes 0 -> 1.
+  // ── 5. WORLD TWO: STEPPED TOPOGRAPHIC TERRACES, OUTCOME CARTOUCHES & INTERCONNECTED ROUTES ──
   const atlasGroup = new THREE.Group();
   root.add(atlasGroup);
 
-  // 3 Stepped Topographic Horizon Terraces (01 Basic West, 02 Consumer Center, 03 Business East)
+  // 3 Circular/Octagonal Architectural Topographic Terraces (West: Basic, Center: Consumer, East: Business)
   const terraceConfigs = [
-    { x: -2.55, y: 0.72, z: 0.16, w: 2.5, d: 2.15, mat: cyanLineMat },
-    { x: 0.05, y: 0.98, z: 0.02, w: 2.5, d: 2.15, mat: lavenderLineMat },
-    { x: 2.65, y: 1.24, z: 0.08, w: 2.5, d: 2.15, mat: emeraldLineMat },
+    { x: -2.52, y: 0.72, z: 0.16, r: 1.32, mat: cyanLineMat },
+    { x: 0.06, y: 0.98, z: 0.04, r: 1.36, mat: lavenderLineMat },
+    { x: 2.62, y: 1.24, z: 0.1, r: 1.38, mat: emeraldLineMat },
   ];
   const atlasTerraces: THREE.Group[] = [];
 
@@ -830,36 +967,41 @@ export function createCapabilityEngine(
     tGrp.position.set(tc.x, tc.y, tc.z);
     atlasGroup.add(tGrp);
 
-    // Translucent architectural map plane
+    // Translucent octagonal architectural drafting platform
     const deck = new THREE.Mesh(
-      new RoundedBoxGeometry(tc.w, 0.035, tc.d, 2, 0.012),
-      translucentGlassMat
+      new THREE.CylinderGeometry(tc.r, tc.r * 0.92, 0.036, 8),
+      frostedGlassMat
     );
     tGrp.add(deck);
 
-    // Topographic elevation contour rings etched into each terrace
-    [0.45, 0.78, 1.08].forEach(r => {
+    // 4 concentric topographic elevation contour rings + radial compass hairlines
+    [0.38, 0.68, 0.98, 1.28].forEach((r, cIdx) => {
       const contourPts: THREE.Vector3[] = [];
-      for (let s = 0; s < 40; s++) {
-        const a = (s / 40) * Math.PI * 2;
-        contourPts.push(new THREE.Vector3(Math.cos(a) * r, 0.024, Math.sin(a) * (r * 0.78)));
+      for (let s = 0; s < 48; s++) {
+        const a = (s / 48) * Math.PI * 2;
+        contourPts.push(
+          new THREE.Vector3(
+            Math.cos(a) * r,
+            0.022 + cIdx * 0.018,
+            Math.sin(a) * (r * 0.76)
+          )
+        );
       }
       tGrp.add(new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(contourPts), tc.mat));
     });
 
-    // Vertical architectural stadia / elevation columns beneath the terrace
-    [-tc.w * 0.44, tc.w * 0.44].forEach(cx => {
-      [-tc.d * 0.42, tc.d * 0.42].forEach(cz => {
-        const col = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.9, 6), alloyMat);
-        col.position.set(cx, -0.46, cz);
-        tGrp.add(col);
-      });
-    });
+    // Sub-surface architectural stadia columns anchoring the terrace into deep space
+    for (let c = 0; c < 4; c++) {
+      const a = (c / 4) * Math.PI * 2 + Math.PI / 4;
+      const col = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.95, 6), titaniumMat);
+      col.position.set(Math.cos(a) * (tc.r * 0.72), -0.48, Math.sin(a) * (tc.r * 0.56));
+      tGrp.add(col);
+    }
 
     atlasTerraces.push(tGrp);
   });
 
-  // 6 Interconnected 3D Spatial Routes linking the 6 capability foundations into outcomes
+  // 7 Multi-Strand 3D Spatial Routes linking the 6 capability foundations across the Atlas
   const routeCurves: THREE.CatmullRomCurve3[] = [];
   const routeLines: THREE.Line[] = [];
   const routePairs: Array<[number, number, THREE.LineBasicMaterial]> = [
@@ -868,8 +1010,8 @@ export function createCapabilityEngine(
     [0, 3, lavenderLineMat], // Write -> Swedish + English Bridge
     [3, 4, lavenderLineMat], // Swedish + English <-> User-Controlled Memory (Consumer Route)
     [4, 1, emeraldLineMat],  // Memory -> Workflow Automation (Business Route)
-    [1, 2, emeraldLineMat],  // Workflow Automation -> Decision Spire (Outcome Realization)
-    [3, 2, lavenderLineMat], // Bilingual Bridge -> Decision Spire
+    [1, 2, emeraldLineMat],  // Workflow Automation -> Decision Citadel (Outcome Realization)
+    [3, 2, lavenderLineMat], // Bilingual Bridge -> Decision Citadel
   ];
 
   routePairs.forEach(([fromIdx, toIdx, mat]) => {
@@ -877,24 +1019,23 @@ export function createCapabilityEngine(
     const b = atlasPlacements[toIdx];
     const mid = new THREE.Vector3(
       (a.x + b.x) * 0.5,
-      Math.max(a.y, b.y) + 0.42,
-      (a.z + b.z) * 0.5 - 0.15
+      Math.max(a.y, b.y) + 0.44,
+      (a.z + b.z) * 0.5 - 0.14
     );
     const curve = new THREE.CatmullRomCurve3([
-      new THREE.Vector3(a.x, a.y + 0.08, a.z),
+      new THREE.Vector3(a.x, a.y + 0.06, a.z),
       mid,
-      new THREE.Vector3(b.x, b.y + 0.08, b.z),
+      new THREE.Vector3(b.x, b.y + 0.06, b.z),
     ]);
     routeCurves.push(curve);
     const rLine = new THREE.Line(
-      new THREE.BufferGeometry().setFromPoints(curve.getPoints(36)),
+      new THREE.BufferGeometry().setFromPoints(curve.getPoints(40)),
       mat
     );
     atlasGroup.add(rLine);
     routeLines.push(rLine);
   });
 
-  // Luminous signal pulses travelling along the Atlas routes
   const routePulses: THREE.Mesh[] = [];
   const pulseGeo = new THREE.SphereGeometry(0.048, 10, 10);
   for (let p = 0; p < routeCurves.length; p++) {
@@ -906,7 +1047,7 @@ export function createCapabilityEngine(
     routePulses.push(pMesh);
   }
 
-  // ── 5. GPU-DRIVEN 3-STATE MORPHING PRECISION DATUM FIELD (960 points) ──
+  // ── 6. GPU-DRIVEN 3-STATE MORPHING PRECISION DATUM FIELD (960 points) ──
   const datumCount = 960;
   const rawPos = new Float32Array(datumCount * 3);
   const workshopPos = new Float32Array(datumCount * 3);
@@ -916,30 +1057,27 @@ export function createCapabilityEngine(
 
   for (let i = 0; i < datumCount; i++) {
     const u = i / datumCount;
-    const angle = i * 2.3999632; // Golden angle distribution
-    const rRaw = 2.6 + (i % 17) * 0.22;
+    const angle = i * 2.3999632;
+    const rRaw = 2.5 + (i % 17) * 0.22;
 
-    // State 0: Unshaped raw material suspended in outer workshop void
-    rawPos[i * 3] = Math.cos(angle) * rRaw * 1.35;
-    rawPos[i * 3 + 1] = 0.9 + Math.sin(angle * 0.7) * 2.1;
+    rawPos[i * 3] = Math.cos(angle) * rRaw * 1.32;
+    rawPos[i * 3 + 1] = 1.0 + Math.sin(angle * 0.7) * 2.0;
     rawPos[i * 3 + 2] = -0.5 + Math.sin(angle) * rRaw * 0.85;
 
-    // State 1: Calibrated cylindrical & helical strata inside The Impossible Workshop
     const ringIdx = i % 6;
-    const wRadius = 1.35 + ringIdx * 0.34;
+    const wRadius = 1.32 + ringIdx * 0.32;
     const wTheta = u * Math.PI * 12 + ringIdx * 1.047;
     workshopPos[i * 3] = Math.cos(wTheta) * wRadius;
-    workshopPos[i * 3 + 1] = 0.92 + Math.sin(wTheta) * (wRadius * 0.68);
-    workshopPos[i * 3 + 2] = 0.15 - ringIdx * 0.45 + Math.cos(wTheta * 2) * 0.18;
+    workshopPos[i * 3 + 1] = 1.05 + Math.sin(wTheta) * (wRadius * 0.68);
+    workshopPos[i * 3 + 2] = 0.15 - ringIdx * 0.42 + Math.cos(wTheta * 2) * 0.16;
 
-    // State 2: Topographic contour & route grid across The Atlas of Possibility
     const terraceIdx = i % 3;
     const tc = terraceConfigs[terraceIdx];
-    const contourR = 0.35 + ((i * 7) % 19) * 0.085;
+    const contourR = 0.32 + ((i * 7) % 19) * 0.082;
     const contourA = u * Math.PI * 18;
-    atlasPos[i * 3] = tc.x + Math.cos(contourA) * contourR * 1.25;
-    atlasPos[i * 3 + 1] = tc.y + 0.06 + ((i % 5) * 0.14);
-    atlasPos[i * 3 + 2] = tc.z + Math.sin(contourA) * contourR * 0.95;
+    atlasPos[i * 3] = tc.x + Math.cos(contourA) * contourR * 1.22;
+    atlasPos[i * 3 + 1] = tc.y + 0.05 + ((i % 5) * 0.14);
+    atlasPos[i * 3 + 2] = tc.z + Math.sin(contourA) * contourR * 0.92;
 
     phases[i] = (i * 0.37) % (Math.PI * 2);
     tones[i] = (i % 3) * 0.4;
@@ -973,23 +1111,21 @@ export function createCapabilityEngine(
   const datumPoints = new THREE.Points(datumGeo, datumMat);
   root.add(datumPoints);
 
-  // ── 6. CONTROLLED ARCHITECTURAL LIGHTING ──
-  const workshopKeyLight = new THREE.PointLight("#7adbf0", 34, 19, 2);
-  workshopKeyLight.position.set(-3.2, 2.8, 2.4);
+  // ── 7. CONTROLLED ARCHITECTURAL LIGHTING ──
+  const workshopKeyLight = new THREE.PointLight("#7adbf0", 36, 20, 2);
+  workshopKeyLight.position.set(-3.2, 2.9, 2.5);
   root.add(workshopKeyLight);
 
-  const atlasHorizonLight = new THREE.PointLight("#a8b4f8", 28, 19, 2);
-  atlasHorizonLight.position.set(3.4, 3.1, 1.8);
+  const atlasHorizonLight = new THREE.PointLight("#a8b4f8", 30, 20, 2);
+  atlasHorizonLight.position.set(3.4, 3.2, 1.9);
   root.add(atlasHorizonLight);
 
-  const crucibleCoreLight = new THREE.PointLight("#6ee7b7", 20, 12, 2);
-  crucibleCoreLight.position.set(0, 0.9, 1.6);
+  const crucibleCoreLight = new THREE.PointLight("#6ee7b7", 24, 13, 2);
+  crucibleCoreLight.position.set(0, 1.05, 1.7);
   root.add(crucibleCoreLight);
 
   return {
     root,
-    // Position the translucent CSS3D studio plate cleanly in the upper-back plane
-    // so the 3D Impossible Workshop and Atlas of Possibility remain unobstructed center-stage
     screenPosition: new THREE.Vector3(0, 1.88, -2.35),
     screenScale: 4.35 / screenWidth,
     update(
@@ -1008,213 +1144,234 @@ export function createCapabilityEngine(
       const modIdx = clamp(activeModule, 0, 5);
       const isTeam = pathwayMode === "business" ? 1 : 0;
 
-      // ── World One 5-Stage Scroll Choreography Weights ──
-      // 1. Discovery (0.00 - 0.12): Raw materials & unlatching portal frames
-      // 2. Activation (0.12 - 0.25): Crucible rings calibrate & awaken
-      // 3. Transformation (0.25 - 0.76): Individual capability sculptures assemble
-      // 4. Composition (0.76 - 0.90): All 6 instruments converge into one hexagonal system
-      // 5. Preparation (0.90 - 1.00 + morph): Structure hinges open to become World Two (Atlas)
-      const discovery = smooth(clamp(p / 0.16, 0.22, 1));
-      const composition = smooth(clamp((p - 0.74) / 0.16, 0, 1)) * (1 - morph);
+      // Local progress inside the active capability's scroll window, shaped by directedPacing()
+      const moduleLocalRaw = clamp((p - modIdx / 6) * 6, 0, 1);
+      const pacedLocal = directedPacing(moduleLocalRaw);
+
+      // 5-Stage Workshop Choreography Weights
+      const discovery = smooth(clamp(p / 0.15, 0.24, 1));
+      const composition = smooth(clamp((p - 0.75) / 0.15, 0, 1)) * (1 - morph);
       const prepUnfold = smooth(clamp((p - 0.88) / 0.12, 0, 1) * 0.22 + morph * 0.88);
 
-      // Update GPU Morphing Datum Field uniforms
       datumMat.uniforms.uDiscovery.value = discovery;
       datumMat.uniforms.uMorph.value = morph;
       datumMat.uniforms.uTime.value = time;
       datumMat.uniforms.uPathwayBoost.value = isTeam;
 
-      // ── 1. Transform Architectural Portal Frames -> Atlas Topographic Horizon Decks ──
-      portalFrames.forEach((fGroup, idx) => {
-        const cfg = frameConfigs[idx];
-        // In Discovery, outer frames start slightly rotated and lock into square alignment;
-        // In Transition (prepUnfold), they hinge 90° flat into horizontal Atlas drafting planes!
-        const discoveryTwist = (1 - discovery) * (idx % 2 === 0 ? 0.18 : -0.18);
-        fGroup.rotation.x = lerp(0, -Math.PI / 2, prepUnfold);
-        fGroup.rotation.z = discoveryTwist * (1 - prepUnfold);
-        fGroup.rotation.y = pointerX * 0.04 * (1 - prepUnfold * 0.5);
+      // ── 1. Tier 1 Background: Astrolabe Rotunda -> Great Cartographic Horizon ──
+      rotundaRings.forEach((rGroup, rIdx) => {
+        const cfg = rotundaConfigs[rIdx];
+        rGroup.rotation.x = lerp(0, -Math.PI / 2, prepUnfold);
+        rGroup.rotation.z = time * (rIdx % 2 === 0 ? 0.08 : -0.06) + p * 0.6;
+        rGroup.rotation.y = pointerX * 0.05 * (1 - prepUnfold * 0.5);
 
-        fGroup.position.x = pointerX * (0.08 * (idx + 1)) * (1 - morph * 0.6);
-        fGroup.position.y = lerp(0.95, cfg.atlasY + asm * 0.12 * idx, prepUnfold);
-        fGroup.position.z = lerp(cfg.z, cfg.atlasZ, prepUnfold);
-        fGroup.scale.set(
-          lerp(1, cfg.atlasScaleX, prepUnfold),
-          lerp(1, 1.15, prepUnfold),
-          1
-        );
+        rGroup.position.x = -pointerX * (0.12 * (rIdx + 1)) * (1 - morph * 0.5);
+        rGroup.position.y = lerp(1.05, cfg.atlasY + asm * 0.08 * rIdx, prepUnfold);
+        rGroup.position.z = lerp(cfg.z, 0.05 - rIdx * 0.45, prepUnfold);
+        rGroup.scale.setScalar(lerp(1, cfg.atlasScale, prepUnfold));
       });
 
-      // ── 2. Transform Central Vernier Crucible -> Atlas Compass Rose & Meridian Arc ──
+      // ── 2. Tier 2 Midground: Central Vernier Crucible -> Atlas Compass Rose & Meridian Arc ──
       crucibleGroup.position.set(
-        pointerX * 0.16,
-        lerp(1.08, 0.96, morph) + pointerY * 0.06,
-        lerp(0.25, 0.05, morph)
+        pointerX * 0.14,
+        lerp(1.05, 0.56, morph) + pointerY * 0.06,
+        lerp(0.15, -0.1, morph)
       );
+      centralSpine.scale.y = lerp(1, 0.45, morph);
 
-      // Ring 0 & 1 flatten into the Atlas Topographic Compass Rose; Ring 2 arches overhead as the Meridian Arc
-      vernierRings[0].rotation.x = lerp(Math.sin(time * 0.35) * 0.22, Math.PI / 2, morph);
-      vernierRings[0].rotation.z = time * 0.24 + p * Math.PI;
-      vernierRings[0].scale.setScalar(lerp(1, 1.55, morph));
+      vernierRings[0].rotation.x = lerp(Math.sin(time * 0.35) * 0.14, Math.PI / 2, morph);
+      vernierRings[0].rotation.z = time * 0.22 + p * Math.PI;
+      vernierRings[0].scale.setScalar(lerp(1, 1.28, morph));
 
-      vernierRings[1].rotation.y = lerp(time * -0.28 + modIdx * 0.52, 0, morph);
-      vernierRings[1].rotation.x = lerp(0.38, Math.PI / 2, morph);
-      vernierRings[1].rotation.z = -time * 0.18;
-      vernierRings[1].scale.setScalar(lerp(1, 1.85, morph));
+      vernierRings[1].rotation.y = lerp(Math.sin(time * 0.28 + modIdx * 0.55) * 0.26, 0, morph);
+      vernierRings[1].rotation.x = lerp(0.18, Math.PI / 2, morph);
+      vernierRings[1].rotation.z = -time * 0.16;
+      vernierRings[1].scale.setScalar(lerp(1, 1.42, morph));
 
-      // Ring 2 becomes the signature Cantilevered Meridian Arc arching over The Atlas of Possibility
-      vernierRings[2].position.y = lerp(0, 0.38, morph);
-      vernierRings[2].rotation.x = lerp(-0.18, 0.32, morph);
-      vernierRings[2].rotation.y = lerp(time * 0.15, (asm - 0.5) * 0.35, morph);
-      vernierRings[2].scale.setScalar(lerp(1, 1.65, morph));
+      // Ring 2 hinges into a low-angle Cantilevered Horizon Arc framing the 3 octagonal terraces
+      vernierRings[2].position.y = lerp(0, -0.08, morph);
+      vernierRings[2].rotation.x = lerp(-0.14, Math.PI * 0.44, morph);
+      vernierRings[2].rotation.y = lerp(Math.cos(time * 0.22 + modIdx * 0.4) * 0.22, (asm - 0.5) * 0.24, morph);
+      vernierRings[2].scale.setScalar(lerp(1, 1.32, morph));
 
-      // ── 3. Transform the 6 Sculptural Capability Pods (Workshop Crucible <-> Atlas Regions) ──
+      // ── 3. Tier 3 Foreground: Optical Framing Calipers Parallax ──
+      fgCalipers.position.x = pointerX * 0.24;
+      fgCalipers.position.y = 1.05 + pointerY * 0.1;
+      fgCalipers.scale.setScalar(lerp(1, 1.32, morph));
+      fgCalipers.visible = morph < 0.72;
+
+      // ── 4. Six Articulated Capability Armatures & Sculptural Mechanisms ──
       pods.forEach((pod, idx) => {
         const isActive = idx === modIdx;
 
-        // World One position: Active pod enters the Crucible center; other 5 form a calibrated orbital arc
-        // During Composition (p > 0.76), all 6 converge into a tight hexagonal synthesis core!
         const orbitSlot = (idx - modIdx + 6) % 6;
         const orbitAngle = (orbitSlot / 6) * Math.PI * 2 - Math.PI / 2;
-        const ringRadius = lerp(2.55, 1.32, composition);
+        const ringRadius = lerp(2.35, 1.28, composition);
 
         const workshopX = isActive
-          ? lerp(0, Math.cos((idx / 6) * Math.PI * 2) * 1.15, composition)
+          ? lerp(0, Math.cos((idx / 6) * Math.PI * 2) * 1.12, composition)
           : Math.cos(orbitAngle) * ringRadius;
         const workshopY = isActive
-          ? lerp(0.56, 0.92 + Math.sin((idx / 6) * Math.PI * 2) * 0.65, composition)
-          : 0.92 + Math.sin(orbitAngle) * (ringRadius * 0.54);
+          ? lerp(0.68, 1.05 + Math.sin((idx / 6) * Math.PI * 2) * 0.62, composition)
+          : 1.05 + Math.sin(orbitAngle) * (ringRadius * 0.52);
         const workshopZ = isActive
-          ? lerp(0.88, 0.35, composition)
-          : lerp(-0.65 + Math.cos(orbitAngle) * 0.35, 0.2, composition);
+          ? lerp(0.96, 0.35, composition)
+          : lerp(-0.55 + Math.cos(orbitAngle) * 0.32, 0.22, composition);
 
-        const workshopScale = isActive ? lerp(1.36, 1.05, composition) : lerp(0.76, 0.96, composition);
+        const workshopScale = isActive
+          ? lerp(1.48, 1.06, composition)
+          : lerp(0.74, 0.96, composition);
 
-        // World Two position: Unfolded terraced Atlas coordinates
         const atlasTarget = atlasPlacements[idx];
         const elevationLift = smooth(clamp((asm - idx * 0.08) / 0.55, 0, 1)) * 0.22;
 
         const targetX = lerp(workshopX, atlasTarget.x, morph) + pointerX * 0.1;
         const targetY = lerp(workshopY, atlasTarget.y + elevationLift, morph) + pointerY * 0.05;
         const targetZ = lerp(workshopZ, atlasTarget.z, morph);
-        const targetScale = lerp(workshopScale, 0.98, morph);
+        const targetScale = lerp(workshopScale, 1.0, morph);
 
-        pod.group.position.x = lerp(pod.group.position.x || targetX, targetX, 0.22);
-        pod.group.position.y = lerp(pod.group.position.y || targetY, targetY, 0.22);
-        pod.group.position.z = lerp(pod.group.position.z || targetZ, targetZ, 0.22);
-        pod.group.scale.setScalar(lerp(pod.group.scale.x || targetScale, targetScale, 0.22));
+        pod.group.position.x = lerp(pod.group.position.x || targetX, targetX, 0.24);
+        pod.group.position.y = lerp(pod.group.position.y || targetY, targetY, 0.24);
+        pod.group.position.z = lerp(pod.group.position.z || targetZ, targetZ, 0.24);
+        pod.group.scale.setScalar(lerp(pod.group.scale.x || targetScale, targetScale, 0.24));
 
-        pod.plateMat.emissiveIntensity = morph >= 0.48
-          ? 0.55 + elevationLift * 1.4
-          : isActive
-          ? 0.95
-          : 0.24;
+        // Update the Articulated Radial Caliper Tether connecting the spine to this pod
+        const tetherAttr = pod.tetherGeo.getAttribute("position") as THREE.BufferAttribute;
+        tetherAttr.setXYZ(0, crucibleGroup.position.x, crucibleGroup.position.y, crucibleGroup.position.z);
+        tetherAttr.setXYZ(1, pod.group.position.x, pod.group.position.y, pod.group.position.z);
+        tetherAttr.needsUpdate = true;
 
-        // Atlas Outcome Monument rises out of the foundation plate as World Two unfolds
-        const monumentScale = smooth(clamp((morph - 0.35) / 0.55, 0, 1)) * (0.55 + 0.45 * asm);
+        pod.cradleRingMat.opacity = morph >= 0.48 ? 0.88 : isActive ? 0.96 : 0.38;
+
+        // Rising Architectural Outcome Monument in World Two
+        const monumentScale = smooth(clamp((morph - 0.32) / 0.55, 0, 1)) * (0.58 + 0.42 * asm);
         pod.atlasMonument.scale.set(1, Math.max(0.001, monumentScale), 1);
         pod.atlasMonument.visible = monumentScale > 0.02;
 
-        // ── Procedural Animation of Each Capability's Sculptural Mechanism ──
-        if (pod.writeFolios) {
-          // 01 Write: Scattered fragments align into a crisp vertical document stack
-          const align = isActive || morph > 0.3 ? smooth(clamp(discovery * 1.2, 0.3, 1)) : 0.35;
-          pod.writeFolios.forEach((sheet, fIdx) => {
-            const targetSheetY = (fIdx - 2) * 0.095;
-            const scatterX = (1 - align) * ((fIdx % 2 === 0 ? 1 : -1) * 0.28);
-            const scatterRot = (1 - align) * ((fIdx - 2) * 0.22);
-            sheet.position.set(
-              scatterX,
-              targetSheetY + Math.sin(time * 1.8 + fIdx * 0.6) * 0.012,
-              0
+        // ── Meaningful Capability Transformations (PASS E — STORYTELLING) ──
+        const activeAssemble = isActive ? pacedLocal : morph > 0.35 ? 1 : 0.28;
+
+        if (pod.writeBlocks && pod.writeScanner) {
+          // 01 Writing: 15 scattered typographic clauses & folios physically align into a structured document
+          pod.writeBlocks.forEach((b, bIdx) => {
+            b.mesh.position.lerpVectors(b.rawPos, b.targetPos, activeAssemble);
+            b.mesh.position.y += Math.sin(time * 1.6 + bIdx * 0.4) * 0.008;
+            b.mesh.rotation.set(
+              b.rawRot.x * (1 - activeAssemble),
+              b.rawRot.y * (1 - activeAssemble),
+              b.rawRot.z * (1 - activeAssemble)
             );
-            sheet.rotation.set(0, scatterRot, scatterRot * 0.5);
           });
+          pod.writeScanner.position.y = Math.sin(time * 2.2) * 0.24;
+          pod.writeScanner.visible = isActive || morph > 0.4;
         }
 
-        if (pod.automateGates && pod.automatePulse) {
-          // 02 Automate: 4 stage gates interlock and transmit a luminous signal pulse
+        if (pod.automateGates && pod.automateRods && pod.automatePulse) {
+          // 02 Automation: Separated eccentric rings & linkage rods snap onto a coherent workflow axis
           pod.automateGates.forEach((gate, gIdx) => {
-            gate.position.x = (gIdx - 1.5) * 0.26;
-            gate.rotation.x = time * (gIdx % 2 === 0 ? 0.9 : -0.9);
+            const alignedX = (gIdx - 1.5) * 0.25;
+            const scatteredY = (1 - activeAssemble) * ((gIdx % 2 === 0 ? 1 : -1) * 0.28);
+            const scatteredZ = (1 - activeAssemble) * ((gIdx - 1.5) * 0.18);
+            gate.position.set(alignedX, scatteredY, scatteredZ);
+            gate.rotation.x = time * (gIdx % 2 === 0 ? 1.05 : -1.05);
           });
-          const pulseU = (time * 0.65) % 1;
-          pod.automatePulse.position.x = (pulseU - 0.5) * 0.92;
+          pod.automateRods.forEach((rod, rIdx) => {
+            rod.scale.y = Math.max(0.1, activeAssemble);
+            rod.position.y = (rIdx % 2 === 0 ? 1 : -1) * lerp(0.28, 0.13, activeAssemble);
+          });
+          const pulseU = (time * 0.68) % 1;
+          pod.automatePulse.position.x = (pulseU - 0.5) * 0.88;
         }
 
-        if (pod.decidePrism && pod.decideBeam) {
-          // 03 Decide: Crystalline prism rotates and projects a clear forward vector
-          pod.decidePrism.rotation.y = time * 0.95;
-          pod.decidePrism.rotation.x = Math.sin(time * 0.7) * 0.25;
-          pod.decideBeam.scale.y = 0.75 + 0.28 * Math.sin(time * 2.4);
+        if (pod.decideBranches && pod.decideWeights && pod.decidePrism && pod.decideBeam) {
+          // 03 Decision-Making: Branching paths weigh scenarios and resolve into a single forward vector
+          pod.decidePrism.rotation.y = time * 0.92;
+          pod.decidePrism.rotation.x = Math.sin(time * 0.7) * 0.22;
+          pod.decideBeam.scale.y = lerp(0.25, 1.05, activeAssemble) + 0.15 * Math.sin(time * 2.6);
+          pod.decideWeights.forEach((wMesh, wIdx) => {
+            const uBranch = ((time * 0.45 + wIdx * 0.16) % 1) * activeAssemble;
+            const angle = (wIdx / 6) * Math.PI * 2;
+            wMesh.position.set(
+              lerp(-0.52, 0, uBranch),
+              Math.cos(angle) * 0.36 * (1 - uBranch),
+              Math.sin(angle) * 0.36 * (1 - uBranch)
+            );
+          });
         }
 
-        if (pod.bilingualHelixA && pod.bilingualHelixB && pod.bilingualRungs) {
-          // 04 Swedish + English: Dual streams rotate in phase-locked harmony
-          const rot = time * 0.85;
+        if (pod.bilingualHelixA && pod.bilingualHelixB && pod.bilingualRungs && pod.bilingualFork) {
+          // 04 Swedish & English: Dual streams pass through the tuning fork into phase-locked parity
+          const rot = time * 0.88;
           pod.bilingualHelixA.rotation.x = rot;
           pod.bilingualHelixB.rotation.x = rot;
           pod.bilingualRungs.rotation.x = rot;
+          pod.bilingualFork.position.x = Math.sin(time * 1.4) * 0.22;
+          pod.bilingualFork.scale.setScalar(0.92 + 0.12 * Math.sin(time * 2.8));
         }
 
         if (pod.memoryStrata) {
-          // 05 Memory: User-selected durable layers lock forward; transient layers stay recessed
+          // 05 Memory: User-selected durable layers lock forward into emerald clamps; transient layers stay recessed
           pod.memoryStrata.forEach((item, mIdx) => {
             item.mesh.position.y = (mIdx - 2) * 0.105;
             item.mesh.position.z = item.durable
-              ? 0.09 + Math.sin(time * 1.6 + mIdx) * 0.015
-              : -0.08;
+              ? lerp(0.02, 0.12, activeAssemble) + Math.sin(time * 1.5 + mIdx) * 0.012
+              : lerp(0, -0.1, activeAssemble);
           });
         }
 
-        if (pod.visionBlades && pod.voiceWaveGeo) {
-          // 06 Vision & Voice: Sculptural 8-blade iris dilates while acoustic wave oscillates
-          const apertureRadius = 0.24 + 0.055 * Math.sin(time * 2.1);
+        if (pod.visionBlades && pod.visionFrustum && pod.voiceWaveGeo) {
+          // 06 Vision & Voice: Optical frustum and acoustic wave converge into the 10-blade iris aperture
+          const apertureRadius = lerp(0.32, 0.21, activeAssemble) + 0.04 * Math.sin(time * 2.1);
           pod.visionBlades.forEach((blade, bIdx) => {
-            const a = (bIdx / 8) * Math.PI * 2 + time * 0.28;
+            const a = (bIdx / 10) * Math.PI * 2 + time * 0.26;
             blade.position.set(Math.cos(a) * apertureRadius, Math.sin(a) * apertureRadius, 0);
-            blade.rotation.z = a + 0.55;
+            blade.rotation.z = a + 0.52;
           });
+          pod.visionFrustum.position.x = lerp(-0.46, -0.22, activeAssemble);
+          pod.visionFrustum.rotation.x = time * 0.65;
+
           const posAttr = pod.voiceWaveGeo.getAttribute("position") as THREE.BufferAttribute;
           for (let w = 0; w < posAttr.count; w++) {
             const a = (w / posAttr.count) * Math.PI * 2;
-            const r = 0.16 + 0.045 * Math.sin(a * 6 + time * 4.2);
+            const r = 0.16 + 0.048 * Math.sin(a * 6 + time * 4.4);
             posAttr.setXYZ(w, Math.cos(a) * r, Math.sin(a) * r, 0.06);
           }
           posAttr.needsUpdate = true;
         }
       });
 
-      // ── 4. World Two Atlas Terraces & Interconnected Routes Emergence ──
-      const atlasVisibility = smooth(clamp((morph - 0.18) / 0.65, 0, 1));
+      // ── 5. World Two Atlas Terraces & Interconnected Routes Emergence ──
+      const atlasVisibility = smooth(clamp((morph - 0.16) / 0.65, 0, 1));
       atlasGroup.visible = atlasVisibility > 0.01;
 
       atlasTerraces.forEach((tGrp, tIdx) => {
         const tc = terraceConfigs[tIdx];
-        const stageReveal = smooth(clamp((atlasVisibility - tIdx * 0.12) / 0.65, 0, 1));
+        const stageReveal = smooth(clamp((atlasVisibility - tIdx * 0.11) / 0.65, 0, 1));
         tGrp.scale.set(
           Math.max(0.001, stageReveal),
           1,
           Math.max(0.001, stageReveal)
         );
-        tGrp.position.y = tc.y + Math.sin(time * 1.1 + tIdx) * 0.025 + (tIdx === 2 ? isTeam * 0.12 : 0);
+        tGrp.position.y = tc.y + Math.sin(time * 1.1 + tIdx) * 0.022 + (tIdx === 2 ? isTeam * 0.12 : 0);
+        tGrp.rotation.y = (asm - 0.5) * 0.12 * (tIdx - 1);
       });
 
       routeLines.forEach((rLine, rIdx) => {
-        const routeReveal = smooth(clamp((morph - 0.32 + asm * 0.35 - rIdx * 0.05) / 0.45, 0, 1));
+        const routeReveal = smooth(clamp((morph - 0.28 + asm * 0.35 - rIdx * 0.045) / 0.45, 0, 1));
         rLine.visible = routeReveal > 0.02;
       });
 
       routePulses.forEach((pulse, pIdx) => {
         const curve = routeCurves[pIdx];
-        const u = (time * 0.28 + pIdx * 0.17 + asm * 0.5) % 1;
+        const u = (time * 0.3 + pIdx * 0.17 + asm * 0.5) % 1;
         curve.getPointAt(u, pulse.position);
-        pulse.visible = atlasVisibility > 0.25;
+        pulse.visible = atlasVisibility > 0.22;
       });
 
-      // ── 5. Controlled Lighting Progression across Workshop -> Atlas ──
-      workshopKeyLight.intensity = lerp(32, 42, discovery) * (1 - morph * 0.2);
-      atlasHorizonLight.intensity = lerp(24, 44, morph) + isTeam * 8;
-      crucibleCoreLight.intensity = lerp(22, 34, Math.max(composition, asm));
+      // ── 6. Controlled Lighting Progression across Workshop -> Atlas ──
+      workshopKeyLight.intensity = lerp(34, 44, discovery) * (1 - morph * 0.18);
+      atlasHorizonLight.intensity = lerp(26, 46, morph) + isTeam * 8;
+      crucibleCoreLight.intensity = lerp(24, 36, Math.max(composition, asm));
     },
   };
 }
