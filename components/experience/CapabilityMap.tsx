@@ -18,8 +18,9 @@ export default function CapabilityMap() {
   const [typedRatio, setTypedRatio] = useState(0.65);
   const [choreoStage, setChoreoStage] = useState(0);
   const [hover, setHover] = useState(-1);
+  const [pinnedStage, setPinnedStage] = useState(-1);
   const [pathway, setPathway] = useState<"personal" | "business">("personal");
-  const active = hover >= 0 ? hover : scrollActive;
+  const active = hover >= 0 ? hover : pinnedStage >= 0 ? pinnedStage : scrollActive;
 
   const workshopStages = sv
     ? ["01 Upptäckt", "02 Aktivering", "03 Omvandling", "04 Sammansättning", "05 Utveckling"]
@@ -142,6 +143,7 @@ export default function CapabilityMap() {
         if (i !== previous.current) {
           previous.current = i;
           setScrollActive(i);
+          setPinnedStage(-1);
         }
         const nextStage = p < 0.12 ? 0 : p < 0.25 ? 1 : p < 0.76 ? 2 : p < 0.9 ? 3 : 4;
         setChoreoStage(prev => (prev === nextStage ? prev : nextStage));
@@ -324,7 +326,7 @@ export default function CapabilityMap() {
                 className={`capability-stage-pill ${active === idx ? "is-active" : ""}`}
                 aria-pressed={active === idx}
                 onClick={() => {
-                  setHover(idx);
+                  setPinnedStage(idx);
                   setScrollActive(idx);
                 }}
               >

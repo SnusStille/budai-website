@@ -119,6 +119,10 @@ export default function Capabilities() {
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="capabilities-intro-header text-center mb-12">
+          <div className="capabilities-bridge-dock" aria-hidden="true">
+            <span className="capabilities-bridge-stem" />
+            <b className="capabilities-bridge-node" />
+          </div>
           <span className="chapter-label mb-6 inline-flex"><i />03 / {t.capabilities.badge}</span>
           <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-[-0.03em] mb-5 text-white">
             {t.capabilities.title} <span className="text-gradient">{t.capabilities.titleHighlight}</span>

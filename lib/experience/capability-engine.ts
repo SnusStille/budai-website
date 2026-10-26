@@ -1315,32 +1315,39 @@ export function createCapabilityEngine(
       const relayAttr = workshopRelayGeo.getAttribute("position") as THREE.BufferAttribute;
 
       // ── 4. Six Articulated Capability Armatures & Sculptural Mechanisms ──
+      const isScrollAligned = Math.min(5, Math.floor(p * 6)) === modIdx;
+      const focusContinuous = isScrollAligned ? clamp(p * 6 - 0.35, 0, 5) : modIdx;
+
       pods.forEach((pod, idx) => {
         const isActive = idx === modIdx;
         const podEmerge = smooth(clamp((emerge - 0.12 - idx * 0.05) / 0.62, 0, 1));
 
-        const orbitSlot = (idx - modIdx + 6) % 6;
-        const orbitAngle = (orbitSlot / 6) * Math.PI * 2 - Math.PI / 2;
+        const relSlot = (((idx - focusContinuous) % 6) + 6) % 6;
+        const signedDist = relSlot > 3 ? relSlot - 6 : relSlot;
+        const activeWeight = isActive ? 1 : smooth(clamp(1 - Math.abs(signedDist) * 1.15, 0, 1));
+        const orbitAngle = (relSlot / 6) * Math.PI * 2 - Math.PI / 2;
         const ringRadius = lerp(2.35, 1.28, composition) * lerp(0.18, 1, podEmerge);
 
-        const rawWorkshopX = isActive
-          ? lerp(0, Math.cos((idx / 6) * Math.PI * 2) * 1.12, composition)
-          : Math.cos(orbitAngle) * ringRadius;
-        const rawWorkshopY = isActive
-          ? lerp(0.68, 1.05 + Math.sin((idx / 6) * Math.PI * 2) * 0.62, composition)
-          : 1.05 + Math.sin(orbitAngle) * (ringRadius * 0.52);
-        const rawWorkshopZ = isActive
-          ? lerp(0.96, 0.35, composition)
-          : lerp(-0.55 + Math.cos(orbitAngle) * 0.32, 0.22, composition);
+        const orbitX = Math.cos(orbitAngle) * ringRadius;
+        const orbitY = 1.05 + Math.sin(orbitAngle) * (ringRadius * 0.52);
+        const orbitZ = lerp(-0.55 + Math.cos(orbitAngle) * 0.32, 0.22, composition);
+
+        const inspectX = lerp(0, Math.cos((idx / 6) * Math.PI * 2) * 1.12, composition);
+        const inspectY = lerp(0.68, 1.05 + Math.sin((idx / 6) * Math.PI * 2) * 0.62, composition);
+        const inspectZ = lerp(0.96, 0.35, composition);
+
+        const rawWorkshopX = lerp(orbitX, inspectX, activeWeight);
+        const rawWorkshopY = lerp(orbitY, inspectY, activeWeight);
+        const rawWorkshopZ = lerp(orbitZ, inspectZ, activeWeight);
 
         // During arrival from Playground corridor, instruments expand out from the Central Crucible
         const workshopX = rawWorkshopX * podEmerge;
         const workshopY = lerp(1.05, rawWorkshopY, podEmerge);
         const workshopZ = lerp(-0.18, rawWorkshopZ, podEmerge);
 
-        const workshopScale = (isActive
-          ? lerp(1.48, 1.06, composition)
-          : lerp(0.74, 0.96, composition)) * lerp(0.28, 1, podEmerge);
+        const workshopScale =
+          lerp(lerp(0.74, 0.96, composition), lerp(1.48, 1.06, composition), activeWeight) *
+          lerp(0.28, 1, podEmerge);
 
         const atlasTarget = atlasPlacements[idx];
         const elevationLift = smooth(clamp((asm - idx * 0.08) / 0.55, 0, 1)) * 0.22;
@@ -1350,7 +1357,7 @@ export function createCapabilityEngine(
         const targetZ = lerp(workshopZ, atlasTarget.z, morph);
         const targetScale = lerp(workshopScale, 0.86, morph);
 
-        const blend = emerge < 0.85 ? 0.65 : 0.32;
+        const blend = emerge < 0.85 ? 0.68 : 0.36;
         pod.group.position.x = lerp(pod.group.position.x || targetX, targetX, blend);
         pod.group.position.y = lerp(pod.group.position.y || targetY, targetY, blend);
         pod.group.position.z = lerp(pod.group.position.z || targetZ, targetZ, blend);

@@ -831,6 +831,9 @@ html[data-budai-intro="playing"] body > a[href="#main"] { visibility: hidden; }
 .capabilities-universe > div:first-child { display:none; }
 .capabilities-intro-header { position: relative; isolation: isolate; }
 .capabilities-intro-header::before { content: ""; position: absolute; z-index: -1; inset: -32px 0 -36px; background: radial-gradient(ellipse at 50% 50%, rgba(2, 2, 5, 0.84) 22%, rgba(2, 2, 5, 0.5) 58%, transparent 86%); pointer-events: none; }
+.capabilities-bridge-dock { display: flex; flex-direction: column; align-items: center; margin-bottom: 14px; pointer-events: none; }
+.capabilities-bridge-stem { width: 1px; height: 28px; background: linear-gradient(180deg, rgba(126, 224, 246, 0.15), rgba(126, 224, 246, 0.65)); }
+.capabilities-bridge-node { width: 7px; height: 7px; border-radius: 50%; border: 1px solid rgba(142, 232, 250, 0.75); background: #071928; box-shadow: 0 0 12px rgba(126, 224, 246, 0.45); }
 .capability-system { height: 230svh; position:relative; margin:56px 0 80px; --capability-progress:0; }
 .capability-sticky { position:sticky; top:95px; min-height:calc(100svh - 130px); display:grid; grid-template-columns:42% 58%; align-items:center; }
 .capability-index { position:relative; z-index:2; padding:12px 0; }
