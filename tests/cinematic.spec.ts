@@ -77,18 +77,53 @@ test("one sparse information register organises six capabilities and three accur
   await expect(page.locator(".capability-network")).toHaveCount(0);
   await expect(page.locator(".capability-module")).toHaveCount(6);
   await expect(page.locator("[data-living-code-console]")).toBeVisible();
+  const studioScreen = page.locator(".world-capability-mount [data-capability-studio-screen]");
+  await expect(studioScreen).toHaveAttribute("data-studio-mode", "capability");
   await page.waitForTimeout(600);
+  const initialChamberProgress = Number(await canvas.getAttribute("data-chamber-progress"));
   await page.screenshot({ path: "test-results/capability-engine-desktop.png" });
+  await move(page, "[data-capability-system]", 680);
+  await expect.poll(async () => Number(await canvas.getAttribute("data-chamber-progress"))).toBeGreaterThan(initialChamberProgress + 0.15);
+  await page.screenshot({ path: "test-results/capability-engine-midscroll-desktop.png" });
+  await move(page, "[data-capability-system]", 180);
+  await expect.poll(async () => Number(await canvas.getAttribute("data-chamber-progress"))).toBeCloseTo(initialChamberProgress, 1);
   await page.locator(".capability-module").nth(4).hover();
   await expect(canvas).toHaveAttribute("data-capability-focus", "4");
   await move(page, "[data-access-architecture]", -120);
   await expect.poll(async () => Number(await canvas.getAttribute("data-access-morph"))).toBeGreaterThan(.9);
+  await expect.poll(async () => Number(await canvas.getAttribute("data-assembly-progress"))).toBeGreaterThan(0.2);
+  await expect(studioScreen).toHaveAttribute("data-studio-mode", "pipeline");
   await page.screenshot({ path: "test-results/access-architecture-desktop.png" });
   const plans = page.locator("[data-plan-comparison]");
   await expect(plans.getByRole("heading", { name: "Basic", exact: true })).toHaveCount(1);
   await expect(plans.getByText("Available now", { exact: true })).toHaveCount(1);
   await expect(plans.getByText("Coming soon", { exact: true })).toHaveCount(2);
   await expect(plans.getByText("Free", { exact: false }).first()).toBeVisible();
+});
+
+test("scrolling past Playground into Capabilities is smooth, pre-warmed, and free of back-and-forth jumps", async ({ page }) => {
+  await prepare(page);
+  await page.goto("/");
+  await move(page, "#playground", 60);
+  // WorldStage should pre-warm as soon as the user is in the Playground
+  await expect(page.locator("html")).toHaveAttribute("data-world-state", "ready", { timeout: 15000 });
+  const startY = await page.evaluate(() => window.scrollY);
+  const topsDown: number[] = [];
+  const chaptersDown: number[] = [];
+  for (let step = 1; step <= 14; step++) {
+    await page.evaluate(y => window.scrollTo(0, y), startY + step * 160);
+    await page.waitForTimeout(30);
+    const rectTop = await page.locator("[data-capability-viewport]").evaluate(el => el.getBoundingClientRect().top);
+    const ch = await page.evaluate(() => Number(document.documentElement.style.getPropertyValue("--journey-phase")));
+    topsDown.push(rectTop);
+    chaptersDown.push(ch);
+  }
+  // Every downward scroll step must move the viewport up monotonically (or hold when sticky) and advance chapter monotonically without jumping backward
+  for (let i = 1; i < topsDown.length; i++) {
+    expect(topsDown[i]).toBeLessThanOrEqual(topsDown[i - 1] + 0.5);
+    expect(chaptersDown[i]).toBeGreaterThanOrEqual(chaptersDown[i - 1] - 0.001);
+  }
+  await page.screenshot({ path: "test-results/post-playground-scroll-transition.png" });
 });
 
 test("05 / THE NEXT SIGNAL standalone section remains removed while early-access waitlist form and 05 Roadmap work cleanly", async ({ page }) => {

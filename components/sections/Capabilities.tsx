@@ -258,27 +258,25 @@ export default function Capabilities() {
           </div>
           <div className="access-fallback">
             <svg viewBox="-5 -2.1 10 4.2" width="100%" height="100%">
-              <path d="M -3.3 0 Q -1.65 -0.18 0 0 T 3.3 0" fill="none" stroke="#7ee0f4" strokeOpacity="0.48" strokeWidth="0.024" />
-              {[0, 1, 2].map(band => {
-                const cx = (band - 1) * 3.3;
-                const coreSize = 0.28 + band * 0.05;
-                return (
-                  <g key={band} opacity={band === 0 ? 0.96 : 0.86}>
-                    <ellipse cx={cx} cy={0.78} rx={0.68 + band * 0.12} ry="0.16" fill="#143246" fillOpacity="0.78" stroke="#8ce8fa" strokeOpacity="0.55" strokeWidth="0.016" />
-                    {Array.from({ length: band + 1 }, (_, r) => (
-                      <ellipse key={r} cx={cx} cy={0} rx={0.56 + r * 0.22} ry={0.34 + r * 0.14} fill="none" stroke={band === 2 ? "#a9b8ff" : "#8ce8fa"} strokeOpacity={0.62 - r * 0.12} strokeWidth="0.016" transform={`rotate(${(r - 0.5) * 18} ${cx} 0)`} />
-                    ))}
-                    <polygon points={`${cx},${-coreSize} ${cx + coreSize},0 ${cx},${coreSize} ${cx - coreSize},0`} fill="#16384c" fillOpacity="0.92" stroke="#b0f5ff" strokeOpacity="0.88" strokeWidth="0.02" />
-                    <circle cx={cx} cy={0} r="0.10" fill="#ecfcff" fillOpacity="0.98" />
-                    {band === 2 && [-0.75, 0.75].map(dx => [-0.42, 0.42].map(dy => (
-                      <g key={`${dx}-${dy}`}>
-                        <line x1={cx} y1={0} x2={cx + dx} y2={dy} stroke="#a9b8ff" strokeOpacity="0.55" strokeWidth="0.014" />
-                        <circle cx={cx + dx} cy={dy} r="0.07" fill="#d8e2ff" fillOpacity="0.92" />
-                      </g>
-                    )))}
-                  </g>
-                );
-              })}
+              {/* Stage 1: Raw Input Tiles & Intake Gate */}
+              {[-0.85, -0.3, 0.25, 0.8].map((iy, idx) => (
+                <rect key={idx} x="-4.4" y={iy - 0.16} width="1.15" height="0.3" rx="0.04" fill="#0d263a" stroke={idx % 2 === 0 ? "#78d5ea" : "#6ee7b7"} strokeWidth="0.02" />
+              ))}
+              <rect x="-2.85" y="-1.15" width="0.42" height="2.3" rx="0.04" fill="none" stroke="#78d5ea" strokeOpacity="0.8" strokeWidth="0.025" />
+              {/* Stage 2: 3-Deck Context & Routing Matrix Rack */}
+              <rect x="-1.45" y="-1.05" width="2.1" height="2.1" rx="0.06" fill="#0b2032" fillOpacity="0.85" stroke="#8ce8fa" strokeWidth="0.024" />
+              {[-0.55, 0, 0.55].map((dy, dIdx) => (
+                <rect key={dIdx} x="-1.25" y={dy - 0.14} width="1.7" height="0.28" rx="0.03" fill="#13344c" stroke={dIdx === 1 ? "#6ee7b7" : "#78d5ea"} strokeWidth="0.018" />
+              ))}
+              {/* Stage 3: Conduits */}
+              {[-0.45, 0, 0.45].map((cy, cIdx) => (
+                <path key={cIdx} d={`M -2.43 ${cy} L -1.45 ${cy} M 0.65 ${cy} L 1.75 ${cy}`} fill="none" stroke="#6ee7b7" strokeOpacity="0.78" strokeWidth="0.022" />
+              ))}
+              {/* Stage 4: Assembled Product Output Window + Mobile Companion */}
+              <rect x="1.75" y="-1.1" width="2.45" height="2.2" rx="0.06" fill="#0d263b" fillOpacity="0.92" stroke="#6ee7b7" strokeWidth="0.026" />
+              <rect x="1.95" y="-0.85" width="2.05" height="0.32" rx="0.03" fill="#163e5c" stroke="#78d5ea" strokeWidth="0.016" />
+              <rect x="1.95" y="-0.38" width="1.2" height="1.15" rx="0.03" fill="#12324a" stroke="#78d5ea" strokeWidth="0.016" />
+              <rect x="3.28" y="-0.38" width="0.72" height="1.15" rx="0.04" fill="#12324a" stroke="#6ee7b7" strokeWidth="0.018" />
             </svg>
           </div>
           <div className="access-labels">

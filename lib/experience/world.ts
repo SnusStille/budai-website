@@ -3,7 +3,6 @@ import { CSS3DObject, CSS3DRenderer } from "three/examples/jsm/renderers/CSS3DRe
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { createPointField } from "./information-field";
 import { createCapabilityEngine } from "./capability-engine";
-import { domViewOffset, worldUnitsPerPixel } from "./projection";
 import { createDeveloperRoom } from "./developer-room";
 import { cameraAt, worldChapterAt, worldOpacityAt, clamp, lerp, smooth, type JourneyFrame } from "./timeline";
 
@@ -15,7 +14,12 @@ const LAVENDER = "#9ca7df";
  * informed by scroll-flyover and AETumi (MIT); original geometry and choreography.
  * There is no scroll handler, RAF, virtual scroller, downloaded model or video here.
  */
-export function createWorld(host: HTMLElement, editor: HTMLElement, onFailure: () => void) {
+export function createWorld(
+  host: HTMLElement,
+  editor: HTMLElement,
+  onFailure: () => void,
+  capabilityEditor?: HTMLElement | null
+) {
   let mobile = window.innerWidth < 768;
   const nav = navigator as Navigator & { deviceMemory?: number };
   let lite = mobile || (nav.deviceMemory ?? 8) <= 4 || navigator.hardwareConcurrency <= 4;
@@ -167,14 +171,18 @@ export function createWorld(host: HTMLElement, editor: HTMLElement, onFailure: (
     const outputSignal = createPointField([{ x: 0, y: 0, z: 0, lane: -1 }], 5.4);
     scene.add(outputSignal);
 
-    // 03 / THE LIVING INTELLIGENCE ENGINE: Dimensional 3D Code Panels, Core, 6 Pathways & Access Stations.
+    // 03 / CAPABILITIES UNIFIED 3D SYNTHESIS STUDIO + real CSS3D projected CapabilityStudioScreen.
     const capabilities = addEnvironment(2);
-    const engine = createCapabilityEngine(capabilities);
-    const capViewport = document.querySelector<HTMLElement>("[data-capability-viewport]");
-    const capSystem = document.querySelector<HTMLElement>("[data-capability-system]");
-    const accessViewport = document.querySelector<HTMLElement>("[data-access-architecture]");
-    const engineCenter = new THREE.Vector3(48, 1.4, -32);
-    const projected = new THREE.Vector3();
+    const engine = createCapabilityEngine(capabilities, mobile ? 640 : 1080);
+    engine.root.position.set(0, -0.35, 3.15);
+    const capScreen = capabilityEditor ? new CSS3DObject(capabilityEditor) : null;
+    if (capScreen) {
+      capScreen.position.copy(capabilities.position).add(engine.root.position).add(engine.screenPosition);
+      capScreen.scale.setScalar(engine.screenScale);
+      cssScene.add(capScreen);
+    }
+    let capSystem = document.querySelector<HTMLElement>("[data-capability-system]");
+    let accessViewport = document.querySelector<HTMLElement>("[data-access-architecture]");
 
     // 04 / Architectural Developer Room + real CSS3D projected ProgressiveEditor.
     const builder = addEnvironment(3);
@@ -420,6 +428,10 @@ export function createWorld(host: HTMLElement, editor: HTMLElement, onFailure: (
           camera.fov = mobile ? 48 : 43;
           editor.dataset.editorLayout = mobile ? "mobile" : "desktop";
           screen.scale.setScalar(6.5 / (mobile ? 640 : 1080));
+          if (capabilityEditor && capScreen) {
+            capabilityEditor.dataset.editorLayout = mobile ? "mobile" : "desktop";
+            capScreen.scale.setScalar(6.5 / (mobile ? 640 : 1080));
+          }
           renderer.setPixelRatio(Math.min(window.devicePixelRatio, pixelCap, mobile ? 1 : 1.35));
           renderer.setSize(width, height);
           cssRenderer?.setSize(width, height);
@@ -437,6 +449,7 @@ export function createWorld(host: HTMLElement, editor: HTMLElement, onFailure: (
         host.style.opacity = String(opacity);
         if (opacity <= 0.001) {
           editor.style.opacity = "0";
+          if (capabilityEditor) capabilityEditor.style.opacity = "0";
           cssRenderer!.domElement.style.visibility = "hidden";
           lastTime = frame.time;
           return;
@@ -447,13 +460,13 @@ export function createWorld(host: HTMLElement, editor: HTMLElement, onFailure: (
         camera.position.fromArray(pose.position);
         camera.lookAt(new THREE.Vector3(...pose.target));
         camera.updateMatrixWorld();
-        const engineRect = capViewport?.getBoundingClientRect();
+        if (!capSystem?.isConnected) capSystem = document.querySelector<HTMLElement>("[data-capability-system]");
+        if (!accessViewport?.isConnected) accessViewport = document.querySelector<HTMLElement>("[data-access-architecture]");
         const accessRect = accessViewport?.getBoundingClientRect();
         const morph = accessRect ? smooth(clamp((frame.height * 0.95 - accessRect.top) / (frame.height * 0.6))) : 0;
         const assemblyProgress = accessRect ? clamp((frame.height * 0.85 - accessRect.top) / Math.max(1, accessRect.height + frame.height * 0.35)) : 0;
-        const targetRect = morph > 0.05 ? accessRect : engineRect;
-        const capWeight = smooth(clamp((1 - Math.abs(frame.chapter - 3) - 0.25) / 0.75));
-        const inWindow = !!targetRect && targetRect.bottom > -50 && targetRect.top < frame.height + 100;
+        const capWeight = smooth(clamp(1 - Math.abs(chapter - 3) / 0.88, 0, 1));
+        const inWindow = capWeight > 0.001;
         engine.root.visible = inWindow;
         const capProgress = Number(capSystem?.dataset.progress ?? 0);
         const activeModule = focus >= 0 ? focus : Math.min(5, Math.floor(capProgress * 6));
@@ -466,14 +479,26 @@ export function createWorld(host: HTMLElement, editor: HTMLElement, onFailure: (
 
         const output = smooth((chapter - 2.05) / 0.85);
         outputSignal.position.set(lerp(24, 48, output), lerp(0.8, 1.4, output), lerp(-16, -32, output));
-        outputSignal.visible = chapter > 2.02 && chapter < 2.9;
-        if (targetRect && inWindow && capWeight > 0.001) {
-          const units = worldUnitsPerPixel(camera.position.distanceTo(engineCenter), camera.fov, frame.height);
-          const scale = units * Math.min((targetRect.height * 0.84) / lerp(4.8, 3.6, morph), (targetRect.width * 0.9) / lerp(3.7, 9.7, morph));
-          engine.root.scale.setScalar(scale);
-          projected.copy(engineCenter).project(camera);
-          const offset = domViewOffset(projected, targetRect, frame.width, frame.height);
-          camera.setViewOffset(frame.width, frame.height, offset.x * capWeight, offset.y * capWeight, frame.width, frame.height);
+        outputSignal.visible = chapter > 2.02 && chapter < 2.65;
+
+        // Deterministic viewport-ratio framing for Capabilities (zero vertical DOM-rect chasing or jumps)
+        if (capWeight > 0.001) {
+          const offsetX = mobile ? 0 : lerp(-frame.width * 0.215, 0, morph) * capWeight;
+          const offsetY = (mobile ? frame.height * 0.12 : lerp(-frame.height * 0.015, frame.height * 0.115, morph)) * capWeight;
+          camera.setViewOffset(frame.width, frame.height, offsetX, offsetY, frame.width, frame.height);
+        }
+        const studioScale = mobile ? 0.72 : lerp(0.88, 0.78, morph);
+        engine.root.scale.setScalar(studioScale);
+        engine.root.rotation.y = lerp((capProgress - 0.5) * -0.08, (assemblyProgress - 0.5) * 0.1, morph);
+        if (capScreen && capabilityEditor) {
+          capScreen.position
+            .copy(capabilities.position)
+            .add(engine.root.position)
+            .addScaledVector(engine.screenPosition, studioScale);
+          capScreen.rotation.y = engine.root.rotation.y;
+          capScreen.scale.setScalar((6.5 / (mobile ? 640 : 1080)) * studioScale);
+          capScreen.visible = capWeight > 0.02 && !mobile;
+          capabilityEditor.style.opacity = String(capScreen.visible ? capWeight : 0);
         }
         renderer.domElement.dataset.capabilityArchitecture = "information-field";
         renderer.domElement.dataset.capabilityModules = "6";
@@ -481,11 +506,19 @@ export function createWorld(host: HTMLElement, editor: HTMLElement, onFailure: (
         renderer.domElement.dataset.informationRecords = "6";
         renderer.domElement.dataset.capabilityFocus = String(activeModule);
         renderer.domElement.dataset.accessMorph = morph.toFixed(3);
+        renderer.domElement.dataset.chamberProgress = capProgress.toFixed(3);
+        renderer.domElement.dataset.assemblyProgress = assemblyProgress.toFixed(3);
+        renderer.domElement.dataset.realityProgress = (frame.sections.about ?? 0).toFixed(3);
         key.position.copy(camera.position).add(new THREE.Vector3(-3, 6, 3));
         key.target.position.fromArray(pose.target);
         key.target.updateMatrixWorld();
         groups.forEach((group, i) => {
-          group.visible = i === 1 ? chapter > 2.03 && chapter < 2.85 : Math.abs(chapter - (i === 0 ? 0 : i + 1)) < 1.15;
+          group.visible =
+            i === 1
+              ? chapter > 2.03 && chapter < 2.75
+              : i === 2
+              ? inWindow
+              : Math.abs(chapter - (i === 0 ? 0 : i + 1)) < 1.15;
         });
         if (close > 0.001) groups.forEach((group, i) => { if (i !== 4) group.visible = false; });
         roadQuiet.forEach(({ material, opacity: baseOpacity }) => {
@@ -514,7 +547,7 @@ export function createWorld(host: HTMLElement, editor: HTMLElement, onFailure: (
         roadNodes.forEach((material, i) => { material.emissiveIntensity = i === activeRoadNode ? 1.55 : 0.52; });
         roadGlows.forEach((material, i) => { material.opacity = (i === activeRoadNode ? 0.82 : 0.36) * (1 - close); });
 
-        room.lamps[0].intensity = 34 + Math.sin(frame.time * 0.6) * 2;
+        room.update(frame.sections.about ?? 0, frame.time);
         room.holo.core.rotation.y = frame.time * 0.7;
         room.holo.cage.rotation.y = -frame.time * 0.42;
         room.holo.orbit.rotation.z = frame.time * 0.55;
@@ -522,7 +555,8 @@ export function createWorld(host: HTMLElement, editor: HTMLElement, onFailure: (
         const builderWeight = smooth(1 - Math.abs(chapter - 4));
         screen.visible = builderWeight > 0.02;
         editor.style.opacity = String(builderWeight);
-        cssRenderer!.domElement.style.visibility = screen.visible ? "visible" : "hidden";
+        cssRenderer!.domElement.style.visibility =
+          screen.visible || (capScreen?.visible ?? false) ? "visible" : "hidden";
         renderer.render(scene, camera);
         cssRenderer?.render(cssScene, camera);
         renderer.domElement.dataset.camera = pose.position.map(v => v.toFixed(2)).join(",");

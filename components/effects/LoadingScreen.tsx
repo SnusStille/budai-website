@@ -173,7 +173,7 @@ export default function LoadingScreen() {
         if (openingRef.current) {
           openingRef.current.style.setProperty("--opening-progress", p.toFixed(4));
           openingRef.current.dataset.nameStage =
-            p < 0.14 ? "opening" : p < 0.66 ? "forming" : p < 0.88 ? "settled" : "entering";
+            p < 0.14 ? "opening" : p < 0.56 ? "forming" : p < 0.86 ? "emerging" : "entering";
         }
         drive(now);
         if (p >= 1) end();
@@ -380,8 +380,13 @@ export default function LoadingScreen() {
             <span>NEURAL SYSTEM / 001</span>
           </div>
           <div className="opening-identity" data-opening-identity aria-hidden="true">
+            <div className="opening-depth-grid" />
+            <div className="opening-focal-beacon">
+              <i className="opening-emergence-ring opening-emergence-ring-a" />
+              <i className="opening-emergence-ring opening-emergence-ring-b" />
+            </div>
             <div className="opening-identity-stage">
-              <span className="opening-identity-kicker">THE INTELLIGENCE SYSTEM</span>
+              <span className="opening-identity-kicker">BUDAI · INTELLIGENCE ENVIRONMENT</span>
               <div className="opening-identity-name" data-opening-name="BudAI">
                 <span className="opening-char opening-char-1">B</span>
                 <span className="opening-char opening-char-2">u</span>
