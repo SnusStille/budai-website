@@ -479,8 +479,8 @@ html[data-budai-intro="playing"] .hero-content > * { opacity: 0; transform: tran
 .editor-statusbar { height: 30px; border-top: 1px solid #8eb2d123; background: #0f2231; display: flex; align-items: center; justify-content: space-between; padding: 0 18px; font-size: 9px; letter-spacing: .06em; color: #9bbdd2; }
 .editor-statusbar i { display: inline-block; width: 3px; height: 3px; border-radius: 50%; background: #75b0ba; margin: 0 12px 2px; }
 
-/* Unified CSS3D Capability Synthesis Studio Screen (projected onto the 03 Capabilities 3D Monolith) */
-.capability-studio-screen { display: flex; flex-direction: column; background: linear-gradient(165deg, #08121f 0%, #050b14 100%); border: 1px solid #6ec7e042; box-shadow: inset 0 1px 0 #9ce8ff22; }
+/* Unified CSS3D Capability Synthesis Studio Screen (translucent architectural blueprint plate) */
+.capability-studio-screen { display: flex; flex-direction: column; background: linear-gradient(165deg, rgba(6, 15, 26, 0.56) 0%, rgba(4, 9, 17, 0.42) 100%); border: 1px solid #6ec7e033; box-shadow: inset 0 1px 0 #9ce8ff1a; }
 .capability-studio-body { flex: 1; display: grid; grid-template-columns: 55% 45%; min-height: 0; overflow: hidden; }
 .capability-studio-code { height: auto; border-right: 1px solid #76b8d426; padding: 18px 0; font-size: 16.5px; line-height: 28px; }
 .capability-studio-code .editor-line { min-height: 28px; }
@@ -757,12 +757,13 @@ html[data-world-state="ready"] .capability-code-depth-backdrop { display:none; }
   html[data-world-state="ready"] .capability-active-readout { bottom: 16px; max-width: 390px; padding: 8px 12px; background: linear-gradient(135deg, #06111be0, #040910cc); }
   html[data-world-state="ready"] .capability-readout-code { max-height: 44px; }
 }
-.plans-heading { border-top:1px solid #8daebc22; padding-top:48px; margin-bottom:0; }
+.plans-heading { border-top:1px solid #8daebc22; padding-top:48px; margin-bottom:0; scroll-margin-top:110px; }
 .plans-heading > span { font-weight:400; }
-.access-architecture { width:min(1040px,100%); height:450px; margin:0 auto 38px; position:relative; }
+.access-architecture { width:min(1040px,100%); height:450px; margin:0 auto 38px; position:relative; scroll-margin-top:135px; }
 .access-code-header { position:absolute; top:0; left:0; right:0; display:flex; justify-content:space-between; align-items:center; gap:12px; font:7px var(--font-jetbrains),monospace; letter-spacing:.12em; color:#6b8ca0; padding-bottom:8px; border-bottom:1px solid #7fcbe018; }
 .access-code-header > code { font:8px var(--font-jetbrains),monospace; color:#8ad8ec; letter-spacing:.03em; background:#091926aa; border:1px solid #78d2e829; border-radius:4px; padding:2px 8px; }
-.access-labels { position:absolute; bottom:0; left:50%; width:min(100%,820px); transform:translateX(-50%); display:grid; grid-template-columns:repeat(3,1fr); gap:16px; text-align:center; font:9px var(--font-jetbrains),monospace; letter-spacing:.08em; color:#d0e4ee; }
+.access-labels { position:absolute; bottom:0; left:50%; width:min(100%,880px); transform:translateX(-50%); display:grid; grid-template-columns:repeat(3,1fr); gap:14px; text-align:center; font:9px var(--font-jetbrains),monospace; letter-spacing:.08em; color:#d0e4ee; }
+.access-labels > span { background:rgba(5, 12, 20, 0.82); border:1px solid rgba(122, 219, 240, 0.18); border-radius:8px; padding:10px 12px; backdrop-filter:blur(8px); }
 .access-labels > span > code { display:block; width:fit-content; margin:0 auto 6px; font:7.5px var(--font-jetbrains),monospace; color:#88def2; background:#0a1d2ce6; border:1px solid #7ed6ec38; border-radius:4px; padding:3px 8px; letter-spacing:.04em; }
 .access-labels small { display:block; color:#6b8391; font-size:8px; margin-top:6px; letter-spacing:0; }
 .access-fallback { position:absolute; inset:40px 5% 50px; display:flex; justify-content:space-around; perspective:700px; }
@@ -785,9 +786,12 @@ html[data-world-state="ready"] .capability-code-depth-backdrop { display:none; }
  .code-depth-mid { display:none; }
  .capability-active-readout { left:0; right:0; bottom:18px; padding:8px 11px; max-width:none; }
  .capability-readout-code { display:none; }
- .access-architecture { height:245px; }
+ .access-architecture { height:310px; scroll-margin-top:115px; }
  .access-code-header > code { display:none; }
- .access-labels { font-size:7px; }
+ .access-labels { font-size:7px; gap:8px; }
+ .access-labels > span { padding:7px 8px; }
+ .access-labels > span > code { font-size:6px; padding:2px 5px; margin-bottom:4px; }
+ .access-labels small { font-size:7px; margin-top:4px; line-height:1.35; }
  .plans-heading { padding-top:28px;flex-direction:column;align-items:flex-start;gap:8px; }
 }
 @media (prefers-reduced-motion:reduce) {

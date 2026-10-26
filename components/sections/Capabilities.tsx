@@ -132,48 +132,53 @@ export default function Capabilities() {
 
         <CapabilityMap />
         <div className="plans-heading">
-          <span>{sv ? "Välj din väg" : "Choose your way in"}</span>
-          <p>{sv ? "Från första signal till gemensamt resultat — börja gratis i preview idag och väx med Konsument eller Företag när paketen lanseras." : "From first signal to shared team output — start free in the preview today and scale with Consumer or Business when paid plans launch."}</p>
+          <span>
+            {sv ? "Värld II: Möjligheternas Atlas" : "World II: The Atlas of Possibility"}
+          </span>
+          <p>
+            {sv
+              ? "”En förmåga är ett verktyg. Sammankopplade förmågor skapar möjligheter.” Verkstadens komponenter viks ut till en rumslig karta av dokument, beslut, planer och arbetsflöden."
+              : "“One capability is a tool. Connected capabilities create possibilities.” The workshop structure unfolds into a spatial map of documents, decisions, structured plans, and workflows."}
+          </p>
         </div>
         <div className="access-architecture" data-access-architecture data-ai-assembly-line aria-hidden="true">
           <div className="access-code-header">
-            <span>{sv ? "03 → 04 / FRÅN SIGNAL TILL HANDLING · NIVÅER & ARBETSYTOR" : "03 → 04 / FROM SIGNAL TO ACTION · WORKFLOW & ACCESS TIERS"}</span>
-            <code>{`signal(chat | image | voice) -> memory.selected() -> model.stream() -> action`}</code>
+            <span>
+              {sv
+                ? "VÄRLD I → VÄRLD II / VERKSTADENS STRUKTUR VIKS UT TILL MÖJLIGHETERNAS ATLAS"
+                : "WORLD I → WORLD II / WORKSHOP STRUCTURE UNFOLDS INTO THE ATLAS OF POSSIBILITY"}
+            </span>
+            <code>{`workshop.components(6) -> atlas.routes(document | decision | plan | workflow)`}</code>
           </div>
           <div className="access-fallback">
             <svg viewBox="-5 -2.1 10 4.2" width="100%" height="100%">
-              {[-0.85, -0.3, 0.25, 0.8].map((iy, idx) => (
-                <rect key={idx} x="-4.4" y={iy - 0.16} width="1.15" height="0.3" rx="0.04" fill="#0d263a" stroke={idx % 2 === 0 ? "#78d5ea" : "#6ee7b7"} strokeWidth="0.02" />
-              ))}
-              <rect x="-2.85" y="-1.15" width="0.42" height="2.3" rx="0.04" fill="none" stroke="#78d5ea" strokeOpacity="0.8" strokeWidth="0.025" />
-              <rect x="-1.45" y="-1.05" width="2.1" height="2.1" rx="0.06" fill="#0b2032" fillOpacity="0.85" stroke="#8ce8fa" strokeWidth="0.024" />
-              {[-0.55, 0, 0.55].map((dy, dIdx) => (
-                <rect key={dIdx} x="-1.25" y={dy - 0.14} width="1.7" height="0.28" rx="0.03" fill="#13344c" stroke={dIdx === 1 ? "#6ee7b7" : "#78d5ea"} strokeWidth="0.018" />
-              ))}
-              {[-0.45, 0, 0.45].map((cy, cIdx) => (
-                <path key={cIdx} d={`M -2.43 ${cy} L -1.45 ${cy} M 0.65 ${cy} L 1.75 ${cy}`} fill="none" stroke="#6ee7b7" strokeOpacity="0.78" strokeWidth="0.022" />
-              ))}
-              <rect x="1.75" y="-1.1" width="2.45" height="2.2" rx="0.06" fill="#0d263b" fillOpacity="0.92" stroke="#6ee7b7" strokeWidth="0.026" />
-              <rect x="1.95" y="-0.85" width="2.05" height="0.32" rx="0.03" fill="#163e5c" stroke="#78d5ea" strokeWidth="0.016" />
-              <rect x="1.95" y="-0.38" width="1.2" height="1.15" rx="0.03" fill="#12324a" stroke="#78d5ea" strokeWidth="0.016" />
-              <rect x="3.28" y="-0.38" width="0.72" height="1.15" rx="0.04" fill="#12324a" stroke="#6ee7b7" strokeWidth="0.018" />
+              {/* Cantilevered Meridian Arc & Topographic Compass Rose */}
+              <path d="M -4.2 0.85 Q 0 -2.15 4.2 0.85" fill="none" stroke="#7adbf0" strokeOpacity="0.65" strokeWidth="0.028" strokeDasharray="0.12 0.06" />
+              <ellipse cx="0" cy="0.35" rx="3.8" ry="1.05" fill="none" stroke="#a8b4f8" strokeOpacity="0.38" strokeWidth="0.02" />
+              <ellipse cx="0" cy="0.35" rx="2.4" ry="0.68" fill="none" stroke="#7adbf0" strokeOpacity="0.45" strokeWidth="0.02" />
+              {/* Three Unfolded Topographic Elevation Terraces (Basic, Consumer, Business) */}
+              <polygon points="-4.5,0.65 -1.8,0.65 -1.4,-0.25 -4.1,-0.25" fill="#0b2032" fillOpacity="0.82" stroke="#7adbf0" strokeWidth="0.024" />
+              <polygon points="-1.3,0.35 1.3,0.35 1.6,-0.55 -1.0,-0.55" fill="#0d2238" fillOpacity="0.86" stroke="#a8b4f8" strokeWidth="0.024" />
+              <polygon points="1.8,0.05 4.4,0.05 4.6,-0.85 2.0,-0.85" fill="#0d263b" fillOpacity="0.88" stroke="#6ee7b7" strokeWidth="0.024" />
+              {/* Interconnected Atlas Routes */}
+              <path d="M -3.1 0.2 Q -1.5 -0.65 0.1 -0.15 T 3.2 -0.45" fill="none" stroke="#6ee7b7" strokeOpacity="0.88" strokeWidth="0.026" />
             </svg>
           </div>
           <div className="access-labels">
             <span>
-              <code>01 · INTAKE (CHAT · VISION · VOICE)</code>
+              <code>01 · DOCUMENT &amp; INTAKE ROUTE</code>
               01 / BASIC
-              <small>{sv ? "Tillgänglig nu · Direkt inmatning & svar" : "Available now · Direct intake & chat"}</small>
+              <small>{sv ? "Tillgänglig nu · Direkt skrivande, syn & röst i preview" : "Available now · Direct writing, vision & voice in preview"}</small>
             </span>
             <span>
-              <code>02 · CONTEXT &amp; MEMORY PIPELINE</code>
+              <code>02 · MEMORY &amp; BILINGUAL ROUTE</code>
               02 / CONSUMER
-              <small>{sv ? "Kommer snart · Strukturerat minne & modeller" : "Coming soon · Structured memory & models"}</small>
+              <small>{sv ? "Kommer snart · Utökat minne, planer & djupanalys" : "Coming soon · Extended memory, plans & deep analysis"}</small>
             </span>
             <span>
-              <code>03 · COHERENT TEAM OUTPUT</code>
+              <code>03 · SHARED WORKFLOW &amp; DECISION ROUTE</code>
               03 / BUSINESS
-              <small>{sv ? "Kommer snart · Gemensamt resultat & flöden" : "Coming soon · Coherent shared output"}</small>
+              <small>{sv ? "Kommer snart · Gemensamma arbetsflöden för team" : "Coming soon · Shared team workflows & governance"}</small>
             </span>
           </div>
         </div>
