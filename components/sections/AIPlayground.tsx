@@ -86,7 +86,7 @@ import * as cloud from "@/lib/playground/cloudStore";
 /* ─── helpers ─────────────────────────────────────────── */
 
 function renderInlineMd(text: string, keyPrefix: string): ReactNode[] {
-  const pattern = /(\*\*.+?\*\*|`.+?`)/g;
+  const pattern = /(\*\*.+?\*\*|`.+?`|\*[^*\s][^*]*?\*|\[[^\]]+\]\((?:https?:\/\/|mailto:)[^)\s]+\))/g;
   return text.split(pattern).map((part, i) => {
     if (part.startsWith("**") && part.endsWith("**"))
       return (
@@ -102,6 +102,25 @@ function renderInlineMd(text: string, keyPrefix: string): ReactNode[] {
         >
           {part.slice(1, -1)}
         </code>
+      );
+    if (part.startsWith("*") && part.endsWith("*") && part.length > 2)
+      return (
+        <em key={`${keyPrefix}-em-${i}`} className="italic text-white/95">
+          {part.slice(1, -1)}
+        </em>
+      );
+    const linkMatch = part.match(/^\[([^\]]+)\]\(((?:https?:\/\/|mailto:)[^)\s]+)\)$/);
+    if (linkMatch)
+      return (
+        <a
+          key={`${keyPrefix}-a-${i}`}
+          href={linkMatch[2]}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-accent-cyan underline decoration-accent-cyan/40 underline-offset-2 hover:text-white transition-colors"
+        >
+          {linkMatch[1]}
+        </a>
       );
     return <span key={`${keyPrefix}-t-${i}`}>{part}</span>;
   });
@@ -567,6 +586,11 @@ export default function AIPlayground() {
       if (d) setInput((cur) => cur || d);
       const p = localStorage.getItem("budai_persona");
       if (p && PERSONAS.some((x) => x.id === p)) setPersona(p);
+      const fb = localStorage.getItem("budai_msg_feedback");
+      if (fb) {
+        const parsed = JSON.parse(fb) as Record<string, "up" | "down" | undefined>;
+        if (parsed && typeof parsed === "object") setFeedback(parsed);
+      }
     } catch {
       /* ignore */
     }
@@ -609,7 +633,9 @@ export default function AIPlayground() {
     const busyNow = activity !== "idle";
     window.dispatchEvent(new CustomEvent("budai:busy", { detail: busyNow }));
     if (busyNow) {
-      if (!titleRef.current) titleRef.current = document.title;
+      if (!titleRef.current || titleRef.current.startsWith("● ")) {
+        titleRef.current = document.title.startsWith("● ") ? "Stilledev.se · BudAI" : document.title;
+      }
       document.title = lang === "sv" ? "● BudAI tänker…" : "● BudAI is thinking…";
     } else if (titleRef.current) {
       document.title = titleRef.current;
@@ -998,6 +1024,8 @@ export default function AIPlayground() {
     }
     const mid = newId("m");
     const finalContent = text || "…";
+    await bumpServer("messages");
+    if (retry?.image) await bumpServer("images");
     setMessages((prev) => [...prev, { id: mid, role: "assistant", content: finalContent, ts: Date.now() }]);
     if (
       workspace ||
@@ -1060,9 +1088,6 @@ export default function AIPlayground() {
     setLastFailed(null);
     abortRef.current = false;
     setActivity(img ? "reading_image" : "thinking");
-
-    await bumpServer("messages");
-    if (img) await bumpServer("images");
 
     // Build API history from nextList
     const apiHistory = nextList
@@ -1147,6 +1172,9 @@ export default function AIPlayground() {
         void reloadSidebar();
       }
 
+      await bumpServer("messages");
+      if (img) await bumpServer("images");
+
       if (data.dual && data.replies?.length >= 2) {
         setActivity("idle");
         const mid = newId("m");
@@ -1208,7 +1236,6 @@ export default function AIPlayground() {
     setGenMode(false);
     setActivity("generating_image");
     setLastFailed(null);
-    await bumpServer("generations");
 
     try {
       const headers = await authHeaders();
@@ -1246,6 +1273,7 @@ export default function AIPlayground() {
         });
         return;
       }
+      await bumpServer("generations");
       setActivity("idle");
       setMessages((prev) => [
         ...prev,
@@ -1359,6 +1387,8 @@ export default function AIPlayground() {
       const tag = (e.target as HTMLElement)?.tagName;
       const inField = tag === "INPUT" || tag === "TEXTAREA" || (e.target as HTMLElement)?.isContentEditable;
       if (e.key === "Escape") {
+        if (lightbox) { setLightbox(null); return; }
+        if (memoryOpen) { setMemoryOpen(false); return; }
         if (showShortcuts) { setShowShortcuts(false); return; }
         if (toolsOpen) { setToolsOpen(false); return; }
         if (workspace) { setWorkspace(null); return; }
@@ -1399,7 +1429,7 @@ export default function AIPlayground() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showShortcuts, toolsOpen, workspace, mobileDrawer, messages, lang]);
+  }, [lightbox, memoryOpen, showShortcuts, toolsOpen, workspace, mobileDrawer, messages, lang]);
 
   const runInspire = () => {
     if (busy) return;
@@ -1734,7 +1764,8 @@ export default function AIPlayground() {
                       </button>
                       <button
                         type="button"
-                        className="opacity-0 group-hover:opacity-100 p-1 text-muted hover:text-white"
+                        aria-label={lang === "sv" ? "Byt namn på chatt" : "Rename chat"}
+                        className="opacity-70 md:opacity-0 md:group-hover:opacity-100 focus-visible:opacity-100 p-1 text-muted hover:text-white"
                         onClick={() => {
                           setRenamingId(c.id);
                           setRenameVal(c.title);
@@ -1744,7 +1775,8 @@ export default function AIPlayground() {
                       </button>
                       <button
                         type="button"
-                        className="opacity-0 group-hover:opacity-100 p-1 text-muted hover:text-red-300"
+                        aria-label={lang === "sv" ? "Radera chatt" : "Delete chat"}
+                        className="opacity-70 md:opacity-0 md:group-hover:opacity-100 focus-visible:opacity-100 p-1 text-muted hover:text-red-300"
                         onClick={() => void removeConvo(c.id)}
                       >
                         <Trash2 className="w-3 h-3" />
@@ -1893,6 +1925,7 @@ export default function AIPlayground() {
                     <button
                       type="button"
                       onClick={() => void newChat()}
+                      aria-label={lang === "sv" ? "Starta ny chatt" : "Start new chat"}
                       className="p-2 rounded-lg border border-white/[0.06] text-muted hover:text-white"
                       title={lang === "sv" ? "Ny chatt" : "New chat"}
                     >
@@ -1903,6 +1936,7 @@ export default function AIPlayground() {
                     type="button"
                     onClick={exportThread}
                     disabled={!messages.length}
+                    aria-label={lang === "sv" ? "Exportera tråd (.md)" : "Export thread (.md)"}
                     className="p-2 rounded-lg border border-white/[0.06] text-muted hover:text-white disabled:opacity-30"
                     title={lang === "sv" ? "Exportera tråd (.md) · ⌘E" : "Export thread (.md) · ⌘E"}
                   >
@@ -1936,6 +1970,7 @@ export default function AIPlayground() {
                   <button
                     type="button"
                     onClick={() => setShowShortcuts(true)}
+                    aria-label={lang === "sv" ? "Tangentbordsgenvägar" : "Keyboard shortcuts"}
                     className="hidden sm:inline-flex p-2 rounded-lg border border-white/[0.06] text-muted hover:text-white"
                     title={lang === "sv" ? "Genvägar · ⌘K" : "Shortcuts · ⌘K"}
                   >
@@ -1945,6 +1980,7 @@ export default function AIPlayground() {
                     <button
                       type="button"
                       onClick={() => void auth.signOut()}
+                      aria-label={lang === "sv" ? "Logga ut" : "Sign out"}
                       className="p-2 rounded-lg border border-white/[0.06] text-muted hover:text-white"
                       title="Sign out"
                     >
@@ -2347,13 +2383,18 @@ export default function AIPlayground() {
                             type="button"
                             onClick={async () => {
                               try {
-                                await navigator.clipboard.writeText(msg.content);
+                                const snippet = `${msg.content}\n\n— BudAI (stilledev.se)`;
+                                if (typeof navigator.share === "function") {
+                                  await navigator.share({ title: "BudAI", text: snippet });
+                                  return;
+                                }
+                                await navigator.clipboard.writeText(snippet);
                                 showToast(
                                   "ok",
                                   lang === "sv" ? "Svar kopierat — klistra in var du vill" : "Reply copied — paste anywhere"
                                 );
                               } catch {
-                                showToast("err", "Share failed");
+                                /* user cancelled or clipboard error */
                               }
                             }}
                             className="inline-flex items-center gap-1 text-[10px] text-muted hover:text-white px-1.5 py-1"
@@ -2363,8 +2404,14 @@ export default function AIPlayground() {
                           </button>
                           <button
                             type="button"
+                            aria-label={lang === "sv" ? "Bra svar" : "Helpful reply"}
+                            aria-pressed={feedback[msg.id] === "up"}
                             onClick={() => {
-                              setFeedback((f) => ({ ...f, [msg.id]: "up" }));
+                              setFeedback((f) => {
+                                const next = { ...f, [msg.id]: "up" as const };
+                                try { localStorage.setItem("budai_msg_feedback", JSON.stringify(next)); } catch { /* ignore */ }
+                                return next;
+                              });
                               showToast("ok", lang === "sv" ? "Tack — sparat lokalt" : "Thanks — saved locally");
                             }}
                             className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-1 ${
@@ -2376,8 +2423,14 @@ export default function AIPlayground() {
                           </button>
                           <button
                             type="button"
+                            aria-label={lang === "sv" ? "Mindre bra svar" : "Unhelpful reply"}
+                            aria-pressed={feedback[msg.id] === "down"}
                             onClick={() => {
-                              setFeedback((f) => ({ ...f, [msg.id]: "down" }));
+                              setFeedback((f) => {
+                                const next = { ...f, [msg.id]: "down" as const };
+                                try { localStorage.setItem("budai_msg_feedback", JSON.stringify(next)); } catch { /* ignore */ }
+                                return next;
+                              });
                               showToast("ok", lang === "sv" ? "Tack — vi tar det vidare" : "Thanks — noted");
                             }}
                             className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-1 ${
@@ -2735,6 +2788,7 @@ export default function AIPlayground() {
                   <button
                     type="button"
                     onClick={() => setToolsOpen((v) => !v)}
+                    aria-label={lang === "sv" ? "Verktyg" : "Tools"}
                     className={`shrink-0 h-11 w-10 rounded-xl border flex items-center justify-center ${
                       toolsOpen
                         ? "border-accent-cyan/35 bg-accent-cyan/10 text-accent-cyan"
@@ -2829,6 +2883,7 @@ export default function AIPlayground() {
                     <button
                       type="button"
                       onClick={stopAll}
+                      aria-label={lang === "sv" ? "Avbryt generering" : "Cancel generation"}
                       className="shrink-0 h-11 px-3.5 rounded-2xl border border-red-400/30 text-red-200"
                     >
                       <StopCircle className="w-4 h-4" />
@@ -2856,6 +2911,11 @@ export default function AIPlayground() {
                         : "Account"}
                   </span>
                   <span>{lang === "sv" ? "Skriv inga känsliga uppgifter under previewn" : "Don't enter sensitive data during the preview"}</span>
+                  {input.length > 100 && (
+                    <span className={`ml-auto font-mono ${input.length > 3600 ? "text-amber-300/80" : "text-muted/50"}`}>
+                      {input.length}/4000
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
@@ -3036,11 +3096,28 @@ export default function AIPlayground() {
               ? ["Skriv", "Automatisera", "Besluta", "SV / EN", "Minne", "Syn & röst"]
               : ["Write", "Automate", "Decide", "SV / EN", "Memory", "Vision & voice"]
             ).map((label, i) => (
-              <span key={i} className="product-bridge-channel">
+              <span
+                key={i}
+                className="product-bridge-channel"
+                onPointerEnter={() => window.dispatchEvent(new CustomEvent("budai:capability-focus", { detail: i }))}
+                onPointerLeave={() => window.dispatchEvent(new CustomEvent("budai:capability-focus", { detail: -1 }))}
+                onClick={() => {
+                  window.dispatchEvent(new CustomEvent("budai:capability-focus", { detail: i }));
+                  document.querySelector("[data-capability-system]")?.scrollIntoView({ behavior: "smooth" });
+                }}
+              >
                 <b>0{i + 1}</b>
                 <span>{label}</span>
               </span>
             ))}
+          </div>
+          <div className="product-bridge-conduit">
+            <span className="product-bridge-conduit-line">
+              <b className="product-bridge-conduit-pulse" />
+            </span>
+            <small className="product-bridge-conduit-label">
+              {lang === "sv" ? "6 KANALER KONVERGERAR I KAPITEL 03 ↓" : "6 CHANNELS CONVERGE INTO CHAPTER 03 ↓"}
+            </small>
           </div>
         </div>
       </div>

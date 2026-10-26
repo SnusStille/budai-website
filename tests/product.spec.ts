@@ -99,13 +99,15 @@ test("Stop response cancels the existing stream reader and releases the composer
   await expect(page.getByRole("button", { name: "Send message", exact: true })).toBeEnabled();
 });
 
-test("Playground error/retry state remains functional without a configured model provider", async ({ page }) => {
+test("Playground error/retry state remains functional without a configured model provider and preserves daily quota on failure", async ({ page }) => {
   await page.route("**/api/playground", route => route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ error: "Temporarily unavailable. Please retry." }) }));
   await page.goto("/#playground");
+  await expect(page.locator("#playground").getByText("12/12 credits left")).toBeVisible();
   const input = page.getByRole("textbox", { name: "Message BudAI", exact: true });
   await input.fill("Help me plan tomorrow.");
   await input.press("Enter");
   await expect(page.getByText("Temporarily unavailable. Please retry.", { exact: true })).toBeVisible();
+  await expect(page.locator("#playground").getByText("12/12 credits left")).toBeVisible();
   await expect(input).toBeEnabled();
   await expect(page.locator("[data-global-loader]")).toHaveCount(0);
 });

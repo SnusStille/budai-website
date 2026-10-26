@@ -26,8 +26,13 @@ export default function Shortcuts() {
         window.setTimeout(() => document.querySelector<HTMLTextAreaElement>("#playground textarea")?.focus({ preventScroll: true }), 500);
       }
     };
+    const openShortcuts = () => setOpen(true);
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    window.addEventListener("budai:shortcuts", openShortcuts);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("budai:shortcuts", openShortcuts);
+    };
   }, []);
 
   if (!open) return null;

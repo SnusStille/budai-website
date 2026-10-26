@@ -128,31 +128,46 @@ export function createWorld(
       blending: THREE.AdditiveBlending,
       depthWrite: false,
     });
+    const corridorPulseMat = new THREE.MeshBasicMaterial({
+      color: "#b8f3ff",
+      transparent: true,
+      opacity: 0,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+    const corridorCurves: THREE.CatmullRomCurve3[] = [];
+    const corridorPulses: THREE.Mesh[] = [];
+    const corridorPulseGeo = new THREE.SphereGeometry(0.052, 8, 8);
     for (let lane = 0; lane < 6; lane++) {
       const a = (lane / 6) * Math.PI * 2;
-      const rStart = 1.65;
-      const rEnd = 0.95;
+      const rStart = 1.55;
       const railCurve = new THREE.CatmullRomCurve3([
-        new THREE.Vector3(Math.cos(a) * rStart, 0.85 + Math.sin(a) * 0.55, 0),
-        new THREE.Vector3(11 + Math.cos(a + 0.45) * 1.25, 1.05 + Math.sin(a + 0.45) * 0.48, -7.5),
-        new THREE.Vector3(22 + Math.cos(a + 0.9) * rEnd, 1.15 + Math.sin(a + 0.9) * 0.42, -14.8),
+        new THREE.Vector3(Math.cos(a) * rStart, 0.88 + Math.sin(a) * 0.52, 0),
+        new THREE.Vector3(9.5 + Math.cos(a + 0.35) * 1.28, 0.98 + Math.sin(a + 0.35) * 0.45, -5.2),
+        new THREE.Vector3(18.2 + Math.cos(a + 0.75) * 0.88, 0.92 + Math.sin(a + 0.75) * 0.32, -10.2),
+        new THREE.Vector3(24 + Math.cos(a + 1.05) * 0.22, 0.85 + Math.sin(a + 1.05) * 0.16, -12.75),
       ]);
+      corridorCurves.push(railCurve);
       corridor.add(
         new THREE.Line(
-          new THREE.BufferGeometry().setFromPoints(railCurve.getPoints(32)),
+          new THREE.BufferGeometry().setFromPoints(railCurve.getPoints(lite ? 24 : 36)),
           corridorRailMat
         )
       );
+      const pulseMesh = new THREE.Mesh(corridorPulseGeo, corridorPulseMat);
+      corridor.add(pulseMesh);
+      corridorPulses.push(pulseMesh);
     }
     [0.32, 0.68].forEach(u => {
       const ringPts: THREE.Vector3[] = [];
-      const r = lerp(1.45, 1.1, u);
-      for (let s = 0; s <= 48; s++) {
-        const theta = (s / 48) * Math.PI * 2;
+      const r = lerp(1.45, 0.95, u);
+      const segs = lite ? 32 : 48;
+      for (let s = 0; s <= segs; s++) {
+        const theta = (s / segs) * Math.PI * 2;
         ringPts.push(new THREE.Vector3(Math.cos(theta) * r, Math.sin(theta) * r * 0.68, 0));
       }
       const gateLoop = new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(ringPts), corridorRailMat);
-      gateLoop.position.set(lerp(0, 22, u), lerp(0.88, 1.12, u), lerp(0, -14.8, u));
+      gateLoop.position.set(lerp(0, 24, u), lerp(0.88, 0.86, u), lerp(0, -12.75, u));
       gateLoop.rotation.y = -0.58;
       corridor.add(gateLoop);
     });
@@ -163,7 +178,7 @@ export function createWorld(
 
     // 03 / CAPABILITIES UNIFIED 3D SYNTHESIS STUDIO + real CSS3D projected CapabilityStudioScreen.
     const capabilities = addEnvironment(2);
-    const engine = createCapabilityEngine(capabilities, mobile ? 640 : 1080);
+    const engine = createCapabilityEngine(capabilities, mobile ? 640 : 1080, lite);
     engine.root.position.set(0, -0.35, 3.15);
     const capScreen = capabilityEditor ? new CSS3DObject(capabilityEditor) : null;
     if (capScreen) {
@@ -172,6 +187,7 @@ export function createWorld(
       cssScene.add(capScreen);
     }
     let capSystem = document.querySelector<HTMLElement>("[data-capability-system]");
+    let capViewport = document.querySelector<HTMLElement>("[data-capability-viewport]");
     let accessViewport = document.querySelector<HTMLElement>("[data-access-architecture]");
 
     // 04 / Architectural Developer Room + real CSS3D projected ProgressiveEditor.
@@ -394,11 +410,13 @@ export function createWorld(
     let height = 0;
     let focus = -1;
     let roadmapFocus = -1;
+    let atlasTier = -1;
     let pathwayMode: "personal" | "business" = "personal";
     let lastTime = 0;
     let slowFrames = 0;
     const onCapability = (event: Event) => { focus = (event as CustomEvent<number>).detail; };
     const onRoadmap = (event: Event) => { roadmapFocus = (event as CustomEvent<number>).detail; };
+    const onAtlasTier = (event: Event) => { atlasTier = (event as CustomEvent<number>).detail; };
     const onPathway = (event: Event) => {
       const next = (event as CustomEvent<"personal" | "business">).detail;
       if (next === "personal" || next === "business") pathwayMode = next;
@@ -406,11 +424,13 @@ export function createWorld(
     const onLost = (event: Event) => { event.preventDefault(); if (!disposed) onFailure(); };
     window.addEventListener("budai:capability-focus", onCapability);
     window.addEventListener("budai:roadmap-focus", onRoadmap);
+    window.addEventListener("budai:atlas-tier", onAtlasTier);
     window.addEventListener("budai:pathway-mode", onPathway);
     renderer.domElement.addEventListener("webglcontextlost", onLost);
     unlisten = () => {
       window.removeEventListener("budai:capability-focus", onCapability);
       window.removeEventListener("budai:roadmap-focus", onRoadmap);
+      window.removeEventListener("budai:atlas-tier", onAtlasTier);
       window.removeEventListener("budai:pathway-mode", onPathway);
       renderer.domElement.removeEventListener("webglcontextlost", onLost);
     };
@@ -458,19 +478,38 @@ export function createWorld(
         camera.lookAt(new THREE.Vector3(...pose.target));
         camera.updateMatrixWorld();
         if (!capSystem?.isConnected) capSystem = document.querySelector<HTMLElement>("[data-capability-system]");
+        if (!capViewport?.isConnected) capViewport = document.querySelector<HTMLElement>("[data-capability-viewport]");
         if (!accessViewport?.isConnected) accessViewport = document.querySelector<HTMLElement>("[data-access-architecture]");
         const sysRect = capSystem?.getBoundingClientRect();
         const sysEntry = sysRect
-          ? smooth(clamp((frame.height * 0.68 - sysRect.top) / (frame.height * 0.42)))
+          ? smooth(clamp((frame.height * 0.94 - sysRect.top) / (frame.height * 0.62)))
           : 1;
+        const bridgeArrival = smooth(clamp((chapter - 2.12) / 0.72, 0, 1));
+        const arrival = clamp(0.42 * bridgeArrival + 0.58 * sysEntry, 0, 1);
         const accessRect = accessViewport?.getBoundingClientRect();
         const morph = accessRect ? smooth(clamp((frame.height * 0.95 - accessRect.top) / (frame.height * 0.6))) : 0;
         const assemblyProgress = accessRect ? clamp((frame.height * 0.85 - accessRect.top) / Math.max(1, accessRect.height + frame.height * 0.35)) : 0;
-        const capWeight = smooth(clamp(1 - Math.abs(chapter - 3) / 0.88, 0, 1));
-        const studioPresence = capWeight * sysEntry;
-        const corridorAlpha = smooth((chapter - 2.02) / 0.26) * (1 - smooth((chapter - 2.52) / 0.34)) * 0.32;
-        const visualOpacity = chapter < 3.3 ? Math.max(0.02, corridorAlpha * 2.2, opacity * sysEntry) : opacity;
+        const capWeight = smooth(clamp(1 - Math.abs(chapter - 3) / 0.92, 0, 1));
+        const studioPresence = capWeight * smooth(clamp((arrival - 0.02) / 0.38, 0, 1));
+        const corridorHandoff = 1 - smooth(clamp((sysEntry - 0.52) / 0.38, 0, 1));
+        const corridorAlpha =
+          smooth((chapter - 2.02) / 0.22) *
+          (1 - smooth((chapter - 2.64) / 0.32)) *
+          corridorHandoff *
+          0.38;
+
+        const vpRect = capViewport?.getBoundingClientRect();
+        const vpVisible = vpRect ? smooth(clamp((vpRect.bottom - frame.height * 0.16) / (frame.height * 0.26))) : 1;
+        const atlasVisible = accessRect ? smooth(clamp((frame.height * 0.88 - accessRect.top) / (frame.height * 0.26))) : 0;
+        const mobileTextComfort = mobile && chapter > 2.65 && chapter < 3.45 ? Math.max(0.28, vpVisible, atlasVisible) : 1;
+
+        const baseVisualOpacity =
+          chapter < 3.3
+            ? Math.max(0.02, corridorAlpha * 2.2, opacity * Math.max(bridgeArrival * 0.76, sysEntry))
+            : opacity;
+        const visualOpacity = Math.max(0.02, baseVisualOpacity * mobileTextComfort);
         host.style.opacity = String(visualOpacity);
+        host.dataset.visualMode = mobile ? "mobile-3d" : "desktop-3d";
         const inWindow = studioPresence > 0.001;
         engine.root.visible = inWindow;
         const capProgress = Number(capSystem?.dataset.progress ?? 0);
@@ -479,26 +518,35 @@ export function createWorld(
         const py = frame.pointerY ?? 0;
         engine.root.position.set(
           0,
-          lerp(-0.22, -0.05, morph) - (1 - sysEntry) * 0.24,
-          lerp(3.25, 2.85, morph)
+          lerp(-0.22, mobile ? -0.08 : -0.05, morph) - (1 - arrival) * 0.18,
+          lerp(3.25, 2.85, morph) - (1 - arrival) * 0.45
         );
-        engine.update(capProgress, activeModule, morph, frame.time, assemblyProgress, px, py, pathwayMode);
+        engine.update(capProgress, activeModule, morph, frame.time, assemblyProgress, px, py, pathwayMode, arrival, atlasTier);
 
         outputField.material.uniforms.uOpacity.value = corridorAlpha;
-        corridorRailMat.opacity = corridorAlpha * 0.85;
-        const output = smooth((chapter - 2.04) / 0.84);
-        outputSignal.position.set(lerp(24, 48, output), lerp(0.8, 1.4, output), lerp(-16, -32, output));
+        corridorRailMat.opacity = corridorAlpha * 0.88;
+        corridorPulseMat.opacity = smooth(corridorAlpha * 2.5) * 0.92;
+        const output = smooth((chapter - 2.04) / 0.82);
+        corridorPulses.forEach((pulse, lane) => {
+          const u = clamp(output * 0.86 + ((lane * 0.15 + frame.time * 0.14) % 0.14), 0, 1);
+          corridorCurves[lane].getPointAt(u, pulse.position);
+        });
+        outputSignal.position.set(lerp(24, 48, output), lerp(0.88, 0.85, output), lerp(-16, -28.75, output));
         outputSignal.material.uniforms.uOpacity.value = corridorAlpha * 1.15;
         outputSignal.visible = corridorAlpha > 0.002;
 
         // Deterministic viewport-ratio framing for Capabilities (zero horizontal whip or vertical jump)
         if (capWeight > 0.001) {
-          const exitWeight = chapter > 3 ? capWeight : 1;
-          const offsetX = mobile ? 0 : lerp(-frame.width * 0.238, 0, morph) * exitWeight;
-          const offsetY = (mobile ? lerp(frame.height * 0.12, frame.height * 0.21, morph) : lerp(-frame.height * 0.04, frame.height * 0.16, morph)) * exitWeight;
+          const entryWeight = smooth(clamp((chapter - 2.24) / 0.62, 0, 1)) * smooth(clamp(sysEntry * 1.35, 0, 1));
+          const frameWeight = chapter > 3 ? capWeight : entryWeight;
+          const mobileEntryWeight = chapter > 3 ? capWeight : smooth(clamp((chapter - 2.18) / 0.55, 0, 1));
+          const offsetX = mobile ? 0 : lerp(-frame.width * 0.238, 0, morph) * frameWeight;
+          const offsetY = mobile
+            ? lerp(frame.height * 0.13, frame.height * 0.195, morph) * mobileEntryWeight
+            : lerp(-frame.height * 0.04, frame.height * 0.16, morph) * frameWeight;
           camera.setViewOffset(frame.width, frame.height, offsetX, offsetY, frame.width, frame.height);
         }
-        const studioScale = (mobile ? 0.72 : lerp(0.92, 0.88, morph)) * lerp(0.94, 1, sysEntry);
+        const studioScale = (mobile ? lerp(0.7, 0.66, morph) : lerp(0.92, 0.88, morph)) * lerp(0.88, 1, arrival);
         engine.root.scale.setScalar(studioScale);
         engine.root.rotation.x = lerp(0.04, 0.26, morph);
         engine.root.rotation.y = lerp((capProgress - 0.5) * -0.1, (assemblyProgress - 0.5) * 0.14, morph);

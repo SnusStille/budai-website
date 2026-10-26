@@ -115,21 +115,33 @@ test("scrolling past Playground into Capabilities is smooth, pre-warmed, and fre
   await move(page, "#playground", 60);
   // WorldStage should pre-warm as soon as the user is in the Playground
   await expect(page.locator("html")).toHaveAttribute("data-world-state", "ready", { timeout: 15000 });
+  await expect(page.locator(".universe-world")).toHaveAttribute("data-visual-mode", "desktop-3d");
+  await expect(page.locator("[data-playground-bridge] .product-bridge-conduit")).toBeVisible();
   const startY = await page.evaluate(() => window.scrollY);
   const topsDown: number[] = [];
   const chaptersDown: number[] = [];
+  const opacitiesInTransition: number[] = [];
   for (let step = 1; step <= 14; step++) {
     await page.evaluate(y => window.scrollTo(0, y), startY + step * 160);
-    await page.waitForTimeout(30);
+    await page.waitForTimeout(35);
     const rectTop = await page.locator("[data-capability-viewport]").evaluate(el => el.getBoundingClientRect().top);
     const ch = await page.evaluate(() => Number(document.documentElement.style.getPropertyValue("--journey-phase")));
+    const worldOpacity = await page.locator(".universe-world").evaluate(el => Number(getComputedStyle(el).opacity));
     topsDown.push(rectTop);
     chaptersDown.push(ch);
+    if (ch > 2.25 && ch < 3.1) {
+      opacitiesInTransition.push(worldOpacity);
+    }
   }
   // Every downward scroll step must move the viewport up monotonically (or hold when sticky) and advance chapter monotonically without jumping backward
   for (let i = 1; i < topsDown.length; i++) {
     expect(topsDown[i]).toBeLessThanOrEqual(topsDown[i - 1] + 0.5);
     expect(chaptersDown[i]).toBeGreaterThanOrEqual(chaptersDown[i - 1] - 0.001);
+  }
+  // No opacity dead-zone between Playground corridor and Capabilities Workshop entry
+  expect(opacitiesInTransition.length).toBeGreaterThan(0);
+  for (const op of opacitiesInTransition) {
+    expect(op).toBeGreaterThan(0.15);
   }
   await page.screenshot({ path: "test-results/post-playground-scroll-transition.png" });
 });

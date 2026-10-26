@@ -29,7 +29,7 @@ export const metadata: Metadata = {
     template: "%s · BudAI",
   },
   description:
-    "BudAI är AI-arbetsassistenten för Sverige — skriv, automatisera och tänk snabbare på svenska och engelska. Utvecklarförhandsvisning av Stilledev.",
+    "BudAI by Stilledev — AI workspace built in Sweden for real work in Swedish and English. Write, automate, analyze, and turn messy context into clear action with user-controlled memory.",
   keywords: [
     "AI",
     "artificial intelligence",
@@ -48,13 +48,13 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
   openGraph: {
     type: "website",
-    locale: "sv_SE",
-    alternateLocale: ["en_US"],
+    locale: "en_US",
+    alternateLocale: ["sv_SE"],
     url: siteUrl,
     siteName: "BudAI",
-    title: "BudAI — AI-arbete för Sverige",
+    title: "BudAI — AI Workspace for Swedish & English Work",
     description:
-      "AI-arbetsassistent för svenska företag och privatpersoner. Skriv, automatisera och tänk snabbare — SV & EN.",
+      "Built in Sweden by Stilledev. Write, analyze, plan, and automate in Swedish and English with a live Playground and user-controlled memory.",
     images: [
       {
         url: "/og.png",
@@ -66,9 +66,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "BudAI — AI-arbete för Sverige",
+    title: "BudAI — AI Workspace for Swedish & English Work",
     description:
-      "AI-arbetsassistent för svenska företag och privatpersoner. Skriv, automatisera och tänk snabbare — SV & EN.",
+      "Built in Sweden by Stilledev. Write, analyze, plan, and automate in Swedish and English with a live Playground and user-controlled memory.",
     images: ["/og.png"],
   },
   icons: {

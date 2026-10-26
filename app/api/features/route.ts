@@ -7,6 +7,11 @@ import { publicModelOptions } from "@/lib/ai-models";
  * Never expose the key — only a boolean.
  */
 export async function GET() {
+  const aiConfigured = Boolean(
+    process.env.ANTHROPIC_API_KEY &&
+      process.env.ANTHROPIC_API_KEY.trim().length >= 10 &&
+      !process.env.ANTHROPIC_API_KEY.includes("your-")
+  );
   const imageGen = Boolean(
     process.env.OPENAI_API_KEY &&
       process.env.OPENAI_API_KEY.trim().length > 8 &&
@@ -14,6 +19,7 @@ export async function GET() {
   );
   return NextResponse.json(
     {
+      aiConfigured,
       imageGeneration: imageGen,
       models: publicModelOptions(),
       vision: true, // Claude vision via ANTHROPIC when configured

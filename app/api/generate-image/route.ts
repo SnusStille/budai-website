@@ -45,35 +45,45 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Prompt required" }, { status: 400 });
   }
 
-  // Quota
-  try {
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-    const skey =
-      process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
-    if (url && skey) {
-      const sb = createClient(url, skey);
-      const day = dayKey();
+  // Quota check before upstream call; increment only after image is generated
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+  const skey =
+    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+  const sb = url && skey && !url.includes("YOUR_PROJECT") ? createClient(url, skey) : null;
+  const day = dayKey();
+  let existingUsage: { messages?: number; images?: number; generations?: number } | null = null;
+  if (sb) {
+    try {
       const { data } = await sb
         .from("usage_daily")
         .select("*")
         .eq("user_id", user.id)
         .eq("day", day)
         .maybeSingle();
+      existingUsage = data;
       const used = data?.generations ?? 0;
       if (used >= limitFor("member", "generations")) {
         return NextResponse.json({ error: "Daily generation limit reached.", code: "limit" }, { status: 429 });
       }
+    } catch {
+      /* */
+    }
+  }
+
+  const commitGenerationUsage = async () => {
+    if (!sb) return;
+    try {
       await sb.from("usage_daily").upsert({
         user_id: user.id,
         day,
-        messages: data?.messages ?? 0,
-        images: data?.images ?? 0,
-        generations: used + 1,
+        messages: existingUsage?.messages ?? 0,
+        images: existingUsage?.images ?? 0,
+        generations: (existingUsage?.generations ?? 0) + 1,
       });
+    } catch {
+      /* */
     }
-  } catch {
-    /* */
-  }
+  };
 
   try {
     const model = process.env.OPENAI_IMAGE_MODEL || "gpt-image-1";
@@ -101,6 +111,7 @@ export async function POST(req: NextRequest) {
     const b64 = data?.data?.[0]?.b64_json;
     const urlOut = data?.data?.[0]?.url;
     if (b64) {
+      await commitGenerationUsage();
       return NextResponse.json({
         imageBase64: b64,
         mime: "image/png",
@@ -108,6 +119,7 @@ export async function POST(req: NextRequest) {
       });
     }
     if (urlOut) {
+      await commitGenerationUsage();
       return NextResponse.json({ imageUrl: urlOut, revised: data?.data?.[0]?.revised_prompt || null });
     }
     return NextResponse.json({ error: "No image in response" }, { status: 502 });

@@ -194,7 +194,9 @@ export interface CapabilityEngine {
     assemblyProgress?: number,
     pointerX?: number,
     pointerY?: number,
-    pathwayMode?: "personal" | "business"
+    pathwayMode?: "personal" | "business",
+    arrival?: number,
+    atlasTier?: number
   ): void;
 }
 
@@ -288,13 +290,15 @@ const DATUM_FRAGMENT_SHADER = /* glsl */ `
  */
 export function createCapabilityEngine(
   parent: THREE.Group,
-  screenWidth = 1080
+  screenWidth = 1080,
+  lite = false
 ): CapabilityEngine {
   const root = new THREE.Group();
   root.position.set(0, 0, 0);
   parent.add(root);
 
   // ── Shared Precision Materials (PASS C — Frosted Glass, Machined Titanium, Controlled Emissives) ──
+  // Mode B (lite / mobile 3D) uses lightweight MeshStandardMaterial instead of multi-pass transmission/clearcoat.
   const titaniumMat = new THREE.MeshStandardMaterial({
     color: "#24374c",
     metalness: 0.88,
@@ -305,26 +309,46 @@ export function createCapabilityEngine(
     metalness: 0.76,
     roughness: 0.28,
   });
-  const frostedGlassMat = new THREE.MeshPhysicalMaterial({
-    color: "#15344f",
-    emissive: "#0c253b",
-    emissiveIntensity: 0.42,
-    metalness: 0.15,
-    roughness: 0.12,
-    transmission: 0.42,
-    transparent: true,
-    opacity: 0.74,
-  });
-  const prismGlassMat = new THREE.MeshPhysicalMaterial({
-    color: "#1e3a5c",
-    emissive: "#233c6e",
-    emissiveIntensity: 0.58,
-    metalness: 0.22,
-    roughness: 0.08,
-    clearcoat: 1.0,
-    transparent: true,
-    opacity: 0.84,
-  });
+  const frostedGlassMat = lite
+    ? new THREE.MeshStandardMaterial({
+        color: "#15344f",
+        emissive: "#0c253b",
+        emissiveIntensity: 0.45,
+        metalness: 0.25,
+        roughness: 0.22,
+        transparent: true,
+        opacity: 0.78,
+      })
+    : new THREE.MeshPhysicalMaterial({
+        color: "#15344f",
+        emissive: "#0c253b",
+        emissiveIntensity: 0.42,
+        metalness: 0.15,
+        roughness: 0.12,
+        transmission: 0.42,
+        transparent: true,
+        opacity: 0.74,
+      });
+  const prismGlassMat = lite
+    ? new THREE.MeshStandardMaterial({
+        color: "#1e3a5c",
+        emissive: "#233c6e",
+        emissiveIntensity: 0.62,
+        metalness: 0.35,
+        roughness: 0.18,
+        transparent: true,
+        opacity: 0.86,
+      })
+    : new THREE.MeshPhysicalMaterial({
+        color: "#1e3a5c",
+        emissive: "#233c6e",
+        emissiveIntensity: 0.58,
+        metalness: 0.22,
+        roughness: 0.08,
+        clearcoat: 1.0,
+        transparent: true,
+        opacity: 0.84,
+      });
   const cyanEmissiveMat = new THREE.MeshBasicMaterial({
     color: "#7adbf0",
     transparent: true,
@@ -386,6 +410,7 @@ export function createCapabilityEngine(
     { radius: 1.95, z: -2.65, atlasY: 0.96, atlasScale: 1.28 },
   ];
 
+  const ringSegs = lite ? 48 : 96;
   rotundaConfigs.forEach((cfg, rIdx) => {
     const rGroup = new THREE.Group();
     rGroup.position.set(0, 1.05, cfg.z);
@@ -393,14 +418,14 @@ export function createCapabilityEngine(
 
     // Chamfered architectural ring segments
     const ringMesh = new THREE.Mesh(
-      new THREE.TorusGeometry(cfg.radius, 0.022, 8, 96),
+      new THREE.TorusGeometry(cfg.radius, 0.022, 8, ringSegs),
       rIdx % 2 === 0 ? titaniumMat : obsidianMat
     );
     rGroup.add(ringMesh);
 
-    // Outer technical hairline & 96 graduation stadia marks
+    // Outer technical hairline & graduation stadia marks
     const gradPts: THREE.Vector3[] = [];
-    const count = 96;
+    const count = ringSegs;
     for (let i = 0; i < count; i++) {
       const a = (i / count) * Math.PI * 2;
       const rIn = cfg.radius - (i % 8 === 0 ? 0.14 : 0.05);
@@ -450,19 +475,19 @@ export function createCapabilityEngine(
   crucibleGroup.add(centralSpine);
 
   const vernierRings: THREE.Group[] = [];
+  const tickCount = lite ? 36 : 72;
   [1.72, 2.08, 2.46].forEach((radius, rIdx) => {
     const rGroup = new THREE.Group();
     crucibleGroup.add(rGroup);
 
     const torusMat = rIdx === 0 ? cyanEmissiveMat : rIdx === 1 ? lavenderEmissiveMat : emeraldEmissiveMat;
     const torus = new THREE.Mesh(
-      new THREE.TorusGeometry(radius, rIdx === 2 ? 0.01 : 0.007, 10, 96),
+      new THREE.TorusGeometry(radius, rIdx === 2 ? 0.01 : 0.007, 8, ringSegs),
       torusMat
     );
     rGroup.add(torus);
 
     const tickPts: THREE.Vector3[] = [];
-    const tickCount = 72;
     for (let t = 0; t < tickCount; t++) {
       const a = (t / tickCount) * Math.PI * 2;
       const inner = radius - (t % 6 === 0 ? 0.11 : 0.045);
@@ -1038,11 +1063,13 @@ export function createCapabilityEngine(
     atlasGroup.add(new THREE.Line(beamGeo, tc.mat));
     polestarBeamGeos.push(beamGeo);
 
-    // 4 concentric topographic elevation contour rings + radial compass hairlines
-    [0.38, 0.68, 0.98, 1.28].forEach((r, cIdx) => {
+    // Concentric topographic elevation contour rings + radial compass hairlines
+    const contourRadii = lite ? [0.48, 1.08] : [0.38, 0.68, 0.98, 1.28];
+    const contourSegs = lite ? 28 : 48;
+    contourRadii.forEach((r, cIdx) => {
       const contourPts: THREE.Vector3[] = [];
-      for (let s = 0; s < 48; s++) {
-        const a = (s / 48) * Math.PI * 2;
+      for (let s = 0; s < contourSegs; s++) {
+        const a = (s / contourSegs) * Math.PI * 2;
         contourPts.push(
           new THREE.Vector3(
             Math.cos(a) * r,
@@ -1054,12 +1081,14 @@ export function createCapabilityEngine(
       tGrp.add(new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(contourPts), tc.mat));
     });
 
-    // Sub-surface architectural stadia columns anchoring the terrace into deep space
-    for (let c = 0; c < 4; c++) {
-      const a = (c / 4) * Math.PI * 2 + Math.PI / 4;
-      const col = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.95, 6), titaniumMat);
-      col.position.set(Math.cos(a) * (tc.r * 0.72), -0.48, Math.sin(a) * (tc.r * 0.56));
-      tGrp.add(col);
+    // Sub-surface architectural stadia columns anchoring the terrace into deep space (desktop Mode A)
+    if (!lite) {
+      for (let c = 0; c < 4; c++) {
+        const a = (c / 4) * Math.PI * 2 + Math.PI / 4;
+        const col = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.95, 6), titaniumMat);
+        col.position.set(Math.cos(a) * (tc.r * 0.72), -0.48, Math.sin(a) * (tc.r * 0.56));
+        tGrp.add(col);
+      }
     }
 
     atlasTerraces.push(tGrp);
@@ -1111,8 +1140,8 @@ export function createCapabilityEngine(
     routePulses.push(pMesh);
   }
 
-  // ── 6. GPU-DRIVEN 3-STATE MORPHING PRECISION DATUM FIELD (960 points) ──
-  const datumCount = 960;
+  // ── 6. GPU-DRIVEN 3-STATE MORPHING PRECISION DATUM FIELD (960 points desktop / 360 mobile) ──
+  const datumCount = lite ? 360 : 960;
   const rawPos = new Float32Array(datumCount * 3);
   const workshopPos = new Float32Array(datumCount * 3);
   const atlasPos = new Float32Array(datumCount * 3);
@@ -1176,17 +1205,21 @@ export function createCapabilityEngine(
   root.add(datumPoints);
 
   // ── 7. CONTROLLED ARCHITECTURAL LIGHTING ──
-  const workshopKeyLight = new THREE.PointLight("#7adbf0", 36, 20, 2);
+  const workshopKeyLight = new THREE.PointLight("#7adbf0", lite ? 42 : 36, 20, 2);
   workshopKeyLight.position.set(-3.2, 2.9, 2.5);
   root.add(workshopKeyLight);
 
-  const atlasHorizonLight = new THREE.PointLight("#a8b4f8", 30, 20, 2);
-  atlasHorizonLight.position.set(3.4, 3.2, 1.9);
-  root.add(atlasHorizonLight);
+  const atlasHorizonLight = !lite ? new THREE.PointLight("#a8b4f8", 30, 20, 2) : null;
+  if (atlasHorizonLight) {
+    atlasHorizonLight.position.set(3.4, 3.2, 1.9);
+    root.add(atlasHorizonLight);
+  }
 
-  const crucibleCoreLight = new THREE.PointLight("#6ee7b7", 24, 13, 2);
-  crucibleCoreLight.position.set(0, 1.05, 1.7);
-  root.add(crucibleCoreLight);
+  const crucibleCoreLight = !lite ? new THREE.PointLight("#6ee7b7", 24, 13, 2) : null;
+  if (crucibleCoreLight) {
+    crucibleCoreLight.position.set(0, 1.05, 1.7);
+    root.add(crucibleCoreLight);
+  }
 
   return {
     root,
@@ -1200,20 +1233,23 @@ export function createCapabilityEngine(
       assemblyProgress = 0,
       pointerX = 0,
       pointerY = 0,
-      pathwayMode: "personal" | "business" = "personal"
+      pathwayMode: "personal" | "business" = "personal",
+      arrival = 1,
+      atlasTier = -1
     ) {
       const p = clamp(progress, 0, 1);
       const morph = clamp(accessMorph, 0, 1);
       const asm = clamp(assemblyProgress, 0, 1);
       const modIdx = clamp(activeModule, 0, 5);
       const isTeam = pathwayMode === "business" ? 1 : 0;
+      const emerge = clamp(smooth(clamp(arrival, 0, 1)) + morph, 0, 1);
 
       // Local progress inside the active capability's scroll window, shaped by directedPacing()
       const moduleLocalRaw = clamp((p - modIdx / 6) * 6, 0, 1);
       const pacedLocal = directedPacing(moduleLocalRaw);
 
-      // 5-Stage Workshop Choreography Weights
-      const discovery = smooth(clamp(p / 0.15, 0.24, 1));
+      // 5-Stage Workshop Choreography Weights + Arrival Emergence from Playground Corridor
+      const discovery = smooth(clamp(p / 0.15, 0.24, 1)) * lerp(0.35, 1, emerge);
       const composition = smooth(clamp((p - 0.75) / 0.15, 0, 1)) * (1 - morph);
       const prepUnfold = smooth(clamp((p - 0.88) / 0.12, 0, 1) * 0.22 + morph * 0.88);
 
@@ -1225,43 +1261,48 @@ export function createCapabilityEngine(
       // ── 1. Tier 1 Background: Astrolabe Rotunda -> Great Cartographic Horizon ──
       rotundaRings.forEach((rGroup, rIdx) => {
         const cfg = rotundaConfigs[rIdx];
-        rGroup.rotation.x = lerp(0, -Math.PI / 2, prepUnfold);
+        const ringEmerge = smooth(clamp((emerge - rIdx * 0.1) / 0.72, 0, 1));
+        rGroup.rotation.x = lerp(-0.35 * (1 - ringEmerge), -Math.PI / 2, prepUnfold);
         rGroup.rotation.z = time * (rIdx % 2 === 0 ? 0.08 : -0.06) + p * 0.6;
         rGroup.rotation.y = pointerX * 0.05 * (1 - prepUnfold * 0.5);
 
         rGroup.position.x = -pointerX * (0.12 * (rIdx + 1)) * (1 - morph * 0.5);
         rGroup.position.y = lerp(1.05, cfg.atlasY + asm * 0.08 * rIdx, prepUnfold);
-        rGroup.position.z = lerp(cfg.z, 0.05 - rIdx * 0.45, prepUnfold);
-        rGroup.scale.setScalar(lerp(1, cfg.atlasScale, prepUnfold));
+        rGroup.position.z = lerp(cfg.z - (1 - ringEmerge) * 1.15, 0.05 - rIdx * 0.45, prepUnfold);
+        rGroup.scale.setScalar(lerp(0.46 + 0.54 * ringEmerge, cfg.atlasScale, prepUnfold));
       });
 
       // ── 2. Tier 2 Midground: Central Vernier Crucible -> Atlas Compass Rose & Meridian Arc ──
       crucibleGroup.position.set(
         pointerX * 0.14,
         lerp(1.05, 0.56, morph) + pointerY * 0.06,
-        lerp(0.15, -0.1, morph)
+        lerp(0.15 - (1 - emerge) * 0.45, -0.1, morph)
       );
-      centralSpine.scale.y = lerp(1, 0.45, morph);
+      centralSpine.scale.y = lerp(0.35 + 0.65 * emerge, 0.45, morph);
 
-      vernierRings[0].rotation.x = lerp(Math.sin(time * 0.35) * 0.14, Math.PI / 2, morph);
+      const v0Emerge = smooth(clamp(emerge / 0.65, 0, 1));
+      const v1Emerge = smooth(clamp((emerge - 0.1) / 0.7, 0, 1));
+      const v2Emerge = smooth(clamp((emerge - 0.2) / 0.72, 0, 1));
+
+      vernierRings[0].rotation.x = lerp(Math.sin(time * 0.35) * 0.14 + (1 - v0Emerge) * 0.42, Math.PI / 2, morph);
       vernierRings[0].rotation.z = time * 0.22 + p * Math.PI;
-      vernierRings[0].scale.setScalar(lerp(1, 1.28, morph));
+      vernierRings[0].scale.setScalar(lerp(0.38 + 0.62 * v0Emerge, 1.28, morph));
 
       vernierRings[1].rotation.y = lerp(Math.sin(time * 0.28 + modIdx * 0.55) * 0.26, 0, morph);
-      vernierRings[1].rotation.x = lerp(0.18, Math.PI / 2, morph);
+      vernierRings[1].rotation.x = lerp(0.18 + (1 - v1Emerge) * 0.35, Math.PI / 2, morph);
       vernierRings[1].rotation.z = -time * 0.16;
-      vernierRings[1].scale.setScalar(lerp(1, 1.42, morph));
+      vernierRings[1].scale.setScalar(lerp(0.34 + 0.66 * v1Emerge, 1.42, morph));
 
       // Ring 2 hinges into a low-angle Cantilevered Horizon Arc framing the 3 octagonal terraces
       vernierRings[2].position.y = lerp(0, -0.08, morph);
-      vernierRings[2].rotation.x = lerp(-0.14, Math.PI * 0.44, morph);
+      vernierRings[2].rotation.x = lerp(-0.14 - (1 - v2Emerge) * 0.28, Math.PI * 0.44, morph);
       vernierRings[2].rotation.y = lerp(Math.cos(time * 0.22 + modIdx * 0.4) * 0.22, (asm - 0.5) * 0.24, morph);
-      vernierRings[2].scale.setScalar(lerp(1, 1.32, morph));
+      vernierRings[2].scale.setScalar(lerp(0.3 + 0.7 * v2Emerge, 1.32, morph));
 
       // Central Synthesis Gyro-Core -> Polestar Compass Apex in World Two
       synthesisCore.position.y = lerp(0.08, 1.18, morph);
       synthesisCore.position.z = lerp(-0.1, -0.15, morph);
-      synthesisCore.scale.setScalar(lerp(1, 1.24, morph));
+      synthesisCore.scale.setScalar(lerp(0.58 + 0.42 * emerge, 1.24, morph));
       coreOctMesh.rotation.y = time * 0.85 + modIdx * 0.52;
       coreOctMesh.rotation.x = Math.sin(time * 0.65) * 0.28;
       coreGimbalA.rotation.set(time * 0.55, modIdx * 0.35, 0);
@@ -1270,45 +1311,62 @@ export function createCapabilityEngine(
       // ── 3. Tier 3 Foreground: Optical Framing Calipers Parallax ──
       fgCalipers.position.x = pointerX * 0.24;
       fgCalipers.position.y = 1.05 + pointerY * 0.1;
-      fgCalipers.scale.setScalar(lerp(1, 1.32, morph));
-      fgCalipers.visible = morph < 0.72;
+      fgCalipers.scale.setScalar(lerp(0.75 + 0.25 * emerge, 1.32, morph));
+      fgCalipers.visible = !lite && morph < 0.72 && emerge > 0.35;
 
       const relayAttr = workshopRelayGeo.getAttribute("position") as THREE.BufferAttribute;
 
       // ── 4. Six Articulated Capability Armatures & Sculptural Mechanisms ──
+      const isScrollAligned = Math.min(5, Math.floor(p * 6)) === modIdx;
+      const focusContinuous = isScrollAligned ? clamp(p * 6 - 0.35, 0, 5) : modIdx;
+
       pods.forEach((pod, idx) => {
         const isActive = idx === modIdx;
+        const podEmerge = smooth(clamp((emerge - 0.12 - idx * 0.05) / 0.62, 0, 1));
 
-        const orbitSlot = (idx - modIdx + 6) % 6;
-        const orbitAngle = (orbitSlot / 6) * Math.PI * 2 - Math.PI / 2;
-        const ringRadius = lerp(2.35, 1.28, composition);
+        const relSlot = (((idx - focusContinuous) % 6) + 6) % 6;
+        const signedDist = relSlot > 3 ? relSlot - 6 : relSlot;
+        const activeWeight = isActive ? 1 : smooth(clamp(1 - Math.abs(signedDist) * 1.15, 0, 1));
+        const orbitAngle = (relSlot / 6) * Math.PI * 2 - Math.PI / 2;
+        const ringRadius = lerp(2.35, 1.28, composition) * lerp(0.18, 1, podEmerge);
 
-        const workshopX = isActive
-          ? lerp(0, Math.cos((idx / 6) * Math.PI * 2) * 1.12, composition)
-          : Math.cos(orbitAngle) * ringRadius;
-        const workshopY = isActive
-          ? lerp(0.68, 1.05 + Math.sin((idx / 6) * Math.PI * 2) * 0.62, composition)
-          : 1.05 + Math.sin(orbitAngle) * (ringRadius * 0.52);
-        const workshopZ = isActive
-          ? lerp(0.96, 0.35, composition)
-          : lerp(-0.55 + Math.cos(orbitAngle) * 0.32, 0.22, composition);
+        const orbitX = Math.cos(orbitAngle) * ringRadius;
+        const orbitY = 1.05 + Math.sin(orbitAngle) * (ringRadius * 0.52);
+        const orbitZ = lerp(-0.55 + Math.cos(orbitAngle) * 0.32, 0.22, composition);
 
-        const workshopScale = isActive
-          ? lerp(1.48, 1.06, composition)
-          : lerp(0.74, 0.96, composition);
+        const inspectX = lerp(0, Math.cos((idx / 6) * Math.PI * 2) * 1.12, composition);
+        const inspectY = lerp(0.68, 1.05 + Math.sin((idx / 6) * Math.PI * 2) * 0.62, composition);
+        const inspectZ = lerp(0.96, 0.35, composition);
+
+        const rawWorkshopX = lerp(orbitX, inspectX, activeWeight);
+        const rawWorkshopY = lerp(orbitY, inspectY, activeWeight);
+        const rawWorkshopZ = lerp(orbitZ, inspectZ, activeWeight);
+
+        // During arrival from Playground corridor, instruments expand out from the Central Crucible
+        const workshopX = rawWorkshopX * podEmerge;
+        const workshopY = lerp(1.05, rawWorkshopY, podEmerge);
+        const workshopZ = lerp(-0.18, rawWorkshopZ, podEmerge);
+
+        const workshopScale =
+          lerp(lerp(0.74, 0.96, composition), lerp(1.48, 1.06, composition), activeWeight) *
+          lerp(0.28, 1, podEmerge);
 
         const atlasTarget = atlasPlacements[idx];
-        const elevationLift = smooth(clamp((asm - idx * 0.08) / 0.55, 0, 1)) * 0.22;
+        const podTerrace = idx === 0 || idx === 5 ? 0 : idx === 3 || idx === 4 ? 1 : 2;
+        const tierFocused = atlasTier >= 0 && podTerrace === atlasTier;
+        const elevationLift =
+          smooth(clamp((asm - idx * 0.08) / 0.55, 0, 1)) * 0.22 + (tierFocused ? 0.08 * morph : 0);
 
         const targetX = lerp(workshopX, atlasTarget.x, morph) + pointerX * 0.1;
         const targetY = lerp(workshopY, atlasTarget.y + elevationLift, morph) + pointerY * 0.05;
         const targetZ = lerp(workshopZ, atlasTarget.z, morph);
-        const targetScale = lerp(workshopScale, 0.86, morph);
+        const targetScale = lerp(workshopScale, tierFocused ? 0.94 : 0.86, morph);
 
-        pod.group.position.x = lerp(pod.group.position.x || targetX, targetX, 0.24);
-        pod.group.position.y = lerp(pod.group.position.y || targetY, targetY, 0.24);
-        pod.group.position.z = lerp(pod.group.position.z || targetZ, targetZ, 0.24);
-        pod.group.scale.setScalar(lerp(pod.group.scale.x || targetScale, targetScale, 0.24));
+        const blend = emerge < 0.85 ? 0.68 : 0.36;
+        pod.group.position.x = lerp(pod.group.position.x || targetX, targetX, blend);
+        pod.group.position.y = lerp(pod.group.position.y || targetY, targetY, blend);
+        pod.group.position.z = lerp(pod.group.position.z || targetZ, targetZ, blend);
+        pod.group.scale.setScalar(lerp(pod.group.scale.x || targetScale, targetScale, blend));
 
         // Update the Articulated Radial Caliper Tether connecting the Synthesis Gyro-Core to this pod
         const coreWorldX = crucibleGroup.position.x + synthesisCore.position.x;
@@ -1321,7 +1379,7 @@ export function createCapabilityEngine(
 
         relayAttr.setXYZ(idx, pod.group.position.x, pod.group.position.y, pod.group.position.z);
 
-        pod.cradleRingMat.opacity = morph >= 0.48 ? 0.88 : isActive ? 0.96 : 0.38;
+        pod.cradleRingMat.opacity = morph >= 0.48 ? (tierFocused ? 0.98 : 0.86) : isActive ? 0.96 : 0.38;
 
         // Rising Architectural Outcome Monument in World Two
         const monumentScale = smooth(clamp((morph - 0.32) / 0.55, 0, 1)) * (0.64 + 0.52 * asm);
@@ -1443,13 +1501,19 @@ export function createCapabilityEngine(
 
       atlasTerraces.forEach((tGrp, tIdx) => {
         const tc = terraceConfigs[tIdx];
-        const stageReveal = smooth(clamp((atlasVisibility - tIdx * 0.11) / 0.65, 0, 1));
+        const isFocusedTerrace = atlasTier === tIdx;
+        const stageReveal =
+          smooth(clamp((atlasVisibility - tIdx * 0.11) / 0.65, 0, 1)) * (isFocusedTerrace ? 1.05 : 1);
         tGrp.scale.set(
           Math.max(0.001, stageReveal),
           1,
           Math.max(0.001, stageReveal)
         );
-        tGrp.position.y = tc.y + Math.sin(time * 1.1 + tIdx) * 0.022 + (tIdx === 2 ? isTeam * 0.12 : 0);
+        tGrp.position.y =
+          tc.y +
+          Math.sin(time * 1.1 + tIdx) * 0.022 +
+          (tIdx === 2 ? isTeam * 0.12 : 0) +
+          (isFocusedTerrace ? 0.09 : 0);
         tGrp.rotation.y = (asm - 0.5) * 0.12 * (tIdx - 1);
 
         const bAttr = polestarBeamGeos[tIdx].getAttribute("position") as THREE.BufferAttribute;
@@ -1472,8 +1536,8 @@ export function createCapabilityEngine(
 
       // ── 6. Controlled Lighting Progression across Workshop -> Atlas ──
       workshopKeyLight.intensity = lerp(34, 44, discovery) * (1 - morph * 0.18);
-      atlasHorizonLight.intensity = lerp(26, 46, morph) + isTeam * 8;
-      crucibleCoreLight.intensity = lerp(24, 36, Math.max(composition, asm));
+      if (atlasHorizonLight) atlasHorizonLight.intensity = lerp(26, 46, morph) + isTeam * 8;
+      if (crucibleCoreLight) crucibleCoreLight.intensity = lerp(24, 36, Math.max(composition, asm));
     },
   };
 }
