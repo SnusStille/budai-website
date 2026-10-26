@@ -31,6 +31,7 @@ export function getJourneyFrame() {
 function start() {
   let raf = 0;
   let last = 0;
+  let scrolling = false;
   let bounds: SectionBounds[] = [];
   let dirty = true;
   let footerTop = Infinity;
@@ -49,7 +50,8 @@ function start() {
     raf = 0;
     if (disposed || document.hidden) return;
     if (dirty) measure();
-    if (now - last >= 30 || !last) {
+    if (scrolling || now - last >= 30 || !last) {
+      scrolling = false;
       last = now;
       const y = window.scrollY;
       const height = window.innerHeight;
@@ -81,6 +83,7 @@ function start() {
     if (!raf && !disposed) raf = requestAnimationFrame(frame);
   };
   const onScroll = () => {
+    scrolling = true;
     last = 0;
     schedule();
   };

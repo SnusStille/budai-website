@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowUpRight, AudioLines, BarChart3, FileText, Languages, Network, Workflow } from "lucide-react";
 import { useLang } from "@/components/ui/LanguageContext";
 import { subscribeJourney } from "@/lib/experience/scroll";
@@ -151,22 +151,20 @@ export default function CapabilityMap() {
 
   const rows = capabilityRecords();
   const currentCap = capabilities[active] ?? capabilities[0];
-  const fullCode = currentCap.codeLines.join("\n");
-  const charBudget = hover >= 0 ? fullCode.length : Math.max(8, Math.floor(typedRatio * fullCode.length));
-  let remainingChars = charBudget;
-  let activeCodeLine = 0;
-  const typedCodeLines = currentCap.codeLines.map((line, idx) => {
-    if (remainingChars <= 0) return "";
-    if (remainingChars >= line.length) {
-      remainingChars -= line.length + 1;
-      activeCodeLine = idx;
-      return line;
-    }
-    const partial = line.slice(0, remainingChars);
-    remainingChars = 0;
-    activeCodeLine = idx;
-    return partial;
-  });
+  const tokenizedLines = useMemo(
+    () => currentCap.codeLines.map(line => tokenizeLine(line)),
+    [currentCap]
+  );
+  const fullCodeLength = useMemo(
+    () =>
+      tokenizedLines.reduce(
+        (sum, line) => sum + line.reduce((lSum, t) => lSum + t.text.length, 0) + 1,
+        0
+      ),
+    [tokenizedLines]
+  );
+  const charBudget = hover >= 0 ? fullCodeLength : Math.max(8, Math.floor(typedRatio * fullCodeLength));
+  let consumedChars = 0;
 
   return (
     <div ref={root} className="capability-system" data-active={active} data-progress="0.0000" data-capability-system data-infinite-code-chamber>
@@ -267,17 +265,33 @@ export default function CapabilityMap() {
               <code className="capability-readout-file">{currentCap.file}</code>
             </div>
             <div className="capability-readout-code">
-              {typedCodeLines.map((line, lIdx) => (
-                <div key={lIdx} className="capability-code-row">
-                  <b>0{lIdx + 1}</b>
-                  <span>
-                    {tokenizeLine(line).map((tk, tIdx) => (
-                      <span key={tIdx} className={`token-${tk.tone}`}>{tk.text}</span>
-                    ))}
-                    {lIdx === activeCodeLine && <i className="editor-cursor" />}
-                  </span>
-                </div>
-              ))}
+              {tokenizedLines.map((tokens, lIdx) => {
+                const lineLen = tokens.reduce((s, t) => s + t.text.length, 0);
+                const visible = Math.max(0, Math.min(lineLen, charBudget - consumedChars));
+                const showCursor =
+                  charBudget >= consumedChars &&
+                  charBudget <= consumedChars + lineLen &&
+                  charBudget < fullCodeLength;
+                consumedChars += lineLen + 1;
+                let used = 0;
+                return (
+                  <div key={lIdx} className="capability-code-row">
+                    <b>0{lIdx + 1}</b>
+                    <span>
+                      {tokens.map((tk, tIdx) => {
+                        const take = Math.max(0, visible - used);
+                        used += tk.text.length;
+                        return (
+                          <span key={tIdx} className={`token-${tk.tone}`}>
+                            {tk.text.slice(0, take)}
+                          </span>
+                        );
+                      })}
+                      {showCursor && <i className="editor-cursor" />}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
             <div className="capability-readout-foot">
               <strong>{currentCap.title}</strong>

@@ -77,6 +77,8 @@ test("one sparse information register organises six capabilities and three accur
   await expect(page.locator(".capability-network")).toHaveCount(0);
   await expect(page.locator(".capability-module")).toHaveCount(6);
   await expect(page.locator("[data-living-code-console]")).toBeVisible();
+  const studioScreen = page.locator(".world-capability-mount [data-capability-studio-screen]");
+  await expect(studioScreen).toHaveAttribute("data-studio-mode", "capability");
   await page.waitForTimeout(600);
   const initialChamberProgress = Number(await canvas.getAttribute("data-chamber-progress"));
   await page.screenshot({ path: "test-results/capability-engine-desktop.png" });
@@ -90,6 +92,7 @@ test("one sparse information register organises six capabilities and three accur
   await move(page, "[data-access-architecture]", -120);
   await expect.poll(async () => Number(await canvas.getAttribute("data-access-morph"))).toBeGreaterThan(.9);
   await expect.poll(async () => Number(await canvas.getAttribute("data-assembly-progress"))).toBeGreaterThan(0.2);
+  await expect(studioScreen).toHaveAttribute("data-studio-mode", "pipeline");
   await page.screenshot({ path: "test-results/access-architecture-desktop.png" });
   const plans = page.locator("[data-plan-comparison]");
   await expect(plans.getByRole("heading", { name: "Basic", exact: true })).toHaveCount(1);
@@ -106,15 +109,19 @@ test("scrolling past Playground into Capabilities is smooth, pre-warmed, and fre
   await expect(page.locator("html")).toHaveAttribute("data-world-state", "ready", { timeout: 15000 });
   const startY = await page.evaluate(() => window.scrollY);
   const topsDown: number[] = [];
-  for (let step = 1; step <= 8; step++) {
-    await page.evaluate(y => window.scrollTo(0, y), startY + step * 140);
-    await page.waitForTimeout(35);
+  const chaptersDown: number[] = [];
+  for (let step = 1; step <= 14; step++) {
+    await page.evaluate(y => window.scrollTo(0, y), startY + step * 160);
+    await page.waitForTimeout(30);
     const rectTop = await page.locator("[data-capability-viewport]").evaluate(el => el.getBoundingClientRect().top);
+    const ch = await page.evaluate(() => Number(document.documentElement.style.getPropertyValue("--journey-phase")));
     topsDown.push(rectTop);
+    chaptersDown.push(ch);
   }
-  // Every downward scroll step must move the viewport up monotonically (or hold when sticky) without jumping backward
+  // Every downward scroll step must move the viewport up monotonically (or hold when sticky) and advance chapter monotonically without jumping backward
   for (let i = 1; i < topsDown.length; i++) {
     expect(topsDown[i]).toBeLessThanOrEqual(topsDown[i - 1] + 0.5);
+    expect(chaptersDown[i]).toBeGreaterThanOrEqual(chaptersDown[i - 1] - 0.001);
   }
   await page.screenshot({ path: "test-results/post-playground-scroll-transition.png" });
 });

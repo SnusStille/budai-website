@@ -3,7 +3,6 @@ import { CSS3DObject, CSS3DRenderer } from "three/examples/jsm/renderers/CSS3DRe
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { createPointField } from "./information-field";
 import { createCapabilityEngine } from "./capability-engine";
-import { domViewOffset, worldUnitsPerPixel } from "./projection";
 import { createDeveloperRoom } from "./developer-room";
 import { cameraAt, worldChapterAt, worldOpacityAt, clamp, lerp, smooth, type JourneyFrame } from "./timeline";
 
@@ -15,7 +14,12 @@ const LAVENDER = "#9ca7df";
  * informed by scroll-flyover and AETumi (MIT); original geometry and choreography.
  * There is no scroll handler, RAF, virtual scroller, downloaded model or video here.
  */
-export function createWorld(host: HTMLElement, editor: HTMLElement, onFailure: () => void) {
+export function createWorld(
+  host: HTMLElement,
+  editor: HTMLElement,
+  onFailure: () => void,
+  capabilityEditor?: HTMLElement | null
+) {
   let mobile = window.innerWidth < 768;
   const nav = navigator as Navigator & { deviceMemory?: number };
   let lite = mobile || (nav.deviceMemory ?? 8) <= 4 || navigator.hardwareConcurrency <= 4;
@@ -167,14 +171,18 @@ export function createWorld(host: HTMLElement, editor: HTMLElement, onFailure: (
     const outputSignal = createPointField([{ x: 0, y: 0, z: 0, lane: -1 }], 5.4);
     scene.add(outputSignal);
 
-    // 03 / CAPABILITIES 3D EXPERIENCES: 03A Infinite Code Chamber & 03B AI Assembly Line.
+    // 03 / CAPABILITIES UNIFIED 3D SYNTHESIS STUDIO + real CSS3D projected CapabilityStudioScreen.
     const capabilities = addEnvironment(2);
-    const engine = createCapabilityEngine(capabilities);
-    let capViewport = document.querySelector<HTMLElement>("[data-capability-viewport]");
+    const engine = createCapabilityEngine(capabilities, mobile ? 640 : 1080);
+    engine.root.position.set(0, -0.35, 3.15);
+    const capScreen = capabilityEditor ? new CSS3DObject(capabilityEditor) : null;
+    if (capScreen) {
+      capScreen.position.copy(capabilities.position).add(engine.root.position).add(engine.screenPosition);
+      capScreen.scale.setScalar(engine.screenScale);
+      cssScene.add(capScreen);
+    }
     let capSystem = document.querySelector<HTMLElement>("[data-capability-system]");
     let accessViewport = document.querySelector<HTMLElement>("[data-access-architecture]");
-    const engineCenter = new THREE.Vector3(48, 1.4, -32);
-    const projected = new THREE.Vector3();
 
     // 04 / Architectural Developer Room + real CSS3D projected ProgressiveEditor.
     const builder = addEnvironment(3);
@@ -420,6 +428,10 @@ export function createWorld(host: HTMLElement, editor: HTMLElement, onFailure: (
           camera.fov = mobile ? 48 : 43;
           editor.dataset.editorLayout = mobile ? "mobile" : "desktop";
           screen.scale.setScalar(6.5 / (mobile ? 640 : 1080));
+          if (capabilityEditor && capScreen) {
+            capabilityEditor.dataset.editorLayout = mobile ? "mobile" : "desktop";
+            capScreen.scale.setScalar(6.5 / (mobile ? 640 : 1080));
+          }
           renderer.setPixelRatio(Math.min(window.devicePixelRatio, pixelCap, mobile ? 1 : 1.35));
           renderer.setSize(width, height);
           cssRenderer?.setSize(width, height);
@@ -437,6 +449,7 @@ export function createWorld(host: HTMLElement, editor: HTMLElement, onFailure: (
         host.style.opacity = String(opacity);
         if (opacity <= 0.001) {
           editor.style.opacity = "0";
+          if (capabilityEditor) capabilityEditor.style.opacity = "0";
           cssRenderer!.domElement.style.visibility = "hidden";
           lastTime = frame.time;
           return;
@@ -447,30 +460,14 @@ export function createWorld(host: HTMLElement, editor: HTMLElement, onFailure: (
         camera.position.fromArray(pose.position);
         camera.lookAt(new THREE.Vector3(...pose.target));
         camera.updateMatrixWorld();
-        if (!capViewport?.isConnected) capViewport = document.querySelector<HTMLElement>("[data-capability-viewport]");
         if (!capSystem?.isConnected) capSystem = document.querySelector<HTMLElement>("[data-capability-system]");
         if (!accessViewport?.isConnected) accessViewport = document.querySelector<HTMLElement>("[data-access-architecture]");
-        const engineRect = capViewport?.getBoundingClientRect();
         const accessRect = accessViewport?.getBoundingClientRect();
         const morph = accessRect ? smooth(clamp((frame.height * 0.95 - accessRect.top) / (frame.height * 0.6))) : 0;
         const assemblyProgress = accessRect ? clamp((frame.height * 0.85 - accessRect.top) / Math.max(1, accessRect.height + frame.height * 0.35)) : 0;
-        const targetRect =
-          engineRect && accessRect
-            ? {
-                left: lerp(engineRect.left, accessRect.left, morph),
-                top: lerp(engineRect.top, accessRect.top, morph),
-                width: lerp(engineRect.width, accessRect.width, morph),
-                height: lerp(engineRect.height, accessRect.height, morph),
-                bottom: Math.max(engineRect.bottom, accessRect.bottom),
-              }
-            : accessRect ?? engineRect;
-        const capWeight = smooth(clamp((3.85 - frame.chapter) / 0.65));
-        const inWindow = !!targetRect && targetRect.bottom > -50 && targetRect.top < frame.height + 100;
-        const anchorX = chapter < 3 ? pose.target[0] : 48;
-        const anchorZ = chapter < 3 ? pose.target[2] : -32;
-        capabilities.position.set(anchorX, 0, anchorZ);
-        engineCenter.set(anchorX, 1.4, anchorZ);
-        engine.root.visible = inWindow && capWeight > 0.001;
+        const capWeight = smooth(clamp(1 - Math.abs(chapter - 3) / 0.88, 0, 1));
+        const inWindow = capWeight > 0.001;
+        engine.root.visible = inWindow;
         const capProgress = Number(capSystem?.dataset.progress ?? 0);
         const activeModule = focus >= 0 ? focus : Math.min(5, Math.floor(capProgress * 6));
         engine.update(capProgress, activeModule, morph, frame.time, assemblyProgress);
@@ -482,18 +479,26 @@ export function createWorld(host: HTMLElement, editor: HTMLElement, onFailure: (
 
         const output = smooth((chapter - 2.05) / 0.85);
         outputSignal.position.set(lerp(24, 48, output), lerp(0.8, 1.4, output), lerp(-16, -32, output));
-        outputSignal.visible = chapter > 2.02 && chapter < 2.35 && !inWindow;
-        if (targetRect && inWindow && capWeight > 0.001) {
-          const units = worldUnitsPerPixel(camera.position.distanceTo(engineCenter), camera.fov, frame.height);
-          const scale = units * Math.min((targetRect.height * 0.88) / lerp(4.1, 3.1, morph), (targetRect.width * 0.94) / lerp(5.35, 8.6, morph));
-          engine.root.scale.setScalar(scale);
-          engine.root.position.x = lerp(0.24, 0, morph) * scale;
-          engine.root.position.y = 1.4 + lerp(0.26, 0.04, morph) * scale;
-          engine.root.rotation.y = lerp((capProgress - 0.5) * -0.1, (assemblyProgress - 0.5) * 0.12, morph);
-          engine.root.rotation.x = lerp((capProgress - 0.5) * 0.04, (0.5 - assemblyProgress) * 0.04, morph);
-          projected.copy(engineCenter).project(camera);
-          const offset = domViewOffset(projected, targetRect, frame.width, frame.height);
-          camera.setViewOffset(frame.width, frame.height, offset.x * capWeight, offset.y * capWeight, frame.width, frame.height);
+        outputSignal.visible = chapter > 2.02 && chapter < 2.65;
+
+        // Deterministic viewport-ratio framing for Capabilities (zero vertical DOM-rect chasing or jumps)
+        if (capWeight > 0.001) {
+          const offsetX = mobile ? 0 : lerp(-frame.width * 0.215, 0, morph) * capWeight;
+          const offsetY = (mobile ? frame.height * 0.12 : lerp(-frame.height * 0.015, frame.height * 0.115, morph)) * capWeight;
+          camera.setViewOffset(frame.width, frame.height, offsetX, offsetY, frame.width, frame.height);
+        }
+        const studioScale = mobile ? 0.72 : lerp(0.88, 0.78, morph);
+        engine.root.scale.setScalar(studioScale);
+        engine.root.rotation.y = lerp((capProgress - 0.5) * -0.08, (assemblyProgress - 0.5) * 0.1, morph);
+        if (capScreen && capabilityEditor) {
+          capScreen.position
+            .copy(capabilities.position)
+            .add(engine.root.position)
+            .addScaledVector(engine.screenPosition, studioScale);
+          capScreen.rotation.y = engine.root.rotation.y;
+          capScreen.scale.setScalar((6.5 / (mobile ? 640 : 1080)) * studioScale);
+          capScreen.visible = capWeight > 0.02 && !mobile;
+          capabilityEditor.style.opacity = String(capScreen.visible ? capWeight : 0);
         }
         renderer.domElement.dataset.capabilityArchitecture = "information-field";
         renderer.domElement.dataset.capabilityModules = "6";
@@ -510,9 +515,9 @@ export function createWorld(host: HTMLElement, editor: HTMLElement, onFailure: (
         groups.forEach((group, i) => {
           group.visible =
             i === 1
-              ? chapter > 2.03 && chapter < 2.35 && !inWindow
+              ? chapter > 2.03 && chapter < 2.75
               : i === 2
-              ? inWindow && capWeight > 0.001
+              ? inWindow
               : Math.abs(chapter - (i === 0 ? 0 : i + 1)) < 1.15;
         });
         if (close > 0.001) groups.forEach((group, i) => { if (i !== 4) group.visible = false; });
@@ -550,7 +555,8 @@ export function createWorld(host: HTMLElement, editor: HTMLElement, onFailure: (
         const builderWeight = smooth(1 - Math.abs(chapter - 4));
         screen.visible = builderWeight > 0.02;
         editor.style.opacity = String(builderWeight);
-        cssRenderer!.domElement.style.visibility = screen.visible ? "visible" : "hidden";
+        cssRenderer!.domElement.style.visibility =
+          screen.visible || (capScreen?.visible ?? false) ? "visible" : "hidden";
         renderer.render(scene, camera);
         cssRenderer?.render(cssScene, camera);
         renderer.domElement.dataset.camera = pose.position.map(v => v.toFixed(2)).join(",");
