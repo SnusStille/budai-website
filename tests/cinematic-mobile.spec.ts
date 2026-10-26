@@ -64,7 +64,6 @@ for (const width of [390, 360]) test(`mobile ${width}: full-height neural perspe
   expect(await page.evaluate(() => document.documentElement.scrollWidth-innerWidth)).toBeLessThanOrEqual(1);
   expect(errors).toEqual([]);
 });
-
 test("throttled fresh entry stays bounded, never mounts competing loaders, and does not fetch the room", async ({ page }) => {
   const cdp = await page.context().newCDPSession(page);
   await cdp.send("Network.enable");
@@ -105,4 +104,3 @@ test("mobile widths 320, 375, 390, 430 and Mode C fallback preserve layout, touc
     expect(overflow).toBeLessThanOrEqual(1);
   }
 });
-
