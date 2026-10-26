@@ -148,6 +148,10 @@ test("waitlist keeps native validation, company details, referral controls, and 
   await expect(form.getByRole("alert")).toHaveText(/not accepting signups|Could not save right now/);
   await expect(page.getByText("You're in!", { exact: true })).toHaveCount(0);
   await expect(form.getByRole("button", { name: "Join the waitlist", exact: true })).toBeEnabled();
+  await form.getByRole("button", { name: "Individual", exact: true }).click();
+  await expect(form.getByRole("button", { name: "Company", exact: true })).toHaveAttribute("aria-pressed", "false");
+  await page.locator(".plan-business a[href='#waitlist']").click();
+  await expect(form.getByRole("button", { name: "Company", exact: true })).toHaveAttribute("aria-pressed", "true");
 });
 
 test("SV / EN changes existing product content without mounting another intro", async ({ page }) => {

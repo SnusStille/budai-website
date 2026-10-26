@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ArrowRight, Check, Copy, Building2, User, Gift, Zap, MessageCircle, Mail } from "lucide-react";
 import BudAILogo from "@/components/ui/BudAILogo";
 import ScrollReveal from "@/components/ui/ScrollReveal";
@@ -32,6 +32,24 @@ export default function Waitlist() {
   const [showCode, setShowCode] = useState(false);
   const [details, setDetails] = useState(false);
   const [, setStatus] = useState<Awaited<ReturnType<typeof getWaitlistStatus>>>(null);
+  const emailInputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    const onPlanSelect = (e: Event) => {
+      const detail = (e as CustomEvent<{ accountType?: "individual" | "company"; openDetails?: boolean }>).detail;
+      if (detail?.accountType) {
+        setAccountType(detail.accountType);
+      }
+      if (detail?.openDetails) {
+        setDetails(true);
+      }
+      setTimeout(() => {
+        emailInputRef.current?.focus({ preventScroll: true });
+      }, 120);
+    };
+    window.addEventListener("budai:waitlist-plan", onPlanSelect);
+    return () => window.removeEventListener("budai:waitlist-plan", onPlanSelect);
+  }, []);
 
   useEffect(() => {
     try {
@@ -152,6 +170,7 @@ export default function Waitlist() {
               <label className="flex flex-1 items-center gap-3 px-3 py-2 sm:px-0 sm:py-0">
                 <Mail className="h-5 w-5 shrink-0 text-accent-cyan" />
                 <input
+                  ref={emailInputRef}
                   required
                   type="email"
                   value={form.email}

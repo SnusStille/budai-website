@@ -2905,10 +2905,41 @@ export default function AIPlayground() {
                         URL.revokeObjectURL(url);
                       }}
                       className="p-1.5 rounded-lg text-muted hover:text-white border border-transparent hover:border-white/10"
-                      title="Download"
+                      title={lang === "sv" ? "Ladda ner Markdown (.md)" : "Download Markdown (.md)"}
                     >
                       <FileDown className="w-3.5 h-3.5" />
                     </button>
+                    {/\|\s*---/.test(workspace.body) && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const tableLines = workspace.body
+                            .split("\n")
+                            .map((l) => l.trim())
+                            .filter((l) => l.startsWith("|") && l.endsWith("|") && !/^\|\s*[:-\s|]+\|$/.test(l));
+                          const csv = tableLines
+                            .map((row) =>
+                              row
+                                .slice(1, -1)
+                                .split("|")
+                                .map((c) => `"${c.trim().replace(/"/g, '""')}"`)
+                                .join(",")
+                            )
+                            .join("\n");
+                          const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+                          const url = URL.createObjectURL(blob);
+                          const a = document.createElement("a");
+                          a.href = url;
+                          a.download = `budai-table-${Date.now()}.csv`;
+                          a.click();
+                          URL.revokeObjectURL(url);
+                        }}
+                        className="px-1.5 py-1 rounded-lg font-mono text-[10px] text-accent-cyan hover:text-white border border-accent-cyan/25 bg-accent-cyan/10"
+                        title={lang === "sv" ? "Exportera tabell som CSV" : "Export table as CSV"}
+                      >
+                        CSV
+                      </button>
+                    )}
                     <button
                       type="button"
                       onClick={() => setWorkspace(null)}
@@ -3014,6 +3045,7 @@ export default function AIPlayground() {
                 </div>
                 <button
                   type="button"
+                  aria-label={lang === "sv" ? "Kopiera workspace" : "Copy workspace"}
                   onClick={async () => {
                     try {
                       await navigator.clipboard.writeText(workspace.body);
@@ -3026,12 +3058,65 @@ export default function AIPlayground() {
                 >
                   <Copy className="w-4 h-4" />
                 </button>
-                <button type="button" onClick={() => setWorkspace(null)} className="p-2 text-muted hover:text-white">
+                <button
+                  type="button"
+                  aria-label={lang === "sv" ? "Ladda ner Markdown" : "Download Markdown"}
+                  onClick={() => {
+                    const blob = new Blob([workspace.body], { type: "text/markdown;charset=utf-8" });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = `budai-workspace-${Date.now()}.md`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                  }}
+                  className="p-2 text-muted hover:text-white"
+                >
+                  <FileDown className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  aria-label={lang === "sv" ? "Stäng workspace" : "Close mobile workspace"}
+                  onClick={() => setWorkspace(null)}
+                  className="p-2 text-muted hover:text-white"
+                >
                   <X className="w-4 h-4" />
                 </button>
               </div>
               <div className="flex-1 overflow-y-auto p-4 text-sm text-white/90">
                 {renderMarkdown(workspace.body)}
+              </div>
+              <div className="shrink-0 p-3 border-t border-white/[0.06] grid grid-cols-2 gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const improve =
+                      lang === "sv"
+                        ? "Förbättra workspace-resultatet: gör det skarpare, mer strukturerat och mer handlingsbart."
+                        : "Improve the workspace result: make it sharper, more structured, and more actionable.";
+                    setWorkspace(null);
+                    void runPrompt(improve);
+                  }}
+                  disabled={busy}
+                  className="text-[11px] font-medium py-2 px-2 rounded-xl border border-accent-cyan/25 bg-accent-cyan/10 text-accent-cyan disabled:opacity-40"
+                >
+                  {lang === "sv" ? "Förbättra" : "Improve"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const toggleBilingual =
+                      lang === "sv"
+                        ? "Översätt detta workspace-resultat mellan svenska och engelska med exakt samma struktur och ton."
+                        : "Translate this workspace result between Swedish and English while keeping the exact structure and tone.";
+                    setWorkspace(null);
+                    void runPrompt(toggleBilingual);
+                  }}
+                  disabled={busy}
+                  className="text-[11px] font-medium py-2 px-2 rounded-xl border border-accent-purple/30 bg-accent-purple/10 text-accent-purple disabled:opacity-40"
+                >
+                  SV ↔ EN
+                </button>
               </div>
             </motion.div>
           </motion.div>
@@ -3162,6 +3247,30 @@ export default function AIPlayground() {
                       {memoryEnabled ? "ON" : "OFF"}
                     </span>
                   </button>
+
+                  <div className="mb-2 flex flex-wrap gap-1.5">
+                    {(lang === "sv"
+                      ? [
+                          ["+ SV/EN-regel", "Svara på kortfattad svenska för affärstext; håll kod och tekniska termer på engelska."],
+                          ["+ Koncis ton", "Använd en rak, exekutiv ton utan utfyllnadsord."],
+                          ["+ Punktlistor", "Avsluta strategiska svar med 3 konkreta nästa steg."],
+                        ]
+                      : [
+                          ["+ SV/EN rule", "Use concise Swedish for client copy; keep code and technical specs in English."],
+                          ["+ Executive tone", "Use a direct, executive tone without filler."],
+                          ["+ Action items", "End strategic answers with 3 concrete next steps."],
+                        ]
+                    ).map(([chip, preset]) => (
+                      <button
+                        key={chip}
+                        type="button"
+                        onClick={() => setNewMemText(preset)}
+                        className="rounded-full border border-white/[0.08] bg-white/[0.02] px-2.5 py-1 text-[10px] text-muted hover:border-accent-purple/40 hover:text-accent-purple"
+                      >
+                        {chip}
+                      </button>
+                    ))}
+                  </div>
 
                   <form
                     onSubmit={(e) => {

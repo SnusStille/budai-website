@@ -216,7 +216,22 @@ export default function Capabilities() {
                       </li>
                     ))}
                   </ul>
-                  <a href={pl.href} className={`mt-auto rounded-full py-2.5 text-center text-sm font-semibold transition-all hover:opacity-90 ${pl.btn}`}>
+                  <a
+                    href={pl.href}
+                    onClick={() => {
+                      if (pl.key === "consumer" || pl.key === "business") {
+                        window.dispatchEvent(
+                          new CustomEvent("budai:waitlist-plan", {
+                            detail: {
+                              accountType: pl.key === "business" ? "company" : "individual",
+                              openDetails: pl.key === "business",
+                            },
+                          })
+                        );
+                      }
+                    }}
+                    className={`mt-auto rounded-full py-2.5 text-center text-sm font-semibold transition-all hover:opacity-90 ${pl.btn}`}
+                  >
                     {pl.cta}
                   </a>
                 </div>
