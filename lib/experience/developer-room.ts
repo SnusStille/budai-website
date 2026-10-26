@@ -140,8 +140,8 @@ export function createDeveloperRoom(parent?: THREE.Object3D, editorWidth = 1080)
     ctx.fillStyle = "#d8f8ff";
     ctx.fillText(
       variant === "dashboard"
-        ? `CREATED PRODUCT 01 · WEBSITE & ANALYTICS (${Math.round(p * 100)}%)`
-        : `CREATED PRODUCT 02 · WORKFLOW & MOBILE (${Math.round(p * 100)}%)`,
+        ? `EXAMPLE UI 01 · WORKSPACE & PREVIEW METRICS (${Math.round(p * 100)}%)`
+        : `EXAMPLE UI 02 · WORKFLOW & MOBILE VIEW (${Math.round(p * 100)}%)`,
       48,
       34
     );
@@ -155,21 +155,21 @@ export function createDeveloperRoom(parent?: THREE.Object3D, editorWidth = 1080)
       ctx.strokeRect(28, 82, 712, 130);
       ctx.fillStyle = "#e8fcff";
       ctx.font = "700 20px sans-serif";
-      ctx.fillText("Nordic Operations Portal · Built with BudAI", 52, 126);
+      ctx.fillText("Nordic Operations Portal · Example UI", 52, 126);
       ctx.fillStyle = "#8ccce0";
       ctx.font = "14px sans-serif";
-      ctx.fillText("Bilingual SV / EN interface, executive summaries & live metrics.", 52, 158);
+      ctx.fillText("Bilingual SV / EN workspace, structured summaries & preview parameters.", 52, 158);
       ctx.fillStyle = "#6ee7b7";
       ctx.fillRect(570, 112, 142, 42);
       ctx.fillStyle = "#051821";
       ctx.font = "700 13px monospace";
       ctx.fillText("LIVE PREVIEW", 590, 138);
 
-      // 3 KPI Metric Cards
+      // 3 Verifiable Preview Specification Cards
       const kpis = [
-        { title: "WEEKLY TIME SAVED", val: "14.2 hrs", col: "#6ee7b7" },
-        { title: "BILINGUAL DOCS", val: "128 SV/EN", col: "#78d5ea" },
-        { title: "PLAYBOOK RUNS", val: "99.4% OK", col: "#a4b0ec" },
+        { title: "PREVIEW QUOTA", val: "12 / 80 DAY", col: "#6ee7b7" },
+        { title: "LANGUAGES", val: "SV ↔ EN", col: "#78d5ea" },
+        { title: "MEMORY MODE", val: "USER OWNED", col: "#a4b0ec" },
       ];
       kpis.forEach((k, idx) => {
         const kx = 28 + idx * 244;

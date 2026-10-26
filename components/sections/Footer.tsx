@@ -96,8 +96,8 @@ export default function Footer() {
           ? "BudAI följer EU:s dataskyddsförordning (GDPR). Som användare har du följande rättigheter: rätt till tillgång, rätt till rättelse, rätt till radering, rätt till begränsning av behandling, rätt till dataportabilitet, och rätt att göra invändningar."
           : "BudAI complies with the EU General Data Protection Regulation (GDPR). As a user, you have the following rights: right of access, right to rectification, right to erasure, right to restriction of processing, right to data portability, and right to object.",
         lang === "sv"
-          ? "Personuppgiftsansvarig: Stilledev AB. Kontakta oss på Stilleinc@hotmail.com för frågor om GDPR eller för att utöva dina rättigheter."
-          : "Data controller: Stilledev AB. Contact us at Stilleinc@hotmail.com for GDPR questions or to exercise your rights.",
+          ? "Personuppgiftsansvarig: Stilledev. Kontakta oss på Stilleinc@hotmail.com för frågor om GDPR eller för att utöva dina rättigheter."
+          : "Data controller: Stilledev. Contact us at Stilleinc@hotmail.com for GDPR questions or to exercise your rights.",
       ],
     },
   };
@@ -108,7 +108,7 @@ export default function Footer() {
         <div className="closing-field" aria-hidden="true"><span/><i data-outro-anchor/><span/></div>
         <span className="closing-kicker">{lang==="sv"?"SIGNALEN FORTSÄTTER":"THE SIGNAL CONTINUES"}</span>
         <h2>{lang==="sv"?"Fortsätt samtalet.":"Continue the conversation."}</h2>
-        <p>{lang==="sv"?"Prova BudAI. Hjälp forma nästa steg.":"Try BudAI. Help shape what comes next."}</p>
+        <p>{lang==="sv"?"Öppna Playground för att testa på svenska eller engelska — och var med när nästa steg byggs.":"Open the Playground to test live in Swedish or English — and help shape what gets built next."}</p>
         <a href="#playground">{lang==="sv"?"Tillbaka till Playground":"Back to Playground"}<ArrowUpRight size={15}/></a>
       </div>
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent-cyan/20 to-transparent" />
@@ -121,8 +121,8 @@ export default function Footer() {
             </a>
             <p className="text-sm text-muted leading-relaxed max-w-sm mb-6">
               {lang === "sv"
-                ? "En avancerad AI-plattform som hjälper svenska företag och privatpersoner att spara tid, automatisera uppgifter och förbättra arbetsflöden."
-                : "An advanced AI platform that helps Swedish companies and individuals save time, automate tasks, and improve workflows."}
+                ? "Utvecklad i Sverige av Stilledev för riktigt arbete på svenska och engelska — med live Playground, användarstyrt minne och tydlig väg från tanke till handling."
+                : "Built in Sweden by Stilledev for real work in Swedish and English — featuring a live Playground, user-controlled memory, and a clear path from raw context to action."}
             </p>
             <div className="flex items-center gap-2.5">
               {socials.map((s) => (

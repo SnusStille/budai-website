@@ -803,17 +803,9 @@ export default function AIPlayground() {
   };
 
   const bumpServer = async (kind: "messages" | "images" | "generations") => {
-    try {
-      const headers = await authHeaders();
-      await fetch("/api/usage", {
-        method: "POST",
-        headers,
-        body: JSON.stringify({ kind, guest: auth.isGuest ? auth.guestKey : undefined }),
-      });
-      auth.bumpUsage(kind);
-    } catch {
-      auth.bumpUsage(kind);
-    }
+    // /api/playground and /api/generate-image enforce and increment daily server quotas directly;
+    // update client-side UX state immediately without a duplicate /api/usage POST round-trip.
+    auth.bumpUsage(kind);
   };
 
   /** Ensure we have a conversation id before first message (New Chat fix) */
@@ -986,6 +978,7 @@ export default function AIPlayground() {
         });
       }
     }
+    acc += dec.decode();
     const cut = acc.indexOf("\u0000");
     const text = (cut === -1 ? acc : acc.slice(0, cut)).trim();
     let meta: { memory?: string; error?: string } = {};

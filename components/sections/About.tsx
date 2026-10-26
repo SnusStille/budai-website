@@ -27,7 +27,7 @@ export default function About() {
           <div className="builder-heading">
             <span className="chapter-label"><i />04 / {sv ? "FRÅN TANKE TILL VERKLIGHET · BYGGAREN" : "FROM THOUGHT TO REALITY · THE BUILDER"}</span>
             <h2 id="builder-title">{sv ? "Från en tanke." : "From a thought."}<br /><span>{sv ? "Till något verkligt." : "To something real."}</span></h2>
-            <p>{sv ? "Jag behövde bara föreställa mig vad jag ville ha — BudAI hjälpte till att göra det verkligt. Skrolla och se kod, gränssnitt, dashboards och flöden ta fysisk form." : "“I only had to imagine what I wanted. BudAI helped turn it into something real.” Scroll to watch code, interfaces, dashboards, and workflows assemble into tangible creations."}</p>
+            <p>{sv ? "Från en kort specifikation till typsäker kod, gränssnitt och strukturerade arbetsflöden — byggd med samma arkitektur som driver BudAI." : "From a short brief to type-safe code, interfaces, and structured workflows — built with the same architecture that powers BudAI."}</p>
             <div className="reality-creation-pills" data-thought-to-reality aria-hidden="true">
               <span><b>01</b>{sv ? "Webbgränssnitt" : "Website interface"}</span>
               <span><b>02</b>{sv ? "Live-dashboard" : "Live dashboard"}</span>
