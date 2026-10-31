@@ -1,3 +1,4 @@
+import { MAX_PLAYGROUND_MESSAGE_CHARS, MAX_PLAYGROUND_HISTORY_MESSAGES } from "@/lib/playground/messageBudget";
 import { resolveModelTier } from "@/lib/ai-models";
 import Anthropic from "@anthropic-ai/sdk";
 import { NextRequest, NextResponse } from "next/server";
@@ -181,7 +182,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid message" }, { status: 400 });
     }
 
-    const recent = rawMessages.slice(-12);
+    const recent = rawMessages.slice(-MAX_PLAYGROUND_HISTORY_MESSAGES);
     type Msg = {
       role: "user" | "assistant";
       content: string | Anthropic.ContentBlockParam[];
@@ -195,7 +196,7 @@ export async function POST(req: NextRequest) {
         (m.role !== "user" && m.role !== "assistant") ||
         typeof m.content !== "string" ||
         m.content.length === 0 ||
-        m.content.length > 4000
+        m.content.length > MAX_PLAYGROUND_MESSAGE_CHARS
       ) {
         return NextResponse.json({ error: "Invalid message" }, { status: 400 });
       }

@@ -85,6 +85,7 @@ import {
   saveSettings,
 } from "@/lib/playground/localStore";
 import * as cloud from "@/lib/playground/cloudStore";
+import { MAX_PLAYGROUND_MESSAGE_CHARS, MAX_PLAYGROUND_HISTORY_MESSAGES, prepareHistory } from "@/lib/playground/messageBudget";
 import { type WorkspaceDraft, readWorkspaceDraft, saveWorkspaceDraft, deleteWorkspaceDraft } from "@/lib/playground/workspaceStore";
 
 /* ─── helpers ─────────────────────────────────────────── */
@@ -579,6 +580,10 @@ export default function AIPlayground() {
     window.dispatchEvent(new CustomEvent("budai:activity", { detail: { level: busy ? 1 : 0 } }));
   }, [messages]);
   const [input, setInput] = useState("");
+  const inputRef = useRef(input);
+  const languageRef = useRef(lang);
+  inputRef.current = input;
+  languageRef.current = lang;
   const [persona, setPersona] = useState("default");
   const [voiceOpen, setVoiceOpen] = useState(false);
   const [slashIdx, setSlashIdx] = useState(0);
@@ -627,6 +632,7 @@ export default function AIPlayground() {
     const onPrompt = (e: Event) => {
       const text = (e as CustomEvent<string>).detail;
       if (typeof text !== "string") return;
+      if (inputRef.current.trim() && inputRef.current !== text && !window.confirm(languageRef.current === "sv" ? "Ersätta ditt oskickade meddelande?" : "Replace your unsent message?")) return;
       setInput(text);
       clearTimeout(focusTimer);
       focusTimer = setTimeout(() => document.querySelector<HTMLTextAreaElement>("#playground textarea")?.focus({ preventScroll: true }), 450);
@@ -1091,24 +1097,30 @@ export default function AIPlayground() {
     }
   };
 
-  const runPrompt = async (text: string, opts?: { image?: AttachmentDraft | null; forceGen?: boolean; base?: ChatMessage[] }) => {
+  const runPrompt = async (text: string, opts?: { image?: AttachmentDraft | null; forceGen?: boolean; base?: ChatMessage[]; consumeComposer?: boolean }) => {
     const trimmed = text.trim();
     if (!trimmed || busy) return;
 
     const wantGen =
-      imageGenEnabled && (opts?.forceGen || genMode || looksLikeImageGen(trimmed));
+      imageGenEnabled && (opts?.forceGen || (opts?.consumeComposer && genMode) || looksLikeImageGen(trimmed));
     if (wantGen && !opts?.image) {
       setGenMode(false);
-      return runImageGen(trimmed);
+      return runImageGen(trimmed, !!opts?.consumeComposer);
     }
     // If user asked to generate but feature off — honest message, no fake image
     if (!imageGenEnabled && !opts?.image && looksLikeImageGen(trimmed)) {
       // fall through as normal chat; model can explain limits
     }
 
+    const intent =
+      (INTENT_PRESETS[lang] || INTENT_PRESETS.en).find((x) => x.id === intentId) || INTENT_PRESETS.en[0];
+    if (intent.prefix.length + trimmed.length > MAX_PLAYGROUND_MESSAGE_CHARS) {
+      showToast("warn", lang === "sv" ? "Meddelandet är för långt för valt läge. Korta texten innan du skickar." : "The message is too long for this mode. Shorten it before sending.");
+      return;
+    }
     if (!checkQuota("messages")) return;
 
-    const img = opts?.image !== undefined ? opts.image : attach;
+    const img = opts?.image !== undefined ? opts.image : opts?.consumeComposer ? attach : null;
     if (img && auth.isGuest) {
       auth.openAuth(lang === "sv" ? "Bildanalys kräver konto" : "Image analysis needs an account");
       return;
@@ -1127,27 +1139,27 @@ export default function AIPlayground() {
     };
     const nextList = [...(opts?.base ?? messages), userMsg];
     setMessages(nextList);
-    setInput("");
-    setAttach(null);
+    if (opts?.consumeComposer) {
+      setInput("");
+      setAttach(null);
+    }
     setLastFailed(null);
     abortRef.current = false;
     setActivity(img ? "reading_image" : "thinking");
 
     // Build API history from nextList
-    const apiHistory = nextList
+    const apiHistory = prepareHistory(nextList
       .filter((m) => !m.error)
       .map((m) => ({
         role: (m.role === "user" ? "user" : "assistant") as "user" | "assistant",
         content: m.content,
-      }));
+      })), lang).messages;
 
     try {
       const headers = await authHeaders();
       const controller = new AbortController();
       const timeout = window.setTimeout(() => controller.abort(), 90_000);
 
-      const intent =
-        (INTENT_PRESETS[lang] || INTENT_PRESETS.en).find((x) => x.id === intentId) || INTENT_PRESETS.en[0];
       const apiMessages = apiHistory.map((m, i, arr) => {
         if (i === arr.length - 1 && m.role === "user" && intent.prefix) {
           return { ...m, content: intent.prefix + m.content };
@@ -1250,7 +1262,7 @@ export default function AIPlayground() {
     }
   };
 
-  const runImageGen = async (prompt: string) => {
+  const runImageGen = async (prompt: string, consumeComposer = false) => {
     const trimmed = prompt.trim();
     if (!trimmed || busy) return;
     if (!imageGenEnabled) {
@@ -1276,7 +1288,7 @@ export default function AIPlayground() {
       ...prev,
       { id: newId("m"), role: "user", content: trimmed, ts: Date.now() },
     ]);
-    setInput("");
+    if (consumeComposer) setInput("");
     setGenMode(false);
     setActivity("generating_image");
     setLastFailed(null);
@@ -1518,24 +1530,27 @@ export default function AIPlayground() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lightbox, memoryOpen, showShortcuts, toolsOpen, workspace, workspaceVisible, mobileDrawer, messages, lang]);
 
+  const replaceComposer = (text: string) => {
+    if (input.trim() && input !== text && !confirm(lang === "sv" ? "Ersätta ditt oskickade meddelande?" : "Replace your unsent message?")) return false;
+    setInput(text);
+    taRef.current?.focus({ preventScroll: true });
+    return true;
+  };
+
   const runInspire = () => {
     if (busy) return;
     const pool = INSPIRE_PROMPTS[answerLang] || INSPIRE_PROMPTS.en;
     const pick = pool[Math.floor(Math.random() * pool.length)];
+    if (!replaceComposer(pick)) return;
     setInspireSpin(true);
     window.setTimeout(() => setInspireSpin(false), 600);
-    setInput(pick);
-    // Auto-send after a beat so it feels magical
-    window.setTimeout(() => {
-      void runPrompt(pick);
-    }, 280);
   };
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() && !attach) return;
-    if (genMode && imageGenEnabled) void runImageGen(input || "image");
-    else void runPrompt(input || (attach ? (lang === "sv" ? "Vad ser du?" : "What do you see?") : ""));
+    if (genMode && imageGenEnabled) void runImageGen(input || "image", true);
+    else void runPrompt(input || (attach ? (lang === "sv" ? "Vad ser du?" : "What do you see?") : ""), { consumeComposer: true });
   };
 
   const onFile = async (e: ChangeEvent<HTMLInputElement>) => {
@@ -1611,6 +1626,8 @@ export default function AIPlayground() {
       return;
     }
     try {
+      // Recognition results replace their own interim text, not an existing draft.
+      const draftBeforeDictation = inputRef.current;
       const r = new SR();
       r.lang = lang === "sv" ? "sv-SE" : "en-US";
       r.interimResults = true;
@@ -1621,7 +1638,8 @@ export default function AIPlayground() {
           const row = ev.results[i];
           if (row?.[0]?.transcript) t += row[0].transcript;
         }
-        setInput(t);
+        const separator = draftBeforeDictation && t && !/\s$/.test(draftBeforeDictation) ? " " : "";
+        setInput(draftBeforeDictation + separator + t);
       };
       r.onerror = (ev) => {
         setListening(false);
@@ -1659,8 +1677,12 @@ export default function AIPlayground() {
     ? "Lämna det redigerade utkastet? Spara eller ladda ner det först om du vill behålla ändringarna."
     : "Leave the edited draft? Save or download it first to keep your changes.");
 
+  const confirmLeavingComposer = () => !(input.trim() || attach) || confirm(lang === "sv"
+    ? "Lämna ditt oskickade meddelande och eventuell bilaga?"
+    : "Discard your unsent message and any attachment?");
+
   const newChat = async (opts?: { temporary?: boolean }) => {
-    if (creatingChat || !confirmLeavingWorkspace()) return;
+    if (creatingChat || !confirmLeavingWorkspace() || !confirmLeavingComposer()) return;
     setCreatingChat(true);
     stopAll();
     setAttach(null);
@@ -1697,7 +1719,7 @@ export default function AIPlayground() {
   };
 
   const loadConvo = async (id: string) => {
-    if (!confirmLeavingWorkspace()) return;
+    if (!confirmLeavingWorkspace() || !confirmLeavingComposer()) return;
     stopAll();
     setDualPick({});
     setLastFailed(null);
@@ -1717,6 +1739,8 @@ export default function AIPlayground() {
       setConvoId(c.id);
       setMessages(c.messages);
     }
+    setInput("");
+    setAttach(null);
     setMobileDrawer(false);
     if (window.innerWidth < 1024) setSidebarOpen(false);
   };
@@ -2217,10 +2241,9 @@ export default function AIPlayground() {
                         : "Write, analyze, plan, or attach an image in Swedish and English — longer structured outputs open in Workspace."}
                     </p>
                     <SignalWorkflows lang={lang} onSelect={(prompt, intent) => {
+                      if (!replaceComposer(prompt)) return;
                       setIntentId(intent);
                       setMode("single");
-                      setInput(prompt);
-                      taRef.current?.focus({ preventScroll: true });
                     }} />
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 w-full max-w-xl">
                       {caps.map((c) => (
@@ -2233,8 +2256,8 @@ export default function AIPlayground() {
                               return;
                             }
                             if ("needsImage" in c && c.needsImage) {
+                              if (!replaceComposer(c.prompt)) return;
                               fileRef.current?.click();
-                              setInput(c.prompt);
                               return;
                             }
                             if ("gen" in c && c.gen) {
@@ -2247,12 +2270,11 @@ export default function AIPlayground() {
                                 );
                                 return;
                               }
+                              if (!replaceComposer(c.prompt)) return;
                               setGenMode(true);
-                              setInput(c.prompt);
-                              taRef.current?.focus({ preventScroll: true });
                               return;
                             }
-                            void runPrompt(c.prompt);
+                            replaceComposer(c.prompt);
                           }}
                           className="pg-suggest-chip text-left rounded-2xl border border-white/[0.09] bg-gradient-to-b from-white/[0.06] to-white/[0.02] hover:border-accent-cyan/40 hover:from-accent-cyan/[0.08] hover:to-accent-purple/[0.04] p-3.5 transition-all duration-200 group"
                         >
@@ -2283,7 +2305,7 @@ export default function AIPlayground() {
                         {lang === "sv" ? "Inspirera mig" : "Surprise me"}
                       </span>
                       <span className="text-[10px] text-muted font-mono hidden sm:inline">
-                        {lang === "sv" ? "slumpad stark prompt" : "random strong prompt"}
+                        {lang === "sv" ? "förslag att redigera" : "editable suggestion"}
                       </span>
                     </button>
                   </div>
@@ -2476,11 +2498,14 @@ export default function AIPlayground() {
                           <button
                             type="button"
                             onClick={() => {
-                              const prompt =
-                                lang === "sv"
-                                  ? "Fortsätt på det senaste svaret — gå djupare och gör det mer konkret."
-                                  : "Continue from your last answer — go deeper and make it more concrete.";
-                              void runPrompt(prompt);
+                              const instruction = lang === "sv"
+                                ? "Fortsätt på det här svaret — gå djupare och gör det mer konkret."
+                                : "Continue this answer — go deeper and make it more concrete.";
+                              if (msg.content.length > 3200) {
+                                showToast("warn", lang === "sv" ? "Svaret är för långt för åtgärden. Öppna Workspace och välj en kortare del." : "This answer is too long for the action. Open Workspace and select a shorter part.");
+                                return;
+                              }
+                              void runPrompt(`${instruction}\n\n---\n${msg.content}`, { image: null });
                             }}
                             className="inline-flex items-center gap-1 text-[10px] text-muted hover:text-white px-1.5 py-1"
                           >
@@ -2856,6 +2881,9 @@ export default function AIPlayground() {
                   onSend={(t) => void runPrompt(t)}
                   onClose={() => setVoiceOpen(false)}
                 />
+                {messages.filter(m => !m.error).length > MAX_PLAYGROUND_HISTORY_MESSAGES - 1 && <p className="mb-2 text-[11px] text-white/65" role="note">{lang === "sv" ? "Nästa anrop använder de senaste 11 meddelandena; hela tråden finns kvar här." : "The next request uses the last 11 messages; the full thread stays here."}</p>}
+                {messages.filter(m => !m.error).slice(-(MAX_PLAYGROUND_HISTORY_MESSAGES - 1)).some(m => m.content.length > MAX_PLAYGROUND_MESSAGE_CHARS) && <p className="mb-2 text-[11px] text-white/65" role="note">{lang === "sv" ? "Långa tidigare meddelanden förkortas i nästa anrop; hela tråden finns kvar här." : "Long earlier messages are shortened in the next request; the full thread stays here."}</p>}
+                {input.trim().length + ((INTENT_PRESETS[lang] || INTENT_PRESETS.en).find(x => x.id === intentId)?.prefix.length || 0) > MAX_PLAYGROUND_MESSAGE_CHARS - 500 && <p id="composer-limit" className="mb-2 text-[11px] text-white/70" role="status">{lang === "sv" ? "Tecken inklusive instruktion för läget" : "Characters including mode instructions"}: {input.trim().length + ((INTENT_PRESETS[lang] || INTENT_PRESETS.en).find(x => x.id === intentId)?.prefix.length || 0)} / {MAX_PLAYGROUND_MESSAGE_CHARS}</p>}
                 <form
                   onSubmit={onSubmit}
                   className={`flex gap-1.5 items-end rounded-2xl transition-colors ${
@@ -2946,7 +2974,7 @@ export default function AIPlayground() {
                       if (e.key === "Enter" && !e.shiftKey) {
                         e.preventDefault();
                         if ((input.trim() || attach) && !busy) {
-                          if (genMode && imageGenEnabled) void runImageGen(input);
+                          if (genMode && imageGenEnabled) void runImageGen(input, true);
                           else
                             void runPrompt(
                               input ||
@@ -2954,7 +2982,8 @@ export default function AIPlayground() {
                                   ? lang === "sv"
                                     ? "Vad ser du?"
                                     : "What do you see?"
-                                  : "")
+                                  : ""),
+                              { consumeComposer: true }
                             );
                         }
                       }
@@ -3019,11 +3048,7 @@ export default function AIPlayground() {
                         : "Account"}
                   </span>
                   <span>{lang === "sv" ? "Skriv inga känsliga uppgifter under previewn" : "Don't enter sensitive data during the preview"}</span>
-                  {input.length > 100 && (
-                    <span className={`ml-auto font-mono ${input.length > 3600 ? "text-amber-300/80" : "text-muted/50"}`}>
-                      {input.length}/4000
-                    </span>
-                  )}
+
                 </div>
               </div>
             </div>
@@ -3164,8 +3189,7 @@ export default function AIPlayground() {
                     <button
                       type="button"
                       onClick={() => {
-                        setInput(workspace.body.slice(0, 2000));
-                        taRef.current?.focus({ preventScroll: true });
+                        replaceComposer(workspace.body);
                       }}
                       className="text-[11px] font-medium py-1.5 px-2 rounded-xl border border-white/[0.08] text-muted hover:text-white"
                     >

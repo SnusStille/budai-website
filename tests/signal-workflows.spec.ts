@@ -15,6 +15,7 @@ test("prepared example and workflows prefill without an AI request, in both lang
   await expect(page.getByRole("textbox", { name: "Message BudAI" })).toHaveValue(/Do not invent owners or dates/);
   expect(requests).toBe(0);
   await page.locator(".site-navigation").getByRole("button", { name: "SV", exact: true }).first().click();
+  page.once("dialog", dialog => dialog.accept());
   await panel.getByRole("button", { name: "Skriv ett mejl" }).click();
   await expect(page.getByRole("textbox", { name: "Meddelande till BudAI" })).toHaveValue(/ämnesrad/);
   expect(requests).toBe(0);

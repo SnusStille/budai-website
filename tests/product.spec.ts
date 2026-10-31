@@ -222,6 +222,7 @@ test("voice dictation keeps SV/EN, permission errors and thrown recognition fail
   await page.goto("/#playground");const input=page.locator("#playground textarea");
   await page.getByRole("button",{name:/^Speak Voice to text/}).click();await expect(input).toHaveValue("Help me plan the day.");
   await page.locator(".site-navigation").getByRole("button",{name:"SV",exact:true}).first().click();
+  await input.fill("");
   await page.getByRole("button",{name:/^Prata in Röst till text/}).click();await expect(input).toHaveValue("Hjälp mig planera dagen.");
   expect(await page.evaluate(()=>(window as unknown as {__voiceLangs:string[]}).__voiceLangs)).toEqual(["en-US","sv-SE"]);
   await page.evaluate(()=>{(window as unknown as {__voiceMode:string}).__voiceMode="denied";});
