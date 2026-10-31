@@ -56,7 +56,9 @@ export type Mode = "single" | "dual" | "concise";
 
 export function newId(prefix = "c") {
   if (typeof crypto !== "undefined" && crypto.randomUUID) {
-    return `${prefix}-${crypto.randomUUID().slice(0, 8)}`;
+    const id = crypto.randomUUID();
+    // Cloud message rows use UUID primary keys. Keep the same ID across syncs.
+    return prefix === "m" ? id : `${prefix}-${id.slice(0, 8)}`;
   }
   return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
 }

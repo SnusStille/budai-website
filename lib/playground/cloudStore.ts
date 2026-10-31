@@ -3,6 +3,7 @@
  * Uses append-friendly updates — never blindly wipe on every keystroke.
  */
 import { createClient } from "@/lib/supabase/client";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   type Conversation,
   type ChatMessage,
@@ -119,7 +120,7 @@ export async function deleteConversation(id: string) {
  * Sync messages: append-only for new ids; update title from first user msg.
  * Avoids full wipe which caused races with New Chat.
  */
-export async function syncMessages(
+async function syncMessagesOnce(
   conversationId: string,
   messages: ChatMessage[],
   opts?: { temporary?: boolean }
@@ -127,22 +128,32 @@ export async function syncMessages(
   if (opts?.temporary) return { ok: true };
   const { sb, user } = await getUser();
   if (!sb || !user) return { ok: false };
+  return syncMessagesToStore(sb, user.id, conversationId, messages);
+}
 
+/** Sync one snapshot using the authenticated client; exported for isolated testing. */
+export async function syncMessagesToStore(sb: SupabaseClient, userId: string, conversationId: string, messages: ChatMessage[]): Promise<{ ok: boolean; title?: string }> {
   const title = messages.length ? titleFromMessages(messages) : "New chat";
   await sb.from("conversations")
     .update({ updated_at: new Date().toISOString() })
-    .eq("id", conversationId).eq("user_id", user.id);
+    .eq("id", conversationId).eq("user_id", userId);
   // Name the initial draft only. Never replace a title the user has changed.
   if (messages.length) await sb.from("conversations")
     .update({ title })
-    .eq("id", conversationId).eq("user_id", user.id).in("title", ["New chat", "Ny chatt"]);
+    .eq("id", conversationId).eq("user_id", userId).in("title", ["New chat", "Ny chatt"]);
 
   // Fetch existing message ids
-  const { data: existing } = await sb
+  const { data: existing, error: readError } = await sb
     .from("messages")
-    .select("id")
+    .select("id,meta")
     .eq("conversation_id", conversationId);
-  const have = new Set((existing || []).map((m) => m.id));
+  // A failed read must never be interpreted as an empty thread.
+  if (readError) return { ok: false };
+  const have = new Set<string>();
+  for (const row of existing || []) {
+    have.add(row.id);
+    if (typeof row.meta?.client_id === "string") have.add(row.meta.client_id);
+  }
 
   const toInsert = messages.filter((m) => !have.has(m.id) && m.role !== "system");
   if (toInsert.length) {
@@ -150,32 +161,36 @@ export async function syncMessages(
       toInsert.map((m) => ({
         id: isUuid(m.id) ? m.id : undefined,
         conversation_id: conversationId,
-        user_id: user.id,
+        user_id: userId,
         role: m.role === "user" ? "user" : "assistant",
         content: m.content,
         image_url: m.imageUrl && !m.imageUrl.startsWith("data:") && !m.generated ? m.imageUrl : null,
         generated_image_url: m.generated && m.imageUrl && !m.imageUrl.startsWith("data:") ? m.imageUrl : null,
         meta: {
           generated: !!m.generated,
+          client_id: m.id,
           has_data_image: !!(m.imageUrl && m.imageUrl.startsWith("data:")),
         },
       }))
     );
     if (error) {
-      // Fallback: insert without custom ids
+      // Do not retry with different IDs: that could duplicate a successful concurrent insert.
       console.warn("[cloud] sync insert", error.message);
-      await sb.from("messages").insert(
-        toInsert.map((m) => ({
-          conversation_id: conversationId,
-          user_id: user.id,
-          role: m.role === "user" ? "user" : "assistant",
-          content: m.content,
-          meta: { generated: !!m.generated, client_id: m.id },
-        }))
-      );
+      return { ok: false };
     }
   }
   return { ok: true, title };
+}
+
+// Debounced snapshots can overlap while the network is slow. Serialize writes per
+// conversation within this tab so each snapshot observes the previous insert.
+const pendingSyncs = new Map<string, Promise<{ ok: boolean; title?: string }>>();
+export function syncMessages(conversationId: string, messages: ChatMessage[], opts?: { temporary?: boolean }): Promise<{ ok: boolean; title?: string }> {
+  const prior = pendingSyncs.get(conversationId) ?? Promise.resolve({ ok: true });
+  const next = prior.catch(() => ({ ok: false })).then(() => syncMessagesOnce(conversationId, messages, opts));
+  pendingSyncs.set(conversationId, next);
+  void next.finally(() => { if (pendingSyncs.get(conversationId) === next) pendingSyncs.delete(conversationId); }).catch(() => {});
+  return next;
 }
 
 function isUuid(s: string) {

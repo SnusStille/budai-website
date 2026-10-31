@@ -16,6 +16,7 @@ import {
   type ChangeEvent,
 } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { createPortal } from "react-dom";
 import {
   Send,
   User,
@@ -84,6 +85,7 @@ import {
   saveSettings,
 } from "@/lib/playground/localStore";
 import * as cloud from "@/lib/playground/cloudStore";
+import { type WorkspaceDraft, readWorkspaceDraft, saveWorkspaceDraft, deleteWorkspaceDraft } from "@/lib/playground/workspaceStore";
 
 /* ─── helpers ─────────────────────────────────────────── */
 
@@ -235,6 +237,8 @@ function renderTextBlock(text: string, keyPrefix: string): ReactNode {
       nodes.push(
         <div
           key={`${keyPrefix}-h-${i}`}
+          role="heading"
+          aria-level={(raw.match(/^#{1,3}/)?.[0].length ?? 1) + 2}
           className="font-semibold text-white mt-2 mb-1 tracking-tight"
         >
           {renderInlineMd(heading[1], `${keyPrefix}-h-${i}`)}
@@ -651,11 +655,20 @@ export default function AIPlayground() {
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [answerLang, setAnswerLang] = useState<"sv" | "en">(lang);
   const [inspireSpin, setInspireSpin] = useState(false);
-  const [workspace, setWorkspace] = useState<{
-    msgId: string;
-    title: string;
-    body: string;
-  } | null>(null);
+  const [workspace, setWorkspace] = useState<WorkspaceDraft | null>(null);
+  const [workspaceVisible, setWorkspaceVisible] = useState(true);
+  const [workspacePreview, setWorkspacePreview] = useState(false);
+  const [savedWorkspace, setSavedWorkspace] = useState<WorkspaceDraft | null>(null);
+  const workspaceOwner = auth.isMember && auth.user ? `user:${auth.user.id}` : "guest";
+  const workspaceOwnerRef = useRef(workspaceOwner);
+  useEffect(() => {
+    setSavedWorkspace(readWorkspaceDraft(workspaceOwner));
+    if (workspaceOwnerRef.current !== workspaceOwner) {
+      // Never carry a previous account's in-memory document into another account.
+      setWorkspace(null);
+      workspaceOwnerRef.current = workspaceOwner;
+    }
+  }, [workspaceOwner]);
   const [toolsOpen, setToolsOpen] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [expanded, setExpanded] = useState(false);
@@ -694,6 +707,7 @@ export default function AIPlayground() {
     gen?: boolean;
   } | null>(null);
 
+  const workspaceDialogRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef(false);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -703,6 +717,29 @@ export default function AIPlayground() {
   const bootRef = useRef(false);
 
   const busy = activity !== "idle" && activity !== "error" && activity !== "listening";
+
+  const workspaceMessageId = workspace?.msgId;
+  useEffect(() => {
+    if (!workspaceMessageId || !workspaceVisible || !window.matchMedia("(max-width: 1023px)").matches) return;
+    const dialog = workspaceDialogRef.current;
+    if (!dialog) return;
+    const previous = document.activeElement as HTMLElement | null;
+    dialog.querySelector<HTMLButtonElement>("[data-workspace-close]")?.focus({ preventScroll: true });
+    const onTab = (event: KeyboardEvent) => {
+      if (event.key !== "Tab") return;
+      const focusable = Array.from(dialog.querySelectorAll<HTMLElement>('button:not([disabled]), textarea:not([disabled]), a[href]'))
+        .filter(element => element.getClientRects().length > 0);
+      if (!focusable.length) return;
+      const first = focusable[0], last = focusable[focusable.length - 1];
+      if (event.shiftKey && (document.activeElement === first || !dialog.contains(document.activeElement))) {
+        event.preventDefault(); last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault(); first.focus();
+      }
+    };
+    dialog.addEventListener("keydown", onTab);
+    return () => { dialog.removeEventListener("keydown", onTab); previous?.focus({ preventScroll: true }); };
+  }, [workspaceMessageId, workspaceVisible]); // Only when the sheet opens, not on each edit.
 
   const showToast = useCallback((kind: "ok" | "warn" | "err", text: string) => {
     setToast({ kind, text });
@@ -864,7 +901,8 @@ export default function AIPlayground() {
       if (!list.length || !id) return id;
       if (temporary) return id;
       if (auth.isMember) {
-        await cloud.syncMessages(id, list);
+        const result = await cloud.syncMessages(id, list);
+        if (!result.ok) showToast("err", lang === "sv" ? "Kunde inte synkronisera historiken. Försök igen." : "Could not sync history. Please try again.");
         void reloadSidebar();
         return id;
       }
@@ -881,7 +919,7 @@ export default function AIPlayground() {
       );
       return convo.id;
     },
-    [auth.isMember, temporary, reloadSidebar]
+    [auth.isMember, temporary, reloadSidebar, showToast, lang]
   );
 
   // Debounced persist after messages change
@@ -934,6 +972,8 @@ export default function AIPlayground() {
       },
     ]);
     if (!workspace && isWorkspaceWorthy(fullText) && typeof window !== "undefined" && window.innerWidth >= 1024) {
+      setWorkspaceVisible(true);
+      setWorkspacePreview(false);
       setWorkspace({
         msgId: mid,
         title: workspaceTitle(fullText, lang),
@@ -1036,6 +1076,8 @@ export default function AIPlayground() {
         typeof window !== "undefined" &&
         window.innerWidth >= 1024)
     ) {
+      setWorkspaceVisible(true);
+      setWorkspacePreview(false);
       setWorkspace({
         msgId: mid,
         title: workspaceTitle(finalContent, lang),
@@ -1381,11 +1423,42 @@ export default function AIPlayground() {
       showToast("warn", lang === "sv" ? "Utkastet är för långt för en åtgärd. Korta det till 3 200 tecken eller kopiera en del till chatten." : "The draft is too long for an action. Shorten it to 3,200 characters or copy part into chat.");
       return;
     }
-    if (closeMobile) setWorkspace(null);
-    void runPrompt(`${instruction}\n\n---\n${workspace.body}`);
+    if (closeMobile) setWorkspaceVisible(false);
+    // An unrelated pending image must not be attached to a document action.
+    void runPrompt(`${instruction}\n\n---\n${workspace.body}`, { image: null });
+  };
+
+  const saveDraft = () => {
+    if (!workspace || temporary) return;
+    if (savedWorkspace && savedWorkspace.msgId !== workspace.msgId &&
+      !confirm(lang === "sv" ? "Ersätta utkastet som redan är sparat på den här enheten?" : "Replace the draft already saved on this device?")) return;
+    if (!saveWorkspaceDraft(workspaceOwner, workspace)) {
+      showToast("err", lang === "sv" ? "Kunde inte spara utkastet på enheten." : "Could not save the draft on this device.");
+      return;
+    }
+    setSavedWorkspace({ ...workspace });
+    showToast("ok", lang === "sv" ? "Utkast sparat på den här enheten" : "Draft saved on this device");
+  };
+  const resumeSavedDraft = () => {
+    if (!savedWorkspace) return;
+    if (workspace && (workspace.msgId !== savedWorkspace.msgId || workspace.body !== savedWorkspace.body) &&
+      !confirm(lang === "sv" ? "Ersätta det öppna utkastet med det sparade?" : "Replace the open draft with the saved draft?")) return;
+    setWorkspace(savedWorkspace);
+    setWorkspaceVisible(true);
+    setWorkspacePreview(false);
+  };
+  const removeSavedDraft = () => {
+    if (!confirm(lang === "sv" ? "Radera utkastet från den här enheten?" : "Delete the draft from this device?")) return;
+    if (deleteWorkspaceDraft(workspaceOwner)) setSavedWorkspace(null);
+    else showToast("err", lang === "sv" ? "Kunde inte radera utkastet." : "Could not delete the draft.");
   };
 
   const openWorkspace = (msgId: string, content: string) => {
+    if (workspace?.msgId === msgId) { setWorkspaceVisible(true); return; }
+    if (workspace && workspace.body !== messages.find(m => m.id === workspace.msgId)?.content &&
+      !confirm(lang === "sv" ? "Ersätta det öppna utkastet? Spara eller ladda ner det först om du vill behålla ändringarna." : "Replace the open draft? Save or download it first to keep your changes.")) return;
+    setWorkspaceVisible(true);
+    setWorkspacePreview(false);
     setWorkspace({
       msgId,
       title: workspaceTitle(content, lang),
@@ -1403,7 +1476,7 @@ export default function AIPlayground() {
         if (memoryOpen) { setMemoryOpen(false); return; }
         if (showShortcuts) { setShowShortcuts(false); return; }
         if (toolsOpen) { setToolsOpen(false); return; }
-        if (workspace) { setWorkspace(null); return; }
+        if (workspace && workspaceVisible) { setWorkspaceVisible(false); return; }
         if (mobileDrawer) { setMobileDrawer(false); return; }
         return;
       }
@@ -1429,10 +1502,12 @@ export default function AIPlayground() {
       }
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "b" && !inField) {
         e.preventDefault();
+        if (workspace) { setWorkspaceVisible(v => !v); return; }
         setWorkspace((w) => {
-          if (w) return null;
+          if (w) return w;
           const last = [...messages].reverse().find((m) => m.role === "assistant" && m.content);
           if (!last) return null;
+          setWorkspaceVisible(true);
           return { msgId: last.id, title: workspaceTitle(last.content, lang), body: last.content };
         });
         return;
@@ -1441,7 +1516,7 @@ export default function AIPlayground() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lightbox, memoryOpen, showShortcuts, toolsOpen, workspace, mobileDrawer, messages, lang]);
+  }, [lightbox, memoryOpen, showShortcuts, toolsOpen, workspace, workspaceVisible, mobileDrawer, messages, lang]);
 
   const runInspire = () => {
     if (busy) return;
@@ -1575,8 +1650,17 @@ export default function AIPlayground() {
     }
   };
 
+  const workspaceHasUnsavedChanges = () => {
+    if (!workspace) return false;
+    if (savedWorkspace?.msgId === workspace.msgId && savedWorkspace.body === workspace.body) return false;
+    return workspace.body !== messages.find(m => m.id === workspace.msgId)?.content;
+  };
+  const confirmLeavingWorkspace = () => !workspaceHasUnsavedChanges() || confirm(lang === "sv"
+    ? "Lämna det redigerade utkastet? Spara eller ladda ner det först om du vill behålla ändringarna."
+    : "Leave the edited draft? Save or download it first to keep your changes.");
+
   const newChat = async (opts?: { temporary?: boolean }) => {
-    if (creatingChat) return;
+    if (creatingChat || !confirmLeavingWorkspace()) return;
     setCreatingChat(true);
     stopAll();
     setAttach(null);
@@ -1613,6 +1697,7 @@ export default function AIPlayground() {
   };
 
   const loadConvo = async (id: string) => {
+    if (!confirmLeavingWorkspace()) return;
     stopAll();
     setDualPick({});
     setLastFailed(null);
@@ -2019,6 +2104,10 @@ export default function AIPlayground() {
                 </div>
               </div>
 
+              {(savedWorkspace || (workspace && !workspaceVisible)) && <div className="flex items-center gap-3 px-3 py-2 border-b border-white/[0.06] text-[11px] text-white/70" data-workspace-return>
+                {workspace && !workspaceVisible && <button type="button" className="text-accent-cyan hover:text-white" onClick={() => setWorkspaceVisible(true)}>{lang === "sv" ? "Återgå till öppet utkast" : "Return to open draft"}</button>}
+                {savedWorkspace && !temporary && <><button type="button" className="text-accent-cyan hover:text-white" onClick={resumeSavedDraft}>{lang === "sv" ? "Öppna sparat utkast" : "Open saved draft"}</button><button type="button" className="text-white/60 hover:text-white" onClick={removeSavedDraft}>{lang === "sv" ? "Radera sparat" : "Delete saved"}</button><span className="hidden sm:inline">{lang === "sv" ? "Endast på denna enhet" : "On this device only"}</span></>}
+              </div>}
               {intentId === "research" && <p className="px-3 py-2 text-xs text-white/70 border-b border-white/[0.06]" role="status">{lang === "sv" ? "Research strukturerar analysen men söker inte på webben. Kontrollera fakta och källor själv." : "Research structures the analysis but does not search the web. Verify facts and sources yourself."}</p>}
               {/* Intent + controls strip — ChatGPT/Claude/Perplexity-inspired, honest */}
               <div className="flex flex-col gap-2 px-2.5 sm:px-3 py-2 border-b border-white/[0.06] bg-gradient-to-b from-black/35 to-black/15 shrink-0">
@@ -2940,7 +3029,7 @@ export default function AIPlayground() {
             </div>
 
               {/* BudAI Workspace — substantial outputs side panel */}
-              {workspace && (
+              {workspace && workspaceVisible && (
                 <aside className="hidden lg:flex w-[min(42%,420px)] shrink-0 flex-col border-l border-white/[0.08] bg-[#07070e] min-h-0">
                   <div className="flex items-center gap-2 px-3 py-2.5 border-b border-white/[0.06] shrink-0">
                     <GripHorizontal className="w-3.5 h-3.5 text-muted/50" />
@@ -3014,7 +3103,7 @@ export default function AIPlayground() {
                     )}
                     <button
                       type="button"
-                      onClick={() => setWorkspace(null)}
+                      onClick={() => setWorkspaceVisible(false)}
                       className="p-1.5 rounded-lg text-muted hover:text-white"
                       aria-label="Close workspace"
                     >
@@ -3022,8 +3111,12 @@ export default function AIPlayground() {
                     </button>
                   </div>
                   <div className="flex-1 overflow-y-auto p-4 text-[13px] text-white/90 leading-relaxed workspace-scroll">
-                    <label className="block text-[11px] text-white/65 mb-2" htmlFor="workspace-edit-desktop">{lang === "sv" ? "Tillfälligt utkast · ladda ner för att spara" : "Temporary draft · download to save"}</label>
-                    <textarea id="workspace-edit-desktop" aria-label={lang === "sv" ? "Redigera workspace" : "Edit workspace"} value={workspace.body} onChange={e => setWorkspace(w => w ? { ...w, body: e.target.value } : w)} className="w-full min-h-[280px] resize-y bg-transparent text-white/90 leading-relaxed outline-none focus:ring-1 focus:ring-accent-cyan/60 rounded" />
+                    <div className="workspace-draft-controls">
+                      <span>{temporary ? (lang === "sv" ? "Tillfällig chatt · lokal sparning avstängd" : "Temporary chat · device saving disabled") : (lang === "sv" ? "Spara utkast på den här enheten" : "Save draft on this device")}</span>
+                      <button type="button" onClick={saveDraft} disabled={temporary || !workspace.body.trim()}>{lang === "sv" ? "Spara" : "Save"}</button>
+                      <button type="button" onClick={() => setWorkspacePreview(v => !v)} aria-pressed={workspacePreview}>{workspacePreview ? (lang === "sv" ? "Redigera" : "Edit") : (lang === "sv" ? "Förhandsvisa" : "Preview")}</button>
+                    </div>
+                    {workspacePreview ? <div className="workspace-preview">{renderMarkdown(workspace.body)}</div> : <textarea id="workspace-edit-desktop" aria-label={lang === "sv" ? "Redigera workspace" : "Edit workspace"} value={workspace.body} onChange={e => setWorkspace(w => w ? { ...w, body: e.target.value } : w)} className="w-full min-h-[280px] resize-y bg-transparent text-white/90 leading-relaxed outline-none focus:ring-1 focus:ring-accent-cyan/60 rounded" />}
                   </div>
                   <div className="shrink-0 p-2.5 border-t border-white/[0.06] grid grid-cols-2 gap-1.5">
                     <button
@@ -3144,10 +3237,14 @@ export default function AIPlayground() {
 
 
       {/* Mobile workspace sheet */}
-      <AnimatePresence>
-        {workspace && (
+      {typeof document !== "undefined" && createPortal(<AnimatePresence>
+        {workspace && workspaceVisible && (
           <motion.div
             key="workspace-mobile-sheet"
+            ref={workspaceDialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label={lang === "sv" ? "Workspace" : "Workspace"}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -3157,7 +3254,7 @@ export default function AIPlayground() {
               type="button"
               className="absolute inset-0 bg-black/65 backdrop-blur-sm"
               aria-label="Close"
-              onClick={() => setWorkspace(null)}
+              onClick={() => setWorkspaceVisible(false)}
             />
             <motion.div
               initial={{ y: "100%" }}
@@ -3205,15 +3302,20 @@ export default function AIPlayground() {
                 <button
                   type="button"
                   aria-label={lang === "sv" ? "Stäng workspace" : "Close mobile workspace"}
-                  onClick={() => setWorkspace(null)}
+                  data-workspace-close
+                  onClick={() => setWorkspaceVisible(false)}
                   className="p-2 text-muted hover:text-white"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
               <div className="flex-1 overflow-y-auto p-4 text-sm text-white/90">
-                <label className="block text-[11px] text-white/65 mb-2" htmlFor="workspace-edit-mobile">{lang === "sv" ? "Tillfälligt utkast · ladda ner för att spara" : "Temporary draft · download to save"}</label>
-                <textarea id="workspace-edit-mobile" aria-label={lang === "sv" ? "Redigera workspace" : "Edit workspace"} value={workspace.body} onChange={e => setWorkspace(w => w ? { ...w, body: e.target.value } : w)} className="w-full min-h-[240px] resize-y bg-transparent text-white/90 leading-relaxed outline-none focus:ring-1 focus:ring-accent-cyan/60 rounded" />
+                <div className="workspace-draft-controls">
+                  <span>{temporary ? (lang === "sv" ? "Tillfällig chatt · lokal sparning avstängd" : "Temporary chat · device saving disabled") : (lang === "sv" ? "Spara utkast på den här enheten" : "Save draft on this device")}</span>
+                  <button type="button" onClick={saveDraft} disabled={temporary || !workspace.body.trim()}>{lang === "sv" ? "Spara" : "Save"}</button>
+                  <button type="button" onClick={() => setWorkspacePreview(v => !v)} aria-pressed={workspacePreview}>{workspacePreview ? (lang === "sv" ? "Redigera" : "Edit") : (lang === "sv" ? "Förhandsvisa" : "Preview")}</button>
+                </div>
+                {workspacePreview ? <div className="workspace-preview">{renderMarkdown(workspace.body)}</div> : <textarea id="workspace-edit-mobile" aria-label={lang === "sv" ? "Redigera workspace" : "Edit workspace"} value={workspace.body} onChange={e => setWorkspace(w => w ? { ...w, body: e.target.value } : w)} className="w-full min-h-[240px] resize-y bg-transparent text-white/90 leading-relaxed outline-none focus:ring-1 focus:ring-accent-cyan/60 rounded" />}
               </div>
               <div className="shrink-0 p-3 border-t border-white/[0.06] grid grid-cols-2 gap-1.5">
                 <button
@@ -3248,7 +3350,7 @@ export default function AIPlayground() {
             </motion.div>
           </motion.div>
         )}
-      </AnimatePresence>
+      </AnimatePresence>, document.body)}
 
       {/* Mobile drawer */}
       <AnimatePresence>

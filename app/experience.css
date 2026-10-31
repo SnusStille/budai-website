@@ -1141,3 +1141,10 @@ html[data-world-state="ready"] .closing-field>i {background:transparent;box-shad
 .signal-example .signal-example-output { border-color: #82ccd3; }
 .signal-example p { color: #d3dce0; font-size: .76rem; line-height: 1.55; margin-top: .45rem; }
 @media (max-width: 480px) { .signal-workflows-heading { align-items: start; flex-direction: column; gap: .7rem; } .signal-workflows-list, .signal-example { grid-template-columns: 1fr; } }
+
+.workspace-draft-controls { display:flex; flex-wrap:wrap; align-items:center; gap:.5rem; padding-bottom:.8rem; margin-bottom:.8rem; border-bottom:1px solid rgba(255,255,255,.08); }
+.workspace-draft-controls span { flex:1 1 10rem; color:#b5bdc8; font-size:.68rem; line-height:1.4; }
+.workspace-draft-controls button { min-height:32px; padding:.3rem .65rem; border:1px solid rgba(124,211,224,.25); border-radius:.55rem; color:#b8edf1; font-size:.7rem; }
+.workspace-draft-controls button:hover { border-color:rgba(124,211,224,.6); color:white; }
+.workspace-draft-controls button:disabled { opacity:.4; cursor:not-allowed; }
+.workspace-preview { min-height:240px; overflow-wrap:anywhere; }
