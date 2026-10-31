@@ -1124,3 +1124,27 @@ html[data-world-state="ready"] .closing-field>i {background:transparent;box-shad
  .original-brain-tour {position:relative;inset:auto;display:grid;grid-template-columns:repeat(2,1fr);height:auto;margin:265px 6vw 70px;gap:24px;}
  .original-brain-stage {position:relative;opacity:1;transform:none;align-items:flex-start;text-align:left;}
 }
+
+/* A small, editorial bridge from raw signal to useful work — no animation or extra renderer. */
+.signal-workflows { width: 100%; max-width: 36rem; margin: 0 auto 1.75rem; border-top: 1px solid rgba(130,231,240,.3); border-bottom: 1px solid rgba(255,255,255,.1); padding: 1.1rem 0; text-align: left; position: relative; }
+.signal-workflows-heading { display: flex; align-items: end; justify-content: space-between; gap: 1rem; }
+.signal-workflows-heading span, .signal-example span { font: 500 10px/1.4 var(--font-jetbrains-mono), monospace; letter-spacing: .12em; color: #8dcbd1; }
+.signal-workflows-heading h4 { margin: .35rem 0 0; font-size: clamp(1.05rem, 2vw, 1.35rem); font-weight: 600; letter-spacing: -.025em; color: #f4f8fa; }
+.signal-workflows-heading button { display: inline-flex; align-items: center; gap: .4rem; color: #a9dce0; font-size: .75rem; white-space: nowrap; }
+.signal-workflows-heading button:hover, .signal-workflows-list button:hover { color: white; }
+.signal-workflows-label { color: #a6aab5; font-size: .75rem; margin: 1.1rem 0 .55rem; }
+.signal-workflows-list { display: grid; grid-template-columns: 1fr 1fr; gap: 0 1.3rem; }
+.signal-workflows-list button { min-height: 44px; display: flex; justify-content: space-between; align-items: center; gap: .5rem; border-top: 1px solid rgba(255,255,255,.09); text-align: left; font-size: .78rem; color: #d7e0e5; transition: color .2s; }
+.signal-workflows-list button svg { flex: none; color: #87cbd2; }
+.signal-example { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; padding: 1rem 0 0; }
+.signal-example > div { border-left: 1px solid rgba(255,255,255,.18); padding-left: .8rem; }
+.signal-example .signal-example-output { border-color: #82ccd3; }
+.signal-example p { color: #d3dce0; font-size: .76rem; line-height: 1.55; margin-top: .45rem; }
+@media (max-width: 480px) { .signal-workflows-heading { align-items: start; flex-direction: column; gap: .7rem; } .signal-workflows-list, .signal-example { grid-template-columns: 1fr; } }
+
+.workspace-draft-controls { display:flex; flex-wrap:wrap; align-items:center; gap:.5rem; padding-bottom:.8rem; margin-bottom:.8rem; border-bottom:1px solid rgba(255,255,255,.08); }
+.workspace-draft-controls span { flex:1 1 10rem; color:#b5bdc8; font-size:.68rem; line-height:1.4; }
+.workspace-draft-controls button { min-height:32px; padding:.3rem .65rem; border:1px solid rgba(124,211,224,.25); border-radius:.55rem; color:#b8edf1; font-size:.7rem; }
+.workspace-draft-controls button:hover { border-color:rgba(124,211,224,.6); color:white; }
+.workspace-draft-controls button:disabled { opacity:.4; cursor:not-allowed; }
+.workspace-preview { min-height:240px; overflow-wrap:anywhere; }

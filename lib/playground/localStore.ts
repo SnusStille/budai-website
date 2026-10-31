@@ -103,13 +103,14 @@ export function persistLocalMessages(
   const cid = existing?.id || id || newId("local");
   const title =
     opts?.title ||
-    (messages.length ? titleFromMessages(messages) : existing?.title || "New chat");
+    (existing?.title && existing.title !== "New chat" && existing.title !== "Ny chatt" ? existing.title : messages.length ? titleFromMessages(messages) : existing?.title || "New chat");
   const convo: Conversation = {
     id: cid,
     title,
     createdAt: existing?.createdAt || Date.now(),
     updatedAt: Date.now(),
     messages,
+    pinned: existing?.pinned,
     temporary: opts?.temporary ?? existing?.temporary ?? false,
   };
   if (!convo.temporary && messages.length > 0) {

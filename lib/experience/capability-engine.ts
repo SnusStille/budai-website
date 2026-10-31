@@ -133,8 +133,8 @@ export const CAPABILITY_CHAMBER_MODULES: CapabilityChamberModule[] = [
     id: "memory",
     index: "05",
     label: "USER-CONTROLLED MEMORY",
-    title: "Layered context you choose to keep",
-    subtitle: "Explicitly retained strata — never automatic.",
+    title: "Context you can manage",
+    subtitle: "Durable context — user-controlled.",
     accent: "#a8b4f8",
     file: "05-memory.ts",
     codeLines: [

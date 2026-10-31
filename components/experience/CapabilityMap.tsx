@@ -87,7 +87,7 @@ export default function CapabilityMap() {
     {
       icon: Network,
       title: sv ? "Minne" : "Memory",
-      detail: sv ? "Sparar det du själv väljer — ändra eller radera när som helst." : "Saves only what you choose — edit or clear anytime.",
+      detail: sv ? "Kan spara långsiktiga fakta automatiskt — stäng av, ändra eller radera när som helst." : "May save durable facts automatically — turn off, edit or clear anytime.",
       file: "src/engine/05-memory.ts",
       telemetry: sv ? "MODUL 05 · ANVÄNDARSTYRT MINNE · GRATIS KONTO" : "MODULE 05 · USER-CONTROLLED MEMORY · FREE ACCOUNT",
       architecture: sv ? "Ditt valda sammanhang → följer med i samtal" : "Your chosen context → carried across chats",

@@ -47,7 +47,7 @@ const SV_TITLES: Record<string, { title: string; subtitle: string; comp: string 
   },
   memory: {
     title: "Användarstyrt arbetsminne",
-    subtitle: "Spara endast de fakta du själv väljer att behålla.",
+    subtitle: "Minnen kan sparas automatiskt och redigeras eller raderas.",
     comp: "ANVÄNDARSTYRT MINNESVALV",
   },
   multimodal: {
