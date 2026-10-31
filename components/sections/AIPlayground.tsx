@@ -1,5 +1,7 @@
 "use client";
 
+import SignalWorkflows from "@/components/experience/SignalWorkflows";
+
 import VoiceOrb from "@/components/ui/VoiceOrb";
 import Routines from "@/components/ui/Routines";
 import CreditsMeter from "@/components/ui/CreditsMeter";
@@ -420,14 +422,14 @@ function workspaceTitle(content: string, lang: "sv" | "en"): string {
 const INTENT_PRESETS = {
   sv: [
     { id: "chat", label: "Chatt", hint: "Vardaglig hjälp", prefix: "", mode: "single" as const },
-    { id: "research", label: "Research", hint: "Djupare + källor-stil", prefix: "Arbeta som research-assistent. Strukturera med: Sammanfattning, Nyckelpunkter, Antaganden, Nästa steg. Var konkret.\n\nFråga: ", mode: "single" as const },
+    { id: "research", label: "Research", hint: "Strukturerad analys · ingen webbsökning", prefix: "Arbeta som research-assistent utan webbsökning. Hitta inte på källor eller citat. Separera underlag från antaganden och ange vad som behöver verifieras. Strukturera med: Sammanfattning, Nyckelpunkter, Antaganden, Nästa steg.\n\nFråga: ", mode: "single" as const },
     { id: "create", label: "Skapa", hint: "Text & pitch", prefix: "Skriv i skarp, publicerbar ton. Ge en färdig leverans (inte meta-råd).\n\nUppgift: ", mode: "single" as const },
     { id: "analyze", label: "Analys", hint: "Beslut & risk", prefix: "Analysera systematiskt. Använd rubriker, bullets och tydlig rekommendation.\n\nCase: ", mode: "single" as const },
     { id: "dual", label: "2 vinklar", hint: "Välj mellan svar", prefix: "", mode: "dual" as const },
   ],
   en: [
     { id: "chat", label: "Chat", hint: "Everyday help", prefix: "", mode: "single" as const },
-    { id: "research", label: "Research", hint: "Deeper structured", prefix: "Act as a research assistant. Structure with: Summary, Key points, Assumptions, Next steps. Be concrete.\n\nQuestion: ", mode: "single" as const },
+    { id: "research", label: "Research", hint: "Structured analysis · no web search", prefix: "Act as a research assistant without web access. Do not invent sources or citations. Separate provided evidence from assumptions and identify what needs verification. Structure with: Summary, Key points, Assumptions, Next steps.\n\nQuestion: ", mode: "single" as const },
     { id: "create", label: "Create", hint: "Copy & drafts", prefix: "Write in a sharp, publishable voice. Deliver a finished piece (not meta-advice).\n\nTask: ", mode: "single" as const },
     { id: "analyze", label: "Analyze", hint: "Decisions & risk", prefix: "Analyze systematically. Use headings, bullets, and a clear recommendation.\n\nCase: ", mode: "single" as const },
     { id: "dual", label: "2 angles", hint: "Pick a reply", prefix: "", mode: "dual" as const },
@@ -931,7 +933,7 @@ export default function AIPlayground() {
         ...extra,
       },
     ]);
-    if (isWorkspaceWorthy(fullText) && typeof window !== "undefined" && window.innerWidth >= 1024) {
+    if (!workspace && isWorkspaceWorthy(fullText) && typeof window !== "undefined" && window.innerWidth >= 1024) {
       setWorkspace({
         msgId: mid,
         title: workspaceTitle(fullText, lang),
@@ -1028,7 +1030,7 @@ export default function AIPlayground() {
     if (retry?.image) await bumpServer("images");
     setMessages((prev) => [...prev, { id: mid, role: "assistant", content: finalContent, ts: Date.now() }]);
     if (
-      workspace ||
+      !workspace &&
       (isWorkspaceWorthy(finalContent) &&
         (intentId === "create" || intentId === "research" || intentId === "analyze") &&
         typeof window !== "undefined" &&
@@ -1371,6 +1373,16 @@ export default function AIPlayground() {
       w.focus();
       window.setTimeout(() => w.print(), 300);
     }
+  };
+
+  const runWorkspaceAction = (instruction: string, closeMobile = false) => {
+    if (!workspace || !workspace.body.trim()) return;
+    if (workspace.body.length > 3200) {
+      showToast("warn", lang === "sv" ? "Utkastet är för långt för en åtgärd. Korta det till 3 200 tecken eller kopiera en del till chatten." : "The draft is too long for an action. Shorten it to 3,200 characters or copy part into chat.");
+      return;
+    }
+    if (closeMobile) setWorkspace(null);
+    void runPrompt(`${instruction}\n\n---\n${workspace.body}`);
   };
 
   const openWorkspace = (msgId: string, content: string) => {
@@ -2007,6 +2019,7 @@ export default function AIPlayground() {
                 </div>
               </div>
 
+              {intentId === "research" && <p className="px-3 py-2 text-xs text-white/70 border-b border-white/[0.06]" role="status">{lang === "sv" ? "Research strukturerar analysen men söker inte på webben. Kontrollera fakta och källor själv." : "Research structures the analysis but does not search the web. Verify facts and sources yourself."}</p>}
               {/* Intent + controls strip — ChatGPT/Claude/Perplexity-inspired, honest */}
               <div className="flex flex-col gap-2 px-2.5 sm:px-3 py-2 border-b border-white/[0.06] bg-gradient-to-b from-black/35 to-black/15 shrink-0">
                 <div className="flex flex-wrap items-center gap-1.5">
@@ -2114,6 +2127,12 @@ export default function AIPlayground() {
                         ? "Skriv, analysera, planera eller bifoga en bild på svenska och engelska — längre strukturerade svar öppnas i Workspace."
                         : "Write, analyze, plan, or attach an image in Swedish and English — longer structured outputs open in Workspace."}
                     </p>
+                    <SignalWorkflows lang={lang} onSelect={(prompt, intent) => {
+                      setIntentId(intent);
+                      setMode("single");
+                      setInput(prompt);
+                      taRef.current?.focus({ preventScroll: true });
+                    }} />
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 w-full max-w-xl">
                       {caps.map((c) => (
                         <button
@@ -3003,7 +3022,8 @@ export default function AIPlayground() {
                     </button>
                   </div>
                   <div className="flex-1 overflow-y-auto p-4 text-[13px] text-white/90 leading-relaxed workspace-scroll">
-                    {renderMarkdown(workspace.body)}
+                    <label className="block text-[11px] text-white/65 mb-2" htmlFor="workspace-edit-desktop">{lang === "sv" ? "Tillfälligt utkast · ladda ner för att spara" : "Temporary draft · download to save"}</label>
+                    <textarea id="workspace-edit-desktop" aria-label={lang === "sv" ? "Redigera workspace" : "Edit workspace"} value={workspace.body} onChange={e => setWorkspace(w => w ? { ...w, body: e.target.value } : w)} className="w-full min-h-[280px] resize-y bg-transparent text-white/90 leading-relaxed outline-none focus:ring-1 focus:ring-accent-cyan/60 rounded" />
                   </div>
                   <div className="shrink-0 p-2.5 border-t border-white/[0.06] grid grid-cols-2 gap-1.5">
                     <button
@@ -3013,7 +3033,7 @@ export default function AIPlayground() {
                           lang === "sv"
                             ? "Förbättra workspace-resultatet: gör det skarpare, mer strukturerat och mer handlingsbart."
                             : "Improve the workspace result: make it sharper, more structured, and more actionable.";
-                        void runPrompt(improve);
+                        runWorkspaceAction(improve);
                       }}
                       disabled={busy}
                       className="text-[11px] font-medium py-1.5 px-2 rounded-xl border border-accent-cyan/25 bg-accent-cyan/10 text-accent-cyan hover:bg-accent-cyan/15 disabled:opacity-40"
@@ -3027,7 +3047,7 @@ export default function AIPlayground() {
                           lang === "sv"
                             ? "Översätt detta workspace-resultat mellan svenska och engelska med exakt samma struktur och ton."
                             : "Translate this workspace result between Swedish and English while keeping the exact structure and tone.";
-                        void runPrompt(toggleBilingual);
+                        runWorkspaceAction(toggleBilingual);
                       }}
                       disabled={busy}
                       className="text-[11px] font-medium py-1.5 px-2 rounded-xl border border-accent-purple/30 bg-accent-purple/10 text-accent-purple hover:bg-accent-purple/15 disabled:opacity-40"
@@ -3041,7 +3061,7 @@ export default function AIPlayground() {
                           lang === "sv"
                             ? "Gör om detta workspace-resultat till en konkret checklista med tydliga nästa steg."
                             : "Turn this workspace result into an actionable checklist with clear next steps.";
-                        void runPrompt(checklist);
+                        runWorkspaceAction(checklist);
                       }}
                       disabled={busy}
                       className="text-[11px] font-medium py-1.5 px-2 rounded-xl border border-white/[0.08] text-muted hover:text-white disabled:opacity-40"
@@ -3192,7 +3212,8 @@ export default function AIPlayground() {
                 </button>
               </div>
               <div className="flex-1 overflow-y-auto p-4 text-sm text-white/90">
-                {renderMarkdown(workspace.body)}
+                <label className="block text-[11px] text-white/65 mb-2" htmlFor="workspace-edit-mobile">{lang === "sv" ? "Tillfälligt utkast · ladda ner för att spara" : "Temporary draft · download to save"}</label>
+                <textarea id="workspace-edit-mobile" aria-label={lang === "sv" ? "Redigera workspace" : "Edit workspace"} value={workspace.body} onChange={e => setWorkspace(w => w ? { ...w, body: e.target.value } : w)} className="w-full min-h-[240px] resize-y bg-transparent text-white/90 leading-relaxed outline-none focus:ring-1 focus:ring-accent-cyan/60 rounded" />
               </div>
               <div className="shrink-0 p-3 border-t border-white/[0.06] grid grid-cols-2 gap-1.5">
                 <button
@@ -3202,8 +3223,7 @@ export default function AIPlayground() {
                       lang === "sv"
                         ? "Förbättra workspace-resultatet: gör det skarpare, mer strukturerat och mer handlingsbart."
                         : "Improve the workspace result: make it sharper, more structured, and more actionable.";
-                    setWorkspace(null);
-                    void runPrompt(improve);
+                    runWorkspaceAction(improve, true);
                   }}
                   disabled={busy}
                   className="text-[11px] font-medium py-2 px-2 rounded-xl border border-accent-cyan/25 bg-accent-cyan/10 text-accent-cyan disabled:opacity-40"
@@ -3217,8 +3237,7 @@ export default function AIPlayground() {
                       lang === "sv"
                         ? "Översätt detta workspace-resultat mellan svenska och engelska med exakt samma struktur och ton."
                         : "Translate this workspace result between Swedish and English while keeping the exact structure and tone.";
-                    setWorkspace(null);
-                    void runPrompt(toggleBilingual);
+                    runWorkspaceAction(toggleBilingual, true);
                   }}
                   disabled={busy}
                   className="text-[11px] font-medium py-2 px-2 rounded-xl border border-accent-purple/30 bg-accent-purple/10 text-accent-purple disabled:opacity-40"
@@ -3299,8 +3318,8 @@ export default function AIPlayground() {
               </h3>
               <p className="text-xs text-muted mb-3 leading-relaxed">
                 {lang === "sv"
-                  ? "Du styr exakt vad BudAI minns — lägg till egna preferenser, redigera eller radera rader när som helst."
-                  : "You control exactly what BudAI remembers — add your own preferences, or edit and delete any row at any time."}
+                  ? "När minnet är på kan BudAI automatiskt spara långsiktiga fakta från samtal. Du kan stänga av, lägga till, redigera eller radera minnen. Temporära samtal använder inte minnet."
+                  : "When memory is on, BudAI may automatically save durable facts from chats. You can turn it off, add, edit or delete memories. Temporary chats do not use memory."}
               </p>
 
               {auth.isGuest ? (

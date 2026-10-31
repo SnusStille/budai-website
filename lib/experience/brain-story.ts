@@ -1,12 +1,12 @@
-/** Recovered verbatim from BudAI 43f44c9, not a newly invented substitute. */
+/** Four stages recovered from BudAI 43f44c9; memory copy reflects the current product. */
 export const ORIGINAL_BRAIN_STAGES = [
   {
     sv: { title: "Skriv", body: "Mejl, rapporter och förslag på några sekunder." },
     en: { title: "Write", body: "Emails, reports and proposals in seconds." },
   },
   {
-    sv: { title: "Minne", body: "BudAI kommer ihåg det du väljer att spara." },
-    en: { title: "Memory", body: "Remembers what you choose to keep." },
+    sv: { title: "Minne", body: "Minnen kan sparas automatiskt. Du kan styra dem." },
+    en: { title: "Memory", body: "Memories may be saved automatically. You control them." },
   },
   {
     sv: { title: "Beslut", body: "Sammanfattningar, risker och nästa steg." },

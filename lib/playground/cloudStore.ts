@@ -129,11 +129,13 @@ export async function syncMessages(
   if (!sb || !user) return { ok: false };
 
   const title = messages.length ? titleFromMessages(messages) : "New chat";
-  await sb
-    .from("conversations")
-    .update({ title, updated_at: new Date().toISOString() })
-    .eq("id", conversationId)
-    .eq("user_id", user.id);
+  await sb.from("conversations")
+    .update({ updated_at: new Date().toISOString() })
+    .eq("id", conversationId).eq("user_id", user.id);
+  // Name the initial draft only. Never replace a title the user has changed.
+  if (messages.length) await sb.from("conversations")
+    .update({ title })
+    .eq("id", conversationId).eq("user_id", user.id).in("title", ["New chat", "Ny chatt"]);
 
   // Fetch existing message ids
   const { data: existing } = await sb
