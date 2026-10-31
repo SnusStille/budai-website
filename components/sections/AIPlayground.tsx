@@ -715,7 +715,12 @@ export default function AIPlayground() {
 
   const workspaceDialogRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const abortRef = useRef(false);
+  const activeRequestRef = useRef<{
+    controller: AbortController;
+    reader?: ReadableStreamDefaultReader<Uint8Array>;
+    partial: string;
+  } | null>(null);
+  const navigationRef = useRef(0);
   const fileRef = useRef<HTMLInputElement>(null);
   const recogRef = useRef<{ stop: () => void } | null>(null);
   const persistTimer = useRef(0);
@@ -723,6 +728,30 @@ export default function AIPlayground() {
   const bootRef = useRef(false);
 
   const busy = activity !== "idle" && activity !== "error" && activity !== "listening";
+
+  // A request belongs to one active conversation. Invalidate synchronously before
+  // aborting so late fetch, stream and animation callbacks cannot alter another chat.
+  const cancelActiveRequest = useCallback((preservePartial: boolean) => {
+    const request = activeRequestRef.current;
+    activeRequestRef.current = null;
+    if (request) {
+      request.controller.abort();
+      void request.reader?.cancel().catch(() => undefined);
+      const partial = request.partial.trim();
+      if (preservePartial && partial) {
+        const stopped = languageRef.current === "sv" ? "_[Svaret avbröts]_" : "_[Response stopped]_";
+        setMessages(prev => [...prev, { id: newId("m"), role: "assistant", content: `${partial}\n\n${stopped}`, ts: Date.now() }]);
+      }
+    }
+    setActivity("idle");
+    setTypingText("");
+  }, []);
+  useEffect(() => () => {
+    const request = activeRequestRef.current;
+    activeRequestRef.current = null;
+    request?.controller.abort();
+    void request?.reader?.cancel().catch(() => undefined);
+  }, []);
 
   const workspaceMessageId = workspace?.msgId;
   useEffect(() => {
@@ -834,12 +863,15 @@ export default function AIPlayground() {
   useEffect(() => {
     if (prevMember.current !== auth.isMember) {
       prevMember.current = auth.isMember;
+      navigationRef.current++;
+      cancelActiveRequest(false);
+      setSavedBranch(null);
       setMessages([]);
       setConvoId(null);
       setTemporary(false);
       void reloadSidebar();
     }
-  }, [auth.isMember, reloadSidebar]);
+  }, [auth.isMember, reloadSidebar, cancelActiveRequest]);
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -880,7 +912,7 @@ export default function AIPlayground() {
   };
 
   /** Ensure we have a conversation id before first message (New Chat fix) */
-  const ensureConversation = useCallback(async (): Promise<string | null> => {
+  const ensureConversation = useCallback(async (isCurrent: () => boolean): Promise<string | null> => {
     if (convoId) return convoId;
     if (temporary) {
       const id = newId("tmp");
@@ -889,6 +921,7 @@ export default function AIPlayground() {
     }
     if (auth.isMember) {
       const id = await cloud.createConversation(lang === "sv" ? "Ny chatt" : "New chat");
+      if (!isCurrent()) return null;
       if (!id) {
         showToast("err", lang === "sv" ? "Kunde inte skapa chatt" : "Could not create chat");
         return null;
@@ -938,55 +971,41 @@ export default function AIPlayground() {
     return () => window.clearTimeout(persistTimer.current);
   }, [messages, convoId, persistMessages]);
 
-  const typeResponse = async (fullText: string, extra?: Partial<ChatMessage>) => {
+  type ActiveRequest = NonNullable<typeof activeRequestRef.current>;
+  const isActiveRequest = (request: ActiveRequest) => activeRequestRef.current === request;
+  const beginRequest = (): ActiveRequest | null => {
+    if (activeRequestRef.current) return null;
+    const request: ActiveRequest = { controller: new AbortController(), partial: "" };
+    activeRequestRef.current = request;
+    return request;
+  };
+
+  const typeResponse = async (fullText: string, request: ActiveRequest, extra?: Partial<ChatMessage>) => {
+    if (!isActiveRequest(request)) return;
     setActivity("typing");
     setTypingText("");
-    abortRef.current = false;
     const words = fullText.split(/(\s+)/);
     let current = "";
     for (let i = 0; i < words.length; i++) {
-      if (abortRef.current) {
-        setTypingText("");
-        setActivity("idle");
-        const partial: ChatMessage = {
-          id: newId("m"),
-          role: "assistant",
-          content: current || fullText,
-          ts: Date.now(),
-          ...extra,
-        };
-        setMessages((prev) => [...prev, partial]);
-        return false;
-      }
+      if (!isActiveRequest(request)) return;
       current += words[i];
+      request.partial = current;
       if (i % 2 === 0 || i === words.length - 1) {
         setTypingText(current);
         await new Promise((r) => setTimeout(r, 4 + Math.random() * 6));
       }
     }
+    if (!isActiveRequest(request)) return;
+    request.partial = "";
     setTypingText("");
     setActivity("idle");
     const mid = newId("m");
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: mid,
-        role: "assistant",
-        content: fullText,
-        ts: Date.now(),
-        ...extra,
-      },
-    ]);
+    setMessages((prev) => [...prev, { id: mid, role: "assistant", content: fullText, ts: Date.now(), ...extra }]);
     if (!workspace && isWorkspaceWorthy(fullText) && typeof window !== "undefined" && window.innerWidth >= 1024) {
       setWorkspaceVisible(true);
       setWorkspacePreview(false);
-      setWorkspace({
-        msgId: mid,
-        title: workspaceTitle(fullText, lang),
-        body: fullText,
-      });
+      setWorkspace({ msgId: mid, title: workspaceTitle(fullText, lang), body: fullText });
     }
-    return true;
   };
 
   const contextBlock = () => {
@@ -994,10 +1013,8 @@ export default function AIPlayground() {
     return memoryToPromptBlock(memory, lang);
   };
 
-  const stopAll = () => {
-    abortRef.current = true;
-    setActivity("idle");
-    setTypingText("");
+  const stopAll = (preservePartial = true) => {
+    cancelActiveRequest(preservePartial);
     if (recogRef.current) {
       try {
         recogRef.current.stop();
@@ -1009,6 +1026,7 @@ export default function AIPlayground() {
   };
 
   const pushError = (text: string, retry?: { text: string; image?: AttachmentDraft | null; gen?: boolean }) => {
+    setTypingText("");
     setActivity("idle");
     setMessages((prev) => [
       ...prev,
@@ -1024,31 +1042,29 @@ export default function AIPlayground() {
   };
 
   // Live token streaming from /api/playground (text/plain; "\u0000{json}" trailer carries memory/error)
-  const readStream = async (res: Response, retry: Parameters<typeof pushError>[1]) => {
+  const readStream = async (res: Response, retry: Parameters<typeof pushError>[1], request: ActiveRequest) => {
     const reader = res.body!.getReader();
+    request.reader = reader;
     const dec = new TextDecoder();
     let acc = "";
-    abortRef.current = false;
     setActivity("typing");
     setTypingText("");
     let latest = "";
     let queued = false;
     let finished = false;
     for (;;) {
-      if (abortRef.current) {
-        await reader.cancel().catch(() => undefined);
-        break;
-      }
       const { done, value } = await reader.read();
+      if (!isActiveRequest(request)) return;
       if (done) break;
       acc += dec.decode(value, { stream: true });
       const cut = acc.indexOf("\u0000");
       latest = cut === -1 ? acc : acc.slice(0, cut);
+      request.partial = latest;
       if (!queued) {
         queued = true;
         requestAnimationFrame(() => {
           queued = false;
-          if (!finished) setTypingText(latest);
+          if (!finished && isActiveRequest(request)) setTypingText(latest);
         });
       }
     }
@@ -1057,39 +1073,30 @@ export default function AIPlayground() {
     const text = (cut === -1 ? acc : acc.slice(0, cut)).trim();
     let meta: { memory?: string; error?: string } = {};
     if (cut !== -1) {
-      try {
-        meta = JSON.parse(acc.slice(cut + 1));
-      } catch {
-        /* ignore */
-      }
+      try { meta = JSON.parse(acc.slice(cut + 1)); } catch { /* ignore */ }
     }
     finished = true;
+    request.partial = "";
     setTypingText("");
     setActivity("idle");
-    if (meta.error && !text) {
-      pushError(lang === "sv" ? "Något gick fel. Försök igen." : "Something went wrong. Try again.", retry);
+    if (text) {
+      const mid = newId("m");
+      setMessages((prev) => [...prev, { id: mid, role: "assistant", content: text, ts: Date.now() }]);
+      if (!meta.error && !workspace && isWorkspaceWorthy(text) &&
+          (intentId === "create" || intentId === "research" || intentId === "analyze") &&
+          typeof window !== "undefined" && window.innerWidth >= 1024) {
+        setWorkspaceVisible(true);
+        setWorkspacePreview(false);
+        setWorkspace({ msgId: mid, title: workspaceTitle(text, lang), body: text });
+      }
+    }
+    if (meta.error || !text) {
+      pushError(lang === "sv" ? "Svaret kunde inte slutföras. Försök igen." : "The response could not be completed. Please try again.", retry);
       return;
     }
-    const mid = newId("m");
-    const finalContent = text || "…";
     await bumpServer("messages");
     if (retry?.image) await bumpServer("images");
-    setMessages((prev) => [...prev, { id: mid, role: "assistant", content: finalContent, ts: Date.now() }]);
-    if (
-      !workspace &&
-      (isWorkspaceWorthy(finalContent) &&
-        (intentId === "create" || intentId === "research" || intentId === "analyze") &&
-        typeof window !== "undefined" &&
-        window.innerWidth >= 1024)
-    ) {
-      setWorkspaceVisible(true);
-      setWorkspacePreview(false);
-      setWorkspace({
-        msgId: mid,
-        title: workspaceTitle(finalContent, lang),
-        body: finalContent,
-      });
-    }
+    if (!isActiveRequest(request)) return;
     if (meta.memory && auth.isMember && !temporary) {
       setMemoryToast(true);
       window.setTimeout(() => setMemoryToast(false), 2800);
@@ -1097,18 +1104,19 @@ export default function AIPlayground() {
     }
   };
 
-  const runPrompt = async (text: string, opts?: { image?: AttachmentDraft | null; forceGen?: boolean; base?: ChatMessage[]; consumeComposer?: boolean }) => {
+  const runPrompt = async (text: string, opts?: { image?: AttachmentDraft | null; forceGen?: boolean; base?: ChatMessage[]; consumeComposer?: boolean; retryMessageId?: string }) => {
     const trimmed = text.trim();
     if (!trimmed || busy) return;
 
+    const img = opts?.image !== undefined ? opts.image : opts?.consumeComposer ? attach : null;
     const wantGen =
       imageGenEnabled && (opts?.forceGen || (opts?.consumeComposer && genMode) || looksLikeImageGen(trimmed));
-    if (wantGen && !opts?.image) {
+    if (wantGen && !img) {
       setGenMode(false);
       return runImageGen(trimmed, !!opts?.consumeComposer);
     }
     // If user asked to generate but feature off — honest message, no fake image
-    if (!imageGenEnabled && !opts?.image && looksLikeImageGen(trimmed)) {
+    if (!imageGenEnabled && !img && looksLikeImageGen(trimmed)) {
       // fall through as normal chat; model can explain limits
     }
 
@@ -1120,45 +1128,46 @@ export default function AIPlayground() {
     }
     if (!checkQuota("messages")) return;
 
-    const img = opts?.image !== undefined ? opts.image : opts?.consumeComposer ? attach : null;
     if (img && auth.isGuest) {
       auth.openAuth(lang === "sv" ? "Bildanalys kräver konto" : "Image analysis needs an account");
       return;
     }
     if (img && !checkQuota("images")) return;
 
-    const cid = await ensureConversation();
-    if (!cid && auth.isMember) return;
-
-    const userMsg: ChatMessage = {
-      id: newId("m"),
-      role: "user",
-      content: trimmed,
-      ts: Date.now(),
-      imageUrl: img?.preview,
-    };
-    const nextList = [...(opts?.base ?? messages), userMsg];
-    setMessages(nextList);
-    if (opts?.consumeComposer) {
-      setInput("");
-      setAttach(null);
-    }
-    setLastFailed(null);
-    abortRef.current = false;
+    const request = beginRequest();
+    if (!request) return;
     setActivity(img ? "reading_image" : "thinking");
-
-    // Build API history from nextList
-    const apiHistory = prepareHistory(nextList
-      .filter((m) => !m.error)
-      .map((m) => ({
-        role: (m.role === "user" ? "user" : "assistant") as "user" | "assistant",
-        content: m.content,
-      })), lang).messages;
-
+    let timeout: number | undefined;
     try {
+      const cid = await ensureConversation(() => isActiveRequest(request));
+      if (!isActiveRequest(request) || !cid) return;
+
+      const userMsg: ChatMessage = {
+        id: opts?.retryMessageId ?? newId("m"),
+        role: "user",
+        content: trimmed,
+        ts: Date.now(),
+        imageUrl: img?.preview,
+      };
+      const nextList = [...(opts?.base ?? messages), userMsg];
+      setMessages(nextList);
+      if (opts?.consumeComposer) {
+        setInput(current => current === text ? "" : current);
+        setAttach(current => current === img ? null : current);
+      }
+      setLastFailed(null);
+
+      // Build API history from nextList
+      const apiHistory = prepareHistory(nextList
+        .filter((m) => !m.error)
+        .map((m) => ({
+          role: (m.role === "user" ? "user" : "assistant") as "user" | "assistant",
+          content: m.content,
+        })), lang).messages;
+
       const headers = await authHeaders();
-      const controller = new AbortController();
-      const timeout = window.setTimeout(() => controller.abort(), 90_000);
+      if (!isActiveRequest(request)) return;
+      timeout = window.setTimeout(() => request.controller.abort(), 90_000);
 
       const apiMessages = apiHistory.map((m, i, arr) => {
         if (i === arr.length - 1 && m.role === "user" && intent.prefix) {
@@ -1170,7 +1179,7 @@ export default function AIPlayground() {
       const res = await fetch("/api/playground", {
         method: "POST",
         headers,
-        signal: controller.signal,
+        signal: request.controller.signal,
         body: JSON.stringify({
           messages: apiMessages,
           lang: answerLang,
@@ -1186,14 +1195,15 @@ export default function AIPlayground() {
           temporary: temporary || !memoryEnabled,
         }),
       });
-      window.clearTimeout(timeout);
+      if (!isActiveRequest(request)) return;
 
       if (res.ok && (res.headers.get("content-type") || "").includes("text/plain") && res.body) {
-        await readStream(res, { text: trimmed, image: img });
+        await readStream(res, { text: trimmed, image: img }, request);
         return;
       }
 
       const data = await res.json().catch(() => ({}));
+      if (!isActiveRequest(request)) return;
 
       if (res.status === 429 || data.code === "limit") {
         pushError(data.error || "Limit", { text: trimmed, image: img });
@@ -1230,6 +1240,7 @@ export default function AIPlayground() {
 
       await bumpServer("messages");
       if (img) await bumpServer("images");
+      if (!isActiveRequest(request)) return;
 
       if (data.dual && data.replies?.length >= 2) {
         setActivity("idle");
@@ -1245,9 +1256,15 @@ export default function AIPlayground() {
           },
         ]);
       } else {
-        await typeResponse(data.reply || "…");
+        await typeResponse(data.reply || "…", request);
       }
     } catch (e) {
+      if (!isActiveRequest(request)) return;
+      const partial = request.partial.trim();
+      if (partial) {
+        request.partial = "";
+        setMessages(prev => [...prev, { id: newId("m"), role: "assistant", content: partial, ts: Date.now() }]);
+      }
       const aborted = e instanceof Error && e.name === "AbortError";
       pushError(
         aborted
@@ -1259,10 +1276,16 @@ export default function AIPlayground() {
             : "Network error. Check your connection.",
         { text: trimmed, image: img }
       );
+    } finally {
+      window.clearTimeout(timeout);
+      if (isActiveRequest(request)) {
+        activeRequestRef.current = null;
+        setActivity("idle");
+      }
     }
   };
 
-  const runImageGen = async (prompt: string, consumeComposer = false) => {
+  const runImageGen = async (prompt: string, consumeComposer = false, base?: ChatMessage[], retryMessageId?: string) => {
     const trimmed = prompt.trim();
     if (!trimmed || busy) return;
     if (!imageGenEnabled) {
@@ -1281,31 +1304,39 @@ export default function AIPlayground() {
     }
     if (!checkQuota("generations")) return;
 
-    const cid = await ensureConversation();
-    if (!cid) return;
-
-    setMessages((prev) => [
-      ...prev,
-      { id: newId("m"), role: "user", content: trimmed, ts: Date.now() },
-    ]);
-    if (consumeComposer) setInput("");
-    setGenMode(false);
+    const request = beginRequest();
+    if (!request) return;
     setActivity("generating_image");
-    setLastFailed(null);
-
+    let timeout: number | undefined;
     try {
+      const cid = await ensureConversation(() => isActiveRequest(request));
+      if (!isActiveRequest(request) || !cid) return;
+
+      setMessages((prev) => [
+        ...(base ?? prev),
+        { id: retryMessageId ?? newId("m"), role: "user", content: trimmed, ts: Date.now() },
+      ]);
+      if (consumeComposer) setInput(current => current === prompt ? "" : current);
+      setGenMode(false);
+      setLastFailed(null);
+
       const headers = await authHeaders();
+      if (!isActiveRequest(request)) return;
+      timeout = window.setTimeout(() => request.controller.abort(), 90_000);
       const res = await fetch("/api/generate-image", {
         method: "POST",
         headers,
+        signal: request.controller.signal,
         body: JSON.stringify({ prompt: trimmed }),
       });
       const data = await res.json().catch(() => ({}));
+      if (!isActiveRequest(request)) return;
       if (res.status === 501) {
         await typeResponse(
           lang === "sv"
             ? "Bildgenerering är inte aktiverad här ännu (OPENAI_API_KEY saknas). Text-chatten fungerar."
-            : "Image generation isn’t enabled here yet (OPENAI_API_KEY missing). Text chat still works."
+            : "Image generation isn’t enabled here yet (OPENAI_API_KEY missing). Text chat still works.",
+          request
         );
         return;
       }
@@ -1330,6 +1361,7 @@ export default function AIPlayground() {
         return;
       }
       await bumpServer("generations");
+      if (!isActiveRequest(request)) return;
       setActivity("idle");
       setMessages((prev) => [
         ...prev,
@@ -1345,8 +1377,16 @@ export default function AIPlayground() {
           generated: true,
         },
       ]);
-    } catch {
-      pushError(lang === "sv" ? "Nätverksfel." : "Network error.", { text: trimmed, gen: true });
+    } catch (e) {
+      if (!isActiveRequest(request)) return;
+      const timedOut = e instanceof Error && e.name === "AbortError";
+      pushError(timedOut ? (lang === "sv" ? "Timeout — försök igen." : "Timed out — try again.") : (lang === "sv" ? "Nätverksfel." : "Network error."), { text: trimmed, gen: true });
+    } finally {
+      window.clearTimeout(timeout);
+      if (isActiveRequest(request)) {
+        activeRequestRef.current = null;
+        setActivity("idle");
+      }
     }
   };
 
@@ -1490,6 +1530,7 @@ export default function AIPlayground() {
         if (toolsOpen) { setToolsOpen(false); return; }
         if (workspace && workspaceVisible) { setWorkspaceVisible(false); return; }
         if (mobileDrawer) { setMobileDrawer(false); return; }
+        if (activeRequestRef.current) cancelActiveRequest(true);
         return;
       }
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
@@ -1683,8 +1724,13 @@ export default function AIPlayground() {
 
   const newChat = async (opts?: { temporary?: boolean }) => {
     if (creatingChat || !confirmLeavingWorkspace() || !confirmLeavingComposer()) return;
+    const navigation = ++navigationRef.current;
+    // Flush the debounced snapshot before leaving so a fast switch cannot lose the last turn.
+    window.clearTimeout(persistTimer.current);
+    void persistMessages(messages, convoId);
     setCreatingChat(true);
-    stopAll();
+    stopAll(false);
+    setSavedBranch(null);
     setAttach(null);
     setGenMode(false);
     setInput("");
@@ -1698,6 +1744,7 @@ export default function AIPlayground() {
     try {
       if (auth.isMember && !opts?.temporary) {
         const id = await cloud.createConversation(lang === "sv" ? "Ny chatt" : "New chat");
+        if (navigation !== navigationRef.current) return;
         if (!id) {
           showToast("err", lang === "sv" ? "Kunde inte skapa chatt" : "Could not create chat");
           setCreatingChat(false);
@@ -1720,13 +1767,18 @@ export default function AIPlayground() {
 
   const loadConvo = async (id: string) => {
     if (!confirmLeavingWorkspace() || !confirmLeavingComposer()) return;
-    stopAll();
+    const navigation = ++navigationRef.current;
+    window.clearTimeout(persistTimer.current);
+    void persistMessages(messages, convoId);
+    stopAll(false);
+    setSavedBranch(null);
     setDualPick({});
     setLastFailed(null);
     setWorkspace(null);
     setTemporary(false);
     if (auth.isMember) {
       const c = await cloud.loadConversation(id);
+      if (navigation !== navigationRef.current) return;
       if (!c) {
         showToast("err", lang === "sv" ? "Kunde inte ladda chatt" : "Could not load chat");
         return;
@@ -1746,9 +1798,13 @@ export default function AIPlayground() {
   };
 
   const removeConvo = async (id: string) => {
+    const navigation = navigationRef.current;
     if (auth.isMember) await cloud.deleteConversation(id);
     else deleteLocalConversation(id);
-    if (convoId === id) {
+    if (convoId === id && navigation === navigationRef.current) {
+      navigationRef.current++;
+      stopAll(false);
+      setSavedBranch(null);
       setConvoId(null);
       setMessages([]);
     }
@@ -2035,7 +2091,7 @@ export default function AIPlayground() {
                   {busy ? (
                     <button
                       type="button"
-                      onClick={stopAll}
+                      onClick={() => stopAll()}
                       aria-label={lang === "sv" ? "Stoppa svaret" : "Stop response"}
                       className="p-2 rounded-lg border border-red-500/25 text-red-300"
                       title="Stop"
@@ -2436,11 +2492,14 @@ export default function AIPlayground() {
                           type="button"
                           onClick={() => {
                             const f = lastFailed;
-                            setLastFailed(null);
-                            // remove last error bubble
-                            setMessages((p) => p.filter((m) => m.id !== msg.id));
-                            if (f.gen) void runImageGen(f.text);
-                            else void runPrompt(f.text, { image: f.image });
+                            // Replace the failed turn rather than adding the same user prompt twice.
+                            const errorIndex = messages.findIndex(m => m.id === msg.id);
+                            let userIndex = errorIndex - 1;
+                            while (userIndex >= 0 && messages[userIndex].role !== "user") userIndex--;
+                            const base = userIndex >= 0 ? messages.slice(0, userIndex) : messages.filter(m => m.id !== msg.id);
+                            const retryMessageId = userIndex >= 0 ? messages[userIndex].id : undefined;
+                            if (f.gen) void runImageGen(f.text, false, base, retryMessageId);
+                            else void runPrompt(f.text, { image: f.image, base, retryMessageId });
                           }}
                           className="inline-flex items-center gap-1.5 text-[11px] text-accent-cyan hover:text-white"
                         >
@@ -2970,7 +3029,6 @@ export default function AIPlayground() {
                           return;
                         }
                       }
-                      if (e.key === "Escape" && activity !== "idle") abortRef.current = true;
                       if (e.key === "Enter" && !e.shiftKey) {
                         e.preventDefault();
                         if ((input.trim() || attach) && !busy) {
@@ -3019,7 +3077,7 @@ export default function AIPlayground() {
                   {busy ? (
                     <button
                       type="button"
-                      onClick={stopAll}
+                      onClick={() => stopAll()}
                       aria-label={lang === "sv" ? "Avbryt generering" : "Cancel generation"}
                       className="shrink-0 h-11 px-3.5 rounded-2xl border border-red-400/30 text-red-200"
                     >
