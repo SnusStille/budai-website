@@ -9,6 +9,7 @@ import { RULES, checkRateLimit, clientIp, rateLimitKey } from "../lib/rate-limit
 import { validateWaitlist } from "../lib/waitlist-validation";
 import { signWaitlistEmail, verifyWaitlistToken } from "../lib/waitlist-status";
 import { aiUsageEvent } from "../lib/ai-usage";
+import { buildCsp } from "../lib/csp";
 
 test("one readiness deadline and camera/reveal timing stay bounded without a logo timeline",()=>{
   expect(INTRO_MS+INTRO_REVEAL_MS).toBeLessThanOrEqual(4000);
@@ -281,4 +282,22 @@ test("AI usage events clamp token counts and never carry prompts or invented cos
   expect(aiUsageEvent({ provider: "openai", operation: "image", status: 429 }).status).toBe(429);
   expect(aiUsageEvent({ provider: "openai", operation: "image", tier: "admin" as never }).tier).toBe("unknown");
   expect(aiUsageEvent({ provider: "anthropic", operation: "chat", inputTokens: Number.NaN }).inputTokens).toBe(0);
+});
+
+
+test("CSP uses a per-request nonce and blocks the risky default sources", () => {
+  const a = buildCsp("nonceA");
+  const b = buildCsp("nonceB");
+  expect(a).toContain("nonce-nonceA");
+  expect(b).toContain("nonce-nonceB");
+  expect(a).not.toBe(b);
+  expect(a).toContain("default-src 'self'");
+  expect(a).toContain("object-src 'none'");
+  expect(a).toContain("base-uri 'self'");
+  expect(a).toContain("form-action 'self'");
+  expect(a).toContain("'strict-dynamic'");
+  expect(a).not.toContain("upgrade-insecure-requests");
+  expect(a).not.toContain("frame-ancestors"); // cross-origin preview iframe
+  expect(a).not.toContain("script-src 'self' 'unsafe-inline'");
+  expect(a).toContain("https://va.vercel-scripts.com");
 });

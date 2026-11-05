@@ -386,3 +386,49 @@ test("footer labels are honest and the What's new link resolves to a real elemen
   // The modal intentionally cleans the hash after opening.
   expect(new URL(page.url()).hash).toBe("");
 });
+
+test("security headers and a per-request CSP nonce let the app boot (B5)", async ({ page }) => {
+  await page.addInitScript(() => {
+    const w = window as Window & { __cspViolations?: string[] };
+    w.__cspViolations = [];
+    document.addEventListener("securitypolicyviolation", (event) => {
+      const e = event as Event & { violatedDirective?: string };
+      w.__cspViolations!.push(e.violatedDirective ?? "unknown");
+    });
+  });
+
+  const response = await page.goto("/");
+  const headers = response?.headers() ?? {};
+  expect(headers["strict-transport-security"]).toMatch(/max-age=\d+/);
+  expect(headers["x-content-type-options"]).toBe("nosniff");
+  // No X-Frame-Options: the Arena/E2B preview embeds the site in an iframe.
+  expect(headers["x-frame-options"]).toBeUndefined();
+
+  const csp = headers["content-security-policy"] ?? "";
+  expect(csp).toContain("default-src 'self'");
+  expect(csp).toContain("object-src 'none'");
+  expect(csp).toContain("base-uri 'self'");
+  const nonce = /nonce-([a-z0-9]+)/.exec(csp)?.[1];
+  expect(nonce?.length).toBeGreaterThan(8);
+
+  // Browsers deliberately hide nonce *attributes* from getAttribute(); the
+  // HTMLScriptElement.nonce property is the readable value.
+  const scriptsWithoutNonce = await page
+    .locator("script")
+    .evaluateAll(
+      (els, n) =>
+        els
+          .filter((el) => (el as HTMLScriptElement).nonce !== n)
+          .map((el) => el.outerHTML.slice(0, 120)),
+      nonce
+    );
+  expect(scriptsWithoutNonce).toEqual([]);
+
+  // The pre-hydration inline script really ran, so the policy did not block it.
+  await expect(page.locator("html")).toHaveAttribute("data-budai-intro", /preparing|done/);
+  await page.waitForLoadState("domcontentloaded");
+  const violations = await page.evaluate(
+    () => (window as Window & { __cspViolations?: string[] }).__cspViolations ?? []
+  );
+  expect(violations).toEqual([]);
+});

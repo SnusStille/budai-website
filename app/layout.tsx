@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { headers } from "next/headers";
 import "@fontsource-variable/plus-jakarta-sans";
 import "@fontsource-variable/jetbrains-mono";
 import "./globals.css";
@@ -88,6 +89,8 @@ export const viewport: Viewport = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  // The middleware generates a fresh nonce per request (see lib/csp.ts).
+  const nonce = headers().get("x-nonce") ?? undefined;
   return (
     <html
       lang="en"
@@ -95,7 +98,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       suppressHydrationWarning
     >
       <head>
-        <script id="budai-intro-policy" dangerouslySetInnerHTML={{ __html: introBootstrap }} />
+        <script id="budai-intro-policy" nonce={nonce} dangerouslySetInnerHTML={{ __html: introBootstrap }} />
       </head>
       <body className="antialiased noise-overlay bg-background text-white">
         <a
@@ -106,6 +109,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </a>
         <script
           type="application/ld+json"
+          nonce={nonce}
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
         <Providers>{children}</Providers>

@@ -1,14 +1,27 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
+import { buildCsp } from "@/lib/csp";
 
 /**
- * Optional session refresh for Supabase Auth (PKCE cookies).
- * No-ops when env is missing / placeholder.
+ * Per-request CSP nonce + optional session refresh for Supabase Auth (PKCE).
+ * The Supabase part no-ops when env is missing / placeholder.
  */
 export async function middleware(request: NextRequest) {
-  let response = NextResponse.next({
-    request: { headers: request.headers },
-  });
+  const nonce = crypto.randomUUID().replace(/-/g, "");
+  const csp = buildCsp(nonce);
+
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-nonce", nonce);
+  // Next.js reads the nonce from this request header and applies it to its
+  // own scripts, so they satisfy the very same policy the response sends.
+  requestHeaders.set("Content-Security-Policy", csp);
+
+  const makeResponse = () => {
+    const res = NextResponse.next({ request: { headers: requestHeaders } });
+    res.headers.set("Content-Security-Policy", csp);
+    return res;
+  };
+  let response = makeResponse();
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -24,7 +37,7 @@ export async function middleware(request: NextRequest) {
         },
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-          response = NextResponse.next({ request: { headers: request.headers } });
+          response = makeResponse();
           cookiesToSet.forEach(({ name, value, options }) =>
             response.cookies.set(name, value, options)
           );
