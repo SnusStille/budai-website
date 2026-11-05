@@ -5,6 +5,7 @@ import { brainCameraAt, brainFovAt, brainJourneyProgress, brainVisualAt, playgro
 import { codeCharactersAt, CODE_LENGTH, EXAMPLE_SOURCE, tokenizeLine } from "../lib/experience/code";
 import { readFileSync } from "node:fs";
 import { LIMITS, limitFor } from "../lib/limits";
+import { RULES, checkRateLimit, clientIp, rateLimitKey } from "../lib/rate-limit";
 
 test("one readiness deadline and camera/reveal timing stay bounded without a logo timeline",()=>{
   expect(INTRO_MS+INTRO_REVEAL_MS).toBeLessThanOrEqual(4000);
@@ -184,4 +185,35 @@ test("daily-limit copy reads the single LIMITS source instead of hardcoded numbe
     expect(source, `${file} still hardcodes a daily limit`).not.toMatch(stale);
     expect(source, `${file} does not use LIMITS`).toContain("LIMITS.");
   }
+});
+
+
+test("shared rate limiter enforces per-rule windows and reports Retry-After", () => {
+  const rule = { name: "unit-b1-a", limit: 3, windowMs: 60_000 };
+  const t = 1_700_000_000_000;
+  expect(checkRateLimit("b1-a", rule, t)).toMatchObject({ limited: false, remaining: 2 });
+  expect(checkRateLimit("b1-a", rule, t + 10)).toMatchObject({ limited: false, remaining: 1 });
+  expect(checkRateLimit("b1-a", rule, t + 20)).toMatchObject({ limited: false, remaining: 0 });
+  const blocked = checkRateLimit("b1-a", rule, t + 30);
+  expect(blocked.limited).toBe(true);
+  expect(blocked.retryAfterSeconds).toBeGreaterThan(0);
+  // A new key and a new rule are independent buckets.
+  expect(checkRateLimit("b1-b", rule, t + 30).limited).toBe(false);
+  expect(checkRateLimit("b1-a-rule-c", { ...rule, name: "unit-b1-c" }, t + 30).limited).toBe(false);
+  // The window really expires.
+  expect(checkRateLimit("b1-a", rule, t + rule.windowMs).limited).toBe(false);
+  expect(RULES.playground.limit).toBeGreaterThan(RULES.feedback.limit);
+});
+
+test("client IP and limiter keys are bounded and never keep a raw address", () => {
+  const req = (headers: Record<string, string>) =>
+    ({ headers: new Headers(headers) } as unknown as import("next/server").NextRequest);
+  expect(clientIp(req({ "x-forwarded-for": "203.0.113.7, 10.0.0.1" }))).toBe("203.0.113.7");
+  expect(clientIp(req({ "x-vercel-forwarded-for": "198.51.100.4", "x-forwarded-for": "spoofed" }))).toBe("198.51.100.4");
+  expect(clientIp(req({}))).toBe("unknown");
+  expect(clientIp(req({ "x-forwarded-for": "x".repeat(500) })).length).toBeLessThanOrEqual(64);
+  const key = rateLimitKey(req({ "x-forwarded-for": "203.0.113.7" }), RULES.share);
+  expect(key).toMatch(/^[a-f0-9]{64}$/);
+  expect(key).not.toContain("203");
+  expect(rateLimitKey(req({ "x-forwarded-for": "203.0.113.7" }), RULES.playground)).not.toBe(key);
 });

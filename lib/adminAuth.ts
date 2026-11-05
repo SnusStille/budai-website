@@ -53,13 +53,6 @@ export function isAdmin(req: NextRequest): boolean {
   return a.length === b.length && timingSafeEqual(a, b);
 }
 
-/** Best-effort client IP for the login lockout. Shared with the other limiters in B1. */
-export function clientIp(req: NextRequest): string {
-  const fwd = req.headers.get("x-forwarded-for");
-  const ip = (fwd ? fwd.split(",")[0] : req.headers.get("x-real-ip") || "unknown").trim();
-  return ip.slice(0, 64) || "unknown";
-}
-
 const LOGIN_WINDOW_MS = 15 * 60_000;
 const LOGIN_MAX_FAILURES = 5;
 const failures = new Map<string, { count: number; expires: number }>();

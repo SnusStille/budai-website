@@ -4,32 +4,12 @@ import Anthropic from "@anthropic-ai/sdk";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { dayKey, limitFor, type AccessTier } from "@/lib/limits";
+import { RULES, checkRateLimit, rateLimitKey } from "@/lib/rate-limit";
 
 function getClient() {
   const key = process.env.ANTHROPIC_API_KEY?.trim();
   if (!key || key.length < 10 || key.includes("your-")) return null;
   return new Anthropic({ apiKey: key });
-}
-
-const requestCounts = new Map<string, { count: number; resetAt: number }>();
-const LIMIT = 60;
-const WINDOW_MS = 60 * 60 * 1000;
-
-function isRateLimited(ip: string): boolean {
-  const now = Date.now();
-  if (requestCounts.size > 500) {
-    requestCounts.forEach((val, key) => {
-      if (now > val.resetAt) requestCounts.delete(key);
-    });
-  }
-  const entry = requestCounts.get(ip);
-  if (!entry || now > entry.resetAt) {
-    requestCounts.set(ip, { count: 1, resetAt: now + WINDOW_MS });
-    return false;
-  }
-  if (entry.count >= LIMIT) return true;
-  entry.count += 1;
-  return false;
 }
 
 async function resolveUser(req: NextRequest) {
@@ -134,9 +114,12 @@ function stripMemoryTag(text: string): { clean: string; memory: string | null } 
 }
 
 export async function POST(req: NextRequest) {
-  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-  if (isRateLimited(ip)) {
-    return NextResponse.json({ error: "Rate limit reached. Try again later." }, { status: 429 });
+  const limit = checkRateLimit(rateLimitKey(req, RULES.playground), RULES.playground);
+  if (limit.limited) {
+    return NextResponse.json(
+      { error: "Rate limit reached. Try again later." },
+      { status: 429, headers: { "Retry-After": String(Math.max(1, limit.retryAfterSeconds)) } }
+    );
   }
 
   const anthropic = getClient();

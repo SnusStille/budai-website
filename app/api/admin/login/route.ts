@@ -6,11 +6,11 @@ import {
   adminSessionMaxAge,
   adminSessionToken,
   clearLoginFailures,
-  clientIp,
   loginLocked,
   noteLoginFailure,
   passwordOk,
 } from "@/lib/adminAuth";
+import { clientIp } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
   if (!adminConfigured()) return NextResponse.json({ ok: false, reason: "not_configured" }, { status: 503 });
