@@ -39,7 +39,6 @@ export const metadata: Metadata = {
     "digital assistant",
     "Stilledev",
     "BudAI",
-    "enterprise AI",
     "automatisering",
   ],
   authors: [{ name: "Stilledev" }],
