@@ -1,11 +1,39 @@
-import { timingSafeEqual } from "crypto";
+import { timingSafeEqual, createHmac } from "crypto";
 import type { NextRequest } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-/** Server-only. Prefers ADMIN_PASSWORD; also accepts NEXT_PUBLIC_ADMIN_PASSWORD so an older .env.local keeps working. */
-const secret = () => (process.env.ADMIN_PASSWORD || process.env.NEXT_PUBLIC_ADMIN_PASSWORD || "").trim();
+/**
+ * Server-only admin authentication.
+ *
+ * Only ADMIN_PASSWORD is accepted. A NEXT_PUBLIC_* name must never be used for a
+ * secret: Next.js inlines those values into the browser bundle.
+ *
+ * The browser never holds the password after login. Instead /api/admin/login sets
+ * an httpOnly, SameSite=Strict cookie containing a stateless HMAC-derived session
+ * token, which every /api/admin/* route verifies with a constant-time comparison.
+ */
+const secret = () => (process.env.ADMIN_PASSWORD || "").trim();
+
+export const ADMIN_SESSION_COOKIE = "budai_admin_session";
+const SESSION_PAYLOAD = "budai-admin-session-v1";
+const SESSION_MAX_AGE = 8 * 60 * 60; // 8 hours
 
 export const adminConfigured = () => !!secret();
+
+/** Stateless session token: derived from the secret, never equal to it. */
+export function adminSessionToken(): string {
+  const s = secret();
+  return s ? createHmac("sha256", s).update(SESSION_PAYLOAD).digest("hex") : "";
+}
+
+export const adminCookieOptions = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: "strict",
+  path: "/",
+} as const;
+
+export const adminSessionMaxAge = SESSION_MAX_AGE;
 
 export function passwordOk(got: string): boolean {
   const expected = secret();
@@ -17,7 +45,52 @@ export function passwordOk(got: string): boolean {
 }
 
 export function isAdmin(req: NextRequest): boolean {
-  return passwordOk(req.headers.get("x-admin-key") || "");
+  const expected = adminSessionToken();
+  if (!expected) return false;
+  const got = req.cookies.get(ADMIN_SESSION_COOKIE)?.value || "";
+  const a = Buffer.from(got);
+  const b = Buffer.from(expected);
+  return a.length === b.length && timingSafeEqual(a, b);
+}
+
+/** Best-effort client IP for the login lockout. Shared with the other limiters in B1. */
+export function clientIp(req: NextRequest): string {
+  const fwd = req.headers.get("x-forwarded-for");
+  const ip = (fwd ? fwd.split(",")[0] : req.headers.get("x-real-ip") || "unknown").trim();
+  return ip.slice(0, 64) || "unknown";
+}
+
+const LOGIN_WINDOW_MS = 15 * 60_000;
+const LOGIN_MAX_FAILURES = 5;
+const failures = new Map<string, { count: number; expires: number }>();
+
+export function loginLocked(ip: string): boolean {
+  const rec = failures.get(ip);
+  if (!rec) return false;
+  if (Date.now() >= rec.expires) {
+    failures.delete(ip);
+    return false;
+  }
+  return rec.count >= LOGIN_MAX_FAILURES;
+}
+
+export function noteLoginFailure(ip: string): void {
+  const now = Date.now();
+  const rec = failures.get(ip);
+  if (!rec || now >= rec.expires) failures.set(ip, { count: 1, expires: now + LOGIN_WINDOW_MS });
+  else {
+    rec.count += 1;
+    rec.expires = now + LOGIN_WINDOW_MS;
+  }
+  if (failures.size > 5_000) {
+    for (const [key, value] of Array.from(failures.entries())) {
+      if (now >= value.expires) failures.delete(key);
+    }
+  }
+}
+
+export function clearLoginFailures(ip: string): void {
+  failures.delete(ip);
 }
 
 export function serviceClient() {

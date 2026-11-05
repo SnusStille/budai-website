@@ -183,10 +183,10 @@ function normalizeUser(row: Record<string, unknown>): WaitlistUser {
 }
 
 async function adminApi(method: string, body?: unknown, query = "") {
-  const key = typeof window !== "undefined" ? sessionStorage.getItem("budai_admin_key") || "" : "";
   const res = await fetch(`/api/admin/waitlist${query}`, {
     method,
-    headers: { "Content-Type": "application/json", "x-admin-key": key },
+    credentials: "same-origin",
+    headers: { "Content-Type": "application/json" },
     body: body ? JSON.stringify(body) : undefined,
     cache: "no-store",
   });

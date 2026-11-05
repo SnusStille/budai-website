@@ -19,10 +19,9 @@ export default function AdminInbox() {
   const [err, setErr] = useState("");
 
   useEffect(() => {
-    const key = sessionStorage.getItem("budai_admin_key") || "";
-    const h = { "x-admin-key": key };
-    fetch("/api/admin/status", { headers: h, cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).then(setSt).catch(() => setSt(null));
-    fetch("/api/admin/feedback", { headers: h, cache: "no-store" })
+    const opts: RequestInit = { cache: "no-store", credentials: "same-origin" };
+    fetch("/api/admin/status", opts).then((r) => (r.ok ? r.json() : null)).then(setSt).catch(() => setSt(null));
+    fetch("/api/admin/feedback", opts)
       .then(async (r) => {
         const j = await r.json();
         if (!r.ok) throw new Error(j.error || "Failed");
@@ -48,7 +47,6 @@ export default function AdminInbox() {
                 </span>
               </li>
             ))}
-            {st.adminPasswordLegacyName && <li className="text-xs text-amber-300/80">Tip: rename NEXT_PUBLIC_ADMIN_PASSWORD to ADMIN_PASSWORD so it never reaches the browser.</li>}
             {st.model && <li className="font-mono text-xs text-muted">model: {String(st.model)}</li>}
           </ul>
         )}

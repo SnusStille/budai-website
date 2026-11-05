@@ -154,13 +154,18 @@ export default function AdminPage() {
         setError(true);
         return;
       }
+      if (res.status === 429) {
+        setHint("Too many attempts. Try again in 15 minutes.");
+        setError(true);
+        return;
+      }
       if (!res.ok) {
         setHint("Wrong password.");
         setError(true);
         return;
       }
+      // The server sets an httpOnly session cookie; the password never leaves this request.
       sessionStorage.setItem("budai_admin_auth", "true");
-      sessionStorage.setItem("budai_admin_key", password.trim());
       setHint("");
       setError(false);
       setAuthenticated(true);
@@ -249,18 +254,13 @@ export default function AdminPage() {
   };
 
 
-  const adminKey = () =>
-    (typeof window !== "undefined" && sessionStorage.getItem("budai_admin_key")) ||
-    password ||
-    "";
-
   const loadChats = async (q = "") => {
     setChatsLoading(true);
     setChatsError(null);
     try {
       const res = await fetch(
         `/api/admin/conversations?limit=50${q ? `&q=${encodeURIComponent(q)}` : ""}`,
-        { headers: { "x-admin-key": adminKey() }, cache: "no-store" }
+        { cache: "no-store", credentials: "same-origin" }
       );
       const data = await res.json();
       if (!res.ok) {
@@ -280,7 +280,7 @@ export default function AdminPage() {
   const openChat = async (id: string) => {
     try {
       const res = await fetch(`/api/admin/conversations?id=${encodeURIComponent(id)}`, {
-        headers: { "x-admin-key": adminKey() },
+        credentials: "same-origin",
         cache: "no-store",
       });
       const data = await res.json();
@@ -460,9 +460,9 @@ export default function AdminPage() {
               </button>
               <button
                 type="button"
-                onClick={() => {
+                onClick={async () => {
+                  await fetch("/api/admin/logout", { method: "POST", credentials: "same-origin" }).catch(() => {});
                   sessionStorage.removeItem("budai_admin_auth");
-                  sessionStorage.removeItem("budai_admin_key");
                   setAuthenticated(false);
                   setPassword("");
                 }}

@@ -301,3 +301,21 @@ test("legal pages disclose automatic memory and its controls in both languages",
   await page.goto("/legal/gdpr");
   await expect(page.getByText(/Automatiskt långtidsminne ingår i kontotjänsten/i)).toBeVisible();
 });
+
+
+test("admin auth uses a server-set session cookie and /admin stays out of indexes", async ({ request }) => {
+  const admin = await request.get("/admin");
+  expect(admin.status()).toBe(200);
+  expect((admin.headers()["x-robots-tag"] || "").toLowerCase()).toContain("noindex");
+  expect(await admin.text()).toMatch(/name="robots"[^>]*content="[^"]*noindex/i);
+
+  const login = await request.post("/api/admin/login", { data: { password: "not-the-admin-password" } });
+  expect([401, 503]).toContain(login.status());
+  // A failed login never issues a session cookie, and no password is echoed back.
+  expect(login.headers()["set-cookie"]).toBeUndefined();
+  expect(await login.text()).not.toContain("not-the-admin-password");
+
+  // The old plaintext header is no longer an auth path.
+  const legacy = await request.get("/api/admin/status", { headers: { "x-admin-key": "anything" } });
+  expect([401, 503]).toContain(legacy.status());
+});
