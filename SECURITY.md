@@ -28,6 +28,10 @@ These must never be exposed to the browser or given a `NEXT_PUBLIC_*` name:
 
 Server logs are single-line JSON with a short `requestId` correlation id and bounded scalars only (`lib/log.ts`); they never contain prompts, message bodies, emails, IP addresses or keys. An external error tracker (Sentry etc.) is still an open infra decision. `BUDAI_AI_DISABLED=1` pauses all Playground generation without a redeploy (emergency cost/abuse switch). Upstream AI calls have a 60 s server timeout with at most 2 retries; `/api/generate-image` has a 45 s timeout. Structured `[budai:usage]` logs contain **only** reported token counts, model, tier, duration and outcome — no prompts, user ids, prices or estimated cost.
 
+## Duplicate domains
+
+Requests whose host ends in `.vercel.app` receive `X-Robots-Tag: noindex, nofollow` from the middleware (`lib/host.ts`), so Vercel's default domain is not indexed as a duplicate of `https://stilledev.se`. Preview deployments still work because no redirect is forced. A production 301 strategy remains an open decision (audit point A5).
+
 ## Secret scanning
 
 `npm run scan:secrets` checks all tracked files **and every commit reachable from any ref** for provider keys, JWTs, private keys and hardcoded credential literals. CI runs the same command with `fetch-depth: 0`. New findings fail the build; reviewed historical findings are recorded as hashes in `scripts/secret-scan-baseline.json` (never the value itself). To investigate use `--working-tree` or regenerate the baseline with `--update-baseline` after review.

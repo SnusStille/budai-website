@@ -476,3 +476,16 @@ test("structured server logs are bounded JSON with a correlation id and no free-
   expect(errorMessage(new Error("boom"))).toBe("boom");
   expect(errorMessage(null)).toBe("null");
 });
+
+test("duplicate-domain guard only targets Vercel's default host (A5)", async () => {
+  const { isNonCanonicalHost, CANONICAL_HOST } = await import("../lib/host");
+  expect(CANONICAL_HOST).toBe("stilledev.se");
+  expect(isNonCanonicalHost("budai-website.vercel.app")).toBe(true);
+  expect(isNonCanonicalHost("budai-website-git-main-snusstille.vercel.app")).toBe(true);
+  expect(isNonCanonicalHost("stilledev.se")).toBe(false);
+  expect(isNonCanonicalHost("www.stilledev.se")).toBe(false);
+  expect(isNonCanonicalHost("127.0.0.1")).toBe(false);
+  expect(isNonCanonicalHost("localhost")).toBe(false);
+  expect(isNonCanonicalHost("")).toBe(false);
+  expect(isNonCanonicalHost("budai-website.vercel.app:443")).toBe(true);
+});

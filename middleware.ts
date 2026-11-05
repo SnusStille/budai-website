@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { buildCsp } from "@/lib/csp";
+import { isNonCanonicalHost } from "@/lib/host";
 
 /**
  * Per-request CSP nonce + optional session refresh for Supabase Auth (PKCE).
@@ -16,9 +17,16 @@ export async function middleware(request: NextRequest) {
   // own scripts, so they satisfy the very same policy the response sends.
   requestHeaders.set("Content-Security-Policy", csp);
 
+  // A5: the Vercel default domain mirrors the canonical site. Do not let
+  // crawlers index it as duplicate content, but keep preview URLs usable.
+  // Behind a proxy, nextUrl.hostname can be the internal upstream host, so
+  // trust the actual Host header and fall back to nextUrl when it is missing.
+  const host = request.headers.get("host") || request.nextUrl.hostname;
+  const noindex = isNonCanonicalHost(host);
   const makeResponse = () => {
     const res = NextResponse.next({ request: { headers: requestHeaders } });
     res.headers.set("Content-Security-Policy", csp);
+    if (noindex) res.headers.set("X-Robots-Tag", "noindex, nofollow");
     return res;
   };
   let response = makeResponse();

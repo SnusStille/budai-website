@@ -546,3 +546,12 @@ test("daily-limit meter says messages, not credits, in both languages (D2)", asy
   await expect(sv).toContainText("meddelanden kvar idag");
   expect(await sv.textContent()).not.toMatch(/credits/i);
 });
+
+test("the Vercel mirror domain is noindexed but the canonical host is not (A5)", async ({ request }) => {
+  const mirror = await request.get("/", { headers: { host: "budai-website.vercel.app" } });
+  expect(mirror.status()).toBe(200);
+  expect(mirror.headers()["x-robots-tag"]).toContain("noindex");
+  const canonical = await request.get("/", { headers: { host: "stilledev.se" } });
+  expect(canonical.status()).toBe(200);
+  expect(canonical.headers()["x-robots-tag"] ?? "").not.toContain("noindex");
+});
