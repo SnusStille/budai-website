@@ -441,3 +441,38 @@ test("test:e2e lists every stable browser spec so CI never silently drops covera
   expect(listed).toEqual(onDisk);
   expect(new Set(listed).size).toBe(listed.length);
 });
+
+test("structured server logs are bounded JSON with a correlation id and no free-form secrets (B9)", async () => {
+  const { logEvent, newRequestId, errorMessage } = await import("../lib/log");
+  const lines: string[] = [];
+  const original = console.error;
+  console.error = (...args: unknown[]) => { lines.push(args.map(String).join(" ")); };
+  try {
+    logEvent("error", "test.scope", {
+      requestId: newRequestId(),
+      status: 502,
+      message: "x".repeat(500),
+      ok: true,
+      latencyMs: Number.NaN,
+      omitted: undefined,
+      nullable: null,
+    });
+  } finally {
+    console.error = original;
+  }
+  expect(lines).toHaveLength(1);
+  const entry = JSON.parse(lines[0]) as Record<string, unknown>;
+  expect(entry.level).toBe("error");
+  expect(entry.scope).toBe("test.scope");
+  expect(entry.ts).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+  expect(String(entry.requestId)).toHaveLength(16);
+  expect(String(entry.message).length).toBeLessThanOrEqual(240);
+  expect(entry.status).toBe(502);
+  expect(entry.ok).toBe(true);
+  expect(entry.latencyMs).toBe(0);
+  expect("omitted" in entry).toBe(false);
+  expect("nullable" in entry).toBe(false);
+  expect(newRequestId()).not.toBe(newRequestId());
+  expect(errorMessage(new Error("boom"))).toBe("boom");
+  expect(errorMessage(null)).toBe("null");
+});

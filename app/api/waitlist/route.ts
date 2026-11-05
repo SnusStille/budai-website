@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { serviceClient } from "@/lib/supabase/service";
+import { logEvent, newRequestId } from "@/lib/log";
 import { validateWaitlist } from "@/lib/waitlist-validation";
 import { RULES, checkRateLimit, rateLimitKey } from "@/lib/rate-limit";
 import { WAITLIST_STATUS_COOKIE, signWaitlistEmail } from "@/lib/waitlist-status";
@@ -12,6 +13,7 @@ import { WAITLIST_STATUS_COOKIE, signWaitlistEmail } from "@/lib/waitlist-status
  * implemented yet — it needs an email provider (see E9 in the audit).
  */
 export async function POST(req: NextRequest) {
+  const requestId = newRequestId();
   const limit = checkRateLimit(rateLimitKey(req, RULES.waitlist), RULES.waitlist);
   if (limit.limited) {
     return NextResponse.json(
@@ -42,7 +44,7 @@ export async function POST(req: NextRequest) {
     if (msg.includes("duplicate") || msg.includes("unique") || msg.includes("already")) {
       return NextResponse.json({ error: "duplicate" }, { status: 409 });
     }
-    console.error("Waitlist insert error:", error.message);
+    logEvent("error", "waitlist.insert", { requestId, message: error.message.slice(0, 200) });
     return NextResponse.json({ error: "could_not_save" }, { status: 500 });
   }
   const res = NextResponse.json({ ok: true });

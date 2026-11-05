@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isAdmin } from "@/lib/adminAuth";
 import { serviceClient } from "@/lib/supabase/service";
+import { errorMessage, logEvent, newRequestId } from "@/lib/log";
 
 /**
  * Stille-only admin read of product conversations.
@@ -9,6 +10,7 @@ import { serviceClient } from "@/lib/supabase/service";
  */
 
 export async function GET(req: NextRequest) {
+  const requestId = newRequestId();
   if (!isAdmin(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -102,7 +104,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ conversations: withMeta });
   } catch (e) {
-    console.error("[admin/conversations]", e);
+    logEvent("error", "admin.conversations", { requestId, message: errorMessage(e) });
     return NextResponse.json({ error: "Failed", conversations: [] }, { status: 500 });
   }
 }

@@ -7,6 +7,7 @@ import { dayKey, limitFor, type AccessTier } from "@/lib/limits";
 import { RULES, checkRateLimit, rateLimitKey } from "@/lib/rate-limit";
 import { aiUsageEvent, logAiUsage } from "@/lib/ai-usage";
 import { serviceClient } from "@/lib/supabase/service";
+import { errorMessage, logEvent, newRequestId } from "@/lib/log";
 
 function getClient() {
   const key = process.env.ANTHROPIC_API_KEY?.trim();
@@ -133,6 +134,7 @@ export async function POST(req: NextRequest) {
   }
 
   const startedAt = Date.now();
+  const requestId = newRequestId();
   try {
     const body = await req.json();
     const model=resolveModelTier(body?.modelTier);
@@ -364,7 +366,7 @@ export async function POST(req: NextRequest) {
                   : status === 401 || status === 403
                   ? "AI provider credential error on server."
                   : "Generation failed";
-              console.error("Playground stream error:", status || err);
+              logEvent("error", "playground.stream", { requestId, status, message: errorMessage(err), durationMs: Date.now() - startedAt });
               logAiUsage(aiUsageEvent({ provider: "anthropic", operation: "chat", stream: true, ok: false, status, durationMs: Date.now() - startedAt }));
               controller.enqueue(enc.encode("\u0000" + JSON.stringify({ error: errMsg })));
             }
@@ -443,7 +445,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ dual: false, reply: text || "…", memory });
   } catch (err) {
     const status = (err as { status?: number })?.status;
-    console.error("Playground error:", status || err);
+    logEvent("error", "playground.complete", { requestId, status, message: errorMessage(err), durationMs: Date.now() - startedAt });
     logAiUsage(aiUsageEvent({ provider: "anthropic", operation: "chat", stream: false, ok: false, status, durationMs: Date.now() - startedAt }));
     if (status === 429 || status === 529) {
       return NextResponse.json(

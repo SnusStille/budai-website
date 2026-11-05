@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { dayKey, limitFor } from "@/lib/limits";
 import { aiUsageEvent, logAiUsage } from "@/lib/ai-usage";
 import { serviceClient } from "@/lib/supabase/service";
+import { errorMessage, logEvent, newRequestId } from "@/lib/log";
 
 /**
  * Image generation via OpenAI Images API when OPENAI_API_KEY is set.
@@ -85,6 +86,7 @@ export async function POST(req: NextRequest) {
   };
 
   const startedAt = Date.now();
+  const requestId = newRequestId();
   const upstream = new AbortController();
   const timer = setTimeout(() => upstream.abort(), 45_000);
   if (req.signal.aborted) upstream.abort();
@@ -109,7 +111,7 @@ export async function POST(req: NextRequest) {
 
     if (!res.ok) {
       const errText = await res.text();
-      console.error("image gen", res.status, errText.slice(0, 400));
+      logEvent("error", "image.provider", { requestId, status: res.status, message: errText.slice(0, 200), durationMs: Date.now() - startedAt });
       logAiUsage(aiUsageEvent({ provider: "openai", operation: "image", model, ok: false, status: res.status, durationMs: Date.now() - startedAt }));
       return NextResponse.json({ error: "Image generation failed" }, { status: 502 });
     }
@@ -132,7 +134,7 @@ export async function POST(req: NextRequest) {
     }
     return NextResponse.json({ error: "No image in response" }, { status: 502 });
   } catch (e) {
-    console.error(e);
+    logEvent("error", "image.exception", { requestId, message: errorMessage(e), durationMs: Date.now() - startedAt });
     logAiUsage(aiUsageEvent({ provider: "openai", operation: "image", ok: false, durationMs: Date.now() - startedAt }));
     return NextResponse.json({ error: "Generation error" }, { status: 500 });
   } finally {
