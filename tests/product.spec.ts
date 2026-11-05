@@ -352,3 +352,22 @@ test("quota writes are server-owned and the waitlist status RPC is not public", 
   expect(status.status()).toBe(200);
   expect((await status.json()).status).toBeNull();
 });
+
+
+test("one keyboard owner: ⌘K opens the site palette and ⌘/ opens Playground shortcuts", async ({ page }) => {
+  await page.goto("/#playground");
+  const palette = page.getByRole("dialog", { name: "Command palette", exact: true });
+  const playgroundKeys = page.getByRole("dialog", { name: "Playground shortcuts", exact: true });
+  await expect(palette).toHaveCount(0);
+  await expect(playgroundKeys).toHaveCount(0);
+
+  await page.keyboard.press("Control+k");
+  await expect(palette).toBeVisible();
+  await expect(playgroundKeys).toHaveCount(0);
+  await page.keyboard.press("Escape");
+  await expect(palette).toHaveCount(0);
+
+  await page.keyboard.press("Control+/");
+  await expect(playgroundKeys).toBeVisible();
+  await expect(palette).toHaveCount(0);
+});

@@ -1534,11 +1534,6 @@ export default function AIPlayground() {
         if (activeRequestRef.current) cancelActiveRequest(true);
         return;
       }
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
-        e.preventDefault();
-        setShowShortcuts((s) => !s);
-        return;
-      }
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "n" && !inField) {
         e.preventDefault();
         void newChat();
@@ -2150,7 +2145,7 @@ export default function AIPlayground() {
                     onClick={() => setShowShortcuts(true)}
                     aria-label={lang === "sv" ? "Tangentbordsgenvägar" : "Keyboard shortcuts"}
                     className="hidden sm:inline-flex p-2 rounded-lg border border-white/[0.06] text-muted hover:text-white"
-                    title={lang === "sv" ? "Genvägar · ⌘K" : "Shortcuts · ⌘K"}
+                    title={lang === "sv" ? "Genvägar · ⌘/" : "Shortcuts · ⌘/"}
                   >
                     <Command className="w-4 h-4" />
                   </button>
@@ -2257,7 +2252,7 @@ export default function AIPlayground() {
                       (lang === "sv" ? "Välj läge ovan" : "Pick a mode above")}
                   </span>
                   <span className="ml-auto font-mono text-muted/40 hidden sm:inline">
-                    {lang === "sv" ? "? för genvägar · ⌘K meny" : "? for shortcuts · ⌘K menu"}
+                    {lang === "sv" ? "⌘/ genvägar · ⌘K meny" : "⌘/ shortcuts · ⌘K menu"}
                   </span>
                 </div>
               </div>
@@ -3773,6 +3768,9 @@ export default function AIPlayground() {
           >
             <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowShortcuts(false)} />
             <motion.div
+              role="dialog"
+              aria-modal="true"
+              aria-label={lang === "sv" ? "Playground-genvägar" : "Playground shortcuts"}
               initial={{ opacity: 0, y: 12, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 8, scale: 0.98 }}
@@ -3789,7 +3787,8 @@ export default function AIPlayground() {
               </div>
               <ul className="space-y-2 text-[12px]">
                 {[
-                  { keys: "⌘ K", desc: lang === "sv" ? "Öppna denna palett" : "Open this palette" },
+                  { keys: "⌘ /", desc: lang === "sv" ? "Öppna denna palett" : "Open this palette" },
+                  { keys: "⌘ K", desc: lang === "sv" ? "Sidans kommandopalett" : "Site command palette" },
                   { keys: "⌘ N", desc: lang === "sv" ? "Ny chatt" : "New chat" },
                   { keys: "⌘ E", desc: lang === "sv" ? "Exportera tråd (.md)" : "Export thread (.md)" },
                   { keys: "⌘ B", desc: lang === "sv" ? "Växla Workspace" : "Toggle Workspace" },

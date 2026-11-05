@@ -38,6 +38,7 @@ export default function Shortcuts() {
   if (!open) return null;
   const rows: [string, string][] = [
     ["⌘ / Ctrl + K", sv ? "Kommandopalett" : "Command palette"],
+    ["⌘ / Ctrl + /", sv ? "Playground-genvägar" : "Playground shortcuts"],
     ["/", sv ? "Gå till Playground och skriv" : "Jump to the Playground input"],
     ["Enter", sv ? "Skicka" : "Send"],
     ["Shift + Enter", sv ? "Ny rad" : "New line"],

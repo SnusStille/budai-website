@@ -216,6 +216,9 @@ export default function CommandPalette() {
               className="fixed inset-0 z-[90] bg-black/60 backdrop-blur-sm"
             />
             <motion.div
+              role="dialog"
+              aria-modal="true"
+              aria-label={lang === "sv" ? "Kommandopalett" : "Command palette"}
               initial={{ opacity: 0, y: -12, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -12, scale: 0.98 }}
