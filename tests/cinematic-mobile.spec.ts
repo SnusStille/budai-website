@@ -23,7 +23,11 @@ for (const width of [390, 360]) test(`mobile ${width}: full-height neural perspe
   page.on("pageerror", e => errors.push(e.message));
   await page.goto("/");
   const brain = page.locator("[data-brain-canvas]");
-  await expect(brain).toHaveCount(0);
+  // The hero renderer lazy-imports after hydration. With a warm browser cache it
+  // can already be mounted at this point, so asserting a zero count here is a
+  // timing race (it used to fail only in long CI runs). The guarantee this test
+  // needs is: no competing global loader, then exactly one rendered canvas.
+  await expect(page.locator("[data-global-loader]")).toHaveCount(0);
   await page.waitForTimeout(300);
   await page.screenshot({ path:`test-results/hero-${width}.png` });
   const dive = async (p: number) => {
@@ -31,6 +35,7 @@ for (const width of [390, 360]) test(`mobile ${width}: full-height neural perspe
     await page.waitForTimeout(450);
   };
   await dive(.1);
+  await expect(brain).toHaveCount(1);
   await expect(brain).toHaveAttribute("data-rendered","true");
   await page.screenshot({ path:`test-results/neural-entry-${width}.png` });
   await dive(.86);

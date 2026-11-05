@@ -11,7 +11,7 @@
     "test:unit": "node scripts/test-browser.mjs unit.spec.ts",
     "scan:secrets": "node scripts/scan-secrets.mjs",
     "check:env": "node scripts/check-env.mjs",
-    "test:e2e": "node scripts/test-browser.mjs loading-lifecycle.spec.ts arrival.spec.ts experience.spec.ts cinematic.spec.ts cinematic-mobile.spec.ts outro.spec.ts brand.spec.ts product.spec.ts",
+    "test:e2e": "node scripts/test-browser.mjs loading-lifecycle.spec.ts arrival.spec.ts experience.spec.ts cinematic.spec.ts cinematic-mobile.spec.ts outro.spec.ts brand.spec.ts product.spec.ts cloud-sync.spec.ts composer-safety.spec.ts request-lifecycle.spec.ts signal-workflows.spec.ts workspace-draft.spec.ts",
     "typecheck": "tsc --noEmit",
     "brand:generate": "node --experimental-strip-types scripts/generate-brand.mjs",
     "brain:poster": "node scripts/generate-brain-poster.mjs",

@@ -3,7 +3,7 @@ import { INTRO_MS, INTRO_REVEAL_MS, INTRO_READY_MS } from "../lib/experience/int
 import { cameraAt, CHAPTERS, journeyAt, worldChapterAt, worldOpacityAt } from "../lib/experience/timeline";
 import { brainCameraAt, brainFovAt, brainJourneyProgress, brainVisualAt, playgroundProjectionAt, BRAIN_STORY_ORIGIN } from "../lib/experience/brain";
 import { codeCharactersAt, CODE_LENGTH, EXAMPLE_SOURCE, tokenizeLine } from "../lib/experience/code";
-import { readFileSync, mkdtempSync, rmSync, writeFileSync as fsWrite } from "node:fs";
+import { readFileSync, readdirSync, mkdtempSync, rmSync, writeFileSync as fsWrite } from "node:fs";
 import { execFileSync, spawnSync } from "node:child_process";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
@@ -423,4 +423,21 @@ test("server Supabase client requires the service role and never falls back to a
       else process.env[k] = saved[k];
     }
   }
+});
+
+
+test("test:e2e lists every stable browser spec so CI never silently drops coverage (step 22)", () => {
+  const root = process.cwd();
+  const pkg = JSON.parse(readFileSync(join(root, "package.json"), "utf8")) as {
+    scripts: Record<string, string>;
+  };
+  const listed = pkg.scripts["test:e2e"]
+    .split(/\s+/)
+    .filter((part) => part.endsWith(".spec.ts"))
+    .sort();
+  const onDisk = readdirSync(join(root, "tests"))
+    .filter((file) => file.endsWith(".spec.ts") && file !== "unit.spec.ts" && file !== "waitlist-dev.spec.ts")
+    .sort();
+  expect(listed).toEqual(onDisk);
+  expect(new Set(listed).size).toBe(listed.length);
 });

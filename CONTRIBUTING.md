@@ -37,8 +37,8 @@ npm run scan:secrets && npm run lint && npm run typecheck && npm run test:unit &
 
 `.github/workflows/ci.yml` runs exactly that on every push and pull request, with `fetch-depth: 0` so the secret scan sees the full history. Chromium comes from the `@sparticuz/chromium` npm package via `scripts/test-browser.mjs`.
 
-- `npm test` runs all 15 spec files (including the opt-in `waitlist-dev.spec.ts`).
-- `npm run test:e2e` runs the 8 core specs.
+- `npm test` runs all 15 spec files (`waitlist-dev.spec.ts` is skipped unless `TEST_WAITLIST_DEV=1`).
+- `npm run test:e2e` runs all 13 stable browser specs — everything except the unit spec and the opt-in waitlist-dev spec. CI uses this script, so a new spec file must be added to the list; `tests/unit.spec.ts` guards that.
 - `TEST_WAITLIST_DEV=1` enables the local mock-only waitlist test.
 
 ## Code conventions
