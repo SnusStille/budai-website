@@ -8,20 +8,35 @@ import Providers from "@/components/Providers";
 import VercelAnalytics from "@/components/VercelAnalytics";
 import { introBootstrap } from "@/lib/experience/intro";
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://stilledev.se";
+
+// A7/F2: one @graph so crawlers see both a standalone Organization and the
+// SoftwareApplication that references it. Public/og.png is the single social
+// image for both og:image and twitter:image (no duplicate route).
 const jsonLd = {
   "@context": "https://schema.org",
-  "@type": "SoftwareApplication",
-  name: "BudAI",
-  applicationCategory: "BusinessApplication",
-  operatingSystem: "Web",
-  description:
-    "AI work assistant for Swedish companies and individuals — write, automate, and think faster in Swedish and English.",
-  url: process.env.NEXT_PUBLIC_SITE_URL || "https://stilledev.se",
-  author: { "@type": "Organization", name: "Stilledev" },
-  offers: { "@type": "Offer", price: "0", priceCurrency: "SEK", description: "Developer preview" },
+  "@graph": [
+    {
+      "@type": "SoftwareApplication",
+      "@id": `${siteUrl}/#app`,
+      name: "BudAI",
+      applicationCategory: "BusinessApplication",
+      operatingSystem: "Web",
+      description:
+        "AI work assistant for Swedish companies and individuals — write, automate, and think faster in Swedish and English.",
+      url: siteUrl,
+      author: { "@id": `${siteUrl}/#organization` },
+      offers: { "@type": "Offer", price: "0", priceCurrency: "SEK", description: "Developer preview" },
+    },
+    {
+      "@type": "Organization",
+      "@id": `${siteUrl}/#organization`,
+      name: "Stilledev",
+      url: siteUrl,
+      description: "Independent software studio in Sweden building BudAI.",
+    },
+  ],
 };
-
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://stilledev.se";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),

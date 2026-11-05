@@ -512,3 +512,23 @@ test("mobile playground tracks the visible viewport and gives message tools 44px
     expect(size.h).toBeGreaterThanOrEqual(44);
   }
 });
+
+test("social metadata uses one image URL and publishes Organization JSON-LD (A7/F2)", async ({ page }) => {
+  const response = await page.goto("/");
+  expect(response?.status()).toBe(200);
+  const head = await page.evaluate(() => {
+    const meta = (selector: string) => document.querySelector(selector)?.getAttribute("content") ?? null;
+    const raw = document.querySelector('script[type="application/ld+json"]')?.textContent ?? "{}";
+    return {
+      og: meta('meta[property="og:image"]'),
+      twitter: meta('meta[name="twitter:image"]'),
+      ld: JSON.parse(raw) as { "@graph"?: Array<{ "@type"?: string }> },
+    };
+  });
+  expect(head.og).toBeTruthy();
+  expect(head.og).toBe(head.twitter);
+  expect(head.og).toContain("/og.png");
+  const types = (head.ld["@graph"] ?? []).map((node) => node["@type"]);
+  expect(types).toContain("SoftwareApplication");
+  expect(types).toContain("Organization");
+});
