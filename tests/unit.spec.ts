@@ -8,6 +8,7 @@ import { LIMITS, limitFor } from "../lib/limits";
 import { RULES, checkRateLimit, clientIp, rateLimitKey } from "../lib/rate-limit";
 import { validateWaitlist } from "../lib/waitlist-validation";
 import { signWaitlistEmail, verifyWaitlistToken } from "../lib/waitlist-status";
+import { aiUsageEvent } from "../lib/ai-usage";
 
 test("one readiness deadline and camera/reveal timing stay bounded without a logo timeline",()=>{
   expect(INTRO_MS+INTRO_REVEAL_MS).toBeLessThanOrEqual(4000);
@@ -261,4 +262,23 @@ test("waitlist status proof is signed, tamper-proof and needs a server secret", 
 
   if (previous === undefined) delete process.env.ADMIN_PASSWORD;
   else process.env.ADMIN_PASSWORD = previous;
+});
+
+
+test("AI usage events clamp token counts and never carry prompts or invented cost", () => {
+  const entry = aiUsageEvent({
+    provider: "anthropic", operation: "chat", model: "x".repeat(200), tier: "member",
+    stream: true, ok: true, inputTokens: -5, outputTokens: 123.7, durationMs: 3000,
+  });
+  expect(entry.event).toBe("ai.usage");
+  expect(entry.model.length).toBeLessThanOrEqual(80);
+  expect(entry.inputTokens).toBe(0);
+  expect(entry.outputTokens).toBe(124);
+  expect(entry.durationMs).toBe(3000);
+  expect(entry.tier).toBe("member");
+  expect(JSON.stringify(entry)).not.toMatch(/cost|price|prompt|email|apiKey/i);
+
+  expect(aiUsageEvent({ provider: "openai", operation: "image", status: 429 }).status).toBe(429);
+  expect(aiUsageEvent({ provider: "openai", operation: "image", tier: "admin" as never }).tier).toBe("unknown");
+  expect(aiUsageEvent({ provider: "anthropic", operation: "chat", inputTokens: Number.NaN }).inputTokens).toBe(0);
 });

@@ -5,11 +5,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { dayKey, limitFor, type AccessTier } from "@/lib/limits";
 import { RULES, checkRateLimit, rateLimitKey } from "@/lib/rate-limit";
+import { aiUsageEvent, logAiUsage } from "@/lib/ai-usage";
 
 function getClient() {
   const key = process.env.ANTHROPIC_API_KEY?.trim();
   if (!key || key.length < 10 || key.includes("your-")) return null;
-  return new Anthropic({ apiKey: key });
+  // Bound a single upstream call and let the SDK retry transient failures only.
+  // The client also aborts after 90s; this is the server-side backstop.
+  return new Anthropic({ apiKey: key, timeout: 60_000, maxRetries: 2 });
 }
 
 async function resolveUser(req: NextRequest) {
@@ -122,6 +125,12 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // Emergency cost/abuse switch: set BUDAI_AI_DISABLED=1 to pause all generation
+  // without a redeploy. Quota and rate-limit checks still run first.
+  if (process.env.BUDAI_AI_DISABLED === "1") {
+    return NextResponse.json({ error: "Playground is temporarily paused.", code: "paused" }, { status: 503 });
+  }
+
   const anthropic = getClient();
   if (!anthropic) {
     return NextResponse.json(
@@ -130,6 +139,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  const startedAt = Date.now();
   try {
     const body = await req.json();
     const model=resolveModelTier(body?.modelTier);
@@ -313,7 +323,7 @@ export async function POST(req: NextRequest) {
               max_tokens: concise ? 500 : 1200,
               system: SYSTEM_PROMPT(lang, dual, concise, contextBlock + personaLine, !!imageBase64),
               messages: messages as Anthropic.MessageParam[],
-            });
+            }, { signal: req.signal });
             activeStream = s;
             s.on("text", (d: string) => {
               if (closed) return;
@@ -327,7 +337,12 @@ export async function POST(req: NextRequest) {
                 sent = limit;
               }
             });
-            await s.finalMessage();
+            const final = await s.finalMessage();
+            logAiUsage(aiUsageEvent({
+              provider: "anthropic", operation: "chat", model, tier, stream: true, ok: true,
+              inputTokens: final.usage?.input_tokens, outputTokens: final.usage?.output_tokens,
+              durationMs: Date.now() - startedAt,
+            }));
             await commitUsage();
             if (closed) return;
             const { clean, memory } = stripMemoryTag(full);
@@ -357,6 +372,7 @@ export async function POST(req: NextRequest) {
                   ? "AI provider credential error on server."
                   : "Generation failed";
               console.error("Playground stream error:", status || err);
+              logAiUsage(aiUsageEvent({ provider: "anthropic", operation: "chat", stream: true, ok: false, status, durationMs: Date.now() - startedAt }));
               controller.enqueue(enc.encode("\u0000" + JSON.stringify({ error: errMsg })));
             }
           } finally {
@@ -384,7 +400,12 @@ export async function POST(req: NextRequest) {
       max_tokens: dual ? 1600 : concise ? 500 : 1200,
       system: SYSTEM_PROMPT(lang, dual, concise, contextBlock + personaLine, !!imageBase64),
       messages: messages as Anthropic.MessageParam[],
-    });
+    }, { signal: req.signal });
+    logAiUsage(aiUsageEvent({
+      provider: "anthropic", operation: "chat", model, tier, stream: false, ok: true,
+      inputTokens: response.usage?.input_tokens, outputTokens: response.usage?.output_tokens,
+      durationMs: Date.now() - startedAt,
+    }));
     await commitUsage();
 
     const textBlock = response.content.find((c) => c.type === "text");
@@ -430,6 +451,7 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     const status = (err as { status?: number })?.status;
     console.error("Playground error:", status || err);
+    logAiUsage(aiUsageEvent({ provider: "anthropic", operation: "chat", stream: false, ok: false, status, durationMs: Date.now() - startedAt }));
     if (status === 429 || status === 529) {
       return NextResponse.json(
         { error: "Provider is busy right now. Please try again in a moment." },

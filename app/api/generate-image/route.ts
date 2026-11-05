@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { dayKey, limitFor } from "@/lib/limits";
+import { aiUsageEvent, logAiUsage } from "@/lib/ai-usage";
 
 /**
  * Image generation via OpenAI Images API when OPENAI_API_KEY is set.
@@ -85,6 +86,12 @@ export async function POST(req: NextRequest) {
     }
   };
 
+  const startedAt = Date.now();
+  const upstream = new AbortController();
+  const timer = setTimeout(() => upstream.abort(), 45_000);
+  if (req.signal.aborted) upstream.abort();
+  else req.signal.addEventListener("abort", () => upstream.abort(), { once: true });
+
   try {
     const model = process.env.OPENAI_IMAGE_MODEL || "gpt-image-1";
     const res = await fetch("https://api.openai.com/v1/images/generations", {
@@ -99,17 +106,20 @@ export async function POST(req: NextRequest) {
         size: "1024x1024",
         n: 1,
       }),
+      signal: upstream.signal,
     });
 
     if (!res.ok) {
       const errText = await res.text();
       console.error("image gen", res.status, errText.slice(0, 400));
+      logAiUsage(aiUsageEvent({ provider: "openai", operation: "image", model, ok: false, status: res.status, durationMs: Date.now() - startedAt }));
       return NextResponse.json({ error: "Image generation failed" }, { status: 502 });
     }
 
     const data = await res.json();
     const b64 = data?.data?.[0]?.b64_json;
     const urlOut = data?.data?.[0]?.url;
+    logAiUsage(aiUsageEvent({ provider: "openai", operation: "image", model, ok: true, durationMs: Date.now() - startedAt }));
     if (b64) {
       await commitGenerationUsage();
       return NextResponse.json({
@@ -125,6 +135,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "No image in response" }, { status: 502 });
   } catch (e) {
     console.error(e);
+    logAiUsage(aiUsageEvent({ provider: "openai", operation: "image", ok: false, durationMs: Date.now() - startedAt }));
     return NextResponse.json({ error: "Generation error" }, { status: 500 });
+  } finally {
+    clearTimeout(timer);
   }
 }
