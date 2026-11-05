@@ -1,6 +1,7 @@
 "use client";
 import { LIMITS } from "@/lib/limits";
 import { readConsent } from "@/lib/consent";
+import { KEYBOARD_OVERLAP_THRESHOLD_PX, keyboardOverlap } from "@/lib/playground/viewport";
 
 import SignalWorkflows from "@/components/experience/SignalWorkflows";
 
@@ -823,6 +824,32 @@ export default function AIPlayground() {
   /* boot sidebar on desktop */
   useEffect(() => {
     if (window.innerWidth >= 1024) setSidebarOpen(true);
+  }, []);
+
+  /* D12: iOS Safari keeps the layout viewport height when the keyboard opens,
+   * which can cover the fixed composer. Publish the *visible* height so CSS can
+   * shrink the surface instead of hiding the input behind the keyboard. */
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const update = () => {
+      const root = document.documentElement;
+      const overlap = keyboardOverlap(window.innerHeight, vv.height, vv.offsetTop);
+      root.style.setProperty("--pg-keyboard-overlap", `${overlap}px`);
+      root.style.setProperty("--pg-visual-height", `${Math.round(vv.height)}px`);
+      root.dataset.pgKeyboard = overlap > KEYBOARD_OVERLAP_THRESHOLD_PX ? "open" : "closed";
+    };
+    update();
+    vv.addEventListener("resize", update);
+    vv.addEventListener("scroll", update);
+    return () => {
+      vv.removeEventListener("resize", update);
+      vv.removeEventListener("scroll", update);
+      const root = document.documentElement;
+      root.style.removeProperty("--pg-keyboard-overlap");
+      root.style.removeProperty("--pg-visual-height");
+      delete root.dataset.pgKeyboard;
+    };
   }, []);
 
   /* Keep answer language aligned with site lang until user overrides */
@@ -2485,7 +2512,7 @@ export default function AIPlayground() {
                         <button
                           type="button"
                           onClick={() => { setEditingId(msg.id); setEditText(msg.content); }}
-                          className="mt-1 text-[10px] text-muted/60 hover:text-accent-cyan"
+                          className="pg-msg-tool mt-1 text-[10px] text-muted/60 hover:text-accent-cyan"
                         >
                           {lang === "sv" ? "Redigera" : "Edit"}
                         </button>
@@ -2499,7 +2526,7 @@ export default function AIPlayground() {
                             className="w-full rounded-xl border border-accent-cyan/30 bg-black/40 p-3 text-sm text-white outline-none"
                           />
                           <div className="flex justify-end gap-2">
-                            <button type="button" onClick={() => setEditingId(null)} className="px-3 py-1.5 text-xs text-muted hover:text-white">
+                            <button type="button" onClick={() => setEditingId(null)} className="pg-msg-tool px-3 py-1.5 text-xs text-muted hover:text-white">
                               {lang === "sv" ? "Avbryt" : "Cancel"}
                             </button>
                             <button
@@ -2511,7 +2538,7 @@ export default function AIPlayground() {
                                 setEditingId(null);
                                 void runPrompt(editText.trim(), { base: messages.slice(0, idx) });
                               }}
-                              className="rounded-lg bg-accent-cyan px-3 py-1.5 text-xs font-semibold text-[#020205]"
+                              className="pg-msg-tool rounded-lg bg-accent-cyan px-3 py-1.5 text-xs font-semibold text-[#020205]"
                             >
                               {lang === "sv" ? "Skicka om" : "Resend"}
                             </button>
@@ -2533,7 +2560,7 @@ export default function AIPlayground() {
                             if (f.gen) void runImageGen(f.text, false, base, retryMessageId);
                             else void runPrompt(f.text, { image: f.image, base, retryMessageId });
                           }}
-                          className="inline-flex items-center gap-1.5 text-[11px] text-accent-cyan hover:text-white"
+                          className="pg-msg-tool inline-flex items-center gap-1.5 text-[11px] text-accent-cyan hover:text-white"
                         >
                           <RefreshCw className="w-3 h-3" />
                           {lang === "sv" ? "Försök igen" : "Retry"}
@@ -2541,12 +2568,12 @@ export default function AIPlayground() {
                       )}
 
                       {msg.role === "assistant" && !msg.error && !dualPick[msg.id] && (
-                        <div className="flex flex-wrap gap-1.5 opacity-80 hover:opacity-100 transition-opacity">
+                        <div className="pg-msg-tools flex flex-wrap gap-1.5 opacity-80 hover:opacity-100 transition-opacity">
                           {isWorkspaceWorthy(msg.content) && (
                             <button
                               type="button"
                               onClick={() => openWorkspace(msg.id, msg.content)}
-                              className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-lg border border-accent-cyan/25 bg-accent-cyan/10 text-accent-cyan hover:bg-accent-cyan/15"
+                              className="pg-msg-tool inline-flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-lg border border-accent-cyan/25 bg-accent-cyan/10 text-accent-cyan hover:bg-accent-cyan/15"
                             >
                               <PanelRight className="w-3 h-3" />
                               {lang === "sv" ? "Workspace" : "Workspace"}
@@ -2562,7 +2589,7 @@ export default function AIPlayground() {
                                 showToast("err", "Copy failed");
                               }
                             }}
-                            className="inline-flex items-center gap-1 text-[10px] text-muted hover:text-white px-1.5 py-1"
+                            className="pg-msg-tool inline-flex items-center gap-1 text-[10px] text-muted hover:text-white px-1.5 py-1"
                           >
                             <Copy className="w-3 h-3" />
                             {lang === "sv" ? "Kopiera" : "Copy"}
@@ -2581,7 +2608,7 @@ export default function AIPlayground() {
                               if (userIdx < 0 || messages[userIdx].imageUrl) return;
                               void runPrompt(messages[userIdx].content, { base: messages.slice(0, userIdx) });
                             }}
-                            className="inline-flex items-center gap-1 text-[10px] text-muted hover:text-white px-1.5 py-1"
+                            className="pg-msg-tool inline-flex items-center gap-1 text-[10px] text-muted hover:text-white px-1.5 py-1"
                           >
                             <RefreshCw className="w-3 h-3" />
                             {lang === "sv" ? "Generera om" : "Regenerate"}
@@ -2598,7 +2625,7 @@ export default function AIPlayground() {
                               }
                               void runPrompt(`${instruction}\n\n---\n${msg.content}`, { image: null });
                             }}
-                            className="inline-flex items-center gap-1 text-[10px] text-muted hover:text-white px-1.5 py-1"
+                            className="pg-msg-tool inline-flex items-center gap-1 text-[10px] text-muted hover:text-white px-1.5 py-1"
                           >
                             <Sparkles className="w-3 h-3" />
                             {lang === "sv" ? "Fortsätt" : "Continue"}
@@ -2621,7 +2648,7 @@ export default function AIPlayground() {
                                 /* user cancelled or clipboard error */
                               }
                             }}
-                            className="inline-flex items-center gap-1 text-[10px] text-muted hover:text-white px-1.5 py-1"
+                            className="pg-msg-tool inline-flex items-center gap-1 text-[10px] text-muted hover:text-white px-1.5 py-1"
                           >
                             <Share2 className="w-3 h-3" />
                             {lang === "sv" ? "Dela" : "Share"}
@@ -2631,7 +2658,7 @@ export default function AIPlayground() {
                             aria-label={lang === "sv" ? "Bra svar" : "Helpful reply"}
                             aria-pressed={feedback[msg.id] === "up"}
                             onClick={() => rateMessage(msg.id, "up")}
-                            className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-1 ${
+                            className={`pg-msg-tool inline-flex items-center gap-1 text-[10px] px-1.5 py-1 ${
                               feedback[msg.id] === "up" ? "text-accent-green" : "text-muted hover:text-white"
                             }`}
                             title="Good"
@@ -2643,7 +2670,7 @@ export default function AIPlayground() {
                             aria-label={lang === "sv" ? "Mindre bra svar" : "Unhelpful reply"}
                             aria-pressed={feedback[msg.id] === "down"}
                             onClick={() => rateMessage(msg.id, "down")}
-                            className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-1 ${
+                            className={`pg-msg-tool inline-flex items-center gap-1 text-[10px] px-1.5 py-1 ${
                               feedback[msg.id] === "down" ? "text-red-300" : "text-muted hover:text-white"
                             }`}
                             title="Bad"
@@ -2654,11 +2681,11 @@ export default function AIPlayground() {
                       )}
 
                       {msg.generated && msg.imageUrl && (
-                        <div className="flex flex-wrap gap-2">
+                        <div className="pg-msg-tools flex flex-wrap gap-2">
                           <a
                             href={msg.imageUrl}
                             download="budai-image.png"
-                            className="inline-flex items-center gap-1 text-[10px] text-muted hover:text-white"
+                            className="pg-msg-tool inline-flex items-center gap-1 text-[10px] text-muted hover:text-white"
                           >
                             <Download className="w-3 h-3" /> Download
                           </a>
@@ -2671,7 +2698,7 @@ export default function AIPlayground() {
                                   : `Variation of: ${messages.find((m) => m.role === "user" && m.ts <= msg.ts)?.content || "the image"}`
                               )
                             }
-                            className="inline-flex items-center gap-1 text-[10px] text-muted hover:text-white"
+                            className="pg-msg-tool inline-flex items-center gap-1 text-[10px] text-muted hover:text-white"
                           >
                             <RotateCcw className="w-3 h-3" />
                             {lang === "sv" ? "Variation" : "Variation"}

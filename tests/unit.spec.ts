@@ -13,6 +13,7 @@ import { validateWaitlist } from "../lib/waitlist-validation";
 import { signWaitlistEmail, verifyWaitlistToken } from "../lib/waitlist-status";
 import { aiUsageEvent } from "../lib/ai-usage";
 import { buildCsp } from "../lib/csp";
+import { KEYBOARD_OVERLAP_THRESHOLD_PX, keyboardOverlap } from "../lib/playground/viewport";
 
 test("one readiness deadline and camera/reveal timing stay bounded without a logo timeline",()=>{
   expect(INTRO_MS+INTRO_REVEAL_MS).toBeLessThanOrEqual(4000);
@@ -329,4 +330,17 @@ test("secret scanner fails on a new key, accepts placeholders and never prints t
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
+});
+
+
+test("D12 keyboard overlap is bounded and ignores browser chrome", () => {
+  expect(keyboardOverlap(844, 844, 0)).toBe(0);
+  expect(keyboardOverlap(844, 544, 0)).toBe(300);
+  expect(keyboardOverlap(844, 544, 60)).toBe(240);
+  expect(keyboardOverlap(844, 900, 0)).toBe(0);
+  expect(keyboardOverlap(844, Number.NaN, 0)).toBe(0);
+  expect(keyboardOverlap(844, 100, 0)).toBeLessThanOrEqual(844);
+  expect(KEYBOARD_OVERLAP_THRESHOLD_PX).toBeGreaterThan(0);
+  expect(keyboardOverlap(844, 844 - KEYBOARD_OVERLAP_THRESHOLD_PX, 0))
+    .toBe(KEYBOARD_OVERLAP_THRESHOLD_PX);
 });

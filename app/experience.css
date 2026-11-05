@@ -1077,7 +1077,7 @@ html:not([data-brain-state="ready"]) .brain-journey-fallback {display:block;}
 .capability-drawing-fallback {inset:0;width:100%;height:100%;padding:0;transform:none;border:0;display:block;}
 .capability-drawing-fallback svg {width:100%;height:100%;}
 
-@media(max-width:767px) { .playground-surface:not(.fixed) {height:min(88dvh,calc(100svh - 175px));min-height:520px;} }
+@media(max-width:767px) { .playground-surface:not(.fixed) {height:min(88dvh,calc(100svh - 175px),var(--pg-visual-height, 100vh));min-height:min(520px,var(--pg-visual-height, 520px));} html[data-pg-keyboard="open"] .pg-composer-shell {padding-bottom:max(0.5rem,env(safe-area-inset-bottom));} }
 html[data-budai-intro="playing"] #main .confluence-trace,
 html[data-budai-intro="playing"] #main .confluence-cell {animation-play-state:paused;}
 
@@ -1148,3 +1148,17 @@ html[data-world-state="ready"] .closing-field>i {background:transparent;box-shad
 .workspace-draft-controls button:hover { border-color:rgba(124,211,224,.6); color:white; }
 .workspace-draft-controls button:disabled { opacity:.4; cursor:not-allowed; }
 .workspace-preview { min-height:240px; overflow-wrap:anywhere; }
+
+
+/* D12 — real touch targets for the compact message tools. Only applied where
+   fingers are used; the desktop layout keeps its tight typography. */
+@media (max-width: 640px), (pointer: coarse) {
+  .pg-msg-tool {
+    min-width: 44px;
+    min-height: 44px;
+    justify-content: center;
+    padding-left: 0.625rem;
+    padding-right: 0.625rem;
+  }
+  .pg-msg-tools { gap: 0.25rem; }
+}

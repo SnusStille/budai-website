@@ -477,3 +477,38 @@ test("message ratings are consent-gated, sent with metadata and described honest
   expect(typeof ratings[0].messageId).toBe("string");
   expect(String(ratings[0].messageId).length).toBeGreaterThan(0);
 });
+
+test("mobile playground tracks the visible viewport and gives message tools 44px targets (D12)", async ({ page }) => {
+  await page.goto("/#playground");
+  // React sets the visualViewport state after hydration.
+  await expect(page.locator("html")).toHaveAttribute("data-pg-keyboard", /open|closed/);
+  const state = await page.evaluate(() => ({
+    keyboard: document.documentElement.dataset.pgKeyboard,
+    visualHeight: getComputedStyle(document.documentElement).getPropertyValue("--pg-visual-height").trim(),
+    overlap: getComputedStyle(document.documentElement).getPropertyValue("--pg-keyboard-overlap").trim(),
+  }));
+  expect(state.keyboard).toBe("closed");
+  expect(state.visualHeight).toMatch(/^\d+px$/);
+  expect(state.overlap).toMatch(/^\d+px$/);
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.evaluate(() => {
+    const original = fetch.bind(window);
+    window.fetch = async (resource, init) => {
+      if (!String(resource).endsWith("/api/playground")) return original(resource, init);
+      return new Response('Mobile test answer.\u0000{"memory":null}', { headers: { "Content-Type": "text/plain" } });
+    };
+  });
+  await page.getByRole("textbox", { name: "Message BudAI", exact: true }).fill("Touch target check.");
+  await page.getByRole("button", { name: "Send message", exact: true }).click();
+  await expect(page.locator("#playground").getByText("Mobile test answer.", { exact: true })).toBeVisible();
+
+  const sizes = await page.locator(".pg-msg-tool").evaluateAll((els) =>
+    els.map((el) => ({ w: el.getBoundingClientRect().width, h: el.getBoundingClientRect().height }))
+  );
+  expect(sizes.length).toBeGreaterThan(3);
+  for (const size of sizes) {
+    expect(size.w).toBeGreaterThanOrEqual(44);
+    expect(size.h).toBeGreaterThanOrEqual(44);
+  }
+});
