@@ -555,3 +555,30 @@ test("the Vercel mirror domain is noindexed but the canonical host is not (A5)",
   expect(canonical.status()).toBe(200);
   expect(canonical.headers()["x-robots-tag"] ?? "").not.toContain("noindex");
 });
+
+test("data-handling page is honest, linked and indexed in both languages (E5)", async ({ page, request }) => {
+  await page.goto("/legal/data");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(/How your data is handled/);
+  const en = await page.locator("main").innerText();
+  for (const phrase of ["Anthropic", "local storage", "Vercel Analytics", "noindex", "request id"]) {
+    expect(en).toContain(phrase);
+  }
+  expect(en).not.toMatch(/we (never|do not) (store|collect) (any|your) data/i);
+
+  const sitemap = await (await request.get("/sitemap.xml")).text();
+  expect(sitemap).toContain("/legal/data");
+
+  await page.goto("/");
+  await expect(
+    page.locator("#continuation").getByRole("link", { name: "How your data is handled", exact: true })
+  ).toBeVisible();
+
+  await page.addInitScript(() => localStorage.setItem("budai-lang", "sv"));
+  await page.reload();
+  await page.goto("/legal/data");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(/Så hanteras dina data/);
+  const sv = await page.locator("main").innerText();
+  for (const phrase of ["Anthropic", "lokala lagring", "Vercel Analytics", "noindex"]) {
+    expect(sv).toContain(phrase);
+  }
+});

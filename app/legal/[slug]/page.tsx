@@ -2,7 +2,7 @@
 
 import { useParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { ArrowLeft, Shield, FileText, Cookie, Scale } from "lucide-react";
+import { ArrowLeft, Shield, FileText, Cookie, Scale, Database } from "lucide-react";
 import Link from "next/link";
 import BudAILogo from "@/components/ui/BudAILogo";
 import { useLang } from "@/components/ui/LanguageContext";
@@ -65,6 +65,34 @@ const content: Record<string, Page> = {
         "BudAI sparar bara det sajten och inloggningen behöver: språkval, session och ditt cookieval. Den lagringen är alltid aktiv.",
         "Anonym trafikanalys (Vercel Analytics) laddas bara efter att du tryckt Acceptera. Om du avböjer laddas den inte alls. Vi använder inga tredjeparts-annonsspårare.",
         "Du kan ändra eller återkalla ditt val när som helst via Cookieinställningar i sidfoten, eller rensa webbplatsdata i webbläsaren.",
+      ],
+    },
+  },
+  data: {
+    title: { en: "How your data is handled", sv: "Så hanteras dina data" },
+    icon: Database,
+    paragraphs: {
+      en: [
+        "This page is a plain-language summary of what happens to what you type into BudAI during the developer preview. The Privacy Policy and the GDPR page contain the formal wording.",
+        "Playground messages are sent to our AI provider (Anthropic) to produce a reply. We do not train our own models on your messages and we do not publish chats. Because this is a preview, do not enter sensitive personal data, passwords, API keys or other secrets.",
+        "Guest mode: conversations, drafts and routines stay in your browser's local storage. No account is created, no long-term memory is saved, and those chats are not written to our database.",
+        "Signed-in accounts: thread history, saved memory facts and daily usage counters are stored in our database under your account's access rules (row-level security). Memory is on by default. Playground → Memory shows every saved fact and lets you switch memory off, edit a fact or delete it.",
+        "Waitlist: we store what you submit only when you tick the consent box. A signed, httpOnly cookie lets you look up your own status; that lookup runs on the server and never exposes the database to the browser.",
+        "Analytics: Vercel Analytics loads only after you press Accept. If you decline, it does not load at all. No third-party advertising trackers are used.",
+        "Shared conversations are stored read-only on the server and share pages are marked noindex. Treat a share link as public.",
+        "Operational data: daily rate-limit counters and one-line JSON logs with a random request id. Logs record token counts, model, tier, duration and outcome — never prompts, message bodies, emails, IP addresses or keys.",
+        "This is a developer preview, so features and data handling may change. For access, correction or deletion, see the GDPR page.",
+      ],
+      sv: [
+        "Den här sidan är en lättläst sammanfattning av vad som händer med det du skriver i BudAI under utvecklarförhandsvisningen. Integritetspolicyn och GDPR-sidan innehåller de formella formuleringarna.",
+        "Playground-meddelanden skickas till vår AI-leverantör (Anthropic) för att skapa ett svar. Vi tränar inte egna modeller på dina meddelanden och publicerar inte chattar. Eftersom detta är en förhandsvisning: ange inte känsliga personuppgifter, lösenord, API-nycklar eller andra hemligheter.",
+        "Gästläge: samtal, utkast och rutiner sparas i webbläsarens lokala lagring. Inget konto skapas, inget långtidsminne sparas och dessa chattar skrivs inte till vår databas.",
+        "Inloggade konton: trådhistorik, sparade minnesfakta och dygnsräknare lagras i vår databas under kontots åtkomstregler (radnivåsäkerhet). Minnet är på som standard. Playground → Minne visar alla sparade fakta och låter dig stänga av minnet, redigera eller radera fakta.",
+        "Väntelista: vi sparar det du skickar in bara när du kryssar i samtyckesrutan. En signerad httpOnly-kaka låter dig slå upp din egen status; uppslagningen sker på servern och exponerar aldrig databasen för webbläsaren.",
+        "Analys: Vercel Analytics laddas bara efter att du tryckt Acceptera. Avböjer du laddas den inte alls. Vi använder inga tredjeparts-annonsspårare.",
+        "Delade samtal lagras skrivskyddat på servern och delningssidor markeras med noindex. Behandla en delningslänk som offentlig.",
+        "Driftdata: dygnsvisa begränsningsräknare och enradiga JSON-loggar med ett slumpmässigt request-id. Loggarna innehåller tokenantal, modell, nivå, löptid och utfall — aldrig promptar, meddelandeinnehåll, e-postadresser, IP-adresser eller nycklar.",
+        "Detta är en utvecklarförhandsvisning, så funktioner och datahantering kan ändras. För tillgång, rättelse eller radering, se GDPR-sidan.",
       ],
     },
   },

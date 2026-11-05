@@ -38,6 +38,7 @@ const groups = (lang: string) => [
       { label: lang === "sv" ? "Användarvillkor" : "Terms of Service", href: "/legal/terms" },
       { label: lang === "sv" ? "Cookiepolicy" : "Cookie Policy", href: "/legal/cookies" },
       { label: "GDPR", href: "/legal/gdpr" },
+      { label: lang === "sv" ? "Så hanteras dina data" : "How your data is handled", href: "/legal/data" },
     ],
   },
 ];
@@ -100,6 +101,20 @@ export default function Footer() {
         lang === "sv"
           ? "Anonym trafikanalys (Vercel Analytics) laddas bara om du trycker Acceptera. Vid Avböj laddas den inte alls, och vi använder inga tredjeparts-annonsspårare. Du kan ändra eller återkalla ditt val när som helst via Cookieinställningar i sidfoten."
           : "Anonymous traffic analytics (Vercel Analytics) loads only after you press Accept. If you decline it never loads, and we use no third-party ad trackers. You can change or withdraw your choice at any time via Cookie settings in the footer.",
+      ],
+    },
+    data: {
+      title: lang === "sv" ? "Så hanteras dina data" : "How your data is handled",
+      content: [
+        lang === "sv"
+          ? "Playground-meddelanden skickas till vår AI-leverantör (Anthropic) för att skapa ett svar. Vi tränar inte egna modeller på dem och publicerar inte chattar. Ange inte känsliga uppgifter eller hemligheter i en förhandsvisning."
+          : "Playground messages go to our AI provider (Anthropic) to generate a reply. We do not train our own models on them or publish chats. Do not enter sensitive data or secrets in a preview.",
+        lang === "sv"
+          ? "Gästchattar stannar i webbläsarens lokala lagring. För konton sparas historik, minne och dygnsräknare i databasen under kontots åtkomstregler — minnet är på som standard och kan stängas av, redigeras och raderas i Playground → Minne."
+          : "Guest chats stay in your browser's local storage. For accounts, history, memory and daily counters are stored under your account's access rules — memory is on by default and can be switched off, edited and deleted in Playground → Memory.",
+        lang === "sv"
+          ? "Analys laddas bara efter Acceptera, delningslänkar är skrivskyddade och noindex, och driftloggar innehåller bara tokenantal, modell, nivå, löptid och utfall — aldrig innehåll, e-post, IP eller nycklar."
+          : "Analytics loads only after Accept, share links are read-only and noindex, and operational logs contain only token counts, model, tier, duration and outcome — never content, email, IP or keys.",
       ],
     },
     gdpr: {
