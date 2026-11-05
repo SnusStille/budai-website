@@ -398,3 +398,29 @@ test("env checker is redacted, strict only when asked, and catches anon/service-
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test("server Supabase client requires the service role and never falls back to anon (step 19)", async () => {
+  const { serviceClient, hasServiceRole } = await import("../lib/supabase/service");
+  const keys = ["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_ANON_KEY", "SUPABASE_SERVICE_ROLE_KEY"] as const;
+  const saved = Object.fromEntries(keys.map((k) => [k, process.env[k]]));
+  try {
+    process.env.NEXT_PUBLIC_SUPABASE_URL = "https://abc123def.supabase.co";
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "public-anon-value-long-enough";
+    delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+    expect(hasServiceRole()).toBe(false);
+    expect(serviceClient()).toBeNull();
+
+    process.env.SUPABASE_SERVICE_ROLE_KEY = "server-service-role-value-long";
+    expect(hasServiceRole()).toBe(true);
+    expect(serviceClient()).not.toBeNull();
+
+    process.env.NEXT_PUBLIC_SUPABASE_URL = "https://your-project.supabase.co";
+    expect(hasServiceRole()).toBe(false);
+    expect(serviceClient()).toBeNull();
+  } finally {
+    for (const k of keys) {
+      if (saved[k] === undefined) delete process.env[k];
+      else process.env[k] = saved[k];
+    }
+  }
+});

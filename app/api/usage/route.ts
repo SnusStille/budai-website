@@ -1,16 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { dayKey, LIMITS, type AccessTier, limitFor } from "@/lib/limits";
-
-function admin() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-  const key =
-    process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-    "";
-  if (!url || !key || url.includes("YOUR_PROJECT")) return null;
-  return createClient(url, key);
-}
+import { serviceClient } from "@/lib/supabase/service";
 
 async function userFromAuth(req: NextRequest) {
   const auth = req.headers.get("authorization");
@@ -28,7 +19,7 @@ export async function GET(req: NextRequest) {
   const day = req.nextUrl.searchParams.get("day") || dayKey();
   const guest = req.nextUrl.searchParams.get("guest");
   const user = await userFromAuth(req);
-  const sb = admin();
+  const sb = serviceClient();
   if (!sb) {
     return NextResponse.json({ messages: 0, images: 0, generations: 0, tier: user ? "member" : "guest" });
   }

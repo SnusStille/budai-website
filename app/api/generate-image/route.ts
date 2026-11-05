@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { dayKey, limitFor } from "@/lib/limits";
 import { aiUsageEvent, logAiUsage } from "@/lib/ai-usage";
+import { serviceClient } from "@/lib/supabase/service";
 
 /**
  * Image generation via OpenAI Images API when OPENAI_API_KEY is set.
@@ -47,10 +48,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Quota check before upstream call; increment only after image is generated
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-  const skey =
-    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
-  const sb = url && skey && !url.includes("YOUR_PROJECT") ? createClient(url, skey) : null;
+  const sb = serviceClient();
   const day = dayKey();
   let existingUsage: { messages?: number; images?: number; generations?: number } | null = null;
   if (sb) {

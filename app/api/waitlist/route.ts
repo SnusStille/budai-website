@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { serviceClient } from "@/lib/supabase/service";
 import { validateWaitlist } from "@/lib/waitlist-validation";
 import { RULES, checkRateLimit, rateLimitKey } from "@/lib/rate-limit";
 import { WAITLIST_STATUS_COOKIE, signWaitlistEmail } from "@/lib/waitlist-status";
@@ -11,14 +11,6 @@ import { WAITLIST_STATUS_COOKIE, signWaitlistEmail } from "@/lib/waitlist-status
  * honeypot, per-IP throttling and priority all live here. Double opt-in is NOT
  * implemented yet — it needs an email provider (see E9 in the audit).
  */
-function writeClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
-  const placeholder = /your[-_]project/i.test(url);
-  if (!url || !key || !url.startsWith("http") || placeholder) return null;
-  return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
-}
-
 export async function POST(req: NextRequest) {
   const limit = checkRateLimit(rateLimitKey(req, RULES.waitlist), RULES.waitlist);
   if (limit.limited) {
@@ -36,7 +28,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: result.error }, { status: 400 });
   }
 
-  const sb = writeClient();
+  const sb = serviceClient();
   if (!sb) {
     // Local development has no database; keep the preview form usable without
     // pretending anything was persisted.

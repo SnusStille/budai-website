@@ -6,6 +6,7 @@ import { createClient } from "@supabase/supabase-js";
 import { dayKey, limitFor, type AccessTier } from "@/lib/limits";
 import { RULES, checkRateLimit, rateLimitKey } from "@/lib/rate-limit";
 import { aiUsageEvent, logAiUsage } from "@/lib/ai-usage";
+import { serviceClient } from "@/lib/supabase/service";
 
 function getClient() {
   const key = process.env.ANTHROPIC_API_KEY?.trim();
@@ -24,14 +25,6 @@ async function resolveUser(req: NextRequest) {
   const sb = createClient(url, anon);
   const { data } = await sb.auth.getUser(auth.slice(7));
   return data.user ?? null;
-}
-
-function adminSb() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-  const key =
-    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
-  if (!url || !key || url.includes("YOUR_PROJECT")) return null;
-  return createClient(url, key);
 }
 
 const PERSONAS: Record<string, string> = {
@@ -219,7 +212,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Soft server quota when tables exist: check before calling upstream AI, increment only on success
-    const sb = adminSb();
+    const sb = serviceClient();
     const day = dayKey();
     let userUsageRow: { messages?: number; images?: number; generations?: number } | null = null;
     let guestUsageRow: { messages?: number; images?: number; generations?: number } | null = null;

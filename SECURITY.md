@@ -24,7 +24,7 @@ These must never be exposed to the browser or given a `NEXT_PUBLIC_*` name:
 | `ANTHROPIC_API_KEY` | Playground chat |
 | `OPENAI_API_KEY` | optional image generation |
 
-`NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` are public by design and are protected by RLS.
+`NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` are public by design and are protected by RLS. All server-owned reads/writes go through the single `serviceClient()` in `lib/supabase/service.ts`; it never falls back to the anon key, so a missing `SUPABASE_SERVICE_ROLE_KEY` is an explicit disabled state instead of silently unenforced quotas.
 
 `BUDAI_AI_DISABLED=1` pauses all Playground generation without a redeploy (emergency cost/abuse switch). Upstream AI calls have a 60 s server timeout with at most 2 retries; `/api/generate-image` has a 45 s timeout. Structured `[budai:usage]` logs contain **only** reported token counts, model, tier, duration and outcome — no prompts, user ids, prices or estimated cost.
 
