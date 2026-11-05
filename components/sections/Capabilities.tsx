@@ -1,4 +1,5 @@
 "use client";
+import { LIMITS } from "@/lib/limits";
 
 import { useState, useEffect } from "react";
 import ScrollReveal from "@/components/ui/ScrollReveal";
@@ -33,13 +34,13 @@ export default function Capabilities() {
         : "Try BudAI — open preview experience as a guest or with a free account.",
       pros: sv
         ? [
-            "Playground på svenska och engelska (12/dag gäst)",
-            "Gratis konto: 80/dag, användarstyrt minne, historik & bildanalys",
+            `Playground på svenska och engelska (${LIMITS.guest.messagesPerDay}/dag gäst)`,
+            `Gratis konto: ${LIMITS.member.messagesPerDay}/dag, användarstyrt minne, historik & bildanalys`,
             "Röstinmatning och export i webbläsaren",
           ]
         : [
-            "Playground in Swedish and English (12/day guest)",
-            "Free account: 80/day, user-controlled memory, history & vision",
+            `Playground in Swedish and English (${LIMITS.guest.messagesPerDay}/day guest)`,
+            `Free account: ${LIMITS.member.messagesPerDay}/day, user-controlled memory, history & vision`,
             "Voice input and conversation export",
           ],
       cons: sv
@@ -303,8 +304,8 @@ export default function Capabilities() {
         </div>
         <p className="mb-10 text-center text-sm text-muted/80 max-w-2xl mx-auto">
           {sv
-            ? "Samma kärnmodell i alla nivåer. Basic är gratis under preview (12 meddelanden/dag som gäst, 80/dag med gratis konto). Konsument och Företag är under utveckling — priserna är inte satta ännu."
-            : "Same core intelligence across every tier. Basic is free during the preview (12 messages/day as guest, 80/day with a free account). Consumer and Business are in development — pricing has not been set yet."}
+            ? `Samma kärnmodell i alla nivåer. Basic är gratis under preview (${LIMITS.guest.messagesPerDay} meddelanden/dag som gäst, ${LIMITS.member.messagesPerDay}/dag med gratis konto). Konsument och Företag är under utveckling — priserna är inte satta ännu.`
+            : `Same core intelligence across every tier. Basic is free during the preview (${LIMITS.guest.messagesPerDay} messages/day as guest, ${LIMITS.member.messagesPerDay}/day with a free account). Consumer and Business are in development — pricing has not been set yet.`}
         </p>
 
         <Waitlist />

@@ -1,4 +1,5 @@
 "use client";
+import { LIMITS } from "@/lib/limits";
 
 import { useEffect, useState } from "react";
 import { Check, Rocket, Layers, Globe, ArrowUpRight } from "lucide-react";
@@ -35,8 +36,8 @@ export default function Journey() {
       title: "Developer Preview",
       lead: sv ? "Öppen Basic-nivå för alla att testa." : "Open Basic tier for everyone to test.",
       items: sv
-        ? ["Basic är gratis (12/dag gäst · 80/dag med konto)", "Verklig användning styr vad som prioriteras", "Löpande förbättringar av kvalitet och flöden"]
-        : ["Basic is free (12/day guest · 80/day with account)", "Real usage steers what gets prioritized next", "Continuous improvements to quality and workflows"],
+        ? [`Basic är gratis (${LIMITS.guest.messagesPerDay}/dag gäst · ${LIMITS.member.messagesPerDay}/dag med konto)`, "Verklig användning styr vad som prioriteras", "Löpande förbättringar av kvalitet och flöden"]
+        : [`Basic is free (${LIMITS.guest.messagesPerDay}/day guest · ${LIMITS.member.messagesPerDay}/day with account)`, "Real usage steers what gets prioritized next", "Continuous improvements to quality and workflows"],
     },
     {
       icon: Layers,

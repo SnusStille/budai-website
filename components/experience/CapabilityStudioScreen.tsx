@@ -1,4 +1,5 @@
 "use client";
+import { LIMITS } from "@/lib/limits";
 
 import { useEffect, useMemo, useState } from "react";
 import BudAILogo from "@/components/ui/BudAILogo";
@@ -358,8 +359,8 @@ export default function CapabilityStudioScreen() {
                   {
                     tier: "01 / BASIC",
                     title: sv
-                      ? "Prova BudAI gratis (12/dag gäst · 80/dag med konto, minne & bild)"
-                      : "Try BudAI free (12/day guest · 80/day signed-in with memory & vision)",
+                      ? `Prova BudAI gratis (${LIMITS.guest.messagesPerDay}/dag gäst · ${LIMITS.member.messagesPerDay}/dag med konto, minne & bild)`
+                      : `Try BudAI free (${LIMITS.guest.messagesPerDay}/day guest · ${LIMITS.member.messagesPerDay}/day signed-in with memory & vision)`,
                     state: sv ? "TILLGÄNGLIG NU" : "AVAILABLE NOW",
                     col: "#72d7ec",
                   },

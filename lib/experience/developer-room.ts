@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 import { clamp, lerp, smooth } from "./timeline";
+import { LIMITS } from "../limits";
 
 /**
  * Architectural Builder & "FROM THOUGHT TO REALITY" Creation Environment (Chapter 04):
@@ -167,7 +168,7 @@ export function createDeveloperRoom(parent?: THREE.Object3D, editorWidth = 1080)
 
       // 3 Verifiable Preview Specification Cards
       const kpis = [
-        { title: "PREVIEW QUOTA", val: "12 / 80 DAY", col: "#6ee7b7" },
+        { title: "PREVIEW QUOTA", val: `${LIMITS.guest.messagesPerDay} / ${LIMITS.member.messagesPerDay} DAY`, col: "#6ee7b7" },
         { title: "LANGUAGES", val: "SV ↔ EN", col: "#78d5ea" },
         { title: "MEMORY MODE", val: "USER OWNED", col: "#a4b0ec" },
       ];

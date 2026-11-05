@@ -40,7 +40,7 @@ The entire BudAI experience now tells **one continuous visual and strategic stor
 4. **Chapter 04 — The Birth of Something Real (`Capabilities.tsx` `[data-access-architecture]` → `About.tsx` Builder)**:
    - As the user scrolls from the 6 capabilities into `Choose your way in`, the left and right 3D studio wing monitors unfold from behind the central monolith into a **3-screen panoramic pipeline** (`01 Basic Intake` → `02 Consumer Memory` → `03 Business Team Workspace`), and then hand off along the 3D trajectory into the **Builder (`#about`)** studio room where TypeScript source code (`ProgressiveEditor.tsx`) assembles live interfaces and workflows, with an interactive `"Try this prompt in Playground"` link.
 5. **Chapter 05 — Your Idea Starts Here (`AIPlayground.tsx` + `Waitlist.tsx` + `Journey.tsx`)**:
-   - The camera resolves directly into the live **BudAI Playground (`#playground`)** (`"You've seen what's possible — now make something of your own."`), backed by transparent guest (`10/day`) vs. free account (`35/day` + user-controlled memory, history, and vision) limits and the waitlist for future paid plans (no promised discount).
+   - The camera resolves directly into the live **BudAI Playground (`#playground`)** (`"You've seen what's possible — now make something of your own."`), backed by transparent guest (`12/day`) vs. free account (`80/day` + user-controlled memory, history, and vision) limits from `lib/limits.ts` and the waitlist for future paid plans (no promised discount).
 
 ---
 
@@ -57,7 +57,7 @@ The entire BudAI experience now tells **one continuous visual and strategic stor
 9. **[Implemented]** Interactive Hero feature chips (`Hero.tsx`) with keyboard accessibility (`role="button"`, `tabIndex={0}`) that dispatch curated prompts to `#playground`.
 10. **[Implemented]** Interactive `"Try this prompt in Playground"` action in `About.tsx` connecting the Builder's illustrative example to the live Playground.
 11. **[Implemented]** Replaced generic/exaggerated copy (`"become one of the best AIs ever"`, `"become your new ChatGPT"`) across `Capabilities.tsx`, `About.tsx`, and `Journey.tsx` with specific, credible Swedish-engineered positioning.
-12. **[Implemented]** Transparent tier differentiation in `Capabilities.tsx` (`Basic`: free preview with `10/day` guest and `35/day` free account + memory/vision; `Consumer`: planned individual plan; `Business`: planned team plan with shared credits/workspaces).
+12. **[Implemented]** Transparent tier differentiation in `Capabilities.tsx` (`Basic`: free preview with `12/day` guest and `80/day` free account + memory/vision (single source: `lib/limits.ts`); `Consumer`: planned individual plan; `Business`: planned team plan with shared credits/workspaces).
 13. **[Implemented]** Explicit communication of **user-controlled memory** (never automatic retention of everything) across `Hero.tsx`, `BrainScrollStory.tsx`, `Capabilities.tsx`, and `CapabilityStudioScreen.tsx`.
 14. **[Implemented]** Honest labeling of illustrative 3D demonstrations (`ILLUSTRATIVE 3D DEMONSTRATION · NOT A LIVE AI REQUEST` and `Prepared example · not a live AI response`).
 15. **[Implemented]** Bounded rate-limiter map pruning in `app/api/playground/route.ts` (`isRateLimited`) to prevent memory growth in long-running server instances.

@@ -3,6 +3,8 @@ import { INTRO_MS, INTRO_REVEAL_MS, INTRO_READY_MS } from "../lib/experience/int
 import { cameraAt, CHAPTERS, journeyAt, worldChapterAt, worldOpacityAt } from "../lib/experience/timeline";
 import { brainCameraAt, brainFovAt, brainJourneyProgress, brainVisualAt, playgroundProjectionAt, BRAIN_STORY_ORIGIN } from "../lib/experience/brain";
 import { codeCharactersAt, CODE_LENGTH, EXAMPLE_SOURCE, tokenizeLine } from "../lib/experience/code";
+import { readFileSync } from "node:fs";
+import { LIMITS, limitFor } from "../lib/limits";
 
 test("one readiness deadline and camera/reveal timing stay bounded without a logo timeline",()=>{
   expect(INTRO_MS+INTRO_REVEAL_MS).toBeLessThanOrEqual(4000);
@@ -161,4 +163,25 @@ test("CHAPTERS renumbers Roadmap to 05 and omits the removed standalone 05 Next 
     {id:"roadmap",number:"05"},
   ]);
   expect(CHAPTERS.some(c=>String(c.id)==="waitlist")).toBe(false);
+});
+
+
+test("daily-limit copy reads the single LIMITS source instead of hardcoded numbers", () => {
+  expect(limitFor("guest", "messages")).toBe(LIMITS.guest.messagesPerDay);
+  expect(limitFor("member", "messages")).toBe(LIMITS.member.messagesPerDay);
+  const copyFiles = [
+    "components/sections/AIPlayground.tsx",
+    "components/sections/Capabilities.tsx",
+    "components/sections/Hero.tsx",
+    "components/sections/Journey.tsx",
+    "components/experience/CapabilityStudioScreen.tsx",
+    "lib/changelog.ts",
+    "lib/experience/developer-room.ts",
+  ];
+  const stale = /12\s*\/\s*(?:dag|day)|80\s*\/\s*(?:dag|day)|12 meddelanden|80 meddelanden|12 messages\/day|80 messages\/day|10\s*\/\s*day|35\s*\/\s*day/;
+  for (const file of copyFiles) {
+    const source = readFileSync(file, "utf8");
+    expect(source, `${file} still hardcodes a daily limit`).not.toMatch(stale);
+    expect(source, `${file} does not use LIMITS`).toContain("LIMITS.");
+  }
 });
