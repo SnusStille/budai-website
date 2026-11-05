@@ -28,6 +28,12 @@ These must never be exposed to the browser or given a `NEXT_PUBLIC_*` name:
 
 `BUDAI_AI_DISABLED=1` pauses all Playground generation without a redeploy (emergency cost/abuse switch). Upstream AI calls have a 60 s server timeout with at most 2 retries; `/api/generate-image` has a 45 s timeout. Structured `[budai:usage]` logs contain **only** reported token counts, model, tier, duration and outcome — no prompts, user ids, prices or estimated cost.
 
+## Secret scanning
+
+`npm run scan:secrets` checks all tracked files **and every commit reachable from any ref** for provider keys, JWTs, private keys and hardcoded credential literals. CI runs the same command with `fetch-depth: 0`. New findings fail the build; reviewed historical findings are recorded as hashes in `scripts/secret-scan-baseline.json` (never the value itself). To investigate use `--working-tree` or regenerate the baseline with `--update-baseline` after review.
+
+A hardcoded admin password existed in three historical commits. It is gone from the tracked tree and the fallback was removed entirely by B3, so the old value no longer grants access. If it was reused anywhere else, rotate it. For stronger coverage, also enable GitHub secret scanning + push protection and run `gitleaks detect --source . --log-opts="--all"` against a full clone (`.gitleaks.toml` is included); those require repository admin access.
+
 ## Deployment notes
 
 - Run `supabase/schema.sql` then `MIGRATION_v2 … v10` in order. `MIGRATION_v10_security_hardening.sql` removes public read/write on guest quota rows, restricts `admin_events` and makes `waitlist_status()` service-role-only.

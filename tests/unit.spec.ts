@@ -3,7 +3,10 @@ import { INTRO_MS, INTRO_REVEAL_MS, INTRO_READY_MS } from "../lib/experience/int
 import { cameraAt, CHAPTERS, journeyAt, worldChapterAt, worldOpacityAt } from "../lib/experience/timeline";
 import { brainCameraAt, brainFovAt, brainJourneyProgress, brainVisualAt, playgroundProjectionAt, BRAIN_STORY_ORIGIN } from "../lib/experience/brain";
 import { codeCharactersAt, CODE_LENGTH, EXAMPLE_SOURCE, tokenizeLine } from "../lib/experience/code";
-import { readFileSync } from "node:fs";
+import { readFileSync, mkdtempSync, rmSync, writeFileSync as fsWrite } from "node:fs";
+import { execFileSync, spawnSync } from "node:child_process";
+import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
 import { LIMITS, limitFor } from "../lib/limits";
 import { RULES, checkRateLimit, clientIp, rateLimitKey } from "../lib/rate-limit";
 import { validateWaitlist } from "../lib/waitlist-validation";
@@ -300,4 +303,30 @@ test("CSP uses a per-request nonce and blocks the risky default sources", () => 
   expect(a).not.toContain("frame-ancestors"); // cross-origin preview iframe
   expect(a).not.toContain("script-src 'self' 'unsafe-inline'");
   expect(a).toContain("https://va.vercel-scripts.com");
+});
+
+
+test("secret scanner fails on a new key, accepts placeholders and never prints the value (B4)", () => {
+  const scanner = resolve(process.cwd(), "scripts/scan-secrets.mjs");
+  const dir = mkdtempSync(join(tmpdir(), "budai-secret-scan-"));
+  const run = () => spawnSync(process.execPath, [scanner, "--working-tree"], { cwd: dir, encoding: "utf8" });
+  try {
+    execFileSync("git", ["init", "-q"], { cwd: dir });
+    fsWrite(join(dir, "config.example"), "ANTHROPIC_API_KEY=your-anthropic-key\n");
+    execFileSync("git", ["add", "-A"], { cwd: dir });
+    const clean = run();
+    expect(clean.status).toBe(0);
+    expect(clean.stdout).toContain("clean");
+
+    // Build the fake key at runtime so the scanner does not flag this test itself.
+    const secret = ["sk-ant-", "api03-", "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"].join("");
+    fsWrite(join(dir, "leak.txt"), `${secret}\n`);
+    execFileSync("git", ["add", "-A"], { cwd: dir });
+    const leaked = run();
+    expect(leaked.status).toBe(1);
+    expect(leaked.stderr).toContain("anthropic-api-key");
+    expect(`${leaked.stdout}${leaked.stderr}`).not.toContain(secret);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 });

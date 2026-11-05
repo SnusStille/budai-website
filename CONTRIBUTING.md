@@ -13,21 +13,25 @@ npm run dev
 
 The site works without keys: the Playground then returns an honest "not configured" state and the waitlist uses the development-only stub. Never commit `.env.local`.
 
+## Secrets
+
+Never commit `.env`, provider keys or service-role credentials. `npm run scan:secrets` runs in CI over the working tree and full git history; a new finding fails the build. If CI reports a real secret, remove it from the tree **and rotate it at the provider** — rewriting history is not enough.
+
 ## Verification chain
 
 Run this **after every change**, and fix errors before starting the next step:
 
 ```bash
-npm run lint && npm run typecheck && npm run test:unit && npm run test:e2e && npm run build
+npm run scan:secrets && npm run lint && npm run typecheck && npm run test:unit && npm run test:e2e && npm run build
 ```
 
 Important: `npm run test:e2e` starts `next start` against an existing `.next` build. After a source change you must build **before** the e2e run, or the suite will test stale code. The practical order is:
 
 ```bash
-npm run lint && npm run typecheck && npm run test:unit && npm run build && npm run test:e2e && npm run build
+npm run scan:secrets && npm run lint && npm run typecheck && npm run test:unit && npm run build && npm run test:e2e && npm run build
 ```
 
-`.github/workflows/ci.yml` runs exactly that on every push and pull request. Chromium comes from the `@sparticuz/chromium` npm package via `scripts/test-browser.mjs`.
+`.github/workflows/ci.yml` runs exactly that on every push and pull request, with `fetch-depth: 0` so the secret scan sees the full history. Chromium comes from the `@sparticuz/chromium` npm package via `scripts/test-browser.mjs`.
 
 - `npm test` runs all 15 spec files (including the opt-in `waitlist-dev.spec.ts`).
 - `npm run test:e2e` runs the 8 core specs.

@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   verify:
-    name: lint · typecheck · unit · build · e2e
+    name: secret scan · lint · typecheck · unit · build · e2e
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
@@ -17,6 +17,9 @@ jobs:
       CI: "1"
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Full history is required by scripts/scan-secrets.mjs.
+          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
@@ -28,6 +31,9 @@ jobs:
 
       # scripts/test-browser.mjs supplies Chromium via @sparticuz/chromium from npm,
       # so no separate `playwright install` step is needed.
+      - name: Secret scan (working tree + full history)
+        run: npm run scan:secrets
+
       - name: Lint
         run: npm run lint
 
