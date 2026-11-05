@@ -35,12 +35,12 @@ export default function Capabilities() {
       pros: sv
         ? [
             `Playground på svenska och engelska (${LIMITS.guest.messagesPerDay}/dag gäst)`,
-            `Gratis konto: ${LIMITS.member.messagesPerDay}/dag, användarstyrt minne, historik & bildanalys`,
+            `Gratis konto: ${LIMITS.member.messagesPerDay}/dag, minne du kan styra, historik & bildanalys`,
             "Röstinmatning och export i webbläsaren",
           ]
         : [
             `Playground in Swedish and English (${LIMITS.guest.messagesPerDay}/day guest)`,
-            `Free account: ${LIMITS.member.messagesPerDay}/day, user-controlled memory, history & vision`,
+            `Free account: ${LIMITS.member.messagesPerDay}/day, memory you control, history & vision`,
             "Voice input and conversation export",
           ],
       cons: sv

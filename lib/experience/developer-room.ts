@@ -170,7 +170,7 @@ export function createDeveloperRoom(parent?: THREE.Object3D, editorWidth = 1080)
       const kpis = [
         { title: "PREVIEW QUOTA", val: `${LIMITS.guest.messagesPerDay} / ${LIMITS.member.messagesPerDay} DAY`, col: "#6ee7b7" },
         { title: "LANGUAGES", val: "SV ↔ EN", col: "#78d5ea" },
-        { title: "MEMORY MODE", val: "USER OWNED", col: "#a4b0ec" },
+        { title: "MEMORY MODE", val: "AUTO + MANAGED", col: "#a4b0ec" },
       ];
       kpis.forEach((k, idx) => {
         const kx = 28 + idx * 244;

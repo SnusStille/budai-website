@@ -75,6 +75,9 @@ export default function Footer() {
         lang === "sv"
           ? "Vi säljer inte dina data och delar aldrig personuppgifter med tredje part utan laglig grund eller ditt samtycke. Du kan när som helst begära tillgång, rättelse eller radering genom att kontakta Stilleinc@hotmail.com."
           : "We do not sell your data and never share personal data with third parties without a lawful basis or your consent. You can request access, correction, or deletion at any time by contacting Stilleinc@hotmail.com.",
+        lang === "sv"
+          ? "För inloggade konton är minnet på som standard: BudAI kan automatiskt spara beständiga fakta (namn, roll, företag, preferenser) som långtidsminnen. Du ser, stänger av, redigerar och raderar dem i Playground → Minne. Gästchattar sparar inga minnen."
+          : "For signed-in accounts memory is on by default: BudAI may automatically save durable facts (name, role, company, preferences) as long-term memories. You can see, switch off, edit and delete them in Playground → Memory. Guest chats save no memories.",
       ],
     },
     terms: {
@@ -108,6 +111,9 @@ export default function Footer() {
         lang === "sv"
           ? "Personuppgiftsansvarig: Stilledev. Kontakta oss på Stilleinc@hotmail.com för frågor om GDPR eller för att utöva dina rättigheter."
           : "Data controller: Stilledev. Contact us at Stilleinc@hotmail.com for GDPR questions or to exercise your rights.",
+        lang === "sv"
+          ? "Automatiskt minne är på som standard för konton. Du kan när som helst stänga av det eller radera enskilda minnen i Playground → Minne, och begära full radering via personuppgiftsansvarig."
+          : "Automatic memory is on by default for accounts. You can turn it off or erase individual memories at any time in Playground → Memory, and request full erasure from the controller.",
       ],
     },
   };
@@ -131,8 +137,8 @@ export default function Footer() {
             </a>
             <p className="text-sm text-muted leading-relaxed max-w-sm mb-6">
               {lang === "sv"
-                ? "Utvecklad i Sverige av Stilledev för riktigt arbete på svenska och engelska — med live Playground, användarstyrt minne och tydlig väg från tanke till handling."
-                : "Built in Sweden by Stilledev for real work in Swedish and English — featuring a live Playground, user-controlled memory, and a clear path from raw context to action."}
+                ? "Utvecklad i Sverige av Stilledev för riktigt arbete på svenska och engelska — med live Playground, minne du kan styra och tydlig väg från tanke till handling."
+                : "Built in Sweden by Stilledev for real work in Swedish and English — featuring a live Playground, memory you control, and a clear path from raw context to action."}
             </p>
             <div className="flex items-center gap-2.5">
               {socials.map((s) => (

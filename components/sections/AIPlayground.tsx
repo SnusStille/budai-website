@@ -2013,8 +2013,8 @@ export default function AIPlayground() {
             <span className="text-gradient">{t.playground.titleHighlight}</span>
           </h2>
           <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-muted">{lang === "sv"
-            ? `Du har sett vad som är möjligt — gör nu något eget. Skriv, planera, sammanfatta eller analysera på svenska och engelska. Prova direkt som gäst (${LIMITS.guest.messagesPerDay} meddelanden/dag) eller logga in gratis (${LIMITS.member.messagesPerDay}/dag) för användarstyrt minne, historik och bildanalys.`
-            : `You've seen what's possible — now make something of your own. Write, plan, summarize, or analyze in Swedish and English. Try free right now as a guest (${LIMITS.guest.messagesPerDay} messages/day) or sign in free (${LIMITS.member.messagesPerDay}/day) for user-controlled memory, history, and image analysis.`}</p>
+            ? `Du har sett vad som är möjligt — gör nu något eget. Skriv, planera, sammanfatta eller analysera på svenska och engelska. Prova direkt som gäst (${LIMITS.guest.messagesPerDay} meddelanden/dag) eller logga in gratis (${LIMITS.member.messagesPerDay}/dag) för minne du kan styra, historik och bildanalys.`
+            : `You've seen what's possible — now make something of your own. Write, plan, summarize, or analyze in Swedish and English. Try free right now as a guest (${LIMITS.guest.messagesPerDay} messages/day) or sign in free (${LIMITS.member.messagesPerDay}/day) for memory you control, history, and image analysis.`}</p>
         </div>
 
         <PlaygroundArrival expanded={expanded} overlay={voiceOpen||showShortcuts||!!lightbox||mobileDrawer||memoryOpen}>
@@ -3499,7 +3499,7 @@ export default function AIPlayground() {
               </button>
               <h3 className="text-base font-semibold text-white mb-1 flex items-center gap-2">
                 <BrainCircuit className="w-5 h-5 text-accent-purple" />
-                {lang === "sv" ? "Användarstyrt minne" : "User-controlled memory"}
+                {lang === "sv" ? "Minne du kan styra" : "Memory you control"}
               </h3>
               <p className="text-xs text-muted mb-3 leading-relaxed">
                 {lang === "sv"
@@ -3530,8 +3530,8 @@ export default function AIPlayground() {
                       setMemoryOpen(false);
                       auth.openAuth(
                         lang === "sv"
-                          ? "Logga in gratis för att aktivera användarstyrt minne"
-                          : "Sign in free to enable user-controlled memory"
+                          ? "Logga in gratis för att använda minnet"
+                          : "Sign in free to use memory"
                       );
                     }}
                     className="w-full py-2.5 rounded-xl bg-accent-cyan text-[#020205] text-xs font-semibold hover:opacity-95"

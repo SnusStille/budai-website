@@ -51,7 +51,7 @@ test("real Playground UI sends persona/language/history and consumes progressive
   await expect(page.locator("#playground").getByText("A calmer Swedish workday.", { exact: true })).toBeVisible();
   await expect(page.locator("#playground").getByRole("button", { name: "Action plan", exact: true })).toBeVisible();
   await page.locator("#playground").getByRole("button", { name: /Memory\s+Account/i }).click();
-  const memHeading = page.locator("#playground").getByRole("heading", { name: "User-controlled memory" });
+  const memHeading = page.locator("#playground").getByRole("heading", { name: "Memory you control" });
   await expect(memHeading).toBeVisible();
   await page.locator("#playground").getByRole("button", { name: "Close memory", exact: true }).click();
   await expect(memHeading).toHaveCount(0);
@@ -282,4 +282,22 @@ test("plans and waitlist make no discount, price or launch-date promise", async 
   const plans = (await page.locator("#capabilities").innerText()).replace(/\s+/g, " ");
   expect(plans).not.toMatch(/10\s?%|founding members|lock 10|BUDAI-EARLY-10/i);
   expect(plans).toMatch(/pricing has not been set yet/i);
+});
+
+
+test("legal pages disclose automatic memory and its controls in both languages", async ({ page }) => {
+  await page.goto("/legal/privacy");
+  await expect(page.getByRole("heading", { name: "Privacy Policy" })).toBeVisible();
+  await expect(page.getByText(/memory is on by default/i)).toBeVisible();
+  await expect(page.getByText(/Playground → Memory/)).toBeVisible();
+  await page.goto("/legal/gdpr");
+  await expect(page.getByText(/Automatic long-term memory is part of the account service/i)).toBeVisible();
+
+  await page.addInitScript(() => localStorage.setItem("budai-lang", "sv"));
+  await page.goto("/legal/privacy");
+  await expect(page.getByRole("heading", { name: "Integritetspolicy" })).toBeVisible();
+  await expect(page.getByText(/minnet är på som standard/i)).toBeVisible();
+  await expect(page.getByText(/Playground → Minne/)).toBeVisible();
+  await page.goto("/legal/gdpr");
+  await expect(page.getByText(/Automatiskt långtidsminne ingår i kontotjänsten/i)).toBeVisible();
 });

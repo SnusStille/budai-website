@@ -27,8 +27,8 @@ export default function Journey() {
       title: sv ? "Grunden" : "The foundation",
       lead: sv ? "Live i utvecklarförhandsvisningen idag." : "Live in the developer preview today.",
       items: sv
-        ? ["Playground med strömmande svar på SV / EN", "Gratis konto med användarstyrt minne & historik", "Bildanalys, röstdiktering och trådexport"]
-        : ["Playground with streaming replies in SV / EN", "Free account with user-controlled memory & history", "Image analysis, voice dictation, and thread export"],
+        ? ["Playground med strömmande svar på SV / EN", "Gratis konto med minne du kan styra & historik", "Bildanalys, röstdiktering och trådexport"]
+        : ["Playground with streaming replies in SV / EN", "Free account with memory you control & history", "Image analysis, voice dictation, and thread export"],
     },
     {
       icon: Rocket,

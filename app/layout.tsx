@@ -29,7 +29,7 @@ export const metadata: Metadata = {
     template: "%s · BudAI",
   },
   description:
-    "BudAI by Stilledev — AI workspace built in Sweden for real work in Swedish and English. Write, automate, analyze, and turn messy context into clear action with user-controlled memory.",
+    "BudAI by Stilledev — AI workspace built in Sweden for real work in Swedish and English. Write, automate, analyze, and turn messy context into clear action with memory you control.",
   keywords: [
     "AI",
     "artificial intelligence",
@@ -53,7 +53,7 @@ export const metadata: Metadata = {
     siteName: "BudAI",
     title: "BudAI — AI Workspace for Swedish & English Work",
     description:
-      "Built in Sweden by Stilledev. Write, analyze, plan, and automate in Swedish and English with a live Playground and user-controlled memory.",
+      "Built in Sweden by Stilledev. Write, analyze, plan, and automate in Swedish and English with a live Playground and memory you control.",
     images: [
       {
         url: "/og.png",
@@ -67,7 +67,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "BudAI — AI Workspace for Swedish & English Work",
     description:
-      "Built in Sweden by Stilledev. Write, analyze, plan, and automate in Swedish and English with a live Playground and user-controlled memory.",
+      "Built in Sweden by Stilledev. Write, analyze, plan, and automate in Swedish and English with a live Playground and memory you control.",
     images: ["/og.png"],
   },
   icons: {

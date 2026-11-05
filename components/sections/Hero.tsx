@@ -106,8 +106,8 @@ export default function Hero() {
         </div>
         <p className="hero-product-note">
           {sv
-            ? `En arbetsyta för ditt eget fokus idag och teamets flöden imorgon — prova gratis som gäst (${LIMITS.guest.messagesPerDay}/dag) eller logga in gratis (${LIMITS.member.messagesPerDay}/dag) för användarstyrt minne, historik och bildanalys.`
-            : `One workspace for personal focus today and team workflows tomorrow — try free as a guest (${LIMITS.guest.messagesPerDay}/day) or sign in free (${LIMITS.member.messagesPerDay}/day) for user-controlled memory, history, and vision.`}
+            ? `En arbetsyta för ditt eget fokus idag och teamets flöden imorgon — prova gratis som gäst (${LIMITS.guest.messagesPerDay}/dag) eller logga in gratis (${LIMITS.member.messagesPerDay}/dag) för minne du kan styra, historik och bildanalys.`
+            : `One workspace for personal focus today and team workflows tomorrow — try free as a guest (${LIMITS.guest.messagesPerDay}/day) or sign in free (${LIMITS.member.messagesPerDay}/day) for memory you control, history, and vision.`}
         </p>
         <p className="hero-credit">
           {sv ? "Utvecklad av " : "Built by "}

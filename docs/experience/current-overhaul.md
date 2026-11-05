@@ -27,7 +27,7 @@ The entire BudAI experience now tells **one continuous visual and strategic stor
    - Interactive feature chips (`Personal · write & plan`, `Business · automate`, `SV / EN`, `Memory & voice`) highlight 3D regions on hover/focus and dispatch live starter prompts to `#playground` on click.
 2. **Chapter 02 — The Context (`BrainScrollStory.tsx` + `brain.ts`)**:
    - The signal enters a network of context (`02 · THE CONTEXT — "A signal gains context."`).
-   - Explicitly communicates **Swedish + English** as two natural streams and **user-controlled memory** (saving only the facts the user chooses to keep, never everything automatically).
+   - Explicitly communicates **Swedish + English** as two natural streams and **memory you control**. Note: for signed-in accounts memory is **on by default** and the API may automatically save durable facts (`[[MEMORY:]]`); users can see, switch off, edit and delete them in Playground → Memory. Guests have no memory. Legal pages document this behavior.
 3. **Chapter 03 — Intelligence in Motion (`CapabilityMap.tsx` + `CapabilityStudioScreen.tsx` + `capability-engine.ts`)**:
    - Inside the shared 3D Signal Studio, each of the 6 capabilities (`Write`, `Automate`, `Decide`, `Swedish + English`, `Memory`, `Vision and voice`) triggers a distinct **3D geometric transformation** on the foreground studio deck alongside the real `CSS3DObject` Studio Screen:
      - `01 Write`: Layered editorial strata align in 3D space.
@@ -40,7 +40,7 @@ The entire BudAI experience now tells **one continuous visual and strategic stor
 4. **Chapter 04 — The Birth of Something Real (`Capabilities.tsx` `[data-access-architecture]` → `About.tsx` Builder)**:
    - As the user scrolls from the 6 capabilities into `Choose your way in`, the left and right 3D studio wing monitors unfold from behind the central monolith into a **3-screen panoramic pipeline** (`01 Basic Intake` → `02 Consumer Memory` → `03 Business Team Workspace`), and then hand off along the 3D trajectory into the **Builder (`#about`)** studio room where TypeScript source code (`ProgressiveEditor.tsx`) assembles live interfaces and workflows, with an interactive `"Try this prompt in Playground"` link.
 5. **Chapter 05 — Your Idea Starts Here (`AIPlayground.tsx` + `Waitlist.tsx` + `Journey.tsx`)**:
-   - The camera resolves directly into the live **BudAI Playground (`#playground`)** (`"You've seen what's possible — now make something of your own."`), backed by transparent guest (`12/day`) vs. free account (`80/day` + user-controlled memory, history, and vision) limits from `lib/limits.ts` and the waitlist for future paid plans (no promised discount).
+   - The camera resolves directly into the live **BudAI Playground (`#playground`)** (`"You've seen what's possible — now make something of your own."`), backed by transparent guest (`12/day`) vs. free account (`80/day` + memory you control, history, and vision) limits from `lib/limits.ts` and the waitlist for future paid plans (no promised discount).
 
 ---
 
@@ -58,7 +58,7 @@ The entire BudAI experience now tells **one continuous visual and strategic stor
 10. **[Implemented]** Interactive `"Try this prompt in Playground"` action in `About.tsx` connecting the Builder's illustrative example to the live Playground.
 11. **[Implemented]** Replaced generic/exaggerated copy (`"become one of the best AIs ever"`, `"become your new ChatGPT"`) across `Capabilities.tsx`, `About.tsx`, and `Journey.tsx` with specific, credible Swedish-engineered positioning.
 12. **[Implemented]** Transparent tier differentiation in `Capabilities.tsx` (`Basic`: free preview with `12/day` guest and `80/day` free account + memory/vision (single source: `lib/limits.ts`); `Consumer`: planned individual plan; `Business`: planned team plan with shared credits/workspaces).
-13. **[Implemented]** Explicit communication of **user-controlled memory** (never automatic retention of everything) across `Hero.tsx`, `BrainScrollStory.tsx`, `Capabilities.tsx`, and `CapabilityStudioScreen.tsx`.
+13. **[Implemented]** Explicit communication of **memory you control** across `Hero.tsx`, `BrainScrollStory.tsx`, `Capabilities.tsx`, and `CapabilityStudioScreen.tsx`. Automatic saving is disclosed in the Memory panel and in the privacy/GDPR copy; changing the default to opt-in is a separate product decision.
 14. **[Implemented]** Honest labeling of illustrative 3D demonstrations (`ILLUSTRATIVE 3D DEMONSTRATION · NOT A LIVE AI REQUEST` and `Prepared example · not a live AI response`).
 15. **[Implemented]** Bounded rate-limiter map pruning in `app/api/playground/route.ts` (`isRateLimited`) to prevent memory growth in long-running server instances.
 16. **[Verified]** `ResizeObserver` on `document.body` in `lib/experience/scroll.ts` automatically recalculates section bounds when dynamic DOM elements expand/collapse.

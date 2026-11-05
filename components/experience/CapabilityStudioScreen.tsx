@@ -47,9 +47,9 @@ const SV_TITLES: Record<string, { title: string; subtitle: string; comp: string 
     comp: "SV ↔ EN SPRÅKBRYGGA",
   },
   memory: {
-    title: "Användarstyrt arbetsminne",
+    title: "Arbetsminne du kan styra",
     subtitle: "Minnen kan sparas automatiskt och redigeras eller raderas.",
-    comp: "ANVÄNDARSTYRT MINNESVALV",
+    comp: "MINNESVALV · DU STYR",
   },
   multimodal: {
     title: "Skärmbilder, diagram & röst",
@@ -290,12 +290,12 @@ export default function CapabilityStudioScreen() {
                     <div className="studio-locale-pane">
                       <b>SV-SE · SVENSKA</b>
                       <span>Naturlig svensk ton &amp; kontext</span>
-                      <span>Användarstyrt minne &amp; struktur</span>
+                      <span>Minne du kan styra &amp; struktur</span>
                     </div>
                     <div className="studio-locale-pane">
                       <b>EN-US · ENGLISH</b>
                       <span>Natural English tone &amp; context</span>
-                      <span>User-controlled memory &amp; clarity</span>
+                      <span>Memory you control &amp; clarity</span>
                     </div>
                   </div>
                 ) : (
@@ -309,8 +309,8 @@ export default function CapabilityStudioScreen() {
                           ? "02 · Teamkontext & SV/EN-ton synkroniserad"
                           : "02 · Team context & SV/EN tone aligned"
                         : sv
-                        ? "02 · Användarstyrt minne & SV/EN-kontext"
-                        : "02 · User-controlled memory & SV/EN context",
+                        ? "02 · Minne du kan styra & SV/EN-kontext"
+                        : "02 · Memory you control & SV/EN context",
                       sv
                         ? `03 · ${displayComp} redo i Playground`
                         : `03 · ${displayComp} ready for action`,

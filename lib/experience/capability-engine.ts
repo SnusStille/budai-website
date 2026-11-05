@@ -132,9 +132,9 @@ export const CAPABILITY_CHAMBER_MODULES: CapabilityChamberModule[] = [
   {
     id: "memory",
     index: "05",
-    label: "USER-CONTROLLED MEMORY",
+    label: "MEMORY YOU CONTROL",
     title: "Context you can manage",
-    subtitle: "Durable context — user-controlled.",
+    subtitle: "Durable context — you control it.",
     accent: "#a8b4f8",
     file: "05-memory.ts",
     codeLines: [
@@ -1101,7 +1101,7 @@ export function createCapabilityEngine(
     [0, 5, cyanLineMat],     // Write <-> Vision/Voice (Basic Preview Intake & Document Route)
     [5, 3, cyanLineMat],     // Vision/Voice -> Swedish + English Bridge
     [0, 3, lavenderLineMat], // Write -> Swedish + English Bridge
-    [3, 4, lavenderLineMat], // Swedish + English <-> User-Controlled Memory (Consumer Route)
+    [3, 4, lavenderLineMat], // Swedish + English <-> Memory You Control (Consumer Route)
     [4, 1, emeraldLineMat],  // Memory -> Workflow Automation (Business Route)
     [1, 2, emeraldLineMat],  // Workflow Automation -> Decision Citadel (Outcome Realization)
     [3, 2, lavenderLineMat], // Bilingual Bridge -> Decision Citadel

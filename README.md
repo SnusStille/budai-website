@@ -25,6 +25,10 @@ Never commit `.env.local`. If it was ever pushed, run `git rm --cached .env.loca
 
 © 2026 BudAI by Stilledev. All rights reserved.
 
+## Memory behavior (signed-in accounts)
+
+Memory is **on by default**. `app/api/playground/route.ts` may persist durable facts the assistant notices in a chat (`[[MEMORY:]]`) into `public.memories` under the user's RLS scope. Guests have no memory. Users can see, switch off, edit and delete memories in Playground → Memory (`profiles.memory_enabled`). This is documented on `/legal/privacy` and `/legal/gdpr` in both languages. Switching the default to opt-in is a product decision, not a code limitation.
+
 ## Cinematic experience
 
 The current Confluence implementation, source recovery, ownership audit and reproducible browser checks are documented in [the implementation audit](docs/experience/current-overhaul.md) and [verification/release notes](docs/experience/confluence-verification.md).
