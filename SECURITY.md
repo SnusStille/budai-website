@@ -36,7 +36,7 @@ A hardcoded admin password existed in three historical commits. It is gone from 
 
 ## Deployment notes
 
-- Run `supabase/schema.sql` then `MIGRATION_v2 … v10` in order. `MIGRATION_v10_security_hardening.sql` removes public read/write on guest quota rows, restricts `admin_events` and makes `waitlist_status()` service-role-only.
+- Run `supabase/schema.sql` then `MIGRATION_v2 … v11` in order. `MIGRATION_v11_message_feedback.sql` adds bounded columns for Playground message ratings; without it ratings are stored locally only. `MIGRATION_v10_security_hardening.sql` removes public read/write on guest quota rows, restricts `admin_events` and makes `waitlist_status()` service-role-only.
 - Set `SUPABASE_SERVICE_ROLE_KEY` on the server. Without it, guest quotas and the waitlist status lookup run in soft mode.
 - `/admin` is `noindex`. Rotate `ADMIN_PASSWORD` if it was ever committed.
 - Rate limits are in-memory per instance; a durable shared counter is still needed for a hard global cap. See [docs/audit/audit-2026-11.md](docs/audit/audit-2026-11.md), point B1.

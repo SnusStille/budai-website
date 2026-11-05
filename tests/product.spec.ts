@@ -432,3 +432,48 @@ test("security headers and a per-request CSP nonce let the app boot (B5)", async
   );
   expect(violations).toEqual([]);
 });
+
+test("feedback API rejects malformed ratings before touching storage (D3)", async ({ request }) => {
+  expect((await request.post("/api/feedback", { data: { kind: "rating", message: "hi" } })).status()).toBe(400);
+  expect((await request.post("/api/feedback", { data: { kind: "rating", message: "Valid message", rating: "sideways" } })).status()).toBe(400);
+  expect([200, 500, 503]).toContain(
+    (await request.post("/api/feedback", { data: { kind: "rating", message: "Valid message", rating: "up" } })).status()
+  );
+});
+
+test("message ratings are consent-gated, sent with metadata and described honestly (D3)", async ({ page }) => {
+  const ratings: Record<string, unknown>[] = [];
+  await page.route("**/api/feedback", async (route) => {
+    ratings.push(route.request().postDataJSON() as Record<string, unknown>);
+    await route.fulfill({ contentType: "application/json", body: JSON.stringify({ ok: true }) });
+  });
+
+  await page.goto("/#playground");
+  await page.evaluate(() => {
+    const original = fetch.bind(window);
+    window.fetch = async (resource, init) => {
+      if (!String(resource).endsWith("/api/playground")) return original(resource, init);
+      return new Response('A helpful answer.\u0000{"memory":null}', { headers: { "Content-Type": "text/plain" } });
+    };
+  });
+  await page.getByRole("textbox", { name: "Message BudAI", exact: true }).fill("Give me a rating target.");
+  await page.getByRole("button", { name: "Send message", exact: true }).click();
+  await expect(page.locator("#playground").getByText("A helpful answer.", { exact: true })).toBeVisible();
+
+  // Cookies are declined by default in this suite: the rating stays local and says so.
+  await page.getByRole("button", { name: "Helpful reply", exact: true }).click();
+  await expect(page.getByText("Thanks — saved locally, nothing sent", { exact: true })).toBeVisible();
+  expect(ratings).toHaveLength(0);
+  expect(await page.evaluate(() => localStorage.getItem("budai_msg_feedback"))).toContain("up");
+
+  // With consent the same control submits structured, bounded metadata.
+  await page.evaluate(() => localStorage.setItem("budai-cookies", "accepted"));
+  await page.getByRole("button", { name: "Unhelpful reply", exact: true }).click();
+  await expect(page.getByText("Thanks — feedback sent", { exact: true })).toBeVisible();
+  expect(ratings).toHaveLength(1);
+  expect(ratings[0]).toMatchObject({
+    kind: "rating", rating: "down", model: "quality", lang: "en", page: "/playground",
+  });
+  expect(typeof ratings[0].messageId).toBe("string");
+  expect(String(ratings[0].messageId).length).toBeGreaterThan(0);
+});

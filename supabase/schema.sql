@@ -250,11 +250,27 @@ create table if not exists public.feedback (
   kind text not null default 'other',
   message text not null,
   page text,
+  rating text,
+  message_id text,
+  model text,
+  lang text,
   created_at timestamptz not null default now()
 );
 
 create index if not exists feedback_created_idx on public.feedback (created_at desc);
 alter table public.feedback enable row level security;
+-- Written only by /api/feedback (service role). No public policies or grants.
+revoke all on table public.feedback from anon, authenticated;
+alter table public.feedback drop constraint if exists feedback_rating_valid;
+alter table public.feedback add constraint feedback_rating_valid
+  check (rating is null or rating in ('up', 'down'));
+alter table public.feedback drop constraint if exists feedback_rating_fields_bounded;
+alter table public.feedback add constraint feedback_rating_fields_bounded
+  check (
+    char_length(coalesce(message_id, '')) <= 80
+    and char_length(coalesce(model, '')) <= 40
+    and (lang is null or lang in ('en', 'sv'))
+  );
 
 -- ============================================================================
 -- 4. AUTH PROFILES (1:1 with auth.users)

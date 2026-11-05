@@ -1,5 +1,6 @@
 "use client";
 import { LIMITS } from "@/lib/limits";
+import { readConsent } from "@/lib/consent";
 
 import SignalWorkflows from "@/components/experience/SignalWorkflows";
 
@@ -781,6 +782,41 @@ export default function AIPlayground() {
     setToast({ kind, text });
     window.setTimeout(() => setToast(null), 4200);
   }, []);
+
+  /** D3: a rating is always stored locally, and only transmitted when the
+   * visitor accepted optional data collection. The toast says which happened. */
+  const rateMessage = useCallback((msgId: string, rating: "up" | "down") => {
+    setFeedback((f) => {
+      const next = { ...f, [msgId]: rating };
+      try { localStorage.setItem("budai_msg_feedback", JSON.stringify(next)); } catch { /* ignore */ }
+      return next;
+    });
+    if (readConsent() !== "accepted") {
+      showToast("ok", lang === "sv" ? "Tack — sparat lokalt, inget skickas" : "Thanks — saved locally, nothing sent");
+      return;
+    }
+    void (async () => {
+      try {
+        const res = await fetch("/api/feedback", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            kind: "rating",
+            rating,
+            message: `Message rating: ${rating}`,
+            messageId: msgId,
+            model: modelTier,
+            lang,
+            page: "/playground",
+          }),
+        });
+        if (!res.ok) throw new Error("feedback failed");
+        showToast("ok", lang === "sv" ? "Tack — din bedömning skickades" : "Thanks — feedback sent");
+      } catch {
+        showToast("warn", lang === "sv" ? "Sparat lokalt — kunde inte skickas just nu" : "Saved locally — could not send right now");
+      }
+    })();
+  }, [lang, modelTier, showToast]);
 
   useEffect(()=>()=>{recogRef.current?.stop();recogRef.current=null;},[]);
 
@@ -2594,14 +2630,7 @@ export default function AIPlayground() {
                             type="button"
                             aria-label={lang === "sv" ? "Bra svar" : "Helpful reply"}
                             aria-pressed={feedback[msg.id] === "up"}
-                            onClick={() => {
-                              setFeedback((f) => {
-                                const next = { ...f, [msg.id]: "up" as const };
-                                try { localStorage.setItem("budai_msg_feedback", JSON.stringify(next)); } catch { /* ignore */ }
-                                return next;
-                              });
-                              showToast("ok", lang === "sv" ? "Tack — sparat lokalt" : "Thanks — saved locally");
-                            }}
+                            onClick={() => rateMessage(msg.id, "up")}
                             className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-1 ${
                               feedback[msg.id] === "up" ? "text-accent-green" : "text-muted hover:text-white"
                             }`}
@@ -2613,14 +2642,7 @@ export default function AIPlayground() {
                             type="button"
                             aria-label={lang === "sv" ? "Mindre bra svar" : "Unhelpful reply"}
                             aria-pressed={feedback[msg.id] === "down"}
-                            onClick={() => {
-                              setFeedback((f) => {
-                                const next = { ...f, [msg.id]: "down" as const };
-                                try { localStorage.setItem("budai_msg_feedback", JSON.stringify(next)); } catch { /* ignore */ }
-                                return next;
-                              });
-                              showToast("ok", lang === "sv" ? "Tack — vi tar det vidare" : "Thanks — noted");
-                            }}
+                            onClick={() => rateMessage(msg.id, "down")}
                             className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-1 ${
                               feedback[msg.id] === "down" ? "text-red-300" : "text-muted hover:text-white"
                             }`}
