@@ -8,6 +8,7 @@ import {subscribeJourney} from "@/lib/experience/scroll";
 import BudAILogo, { StilledevLink, StilledevMark } from "@/components/ui/BudAILogo";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLang } from "@/components/ui/LanguageContext";
+import { openCookieSettings } from "@/lib/consent";
 
 const groups = (lang: string) => [
   {
@@ -24,7 +25,7 @@ const groups = (lang: string) => [
       { label: "Stilledev", href: "https://stilledev.se", external: true },
       { label: lang === "sv" ? "Byggaren" : "Builder", href: "#about" },
       { label: lang === "sv" ? "Early access" : "Early access", href: "#waitlist" },
-      { label: lang === "sv" ? "Prissättning" : "Pricing", href: "#capabilities" },
+      { label: lang === "sv" ? "Paket" : "Plans", href: "#capabilities" },
       { label: lang === "sv" ? "Kontakt" : "Contact", href: "mailto:Stilleinc@hotmail.com" },
       { label: lang === "sv" ? "Skicka feedback" : "Send feedback", href: "mailto:Stilleinc@hotmail.com?subject=BudAI%20preview%20feedback" },
       { label: lang === "sv" ? "Vad är nytt" : "What's new", href: "#whats-new" },
@@ -74,6 +75,9 @@ export default function Footer() {
         lang === "sv"
           ? "Vi säljer inte dina data och delar aldrig personuppgifter med tredje part utan laglig grund eller ditt samtycke. Du kan när som helst begära tillgång, rättelse eller radering genom att kontakta Stilleinc@hotmail.com."
           : "We do not sell your data and never share personal data with third parties without a lawful basis or your consent. You can request access, correction, or deletion at any time by contacting Stilleinc@hotmail.com.",
+        lang === "sv"
+          ? "För inloggade konton är minnet på som standard: BudAI kan automatiskt spara beständiga fakta (namn, roll, företag, preferenser) som långtidsminnen. Du ser, stänger av, redigerar och raderar dem i Playground → Minne. Gästchattar sparar inga minnen."
+          : "For signed-in accounts memory is on by default: BudAI may automatically save durable facts (name, role, company, preferences) as long-term memories. You can see, switch off, edit and delete them in Playground → Memory. Guest chats save no memories.",
       ],
     },
     terms: {
@@ -91,11 +95,11 @@ export default function Footer() {
       title: lang === "sv" ? "Cookiepolicy" : "Cookie Policy",
       content: [
         lang === "sv"
-          ? "BudAI använder cookies för att förbättra din upplevelse och analysera trafik. Vi använder endast nödvändiga cookies och analytiska cookies med ditt samtycke."
-          : "BudAI uses cookies to enhance your experience and analyze traffic. We only use necessary cookies and analytical cookies with your consent.",
+          ? "BudAI sparar bara det sajten behöver för att fungera: språkval, inloggningssession och ditt cookieval. Den lagringen är alltid aktiv."
+          : "BudAI stores only what the site needs to work: your language choice, the sign-in session and your cookie choice. That storage is always active.",
         lang === "sv"
-          ? "Du kan när som helst ändra dina cookie-inställningar eller återkalla ditt samtycke. Nödvändiga cookies kan inte inaktiveras eftersom de krävs för att webbplatsen ska fungera."
-          : "You can change your cookie settings or withdraw your consent at any time. Necessary cookies cannot be disabled as they are required for the website to function.",
+          ? "Anonym trafikanalys (Vercel Analytics) laddas bara om du trycker Acceptera. Vid Avböj laddas den inte alls, och vi använder inga tredjeparts-annonsspårare. Du kan ändra eller återkalla ditt val när som helst via Cookieinställningar i sidfoten."
+          : "Anonymous traffic analytics (Vercel Analytics) loads only after you press Accept. If you decline it never loads, and we use no third-party ad trackers. You can change or withdraw your choice at any time via Cookie settings in the footer.",
       ],
     },
     gdpr: {
@@ -107,6 +111,9 @@ export default function Footer() {
         lang === "sv"
           ? "Personuppgiftsansvarig: Stilledev. Kontakta oss på Stilleinc@hotmail.com för frågor om GDPR eller för att utöva dina rättigheter."
           : "Data controller: Stilledev. Contact us at Stilleinc@hotmail.com for GDPR questions or to exercise your rights.",
+        lang === "sv"
+          ? "Automatiskt minne är på som standard för konton. Du kan när som helst stänga av det eller radera enskilda minnen i Playground → Minne, och begära full radering via personuppgiftsansvarig."
+          : "Automatic memory is on by default for accounts. You can turn it off or erase individual memories at any time in Playground → Memory, and request full erasure from the controller.",
       ],
     },
   };
@@ -130,8 +137,8 @@ export default function Footer() {
             </a>
             <p className="text-sm text-muted leading-relaxed max-w-sm mb-6">
               {lang === "sv"
-                ? "Utvecklad i Sverige av Stilledev för riktigt arbete på svenska och engelska — med live Playground, användarstyrt minne och tydlig väg från tanke till handling."
-                : "Built in Sweden by Stilledev for real work in Swedish and English — featuring a live Playground, user-controlled memory, and a clear path from raw context to action."}
+                ? "Utvecklad i Sverige av Stilledev för riktigt arbete på svenska och engelska — med live Playground, minne du kan styra och tydlig väg från tanke till handling."
+                : "Built in Sweden by Stilledev for real work in Swedish and English — featuring a live Playground, memory you control, and a clear path from raw context to action."}
             </p>
             <div className="flex items-center gap-2.5">
               {socials.map((s) => (
@@ -188,6 +195,13 @@ export default function Footer() {
             <span className="text-muted/30">·</span>
             <span className="text-xs">Sweden</span>
           </p>
+          <button
+            type="button"
+            onClick={openCookieSettings}
+            className="text-xs text-muted underline decoration-white/20 underline-offset-4 hover:text-white transition-colors"
+          >
+            {lang === "sv" ? "Cookieinställningar" : "Cookie settings"}
+          </button>
         </div>
       </div>
 

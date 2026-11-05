@@ -53,10 +53,10 @@ export default function BrainScrollStory() {
       <div className="brain-journey-sticky">
         <div className="neural-hud-top"><span className="chapter-label"><i />02 · {sv?"KONTEXTEN · SIGNAL & MINNE":"THE CONTEXT · SIGNAL & MEMORY"}</span><a href="#playground">{sv?"Direkt till Playground":"Skip to Playground"}<ArrowUpRight size={12}/></a></div>
         <div className="neural-entry-title">
-          <span>{sv?"SIGNAL → TVÅ SPRÅK → ANVÄNDARSTYRT MINNE":"SIGNAL → TWO LANGUAGES → USER-CONTROLLED MEMORY"}</span>
+          <span>{sv?"SIGNAL → TVÅ SPRÅK → MINNE DU KAN STYRA":"SIGNAL → TWO LANGUAGES → MEMORY YOU CONTROL"}</span>
           <h2 id="signal-title">{sv?"En signal får sammanhang.":"A signal gains context."}</h2>
           <p className="signal-meaning">{sv?"Svenska och engelska möts naturligt i samma tråd utan att tappa ton. Med ett konto kan minnet automatiskt spara långsiktiga fakta. Du kan stänga av, redigera och radera minnen.":"Swedish and English flow naturally in the same thread without losing tone. With an account, memory may automatically save durable facts. You can turn it off, edit and delete memories."}</p>
-          <div className="signal-meaning-chips"><span>{sv?"Svenska + Engelska":"Swedish + English"}</span><span>{sv?"Användarstyrt minne":"User-controlled memory"}</span><span>{sv?"Strukturerat svar":"Structured action"}</span></div>
+          <div className="signal-meaning-chips"><span>{sv?"Svenska + Engelska":"Swedish + English"}</span><span>{sv?"Minne du kan styra":"Memory you control"}</span><span>{sv?"Strukturerat svar":"Structured action"}</span></div>
         </div>
         {poster&&<div className="brain-journey-fallback" aria-hidden="true"><BrainPoster/></div>}
         <div className="original-brain-tour" data-original-brain-tour>

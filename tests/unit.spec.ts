@@ -3,6 +3,17 @@ import { INTRO_MS, INTRO_REVEAL_MS, INTRO_READY_MS } from "../lib/experience/int
 import { cameraAt, CHAPTERS, journeyAt, worldChapterAt, worldOpacityAt } from "../lib/experience/timeline";
 import { brainCameraAt, brainFovAt, brainJourneyProgress, brainVisualAt, playgroundProjectionAt, BRAIN_STORY_ORIGIN } from "../lib/experience/brain";
 import { codeCharactersAt, CODE_LENGTH, EXAMPLE_SOURCE, tokenizeLine } from "../lib/experience/code";
+import { readFileSync, mkdtempSync, rmSync, writeFileSync as fsWrite } from "node:fs";
+import { execFileSync, spawnSync } from "node:child_process";
+import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
+import { LIMITS, limitFor } from "../lib/limits";
+import { RULES, checkRateLimit, clientIp, rateLimitKey } from "../lib/rate-limit";
+import { validateWaitlist } from "../lib/waitlist-validation";
+import { signWaitlistEmail, verifyWaitlistToken } from "../lib/waitlist-status";
+import { aiUsageEvent } from "../lib/ai-usage";
+import { buildCsp } from "../lib/csp";
+import { KEYBOARD_OVERLAP_THRESHOLD_PX, keyboardOverlap } from "../lib/playground/viewport";
 
 test("one readiness deadline and camera/reveal timing stay bounded without a logo timeline",()=>{
   expect(INTRO_MS+INTRO_REVEAL_MS).toBeLessThanOrEqual(4000);
@@ -161,4 +172,175 @@ test("CHAPTERS renumbers Roadmap to 05 and omits the removed standalone 05 Next 
     {id:"roadmap",number:"05"},
   ]);
   expect(CHAPTERS.some(c=>String(c.id)==="waitlist")).toBe(false);
+});
+
+
+test("daily-limit copy reads the single LIMITS source instead of hardcoded numbers", () => {
+  expect(limitFor("guest", "messages")).toBe(LIMITS.guest.messagesPerDay);
+  expect(limitFor("member", "messages")).toBe(LIMITS.member.messagesPerDay);
+  const copyFiles = [
+    "components/sections/AIPlayground.tsx",
+    "components/sections/Capabilities.tsx",
+    "components/sections/Hero.tsx",
+    "components/sections/Journey.tsx",
+    "components/experience/CapabilityStudioScreen.tsx",
+    "lib/changelog.ts",
+    "lib/experience/developer-room.ts",
+  ];
+  const stale = /12\s*\/\s*(?:dag|day)|80\s*\/\s*(?:dag|day)|12 meddelanden|80 meddelanden|12 messages\/day|80 messages\/day|10\s*\/\s*day|35\s*\/\s*day/;
+  for (const file of copyFiles) {
+    const source = readFileSync(file, "utf8");
+    expect(source, `${file} still hardcodes a daily limit`).not.toMatch(stale);
+    expect(source, `${file} does not use LIMITS`).toContain("LIMITS.");
+  }
+});
+
+
+test("shared rate limiter enforces per-rule windows and reports Retry-After", () => {
+  const rule = { name: "unit-b1-a", limit: 3, windowMs: 60_000 };
+  const t = 1_700_000_000_000;
+  expect(checkRateLimit("b1-a", rule, t)).toMatchObject({ limited: false, remaining: 2 });
+  expect(checkRateLimit("b1-a", rule, t + 10)).toMatchObject({ limited: false, remaining: 1 });
+  expect(checkRateLimit("b1-a", rule, t + 20)).toMatchObject({ limited: false, remaining: 0 });
+  const blocked = checkRateLimit("b1-a", rule, t + 30);
+  expect(blocked.limited).toBe(true);
+  expect(blocked.retryAfterSeconds).toBeGreaterThan(0);
+  // A new key and a new rule are independent buckets.
+  expect(checkRateLimit("b1-b", rule, t + 30).limited).toBe(false);
+  expect(checkRateLimit("b1-a-rule-c", { ...rule, name: "unit-b1-c" }, t + 30).limited).toBe(false);
+  // The window really expires.
+  expect(checkRateLimit("b1-a", rule, t + rule.windowMs).limited).toBe(false);
+  expect(RULES.playground.limit).toBeGreaterThan(RULES.feedback.limit);
+});
+
+test("client IP and limiter keys are bounded and never keep a raw address", () => {
+  const req = (headers: Record<string, string>) =>
+    ({ headers: new Headers(headers) } as unknown as import("next/server").NextRequest);
+  expect(clientIp(req({ "x-forwarded-for": "203.0.113.7, 10.0.0.1" }))).toBe("203.0.113.7");
+  expect(clientIp(req({ "x-vercel-forwarded-for": "198.51.100.4", "x-forwarded-for": "spoofed" }))).toBe("198.51.100.4");
+  expect(clientIp(req({}))).toBe("unknown");
+  expect(clientIp(req({ "x-forwarded-for": "x".repeat(500) })).length).toBeLessThanOrEqual(64);
+  const key = rateLimitKey(req({ "x-forwarded-for": "203.0.113.7" }), RULES.share);
+  expect(key).toMatch(/^[a-f0-9]{64}$/);
+  expect(key).not.toContain("203");
+  expect(rateLimitKey(req({ "x-forwarded-for": "203.0.113.7" }), RULES.playground)).not.toBe(key);
+});
+
+
+test("waitlist validation sanitises input and never trusts client-side priority", () => {
+  const base = { email: "  Person@Example.COM ", consent: true, account_type: "individual", name: "  Person  " };
+  const ok = validateWaitlist({ ...base, priority: 9999, discount_code: "FREE", tags: ["admin"] });
+  expect(ok.ok).toBe(true);
+  if (!ok.ok) return;
+  expect(ok.value.email).toBe("person@example.com");
+  expect(ok.value.name).toBe("Person");
+  expect(ok.value.priority).toBe(45);
+  expect(ok.value.discount_code).toBeNull();
+  expect(ok.value.tags).toEqual(["individual"]);
+  expect(ok.value.access_status).toBe("pending");
+
+  expect(validateWaitlist({ ...base, consent: false })).toMatchObject({ ok: false, error: "consent_required" });
+  expect(validateWaitlist({ ...base, email: "nope" })).toMatchObject({ ok: false, error: "invalid_email" });
+  expect(validateWaitlist({ ...base, website: "spam" })).toMatchObject({ ok: false, error: "honeypot" });
+  expect(validateWaitlist(null)).toMatchObject({ ok: false, error: "invalid_email" });
+
+  const company = validateWaitlist({ ...base, account_type: "company", company: "Acme", employees: "1-10", referral: "abc" });
+  expect(company.ok).toBe(true);
+  if (!company.ok) return;
+  expect(company.value).toMatchObject({ account_type: "company", company: "Acme", employees: "1-10", priority: 60, source: "referral", notes: "referral:abc" });
+});
+
+
+test("waitlist status proof is signed, tamper-proof and needs a server secret", () => {
+  const previous = process.env.ADMIN_PASSWORD;
+  delete process.env.ADMIN_PASSWORD;
+  delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+  expect(signWaitlistEmail("person@example.com")).toBeNull();
+
+  process.env.ADMIN_PASSWORD = "unit-test-secret";
+  const token = signWaitlistEmail("person@example.com");
+  expect(token).toBeTruthy();
+  expect(verifyWaitlistToken(token!)).toBe("person@example.com");
+  expect(verifyWaitlistToken(undefined)).toBeNull();
+  expect(verifyWaitlistToken(token!.replace(/.$/, "x"))).toBeNull();
+  expect(verifyWaitlistToken("garbage")).toBeNull();
+
+  if (previous === undefined) delete process.env.ADMIN_PASSWORD;
+  else process.env.ADMIN_PASSWORD = previous;
+});
+
+
+test("AI usage events clamp token counts and never carry prompts or invented cost", () => {
+  const entry = aiUsageEvent({
+    provider: "anthropic", operation: "chat", model: "x".repeat(200), tier: "member",
+    stream: true, ok: true, inputTokens: -5, outputTokens: 123.7, durationMs: 3000,
+  });
+  expect(entry.event).toBe("ai.usage");
+  expect(entry.model.length).toBeLessThanOrEqual(80);
+  expect(entry.inputTokens).toBe(0);
+  expect(entry.outputTokens).toBe(124);
+  expect(entry.durationMs).toBe(3000);
+  expect(entry.tier).toBe("member");
+  expect(JSON.stringify(entry)).not.toMatch(/cost|price|prompt|email|apiKey/i);
+
+  expect(aiUsageEvent({ provider: "openai", operation: "image", status: 429 }).status).toBe(429);
+  expect(aiUsageEvent({ provider: "openai", operation: "image", tier: "admin" as never }).tier).toBe("unknown");
+  expect(aiUsageEvent({ provider: "anthropic", operation: "chat", inputTokens: Number.NaN }).inputTokens).toBe(0);
+});
+
+
+test("CSP uses a per-request nonce and blocks the risky default sources", () => {
+  const a = buildCsp("nonceA");
+  const b = buildCsp("nonceB");
+  expect(a).toContain("nonce-nonceA");
+  expect(b).toContain("nonce-nonceB");
+  expect(a).not.toBe(b);
+  expect(a).toContain("default-src 'self'");
+  expect(a).toContain("object-src 'none'");
+  expect(a).toContain("base-uri 'self'");
+  expect(a).toContain("form-action 'self'");
+  expect(a).toContain("'strict-dynamic'");
+  expect(a).not.toContain("upgrade-insecure-requests");
+  expect(a).not.toContain("frame-ancestors"); // cross-origin preview iframe
+  expect(a).not.toContain("script-src 'self' 'unsafe-inline'");
+  expect(a).toContain("https://va.vercel-scripts.com");
+});
+
+
+test("secret scanner fails on a new key, accepts placeholders and never prints the value (B4)", () => {
+  const scanner = resolve(process.cwd(), "scripts/scan-secrets.mjs");
+  const dir = mkdtempSync(join(tmpdir(), "budai-secret-scan-"));
+  const run = () => spawnSync(process.execPath, [scanner, "--working-tree"], { cwd: dir, encoding: "utf8" });
+  try {
+    execFileSync("git", ["init", "-q"], { cwd: dir });
+    fsWrite(join(dir, "config.example"), "ANTHROPIC_API_KEY=your-anthropic-key\n");
+    execFileSync("git", ["add", "-A"], { cwd: dir });
+    const clean = run();
+    expect(clean.status).toBe(0);
+    expect(clean.stdout).toContain("clean");
+
+    // Build the fake key at runtime so the scanner does not flag this test itself.
+    const secret = ["sk-ant-", "api03-", "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"].join("");
+    fsWrite(join(dir, "leak.txt"), `${secret}\n`);
+    execFileSync("git", ["add", "-A"], { cwd: dir });
+    const leaked = run();
+    expect(leaked.status).toBe(1);
+    expect(leaked.stderr).toContain("anthropic-api-key");
+    expect(`${leaked.stdout}${leaked.stderr}`).not.toContain(secret);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+
+test("D12 keyboard overlap is bounded and ignores browser chrome", () => {
+  expect(keyboardOverlap(844, 844, 0)).toBe(0);
+  expect(keyboardOverlap(844, 544, 0)).toBe(300);
+  expect(keyboardOverlap(844, 544, 60)).toBe(240);
+  expect(keyboardOverlap(844, 900, 0)).toBe(0);
+  expect(keyboardOverlap(844, Number.NaN, 0)).toBe(0);
+  expect(keyboardOverlap(844, 100, 0)).toBeLessThanOrEqual(844);
+  expect(KEYBOARD_OVERLAP_THRESHOLD_PX).toBeGreaterThan(0);
+  expect(keyboardOverlap(844, 844 - KEYBOARD_OVERLAP_THRESHOLD_PX, 0))
+    .toBe(KEYBOARD_OVERLAP_THRESHOLD_PX);
 });

@@ -1,0 +1,22 @@
+# Optional full-history scan for maintainers (audit point B4):
+#   gitleaks detect --source . --config .gitleaks.toml --log-opts="--all"
+# CI uses the dependency-free scripts/scan-secrets.mjs instead.
+title = "BudAI gitleaks config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Documented placeholders, test fixtures and build artifacts"
+paths = [
+  '''(^|/)package-lock\.json$''',
+  '''(^|/)\.env\.example$''',
+  '''(^|/)docs/archive/''',
+  '''(^|/)tests/''',
+  '''\.(png|jpe?g|webp|avif|ico|woff2?|ttf|map|pdf)$''',
+  '''(^|/)public/brain/''',
+]
+regexes = [
+  '''your[-_](anon|anthropic|openai|supabase)[-_]key''',
+  '''(change|unit-test|not-)[-_]me|placeholder|example|dummy|redacted''',
+]

@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { headers } from "next/headers";
 import "@fontsource-variable/plus-jakarta-sans";
 import "@fontsource-variable/jetbrains-mono";
 import "./globals.css";
@@ -29,7 +30,7 @@ export const metadata: Metadata = {
     template: "%s · BudAI",
   },
   description:
-    "BudAI by Stilledev — AI workspace built in Sweden for real work in Swedish and English. Write, automate, analyze, and turn messy context into clear action with user-controlled memory.",
+    "BudAI by Stilledev — AI workspace built in Sweden for real work in Swedish and English. Write, automate, analyze, and turn messy context into clear action with memory you control.",
   keywords: [
     "AI",
     "artificial intelligence",
@@ -39,7 +40,6 @@ export const metadata: Metadata = {
     "digital assistant",
     "Stilledev",
     "BudAI",
-    "enterprise AI",
     "automatisering",
   ],
   authors: [{ name: "Stilledev" }],
@@ -54,7 +54,7 @@ export const metadata: Metadata = {
     siteName: "BudAI",
     title: "BudAI — AI Workspace for Swedish & English Work",
     description:
-      "Built in Sweden by Stilledev. Write, analyze, plan, and automate in Swedish and English with a live Playground and user-controlled memory.",
+      "Built in Sweden by Stilledev. Write, analyze, plan, and automate in Swedish and English with a live Playground and memory you control.",
     images: [
       {
         url: "/og.png",
@@ -68,7 +68,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "BudAI — AI Workspace for Swedish & English Work",
     description:
-      "Built in Sweden by Stilledev. Write, analyze, plan, and automate in Swedish and English with a live Playground and user-controlled memory.",
+      "Built in Sweden by Stilledev. Write, analyze, plan, and automate in Swedish and English with a live Playground and memory you control.",
     images: ["/og.png"],
   },
   icons: {
@@ -89,6 +89,8 @@ export const viewport: Viewport = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  // The middleware generates a fresh nonce per request (see lib/csp.ts).
+  const nonce = headers().get("x-nonce") ?? undefined;
   return (
     <html
       lang="en"
@@ -96,7 +98,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       suppressHydrationWarning
     >
       <head>
-        <script id="budai-intro-policy" dangerouslySetInnerHTML={{ __html: introBootstrap }} />
+        <script id="budai-intro-policy" nonce={nonce} dangerouslySetInnerHTML={{ __html: introBootstrap }} />
       </head>
       <body className="antialiased noise-overlay bg-background text-white">
         <a
@@ -107,6 +109,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </a>
         <script
           type="application/ld+json"
+          nonce={nonce}
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
         <Providers>{children}</Providers>

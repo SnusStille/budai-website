@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { isAdmin, serviceClient } from "@/lib/adminAuth";
+import { adminConfigured, isAdmin, serviceClient } from "@/lib/adminAuth";
 
 export const dynamic = "force-dynamic";
 
@@ -13,8 +13,7 @@ export async function GET(req: NextRequest) {
     feedbackCount = count ?? null;
   }
   return NextResponse.json({
-    adminPassword: !!(process.env.ADMIN_PASSWORD || process.env.NEXT_PUBLIC_ADMIN_PASSWORD),
-    adminPasswordLegacyName: !process.env.ADMIN_PASSWORD && !!process.env.NEXT_PUBLIC_ADMIN_PASSWORD,
+    adminPassword: adminConfigured(),
     supabaseUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
     supabaseAnon: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     serviceRole: !!process.env.SUPABASE_SERVICE_ROLE_KEY,

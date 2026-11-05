@@ -26,9 +26,9 @@ npm run dev
 Restricted to **Stille** only. Password never shown on the login UI.  
 Default key: see `ADMIN.md` / env (not printed on the page).
 
-## Waitlist 10%
+## Waitlist
 
-Code `BUDAI-EARLY-10` — subtle hero chip, Buddy popup, waitlist perks + success copy.
+A signup list for future paid plans. No discount, price or launch date is promised anywhere on the site or in the AI system prompt. `discount_code` stays as an optional admin-managed field, with no database default.
 
 ## Playground
 
@@ -62,3 +62,7 @@ Run `supabase/schema.sql` and/or `supabase/MIGRATION_v2.sql` if not already appl
 ## Optional SQL v3
 
 `supabase/MIGRATION_v3.sql` — playground_conversations / memory / events (for future accounts). Public demo uses localStorage today.
+
+## Supabase security (required)
+
+Run `supabase/MIGRATION_v10_security_hardening.sql` and `supabase/MIGRATION_v11_message_feedback.sql` in the SQL Editor after `schema.sql` and `MIGRATION_v2 … v9`. It removes public read/write on guest quota rows, restricts `admin_events`, adds non-negative counter constraints and makes `waitlist_status()` service-role-only. Set `SUPABASE_SERVICE_ROLE_KEY` on the server; without it guest quotas and the waitlist status widget run in soft mode.

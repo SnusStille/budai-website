@@ -1,4 +1,7 @@
 "use client";
+import { LIMITS } from "@/lib/limits";
+import { readConsent } from "@/lib/consent";
+import { KEYBOARD_OVERLAP_THRESHOLD_PX, keyboardOverlap } from "@/lib/playground/viewport";
 
 import SignalWorkflows from "@/components/experience/SignalWorkflows";
 
@@ -781,11 +784,72 @@ export default function AIPlayground() {
     window.setTimeout(() => setToast(null), 4200);
   }, []);
 
+  /** D3: a rating is always stored locally, and only transmitted when the
+   * visitor accepted optional data collection. The toast says which happened. */
+  const rateMessage = useCallback((msgId: string, rating: "up" | "down") => {
+    setFeedback((f) => {
+      const next = { ...f, [msgId]: rating };
+      try { localStorage.setItem("budai_msg_feedback", JSON.stringify(next)); } catch { /* ignore */ }
+      return next;
+    });
+    if (readConsent() !== "accepted") {
+      showToast("ok", lang === "sv" ? "Tack — sparat lokalt, inget skickas" : "Thanks — saved locally, nothing sent");
+      return;
+    }
+    void (async () => {
+      try {
+        const res = await fetch("/api/feedback", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            kind: "rating",
+            rating,
+            message: `Message rating: ${rating}`,
+            messageId: msgId,
+            model: modelTier,
+            lang,
+            page: "/playground",
+          }),
+        });
+        if (!res.ok) throw new Error("feedback failed");
+        showToast("ok", lang === "sv" ? "Tack — din bedömning skickades" : "Thanks — feedback sent");
+      } catch {
+        showToast("warn", lang === "sv" ? "Sparat lokalt — kunde inte skickas just nu" : "Saved locally — could not send right now");
+      }
+    })();
+  }, [lang, modelTier, showToast]);
+
   useEffect(()=>()=>{recogRef.current?.stop();recogRef.current=null;},[]);
 
   /* boot sidebar on desktop */
   useEffect(() => {
     if (window.innerWidth >= 1024) setSidebarOpen(true);
+  }, []);
+
+  /* D12: iOS Safari keeps the layout viewport height when the keyboard opens,
+   * which can cover the fixed composer. Publish the *visible* height so CSS can
+   * shrink the surface instead of hiding the input behind the keyboard. */
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const update = () => {
+      const root = document.documentElement;
+      const overlap = keyboardOverlap(window.innerHeight, vv.height, vv.offsetTop);
+      root.style.setProperty("--pg-keyboard-overlap", `${overlap}px`);
+      root.style.setProperty("--pg-visual-height", `${Math.round(vv.height)}px`);
+      root.dataset.pgKeyboard = overlap > KEYBOARD_OVERLAP_THRESHOLD_PX ? "open" : "closed";
+    };
+    update();
+    vv.addEventListener("resize", update);
+    vv.addEventListener("scroll", update);
+    return () => {
+      vv.removeEventListener("resize", update);
+      vv.removeEventListener("scroll", update);
+      const root = document.documentElement;
+      root.style.removeProperty("--pg-keyboard-overlap");
+      root.style.removeProperty("--pg-visual-height");
+      delete root.dataset.pgKeyboard;
+    };
   }, []);
 
   /* Keep answer language aligned with site lang until user overrides */
@@ -1533,11 +1597,6 @@ export default function AIPlayground() {
         if (activeRequestRef.current) cancelActiveRequest(true);
         return;
       }
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
-        e.preventDefault();
-        setShowShortcuts((s) => !s);
-        return;
-      }
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "n" && !inField) {
         e.preventDefault();
         void newChat();
@@ -2012,8 +2071,8 @@ export default function AIPlayground() {
             <span className="text-gradient">{t.playground.titleHighlight}</span>
           </h2>
           <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-muted">{lang === "sv"
-            ? "Du har sett vad som är möjligt — gör nu något eget. Skriv, planera, sammanfatta eller analysera på svenska och engelska. Prova direkt som gäst (12 meddelanden/dag) eller logga in gratis (80/dag) för användarstyrt minne, historik och bildanalys."
-            : "You've seen what's possible — now make something of your own. Write, plan, summarize, or analyze in Swedish and English. Try free right now as a guest (12 messages/day) or sign in free (80/day) for user-controlled memory, history, and image analysis."}</p>
+            ? `Du har sett vad som är möjligt — gör nu något eget. Skriv, planera, sammanfatta eller analysera på svenska och engelska. Prova direkt som gäst (${LIMITS.guest.messagesPerDay} meddelanden/dag) eller logga in gratis (${LIMITS.member.messagesPerDay}/dag) för minne du kan styra, historik och bildanalys.`
+            : `You've seen what's possible — now make something of your own. Write, plan, summarize, or analyze in Swedish and English. Try free right now as a guest (${LIMITS.guest.messagesPerDay} messages/day) or sign in free (${LIMITS.member.messagesPerDay}/day) for memory you control, history, and image analysis.`}</p>
         </div>
 
         <PlaygroundArrival expanded={expanded} overlay={voiceOpen||showShortcuts||!!lightbox||mobileDrawer||memoryOpen}>
@@ -2149,7 +2208,7 @@ export default function AIPlayground() {
                     onClick={() => setShowShortcuts(true)}
                     aria-label={lang === "sv" ? "Tangentbordsgenvägar" : "Keyboard shortcuts"}
                     className="hidden sm:inline-flex p-2 rounded-lg border border-white/[0.06] text-muted hover:text-white"
-                    title={lang === "sv" ? "Genvägar · ⌘K" : "Shortcuts · ⌘K"}
+                    title={lang === "sv" ? "Genvägar · ⌘/" : "Shortcuts · ⌘/"}
                   >
                     <Command className="w-4 h-4" />
                   </button>
@@ -2256,7 +2315,7 @@ export default function AIPlayground() {
                       (lang === "sv" ? "Välj läge ovan" : "Pick a mode above")}
                   </span>
                   <span className="ml-auto font-mono text-muted/40 hidden sm:inline">
-                    {lang === "sv" ? "? för genvägar · ⌘K meny" : "? for shortcuts · ⌘K menu"}
+                    {lang === "sv" ? "⌘/ genvägar · ⌘K meny" : "⌘/ shortcuts · ⌘K menu"}
                   </span>
                 </div>
               </div>
@@ -2453,7 +2512,7 @@ export default function AIPlayground() {
                         <button
                           type="button"
                           onClick={() => { setEditingId(msg.id); setEditText(msg.content); }}
-                          className="mt-1 text-[10px] text-muted/60 hover:text-accent-cyan"
+                          className="pg-msg-tool mt-1 text-[10px] text-muted/60 hover:text-accent-cyan"
                         >
                           {lang === "sv" ? "Redigera" : "Edit"}
                         </button>
@@ -2467,7 +2526,7 @@ export default function AIPlayground() {
                             className="w-full rounded-xl border border-accent-cyan/30 bg-black/40 p-3 text-sm text-white outline-none"
                           />
                           <div className="flex justify-end gap-2">
-                            <button type="button" onClick={() => setEditingId(null)} className="px-3 py-1.5 text-xs text-muted hover:text-white">
+                            <button type="button" onClick={() => setEditingId(null)} className="pg-msg-tool px-3 py-1.5 text-xs text-muted hover:text-white">
                               {lang === "sv" ? "Avbryt" : "Cancel"}
                             </button>
                             <button
@@ -2479,7 +2538,7 @@ export default function AIPlayground() {
                                 setEditingId(null);
                                 void runPrompt(editText.trim(), { base: messages.slice(0, idx) });
                               }}
-                              className="rounded-lg bg-accent-cyan px-3 py-1.5 text-xs font-semibold text-[#020205]"
+                              className="pg-msg-tool rounded-lg bg-accent-cyan px-3 py-1.5 text-xs font-semibold text-[#020205]"
                             >
                               {lang === "sv" ? "Skicka om" : "Resend"}
                             </button>
@@ -2501,7 +2560,7 @@ export default function AIPlayground() {
                             if (f.gen) void runImageGen(f.text, false, base, retryMessageId);
                             else void runPrompt(f.text, { image: f.image, base, retryMessageId });
                           }}
-                          className="inline-flex items-center gap-1.5 text-[11px] text-accent-cyan hover:text-white"
+                          className="pg-msg-tool inline-flex items-center gap-1.5 text-[11px] text-accent-cyan hover:text-white"
                         >
                           <RefreshCw className="w-3 h-3" />
                           {lang === "sv" ? "Försök igen" : "Retry"}
@@ -2509,12 +2568,12 @@ export default function AIPlayground() {
                       )}
 
                       {msg.role === "assistant" && !msg.error && !dualPick[msg.id] && (
-                        <div className="flex flex-wrap gap-1.5 opacity-80 hover:opacity-100 transition-opacity">
+                        <div className="pg-msg-tools flex flex-wrap gap-1.5 opacity-80 hover:opacity-100 transition-opacity">
                           {isWorkspaceWorthy(msg.content) && (
                             <button
                               type="button"
                               onClick={() => openWorkspace(msg.id, msg.content)}
-                              className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-lg border border-accent-cyan/25 bg-accent-cyan/10 text-accent-cyan hover:bg-accent-cyan/15"
+                              className="pg-msg-tool inline-flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-lg border border-accent-cyan/25 bg-accent-cyan/10 text-accent-cyan hover:bg-accent-cyan/15"
                             >
                               <PanelRight className="w-3 h-3" />
                               {lang === "sv" ? "Workspace" : "Workspace"}
@@ -2530,7 +2589,7 @@ export default function AIPlayground() {
                                 showToast("err", "Copy failed");
                               }
                             }}
-                            className="inline-flex items-center gap-1 text-[10px] text-muted hover:text-white px-1.5 py-1"
+                            className="pg-msg-tool inline-flex items-center gap-1 text-[10px] text-muted hover:text-white px-1.5 py-1"
                           >
                             <Copy className="w-3 h-3" />
                             {lang === "sv" ? "Kopiera" : "Copy"}
@@ -2549,7 +2608,7 @@ export default function AIPlayground() {
                               if (userIdx < 0 || messages[userIdx].imageUrl) return;
                               void runPrompt(messages[userIdx].content, { base: messages.slice(0, userIdx) });
                             }}
-                            className="inline-flex items-center gap-1 text-[10px] text-muted hover:text-white px-1.5 py-1"
+                            className="pg-msg-tool inline-flex items-center gap-1 text-[10px] text-muted hover:text-white px-1.5 py-1"
                           >
                             <RefreshCw className="w-3 h-3" />
                             {lang === "sv" ? "Generera om" : "Regenerate"}
@@ -2566,7 +2625,7 @@ export default function AIPlayground() {
                               }
                               void runPrompt(`${instruction}\n\n---\n${msg.content}`, { image: null });
                             }}
-                            className="inline-flex items-center gap-1 text-[10px] text-muted hover:text-white px-1.5 py-1"
+                            className="pg-msg-tool inline-flex items-center gap-1 text-[10px] text-muted hover:text-white px-1.5 py-1"
                           >
                             <Sparkles className="w-3 h-3" />
                             {lang === "sv" ? "Fortsätt" : "Continue"}
@@ -2589,7 +2648,7 @@ export default function AIPlayground() {
                                 /* user cancelled or clipboard error */
                               }
                             }}
-                            className="inline-flex items-center gap-1 text-[10px] text-muted hover:text-white px-1.5 py-1"
+                            className="pg-msg-tool inline-flex items-center gap-1 text-[10px] text-muted hover:text-white px-1.5 py-1"
                           >
                             <Share2 className="w-3 h-3" />
                             {lang === "sv" ? "Dela" : "Share"}
@@ -2598,15 +2657,8 @@ export default function AIPlayground() {
                             type="button"
                             aria-label={lang === "sv" ? "Bra svar" : "Helpful reply"}
                             aria-pressed={feedback[msg.id] === "up"}
-                            onClick={() => {
-                              setFeedback((f) => {
-                                const next = { ...f, [msg.id]: "up" as const };
-                                try { localStorage.setItem("budai_msg_feedback", JSON.stringify(next)); } catch { /* ignore */ }
-                                return next;
-                              });
-                              showToast("ok", lang === "sv" ? "Tack — sparat lokalt" : "Thanks — saved locally");
-                            }}
-                            className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-1 ${
+                            onClick={() => rateMessage(msg.id, "up")}
+                            className={`pg-msg-tool inline-flex items-center gap-1 text-[10px] px-1.5 py-1 ${
                               feedback[msg.id] === "up" ? "text-accent-green" : "text-muted hover:text-white"
                             }`}
                             title="Good"
@@ -2617,15 +2669,8 @@ export default function AIPlayground() {
                             type="button"
                             aria-label={lang === "sv" ? "Mindre bra svar" : "Unhelpful reply"}
                             aria-pressed={feedback[msg.id] === "down"}
-                            onClick={() => {
-                              setFeedback((f) => {
-                                const next = { ...f, [msg.id]: "down" as const };
-                                try { localStorage.setItem("budai_msg_feedback", JSON.stringify(next)); } catch { /* ignore */ }
-                                return next;
-                              });
-                              showToast("ok", lang === "sv" ? "Tack — vi tar det vidare" : "Thanks — noted");
-                            }}
-                            className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-1 ${
+                            onClick={() => rateMessage(msg.id, "down")}
+                            className={`pg-msg-tool inline-flex items-center gap-1 text-[10px] px-1.5 py-1 ${
                               feedback[msg.id] === "down" ? "text-red-300" : "text-muted hover:text-white"
                             }`}
                             title="Bad"
@@ -2636,11 +2681,11 @@ export default function AIPlayground() {
                       )}
 
                       {msg.generated && msg.imageUrl && (
-                        <div className="flex flex-wrap gap-2">
+                        <div className="pg-msg-tools flex flex-wrap gap-2">
                           <a
                             href={msg.imageUrl}
                             download="budai-image.png"
-                            className="inline-flex items-center gap-1 text-[10px] text-muted hover:text-white"
+                            className="pg-msg-tool inline-flex items-center gap-1 text-[10px] text-muted hover:text-white"
                           >
                             <Download className="w-3 h-3" /> Download
                           </a>
@@ -2653,7 +2698,7 @@ export default function AIPlayground() {
                                   : `Variation of: ${messages.find((m) => m.role === "user" && m.ts <= msg.ts)?.content || "the image"}`
                               )
                             }
-                            className="inline-flex items-center gap-1 text-[10px] text-muted hover:text-white"
+                            className="pg-msg-tool inline-flex items-center gap-1 text-[10px] text-muted hover:text-white"
                           >
                             <RotateCcw className="w-3 h-3" />
                             {lang === "sv" ? "Variation" : "Variation"}
@@ -3498,7 +3543,7 @@ export default function AIPlayground() {
               </button>
               <h3 className="text-base font-semibold text-white mb-1 flex items-center gap-2">
                 <BrainCircuit className="w-5 h-5 text-accent-purple" />
-                {lang === "sv" ? "Användarstyrt minne" : "User-controlled memory"}
+                {lang === "sv" ? "Minne du kan styra" : "Memory you control"}
               </h3>
               <p className="text-xs text-muted mb-3 leading-relaxed">
                 {lang === "sv"
@@ -3529,8 +3574,8 @@ export default function AIPlayground() {
                       setMemoryOpen(false);
                       auth.openAuth(
                         lang === "sv"
-                          ? "Logga in gratis för att aktivera användarstyrt minne"
-                          : "Sign in free to enable user-controlled memory"
+                          ? "Logga in gratis för att använda minnet"
+                          : "Sign in free to use memory"
                       );
                     }}
                     className="w-full py-2.5 rounded-xl bg-accent-cyan text-[#020205] text-xs font-semibold hover:opacity-95"
@@ -3772,6 +3817,9 @@ export default function AIPlayground() {
           >
             <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowShortcuts(false)} />
             <motion.div
+              role="dialog"
+              aria-modal="true"
+              aria-label={lang === "sv" ? "Playground-genvägar" : "Playground shortcuts"}
               initial={{ opacity: 0, y: 12, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 8, scale: 0.98 }}
@@ -3788,7 +3836,8 @@ export default function AIPlayground() {
               </div>
               <ul className="space-y-2 text-[12px]">
                 {[
-                  { keys: "⌘ K", desc: lang === "sv" ? "Öppna denna palett" : "Open this palette" },
+                  { keys: "⌘ /", desc: lang === "sv" ? "Öppna denna palett" : "Open this palette" },
+                  { keys: "⌘ K", desc: lang === "sv" ? "Sidans kommandopalett" : "Site command palette" },
                   { keys: "⌘ N", desc: lang === "sv" ? "Ny chatt" : "New chat" },
                   { keys: "⌘ E", desc: lang === "sv" ? "Exportera tråd (.md)" : "Export thread (.md)" },
                   { keys: "⌘ B", desc: lang === "sv" ? "Växla Workspace" : "Toggle Workspace" },

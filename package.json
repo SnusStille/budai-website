@@ -9,6 +9,7 @@
     "lint": "next lint",
     "test": "node scripts/test-browser.mjs",
     "test:unit": "node scripts/test-browser.mjs unit.spec.ts",
+    "scan:secrets": "node scripts/scan-secrets.mjs",
     "test:e2e": "node scripts/test-browser.mjs loading-lifecycle.spec.ts arrival.spec.ts experience.spec.ts cinematic.spec.ts cinematic-mobile.spec.ts outro.spec.ts brand.spec.ts product.spec.ts",
     "typecheck": "tsc --noEmit",
     "brand:generate": "node --experimental-strip-types scripts/generate-brand.mjs",

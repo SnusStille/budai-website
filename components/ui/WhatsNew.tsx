@@ -32,7 +32,7 @@ export default function WhatsNew() {
 
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-[140] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm" onClick={() => setOpen(false)} role="dialog" aria-label="What's new">
+    <div id="whats-new" className="fixed inset-0 z-[140] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm" onClick={() => setOpen(false)} role="dialog" aria-label="What's new">
       <div className="max-h-[80vh] w-full max-w-md overflow-y-auto rounded-2xl border border-white/10 bg-[#07070e] p-6" onClick={(e) => e.stopPropagation()}>
         <div className="mb-5 flex items-center justify-between">
           <h2 className="text-xl font-semibold text-white">{sv ? "Vad är nytt" : "What's new"}</h2>

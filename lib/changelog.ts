@@ -1,4 +1,5 @@
 export type Entry = { date: string; title: string; titleSv: string; items: string[]; itemsSv: string[] };
+import { LIMITS } from "@/lib/limits";
 
 export const CHANGELOG: Entry[] = [
   {
@@ -28,15 +29,15 @@ export const CHANGELOG: Entry[] = [
     titleSv: "Playground & kärnförmågor",
     items: [
       "Live streaming replies in Swedish and English with Writer, Analyst, Coder, and Translator personas",
-      "User-controlled memory, thread history, and image analysis for free accounts (80 messages/day)",
-      "Open guest preview (12 messages/day) with zero setup required",
+      `Memory you control, thread history, and image analysis for free accounts (${LIMITS.member.messagesPerDay} messages/day)`,
+      `Open guest preview (${LIMITS.guest.messagesPerDay} messages/day) with zero setup required`,
       "Voice dictation, live voice mode, reusable {{field}} routines, and Workspace side panel",
       "Export conversations to Markdown, PDF, Word, or read-only share links",
     ],
     itemsSv: [
       "Strömmande svar live på svenska och engelska med Skribent, Analytiker, Kodare och Översättare",
-      "Användarstyrt minne, trådhistorik och bildanalys med gratis konto (80 meddelanden/dag)",
-      "Öppen gästförhandsvisning (12 meddelanden/dag) utan registrering",
+      `Minne du kan styra, trådhistorik och bildanalys med gratis konto (${LIMITS.member.messagesPerDay} meddelanden/dag)`,
+      `Öppen gästförhandsvisning (${LIMITS.guest.messagesPerDay} meddelanden/dag) utan registrering`,
       "Röstdiktering, röstläge, återanvändbara {{fält}}-rutiner och Workspace-sidopanel",
       "Exportera samtal till Markdown, PDF, Word eller skrivskyddade delningslänkar",
     ],

@@ -51,7 +51,7 @@ test("real Playground UI sends persona/language/history and consumes progressive
   await expect(page.locator("#playground").getByText("A calmer Swedish workday.", { exact: true })).toBeVisible();
   await expect(page.locator("#playground").getByRole("button", { name: "Action plan", exact: true })).toBeVisible();
   await page.locator("#playground").getByRole("button", { name: /Memory\s+Account/i }).click();
-  const memHeading = page.locator("#playground").getByRole("heading", { name: "User-controlled memory" });
+  const memHeading = page.locator("#playground").getByRole("heading", { name: "Memory you control" });
   await expect(memHeading).toBeVisible();
   await page.locator("#playground").getByRole("button", { name: "Close memory", exact: true }).click();
   await expect(memHeading).toHaveCount(0);
@@ -146,6 +146,7 @@ test("waitlist keeps native validation, company details, referral controls, and 
   await form.getByRole("button", { name: "Have an invite code?", exact: true }).click();
   await form.getByRole("textbox", { name: "Invite code", exact: true }).fill("qa-referral");
   await email.fill("browser-qa@example.invalid");
+  await form.getByRole("checkbox", { name: "Consent to storage" }).check();
   await form.getByRole("button", { name: "Join the waitlist", exact: true }).click();
   await expect(form.getByRole("alert")).toHaveText(/not accepting signups|Could not save right now/);
   await expect(page.getByText("You're in!", { exact: true })).toHaveCount(0);
@@ -248,4 +249,266 @@ test("voice-mode permission failure stays closable above navigation and never st
   const close=dialog.getByRole("button",{name:"Close",exact:true});
   expect(await close.evaluate(el=>{const r=el.getBoundingClientRect();return el.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2));})).toBe(true);
   await close.click();await expect(dialog).toHaveCount(0);await expect(page.getByRole("textbox",{name:"Message BudAI",exact:true})).toBeEnabled();
+});
+
+test("cookie choice is the single consent source and can be changed later", async ({ page }) => {
+  // beforeEach pre-seeds a declined choice; this case starts from a fresh visitor.
+  await page.addInitScript(() => localStorage.removeItem("budai-cookies"));
+  await page.goto("/");
+  const banner = page.getByRole("dialog", { name: /cookies/i });
+  await expect(banner).toBeVisible({ timeout: 10_000 });
+  await banner.getByRole("button", { name: "Decline", exact: true }).click();
+  expect(await page.evaluate(() => localStorage.getItem("budai-cookies"))).toBe("declined");
+  await expect(banner).toHaveCount(0);
+
+  const settings = page.getByRole("button", { name: "Cookie settings", exact: true });
+  await expect(settings).toBeVisible();
+  // Fixed UI (back-to-top etc.) can cover the footer row; trigger the real button.
+  await settings.evaluate((el) => (el as HTMLButtonElement).click());
+  await expect(banner).toBeVisible();
+  await banner.getByRole("button", { name: "Accept", exact: true }).click();
+  expect(await page.evaluate(() => localStorage.getItem("budai-cookies"))).toBe("accepted");
+});
+
+
+test("plans and waitlist make no discount, price or launch-date promise", async ({ page }) => {
+  await page.goto("/#waitlist");
+  const waitlist = page.locator("#waitlist");
+  await expect(waitlist).toBeVisible();
+  const text = (await waitlist.innerText()).replace(/\s+/g, " ");
+  expect(text).not.toMatch(/10\s?%|BUDAI-EARLY-10|founding|discount|rabatt|grundare/i);
+  expect(text).toMatch(/pricing has not been set|paid plans are ready|Free during the developer preview/i);
+
+  await page.locator("#capabilities").scrollIntoViewIfNeeded();
+  const plans = (await page.locator("#capabilities").innerText()).replace(/\s+/g, " ");
+  expect(plans).not.toMatch(/10\s?%|founding members|lock 10|BUDAI-EARLY-10/i);
+  expect(plans).toMatch(/pricing has not been set yet/i);
+});
+
+
+test("legal pages disclose automatic memory and its controls in both languages", async ({ page }) => {
+  await page.goto("/legal/privacy");
+  await expect(page.getByRole("heading", { name: "Privacy Policy" })).toBeVisible();
+  await expect(page.getByText(/memory is on by default/i)).toBeVisible();
+  await expect(page.getByText(/Playground → Memory/)).toBeVisible();
+  await page.goto("/legal/gdpr");
+  await expect(page.getByText(/Automatic long-term memory is part of the account service/i)).toBeVisible();
+
+  await page.addInitScript(() => localStorage.setItem("budai-lang", "sv"));
+  await page.goto("/legal/privacy");
+  await expect(page.getByRole("heading", { name: "Integritetspolicy" })).toBeVisible();
+  await expect(page.getByText(/minnet är på som standard/i)).toBeVisible();
+  await expect(page.getByText(/Playground → Minne/)).toBeVisible();
+  await page.goto("/legal/gdpr");
+  await expect(page.getByText(/Automatiskt långtidsminne ingår i kontotjänsten/i)).toBeVisible();
+});
+
+
+test("admin auth uses a server-set session cookie and /admin stays out of indexes", async ({ request }) => {
+  const admin = await request.get("/admin");
+  expect(admin.status()).toBe(200);
+  expect((admin.headers()["x-robots-tag"] || "").toLowerCase()).toContain("noindex");
+  expect(await admin.text()).toMatch(/name="robots"[^>]*content="[^"]*noindex/i);
+
+  const login = await request.post("/api/admin/login", { data: { password: "not-the-admin-password" } });
+  expect([401, 503]).toContain(login.status());
+  // A failed login never issues a session cookie, and no password is echoed back.
+  expect(login.headers()["set-cookie"]).toBeUndefined();
+  expect(await login.text()).not.toContain("not-the-admin-password");
+
+  // The old plaintext header is no longer an auth path.
+  const legacy = await request.get("/api/admin/status", { headers: { "x-admin-key": "anything" } });
+  expect([401, 503]).toContain(legacy.status());
+});
+
+
+test("waitlist API validates server-side, requires consent and quietly drops bots", async ({ request }) => {
+  const base = { email: "qa-signup@example.invalid", name: "QA", consent: true, account_type: "individual" };
+  const noConsent = await request.post("/api/waitlist", { data: { ...base, consent: false } });
+  expect(noConsent.status()).toBe(400);
+  expect((await noConsent.json()).error).toBe("consent_required");
+
+  const badEmail = await request.post("/api/waitlist", { data: { ...base, email: "not-an-email" } });
+  expect(badEmail.status()).toBe(400);
+  expect((await badEmail.json()).error).toBe("invalid_email");
+
+  // A filled honeypot gets a 200 but must never reach the database.
+  const bot = await request.post("/api/waitlist", { data: { ...base, website: "https://spam.example" } });
+  expect(bot.status()).toBe(200);
+
+  const real = await request.post("/api/waitlist", { data: base });
+  // No database is configured in the browser QA environment.
+  expect([200, 503]).toContain(real.status());
+});
+
+
+test("quota writes are server-owned and the waitlist status RPC is not public", async ({ request }) => {
+  const usage = await request.post("/api/usage", { data: { kind: "messages", n: 1 } });
+  expect(usage.status()).toBe(405);
+  expect(usage.headers()["allow"]).toContain("GET");
+
+  // No proof-of-signup cookie: no enumeration, no referral code disclosure.
+  const status = await request.get("/api/waitlist/status");
+  expect(status.status()).toBe(200);
+  expect((await status.json()).status).toBeNull();
+});
+
+
+test("one keyboard owner: ⌘K opens the site palette and ⌘/ opens Playground shortcuts", async ({ page }) => {
+  await page.goto("/#playground");
+  const palette = page.getByRole("dialog", { name: "Command palette", exact: true });
+  const playgroundKeys = page.getByRole("dialog", { name: "Playground shortcuts", exact: true });
+  await expect(palette).toHaveCount(0);
+  await expect(playgroundKeys).toHaveCount(0);
+
+  await page.keyboard.press("Control+k");
+  await expect(palette).toBeVisible();
+  await expect(playgroundKeys).toHaveCount(0);
+  await page.keyboard.press("Escape");
+  await expect(palette).toHaveCount(0);
+
+  await page.keyboard.press("Control+/");
+  await expect(playgroundKeys).toBeVisible();
+  await expect(palette).toHaveCount(0);
+});
+
+
+test("footer labels are honest and the What's new link resolves to a real element", async ({ page }) => {
+  await page.goto("/");
+  const footer = page.locator("#continuation");
+  await expect(footer.getByRole("link", { name: "Plans", exact: true })).toBeVisible();
+  await expect(footer.getByRole("link", { name: "Pricing", exact: true })).toHaveCount(0);
+
+  await footer.getByRole("link", { name: "What's new", exact: true }).click();
+  const dialog = page.getByRole("dialog", { name: "What's new", exact: true });
+  await expect(dialog).toBeVisible();
+  await expect(page.locator("#whats-new")).toBeVisible();
+  // The modal intentionally cleans the hash after opening.
+  expect(new URL(page.url()).hash).toBe("");
+});
+
+test("security headers and a per-request CSP nonce let the app boot (B5)", async ({ page }) => {
+  await page.addInitScript(() => {
+    const w = window as Window & { __cspViolations?: string[] };
+    w.__cspViolations = [];
+    document.addEventListener("securitypolicyviolation", (event) => {
+      const e = event as Event & { violatedDirective?: string };
+      w.__cspViolations!.push(e.violatedDirective ?? "unknown");
+    });
+  });
+
+  const response = await page.goto("/");
+  const headers = response?.headers() ?? {};
+  expect(headers["strict-transport-security"]).toMatch(/max-age=\d+/);
+  expect(headers["x-content-type-options"]).toBe("nosniff");
+  // No X-Frame-Options: the Arena/E2B preview embeds the site in an iframe.
+  expect(headers["x-frame-options"]).toBeUndefined();
+
+  const csp = headers["content-security-policy"] ?? "";
+  expect(csp).toContain("default-src 'self'");
+  expect(csp).toContain("object-src 'none'");
+  expect(csp).toContain("base-uri 'self'");
+  const nonce = /nonce-([a-z0-9]+)/.exec(csp)?.[1];
+  expect(nonce?.length).toBeGreaterThan(8);
+
+  // Browsers deliberately hide nonce *attributes* from getAttribute(); the
+  // HTMLScriptElement.nonce property is the readable value.
+  const scriptsWithoutNonce = await page
+    .locator("script")
+    .evaluateAll(
+      (els, n) =>
+        els
+          .filter((el) => (el as HTMLScriptElement).nonce !== n)
+          .map((el) => el.outerHTML.slice(0, 120)),
+      nonce
+    );
+  expect(scriptsWithoutNonce).toEqual([]);
+
+  // The pre-hydration inline script really ran, so the policy did not block it.
+  await expect(page.locator("html")).toHaveAttribute("data-budai-intro", /preparing|done/);
+  await page.waitForLoadState("domcontentloaded");
+  const violations = await page.evaluate(
+    () => (window as Window & { __cspViolations?: string[] }).__cspViolations ?? []
+  );
+  expect(violations).toEqual([]);
+});
+
+test("feedback API rejects malformed ratings before touching storage (D3)", async ({ request }) => {
+  expect((await request.post("/api/feedback", { data: { kind: "rating", message: "hi" } })).status()).toBe(400);
+  expect((await request.post("/api/feedback", { data: { kind: "rating", message: "Valid message", rating: "sideways" } })).status()).toBe(400);
+  expect([200, 500, 503]).toContain(
+    (await request.post("/api/feedback", { data: { kind: "rating", message: "Valid message", rating: "up" } })).status()
+  );
+});
+
+test("message ratings are consent-gated, sent with metadata and described honestly (D3)", async ({ page }) => {
+  const ratings: Record<string, unknown>[] = [];
+  await page.route("**/api/feedback", async (route) => {
+    ratings.push(route.request().postDataJSON() as Record<string, unknown>);
+    await route.fulfill({ contentType: "application/json", body: JSON.stringify({ ok: true }) });
+  });
+
+  await page.goto("/#playground");
+  await page.evaluate(() => {
+    const original = fetch.bind(window);
+    window.fetch = async (resource, init) => {
+      if (!String(resource).endsWith("/api/playground")) return original(resource, init);
+      return new Response('A helpful answer.\u0000{"memory":null}', { headers: { "Content-Type": "text/plain" } });
+    };
+  });
+  await page.getByRole("textbox", { name: "Message BudAI", exact: true }).fill("Give me a rating target.");
+  await page.getByRole("button", { name: "Send message", exact: true }).click();
+  await expect(page.locator("#playground").getByText("A helpful answer.", { exact: true })).toBeVisible();
+
+  // Cookies are declined by default in this suite: the rating stays local and says so.
+  await page.getByRole("button", { name: "Helpful reply", exact: true }).click();
+  await expect(page.getByText("Thanks — saved locally, nothing sent", { exact: true })).toBeVisible();
+  expect(ratings).toHaveLength(0);
+  expect(await page.evaluate(() => localStorage.getItem("budai_msg_feedback"))).toContain("up");
+
+  // With consent the same control submits structured, bounded metadata.
+  await page.evaluate(() => localStorage.setItem("budai-cookies", "accepted"));
+  await page.getByRole("button", { name: "Unhelpful reply", exact: true }).click();
+  await expect(page.getByText("Thanks — feedback sent", { exact: true })).toBeVisible();
+  expect(ratings).toHaveLength(1);
+  expect(ratings[0]).toMatchObject({
+    kind: "rating", rating: "down", model: "quality", lang: "en", page: "/playground",
+  });
+  expect(typeof ratings[0].messageId).toBe("string");
+  expect(String(ratings[0].messageId).length).toBeGreaterThan(0);
+});
+
+test("mobile playground tracks the visible viewport and gives message tools 44px targets (D12)", async ({ page }) => {
+  await page.goto("/#playground");
+  // React sets the visualViewport state after hydration.
+  await expect(page.locator("html")).toHaveAttribute("data-pg-keyboard", /open|closed/);
+  const state = await page.evaluate(() => ({
+    keyboard: document.documentElement.dataset.pgKeyboard,
+    visualHeight: getComputedStyle(document.documentElement).getPropertyValue("--pg-visual-height").trim(),
+    overlap: getComputedStyle(document.documentElement).getPropertyValue("--pg-keyboard-overlap").trim(),
+  }));
+  expect(state.keyboard).toBe("closed");
+  expect(state.visualHeight).toMatch(/^\d+px$/);
+  expect(state.overlap).toMatch(/^\d+px$/);
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.evaluate(() => {
+    const original = fetch.bind(window);
+    window.fetch = async (resource, init) => {
+      if (!String(resource).endsWith("/api/playground")) return original(resource, init);
+      return new Response('Mobile test answer.\u0000{"memory":null}', { headers: { "Content-Type": "text/plain" } });
+    };
+  });
+  await page.getByRole("textbox", { name: "Message BudAI", exact: true }).fill("Touch target check.");
+  await page.getByRole("button", { name: "Send message", exact: true }).click();
+  await expect(page.locator("#playground").getByText("Mobile test answer.", { exact: true })).toBeVisible();
+
+  const sizes = await page.locator(".pg-msg-tool").evaluateAll((els) =>
+    els.map((el) => ({ w: el.getBoundingClientRect().width, h: el.getBoundingClientRect().height }))
+  );
+  expect(sizes.length).toBeGreaterThan(3);
+  for (const size of sizes) {
+    expect(size.w).toBeGreaterThanOrEqual(44);
+    expect(size.h).toBeGreaterThanOrEqual(44);
+  }
 });

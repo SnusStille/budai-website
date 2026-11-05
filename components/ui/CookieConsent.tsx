@@ -4,30 +4,37 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Cookie, X } from "lucide-react";
 import { useLang } from "./LanguageContext";
+import {
+  CONSENT_SETTINGS_EVENT,
+  readConsent,
+  writeConsent,
+  type ConsentChoice,
+} from "@/lib/consent";
 
 /**
  * Compact bottom cookie bar — never a full-screen overlay.
+ * The choice is written to the shared consent store, which also decides
+ * whether Vercel Analytics is allowed to load.
  */
 export default function CookieConsent() {
   const [visible, setVisible] = useState(false);
   const { t, lang } = useLang();
 
   useEffect(() => {
-    try {
-      if (localStorage.getItem("budai-cookies")) return;
-    } catch {
-      return;
-    }
-    const timer = setTimeout(() => setVisible(true), 2200);
-    return () => clearTimeout(timer);
+    if (readConsent()) return;
+    const timer = window.setTimeout(() => setVisible(true), 2200);
+    return () => window.clearTimeout(timer);
   }, []);
 
-  const save = (v: string) => {
-    try {
-      localStorage.setItem("budai-cookies", v);
-    } catch {
-      /* ignore */
-    }
+  // "Cookie settings" in the footer lets a visitor change or withdraw consent.
+  useEffect(() => {
+    const reopen = () => setVisible(true);
+    window.addEventListener(CONSENT_SETTINGS_EVENT, reopen);
+    return () => window.removeEventListener(CONSENT_SETTINGS_EVENT, reopen);
+  }, []);
+
+  const save = (choice: ConsentChoice) => {
+    writeConsent(choice);
     setVisible(false);
   };
 

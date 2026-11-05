@@ -58,7 +58,7 @@ export default function AdminPage() {
   const [events, setEvents] = useState<AdminEvent[]>([]);
   const [inviteSubject, setInviteSubject] = useState("You're in — BudAI early access");
   const [inviteBody, setInviteBody] = useState(
-    ["Hi {name},", "", "Welcome to BudAI early access. Your code: BUDAI-EARLY-10 (10% off at launch).", "", "— Stilledev"].join("\n")
+    ["Hi {name},", "", "Welcome to the BudAI waitlist. We'll be in touch when paid plans are ready.", "", "— Stilledev"].join("\n")
   );
   const [inviteCopied, setInviteCopied] = useState(false);
   const [platform, setPlatform] = useState<{
@@ -154,13 +154,18 @@ export default function AdminPage() {
         setError(true);
         return;
       }
+      if (res.status === 429) {
+        setHint("Too many attempts. Try again in 15 minutes.");
+        setError(true);
+        return;
+      }
       if (!res.ok) {
         setHint("Wrong password.");
         setError(true);
         return;
       }
+      // The server sets an httpOnly session cookie; the password never leaves this request.
       sessionStorage.setItem("budai_admin_auth", "true");
-      sessionStorage.setItem("budai_admin_key", password.trim());
       setHint("");
       setError(false);
       setAuthenticated(true);
@@ -249,18 +254,13 @@ export default function AdminPage() {
   };
 
 
-  const adminKey = () =>
-    (typeof window !== "undefined" && sessionStorage.getItem("budai_admin_key")) ||
-    password ||
-    "";
-
   const loadChats = async (q = "") => {
     setChatsLoading(true);
     setChatsError(null);
     try {
       const res = await fetch(
         `/api/admin/conversations?limit=50${q ? `&q=${encodeURIComponent(q)}` : ""}`,
-        { headers: { "x-admin-key": adminKey() }, cache: "no-store" }
+        { cache: "no-store", credentials: "same-origin" }
       );
       const data = await res.json();
       if (!res.ok) {
@@ -280,7 +280,7 @@ export default function AdminPage() {
   const openChat = async (id: string) => {
     try {
       const res = await fetch(`/api/admin/conversations?id=${encodeURIComponent(id)}`, {
-        headers: { "x-admin-key": adminKey() },
+        credentials: "same-origin",
         cache: "no-store",
       });
       const data = await res.json();
@@ -460,9 +460,9 @@ export default function AdminPage() {
               </button>
               <button
                 type="button"
-                onClick={() => {
+                onClick={async () => {
+                  await fetch("/api/admin/logout", { method: "POST", credentials: "same-origin" }).catch(() => {});
                   sessionStorage.removeItem("budai_admin_auth");
-                  sessionStorage.removeItem("budai_admin_key");
                   setAuthenticated(false);
                   setPassword("");
                 }}
@@ -867,7 +867,7 @@ export default function AdminPage() {
               <h3 className="text-sm font-semibold text-white">Ops checklist</h3>
               <ul className="text-xs text-muted space-y-2 list-disc pl-4 leading-relaxed">
                 <li>Run <code className="font-mono text-white/70">supabase/schema.sql</code> + required <code className="font-mono text-white/70">MIGRATION_v4_product.sql</code></li>
-                <li>Discount default: <code className="font-mono text-accent-green/80">BUDAI-EARLY-10</code></li>
+                <li>No automatic discount codes — no offer is promised</li>
                 <li>Playground needs <code className="font-mono text-white/70">ANTHROPIC_API_KEY</code></li>
                 <li>Tighten RLS before scale — service role for admin mutations</li>
                 <li>Optional: Vercel password protect <code className="font-mono">/admin</code></li>

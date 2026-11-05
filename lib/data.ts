@@ -26,7 +26,7 @@ const mockUsers: WaitlistUser[] = [
     interest: "Automation",
     created_at: "2026-07-20T10:00:00Z",
     access_status: "approved",
-    discount_code: "BUDAI-EARLY-10",
+    discount_code: null,
     notes: null,
     source: "landing",
     priority: 80,
@@ -44,7 +44,7 @@ const mockUsers: WaitlistUser[] = [
     interest: "Data Analysis",
     created_at: "2026-07-21T14:30:00Z",
     access_status: "pending",
-    discount_code: "BUDAI-EARLY-10",
+    discount_code: null,
     notes: null,
     source: "landing",
     priority: 55,
@@ -62,7 +62,7 @@ const mockUsers: WaitlistUser[] = [
     interest: "Customer Support",
     created_at: "2026-07-22T09:15:00Z",
     access_status: "pending",
-    discount_code: "BUDAI-EARLY-10",
+    discount_code: null,
     notes: null,
     source: "landing",
     priority: 40,
@@ -80,7 +80,7 @@ const mockUsers: WaitlistUser[] = [
     interest: "Workflow Optimization",
     created_at: "2026-07-23T16:45:00Z",
     access_status: "approved",
-    discount_code: "BUDAI-EARLY-10",
+    discount_code: null,
     notes: "Enterprise lead",
     source: "landing",
     priority: 95,
@@ -98,7 +98,7 @@ const mockUsers: WaitlistUser[] = [
     interest: "Document Generation",
     created_at: "2026-07-24T11:20:00Z",
     access_status: "pending",
-    discount_code: "BUDAI-EARLY-10",
+    discount_code: null,
     notes: null,
     source: "landing",
     priority: 35,
@@ -183,10 +183,10 @@ function normalizeUser(row: Record<string, unknown>): WaitlistUser {
 }
 
 async function adminApi(method: string, body?: unknown, query = "") {
-  const key = typeof window !== "undefined" ? sessionStorage.getItem("budai_admin_key") || "" : "";
   const res = await fetch(`/api/admin/waitlist${query}`, {
     method,
-    headers: { "Content-Type": "application/json", "x-admin-key": key },
+    credentials: "same-origin",
+    headers: { "Content-Type": "application/json" },
     body: body ? JSON.stringify(body) : undefined,
     cache: "no-store",
   });
@@ -215,46 +215,33 @@ export async function getWaitlistUsers(): Promise<WaitlistUser[]> {
   }
 }
 
+/**
+ * The write now goes through /api/waitlist so validation, consent, honeypot and
+ * throttling are enforced server-side. `discount_code`/`priority` are ignored by
+ * the server; it derives its own values.
+ */
 export async function addWaitlistUser(
-  user: Omit<WaitlistUser, "id" | "created_at" | "access_status">
+  user: Omit<WaitlistUser, "id" | "created_at" | "access_status">,
+  guard: { consent: boolean; website?: string; referral?: string } = { consent: false }
 ): Promise<WaitlistUser> {
-  const payload = {
-    ...user,
-    discount_code: user.discount_code || "BUDAI-EARLY-10",
-    source: user.source || "landing",
-    priority: user.priority ?? 50,
-    tags: user.tags ?? [],
-  };
-
-  const supabase = getSupabase();
-  if (!supabase) {
-    if (process.env.NODE_ENV !== "development") throw new Error("Waitlist is not configured");
-    const newUser: WaitlistUser = {
-      id: String(Date.now()),
-      ...payload,
-      created_at: new Date().toISOString(),
-      access_status: "pending",
-      last_contacted_at: null,
-    };
-    mockUsers.unshift(newUser);
-    return new Promise((resolve) => setTimeout(() => resolve(newUser), 500));
-  }
-
-  const { error } = await supabase
-    .from("waitlist_users")
-    .insert([{ ...payload, access_status: "pending" }]);
-
-  if (error) {
-    console.error("Supabase error:", error);
-    throw error;
-  }
-
-  return normalizeUser({
-    ...payload,
-    id: "",
-    created_at: new Date().toISOString(),
-    access_status: "pending",
-  } as Record<string, unknown>);
+  const res = await fetch("/api/waitlist", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      name: user.name,
+      email: user.email,
+      account_type: user.account_type,
+      company: user.company,
+      employees: user.employees,
+      interest: user.interest,
+      consent: guard.consent,
+      website: guard.website || "",
+      referral: guard.referral || "",
+    }),
+  });
+  const data = (await res.json().catch(() => ({}))) as { error?: string };
+  if (!res.ok) throw new Error(data.error || (res.status === 503 ? "not configured" : "could not save"));
+  return { ...user, id: "", created_at: new Date().toISOString(), access_status: "pending" };
 }
 
 export async function updateUserStatus(id: string, status: WaitlistUser["access_status"]): Promise<void> {
@@ -357,13 +344,18 @@ export function getWaitlistStats(users: WaitlistUser[]) {
   };
 }
 
-export async function getWaitlistStatus(
-  email: string
-): Promise<{ position: number; total: number; code: string | null; referrals: number } | null> {
-  const supabase = getSupabase();
-  if (!supabase) return null;
-  const { data, error } = await supabase.rpc("waitlist_status", { p_email: email });
-  const row = Array.isArray(data) ? data[0] : data;
-  if (error || !row) return null;
-  return { position: row.pos as number, total: row.total as number, code: (row.code as string) ?? null, referrals: (row.referrals as number) ?? 0 };
+/**
+ * The SECURITY DEFINER RPC is no longer publicly executable. The server route
+ * verifies a signed proof-of-signup cookie before doing the lookup.
+ */
+export async function getWaitlistStatus(): Promise<{ position: number; total: number; code: string | null; referrals: number } | null> {
+  if (typeof window === "undefined") return null;
+  try {
+    const res = await fetch("/api/waitlist/status", { cache: "no-store", credentials: "same-origin" });
+    if (!res.ok) return null;
+    const json = (await res.json()) as { status?: { position: number; total: number; code: string | null; referrals: number } | null };
+    return json.status ?? null;
+  } catch {
+    return null;
+  }
 }

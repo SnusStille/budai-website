@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { ArrowRight, Check, Copy, Building2, User, Gift, Zap, MessageCircle, Mail } from "lucide-react";
+import { ArrowRight, Check, Building2, User, Zap, MessageCircle, Mail } from "lucide-react";
 import BudAILogo from "@/components/ui/BudAILogo";
 import ScrollReveal from "@/components/ui/ScrollReveal";
 import Confetti from "@/components/ui/Confetti";
-import { addWaitlistUser, getWaitlistCount, getWaitlistStatus } from "@/lib/data";
+import { addWaitlistUser } from "@/lib/data";
 import WaitlistStatus from "@/components/sections/WaitlistStatus";
 import { useLang } from "@/components/ui/LanguageContext";
 
@@ -25,13 +25,12 @@ export default function Waitlist() {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [confetti, setConfetti] = useState(false);
-  const [count, setCount] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
+  const [consent, setConsent] = useState(false);
+  const [honeypot, setHoneypot] = useState("");
   const [referral, setReferral] = useState("");
   const [showCode, setShowCode] = useState(false);
   const [details, setDetails] = useState(false);
-  const [, setStatus] = useState<Awaited<ReturnType<typeof getWaitlistStatus>>>(null);
   const emailInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
@@ -63,22 +62,12 @@ export default function Waitlist() {
     }
   }, []);
 
-  useEffect(() => {
-    let cancelled = false;
-    getWaitlistCount()
-      .then((n) => !cancelled && setCount(n))
-      .catch(() => !cancelled && setCount(null));
-    return () => {
-      cancelled = true;
-    };
-  }, [submitted]);
-
   const set = (k: keyof typeof initialForm) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     setForm((f) => ({ ...f, [k]: e.target.value }));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (loading || !form.email.includes("@")) return;
+    if (loading || !form.email.includes("@") || !consent) return;
     setLoading(true);
     setError(null);
     try {
@@ -91,15 +80,14 @@ export default function Waitlist() {
         company: company ? form.company : null,
         industry: null,
         employees: company ? form.employees : null,
-        discount_code: "BUDAI-EARLY-10",
+        discount_code: null,
         notes: referral.trim() ? `referral:${referral.trim().slice(0, 64)}` : null,
         source: referral.trim() ? "referral" : "landing",
         priority: company ? 60 : 45,
         last_contacted_at: null,
         tags: company ? ["company"] : ["individual"],
-      });
+      }, { consent, website: honeypot, referral: referral.trim().slice(0, 64) });
       setSubmitted(true);
-      void getWaitlistStatus(form.email).then(setStatus);
       setConfetti(true);
       setTimeout(() => setConfetti(false), 4000);
     } catch (err: unknown) {
@@ -107,6 +95,12 @@ export default function Waitlist() {
       setError(
         msg.includes("duplicate") || msg.includes("unique") || msg.includes("already")
           ? sv ? "Den e-postadressen finns redan på listan." : "That email is already on the waitlist."
+          : msg.includes("consent_required")
+            ? sv ? "Godkänn lagringen av din e-postadress för att fortsätta." : "Please accept the storage consent to continue."
+          : msg.includes("invalid_email")
+            ? sv ? "Ange en giltig e-postadress." : "Please enter a valid email address."
+          : msg.includes("rate_limited")
+            ? sv ? "För många försök. Prova igen om en stund." : "Too many signups. Please try again in a while."
           : msg.includes("not configured")
             ? sv ? "Väntelistan är inte tillgänglig just nu. Försök igen senare." : "The waitlist is not accepting signups right now. Please try again later."
           : msg.includes("network") || msg.includes("fetch")
@@ -118,18 +112,7 @@ export default function Waitlist() {
     }
   };
 
-  const copyCode = async () => {
-    try {
-      await navigator.clipboard.writeText("BUDAI-EARLY-10");
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1600);
-    } catch {
-      /* ignore */
-    }
-  };
-
   const perks = [
-    { i: Gift, t: sv ? "10 % rabatt för grundare" : "10% off for founding members" },
     { i: Zap, t: sv ? "Tidig tillgång" : "Early access to features" },
     { i: MessageCircle, t: sv ? "Din feedback styr" : "Your feedback steers" },
   ];
@@ -152,15 +135,9 @@ export default function Waitlist() {
         </h3>
         <p className="mx-auto max-w-md text-sm text-muted sm:text-base">
           {sv
-            ? "Gratis under preview. Grundare låser 10 % rabatt när paketen lanseras."
-            : "Free during the preview. Founding members lock 10% off when plans launch."}
+            ? "Gratis under utvecklarförhandsvisningen. Gå med i listan så hör vi av oss när betalplanerna är redo."
+            : "Free during the developer preview. Join the list and we'll email you when paid plans are ready."}
         </p>
-        {count !== null && count > 0 && (
-          <p className="mt-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-xs text-white/70">
-            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent-green" />
-            {sv ? `${count} står redan på listan` : `${count} already on the list`}
-          </p>
-        )}
       </ScrollReveal>
 
       {!submitted ? (
@@ -190,6 +167,19 @@ export default function Waitlist() {
                 {!loading && <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />}
               </button>
             </div>
+          </div>
+
+          <div aria-hidden="true" className="absolute -left-[9999px] h-px w-px overflow-hidden">
+            <label htmlFor="budai-website-hp">Website</label>
+            <input
+              id="budai-website-hp"
+              name="website"
+              type="text"
+              tabIndex={-1}
+              autoComplete="off"
+              value={honeypot}
+              onChange={(e) => setHoneypot(e.target.value)}
+            />
           </div>
 
           {error && <p role="alert" className="mt-3 text-center text-sm text-red-300">{error}</p>}
@@ -243,7 +233,25 @@ export default function Waitlist() {
               )}
             </div>
           )}
-          <p className="mt-4 text-center text-[11px] text-muted/70">{sv ? "Ingen spam. Ingen betalning krävs." : "No spam. No payment needed."}</p>
+          <label className="mx-auto mt-4 flex max-w-md items-start justify-center gap-2.5 text-[11px] leading-relaxed text-muted">
+            <input
+              type="checkbox"
+              required
+              checked={consent}
+              onChange={(e) => setConsent(e.target.checked)}
+              aria-label={sv ? "Samtycke till lagring" : "Consent to storage"}
+              className="mt-0.5 h-4 w-4 shrink-0 accent-accent-cyan"
+            />
+            <span>
+              {sv
+                ? "Jag godkänner att Stilledev sparar min e-postadress för att kontakta mig om tillgång. "
+                : "I agree that Stilledev may store my email address to contact me about access. "}
+              <a href="/legal/privacy" target="_blank" rel="noopener noreferrer" className="underline hover:text-accent-cyan">
+                {sv ? "Integritetspolicy" : "Privacy policy"}
+              </a>.
+            </span>
+          </label>
+          <p className="mt-2 text-center text-[11px] text-muted/70">{sv ? "Ingen spam. Ingen betalning krävs." : "No spam. No payment needed."}</p>
         </form>
       ) : (
         <div role="status" aria-live="polite" className="bud-pop mx-auto mt-7 max-w-md rounded-2xl border border-white/10 bg-[#07070e]/90 p-6 shadow-[0_0_70px_-20px_rgba(124,92,255,0.6)]">
@@ -253,14 +261,6 @@ export default function Waitlist() {
           <h3 className="mb-1 text-xl font-semibold text-white">{sv ? "Du är med!" : "You're in!"}</h3>
           <p className="mb-5 text-sm text-muted">{sv ? "Vi hör av oss när det är din tur." : "We'll be in touch when it's your turn."}</p>
           <WaitlistStatus email={form.email} sv={sv} refParam="ref" />
-          <button
-            type="button"
-            onClick={copyCode}
-            className="inline-flex items-center gap-2 rounded-full border border-white/15 px-4 py-2 font-mono text-xs text-white transition-colors hover:border-accent-cyan/40"
-          >
-            {copied ? <Check className="h-3.5 w-3.5 text-accent-green" /> : <Copy className="h-3.5 w-3.5" />}
-            BUDAI-EARLY-10
-          </button>
         </div>
       )}
 

@@ -4,7 +4,7 @@ import { isAdmin } from "@/lib/adminAuth";
 
 /**
  * Stille-only admin read of product conversations.
- * Auth: x-admin-key header must match ADMIN password (same as /admin UI).
+ * Auth: httpOnly admin session cookie set by /api/admin/login (same as /admin UI).
  * Uses service role — never expose this key to the browser beyond the admin gate.
  */
 

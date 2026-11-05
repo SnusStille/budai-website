@@ -22,14 +22,16 @@ test("local development mock exercises real waitlist loading, success and copy U
   const section = page.locator("#waitlist");
   const form = section.locator("form");
   await form.getByRole("textbox",{name:"Email",exact:true}).fill("cinematic-local-qa@example.invalid");
+  await form.getByRole("checkbox",{name:"Consent to storage"}).check();
   await form.getByRole("button",{name:"Join the waitlist",exact:true}).click();
   await expect(form).toHaveAttribute("aria-busy","true");
   await expect(section.getByRole("heading",{name:"You're in!",exact:true})).toBeVisible();
   await expect(section.getByRole("status").filter({hasText:"You're in!"})).toBeVisible();
   await expect(form).toHaveCount(0);
   await expect(section.getByText("We'll be in touch when it's your turn.",{exact:true})).toBeVisible();
-  await section.getByRole("button",{name:"BUDAI-EARLY-10",exact:true}).click();
-  expect(await page.evaluate(()=>navigator.clipboard.readText())).toBe("BUDAI-EARLY-10");
+  // No discount, promo code or launch-date promise is shown after signup.
+  await expect(section.getByText(/10\s?%|BUDAI-EARLY-10|founding/i)).toHaveCount(0);
+  await expect(section.getByRole("button",{name:/BUDAI-EARLY-10/i})).toHaveCount(0);
   expect(externalWrites).toEqual([]);
   await page.screenshot({path:"test-results/waitlist-local-success.png"});
 });

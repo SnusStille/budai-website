@@ -8,7 +8,7 @@ import { getSiteUrl, PRODUCTION_URL } from "@/lib/site";
  *
  * Magic-link localhost bug: if Supabase Dashboard "Site URL" is still
  * http://localhost:3000 and redirectTo is not allowlisted, emails point at
- * localhost. Fix Site URL = https://stilledev.se (AUTH_SETUP.md).
+ * localhost. Fix Site URL = https://stilledev.se (docs/setup/AUTH_SETUP.md).
  */
 function safeAppOrigin(request: Request): string {
   const url = new URL(request.url);
