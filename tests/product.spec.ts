@@ -371,3 +371,18 @@ test("one keyboard owner: ⌘K opens the site palette and ⌘/ opens Playground 
   await expect(playgroundKeys).toBeVisible();
   await expect(palette).toHaveCount(0);
 });
+
+
+test("footer labels are honest and the What's new link resolves to a real element", async ({ page }) => {
+  await page.goto("/");
+  const footer = page.locator("#continuation");
+  await expect(footer.getByRole("link", { name: "Plans", exact: true })).toBeVisible();
+  await expect(footer.getByRole("link", { name: "Pricing", exact: true })).toHaveCount(0);
+
+  await footer.getByRole("link", { name: "What's new", exact: true }).click();
+  const dialog = page.getByRole("dialog", { name: "What's new", exact: true });
+  await expect(dialog).toBeVisible();
+  await expect(page.locator("#whats-new")).toBeVisible();
+  // The modal intentionally cleans the hash after opening.
+  expect(new URL(page.url()).hash).toBe("");
+});

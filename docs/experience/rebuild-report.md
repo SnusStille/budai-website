@@ -28,7 +28,7 @@ The cable network and six-card-around-a-core presentation are replaced by an ori
 
 Native scroll assembles the layers; pointer/keyboard focus extends and lights the corresponding module. A readable real-DOM index stays separate from the visual model. The architecture then contracts into three access gates, above the real Basic/Consumer/Business comparison. Every gate contains the same six capability bars; differing depth represents expanding access, **not invented feature restrictions**.
 
-Plan availability, features, account requirements and limits are preserved. (The founding-member discount described in older copies of this report was removed in November 2026 — see `GO_LIVE.md`.) Basic is free during preview; Consumer and Business remain coming soon. No price was invented. Mobile has a fitted model and stacked, usable index rather than unreadable orbiting labels. Reduced-motion/no-WebGL retain a static architectural drawing and the real plan content.
+Plan availability, features, account requirements and limits are preserved. (The founding-member discount described in older copies of this report was removed in November 2026 — see `docs/setup/GO_LIVE.md`.) Basic is free during preview; Consumer and Business remain coming soon. No price was invented. Mobile has a fitted model and stacked, usable index rather than unreadable orbiting labels. Reduced-motion/no-WebGL retain a static architectural drawing and the real plan content.
 
 ### 3. Builder, Next Signal and Roadmap connect
 

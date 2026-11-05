@@ -7,6 +7,7 @@ BudAI is in **developer preview**. Stability beats rewrites: change only what is
 ```bash
 npm ci
 cp .env.example .env.local   # fill in Supabase + Anthropic keys if you need them
+# Deployment / auth / admin guides: docs/setup/
 npm run dev
 ```
 
