@@ -17,6 +17,10 @@ The site works without keys: the Playground then returns an honest "not configur
 
 Never commit `.env`, provider keys or service-role credentials. `npm run scan:secrets` runs in CI over the working tree and full git history; a new finding fails the build. If CI reports a real secret, remove it from the tree **and rotate it at the provider** — rewriting history is not enough.
 
+## Local environment
+
+Copy `.env.example` to `.env.local`, fill in the required values, then run `npm run check:env` (it never prints secrets). The complete variable reference, SQL order and fail-closed behaviour are documented in [docs/setup/ENVIRONMENT.md](docs/setup/ENVIRONMENT.md). Never commit `.env.local`.
+
 ## Verification chain
 
 Run this **after every change**, and fix errors before starting the next step:

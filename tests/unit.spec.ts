@@ -344,3 +344,57 @@ test("D12 keyboard overlap is bounded and ignores browser chrome", () => {
   expect(keyboardOverlap(844, 844 - KEYBOARD_OVERLAP_THRESHOLD_PX, 0))
     .toBe(KEYBOARD_OVERLAP_THRESHOLD_PX);
 });
+
+
+test("env checker is redacted, strict only when asked, and catches anon/service-role confusion (step 18)", () => {
+  const checker = resolve(process.cwd(), "scripts/check-env.mjs");
+  const dir = mkdtempSync(join(tmpdir(), "budai-env-check-"));
+  const emptyEnv: NodeJS.ProcessEnv = {
+    PATH: process.env.PATH ?? "",
+    HOME: process.env.HOME ?? "",
+    NODE_ENV: "test",
+  };
+  // Build key-like literals at runtime so the secret scanner does not flag this file.
+  const secret = ["sk-ant-", "example-ONLY-FOR-TESTS-0123456789"].join("");
+  const longModelKey = ["sk-ant-", "example-long-enough-value-000000"].join("");
+  const run = (...args: string[]) =>
+    spawnSync(process.execPath, [checker, ...args], { cwd: dir, env: emptyEnv, encoding: "utf8" });
+
+  try {
+    const missing = run("--strict");
+    expect(missing.status).toBe(1);
+    expect(missing.stdout).toContain("SUPABASE_SERVICE_ROLE_KEY");
+    expect(run().status).toBe(0); // informational mode never fails
+
+    fsWrite(join(dir, ".env.local"), `ANTHROPIC_API_KEY=${secret}\n` + [
+      "NEXT_PUBLIC_SUPABASE_URL=https://abc123def.supabase.co",
+      "NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiJ9.long-enough-anon-value-000000",
+      "SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiJ9.long-enough-service-value-0000",
+      "ADMIN_PASSWORD=a-long-unique-local-password",
+      "NEXT_PUBLIC_SITE_URL=https://stilledev.se",
+    ].join("\n") + "\n");
+
+    const ok = run("--strict");
+    expect(ok.status).toBe(0);
+    expect(ok.stdout).toContain("5/5 required OK");
+    expect(`${ok.stdout}${ok.stderr}`).not.toContain(secret);
+    expect(`${ok.stdout}${ok.stderr}`).not.toContain("long-enough-service-value");
+
+    // A service-role key that is really the public anon key must be flagged.
+    fsWrite(join(dir, ".env.local"), [
+      "NEXT_PUBLIC_SUPABASE_URL=https://abc123def.supabase.co",
+      "NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiJ9.same-key-value-0000000000",
+      "SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiJ9.same-key-value-0000000000",
+      `ANTHROPIC_API_KEY=${longModelKey}`,
+      "ADMIN_PASSWORD=a-long-unique-local-password",
+      "NEXT_PUBLIC_SITE_URL=https://stilledev.se",
+      "BUDAI_AI_DISABLED=1",
+    ].join("\n") + "\n");
+    const confused = run();
+    expect(confused.status).toBe(0);
+    expect(confused.stdout).toContain("identical to the anon key");
+    expect(confused.stdout).toContain("currently paused");
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
