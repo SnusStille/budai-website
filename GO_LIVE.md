@@ -26,9 +26,9 @@ npm run dev
 Restricted to **Stille** only. Password never shown on the login UI.  
 Default key: see `ADMIN.md` / env (not printed on the page).
 
-## Waitlist 10%
+## Waitlist
 
-Code `BUDAI-EARLY-10` — subtle hero chip, Buddy popup, waitlist perks + success copy.
+A signup list for future paid plans. No discount, price or launch date is promised anywhere on the site or in the AI system prompt. `discount_code` stays as an optional admin-managed field, with no database default.
 
 ## Playground
 

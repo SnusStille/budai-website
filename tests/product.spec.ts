@@ -268,3 +268,18 @@ test("cookie choice is the single consent source and can be changed later", asyn
   await banner.getByRole("button", { name: "Accept", exact: true }).click();
   expect(await page.evaluate(() => localStorage.getItem("budai-cookies"))).toBe("accepted");
 });
+
+
+test("plans and waitlist make no discount, price or launch-date promise", async ({ page }) => {
+  await page.goto("/#waitlist");
+  const waitlist = page.locator("#waitlist");
+  await expect(waitlist).toBeVisible();
+  const text = (await waitlist.innerText()).replace(/\s+/g, " ");
+  expect(text).not.toMatch(/10\s?%|BUDAI-EARLY-10|founding|discount|rabatt|grundare/i);
+  expect(text).toMatch(/pricing has not been set|paid plans are ready|Free during the developer preview/i);
+
+  await page.locator("#capabilities").scrollIntoViewIfNeeded();
+  const plans = (await page.locator("#capabilities").innerText()).replace(/\s+/g, " ");
+  expect(plans).not.toMatch(/10\s?%|founding members|lock 10|BUDAI-EARLY-10/i);
+  expect(plans).toMatch(/pricing has not been set yet/i);
+});

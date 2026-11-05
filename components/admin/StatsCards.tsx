@@ -67,7 +67,7 @@ export default function StatsCards({ users }: { users: WaitlistUser[] }) {
       bg: "bg-accent-pink/10",
     },
     {
-      label: "10% codes",
+      label: "Codes issued",
       value: statsData.withDiscount,
       icon: Tag,
       color: "text-accent-green",

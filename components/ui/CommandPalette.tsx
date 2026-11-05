@@ -75,8 +75,8 @@ export default function CommandPalette() {
       },
       {
         id: "waitlist",
-        label: sv ? "Gå med på väntelistan (10 %)" : "Join the Waitlist (10% off)",
-        hint: "-10%",
+        label: sv ? "Gå med på väntelistan" : "Join the Waitlist",
+        hint: "→",
         icon: Users,
         action: () => goTo("waitlist"),
         keywords: "signup access request join väntelista early access",

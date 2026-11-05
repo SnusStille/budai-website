@@ -92,8 +92,8 @@ export default function BuddyCard({ className = "" }: { className?: string }) {
               <div className="inline-flex items-center gap-1.5 text-[10px] text-accent-green/90 font-medium">
                 <Tag className="w-3 h-3" />
                 {lang === "sv"
-                  ? "10 % early access under preview"
-                  : "10% early access during preview"}
+                  ? "Gratis under utvecklarförhandsvisningen"
+                  : "Free during the developer preview"}
               </div>
             </div>
 

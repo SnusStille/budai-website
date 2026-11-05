@@ -40,7 +40,7 @@ The entire BudAI experience now tells **one continuous visual and strategic stor
 4. **Chapter 04 — The Birth of Something Real (`Capabilities.tsx` `[data-access-architecture]` → `About.tsx` Builder)**:
    - As the user scrolls from the 6 capabilities into `Choose your way in`, the left and right 3D studio wing monitors unfold from behind the central monolith into a **3-screen panoramic pipeline** (`01 Basic Intake` → `02 Consumer Memory` → `03 Business Team Workspace`), and then hand off along the 3D trajectory into the **Builder (`#about`)** studio room where TypeScript source code (`ProgressiveEditor.tsx`) assembles live interfaces and workflows, with an interactive `"Try this prompt in Playground"` link.
 5. **Chapter 05 — Your Idea Starts Here (`AIPlayground.tsx` + `Waitlist.tsx` + `Journey.tsx`)**:
-   - The camera resolves directly into the live **BudAI Playground (`#playground`)** (`"You've seen what's possible — now make something of your own."`), backed by transparent guest (`10/day`) vs. free account (`35/day` + user-controlled memory, history, and vision) limits and the `BUDAI-EARLY-10` founding-member waitlist.
+   - The camera resolves directly into the live **BudAI Playground (`#playground`)** (`"You've seen what's possible — now make something of your own."`), backed by transparent guest (`10/day`) vs. free account (`35/day` + user-controlled memory, history, and vision) limits and the waitlist for future paid plans (no promised discount).
 
 ---
 

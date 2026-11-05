@@ -303,8 +303,8 @@ export default function Capabilities() {
         </div>
         <p className="mb-10 text-center text-sm text-muted/80 max-w-2xl mx-auto">
           {sv
-            ? "Samma kärnmodell i alla nivåer. Basic är gratis under preview (12 meddelanden/dag som gäst, 80/dag med gratis konto). Konsument och Företag är under utveckling — grundarmedlemmar på väntelistan låser 10 % rabatt vid lansering."
-            : "Same core intelligence across every tier. Basic is free during the preview (12 messages/day as guest, 80/day with a free account). Consumer and Business are in development — founding members on the waitlist lock 10% off at launch."}
+            ? "Samma kärnmodell i alla nivåer. Basic är gratis under preview (12 meddelanden/dag som gäst, 80/dag med gratis konto). Konsument och Företag är under utveckling — priserna är inte satta ännu."
+            : "Same core intelligence across every tier. Basic is free during the preview (12 messages/day as guest, 80/day with a free account). Consumer and Business are in development — pricing has not been set yet."}
         </p>
 
         <Waitlist />

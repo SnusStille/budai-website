@@ -65,7 +65,7 @@ create table if not exists public.waitlist_users (
   employees text,
   interest text not null,
   access_status waitlist_access_status not null default 'pending',
-  discount_code text default 'BUDAI-EARLY-10',
+  discount_code text,
   notes text,
   source text default 'landing',
   priority int default 50 check (priority >= 0 and priority <= 100),
@@ -82,7 +82,7 @@ alter table public.waitlist_users add column if not exists account_type waitlist
 alter table public.waitlist_users alter column company drop not null;
 alter table public.waitlist_users alter column industry drop not null;
 alter table public.waitlist_users alter column employees drop not null;
-alter table public.waitlist_users add column if not exists discount_code text default 'BUDAI-EARLY-10';
+alter table public.waitlist_users add column if not exists discount_code text;
 alter table public.waitlist_users add column if not exists notes text;
 alter table public.waitlist_users add column if not exists source text default 'landing';
 alter table public.waitlist_users add column if not exists updated_at timestamptz not null default now();

@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { ArrowRight, Check, Copy, Building2, User, Gift, Zap, MessageCircle, Mail } from "lucide-react";
+import { ArrowRight, Check, Building2, User, Zap, MessageCircle, Mail } from "lucide-react";
 import BudAILogo from "@/components/ui/BudAILogo";
 import ScrollReveal from "@/components/ui/ScrollReveal";
 import Confetti from "@/components/ui/Confetti";
-import { addWaitlistUser, getWaitlistCount, getWaitlistStatus } from "@/lib/data";
+import { addWaitlistUser, getWaitlistStatus } from "@/lib/data";
 import WaitlistStatus from "@/components/sections/WaitlistStatus";
 import { useLang } from "@/components/ui/LanguageContext";
 
@@ -25,9 +25,7 @@ export default function Waitlist() {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [confetti, setConfetti] = useState(false);
-  const [count, setCount] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
   const [referral, setReferral] = useState("");
   const [showCode, setShowCode] = useState(false);
   const [details, setDetails] = useState(false);
@@ -63,16 +61,6 @@ export default function Waitlist() {
     }
   }, []);
 
-  useEffect(() => {
-    let cancelled = false;
-    getWaitlistCount()
-      .then((n) => !cancelled && setCount(n))
-      .catch(() => !cancelled && setCount(null));
-    return () => {
-      cancelled = true;
-    };
-  }, [submitted]);
-
   const set = (k: keyof typeof initialForm) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     setForm((f) => ({ ...f, [k]: e.target.value }));
 
@@ -91,7 +79,7 @@ export default function Waitlist() {
         company: company ? form.company : null,
         industry: null,
         employees: company ? form.employees : null,
-        discount_code: "BUDAI-EARLY-10",
+        discount_code: null,
         notes: referral.trim() ? `referral:${referral.trim().slice(0, 64)}` : null,
         source: referral.trim() ? "referral" : "landing",
         priority: company ? 60 : 45,
@@ -118,18 +106,7 @@ export default function Waitlist() {
     }
   };
 
-  const copyCode = async () => {
-    try {
-      await navigator.clipboard.writeText("BUDAI-EARLY-10");
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1600);
-    } catch {
-      /* ignore */
-    }
-  };
-
   const perks = [
-    { i: Gift, t: sv ? "10 % rabatt för grundare" : "10% off for founding members" },
     { i: Zap, t: sv ? "Tidig tillgång" : "Early access to features" },
     { i: MessageCircle, t: sv ? "Din feedback styr" : "Your feedback steers" },
   ];
@@ -152,15 +129,9 @@ export default function Waitlist() {
         </h3>
         <p className="mx-auto max-w-md text-sm text-muted sm:text-base">
           {sv
-            ? "Gratis under preview. Grundare låser 10 % rabatt när paketen lanseras."
-            : "Free during the preview. Founding members lock 10% off when plans launch."}
+            ? "Gratis under utvecklarförhandsvisningen. Gå med i listan så hör vi av oss när betalplanerna är redo."
+            : "Free during the developer preview. Join the list and we'll email you when paid plans are ready."}
         </p>
-        {count !== null && count > 0 && (
-          <p className="mt-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-xs text-white/70">
-            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent-green" />
-            {sv ? `${count} står redan på listan` : `${count} already on the list`}
-          </p>
-        )}
       </ScrollReveal>
 
       {!submitted ? (
@@ -253,14 +224,6 @@ export default function Waitlist() {
           <h3 className="mb-1 text-xl font-semibold text-white">{sv ? "Du är med!" : "You're in!"}</h3>
           <p className="mb-5 text-sm text-muted">{sv ? "Vi hör av oss när det är din tur." : "We'll be in touch when it's your turn."}</p>
           <WaitlistStatus email={form.email} sv={sv} refParam="ref" />
-          <button
-            type="button"
-            onClick={copyCode}
-            className="inline-flex items-center gap-2 rounded-full border border-white/15 px-4 py-2 font-mono text-xs text-white transition-colors hover:border-accent-cyan/40"
-          >
-            {copied ? <Check className="h-3.5 w-3.5 text-accent-green" /> : <Copy className="h-3.5 w-3.5" />}
-            BUDAI-EARLY-10
-          </button>
         </div>
       )}
 

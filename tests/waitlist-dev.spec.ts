@@ -28,8 +28,9 @@ test("local development mock exercises real waitlist loading, success and copy U
   await expect(section.getByRole("status").filter({hasText:"You're in!"})).toBeVisible();
   await expect(form).toHaveCount(0);
   await expect(section.getByText("We'll be in touch when it's your turn.",{exact:true})).toBeVisible();
-  await section.getByRole("button",{name:"BUDAI-EARLY-10",exact:true}).click();
-  expect(await page.evaluate(()=>navigator.clipboard.readText())).toBe("BUDAI-EARLY-10");
+  // No discount, promo code or launch-date promise is shown after signup.
+  await expect(section.getByText(/10\s?%|BUDAI-EARLY-10|founding/i)).toHaveCount(0);
+  await expect(section.getByRole("button",{name:/BUDAI-EARLY-10/i})).toHaveCount(0);
   expect(externalWrites).toEqual([]);
   await page.screenshot({path:"test-results/waitlist-local-success.png"});
 });
