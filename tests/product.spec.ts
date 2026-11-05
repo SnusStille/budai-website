@@ -373,18 +373,17 @@ test("one keyboard owner: ⌘K opens the site palette and ⌘/ opens Playground 
 });
 
 
-test("footer labels are honest and the What's new link resolves to a real element", async ({ page }) => {
+test("footer labels are honest and What's new resolves to the real changelog page", async ({ page }) => {
   await page.goto("/");
   const footer = page.locator("#continuation");
   await expect(footer.getByRole("link", { name: "Plans", exact: true })).toBeVisible();
   await expect(footer.getByRole("link", { name: "Pricing", exact: true })).toHaveCount(0);
 
-  await footer.getByRole("link", { name: "What's new", exact: true }).click();
-  const dialog = page.getByRole("dialog", { name: "What's new", exact: true });
-  await expect(dialog).toBeVisible();
-  await expect(page.locator("#whats-new")).toBeVisible();
-  // The modal intentionally cleans the hash after opening.
-  expect(new URL(page.url()).hash).toBe("");
+  const link = footer.getByRole("link", { name: "What's new", exact: true });
+  await expect(link).toHaveAttribute("href", "/changelog");
+  await link.click();
+  await expect(page).toHaveURL(/\/changelog$/);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(/What's new/);
 });
 
 test("security headers and a per-request CSP nonce let the app boot (B5)", async ({ page }) => {
@@ -581,4 +580,37 @@ test("data-handling page is honest, linked and indexed in both languages (E5)", 
   for (const phrase of ["Anthropic", "lokala lagring", "Vercel Analytics", "noindex"]) {
     expect(sv).toContain(phrase);
   }
+});
+
+test("changelog page is indexable, bilingual and free of invented cadence claims (E6)", async ({ page, request }) => {
+  await page.goto("/changelog");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(/What's new/);
+  await expect(page.getByRole("heading", { name: "FAS1: security, honesty and CI" })).toBeVisible();
+  const en = await page.locator("main").innerText();
+  expect(en).toContain("2026-11-06");
+  expect(en).toContain("Current preview");
+  expect(en).toContain("How your data is handled");
+  expect(en).not.toContain("2026-10-26");
+  expect(en).not.toMatch(/every week|every month|updated weekly/i);
+
+  const sitemap = await (await request.get("/sitemap.xml")).text();
+  expect(sitemap).toContain("/changelog");
+  const canonical = await page.locator('link[rel="canonical"]').getAttribute("href");
+  expect(canonical).toContain("/changelog");
+
+  await page.getByRole("button", { name: "SV", exact: true }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(/Vad är nytt/);
+  const sv = await page.locator("main").innerText();
+  expect(sv).toContain("FAS1: säkerhet, ärlighet och CI");
+  expect(sv).toContain("Nuvarande förhandsvisning");
+  expect(sv).not.toMatch(/varje vecka|varje månad/i);
+  await page.getByRole("button", { name: "EN", exact: true }).click();
+
+  // The in-app quick peek still works, uses the same data and links to the page.
+  await page.goto("/#whats-new");
+  const dialog = page.getByRole("dialog", { name: "What's new", exact: true });
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByRole("link", { name: "View the full changelog" })).toHaveAttribute("href", "/changelog");
+  expect(await dialog.innerText()).not.toMatch(/every week/i);
+  expect(new URL(page.url()).hash).toBe("");
 });

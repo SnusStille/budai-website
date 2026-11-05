@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { X } from "lucide-react";
+import Link from "next/link";
+import { ArrowUpRight, X } from "lucide-react";
 import { CHANGELOG } from "@/lib/changelog";
 import { useLang } from "@/components/ui/LanguageContext";
 
@@ -40,10 +41,10 @@ export default function WhatsNew() {
         </div>
         <div className="space-y-6">
           {CHANGELOG.map((e) => (
-            <div key={e.date}>
+            <div key={e.id}>
               <p className="mb-2 flex items-center gap-2 text-sm font-medium text-accent-cyan">
                 <span className="h-1.5 w-1.5 rounded-full bg-accent-cyan" />
-                {sv ? e.titleSv : e.title} <span className="font-mono text-[11px] text-muted/60">{e.date}</span>
+                {sv ? e.titleSv : e.title} <span className="font-mono text-[11px] text-muted/60">{e.date || (sv ? "Nu" : "Current")}</span>
               </p>
               <ul className="space-y-1.5 pl-3.5 text-sm text-white/80">
                 {(sv ? e.itemsSv : e.items).map((it) => <li key={it}>· {it}</li>)}
@@ -51,7 +52,14 @@ export default function WhatsNew() {
             </div>
           ))}
         </div>
-        <p className="mt-6 text-xs text-muted">{sv ? "Vi förbättrar BudAI varje vecka." : "We improve BudAI every week."}</p>
+        <Link
+          href="/changelog"
+          onClick={() => setOpen(false)}
+          className="mt-6 inline-flex items-center gap-1 text-xs text-accent-cyan hover:text-white transition-colors"
+        >
+          {sv ? "Visa hela ändringsloggen" : "View the full changelog"}
+          <ArrowUpRight className="h-3.5 w-3.5" />
+        </Link>
       </div>
     </div>
   );

@@ -28,7 +28,7 @@ const groups = (lang: string) => [
       { label: lang === "sv" ? "Paket" : "Plans", href: "#capabilities" },
       { label: lang === "sv" ? "Kontakt" : "Contact", href: "mailto:Stilleinc@hotmail.com" },
       { label: lang === "sv" ? "Skicka feedback" : "Send feedback", href: "mailto:Stilleinc@hotmail.com?subject=BudAI%20preview%20feedback" },
-      { label: lang === "sv" ? "Vad är nytt" : "What's new", href: "#whats-new" },
+      { label: lang === "sv" ? "Vad är nytt" : "What's new", href: "/changelog" },
     ],
   },
   {

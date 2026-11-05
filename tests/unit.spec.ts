@@ -184,7 +184,6 @@ test("daily-limit copy reads the single LIMITS source instead of hardcoded numbe
     "components/sections/Hero.tsx",
     "components/sections/Journey.tsx",
     "components/experience/CapabilityStudioScreen.tsx",
-    "lib/changelog.ts",
     "lib/experience/developer-room.ts",
   ];
   const stale = /12\s*\/\s*(?:dag|day)|80\s*\/\s*(?:dag|day)|12 meddelanden|80 meddelanden|12 messages\/day|80 messages\/day|10\s*\/\s*day|35\s*\/\s*day/;
@@ -193,6 +192,11 @@ test("daily-limit copy reads the single LIMITS source instead of hardcoded numbe
     expect(source, `${file} still hardcodes a daily limit`).not.toMatch(stale);
     expect(source, `${file} does not use LIMITS`).toContain("LIMITS.");
   }
+  // E6: the changelog deliberately points at the usage meter instead of
+  // repeating a number that could drift away from lib/limits.ts.
+  const changelog = readFileSync("lib/changelog.ts", "utf8");
+  expect(changelog).not.toMatch(stale);
+  expect(changelog).toContain("usage meter");
 });
 
 
