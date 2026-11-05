@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { validateWaitlist } from "@/lib/waitlist-validation";
 import { RULES, checkRateLimit, rateLimitKey } from "@/lib/rate-limit";
+import { WAITLIST_STATUS_COOKIE, signWaitlistEmail } from "@/lib/waitlist-status";
 
 /**
  * Server-authoritative waitlist signup.
@@ -52,5 +53,16 @@ export async function POST(req: NextRequest) {
     console.error("Waitlist insert error:", error.message);
     return NextResponse.json({ error: "could_not_save" }, { status: 500 });
   }
-  return NextResponse.json({ ok: true });
+  const res = NextResponse.json({ ok: true });
+  const token = signWaitlistEmail(result.value.email);
+  if (token) {
+    res.cookies.set(WAITLIST_STATUS_COOKIE, token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 30 * 24 * 60 * 60,
+    });
+  }
+  return res;
 }

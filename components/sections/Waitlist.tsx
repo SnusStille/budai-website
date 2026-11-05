@@ -5,7 +5,7 @@ import { ArrowRight, Check, Building2, User, Zap, MessageCircle, Mail } from "lu
 import BudAILogo from "@/components/ui/BudAILogo";
 import ScrollReveal from "@/components/ui/ScrollReveal";
 import Confetti from "@/components/ui/Confetti";
-import { addWaitlistUser, getWaitlistStatus } from "@/lib/data";
+import { addWaitlistUser } from "@/lib/data";
 import WaitlistStatus from "@/components/sections/WaitlistStatus";
 import { useLang } from "@/components/ui/LanguageContext";
 
@@ -31,7 +31,6 @@ export default function Waitlist() {
   const [referral, setReferral] = useState("");
   const [showCode, setShowCode] = useState(false);
   const [details, setDetails] = useState(false);
-  const [, setStatus] = useState<Awaited<ReturnType<typeof getWaitlistStatus>>>(null);
   const emailInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
@@ -89,7 +88,6 @@ export default function Waitlist() {
         tags: company ? ["company"] : ["individual"],
       }, { consent, website: honeypot, referral: referral.trim().slice(0, 64) });
       setSubmitted(true);
-      void getWaitlistStatus(form.email).then(setStatus);
       setConfetti(true);
       setTimeout(() => setConfetti(false), 4000);
     } catch (err: unknown) {

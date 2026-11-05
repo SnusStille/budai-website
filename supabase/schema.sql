@@ -167,8 +167,9 @@ as $$
   from me;
 $$;
 
-revoke all on function public.waitlist_status(text) from public;
-grant execute on function public.waitlist_status(text) to anon, authenticated;
+revoke all on function public.waitlist_status(text) from public, anon, authenticated;
+-- Server-only: /api/waitlist/status verifies a signed proof-of-signup cookie.
+grant execute on function public.waitlist_status(text) to service_role;
 
 -- Lock down waitlist_users RLS: public can only insert valid pending rows; admin reads via service role
 do $$
@@ -210,13 +211,19 @@ create table if not exists public.admin_events (
 create index if not exists admin_events_created_idx on public.admin_events (created_at desc);
 alter table public.admin_events enable row level security;
 
+-- No public SELECT policy: the admin log is read via /api/admin/* (service role).
 drop policy if exists "admin_events_select_anon" on public.admin_events;
-create policy "admin_events_select_anon"
-  on public.admin_events for select to anon, authenticated using (true);
-
 drop policy if exists "admin_events_insert_anon" on public.admin_events;
-create policy "admin_events_insert_anon"
-  on public.admin_events for insert to anon, authenticated with check (true);
+revoke all on table public.admin_events from anon, authenticated;
+grant insert on table public.admin_events to anon, authenticated;
+
+create policy "admin_events_insert_bounded"
+  on public.admin_events for insert to anon, authenticated
+  with check (
+    char_length(message) between 1 and 500
+    and kind in ('signup', 'approve', 'reject', 'bulk_approve', 'note', 'system', 'feedback')
+    and char_length(coalesce(meta::text, '{}')) <= 4000
+  );
 
 create table if not exists public.platform_events (
   id uuid primary key default gen_random_uuid(),
@@ -432,7 +439,10 @@ create table if not exists public.usage_daily (
   messages int not null default 0,
   images int not null default 0,
   generations int not null default 0,
-  primary key (user_id, day)
+  primary key (user_id, day),
+  constraint usage_daily_counters_valid
+    check (messages >= 0 and images >= 0 and generations >= 0
+           and messages <= 10000 and images <= 10000 and generations <= 10000)
 );
 
 alter table public.usage_daily enable row level security;
@@ -455,14 +465,16 @@ create table if not exists public.usage_guest_daily (
   messages int not null default 0,
   images int not null default 0,
   generations int not null default 0,
-  primary key (guest_key, day)
+  primary key (guest_key, day),
+  constraint usage_guest_daily_counters_valid
+    check (messages >= 0 and images >= 0 and generations >= 0
+           and messages <= 10000 and images <= 10000 and generations <= 10000)
 );
 
 alter table public.usage_guest_daily enable row level security;
-
+-- No public policies: only the service role may read or write guest quotas.
 drop policy if exists "guest_usage_all" on public.usage_guest_daily;
-create policy "guest_usage_all" on public.usage_guest_daily
-  for all to anon, authenticated using (true) with check (true);
+revoke all on table public.usage_guest_daily from anon, authenticated;
 
 -- ============================================================================
 -- 7. SHARED CONVERSATIONS & LEGACY TABLE LOCKDOWN

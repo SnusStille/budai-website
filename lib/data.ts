@@ -344,13 +344,18 @@ export function getWaitlistStats(users: WaitlistUser[]) {
   };
 }
 
-export async function getWaitlistStatus(
-  email: string
-): Promise<{ position: number; total: number; code: string | null; referrals: number } | null> {
-  const supabase = getSupabase();
-  if (!supabase) return null;
-  const { data, error } = await supabase.rpc("waitlist_status", { p_email: email });
-  const row = Array.isArray(data) ? data[0] : data;
-  if (error || !row) return null;
-  return { position: row.pos as number, total: row.total as number, code: (row.code as string) ?? null, referrals: (row.referrals as number) ?? 0 };
+/**
+ * The SECURITY DEFINER RPC is no longer publicly executable. The server route
+ * verifies a signed proof-of-signup cookie before doing the lookup.
+ */
+export async function getWaitlistStatus(): Promise<{ position: number; total: number; code: string | null; referrals: number } | null> {
+  if (typeof window === "undefined") return null;
+  try {
+    const res = await fetch("/api/waitlist/status", { cache: "no-store", credentials: "same-origin" });
+    if (!res.ok) return null;
+    const json = (await res.json()) as { status?: { position: number; total: number; code: string | null; referrals: number } | null };
+    return json.status ?? null;
+  } catch {
+    return null;
+  }
 }

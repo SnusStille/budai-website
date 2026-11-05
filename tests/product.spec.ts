@@ -340,3 +340,15 @@ test("waitlist API validates server-side, requires consent and quietly drops bot
   // No database is configured in the browser QA environment.
   expect([200, 503]).toContain(real.status());
 });
+
+
+test("quota writes are server-owned and the waitlist status RPC is not public", async ({ request }) => {
+  const usage = await request.post("/api/usage", { data: { kind: "messages", n: 1 } });
+  expect(usage.status()).toBe(405);
+  expect(usage.headers()["allow"]).toContain("GET");
+
+  // No proof-of-signup cookie: no enumeration, no referral code disclosure.
+  const status = await request.get("/api/waitlist/status");
+  expect(status.status()).toBe(200);
+  expect((await status.json()).status).toBeNull();
+});

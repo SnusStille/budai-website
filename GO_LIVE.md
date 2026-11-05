@@ -62,3 +62,7 @@ Run `supabase/schema.sql` and/or `supabase/MIGRATION_v2.sql` if not already appl
 ## Optional SQL v3
 
 `supabase/MIGRATION_v3.sql` — playground_conversations / memory / events (for future accounts). Public demo uses localStorage today.
+
+## Supabase security (required)
+
+Run `supabase/MIGRATION_v10_security_hardening.sql` in the SQL Editor after `schema.sql` and `MIGRATION_v2 … v9`. It removes public read/write on guest quota rows, restricts `admin_events`, adds non-negative counter constraints and makes `waitlist_status()` service-role-only. Set `SUPABASE_SERVICE_ROLE_KEY` on the server; without it guest quotas and the waitlist status widget run in soft mode.

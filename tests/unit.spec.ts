@@ -7,6 +7,7 @@ import { readFileSync } from "node:fs";
 import { LIMITS, limitFor } from "../lib/limits";
 import { RULES, checkRateLimit, clientIp, rateLimitKey } from "../lib/rate-limit";
 import { validateWaitlist } from "../lib/waitlist-validation";
+import { signWaitlistEmail, verifyWaitlistToken } from "../lib/waitlist-status";
 
 test("one readiness deadline and camera/reveal timing stay bounded without a logo timeline",()=>{
   expect(INTRO_MS+INTRO_REVEAL_MS).toBeLessThanOrEqual(4000);
@@ -241,4 +242,23 @@ test("waitlist validation sanitises input and never trusts client-side priority"
   expect(company.ok).toBe(true);
   if (!company.ok) return;
   expect(company.value).toMatchObject({ account_type: "company", company: "Acme", employees: "1-10", priority: 60, source: "referral", notes: "referral:abc" });
+});
+
+
+test("waitlist status proof is signed, tamper-proof and needs a server secret", () => {
+  const previous = process.env.ADMIN_PASSWORD;
+  delete process.env.ADMIN_PASSWORD;
+  delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+  expect(signWaitlistEmail("person@example.com")).toBeNull();
+
+  process.env.ADMIN_PASSWORD = "unit-test-secret";
+  const token = signWaitlistEmail("person@example.com");
+  expect(token).toBeTruthy();
+  expect(verifyWaitlistToken(token!)).toBe("person@example.com");
+  expect(verifyWaitlistToken(undefined)).toBeNull();
+  expect(verifyWaitlistToken(token!.replace(/.$/, "x"))).toBeNull();
+  expect(verifyWaitlistToken("garbage")).toBeNull();
+
+  if (previous === undefined) delete process.env.ADMIN_PASSWORD;
+  else process.env.ADMIN_PASSWORD = previous;
 });

@@ -7,7 +7,7 @@ export default function WaitlistStatus({ email, sv, refParam }: { email: string;
   const [s, setS] = useState<Awaited<ReturnType<typeof getWaitlistStatus>>>(null);
   const [copied, setCopied] = useState(false);
   useEffect(() => {
-    void getWaitlistStatus(email).then(setS);
+    void getWaitlistStatus().then(setS);
   }, [email]);
   if (!s) return null;
   const link = s.code ? `${window.location.origin}/?${refParam}=${s.code}` : "";
