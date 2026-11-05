@@ -249,3 +249,22 @@ test("voice-mode permission failure stays closable above navigation and never st
   expect(await close.evaluate(el=>{const r=el.getBoundingClientRect();return el.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2));})).toBe(true);
   await close.click();await expect(dialog).toHaveCount(0);await expect(page.getByRole("textbox",{name:"Message BudAI",exact:true})).toBeEnabled();
 });
+
+test("cookie choice is the single consent source and can be changed later", async ({ page }) => {
+  // beforeEach pre-seeds a declined choice; this case starts from a fresh visitor.
+  await page.addInitScript(() => localStorage.removeItem("budai-cookies"));
+  await page.goto("/");
+  const banner = page.getByRole("dialog", { name: /cookies/i });
+  await expect(banner).toBeVisible({ timeout: 10_000 });
+  await banner.getByRole("button", { name: "Decline", exact: true }).click();
+  expect(await page.evaluate(() => localStorage.getItem("budai-cookies"))).toBe("declined");
+  await expect(banner).toHaveCount(0);
+
+  const settings = page.getByRole("button", { name: "Cookie settings", exact: true });
+  await expect(settings).toBeVisible();
+  // Fixed UI (back-to-top etc.) can cover the footer row; trigger the real button.
+  await settings.evaluate((el) => (el as HTMLButtonElement).click());
+  await expect(banner).toBeVisible();
+  await banner.getByRole("button", { name: "Accept", exact: true }).click();
+  expect(await page.evaluate(() => localStorage.getItem("budai-cookies"))).toBe("accepted");
+});

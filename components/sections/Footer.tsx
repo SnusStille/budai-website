@@ -8,6 +8,7 @@ import {subscribeJourney} from "@/lib/experience/scroll";
 import BudAILogo, { StilledevLink, StilledevMark } from "@/components/ui/BudAILogo";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLang } from "@/components/ui/LanguageContext";
+import { openCookieSettings } from "@/lib/consent";
 
 const groups = (lang: string) => [
   {
@@ -91,11 +92,11 @@ export default function Footer() {
       title: lang === "sv" ? "Cookiepolicy" : "Cookie Policy",
       content: [
         lang === "sv"
-          ? "BudAI använder cookies för att förbättra din upplevelse och analysera trafik. Vi använder endast nödvändiga cookies och analytiska cookies med ditt samtycke."
-          : "BudAI uses cookies to enhance your experience and analyze traffic. We only use necessary cookies and analytical cookies with your consent.",
+          ? "BudAI sparar bara det sajten behöver för att fungera: språkval, inloggningssession och ditt cookieval. Den lagringen är alltid aktiv."
+          : "BudAI stores only what the site needs to work: your language choice, the sign-in session and your cookie choice. That storage is always active.",
         lang === "sv"
-          ? "Du kan när som helst ändra dina cookie-inställningar eller återkalla ditt samtycke. Nödvändiga cookies kan inte inaktiveras eftersom de krävs för att webbplatsen ska fungera."
-          : "You can change your cookie settings or withdraw your consent at any time. Necessary cookies cannot be disabled as they are required for the website to function.",
+          ? "Anonym trafikanalys (Vercel Analytics) laddas bara om du trycker Acceptera. Vid Avböj laddas den inte alls, och vi använder inga tredjeparts-annonsspårare. Du kan ändra eller återkalla ditt val när som helst via Cookieinställningar i sidfoten."
+          : "Anonymous traffic analytics (Vercel Analytics) loads only after you press Accept. If you decline it never loads, and we use no third-party ad trackers. You can change or withdraw your choice at any time via Cookie settings in the footer.",
       ],
     },
     gdpr: {
@@ -188,6 +189,13 @@ export default function Footer() {
             <span className="text-muted/30">·</span>
             <span className="text-xs">Sweden</span>
           </p>
+          <button
+            type="button"
+            onClick={openCookieSettings}
+            className="text-xs text-muted underline decoration-white/20 underline-offset-4 hover:text-white transition-colors"
+          >
+            {lang === "sv" ? "Cookieinställningar" : "Cookie settings"}
+          </button>
         </div>
       </div>
 

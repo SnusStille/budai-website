@@ -55,14 +55,14 @@ const content: Record<string, Page> = {
     icon: Cookie,
     paragraphs: {
       en: [
-        "BudAI uses necessary cookies/local storage so the site and auth can function (language preference, session, consent).",
-        "With your consent we may use light analytics (e.g. Vercel Analytics) to understand traffic. You can decline non-essential cookies.",
-        "You can clear site data in your browser at any time. We do not use invasive third-party ad trackers.",
+        "BudAI stores only what the site and sign-in need to function: your language preference, the session, and your cookie choice. That storage is always active.",
+        "Anonymous traffic analytics (Vercel Analytics) is loaded only after you press Accept. If you decline, it is not loaded at all. We do not use third-party ad trackers.",
+        "You can change or withdraw your choice at any time with Cookie settings in the footer, or clear site data in your browser.",
       ],
       sv: [
-        "BudAI använder nödvändiga cookies/local storage så att sajten och inloggning fungerar (språk, session, samtycke).",
-        "Med ditt samtycke kan vi använda lätt analys (t.ex. Vercel Analytics) för att förstå trafik. Du kan tacka nej till icke-nödvändiga cookies.",
-        "Du kan rensa webbplatsdata i webbläsaren när som helst. Vi använder inte aggressiva tredjeparts-annonsspårare.",
+        "BudAI sparar bara det sajten och inloggningen behöver: språkval, session och ditt cookieval. Den lagringen är alltid aktiv.",
+        "Anonym trafikanalys (Vercel Analytics) laddas bara efter att du tryckt Acceptera. Om du avböjer laddas den inte alls. Vi använder inga tredjeparts-annonsspårare.",
+        "Du kan ändra eller återkalla ditt val när som helst via Cookieinställningar i sidfoten, eller rensa webbplatsdata i webbläsaren.",
       ],
     },
   },
