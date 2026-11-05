@@ -26,6 +26,8 @@ export default function Waitlist() {
   const [loading, setLoading] = useState(false);
   const [confetti, setConfetti] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [consent, setConsent] = useState(false);
+  const [honeypot, setHoneypot] = useState("");
   const [referral, setReferral] = useState("");
   const [showCode, setShowCode] = useState(false);
   const [details, setDetails] = useState(false);
@@ -66,7 +68,7 @@ export default function Waitlist() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (loading || !form.email.includes("@")) return;
+    if (loading || !form.email.includes("@") || !consent) return;
     setLoading(true);
     setError(null);
     try {
@@ -85,7 +87,7 @@ export default function Waitlist() {
         priority: company ? 60 : 45,
         last_contacted_at: null,
         tags: company ? ["company"] : ["individual"],
-      });
+      }, { consent, website: honeypot, referral: referral.trim().slice(0, 64) });
       setSubmitted(true);
       void getWaitlistStatus(form.email).then(setStatus);
       setConfetti(true);
@@ -95,6 +97,12 @@ export default function Waitlist() {
       setError(
         msg.includes("duplicate") || msg.includes("unique") || msg.includes("already")
           ? sv ? "Den e-postadressen finns redan på listan." : "That email is already on the waitlist."
+          : msg.includes("consent_required")
+            ? sv ? "Godkänn lagringen av din e-postadress för att fortsätta." : "Please accept the storage consent to continue."
+          : msg.includes("invalid_email")
+            ? sv ? "Ange en giltig e-postadress." : "Please enter a valid email address."
+          : msg.includes("rate_limited")
+            ? sv ? "För många försök. Prova igen om en stund." : "Too many signups. Please try again in a while."
           : msg.includes("not configured")
             ? sv ? "Väntelistan är inte tillgänglig just nu. Försök igen senare." : "The waitlist is not accepting signups right now. Please try again later."
           : msg.includes("network") || msg.includes("fetch")
@@ -163,6 +171,19 @@ export default function Waitlist() {
             </div>
           </div>
 
+          <div aria-hidden="true" className="absolute -left-[9999px] h-px w-px overflow-hidden">
+            <label htmlFor="budai-website-hp">Website</label>
+            <input
+              id="budai-website-hp"
+              name="website"
+              type="text"
+              tabIndex={-1}
+              autoComplete="off"
+              value={honeypot}
+              onChange={(e) => setHoneypot(e.target.value)}
+            />
+          </div>
+
           {error && <p role="alert" className="mt-3 text-center text-sm text-red-300">{error}</p>}
 
           <div className="mt-4 text-center">
@@ -214,7 +235,25 @@ export default function Waitlist() {
               )}
             </div>
           )}
-          <p className="mt-4 text-center text-[11px] text-muted/70">{sv ? "Ingen spam. Ingen betalning krävs." : "No spam. No payment needed."}</p>
+          <label className="mx-auto mt-4 flex max-w-md items-start justify-center gap-2.5 text-[11px] leading-relaxed text-muted">
+            <input
+              type="checkbox"
+              required
+              checked={consent}
+              onChange={(e) => setConsent(e.target.checked)}
+              aria-label={sv ? "Samtycke till lagring" : "Consent to storage"}
+              className="mt-0.5 h-4 w-4 shrink-0 accent-accent-cyan"
+            />
+            <span>
+              {sv
+                ? "Jag godkänner att Stilledev sparar min e-postadress för att kontakta mig om tillgång. "
+                : "I agree that Stilledev may store my email address to contact me about access. "}
+              <a href="/legal/privacy" target="_blank" rel="noopener noreferrer" className="underline hover:text-accent-cyan">
+                {sv ? "Integritetspolicy" : "Privacy policy"}
+              </a>.
+            </span>
+          </label>
+          <p className="mt-2 text-center text-[11px] text-muted/70">{sv ? "Ingen spam. Ingen betalning krävs." : "No spam. No payment needed."}</p>
         </form>
       ) : (
         <div role="status" aria-live="polite" className="bud-pop mx-auto mt-7 max-w-md rounded-2xl border border-white/10 bg-[#07070e]/90 p-6 shadow-[0_0_70px_-20px_rgba(124,92,255,0.6)]">

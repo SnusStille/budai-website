@@ -215,46 +215,33 @@ export async function getWaitlistUsers(): Promise<WaitlistUser[]> {
   }
 }
 
+/**
+ * The write now goes through /api/waitlist so validation, consent, honeypot and
+ * throttling are enforced server-side. `discount_code`/`priority` are ignored by
+ * the server; it derives its own values.
+ */
 export async function addWaitlistUser(
-  user: Omit<WaitlistUser, "id" | "created_at" | "access_status">
+  user: Omit<WaitlistUser, "id" | "created_at" | "access_status">,
+  guard: { consent: boolean; website?: string; referral?: string } = { consent: false }
 ): Promise<WaitlistUser> {
-  const payload = {
-    ...user,
-    discount_code: user.discount_code ?? null,
-    source: user.source || "landing",
-    priority: user.priority ?? 50,
-    tags: user.tags ?? [],
-  };
-
-  const supabase = getSupabase();
-  if (!supabase) {
-    if (process.env.NODE_ENV !== "development") throw new Error("Waitlist is not configured");
-    const newUser: WaitlistUser = {
-      id: String(Date.now()),
-      ...payload,
-      created_at: new Date().toISOString(),
-      access_status: "pending",
-      last_contacted_at: null,
-    };
-    mockUsers.unshift(newUser);
-    return new Promise((resolve) => setTimeout(() => resolve(newUser), 500));
-  }
-
-  const { error } = await supabase
-    .from("waitlist_users")
-    .insert([{ ...payload, access_status: "pending" }]);
-
-  if (error) {
-    console.error("Supabase error:", error);
-    throw error;
-  }
-
-  return normalizeUser({
-    ...payload,
-    id: "",
-    created_at: new Date().toISOString(),
-    access_status: "pending",
-  } as Record<string, unknown>);
+  const res = await fetch("/api/waitlist", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      name: user.name,
+      email: user.email,
+      account_type: user.account_type,
+      company: user.company,
+      employees: user.employees,
+      interest: user.interest,
+      consent: guard.consent,
+      website: guard.website || "",
+      referral: guard.referral || "",
+    }),
+  });
+  const data = (await res.json().catch(() => ({}))) as { error?: string };
+  if (!res.ok) throw new Error(data.error || (res.status === 503 ? "not configured" : "could not save"));
+  return { ...user, id: "", created_at: new Date().toISOString(), access_status: "pending" };
 }
 
 export async function updateUserStatus(id: string, status: WaitlistUser["access_status"]): Promise<void> {

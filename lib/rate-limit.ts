@@ -17,6 +17,7 @@ export const RULES: Record<string, RateLimitRule> = {
   playground: { name: "playground", limit: 60, windowMs: 60 * 60_000 },
   feedback: { name: "feedback", limit: 15, windowMs: 60 * 60_000 },
   share: { name: "share", limit: 20, windowMs: 60 * 60_000 },
+  waitlist: { name: "waitlist", limit: 8, windowMs: 60 * 60_000 },
 };
 
 type Bucket = { count: number; resetAt: number };

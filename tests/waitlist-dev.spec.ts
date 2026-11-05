@@ -22,6 +22,7 @@ test("local development mock exercises real waitlist loading, success and copy U
   const section = page.locator("#waitlist");
   const form = section.locator("form");
   await form.getByRole("textbox",{name:"Email",exact:true}).fill("cinematic-local-qa@example.invalid");
+  await form.getByRole("checkbox",{name:"Consent to storage"}).check();
   await form.getByRole("button",{name:"Join the waitlist",exact:true}).click();
   await expect(form).toHaveAttribute("aria-busy","true");
   await expect(section.getByRole("heading",{name:"You're in!",exact:true})).toBeVisible();

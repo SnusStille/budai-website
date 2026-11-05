@@ -146,6 +146,7 @@ test("waitlist keeps native validation, company details, referral controls, and 
   await form.getByRole("button", { name: "Have an invite code?", exact: true }).click();
   await form.getByRole("textbox", { name: "Invite code", exact: true }).fill("qa-referral");
   await email.fill("browser-qa@example.invalid");
+  await form.getByRole("checkbox", { name: "Consent to storage" }).check();
   await form.getByRole("button", { name: "Join the waitlist", exact: true }).click();
   await expect(form.getByRole("alert")).toHaveText(/not accepting signups|Could not save right now/);
   await expect(page.getByText("You're in!", { exact: true })).toHaveCount(0);
@@ -318,4 +319,24 @@ test("admin auth uses a server-set session cookie and /admin stays out of indexe
   // The old plaintext header is no longer an auth path.
   const legacy = await request.get("/api/admin/status", { headers: { "x-admin-key": "anything" } });
   expect([401, 503]).toContain(legacy.status());
+});
+
+
+test("waitlist API validates server-side, requires consent and quietly drops bots", async ({ request }) => {
+  const base = { email: "qa-signup@example.invalid", name: "QA", consent: true, account_type: "individual" };
+  const noConsent = await request.post("/api/waitlist", { data: { ...base, consent: false } });
+  expect(noConsent.status()).toBe(400);
+  expect((await noConsent.json()).error).toBe("consent_required");
+
+  const badEmail = await request.post("/api/waitlist", { data: { ...base, email: "not-an-email" } });
+  expect(badEmail.status()).toBe(400);
+  expect((await badEmail.json()).error).toBe("invalid_email");
+
+  // A filled honeypot gets a 200 but must never reach the database.
+  const bot = await request.post("/api/waitlist", { data: { ...base, website: "https://spam.example" } });
+  expect(bot.status()).toBe(200);
+
+  const real = await request.post("/api/waitlist", { data: base });
+  // No database is configured in the browser QA environment.
+  expect([200, 503]).toContain(real.status());
 });

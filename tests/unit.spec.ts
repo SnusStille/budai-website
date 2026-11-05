@@ -6,6 +6,7 @@ import { codeCharactersAt, CODE_LENGTH, EXAMPLE_SOURCE, tokenizeLine } from "../
 import { readFileSync } from "node:fs";
 import { LIMITS, limitFor } from "../lib/limits";
 import { RULES, checkRateLimit, clientIp, rateLimitKey } from "../lib/rate-limit";
+import { validateWaitlist } from "../lib/waitlist-validation";
 
 test("one readiness deadline and camera/reveal timing stay bounded without a logo timeline",()=>{
   expect(INTRO_MS+INTRO_REVEAL_MS).toBeLessThanOrEqual(4000);
@@ -216,4 +217,28 @@ test("client IP and limiter keys are bounded and never keep a raw address", () =
   expect(key).toMatch(/^[a-f0-9]{64}$/);
   expect(key).not.toContain("203");
   expect(rateLimitKey(req({ "x-forwarded-for": "203.0.113.7" }), RULES.playground)).not.toBe(key);
+});
+
+
+test("waitlist validation sanitises input and never trusts client-side priority", () => {
+  const base = { email: "  Person@Example.COM ", consent: true, account_type: "individual", name: "  Person  " };
+  const ok = validateWaitlist({ ...base, priority: 9999, discount_code: "FREE", tags: ["admin"] });
+  expect(ok.ok).toBe(true);
+  if (!ok.ok) return;
+  expect(ok.value.email).toBe("person@example.com");
+  expect(ok.value.name).toBe("Person");
+  expect(ok.value.priority).toBe(45);
+  expect(ok.value.discount_code).toBeNull();
+  expect(ok.value.tags).toEqual(["individual"]);
+  expect(ok.value.access_status).toBe("pending");
+
+  expect(validateWaitlist({ ...base, consent: false })).toMatchObject({ ok: false, error: "consent_required" });
+  expect(validateWaitlist({ ...base, email: "nope" })).toMatchObject({ ok: false, error: "invalid_email" });
+  expect(validateWaitlist({ ...base, website: "spam" })).toMatchObject({ ok: false, error: "honeypot" });
+  expect(validateWaitlist(null)).toMatchObject({ ok: false, error: "invalid_email" });
+
+  const company = validateWaitlist({ ...base, account_type: "company", company: "Acme", employees: "1-10", referral: "abc" });
+  expect(company.ok).toBe(true);
+  if (!company.ok) return;
+  expect(company.value).toMatchObject({ account_type: "company", company: "Acme", employees: "1-10", priority: 60, source: "referral", notes: "referral:abc" });
 });
