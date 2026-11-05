@@ -7,7 +7,7 @@ import SignalWorkflows from "@/components/experience/SignalWorkflows";
 
 import VoiceOrb from "@/components/ui/VoiceOrb";
 import Routines from "@/components/ui/Routines";
-import CreditsMeter from "@/components/ui/CreditsMeter";
+import DailyUsageMeter from "@/components/ui/DailyUsageMeter";
 
 import {
   useState,
@@ -2974,7 +2974,7 @@ export default function AIPlayground() {
                     <button type="button" onClick={() => setVoiceOpen(true)} className="rounded-full border border-white/[0.08] px-3 py-1 text-[11px] text-muted hover:text-white transition-colors">
                       {lang === "sv" ? "Röstläge" : "Voice mode"}
                     </button>
-                    <CreditsMeter rem={rem} lim={lim} sv={lang === "sv"} />
+                    <DailyUsageMeter rem={rem} lim={lim} sv={lang === "sv"} />
                   </div>
                 </div>
                 <VoiceOrb

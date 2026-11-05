@@ -102,12 +102,12 @@ test("Stop response cancels the existing stream reader and releases the composer
 test("Playground error/retry state remains functional without a configured model provider and preserves daily quota on failure", async ({ page }) => {
   await page.route("**/api/playground", route => route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ error: "Temporarily unavailable. Please retry." }) }));
   await page.goto("/#playground");
-  await expect(page.locator("#playground").getByText("12/12 credits left")).toBeVisible();
+  await expect(page.locator("#playground").getByText("12/12 messages left today")).toBeVisible();
   const input = page.getByRole("textbox", { name: "Message BudAI", exact: true });
   await input.fill("Help me plan tomorrow.");
   await input.press("Enter");
   await expect(page.getByText("Temporarily unavailable. Please retry.", { exact: true })).toBeVisible();
-  await expect(page.locator("#playground").getByText("12/12 credits left")).toBeVisible();
+  await expect(page.locator("#playground").getByText("12/12 messages left today")).toBeVisible();
   await expect(input).toBeEnabled();
   await expect(page.locator("[data-global-loader]")).toHaveCount(0);
 });
@@ -531,4 +531,18 @@ test("social metadata uses one image URL and publishes Organization JSON-LD (A7/
   const types = (head.ld["@graph"] ?? []).map((node) => node["@type"]);
   expect(types).toContain("SoftwareApplication");
   expect(types).toContain("Organization");
+});
+
+test("daily-limit meter says messages, not credits, in both languages (D2)", async ({ page }) => {
+  await page.goto("/#playground");
+  const en = page.getByRole("link", { name: "Remaining messages today", exact: true });
+  await expect(en).toBeVisible();
+  await expect(en).toContainText("messages left today");
+  expect(await en.textContent()).not.toMatch(/credits/i);
+
+  await page.locator(".site-navigation").getByRole("button", { name: "SV", exact: true }).first().click();
+  const sv = page.getByRole("link", { name: "Dagens återstående meddelanden", exact: true });
+  await expect(sv).toBeVisible();
+  await expect(sv).toContainText("meddelanden kvar idag");
+  expect(await sv.textContent()).not.toMatch(/credits/i);
 });
