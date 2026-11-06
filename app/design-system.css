@@ -524,12 +524,11 @@ p {
  * Paint-only: no DOM, no scroll listener, no WebGL or geometry change.
  * ========================================================================== */
 
-/* The still and the live renderer must share one grade, otherwise the intro
-   visibly jumps in colour at the moment the poster is replaced by the canvas. */
-canvas[data-brain-canvas],
-.brain-poster img {
-  filter: saturate(1.24) contrast(1.07) brightness(1.045);
-}
+/* FAS2 r4 — NO CSS filter on the live WebGL canvas. A filter on a
+   preserveDrawingBuffer:false canvas forces an extra compositing pass and can
+   render blank on real GPUs (it happened on the landing page). The grade is
+   done in BrainFlight's shader instead, so the poster generated from that same
+   shader matches the live brain exactly without any CSS. */
 
 /* A rotated square has a larger bounding box than the circle painted inside
    it. Without clipping, the 96s orbit grows up to 20px of horizontal overflow

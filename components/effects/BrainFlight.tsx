@@ -766,7 +766,12 @@ export default function BrainFlight({
         lastMvp = mvp;
 
         const intro = ambient ? 0.7 : 0.35 + 0.65 * Math.min(1, t / 0.9);
-        const gain = .85; // Readiness means a visible frame, never the old zero-gain first frame.
+        // FAS2 r4: the colour grade lives HERE, in the shader, not in a CSS
+        // filter on the WebGL canvas. A CSS filter forces an extra compositing
+        // pass and can leave a preserveDrawingBuffer:false canvas blank on real
+        // GPUs. Raising gain/bloom also makes the poster (same shader) and the
+        // live brain identically bright, with no CSS to get out of sync.
+        const gain = 1.0;
         const focusNow = controlled?.kind === "journey"
           ? visual.focus
           : controlled?.kind === "hero" && heroFocus >= 0
@@ -842,7 +847,7 @@ export default function BrainFlight({
         gl.bindTexture(gl.TEXTURE_2D, scene.tex);
         gl.activeTexture(gl.TEXTURE1);
         gl.bindTexture(gl.TEXTURE_2D, bB.tex);
-        gl.uniform1f(uComp.amt,.28);
+        gl.uniform1f(uComp.amt,.34);
         gl.drawArrays(gl.TRIANGLES, 0, 3);
         gl.bindVertexArray(null);
       };
