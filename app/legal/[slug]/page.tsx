@@ -10,23 +10,27 @@ import LegalView from "./LegalView";
 // generation froze page-level metadata in English at build time even though
 // <html lang="sv"> was correct. The root layout is dynamic anyway (CSP nonce).
 
-export function generateMetadata({ params }: { params: { slug: string } }): Metadata {
-  if (!isLegalSlug(params.slug)) return {};
+type LegalPageProps = { params: Promise<{ slug: string }> };
+
+export async function generateMetadata({ params }: LegalPageProps): Promise<Metadata> {
+  const { slug } = await params;
+  if (!isLegalSlug(slug)) return {};
   // F1: page-level metadata must follow the same server-resolved language as
   // the root layout, otherwise a Swedish page still has an English <title>.
-  const sv = headers().get("x-budai-lang") === "sv";
-  const title = (sv ? LEGAL_TITLES_SV : LEGAL_TITLES)[params.slug];
+  const sv = (await headers()).get("x-budai-lang") === "sv";
+  const title = (sv ? LEGAL_TITLES_SV : LEGAL_TITLES)[slug];
   return {
     title,
     description: sv
       ? `${title} för BudAI:s utvecklarförhandsvisning, på svenska och engelska.`
       : `${title} for the BudAI developer preview, available in English and Swedish.`,
-    alternates: { canonical: `/legal/${params.slug}` },
+    alternates: { canonical: `/legal/${slug}` },
     robots: { index: true, follow: true },
   };
 }
 
-export default function LegalPage({ params }: { params: { slug: string } }) {
-  if (!isLegalSlug(params.slug)) notFound();
-  return <LegalView slug={params.slug} />;
+export default async function LegalPage({ params }: LegalPageProps) {
+  const { slug } = await params;
+  if (!isLegalSlug(slug)) notFound();
+  return <LegalView slug={slug} />;
 }

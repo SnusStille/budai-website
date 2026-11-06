@@ -4,8 +4,8 @@ import ChangelogView from "@/components/ui/ChangelogView";
 
 // F1: the changelog is an indexable page, so its title/description follow the
 // server-resolved language (the visible copy already does via LanguageContext).
-export function generateMetadata(): Metadata {
-  const sv = headers().get("x-budai-lang") === "sv";
+export async function generateMetadata(): Promise<Metadata> {
+  const sv = (await headers()).get("x-budai-lang") === "sv";
   return {
     title: sv ? "Vad är nytt" : "What's new",
     description: sv

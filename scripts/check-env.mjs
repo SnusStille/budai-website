@@ -135,7 +135,7 @@ if (asJson) {
     `Summary: ${results.filter((r) => r.tier === "required" && r.valid).length}/${results.filter((r) => r.tier === "required").length} required OK, ` +
       `${recommendedMissing.length} recommended missing, ${warnings.length} warning(s).`
   );
-  console.log("Values are never printed. Next: run supabase/schema.sql + MIGRATION_v2…v11, then npm run dev.");
+  console.log("Values are never printed. Next: run supabase/schema.sql + MIGRATION_v2…v12, then npm run dev.");
   console.log("Use --strict to fail on missing required values (e.g. in a deployment check).");
 }
 

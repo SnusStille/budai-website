@@ -63,8 +63,8 @@ const META = {
  * resolved. The root layout already reads headers() for the CSP nonce, so this
  * does not change static/dynamic behaviour of any route.
  */
-export function generateMetadata(): Metadata {
-  const h = headers();
+export async function generateMetadata(): Promise<Metadata> {
+  const h = await headers();
   const sv = h.get("x-budai-lang") === "sv";
   const lang = sv ? "sv" : "en";
   const pathname = h.get("x-budai-path") || "/";
@@ -140,8 +140,8 @@ export const viewport: Viewport = {
   maximumScale: 5,
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const h = headers();
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const h = await headers();
   // The middleware generates a fresh nonce per request (see lib/csp.ts).
   const nonce = h.get("x-nonce") ?? undefined;
   const lang = h.get("x-budai-lang") === "sv" ? "sv" : "en";

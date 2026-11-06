@@ -24,12 +24,12 @@ test("the opening enters the intended cortex and keeps the same pose and connect
   });
   await page.goto("/");
   const brain=page.locator("[data-brain-canvas]");
-  await expect(brain).toHaveAttribute("data-rendered","true");
   const canvas=await brain.elementHandle();
+  await expect(brain).toHaveAttribute("data-rendered","true");
   await expect(page.locator("html")).toHaveAttribute("data-budai-intro","done");
   await expect(brain).toHaveAttribute("data-sequence","hero");
   const poses=await page.evaluate(()=>window.__openingPoses),opening=poses.filter(p=>p.sequence==="intro");
-  expect(opening.some(p=>p.z<.8&&p.z>-.8)).toBe(true);
+  expect(opening.some(p=>p.z<.8&&p.z>-.8),JSON.stringify(opening.map(p=>p.z))).toBe(true);
   expect(opening.some(p=>p.z<0)).toBe(true);
   expect(Math.max(...poses.map(p=>p.brains))).toBe(1);expect(Math.max(...poses.map(p=>p.loaders))).toBe(1);
   expect(Number(await brain.getAttribute("data-camera-z"))).toBeCloseTo(opening.at(-1)!.z,3);

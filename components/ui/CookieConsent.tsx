@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Cookie, X } from "lucide-react";
+import Link from "next/link";
 import { useLang } from "./LanguageContext";
 import {
   CONSENT_SETTINGS_EVENT,
@@ -84,12 +85,12 @@ export default function CookieConsent() {
                 >
                   {t.cookie.decline}
                 </button>
-                <a
+                <Link
                   href="/legal/cookies"
                   className="text-[11px] text-accent-cyan hover:text-white ml-auto"
                 >
                   {lang === "sv" ? "Mer" : "More"}
-                </a>
+                </Link>
               </div>
             </div>
           </div>

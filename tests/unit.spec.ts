@@ -573,8 +573,8 @@ test("page-level metadata is localized for every indexable route (F1)", () => {
   const legal = readFileSync("app/legal/[slug]/page.tsx", "utf8");
   const changelog = readFileSync("app/changelog/page.tsx", "utf8");
   expect(legal).toContain("LEGAL_TITLES_SV");
-  expect(legal).toContain('headers().get("x-budai-lang")');
-  expect(changelog).toContain('headers().get("x-budai-lang")');
+  expect(legal).toContain('(await headers()).get("x-budai-lang")');
+  expect(changelog).toContain('(await headers()).get("x-budai-lang")');
   expect(changelog).toContain('"Vad är nytt"');
   expect(LEGAL_TITLES_SV.data).toBe("Så hanteras dina data");
 });

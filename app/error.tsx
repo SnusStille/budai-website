@@ -2,6 +2,7 @@
 
 import BudAILogo from "@/components/ui/BudAILogo";
 import { useLang } from "@/components/ui/LanguageContext";
+import Link from "next/link";
 
 export default function ErrorPage({ reset }: { error: Error; reset: () => void }) {
   const { lang } = useLang();
@@ -27,9 +28,9 @@ export default function ErrorPage({ reset }: { error: Error; reset: () => void }
           <button type="button" onClick={reset} className="rounded-full bg-accent-cyan px-5 py-2.5 text-sm font-semibold text-[#020205] hover:opacity-90 transition-opacity">
             {sv ? "Försök igen" : "Try again"}
           </button>
-          <a href="/" className="rounded-full border border-white/15 px-5 py-2.5 text-sm font-medium text-white/85 hover:text-white hover:border-accent-cyan/40 transition-colors">
+          <Link href="/" className="rounded-full border border-white/15 px-5 py-2.5 text-sm font-medium text-white/85 hover:text-white hover:border-accent-cyan/40 transition-colors">
             {sv ? "Ladda om startsidan" : "Reload home"}
-          </a>
+          </Link>
         </div>
       </div>
     </main>

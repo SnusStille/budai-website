@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Search, ArrowRight, Sparkles, Users, Map,
@@ -22,20 +23,21 @@ interface CommandItem {
 // Lets a visitor jump anywhere on the site without hunting through the nav.
 export default function CommandPalette() {
   const { lang, setLang } = useLang();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const goTo = (id: string) => {
+  const goTo = useCallback((id: string) => {
     setOpen(false);
     const el = document.getElementById(id);
     if (el) {
       el.scrollIntoView({ behavior: "smooth", block: "start" });
     } else {
-      window.location.href = `/#${id}`;
+      router.push(`/#${id}`);
     }
-  };
+  }, [router]);
 
   const sv = lang === "sv";
 
@@ -152,7 +154,7 @@ export default function CommandPalette() {
         keywords: "developer contact discord stilledev kontakt",
       },
     ],
-    [sv, setLang]
+    [sv, setLang, goTo]
   );
 
   const filtered = useMemo(() => {

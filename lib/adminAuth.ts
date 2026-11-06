@@ -85,4 +85,3 @@ export function noteLoginFailure(ip: string): void {
 export function clearLoginFailures(ip: string): void {
   failures.delete(ip);
 }
-

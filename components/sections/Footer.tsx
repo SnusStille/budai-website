@@ -1,6 +1,7 @@
 "use client";
 
 import StatusPill from "@/components/ui/StatusPill";
+import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
 import { Github, MessageSquare, Linkedin, Mail, ArrowUpRight, X } from "lucide-react";
 import BudAIWordmark from "@/components/ui/BudAIWordmark";
@@ -146,10 +147,10 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto px-6 lg:px-8 py-14 md:py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 lg:gap-8">
           <div className="lg:col-span-2">
-            <a href="/" aria-label="BudAI home" className="flex items-center gap-2.5 mb-5 group">
+            <Link href="/" aria-label="BudAI home" className="flex items-center gap-2.5 mb-5 group">
               <BudAILogo size="md" animated />
               <BudAIWordmark className="text-xl" />
-            </a>
+            </Link>
             <p className="text-sm text-muted leading-relaxed max-w-sm mb-6">
               {lang === "sv"
                 ? "Utvecklad i Sverige av Stilledev för riktigt arbete på svenska och engelska — med live Playground, minne du kan styra och tydlig väg från tanke till handling."

@@ -52,8 +52,8 @@ test("fresh visit: readiness-gated actual brain, one surface, continuous hero br
   await quietChrome(page,false);await observeLayout(page);
   const errors:string[]=[];page.on("pageerror",e=>errors.push(e.message));page.on("console",m=>{if(m.type()==="error")errors.push(m.text());});
   await page.goto("/",{waitUntil:"domcontentloaded"});
-  const brain=page.locator("[data-brain-canvas]");await expect(brain).toHaveAttribute("data-rendered","true");
-  const canvas=await brain.elementHandle();await expect(brain).toHaveAttribute("data-render-driver","shared");
+  const brain=page.locator("[data-brain-canvas]");const canvas=await brain.elementHandle();
+  await expect(brain).toHaveAttribute("data-rendered","true");await expect(brain).toHaveAttribute("data-render-driver","shared");
   await expect(page.locator("[data-global-loader] svg,[data-global-loader] [data-budai-mark]")).toHaveCount(0);
   await page.screenshot({path:"test-results/intro-desktop.png"});
   await expect(page.locator("[data-global-loader]")).toHaveCount(0);

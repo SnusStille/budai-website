@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import Link from "next/link";
 import { Menu, X, Globe, Bell } from "lucide-react";
 import { useLang } from "@/components/ui/LanguageContext";
 import BudAIWordmark from "@/components/ui/BudAIWordmark";
@@ -79,7 +80,7 @@ export default function Navbar() {
       >
         <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 lg:h-[4.5rem] lg:grid lg:grid-cols-[1fr_auto_1fr]">
-            <a
+            <Link
               href="/"
               data-budai-logo
               className="flex items-center gap-2.5 group outline-none focus-visible:ring-2 focus-visible:ring-accent-cyan/50 rounded-lg"
@@ -105,7 +106,7 @@ export default function Navbar() {
                   DEVELOPED BY <b className="font-bold text-accent-cyan [text-shadow:0_0_12px_rgba(0,229,255,0.55)]">STILLEDEV</b>
                 </span>
               </span>
-            </a>
+            </Link>
 
             <div className="hidden lg:flex items-center gap-0.5">
               {links.map((l) => {
