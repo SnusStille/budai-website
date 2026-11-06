@@ -6,8 +6,8 @@ import { createCapabilityEngine } from "./capability-engine";
 import { createDeveloperRoom } from "./developer-room";
 import { cameraAt, worldChapterAt, worldOpacityAt, clamp, lerp, smooth, type JourneyFrame } from "./timeline";
 
-const CYAN = "#79cfe4";
-const LAVENDER = "#9ca7df";
+const CYAN = "#5fe3f7";
+const LAVENDER = "#a78bfa";
 
 /**
  * FAS2: static scenery never needs a per-frame matrix recompute. Freezing it

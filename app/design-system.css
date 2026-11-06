@@ -254,9 +254,10 @@ p {
   inset: 0;
   pointer-events: none;
   background-image:
+    linear-gradient(90deg, rgba(2, 2, 5, 0.62) 0%, rgba(2, 2, 5, 0.22) 42%, transparent 68%),
     radial-gradient(ellipse at 50% 44%, transparent 42%, rgba(1, 2, 6, 0.62) 100%),
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.32'/%3E%3C/svg%3E");
-  background-size: cover, 140px 140px;
+  background-size: cover, cover, 140px 140px;
   opacity: 0.42;
 }
 
@@ -331,4 +332,182 @@ p {
    without touching any geometry or material. One composited element only. */
 .universe-world > canvas[data-world-canvas] {
   filter: saturate(1.12) contrast(1.045);
+}
+
+/* ==========================================================================
+ * FAS2 round 2 — a visibly stronger visual identity.
+ * All of this is paint-only (backgrounds, pseudo-elements, type scale), so
+ * the journey timeline and the DOM stay exactly as the tests expect.
+ * ========================================================================== */
+
+/* A real, hand-authored aurora plate behind the 3D scene. 12 kB WebP, parallax
+   and a slow hue drift driven by the existing --journey-phase variable that
+   WorldStage already writes on <html>. It sits behind .universe-world. */
+.universe-atmosphere {
+  --chapter: var(--journey-phase, 0);
+  background:
+    radial-gradient(ellipse 72% 56% at calc(78% - var(--chapter) * 5%) 36%, rgba(24, 96, 134, 0.30), transparent 68%),
+    radial-gradient(ellipse 62% 50% at calc(14% + var(--chapter) * 5%) 80%, rgba(86, 62, 156, 0.24), transparent 64%),
+    radial-gradient(ellipse 76% 58% at calc(48% + var(--chapter) * 3%) 54%, rgba(22, 112, 104, 0.13), transparent 72%),
+    linear-gradient(150deg, #020205, #03070d 58%, #050811);
+}
+
+.universe-atmosphere::before {
+  inset: -12% 0;
+  background-image:
+    url("/ambient/aurora.webp"),
+    repeating-linear-gradient(90deg, transparent 0 calc(16.666% - 1px), #8295b008 calc(16.666% - 1px) 16.666%);
+  background-size: cover, auto;
+  background-position: calc(34% + var(--journey-phase, 0) * 2.5%) center, 0 0;
+  background-repeat: no-repeat, repeat;
+  mask-image: linear-gradient(transparent, #000 14%, #000 88%, transparent);
+  opacity: 0.62;
+  filter: hue-rotate(calc(var(--journey-phase, 0) * 6deg));
+  transform: translateY(var(--journey-shift, 0px));
+}
+
+/* Each chapter gets its own colour identity instead of one endless blue wash. */
+.brain-journey {
+  background-image: radial-gradient(ellipse 62% 42% at 72% 44%, rgba(0, 190, 226, 0.11), transparent 72%);
+}
+.capabilities-universe {
+  background:
+    radial-gradient(ellipse 58% 46% at 80% 28%, rgba(124, 92, 255, 0.16), transparent 70%),
+    radial-gradient(ellipse 46% 38% at 12% 74%, rgba(0, 190, 226, 0.09), transparent 72%),
+    linear-gradient(#02020500, #02020540 6%, #0202052b 95%, transparent);
+}
+.builder-section {
+  background:
+    radial-gradient(ellipse 56% 44% at 22% 40%, rgba(45, 212, 191, 0.13), transparent 70%),
+    linear-gradient(#020205b0, transparent 15%, transparent 68%, #020205e6 88%);
+}
+.roadmap-section {
+  background:
+    radial-gradient(ellipse 60% 44% at 76% 42%, rgba(56, 189, 248, 0.14), transparent 70%),
+    linear-gradient(transparent, #03080f50 25%, #03080fed 65%, #020205);
+}
+.early-access-card {
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(0, 200, 232, 0.14), transparent 68%),
+    radial-gradient(ellipse 60% 50% at 50% 100%, rgba(124, 92, 255, 0.10), transparent 72%),
+    linear-gradient(180deg, #07111be6, #050a12ee);
+}
+
+/* A visible halo around the neural brain and a slightly bolder first screen. */
+.hero-light {
+  background:
+    radial-gradient(ellipse 34% 40% at 74% 47%, rgba(0, 214, 240, 0.13), transparent 72%),
+    radial-gradient(ellipse 26% 32% at 79% 39%, rgba(124, 92, 255, 0.11), transparent 72%),
+    radial-gradient(ellipse 44% 50% at 80% 43%, rgba(48, 71, 82, 0.07), transparent 60%);
+}
+
+.hero-content h1 {
+  font-size: clamp(54px, 6.6vw, 96px);
+  font-weight: 560;
+  letter-spacing: -0.065em;
+  line-height: 1.02;
+}
+
+.hero-eyebrow {
+  display: inline-flex;
+  width: fit-content;
+  padding: 7px 14px;
+  border: 1px solid var(--ds-border);
+  border-radius: 999px;
+  background: rgba(9, 21, 33, 0.62);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+.signal-dot {
+  height: 6px;
+  width: 6px;
+  background: var(--ds-accent);
+  box-shadow: 0 0 12px rgba(127, 227, 245, 0.85);
+}
+
+/* Section headings get a short accent rule — a small, very legible detail. */
+.chapter-label {
+  color: var(--ds-text-3);
+  letter-spacing: 0.16em;
+}
+.chapter-label i {
+  background: linear-gradient(90deg, var(--ds-accent), var(--ds-accent-2));
+  box-shadow: 0 0 10px rgba(127, 227, 245, 0.4);
+}
+
+/* Cards read as physical objects now, not flat translucent rectangles. */
+.plan-card,
+.waitlist-composer {
+  box-shadow:
+    var(--ds-shadow-1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 0 32px rgba(0, 190, 226, 0.05);
+}
+.plan-card:hover {
+  border-color: var(--ds-border-strong);
+  box-shadow:
+    var(--ds-shadow-2),
+    0 0 46px rgba(0, 190, 226, 0.10);
+}
+
+/* Stronger, more confident WebGL line-work. */
+.universe-world > canvas[data-world-canvas] {
+  filter: saturate(1.24) contrast(1.075);
+}
+
+@media (max-width: 767px) {
+  .hero-content h1 { font-size: clamp(44px, 11vw, 74px); }
+  .hero-eyebrow { font-size: 8px; padding: 6px 10px; }
+  .universe-atmosphere::before { opacity: 0.45; }
+}
+
+/* --------------------------------------------- navigation, dividers, ending */
+
+.site-navigation {
+  border-bottom: 1px solid rgba(169, 205, 224, 0.07);
+  background: linear-gradient(180deg, rgba(2, 2, 5, 0.94), rgba(2, 2, 5, 0.55) 68%, transparent);
+}
+.site-navigation.glass-strong {
+  background: rgba(6, 10, 16, 0.86);
+  border-bottom-color: var(--ds-border);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.45);
+}
+.site-navigation [data-budai-logo] svg { filter: saturate(1.05); }
+
+/* Section boundaries become a visible, two-accent light seam. */
+.section-hairline::before {
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(127, 227, 245, 0.5) 42%,
+    rgba(169, 155, 255, 0.42) 58%,
+    transparent
+  );
+  box-shadow: 0 0 18px rgba(127, 227, 245, 0.25);
+}
+
+/* The composer is the working surface — give it a little more presence. */
+.pg-composer-shell {
+  border-top: 1px solid var(--ds-border) !important;
+  background: linear-gradient(180deg, rgba(12, 24, 36, 0.72), rgba(6, 12, 20, 0.86));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.055), 0 -18px 44px rgba(0, 0, 0, 0.32);
+}
+
+/* A stronger, warmer ending so the page does not just fade to black. */
+.site-footer {
+  border-top-color: var(--ds-border) !important;
+  background:
+    radial-gradient(ellipse 70% 60% at 50% 118%, rgba(0, 190, 226, 0.16), transparent 70%),
+    radial-gradient(ellipse 50% 50% at 82% 0%, rgba(124, 92, 255, 0.12), transparent 72%),
+    linear-gradient(180deg, #020205, #04070e);
+}
+.closing-kicker {
+  color: var(--ds-text-3);
+  letter-spacing: 0.28em;
+  text-shadow: 0 0 18px rgba(127, 227, 245, 0.35);
 }
