@@ -1,0 +1,334 @@
+/*
+ * BudAI Visual System — FAS2 design pass.
+ *
+ * Imported LAST in app/layout.tsx, after globals.css and experience.css, so
+ * these tokens and refinements win the cascade. This layer is presentation
+ * only: it adds no DOM, no copy and no layout containers. That keeps the 3D
+ * journey, the scroll timeline and all browser regression tests intact.
+ *
+ * Goals:
+ *  1. One semantic colour system with WCAG AA text contrast on #020205.
+ *  2. A calmer, more consistent typographic hierarchy and reading measure.
+ *  3. Coherent surfaces (radius, border, elevation, glow) instead of dozens
+ *     of one-off glass/blur recipes.
+ *  4. One ambient backdrop (gradient + vignette + grain) instead of many
+ *     competing radial glows.
+ *  5. Shared motion tokens; decorative animation stays opt-out for
+ *     prefers-reduced-motion.
+ */
+
+:root {
+  /* Text tokens, measured against --bg (#020205). All >= 4.5:1 (WCAG AA). */
+  --ds-text-1: #f2f7fb; /* 17.6:1 — headings, primary copy */
+  --ds-text-2: #c6d3df; /* 12.7:1 — body copy */
+  --ds-text-3: #9fb0c1; /*  8.4:1 — secondary copy, labels */
+  --ds-text-4: #8394a8; /*  5.9:1 — micro labels, still AA */
+
+  --ds-accent: #7fe3f5;
+  --ds-accent-2: #a99bff;
+  --ds-accent-3: #6fe0c4;
+
+  --ds-surface-1: rgba(255, 255, 255, 0.035);
+  --ds-surface-2: rgba(255, 255, 255, 0.018);
+  --ds-border: rgba(169, 205, 224, 0.14);
+  --ds-border-strong: rgba(169, 205, 224, 0.28);
+
+  --ds-radius-sm: 10px;
+  --ds-radius-md: 16px;
+  --ds-radius-lg: 24px;
+
+  --ds-shadow-1:
+    inset 0 1px 0 rgba(255, 255, 255, 0.055),
+    0 18px 48px rgba(0, 0, 0, 0.42);
+  --ds-shadow-2:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    0 24px 70px rgba(0, 0, 0, 0.52),
+    0 0 0 1px rgba(127, 227, 245, 0.06);
+
+  /* One easing curve and three durations for the whole site. */
+  --ds-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --ds-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ds-dur-fast: 180ms;
+  --ds-dur: 320ms;
+  --ds-dur-slow: 620ms;
+
+  --ds-measure: 68ch;
+}
+
+/* ---------------------------------------------------------------- typography */
+
+body {
+  color: var(--ds-text-1);
+  font-feature-settings: "ss01" on, "cv11" on, "kern" on;
+}
+
+h1, h2, h3 {
+  letter-spacing: -0.045em;
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+/* Never let long-form copy turn into a wall of text. */
+.hero-description,
+.section-pad p,
+.about-copy p,
+.legal-copy p {
+  max-width: var(--ds-measure);
+  color: var(--ds-text-2);
+  line-height: 1.75;
+}
+
+:focus-visible {
+  outline: 2px solid var(--ds-accent);
+  outline-offset: 3px;
+}
+
+::selection {
+  background: rgba(127, 227, 245, 0.28);
+  color: #ffffff;
+}
+
+/* Single utility for micro copy that used to be white at 40–60% opacity.
+   Replaces text-white/40|50|60 in components; hover:text-white still wins. */
+.text-ds-muted { color: var(--ds-text-3); }
+.text-ds-faint { color: var(--ds-text-4); }
+
+/* ------------------------------------------------------------- hero clarity */
+
+.hero-title-accent {
+  background: linear-gradient(105deg, #f0fbfd -10%, #8adcef 46%, #b7bcf5 104%);
+  background-clip: text;
+  -webkit-background-clip: text;
+}
+
+.hero-eyebrow,
+.hero-locale,
+.hero-description,
+.hero-product-note,
+.hero-credit,
+.hero-bottom,
+.hero-bottom a,
+.hero-edition,
+.hero-features > span {
+  text-shadow: none;
+}
+
+.hero-eyebrow { color: var(--ds-text-3); letter-spacing: 0.14em; }
+.hero-locale { color: var(--ds-text-3); }
+.hero-description { color: var(--ds-text-2); }
+.hero-product-note,
+.hero-credit { color: var(--ds-text-3); }
+.hero-edition { color: var(--ds-text-4); }
+.hero-bottom { color: var(--ds-text-4); }
+.hero-bottom a { color: var(--ds-text-3); }
+.hero-features > span {
+  color: var(--ds-text-3);
+  border-color: var(--ds-border);
+  background: rgba(10, 22, 34, 0.62);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition:
+    color var(--ds-dur-fast) var(--ds-ease),
+    border-color var(--ds-dur) var(--ds-ease),
+    background var(--ds-dur) var(--ds-ease),
+    transform var(--ds-dur-fast) var(--ds-ease);
+}
+.hero-features > span:hover {
+  color: var(--ds-text-1);
+  border-color: var(--ds-border-strong);
+  transform: translateY(-1px);
+}
+
+/* One primary action, clearly dominant. */
+.btn-primary {
+  border-radius: var(--ds-radius-sm);
+  border: 1px solid rgba(210, 246, 253, 0.7);
+  background: linear-gradient(110deg, #d6f5fb 0%, #8fddf1 48%, #b6c9f7 100%);
+  color: #04121a;
+  font-weight: 650;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.65),
+    0 10px 30px rgba(0, 199, 232, 0.14);
+  transition:
+    transform var(--ds-dur-fast) var(--ds-ease),
+    box-shadow var(--ds-dur) var(--ds-ease),
+    filter var(--ds-dur-fast) var(--ds-ease);
+}
+.btn-primary:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.04);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    0 18px 44px rgba(0, 199, 232, 0.24);
+}
+.btn-primary:active { transform: translateY(0); }
+
+.hero-secondary {
+  color: var(--ds-text-2);
+  transition: color var(--ds-dur-fast) var(--ds-ease), transform var(--ds-dur-fast) var(--ds-ease);
+}
+.hero-secondary:hover { color: #ffffff; transform: translateX(2px); }
+
+/* --------------------------------------------------------------- surfaces */
+
+.glass,
+.glass-strong,
+.holo-card,
+.panel-premium,
+.surface-elevated,
+.early-access-card,
+.playground-shell,
+.waitlist-composer {
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-radius-md);
+  box-shadow: var(--ds-shadow-1);
+}
+
+/* Cheaper, consistent blur: 40px backdrop-filter was the single most
+   expensive paint on mid-range mobile GPUs and made cards look muddy. */
+.glass,
+.glass-strong,
+.holo-card {
+  backdrop-filter: blur(12px) saturate(120%);
+  -webkit-backdrop-filter: blur(12px) saturate(120%);
+}
+
+.holo-card::before {
+  /* Tone the four-colour shimmer down to a two-accent sheen. */
+  background: linear-gradient(
+    105deg,
+    transparent 42%,
+    rgba(127, 227, 245, 0.028) 48%,
+    rgba(169, 155, 255, 0.028) 54%,
+    transparent 60%
+  );
+  animation-duration: 11s;
+}
+
+.panel-premium,
+.surface-elevated {
+  background: linear-gradient(180deg, var(--ds-surface-1), var(--ds-surface-2));
+}
+
+.glass-hover {
+  transition:
+    background var(--ds-dur) var(--ds-ease),
+    border-color var(--ds-dur) var(--ds-ease),
+    transform var(--ds-dur) var(--ds-ease),
+    box-shadow var(--ds-dur) var(--ds-ease);
+}
+.glass-hover:hover {
+  border-color: var(--ds-border-strong);
+  box-shadow: var(--ds-shadow-2);
+}
+
+/* A single hairline grammar for section boundaries. */
+.section-hairline::before {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(127, 227, 245, 0.26) 45%,
+    rgba(169, 155, 255, 0.18) 55%,
+    transparent
+  );
+}
+
+/* --------------------------------------------------------------- ambience */
+
+/* One calm backdrop: a wide colour wash, a vignette that frames the 3D stage,
+   and a very light grain so large dark areas do not band on OLED screens.
+   Sits behind .universe-world (z-index 1) — never over the WebGL canvas. */
+.universe-atmosphere {
+  background:
+    radial-gradient(ellipse at 72% 38%, rgba(25, 58, 78, 0.22), transparent 62%),
+    radial-gradient(ellipse at 18% 82%, rgba(52, 42, 96, 0.16), transparent 58%),
+    linear-gradient(150deg, #020205, #03070d 58%, #050811);
+}
+
+.universe-atmosphere::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(ellipse at 50% 44%, transparent 42%, rgba(1, 2, 6, 0.62) 100%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.32'/%3E%3C/svg%3E");
+  background-size: cover, 140px 140px;
+  opacity: 0.42;
+}
+
+/* Keep the grid subtle now that grain + vignette add depth. */
+.universe-atmosphere::before { opacity: 0.55; }
+
+/* ----------------------------------------------------------------- motion */
+
+.glass-hover,
+.holo-card::after,
+.pg-suggest-chip,
+.site-navigation a,
+.site-navigation button,
+.roadmap-milestone > button {
+  transition-timing-function: var(--ds-ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .holo-card::before,
+  .bud-sheen,
+  .text-gradient,
+  .bud-spin-conic,
+  .bud-codescan {
+    animation: none !important;
+  }
+  .btn-primary,
+  .hero-secondary,
+  .hero-features > span {
+    transform: none !important;
+  }
+}
+
+/* ------------------------------------------------------- small-screen care */
+
+@media (max-width: 767px) {
+  :root { --ds-measure: 46ch; }
+  .hero-description { line-height: 1.7; }
+  .glass,
+  .glass-strong,
+  .holo-card {
+    /* Blur is disproportionately expensive on mobile GPUs. */
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+}
+
+/* ------------------------------------------------- capability legibility */
+
+/* The second line of the workshop heading and the tiny mono labels were the
+   dimmest readable text on the page. Keep the hierarchy, raise the contrast. */
+.capability-index h3 > span { color: var(--ds-text-2); }
+.capability-matrix-header,
+.capability-viewport-top,
+.capability-viewport-bottom,
+.capability-module > b,
+.capability-module small,
+.capability-module-file,
+.capability-matrix-note {
+  color: var(--ds-text-3);
+}
+.capability-pathway-switch > button { color: var(--ds-text-3); }
+.capability-pathway-switch > button.is-active { color: var(--ds-text-1); }
+
+/* Two accents instead of the old cyan/purple/green three-way gradient. */
+.text-gradient {
+  background: linear-gradient(115deg, #eaf8fc 0%, var(--ds-accent) 48%, var(--ds-accent-2) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+/* A gentle grade makes the fine WebGL line-work read against the dark page
+   without touching any geometry or material. One composited element only. */
+.universe-world > canvas[data-world-canvas] {
+  filter: saturate(1.12) contrast(1.045);
+}

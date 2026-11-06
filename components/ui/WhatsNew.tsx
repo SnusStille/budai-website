@@ -37,7 +37,7 @@ export default function WhatsNew() {
       <div className="max-h-[80vh] w-full max-w-md overflow-y-auto rounded-2xl border border-white/10 bg-[#07070e] p-6" onClick={(e) => e.stopPropagation()}>
         <div className="mb-5 flex items-center justify-between">
           <h2 className="text-xl font-semibold text-white">{sv ? "Vad är nytt" : "What's new"}</h2>
-          <button type="button" onClick={() => setOpen(false)} aria-label="Close" className="text-white/60 hover:text-white"><X className="h-5 w-5" /></button>
+          <button type="button" onClick={() => setOpen(false)} aria-label="Close" className="text-ds-muted hover:text-white"><X className="h-5 w-5" /></button>
         </div>
         <div className="space-y-6">
           {CHANGELOG.map((e) => (
