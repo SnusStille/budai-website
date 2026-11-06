@@ -578,3 +578,59 @@ test("page-level metadata is localized for every indexable route (F1)", () => {
   expect(changelog).toContain('"Vad är nytt"');
   expect(LEGAL_TITLES_SV.data).toBe("Så hanteras dina data");
 });
+
+/* ------------------------------------------------------------------------- *
+ * FAS2 visual system guards. These read source (like the other design guards)
+ * so a future refactor cannot silently reintroduce low-contrast text or the
+ * per-mesh pulse draw calls without failing CI.
+ * ------------------------------------------------------------------------- */
+
+test("FAS2: text tokens meet WCAG AA and the visual layer wins the cascade", () => {
+  const layout = readFileSync("app/layout.tsx", "utf8");
+  const css = readFileSync("app/design-system.css", "utf8");
+  expect(layout.indexOf('import "./design-system.css"')).toBeGreaterThan(
+    layout.indexOf('import "./experience.css"')
+  );
+  const channel = (v: number) => {
+    const c = v / 255;
+    return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+  };
+  const luminance = (hex: string) => {
+    const n = parseInt(hex.slice(1), 16);
+    return 0.2126 * channel((n >> 16) & 255) + 0.7152 * channel((n >> 8) & 255) + 0.0722 * channel(n & 255);
+  };
+  const contrast = (a: string, b: string) => {
+    const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+    return (hi + 0.05) / (lo + 0.05);
+  };
+  for (const token of ["--ds-text-1", "--ds-text-2", "--ds-text-3", "--ds-text-4"]) {
+    const match = css.match(new RegExp(`${token}\\s*:\\s*(#[0-9a-fA-F]{6})`));
+    expect(match, `${token} must be a hex literal`).not.toBeNull();
+    expect(contrast(match![1], "#020205"), `${token} contrast on --bg`).toBeGreaterThanOrEqual(4.5);
+  }
+  expect(css).toContain(".text-ds-muted");
+  expect(css).toContain("--ds-ease");
+});
+
+test("FAS2: no white text at 40-60% opacity remains in components", () => {
+  const found = spawnSync("grep", ["-rl", "-E", "--include=*.tsx", "text-white/(40|50|60)", "components", "app"], {
+    encoding: "utf8",
+  });
+  expect(found.stdout.trim()).toBe("");
+});
+
+test("FAS2: static 3D scenery is frozen and moving pulses are instanced", () => {
+  const world = readFileSync("lib/experience/world.ts", "utf8");
+  expect(world).toContain("function freezeStatic");
+  expect(world).toContain("matrixAutoUpdate = false");
+  expect(world).toContain("InstancedMesh");
+  expect(world).toContain("DynamicDrawUsage");
+  expect(world).toContain('dataset.drawBudget = "65"');
+  expect(world).toContain("if (cssVisible) cssRenderer?.render");
+  // The old one-mesh-per-pulse loops must not come back.
+  expect(world).not.toContain("corridorPulses");
+  expect(world).not.toContain("roadPulses");
+  // Fewer decorative meshes on software/mobile GPUs.
+  expect(world).toContain("lite ? 1 : 2");
+  expect(world).toContain("lite ? 1 : 3");
+});

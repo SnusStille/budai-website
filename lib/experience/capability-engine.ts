@@ -373,28 +373,28 @@ export function createCapabilityEngine(
   const cyanLineMat = new THREE.LineBasicMaterial({
     color: "#7adbf0",
     transparent: true,
-    opacity: 0.52,
+    opacity: lite ? 0.62 : 0.52,
     blending: THREE.AdditiveBlending,
     depthWrite: false,
   });
   const lavenderLineMat = new THREE.LineBasicMaterial({
     color: "#a8b4f8",
     transparent: true,
-    opacity: 0.48,
+    opacity: lite ? 0.58 : 0.48,
     blending: THREE.AdditiveBlending,
     depthWrite: false,
   });
   const emeraldLineMat = new THREE.LineBasicMaterial({
     color: "#6ee7b7",
     transparent: true,
-    opacity: 0.54,
+    opacity: lite ? 0.64 : 0.54,
     blending: THREE.AdditiveBlending,
     depthWrite: false,
   });
   const bgArchitecturalLineMat = new THREE.LineBasicMaterial({
     color: "#578fae",
     transparent: true,
-    opacity: 0.22,
+    opacity: lite ? 0.28 : 0.22,
     blending: THREE.AdditiveBlending,
     depthWrite: false,
   });

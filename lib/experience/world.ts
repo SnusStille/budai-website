@@ -10,6 +10,17 @@ const CYAN = "#79cfe4";
 const LAVENDER = "#9ca7df";
 
 /**
+ * FAS2: static scenery never needs a per-frame matrix recompute. Freezing it
+ * after its transform is set removes thousands of matrix multiplies per second
+ * on the long scroll journey. Animated objects are deliberately NOT frozen.
+ */
+function freezeStatic<T extends THREE.Object3D>(object: T): T {
+  object.updateMatrix();
+  object.matrixAutoUpdate = false;
+  return object;
+}
+
+/**
  * A single, persistent WebGL world. Camera-scrub / quality / disposal techniques
  * informed by scroll-flyover and AETumi (MIT); original geometry and choreography.
  * There is no scroll handler, RAF, virtual scroller, downloaded model or video here.
@@ -61,6 +72,10 @@ export function createWorld(
   };
 
   try {
+    // FAS2: reusable scratch objects — the render loop must not allocate per frame.
+    const pulseMatrix = new THREE.Matrix4();
+    const pulsePosition = new THREE.Vector3();
+    const seedMatrix = new THREE.Matrix4();
     const gl = renderer.getContext();
     const debug = gl.getExtension("WEBGL_debug_renderer_info");
     const software = !!debug && /swiftshader|llvmpipe|software/i.test(String(gl.getParameter(debug.UNMASKED_RENDERER_WEBGL)));
@@ -70,7 +85,7 @@ export function createWorld(
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, pixelCap));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.25;
+    renderer.toneMappingExposure = 1.18;
     renderer.domElement.dataset.worldCanvas = "";
     renderer.domElement.setAttribute("aria-hidden", "true");
     host.appendChild(renderer.domElement);
@@ -78,7 +93,9 @@ export function createWorld(
     cssRenderer.domElement.className = "world-dom-layer";
     cssRenderer.domElement.setAttribute("aria-hidden", "true");
     host.appendChild(cssRenderer.domElement);
-    scene.fog = new THREE.FogExp2("#03070f", 0.029);
+    // FAS2: fog matches the new atmosphere so distant geometry dissolves into
+    // the page instead of ending on a hard dark edge.
+    scene.fog = new THREE.FogExp2("#04070e", 0.026);
     const camera = new THREE.PerspectiveCamera(mobile ? 48 : 43, 1, 0.1, 100);
     if (!lite) {
       const pmrem = new THREE.PMREMGenerator(renderer);
@@ -136,8 +153,15 @@ export function createWorld(
       depthWrite: false,
     });
     const corridorCurves: THREE.CatmullRomCurve3[] = [];
-    const corridorPulses: THREE.Mesh[] = [];
+    const corridorPulseCount = 6;
     const corridorPulseGeo = new THREE.SphereGeometry(0.052, 8, 8);
+    // FAS2: six identical moving pulses become one draw call instead of six.
+    const corridorPulse = new THREE.InstancedMesh(corridorPulseGeo, corridorPulseMat, corridorPulseCount);
+    corridorPulse.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    corridorPulse.frustumCulled = false;
+    for (let i = 0; i < corridorPulseCount; i++) corridorPulse.setMatrixAt(i, seedMatrix);
+    corridorPulse.instanceMatrix.needsUpdate = true;
+    corridor.add(corridorPulse);
     for (let lane = 0; lane < 6; lane++) {
       const a = (lane / 6) * Math.PI * 2;
       const rStart = 1.55;
@@ -149,14 +173,11 @@ export function createWorld(
       ]);
       corridorCurves.push(railCurve);
       corridor.add(
-        new THREE.Line(
+        freezeStatic(new THREE.Line(
           new THREE.BufferGeometry().setFromPoints(railCurve.getPoints(lite ? 24 : 36)),
           corridorRailMat
-        )
+        ))
       );
-      const pulseMesh = new THREE.Mesh(corridorPulseGeo, corridorPulseMat);
-      corridor.add(pulseMesh);
-      corridorPulses.push(pulseMesh);
     }
     [0.32, 0.68].forEach(u => {
       const ringPts: THREE.Vector3[] = [];
@@ -169,7 +190,7 @@ export function createWorld(
       const gateLoop = new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(ringPts), corridorRailMat);
       gateLoop.position.set(lerp(0, 24, u), lerp(0.88, 0.86, u), lerp(0, -12.75, u));
       gateLoop.rotation.y = -0.58;
-      corridor.add(gateLoop);
+      corridor.add(freezeStatic(gateLoop));
     });
 
     const outputSignal = createPointField([{ x: 0, y: 0, z: 0, lane: -1 }], 4.2);
@@ -245,10 +266,10 @@ export function createWorld(
         depthWrite: false,
       });
       roadmap.add(
-        new THREE.Line(
+        freezeStatic(new THREE.Line(
           new THREE.BufferGeometry().setFromPoints(new THREE.CatmullRomCurve3(railPts).getPoints(48)),
           railMat
-        )
+        ))
       );
       roadQuiet.push({ material: railMat, opacity: railMat.opacity });
     });
@@ -261,13 +282,14 @@ export function createWorld(
       depthWrite: false,
     });
     roadQuiet.push({ material: roadPulseMat, opacity: roadPulseMat.opacity });
-    const roadPulses: THREE.Mesh[] = [];
+    const roadPulseCount = 4;
     const roadPulseGeo = new THREE.SphereGeometry(0.068, 10, 10);
-    for (let pIdx = 0; pIdx < 4; pIdx++) {
-      const pMesh = new THREE.Mesh(roadPulseGeo, roadPulseMat);
-      roadmap.add(pMesh);
-      roadPulses.push(pMesh);
-    }
+    const roadPulse = new THREE.InstancedMesh(roadPulseGeo, roadPulseMat, roadPulseCount);
+    roadPulse.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    roadPulse.frustumCulled = false;
+    for (let i = 0; i < roadPulseCount; i++) roadPulse.setMatrixAt(i, seedMatrix);
+    roadPulse.instanceMatrix.needsUpdate = true;
+    roadmap.add(roadPulse);
 
     path.forEach((point, i) => {
       const baseMaterial = new THREE.MeshStandardMaterial({
@@ -282,7 +304,7 @@ export function createWorld(
       roadQuiet.push({ material: baseMaterial, opacity: 0.95 });
       const base = new THREE.Mesh(new THREE.CylinderGeometry(0.76, 0.92, 0.22, 6), baseMaterial);
       base.position.copy(point);
-      roadmap.add(base);
+      roadmap.add(freezeStatic(base));
 
       const baseEdgeMat = new THREE.LineBasicMaterial({
         color: i < 2 ? "#8ce8fa" : "#a8b4ec",
@@ -297,7 +319,7 @@ export function createWorld(
         baseEdgeMat
       );
       baseEdges.position.copy(point);
-      roadmap.add(baseEdges);
+      roadmap.add(freezeStatic(baseEdges));
 
       const material = new THREE.MeshStandardMaterial({
         color: i < 2 ? CYAN : LAVENDER,
@@ -347,26 +369,28 @@ export function createWorld(
       roadQuiet.push({ material: orbitMaterial, opacity: orbitMaterial.opacity });
 
       if (i === 1) {
-        for (let r = 0; r < 2; r++) {
+        for (let r = 0; r < (lite ? 1 : 2); r++) {
           const gimbal = new THREE.Mesh(new THREE.TorusGeometry(0.62 + r * 0.14, 0.014, 8, 56), orbitMaterial);
           gimbal.rotation.set(0.9 + r * 0.5, r * 0.7, 0.3);
           stationGroup.add(gimbal);
         }
-        const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 2.5, 8), orbitMaterial);
-        pillar.position.copy(point).add(new THREE.Vector3(0, 1.35, 0));
-        roadmap.add(pillar);
+        if (!lite) {
+          const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 2.5, 8), orbitMaterial);
+          pillar.position.copy(point).add(new THREE.Vector3(0, 1.35, 0));
+          roadmap.add(freezeStatic(pillar));
+        }
       } else if (i === 2) {
         const teamRing = new THREE.Mesh(new THREE.TorusGeometry(0.68, 0.013, 8, 56), orbitMaterial);
         teamRing.rotation.x = 1.25;
         stationGroup.add(teamRing);
-        for (let sat = 0; sat < 3; sat++) {
+        for (let sat = 0; sat < (lite ? 1 : 3); sat++) {
           const ang = (sat / 3) * Math.PI * 2;
           const satMesh = new THREE.Mesh(new THREE.OctahedronGeometry(0.12, 0), material);
           satMesh.position.set(Math.cos(ang) * 0.68, Math.sin(ang) * 0.18, Math.sin(ang) * 0.68);
           stationGroup.add(satMesh);
         }
       } else if (i === 3) {
-        for (let r = 0; r < 3; r++) {
+        for (let r = 0; r < (lite ? 1 : 3); r++) {
           const hRing = new THREE.Mesh(new THREE.TorusGeometry(0.68 + r * 0.12, 0.013, 8, 60), orbitMaterial);
           hRing.rotation.set(r * 0.55, r * 0.8, 0.25);
           stationGroup.add(hRing);
@@ -391,12 +415,12 @@ export function createWorld(
       const glow = new THREE.Sprite(glowMaterial);
       glow.position.copy(stationGroup.position);
       glow.scale.set(3.4, 3.4, 1);
-      roadmap.add(glow);
+      roadmap.add(freezeStatic(glow));
 
       const pedestalOrbit = new THREE.Mesh(new THREE.TorusGeometry(0.82, 0.016, 6, 56), orbitMaterial);
       pedestalOrbit.rotation.x = Math.PI / 2;
       pedestalOrbit.position.copy(point).add(new THREE.Vector3(0, 0.14, 0));
-      roadmap.add(pedestalOrbit);
+      roadmap.add(freezeStatic(pedestalOrbit));
     });
 
     const closingOrigin = path[3].clone().add(new THREE.Vector3(0, 0.72, 0));
@@ -527,10 +551,13 @@ export function createWorld(
         corridorRailMat.opacity = corridorAlpha * 0.88;
         corridorPulseMat.opacity = smooth(corridorAlpha * 2.5) * 0.92;
         const output = smooth((chapter - 2.04) / 0.82);
-        corridorPulses.forEach((pulse, lane) => {
+        for (let lane = 0; lane < corridorPulseCount; lane++) {
           const u = clamp(output * 0.86 + ((lane * 0.15 + frame.time * 0.14) % 0.14), 0, 1);
-          corridorCurves[lane].getPointAt(u, pulse.position);
-        });
+          corridorCurves[lane].getPointAt(u, pulsePosition);
+          pulseMatrix.makeTranslation(pulsePosition.x, pulsePosition.y, pulsePosition.z);
+          corridorPulse.setMatrixAt(lane, pulseMatrix);
+        }
+        corridorPulse.instanceMatrix.needsUpdate = true;
         outputSignal.position.set(lerp(24, 48, output), lerp(0.88, 0.85, output), lerp(-16, -28.75, output));
         outputSignal.material.uniforms.uOpacity.value = corridorAlpha * 1.15;
         outputSignal.visible = corridorAlpha > 0.002;
@@ -590,11 +617,14 @@ export function createWorld(
           mesh.scale.setScalar(i === 3 ? lerp(1, 0.07, close) : lerp(1, 0.94, close));
           mesh.rotation.y = frame.time * (0.24 + i * 0.05);
         });
-        roadPulses.forEach((pulse, pIdx) => {
+        for (let pIdx = 0; pIdx < roadPulseCount; pIdx++) {
           const u = (frame.time * 0.22 + pIdx * 0.25) % 1;
-          roadCurve.getPointAt(u, pulse.position);
-          pulse.position.y += 0.35;
-        });
+          roadCurve.getPointAt(u, pulsePosition);
+          pulsePosition.y += 0.35;
+          pulseMatrix.makeTranslation(pulsePosition.x, pulsePosition.y, pulsePosition.z);
+          roadPulse.setMatrixAt(pIdx, pulseMatrix);
+        }
+        roadPulse.instanceMatrix.needsUpdate = true;
         const anchor = closingAnchor?.getBoundingClientRect();
         if (anchor) {
           desiredClosing.set(((anchor.left + anchor.width / 2) / width) * 2 - 1, 1 - ((anchor.top + anchor.height / 2) / height) * 2, 0.94).unproject(camera);
@@ -616,13 +646,16 @@ export function createWorld(
         const builderWeight = smooth(1 - Math.abs(chapter - 4));
         screen.visible = builderWeight > 0.02;
         editor.style.opacity = String(builderWeight);
-        cssRenderer!.domElement.style.visibility =
-          screen.visible || (capScreen?.visible ?? false) ? "visible" : "hidden";
+        const cssVisible = screen.visible || (capScreen?.visible ?? false);
+        cssRenderer!.domElement.style.visibility = cssVisible ? "visible" : "hidden";
         renderer.render(scene, camera);
-        cssRenderer?.render(cssScene, camera);
+        // FAS2: skip the DOM projection pass when neither CSS3D screen is on
+        // screen — it used to re-write transforms every frame for nothing.
+        if (cssVisible) cssRenderer?.render(cssScene, camera);
         renderer.domElement.dataset.camera = pose.position.map(v => v.toFixed(2)).join(",");
         renderer.domElement.dataset.chapter = frame.chapter.toFixed(3);
         renderer.domElement.dataset.drawCalls = String(renderer.info.render.calls);
+        renderer.domElement.dataset.drawBudget = "65";
         renderer.domElement.dataset.quality = lite || mobile ? "lite" : "full";
         if (lastTime && frame.time - lastTime > 0.055 && !frame.reduced) slowFrames++;
         else slowFrames = Math.max(0, slowFrames - 1);
