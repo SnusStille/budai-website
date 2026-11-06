@@ -535,6 +535,17 @@ p {
    on mobile. `clip` removes the invisible corners, not the masked ring. */
 .hero-light { overflow: clip; }
 
+/* FAS2 r5 — the signal chapter dives inside the brain, where the synapse
+   lattice covers the whole viewport. Its copy needs a readable field without
+   hiding the 3D entirely: a left-weighted scrim plus a top/bottom vignette,
+   applied only while the enhanced (WebGL) tour is active. The fallback poster
+   already has its own dark frame and must not be dimmed twice. */
+.brain-journey[data-enhanced="true"] .brain-journey-sticky {
+  background:
+    linear-gradient(90deg, rgba(2, 4, 9, .92) 0%, rgba(2, 4, 9, .78) 26%, rgba(2, 4, 9, .42) 48%, rgba(2, 4, 9, 0) 72%),
+    linear-gradient(180deg, rgba(2, 4, 9, .55) 0%, transparent 28%, transparent 72%, rgba(2, 4, 9, .55) 100%);
+}
+
 /* Concentric graduation ring: tick marks plus one cyan and one lavender
    hairline. The tick layer rotates as a single composited element; the two
    radial hairlines are rotationally symmetric, so they stay put. */
