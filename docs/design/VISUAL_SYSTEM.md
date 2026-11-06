@@ -111,11 +111,10 @@ brain renders into a separate `[data-brain-canvas]` inside
 aurora plate. So the most prominent 3D object on the page received none of the
 colour work. Round 3 fixes that.
 
-- **Shared grade**: one `filter: saturate(1.24) contrast(1.07) brightness(1.045)`
-  rule targets **both** `canvas[data-brain-canvas]` and `.brain-poster img`. The
-  intro still and the live renderer must be graded identically, otherwise the
-  hand-off from poster to WebGL visibly jumps in colour. No shader, geometry or
-  poster asset changed — the checked-in `public/brain/entry-*.webp` stays intact.
+- **Shared grade** *(superseded by round 4)*: round 3 put one
+  `filter: saturate(1.24) contrast(1.07) brightness(1.045)` rule on both
+  `canvas[data-brain-canvas]` and `.brain-poster img`. That turned out to be the
+  root cause of the blank landing-page brain; see round 4 below.
 - **Instrument halo**: `.hero-light::before` paints a masked, concentric
   graduation ring (repeating conic ticks + one cyan and one lavender hairline),
   centred on the brain at 73%/55%, with `--journey-phase` fading it out as the
@@ -166,13 +165,44 @@ reverted: it saved only 1–5 calls and risked visible pop-in at chapter edges.
 `scripts/generate-brain-poster.mjs` called `wp.init()` unconditionally. Next
 16.4.5's bundled webpack no longer exposes `init`, so `npm run brain:poster`
 failed with `TypeError: wp.init is not a function`. The call is now optional
-(`typeof wp.init === 'function'`), which keeps Next 14/15 working. The generator
-was re-run successfully; its output is still darker than the checked-in posters,
-so the assets were deliberately **not** overwritten.
+(`typeof wp.init === 'function'`), which keeps Next 14/15 working.
 
-QA stills: `test-results/fas2-r3-{hero,capabilities,builder,roadmap}.png`
-(gitignored). Three unit guards cover the grade, the tether batching and the
-generator fix; unit suite is 41/41.
+## Round 4 — the brain actually renders (2026-11-06)
+
+The landing page 3D and the loading screen both went dark. They were **the same
+failure**, seen through two surfaces.
+
+- **Cause 1 — the live canvas.** Round 3 added a CSS `filter` to
+  `[data-brain-canvas]`. A filter on a `preserveDrawingBuffer:false` WebGL canvas
+  forces an extra compositing pass; on real GPUs the canvas can end up blank even
+  though `data-rendered="true"` and no JS error is thrown. SwiftShader in CI hid
+  it. The filter is **removed**. Colour is now produced in `BrainFlight`'s shader:
+  `gain` 0.85 → 1.0 and bloom `uComp.amt` 0.28 → 0.34. That is brighter, and it
+  cannot desync from the still because the still comes from the same shader.
+- **Cause 2 — the poster.** The generator captured `intro/progress:0`, where
+  `brainVisualAt()` returns `cortex 0.14` and `neural 0`; `FS_POINTS` multiplies
+  the point cloud by `smoothstep(0.04, 0.32, uJourney) = 0` there, and activity
+  starts near zero. Only dim wire lines survived. It also called `toDataURL()`
+  on the *first* frame, before points and bloom settled, and a WebGL canvas
+  cannot be reliably read that way. Result: an opaque near-black image.
+- **Fix.** The generator now renders the **hero pose** (`cortex 1`, `activity 1`)
+  and captures a fully composed frame with Playwright's element screenshot after
+  several animation frames, then re-encodes to WebP inside Chromium (no native
+  image dependency). Because the canvas is transparent, the ambient hero glow is
+  baked into the page background under it and ends up in the poster — the old
+  black rectangle hid `.opening-brain-frame`'s radial glow. Both
+  `entry-desktop.webp` and `entry-mobile.webp` are regenerated from the real
+  `BrainFlight` renderer; geometry, seed and model id are unchanged.
+- **Consistency.** Loading screen (`preparing`), WebGL failure fallback, and the
+  journey fallback all use that same bright poster, so the hand-off to the live
+  brain no longer jumps from black wireframe to a lit neural core.
+
+Unit guard: `FAS2 round 4: the brain grade lives in the shader, never in a CSS
+filter` asserts no canvas/poster CSS filter, the new gain/bloom, the hero pose,
+the composited-frame capture and the baked glow.
+
+QA stills: `test-results/fas2-r3-{hero,capabilities,builder,roadmap}.png` and
+`test-results/diag-intro-*.png` (gitignored).
 
 > Note: these changes live on the FAS2 branch / PR. Production
 > `https://stilledev.se` still serves `main` until the PR is merged.

@@ -649,14 +649,37 @@ test("FAS2 round 2: ambient plate is small, referenced and chapter-reactive", ()
   }
 });
 
-test("FAS2 round 3: the live brain and the still poster share one colour grade", () => {
+test("FAS2 round 4: the brain grade lives in the shader, never in a CSS filter", () => {
   const css = readFileSync("app/design-system.css", "utf8");
-  // The brain lives in [data-brain-canvas], outside .universe-world, so the
-  // world-canvas grade never reached it. Both surfaces must be graded together
-  // or the intro hand-off visibly jumps in colour.
-  expect(css).toContain("canvas[data-brain-canvas],");
-  expect(css).toContain(".brain-poster img {");
-  expect(css).toMatch(/canvas\[data-brain-canvas\],\s*\.brain-poster img \{\s*filter: saturate\(1\.24\) contrast\(1\.07\) brightness\(1\.045\)/);
+  const brain = readFileSync("components/effects/BrainFlight.tsx", "utf8");
+  const generator = readFileSync("scripts/generate-brain-poster.mjs", "utf8");
+  // A CSS filter on a preserveDrawingBuffer:false WebGL canvas forces an extra
+  // compositing pass and can leave the landing-page brain blank on real GPUs.
+  // The grade is done in the shader so the poster (same renderer) always matches.
+  expect(css).not.toMatch(/canvas\[data-brain-canvas\][^{]*\{[^}]*filter:/);
+  expect(css).not.toMatch(/\.brain-poster img[^{]*\{[^}]*filter:/);
+  expect(brain).toContain("const gain = 1.0;");
+  expect(brain).toContain("gl.uniform1f(uComp.amt,.34)");
+  // The poster must be the hero pose (cortex 1, activity 1), never intro progress 0.
+  expect(generator).toContain("kind:'hero',progress:0");
+  expect(generator).toContain("activity:1");
+  expect(generator).not.toContain("kind:'intro',progress:0");
+  // toDataURL() on the first frame misses the point cloud and bloom; capture a
+  // real composited frame instead, and bake in the ambient hero glow.
+  expect(generator).toContain(".screenshot()");
+  expect(generator).toContain("radial-gradient(ellipse");
+  expect(generator).not.toContain("drawImage(source");
+  expect(generator).not.toContain("onReady:");
+  // The opening veil used to start at 0.84-0.96 alpha and hide the poster for
+  // the whole `preparing` phase. Keep both the veil and the identity card light
+  // enough for the brain to read, while preserving the reveal's end state.
+  const experience = readFileSync("app/experience.css", "utf8");
+  expect(experience).toContain("0.42 - var(--veil-open) * 0.30");
+  expect(experience).not.toContain("0.84 - var(--veil-open)");
+  expect(experience).toContain("rgba(3, 10, 20, 0.50)");
+  // 6px backdrop blur turned the brain behind the identity card into a blob.
+  expect(experience).toContain("backdrop-filter: blur(2px)");
+  expect(experience).not.toContain("backdrop-filter: blur(6px)");
   for (const rule of [".hero-light::before", ".hero-light::after", "@keyframes ds-core-orbit", "prefers-reduced-motion: no-preference", "var(--journey-phase, 0) * 0.14"]) {
     expect(css, `${rule} keeps the instrument halo alive`).toContain(rule);
   }
