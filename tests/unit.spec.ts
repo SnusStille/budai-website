@@ -14,6 +14,7 @@ import { signWaitlistEmail, verifyWaitlistToken } from "../lib/waitlist-status";
 import { aiUsageEvent } from "../lib/ai-usage";
 import { buildCsp } from "../lib/csp";
 import { KEYBOARD_OVERLAP_THRESHOLD_PX, keyboardOverlap } from "../lib/playground/viewport";
+import { LEGAL_SLUGS } from "../lib/legal-slugs";
 
 test("one readiness deadline and camera/reveal timing stay bounded without a logo timeline",()=>{
   expect(INTRO_MS+INTRO_REVEAL_MS).toBeLessThanOrEqual(4000);
@@ -520,4 +521,15 @@ test("waitlist writes are server-only: no public INSERT policy remains (E9/v12)"
   expect(route).toContain("serviceClient()");
   expect(readFileSync("docs/setup/ENVIRONMENT.md", "utf8")).toContain("MIGRATION_v12_waitlist_insert_lockdown.sql");
   expect(readFileSync("README.md", "utf8")).toContain("MIGRATION_v12_waitlist_insert_lockdown.sql");
+});
+
+test("no dead hash-only logo links remain and legal slugs are a closed set (A6)", () => {
+  for (const file of ["components/sections/Footer.tsx", "components/sections/Navbar.tsx"]) {
+    expect(readFileSync(file, "utf8"), file).not.toMatch(/href="#"/);
+  }
+  const page = readFileSync("app/legal/[slug]/page.tsx", "utf8");
+  expect(page).toContain("dynamicParams = false");
+  expect(page).toContain("notFound()");
+  expect(readFileSync("app/legal/[slug]/LegalView.tsx", "utf8")).not.toContain("useParams");
+  expect(LEGAL_SLUGS).toEqual(["privacy", "terms", "cookies", "gdpr", "data"]);
 });

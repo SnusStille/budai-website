@@ -146,7 +146,7 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto px-6 lg:px-8 py-14 md:py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 lg:gap-8">
           <div className="lg:col-span-2">
-            <a href="#" className="flex items-center gap-2.5 mb-5 group">
+            <a href="/" aria-label="BudAI home" className="flex items-center gap-2.5 mb-5 group">
               <BudAILogo size="md" animated />
               <BudAIWordmark className="text-xl" />
             </a>

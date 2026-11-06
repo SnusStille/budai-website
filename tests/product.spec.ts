@@ -614,3 +614,18 @@ test("changelog page is indexable, bilingual and free of invented cadence claims
   expect(await dialog.innerText()).not.toMatch(/every week/i);
   expect(new URL(page.url()).hash).toBe("");
 });
+
+test("unknown legal slugs are real 404s and logo links point home (A6)", async ({ page, request }) => {
+  for (const slug of ["privacy", "terms", "cookies", "gdpr", "data"]) {
+    const res = await request.get(`/legal/${slug}`);
+    expect(res.status(), slug).toBe(200);
+  }
+  expect((await request.get("/legal/not-a-real-page")).status()).toBe(404);
+  expect((await request.get("/legal/")).status()).toBe(404);
+
+  await page.goto("/");
+  await expect(page.locator("[data-budai-logo]")).toHaveAttribute("href", "/");
+  await expect(
+    page.locator("#continuation").getByRole("link", { name: "BudAI home", exact: true })
+  ).toHaveAttribute("href", "/");
+});

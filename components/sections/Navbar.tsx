@@ -80,14 +80,18 @@ export default function Navbar() {
         <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 lg:h-[4.5rem] lg:grid lg:grid-cols-[1fr_auto_1fr]">
             <a
-              href="#"
+              href="/"
               data-budai-logo
               className="flex items-center gap-2.5 group outline-none focus-visible:ring-2 focus-visible:ring-accent-cyan/50 rounded-lg"
               aria-label="BudAI home"
               onClick={(e) => {
-                e.preventDefault();
+                // On the landing page scroll to top instead of reloading; on any
+                // other route let the link navigate home. No dead hash-only links.
+                if (window.location.pathname === "/") {
+                  e.preventDefault();
+                  if (window.scrollY > 300) window.scrollTo({ top: 0, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+                }
                 (e.currentTarget as HTMLElement).blur();
-                if (window.scrollY > 300) window.scrollTo({ top: 0, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
                 // Progressive easter egg: every click advances the sequence (see LogoEasterEgg)
                 window.dispatchEvent(new CustomEvent("budai:logo-click", { detail: { el: e.currentTarget } }));
               }}
