@@ -709,3 +709,25 @@ test("FAS2 round 3: the poster generator tolerates Next 16's webpack bundle", ()
   // The old unconditional call on the require line must not return.
   expect(tool).not.toContain("webpack');wp.init();");
 });
+
+test("FAS2 round 5: relay nodes orbit the brain inside the existing point draw call", () => {
+  const brain = readFileSync("components/effects/BrainFlight.tsx", "utf8");
+  const world = readFileSync("lib/experience/world.ts", "utf8");
+  const css = readFileSync("app/design-system.css", "utf8");
+  // Three tilted rings of relay nodes, appended BEFORE the digital volume so
+  // the hero draw call (N - volumeCount) includes them.
+  expect(brain).toContain("const orbitCount = mobile ? 42 : 72");
+  expect(brain).toContain("const volumeStart = orbitStart + orbitCount");
+  expect(brain).toContain("isOrbit ? -4");
+  // No new GL resource: the draw call count is unchanged.
+  expect(brain.match(/gl\.drawArrays\(gl\.POINTS, 0,/g)?.length).toBe(1);
+  expect(brain).toContain("if (aRegion < -3.5)");
+  expect(brain).toContain("if (vRegion < -3.5)");
+  // The journey lattice must not swallow the copy, while the hero stays intact.
+  expect(brain).toContain("1.0 - 0.58 * smoothstep(0.12, 0.62, uJourney)");
+  expect(css).toContain('.brain-journey[data-enhanced="true"] .brain-journey-sticky');
+  // Six rails + two gate loops now share ONE LineSegments buffer (8 -> 1).
+  expect(world).toContain("const railSegments: THREE.Vector3[] = []");
+  expect(world).toContain("new THREE.BufferGeometry().setFromPoints(railSegments)");
+  expect(world).not.toContain("const gateLoop = new THREE.LineLoop");
+});

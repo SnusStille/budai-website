@@ -206,3 +206,44 @@ QA stills: `test-results/fas2-r3-{hero,capabilities,builder,roadmap}.png` and
 
 > Note: these changes live on the FAS2 branch / PR. Production
 > `https://stilledev.se` still serves `main` until the PR is merged.
+
+## Round 5 — relay orbits and a readable signal chapter (2026-11-06)
+
+Round 4 made the brain render. Round 5 gives it depth and fixes the chapter
+where it was drowning its own copy.
+
+- **A new 3D object, for free**: 72 (42 on mobile) relay nodes on three tilted
+  rings orbit the neural core. They are appended to the **existing** point
+  buffer before the digital volume, so the hero draw call `N - volumeCount`
+  already includes them. One new `aRegion = -4` branch in the point vertex
+  shader (slow rotation + bob) and one in the fragment shader (cooler colour +
+  twinkle). **Zero new buffers, programs, textures or draw calls.** The nodes
+  deliberately bypass the `uJourney`/`uCortex` gates so they are visible from
+  the first frame; the poster is regenerated from the same shader.
+- **The signal chapter was unreadable**: at full `journey` the synapse lattice
+  plus the interior digital architecture became a wall of white lines over the
+  whole viewport. `FS_LINES` now calms every non-signal line by up to 58% as
+  `uJourney` rises (`uJourney` is 0 on the hero, so the landing page is
+  untouched). A left-weighted scrim behind the copy is added only when
+  `[data-enhanced="true"]`, so the fallback poster is not dimmed twice.
+  `.brain-journey` is `z-index: 4` and the brain canvas `z-index: 3`, so the
+  scrim really sits above the lines. Measured A/B at `journey = 0.38`: mean
+  luminance in the left copy zone drops from `0.126` to `0.042` (≈3× darker).
+- **8 draw calls become 1**: the six corridor rail curves and two gate loops
+  shared one material but were eight `Line`/`LineLoop` objects. They are baked
+  into a single `LineSegments` buffer, including the gate loops' former
+  position and `rotation.y`, with identical vertices. The curves remain alive
+  for the pulse positions. Eight *objects* become one, but frustum culling meant
+  only one of them was actually drawn in the measured Capabilities view, so the
+  honest measured delta is **136 → 135 calls** (Builder 82 → 80, Roadmap 34 →
+  34). This does **not** close the `data-draw-budget="65"` gap: the six
+  articulated sculptures have unique materials and independent per-frame
+  transforms.
+
+Unit guard: `FAS2 round 5: relay nodes orbit the brain inside the existing
+point draw call` asserts the orbit layout, the single point draw call, the
+journey calm, the scrim and the batched corridor geometry. Unit suite 42/42.
+
+Measurements remain Chromium 153 / SwiftShader / DPR 1 / `quality:lite` at
+1440×1000. No real-GPU, Safari/Firefox, device, Lighthouse or field Web Vitals
+claim is made.
