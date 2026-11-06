@@ -162,6 +162,14 @@ export function createWorld(
     for (let i = 0; i < corridorPulseCount; i++) corridorPulse.setMatrixAt(i, seedMatrix);
     corridorPulse.instanceMatrix.needsUpdate = true;
     corridor.add(corridorPulse);
+    // FAS2 r5: six rail curves + two gate loops used to be eight separate
+    // THREE.Line / LineLoop objects sharing one material. Bake every polyline
+    // into ONE LineSegments buffer: 8 draw calls become 1, with identical
+    // vertices. The curves themselves stay alive for the pulse positions below.
+    const railSegments: THREE.Vector3[] = [];
+    const addPolyline = (pts: THREE.Vector3[]) => {
+      for (let i = 0; i < pts.length - 1; i++) railSegments.push(pts[i], pts[i + 1]);
+    };
     for (let lane = 0; lane < 6; lane++) {
       const a = (lane / 6) * Math.PI * 2;
       const rStart = 1.55;
@@ -172,26 +180,26 @@ export function createWorld(
         new THREE.Vector3(24 + Math.cos(a + 1.05) * 0.22, 0.85 + Math.sin(a + 1.05) * 0.16, -12.75),
       ]);
       corridorCurves.push(railCurve);
-      corridor.add(
-        freezeStatic(new THREE.Line(
-          new THREE.BufferGeometry().setFromPoints(railCurve.getPoints(lite ? 24 : 36)),
-          corridorRailMat
-        ))
-      );
+      addPolyline(railCurve.getPoints(lite ? 24 : 36));
     }
     [0.32, 0.68].forEach(u => {
       const ringPts: THREE.Vector3[] = [];
       const r = lerp(1.45, 0.95, u);
       const segs = lite ? 32 : 48;
+      const origin = new THREE.Vector3(lerp(0, 24, u), lerp(0.88, 0.86, u), lerp(0, -12.75, u));
       for (let s = 0; s <= segs; s++) {
         const theta = (s / segs) * Math.PI * 2;
-        ringPts.push(new THREE.Vector3(Math.cos(theta) * r, Math.sin(theta) * r * 0.68, 0));
+        const p = new THREE.Vector3(Math.cos(theta) * r, Math.sin(theta) * r * 0.68, 0);
+        // Bake the old LineLoop's position + rotation.y = -0.58 into the vertex.
+        p.applyAxisAngle(new THREE.Vector3(0, 1, 0), -0.58).add(origin);
+        ringPts.push(p);
       }
-      const gateLoop = new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(ringPts), corridorRailMat);
-      gateLoop.position.set(lerp(0, 24, u), lerp(0.88, 0.86, u), lerp(0, -12.75, u));
-      gateLoop.rotation.y = -0.58;
-      corridor.add(freezeStatic(gateLoop));
+      addPolyline(ringPts);
     });
+    corridor.add(freezeStatic(new THREE.LineSegments(
+      new THREE.BufferGeometry().setFromPoints(railSegments),
+      corridorRailMat
+    )));
 
     const outputSignal = createPointField([{ x: 0, y: 0, z: 0, lane: -1 }], 4.2);
     outputSignal.material.uniforms.uOpacity.value = 0;
