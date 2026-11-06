@@ -58,5 +58,5 @@ try{
   await writeFile(`public/brain/entry-${name}.webp`,Buffer.from(dataUrl.split(',')[1],'base64'));
   console.log(name,await page.locator('[data-brain-canvas]').evaluate(el=>({model:el.dataset.brainModel,camera:el.dataset.cameraPose,fov:el.dataset.fov})));await page.close();
  }
- await writeFile('public/brain/model.json',JSON.stringify({id:'budai-neural-43f44c9',seed:43044,source:'Original repository BrainFlight SDF; deterministic sampling; no imported atlas/model',poster:'Actual BrainFlight composed frame at the hero pose (cortex 1, activity 1), captured by the browser compositor; matches the landing-page brain',variants:['entry-desktop.webp','entry-mobile.webp']},null,2)+'\n');
+ await writeFile('public/brain/model.json',JSON.stringify({id:'budai-neural-43f44c9',seed:43044,source:'Original repository BrainFlight SDF; deterministic sampling; no imported atlas/model',poster:'Actual BrainFlight composed frame at the hero pose (cortex 1, activity 1) with orbiting relay nodes, captured by the browser compositor; matches the landing-page brain',variants:['entry-desktop.webp','entry-mobile.webp']},null,2)+'\n');
 }finally{await browser.close();}
