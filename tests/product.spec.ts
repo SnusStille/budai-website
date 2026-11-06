@@ -356,6 +356,10 @@ test("quota writes are server-owned and the waitlist status RPC is not public", 
 
 test("one keyboard owner: ⌘K opens the site palette and ⌘/ opens Playground shortcuts", async ({ page }) => {
   await page.goto("/#playground");
+  // Both shortcut owners register their keydown handlers in effects. Wait for
+  // AIPlayground's hydration marker before pressing keys, otherwise a cold
+  // bundle can miss the very first Ctrl+K and the test flakes.
+  await expect(page.locator("html")).toHaveAttribute("data-pg-keyboard", /open|closed/);
   const palette = page.getByRole("dialog", { name: "Command palette", exact: true });
   const playgroundKeys = page.getByRole("dialog", { name: "Playground shortcuts", exact: true });
   await expect(palette).toHaveCount(0);
