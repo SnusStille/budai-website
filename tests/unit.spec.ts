@@ -507,3 +507,17 @@ test("duplicate-domain guard only targets Vercel's default host (A5)", async () 
   expect(isNonCanonicalHost("")).toBe(false);
   expect(isNonCanonicalHost("budai-website.vercel.app:443")).toBe(true);
 });
+
+test("waitlist writes are server-only: no public INSERT policy remains (E9/v12)", () => {
+  const schema = readFileSync("supabase/schema.sql", "utf8");
+  const migration = readFileSync("supabase/MIGRATION_v12_waitlist_insert_lockdown.sql", "utf8");
+  expect(schema).not.toMatch(/create policy\s+"waitlist_insert_public"/i);
+  expect(schema).toMatch(/revoke all on table public\.waitlist_users from public, anon, authenticated/i);
+  expect(migration).toMatch(/revoke all on table public\.waitlist_users from public, anon, authenticated/i);
+  expect(migration).toMatch(/grant select, insert, update, delete on table public\.waitlist_users to service_role/i);
+  // The only signup write path is the validated server route with the service role.
+  const route = readFileSync("app/api/waitlist/route.ts", "utf8");
+  expect(route).toContain("serviceClient()");
+  expect(readFileSync("docs/setup/ENVIRONMENT.md", "utf8")).toContain("MIGRATION_v12_waitlist_insert_lockdown.sql");
+  expect(readFileSync("README.md", "utf8")).toContain("MIGRATION_v12_waitlist_insert_lockdown.sql");
+});

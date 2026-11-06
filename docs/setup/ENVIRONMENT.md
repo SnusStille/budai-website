@@ -37,7 +37,7 @@ The checker reads `.env`, then `.env.local` (local wins), then the real process 
 
 ## Required SQL (run once per database)
 
-In Supabase SQL Editor, in order: `supabase/schema.sql`, then `MIGRATION_v2` … `MIGRATION_v9`, `MIGRATION_v10_security_hardening.sql`, `MIGRATION_v11_message_feedback.sql`. `v10` removes public read/write on guest quota rows and makes `waitlist_status()` service-role-only; `v11` adds bounded columns for Playground message ratings. Without `v10` the security hardening is incomplete, and without `v11` ratings stay local only (the UI says so honestly).
+In Supabase SQL Editor, in order: `supabase/schema.sql`, then `MIGRATION_v2` … `MIGRATION_v9`, `MIGRATION_v10_security_hardening.sql`, `MIGRATION_v11_message_feedback.sql`, `MIGRATION_v12_waitlist_insert_lockdown.sql`. `v10` removes public read/write on guest quota rows and makes `waitlist_status()` service-role-only; `v11` adds bounded columns for Playground message ratings; `v12` removes the public INSERT policy on `waitlist_users` so signups cannot bypass consent, honeypot and throttling by writing from the browser. Without `v10`/`v12` the security hardening is incomplete, and without `v11` ratings stay local only (the UI says so honestly).
 
 ## Partial configuration is deliberately fail-closed
 
