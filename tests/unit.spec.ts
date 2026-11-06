@@ -185,7 +185,7 @@ test("daily-limit copy reads the single LIMITS source instead of hardcoded numbe
     "components/sections/AIPlayground.tsx",
     "components/sections/Capabilities.tsx",
     "components/sections/Hero.tsx",
-    "components/sections/Journey.tsx",
+    "components/site/KnowledgeView.tsx",
     "components/experience/CapabilityStudioScreen.tsx",
     "lib/experience/developer-room.ts",
   ];

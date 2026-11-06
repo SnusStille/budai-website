@@ -1,127 +1,75 @@
 "use client";
+
+import Image from "next/image";
+import Link from "next/link";
+import { ArrowDown, ArrowRight, ArrowUpRight, Check, MapPin } from "lucide-react";
+import { useLang } from "@/components/ui/LanguageContext";
+import BudAIWordmark from "@/components/ui/BudAIWordmark";
+import NeuralCore from "@/components/site/NeuralCore";
 import { LIMITS } from "@/lib/limits";
 
-import { ArrowDown, ArrowRight, FileText, Languages, Network, Zap } from "lucide-react";
-import { useLang } from "@/components/ui/LanguageContext";
-import { StilledevLink } from "@/components/ui/BudAILogo";
-
-/** Landing hero paired with the persistent single-owner 3D Neural Brain stage. */
 export default function Hero() {
-  const { t, lang } = useLang();
+  const { lang } = useLang();
   const sv = lang === "sv";
-  const chips = [
-    {
-      icon: FileText,
-      label: sv ? "Privat · skriv & planera" : "Personal · write & plan",
-      region: 0,
-      prompt: sv
-        ? "Hjälp mig skriva ett tydligt och vänligt mejl."
-        : "Help me write a clear, friendly email.",
-    },
-    {
-      icon: Zap,
-      label: sv ? "Företag · automatisera" : "Business · automate",
-      region: 2,
-      prompt: sv
-        ? "Hjälp mig göra en återkommande arbetsuppgift till tydliga steg."
-        : "Help me turn a recurring work task into clear steps.",
-    },
-    {
-      icon: Languages,
-      label: "SV / EN",
-      region: 1,
-      prompt: sv
-        ? "Hjälp mig skriva om en kort text på svenska och engelska med samma ton."
-        : "Help me rewrite a short text in Swedish and English with the same tone.",
-    },
-    {
-      icon: Network,
-      label: sv ? "Minne & röst" : "Memory & voice",
-      region: 3,
-      prompt: sv
-        ? "Hjälp mig formulera hur jag vill att mina svar ska vara."
-        : "Help me describe how I like my responses to be written.",
-    },
-  ];
-  const focusRegion = (region: number) => {
-    window.dispatchEvent(new CustomEvent("budai:brain-region", { detail: region }));
-  };
-  const activateChipPrompt = (prompt: string) => {
-    window.dispatchEvent(new CustomEvent("budai:prompt", { detail: prompt }));
-    document.getElementById("playground")?.scrollIntoView({ behavior: "smooth" });
-  };
 
   return (
-    <section id="intelligence" className="hero-universe" aria-labelledby="hero-title">
-      <div className="hero-light" aria-hidden="true" />
-      <div className="hero-content">
-        <div className="hero-eyebrow">
-          <i className="signal-dot" aria-hidden="true" />
-          {t.hero.badge}
-          <span className="hero-edition">BUDAI / 01 · THE SPARK</span>
+    <section id="intelligence" className="v2-hero" aria-labelledby="hero-title">
+      <div className="v2-hero-grid v2-container">
+        <div className="v2-hero-copy">
+          <p className="v2-eyebrow"><span className="v2-status-dot" />{sv ? "BUDAI AV STILLEDEV · UTVECKLARPREVIEW" : "BUDAI BY STILLEDEV · DEVELOPER PREVIEW"}</p>
+          <h1 id="hero-title">
+            {sv ? <>Mer än AI.<br /><span>En arbetsyta som tänker med dig.</span></> : <>More than AI.<br /><span>A workspace that thinks with you.</span></>}
+          </h1>
+          <p className="v2-hero-description">
+            {sv
+              ? "Gör röriga anteckningar, frågor och bilder till tydliga dokument, beslut och nästa steg — på svenska och engelska, i en och samma intelligenta miljö."
+              : "Turn rough notes, questions and images into clear documents, decisions and next steps—in Swedish and English, in one intelligent environment."}
+          </p>
+          <div className="v2-hero-actions">
+            <a href="#playground" className="v2-button v2-button-primary">
+              <span>{sv ? "Utforska BudAI" : "Explore BudAI"}</span><ArrowRight size={17} />
+            </a>
+            <Link href="/about" className="v2-button v2-button-secondary">
+              <span>{sv ? "Om Stilledev" : "About Stilledev"}</span><ArrowUpRight size={16} />
+            </Link>
+          </div>
+          <ul className="v2-hero-assurances" aria-label={sv ? "Produktfördelar" : "Product benefits"}>
+            <li><Check size={13} />{sv ? "Gratis att prova" : "Free to try"}</li>
+            <li><Check size={13} />{sv ? "Inget konto behövs" : "No account required"}</li>
+            <li><Check size={13} />SV / EN</li>
+          </ul>
         </div>
-        <h1 id="hero-title">
-          <span>{t.hero.title1}</span>
-          <span className="hero-title-accent">{t.hero.title2}</span>
-        </h1>
-        <p className="hero-locale">
-          {sv
-            ? "Varje handling börjar med en signal. Byggd i Sverige för arbete på svenska och engelska."
-            : "Every action starts with a signal. Built in Sweden for Swedish and English work."}
-        </p>
-        <p className="hero-description">{t.hero.subtitle}</p>
-        <div className="hero-actions">
-          <a href="#playground" className="btn-primary inline-flex items-center gap-3">
-            <span>{t.hero.ctaPrimary}</span>
-            <ArrowRight size={17} />
-          </a>
-          <a href="#waitlist" className="hero-secondary">
-            {t.hero.ctaSecondary}
-            <ArrowRight size={16} />
-          </a>
+
+        <div className="v2-hero-visual">
+          <NeuralCore />
+          <div className="v2-product-window">
+            <div className="v2-product-window-bar">
+              <div className="v2-window-identity"><i /><i /><i /><BudAIWordmark /></div>
+              <span>{sv ? "VERKLIG PRODUKTYTA" : "ACTUAL PRODUCT INTERFACE"}</span>
+              <a href="#playground">{sv ? "Öppna live" : "Open live"}<ArrowUpRight size={12} /></a>
+            </div>
+            <div className="v2-product-screenshot">
+              <Image
+                src="/images/product/budai-chat.webp"
+                alt={sv ? "BudAI Playground med chatt, Research, Skapa, Analys, röst och minne" : "The real BudAI Playground with chat, Research, Create, Analyze, voice and memory controls"}
+                width={1392}
+                height={881}
+                priority
+                sizes="(max-width: 800px) 92vw, (max-width: 1400px) 48vw, 650px"
+              />
+            </div>
+            <div className="v2-product-window-foot">
+              <span><i />{sv ? "Live Playground" : "Live Playground"}</span>
+              <span>{sv ? `${LIMITS.guest.messagesPerDay} gratismeddelanden/dag som gäst` : `${LIMITS.guest.messagesPerDay} free guest messages/day`}</span>
+            </div>
+          </div>
+          <p className="v2-visual-caption"><span>01</span>{sv ? "Intelligens som blir användbart arbete." : "Intelligence, turned into useful work."}</p>
         </div>
-        <div className="hero-features">
-          {chips.map(({ icon: Icon, label, region, prompt }) => (
-            <span
-              key={label}
-              role="button"
-              tabIndex={0}
-              data-hero-brain-region={region}
-              onPointerEnter={() => focusRegion(region)}
-              onPointerLeave={() => focusRegion(-1)}
-              onFocus={() => focusRegion(region)}
-              onBlur={() => focusRegion(-1)}
-              onClick={() => activateChipPrompt(prompt)}
-              onKeyDown={e => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  activateChipPrompt(prompt);
-                }
-              }}
-            >
-              <Icon size={13} />
-              {label}
-            </span>
-          ))}
-        </div>
-        <p className="hero-product-note">
-          {sv
-            ? `En arbetsyta för ditt eget fokus idag och teamets flöden imorgon — prova gratis som gäst (${LIMITS.guest.messagesPerDay}/dag) eller logga in gratis (${LIMITS.member.messagesPerDay}/dag) för minne du kan styra, historik och bildanalys.`
-            : `One workspace for personal focus today and team workflows tomorrow — try free as a guest (${LIMITS.guest.messagesPerDay}/day) or sign in free (${LIMITS.member.messagesPerDay}/day) for memory you control, history, and vision.`}
-        </p>
-        <p className="hero-credit">
-          {sv ? "Utvecklad av " : "Built by "}
-          <StilledevLink /> <span>·</span> Sweden
-        </p>
       </div>
-      <div className="hero-bottom">
-        <span>
-          <i /> 01 — {sv ? "GNISTAN · INTELLIGENSKÄRNAN" : "THE SPARK · INTELLIGENCE CORE"}
-        </span>
-        <a href="#playground">
-          {sv ? "Från tanke till handling" : "From intelligence to action"}
-          <ArrowDown size={14} />
-        </a>
+
+      <div className="v2-hero-bottom v2-container">
+        <p><MapPin size={13} />{sv ? "Oberoende teknik och mjukvaruutveckling i Sverige" : "Independent software & AI development in Sweden"}</p>
+        <a href="#product-story"><span>{sv ? "Se hur det fungerar" : "See how it works"}</span><ArrowDown size={14} /></a>
       </div>
     </section>
   );

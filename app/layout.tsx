@@ -6,7 +6,7 @@ import "./globals.css";
 import "./experience.css";
 import Providers from "@/components/Providers";
 import VercelAnalytics from "@/components/VercelAnalytics";
-import { introBootstrap } from "@/lib/experience/intro";
+import "./v2.css";
 import { canonicalPath, hasLanguageAlternate, SWEDISH_PATH } from "@/lib/lang";
 
 const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://stilledev.se").replace(/\/$/, "");
@@ -24,7 +24,7 @@ const jsonLd = {
       applicationCategory: "BusinessApplication",
       operatingSystem: "Web",
       description:
-        "AI work assistant for Swedish companies and individuals — write, automate, and think faster in Swedish and English.",
+        "An intelligent AI workspace by Stilledev for Swedish and English work — conversations, analysis, editable drafts, memory controls, vision and voice.",
       url: siteUrl,
       author: { "@id": `${siteUrl}/#organization` },
       offers: { "@type": "Offer", price: "0", priceCurrency: "SEK", description: "Developer preview" },
@@ -34,7 +34,7 @@ const jsonLd = {
       "@id": `${siteUrl}/#organization`,
       name: "Stilledev",
       url: siteUrl,
-      description: "Independent software studio in Sweden building BudAI.",
+      description: "Independent Swedish software and AI development brand building intelligent digital experiences, including BudAI.",
     },
   ],
 };
@@ -44,17 +44,17 @@ const jsonLd = {
 const META = {
   en: {
     description:
-      "BudAI by Stilledev — AI workspace built in Sweden for real work in Swedish and English. Write, automate, analyze, and turn messy context into clear action with memory you control.",
-    ogTitle: "BudAI — AI Workspace for Swedish & English Work",
+      "Stilledev is an independent Swedish software and AI brand. Explore BudAI, an intelligent workspace for bilingual conversations, analysis, editable drafts, memory you control, vision and voice.",
+    ogTitle: "Stilledev — Independent software & AI development",
     ogDescription:
-      "Built in Sweden by Stilledev. Write, analyze, plan, and automate in Swedish and English with a live Playground and memory you control.",
+      "Built in Sweden. Explore BudAI, a real AI workspace for Swedish and English work, with editable drafts, memory you control, vision and voice.",
   },
   sv: {
     description:
-      "BudAI av Stilledev — AI-arbetsyta byggd i Sverige för riktigt arbete på svenska och engelska. Skriv, automatisera, analysera och gör rörig kontext till tydlig handling med minne du styr.",
-    ogTitle: "BudAI — AI-arbetsyta för arbete på svenska och engelska",
+      "Stilledev är ett oberoende svenskt mjukvaru- och AI-varumärke. Utforska BudAI, en intelligent arbetsyta för tvåspråkiga samtal, analys, redigerbara utkast, minne du styr, bildförståelse och röst.",
+    ogTitle: "Stilledev — Oberoende mjukvaru- och AI-utveckling",
     ogDescription:
-      "Byggd i Sverige av Stilledev. Skriv, analysera, planera och automatisera på svenska och engelska med live Playground och minne du styr.",
+      "Oberoende mjukvaru- och AI-utveckling i Sverige. Utforska BudAI för samtal på svenska och engelska, redigerbara utkast, minne du styr, bildförståelse och röst.",
   },
 } as const;
 
@@ -75,8 +75,8 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     metadataBase: new URL(siteUrl),
     title: {
-      default: "Stilledev.se · BudAI",
-      template: "%s · BudAI",
+      default: sv ? "Stilledev — Oberoende mjukvaru- och AI-utveckling" : "Stilledev — Independent software & AI development",
+      template: "%s — Stilledev",
     },
     description: copy.description,
     keywords: [
@@ -99,7 +99,7 @@ export async function generateMetadata(): Promise<Metadata> {
       locale: sv ? "sv_SE" : "en_US",
       alternateLocale: [sv ? "en_US" : "sv_SE"],
       url: canonical,
-      siteName: "BudAI",
+      siteName: "Stilledev",
       title: copy.ogTitle,
       description: copy.ogDescription,
       images: [
@@ -107,7 +107,7 @@ export async function generateMetadata(): Promise<Metadata> {
           url: "/og.png",
           width: 1200,
           height: 630,
-          alt: "BudAI — AI work for Sweden",
+          alt: "Stilledev — Independent software and AI development, creators of BudAI",
         },
       ],
     },
@@ -149,11 +149,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html
       lang={lang}
       className="font-sans"
+      data-budai-intro="done"
       suppressHydrationWarning
     >
-      <head>
-        <script id="budai-intro-policy" nonce={nonce} dangerouslySetInnerHTML={{ __html: introBootstrap }} />
-      </head>
       <body className="antialiased noise-overlay bg-background text-white">
         <a
           href="#main"

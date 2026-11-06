@@ -30,9 +30,13 @@ export default function StatusPill() {
 
   if (!s) return null;
   return (
-    <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-[11px] text-white/70">
+    <span
+      className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-[11px] text-white/70"
+      title={sv ? "Kontrollerar webbplatsens hälsoslutpunkt. Mäter inte AI-leverantörer eller databas." : "Checks the website health endpoint. Does not measure AI providers or the database."}
+      aria-live="polite"
+    >
       <span className={`h-1.5 w-1.5 rounded-full ${s.ok ? "bg-accent-green" : "bg-red-400"}`} />
-      {s.ok ? (sv ? "Alla system fungerar" : "All systems operational") : sv ? "Störning" : "Degraded"}
+      {s.ok ? (sv ? "Webbplatsen svarar" : "Website reachable") : sv ? "Webbplatsen svarar inte" : "Website unreachable"}
       {s.ok && <span className="font-mono text-white/40">{s.ms} ms</span>}
     </span>
   );

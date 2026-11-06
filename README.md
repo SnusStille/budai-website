@@ -1,16 +1,20 @@
-# BudAI — developer preview site
+# Stilledev — company and BudAI product website
 
 [![CI](https://github.com/SnusStille/budai-website/actions/workflows/ci.yml/badge.svg)](https://github.com/SnusStille/budai-website/actions/workflows/ci.yml)
 
-Landing site and live Playground for **BudAI**, an AI work assistant for Swedish and English work, built in Sweden by Stilledev.
+Company website for **Stilledev**, an independent Swedish software and AI development brand, and the live product website for **BudAI**, its intelligent bilingual AI workspace. The site includes real product captures and the working BudAI Playground—not a simulated chat demo.
 
 ## Stack
 
-Next.js 14 (App Router) · Tailwind · Supabase (auth, waitlist, history) · Anthropic API (chat, vision).
+Next.js 16.4 (App Router) · React 18 · Tailwind · Supabase (auth, waitlist, history) · Anthropic API (chat, vision) · optional deployment-dependent OpenAI image generation.
 
-## Sections
+## Website structure
 
-Render order in `app/page.tsx`: `Hero` (Spark) → `BrainScrollStory` (Context) → `AIPlayground` → `Capabilities` (which renders `Waitlist`) → `About` (Builder) → `Journey` (Roadmap) → `Footer`. The 3D world, intro and fallbacks live in `components/experience/*` / `lib/experience/*`. Admin dashboard at `/admin` (gated).
+The homepage render order in `app/page.tsx` is `Hero` → `ProductShowcase` → `AIPlayground` → `Capabilities` (including the real waitlist) → `About` → `Journey` → `Footer`, all inside the shared `SiteShell`.
+
+Supporting routes: `/budai`, `/roadmap`, `/knowledge`, `/labs`, `/about`, `/feedback`, `/changelog`, `/sv` and `/legal/*`. `/whats-new` redirects to `/changelog`. The public roadmap uses truthful Live / In Development / Planned states from `lib/roadmap.ts`; no release dates or shipped features are inferred from future plans.
+
+The shared responsive navigation, mobile focus management, bilingual switching and command palette live in `components/sections/Navbar.tsx` and `components/ui/CommandPalette.tsx`. `components/site/NeuralCore.tsx` is the bounded, lazy hero accent with reduced-motion/save-data/WebGL fallbacks. The existing product, auth and admin functionality remains intact; the admin dashboard is at `/admin` (gated).
 
 ## Run locally
 
@@ -40,8 +44,19 @@ Step-by-step deployment, auth and admin instructions live in [docs/setup/](docs/
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the verification chain and code conventions, and [SECURITY.md](SECURITY.md) for private vulnerability reporting and secret handling.
 
-## Cinematic experience
+## Verification
 
-The current Confluence implementation, source recovery, ownership audit and reproducible browser checks are documented in [the implementation audit](docs/experience/current-overhaul.md) and [verification/release notes](docs/experience/confluence-verification.md).
+```bash
+npm run typecheck
+npm run lint
+npm run build
+npm run test:unit
+npm run test:e2e
+npm run audit:visual  # with the production server running on port 3000
+```
 
-The latest critical loading/landing correction and information-field/outro refinement is documented in [refinement verification](docs/experience/refinement-verification.md). Use `npm run test:loading` for the focused opening/hero cases.
+`test:e2e` covers the public website plus Playground streaming, cancellation, request lifecycle, composer safety, Workspace drafts, cloud sync and prepared workflows without writing to external services. `audit:visual` captures the public routes at desktop, tablet and mobile sizes into ignored `test-results/audit-v2/` artifacts and reports overflow, metadata and browser errors.
+
+Browser helpers apply the bundled Chromium runtime environment before launch. The website is designed for responsive desktop, tablet and mobile layouts, keyboard navigation, reduced motion and bilingual EN/SV content. Real provider calls require the corresponding environment configuration; tests and local UI review do not imply that unavailable production providers are healthy.
+
+Earlier cinematic implementation documents remain under `docs/experience/` as historical engineering records. The current public homepage no longer uses the long multi-chapter scroll sequence or blocking loading gate.

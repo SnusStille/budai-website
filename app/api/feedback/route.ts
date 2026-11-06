@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
   const rating = b.rating === "up" || b.rating === "down" ? b.rating : null;
   const kind = rating
     ? "rating"
-    : ["idea", "bug", "other"].includes(String(b.kind))
+    : ["idea", "bug", "feature", "other"].includes(String(b.kind))
     ? String(b.kind)
     : "other";
   if (String(b.kind) === "rating" && !rating) {

@@ -1,315 +1,147 @@
 "use client";
+
+import { ArrowRight, ArrowUpRight, BrainCircuit, FilePenLine, Image, Languages, ListChecks, PanelsTopLeft } from "lucide-react";
+import { useLang } from "@/components/ui/LanguageContext";
+import ScrollReveal from "@/components/ui/ScrollReveal";
+import Waitlist from "./Waitlist";
 import { LIMITS } from "@/lib/limits";
 
-import { useState, useEffect } from "react";
-import ScrollReveal from "@/components/ui/ScrollReveal";
-import SpotlightCard from "@/components/ui/SpotlightCard";
-import { Check as CheckIcon, X as XIcon, User as UserIcon, Building2 as BuildingIcon, Sparkles as SparkIcon } from "lucide-react";
-import { useLang } from "@/components/ui/LanguageContext";
-import CapabilityMap from "@/components/experience/CapabilityMap";
-import Waitlist from "@/components/sections/Waitlist";
-
 export default function Capabilities() {
-  const { t, lang } = useLang();
+  const { lang } = useLang();
   const sv = lang === "sv";
-  const [activeTier, setActiveTier] = useState<number>(-1);
+  const capabilities = [
+    {
+      icon: FilePenLine,
+      title: sv ? "Skriv och redigera" : "Write and refine",
+      description: sv ? "Gör anteckningar till mejl, rapporter och förslag som är redo att redigera och använda." : "Turn notes into emails, reports and proposals ready to edit and use.",
+      prompt: sv ? "Hjälp mig skriva ett tydligt och vänligt mejl." : "Help me write a clear, friendly email.",
+    },
+    {
+      icon: ListChecks,
+      title: sv ? "Analysera och besluta" : "Analyze and decide",
+      description: sv ? "Jämför alternativ, synliga antaganden och risker, och få ett tydligt nästa steg." : "Compare options, surface assumptions and risks, and find a clear next step.",
+      prompt: sv ? "Hjälp mig jämföra två alternativ med fördelar, risker och en rekommendation." : "Help me compare two options with trade-offs, risks and a recommendation.",
+    },
+    {
+      icon: Languages,
+      title: sv ? "Svenska + engelska" : "Swedish + English",
+      description: sv ? "Växla språk i samma tråd och behåll ton, register och sammanhang." : "Switch languages in the same thread while preserving tone, register and context.",
+      prompt: sv ? "Skriv ett kort projektmeddelande på svenska och engelska med samma ton." : "Write a short project update in Swedish and English with the same tone.",
+    },
+    {
+      icon: BrainCircuit,
+      title: sv ? "Minne du kontrollerar" : "Memory you control",
+      description: sv ? "Spara beständiga preferenser med ett konto. Se, ändra, stäng av eller radera minnet." : "Remember durable preferences with an account. Review, edit, disable or delete memory.",
+      prompt: sv ? "Hjälp mig formulera hur jag vill att mina svar ska vara." : "Help me describe how I like my responses to be written.",
+    },
+    {
+      icon: Image,
+      title: sv ? "Bild och röst" : "Vision and voice",
+      description: sv ? "Diktera med webbläsarens röstinmatning och analysera bifogade bilder med ett konto." : "Dictate with browser speech input and analyze attached images with an account.",
+      prompt: sv ? "Beskriv hur jag kan använda bildanalys för att förstå en skärmdump." : "Explain how I can use image analysis to understand a screenshot.",
+    },
+    {
+      icon: PanelsTopLeft,
+      title: sv ? "Workspace och export" : "Workspace and export",
+      description: sv ? "Redigera längre svar, spara utkast och exportera eller dela det färdiga arbetet." : "Edit longer answers, save drafts, then export or share the finished work.",
+      prompt: sv ? "Skapa ett strukturerat utkast med sammanfattning, åtgärder och checklista." : "Create a structured draft with a summary, actions and a checklist.",
+    },
+  ];
 
-  useEffect(() => {
-    window.dispatchEvent(new CustomEvent("budai:atlas-tier", { detail: activeTier }));
-    return () => {
-      window.dispatchEvent(new CustomEvent("budai:atlas-tier", { detail: -1 }));
-    };
-  }, [activeTier]);
+  const launch = (prompt: string) => {
+    window.dispatchEvent(new CustomEvent("budai:prompt", { detail: prompt }));
+    document.getElementById("playground")?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+  };
 
   const plans = [
     {
-      key: "basic",
-      icon: SparkIcon,
       name: "Basic",
-      tag: sv ? "Tillgänglig nu" : "Available now",
-      price: sv ? "Gratis" : "Free",
-      sub: sv ? "under preview" : "during the preview",
-      note: sv
-        ? "Prova BudAI — öppen förhandsvisning utan konto eller med gratis konto."
-        : "Try BudAI — open preview experience as a guest or with a free account.",
-      pros: sv
-        ? [
-            `Playground på svenska och engelska (${LIMITS.guest.messagesPerDay}/dag gäst)`,
-            `Gratis konto: ${LIMITS.member.messagesPerDay}/dag, minne du kan styra, historik & bildanalys`,
-            "Röstinmatning och export i webbläsaren",
-          ]
-        : [
-            `Playground in Swedish and English (${LIMITS.guest.messagesPerDay}/day guest)`,
-            `Free account: ${LIMITS.member.messagesPerDay}/day, memory you control, history & vision`,
-            "Voice input and conversation export",
-          ],
-      cons: sv
-        ? ["Begränsad daglig kvot under preview", "Kortare kontext- och minnesfönster", "Ingen prioriterad kö vid hög last"]
-        : ["Preview daily message cap", "Shorter context and memory window", "Standard preview queue"],
-      cta: sv ? "Prova Playground" : "Try the Playground",
+      status: sv ? "Tillgänglig nu" : "Available now",
+      price: sv ? "Gratis under preview" : "Free during preview",
+      description: sv ? "Den öppna utvecklarpreviewn för eget arbete." : "The open developer preview for individual work.",
+      features: sv
+        ? [`${LIMITS.guest.messagesPerDay} meddelanden/dag som gäst`, `${LIMITS.member.messagesPerDay}/dag med gratiskonto`, "Minne, historik och bildanalys med konto"]
+        : [`${LIMITS.guest.messagesPerDay} guest messages/day`, `${LIMITS.member.messagesPerDay}/day with a free account`, "Memory, history and vision with an account"],
       href: "#playground",
-      card: "border-accent-cyan/40 bg-accent-cyan/[0.05] shadow-[0_0_70px_-25px_rgba(0,229,255,0.55)]",
-      bar: "from-accent-cyan to-accent-cyan/0",
-      chip: "border-accent-cyan/30 bg-accent-cyan/10 text-accent-cyan",
-      iconTone: "border-accent-cyan/30 bg-accent-cyan/10 text-accent-cyan",
-      btn: "bg-accent-cyan text-[#020205]",
-      blob: "bg-accent-cyan/20",
+      cta: sv ? "Öppna Playground" : "Open Playground",
     },
     {
-      key: "consumer",
-      icon: UserIcon,
-      name: sv ? "Konsument" : "Consumer",
-      tag: "Coming soon",
-      price: "Coming soon",
-      sub: sv ? "planerat privatpaket" : "planned individual plan",
-      note: sv
-        ? "Använd BudAI varje dag — under utveckling för regelbundet individuellt arbete."
-        : "Use BudAI every day — in development for regular individual work.",
-      pros: sv
-        ? [
-            "Högre daglig kapacitet för frekvent arbete",
-            "Längre konversationshistorik och utökat minne",
-            "Tidig tillgång till nya modeller och verktyg",
-          ]
-        : [
-            "Higher daily capacity for regular work",
-            "Extended conversation history and memory capacity",
-            "Early access to new models and capabilities",
-          ],
-      cons: sv
-        ? ["Avsett för en person (1 konto)", "Ingen delad teamarbetsyta"]
-        : ["Designed for one person (single account)", "No shared team workspace"],
-      cta: sv ? "Gå med i väntelistan" : "Join the waitlist",
+      name: "Consumer",
+      status: sv ? "Under utveckling" : "In development",
+      price: sv ? "Pris ej satt" : "Pricing not set",
+      description: sv ? "Mer kapacitet för regelbundet individuellt arbete." : "More capacity for regular individual work.",
+      features: sv ? ["Högre dygnskapacitet", "Utökad historik och minneskapacitet", "Tidig tillgång till nya funktioner"] : ["Higher daily capacity", "Extended history and memory capacity", "Early access to new capabilities"],
       href: "#waitlist",
-      card: "border-accent-purple/30 bg-accent-purple/[0.04]",
-      bar: "from-accent-purple to-accent-purple/0",
-      chip: "border-accent-purple/30 bg-accent-purple/10 text-accent-purple",
-      iconTone: "border-accent-purple/30 bg-accent-purple/10 text-accent-purple",
-      btn: "border border-accent-purple/40 text-white hover:bg-accent-purple/10",
-      blob: "bg-accent-purple/20",
+      cta: sv ? "Gå med i väntelistan" : "Join the waitlist",
     },
     {
-      key: "business",
-      icon: BuildingIcon,
-      name: sv ? "Företag" : "Business",
-      tag: "Coming soon",
-      price: "Coming soon",
-      sub: sv ? "planerat teampaket" : "planned team plan",
-      note: sv
-        ? "Ta BudAI till ditt team — under utveckling för gemensamma arbetsflöden."
-        : "Bring BudAI to your team — in development for shared workflows and governance.",
-      pros: sv
-        ? [
-            "Planerat: delad dagskvot över flera teamkonton",
-            "Planerat: gemensamma playbooks och arbetsytor",
-            "Planerat: administrationskontroller och prioriterad support",
-          ]
-        : [
-            "Planned: a shared daily limit across multiple team accounts",
-            "Planned: shared playbooks and team workspaces",
-            "Planned: admin controls and priority support",
-          ],
-      cons: sv
-        ? ["Under utveckling (ej aktivt i preview än)", "Kommer kräva företagskonto"]
-        : ["In development (not yet active in preview)", "Will require a company account"],
-      cta: sv ? "Gå med i väntelistan" : "Join the waitlist",
+      name: "Business",
+      status: sv ? "Under utveckling" : "In development",
+      price: sv ? "Pris ej satt" : "Pricing not set",
+      description: sv ? "Planerade delade arbetsytor och teamflöden." : "Planned shared workspaces and team workflows.",
+      features: sv ? ["Delade teamarbetsytor", "Återanvändbara teamplaybooks", "Planerade administratörskontroller"] : ["Shared team workspaces", "Reusable team playbooks", "Planned admin controls"],
       href: "#waitlist",
-      card: "border-white/20 bg-white/[0.04]",
-      bar: "from-accent-cyan via-accent-purple to-accent-purple/0",
-      chip: "border-white/20 bg-white/10 text-white",
-      iconTone: "border-white/20 bg-white/10 text-white",
-      btn: "border border-white/30 text-white hover:bg-white/10",
-      blob: "bg-white/10",
+      cta: sv ? "Gå med i väntelistan" : "Join the waitlist",
     },
   ];
 
   return (
-    <section id="capabilities" className="capabilities-universe relative section-hairline py-20 sm:py-24 md:py-32">
-      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[min(90vw,700px)] h-[400px] bg-accent-cyan/[0.04] rounded-full blur-[120px] pointer-events-none" />
-
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="capabilities-intro-header text-center mb-12">
-          <div className="capabilities-bridge-dock" aria-hidden="true">
-            <span className="capabilities-bridge-stem" />
-            <b className="capabilities-bridge-node" />
+    <section id="capabilities" className="v2-section v2-capabilities" aria-labelledby="capabilities-title">
+      <div className="v2-container">
+        <ScrollReveal>
+          <div className="v2-section-heading v2-split-heading">
+            <div>
+              <p className="v2-kicker">03 · {sv ? "ANVÄNDBART PÅ RIKTIGT" : "USEFUL IN PRACTICE"}</p>
+              <h2 id="capabilities-title">{sv ? "Mindre friktion. Mer färdigt arbete." : "Less friction. More finished work."}</h2>
+            </div>
+            <p>{sv ? "Sex sammanhängande förmågor i samma yta. Välj ett exempel för att öppna det i den riktiga Playgrounden och lägg till din egen kontext." : "Six connected capabilities in the same surface. Choose an example to open it in the real Playground, then add your own context."}</p>
           </div>
-          <span className="chapter-label mb-6 inline-flex"><i />03 / {t.capabilities.badge}</span>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-[-0.03em] mb-5 text-white">
-            {t.capabilities.title} <span className="text-gradient">{t.capabilities.titleHighlight}</span>
-          </h2>
-          <p className="text-base sm:text-lg text-muted max-w-2xl mx-auto leading-relaxed">
-            {sv
-              ? "I Playground ovan arbetar du i ett sammanhållet samtal. Under ytan samverkar sex förmågor för att forma råa anteckningar, dokument, bilder och röst till strukturerade resultat — på svenska och engelska, med minne du själv styr."
-              : "In the Playground above, you work in a single conversation. Beneath that surface, six connected capabilities turn rough notes, documents, images, and voice into structured outcomes — in Swedish and English, with memory you control."}
-          </p>
+        </ScrollReveal>
+
+        <div className="v2-capability-grid">
+          {capabilities.map((capability, index) => {
+            const Icon = capability.icon;
+            return (
+              <ScrollReveal key={capability.title} delay={index * 0.035}>
+                <button type="button" className="capability-module v2-capability-card" onClick={() => launch(capability.prompt)}>
+                  <span className="v2-capability-top"><Icon size={19} /><span>0{index + 1}</span></span>
+                  <strong>{capability.title}</strong>
+                  <span className="v2-capability-description">{capability.description}</span>
+                  <span className="v2-capability-action">{sv ? "Prova i Playground" : "Try in Playground"}<ArrowUpRight size={14} /></span>
+                </button>
+              </ScrollReveal>
+            );
+          })}
         </div>
 
-        <CapabilityMap />
-        <div className="plans-heading">
-          <span>
-            {sv ? "Värld II: Möjligheternas Atlas" : "World II: The Atlas of Possibility"}
-          </span>
-          <p>
-            {sv
-              ? "En förmåga löser en uppgift. Tillsammans bär de hela arbetssättet — från öppen preview idag till utökad individuell kapacitet och gemensamma teamflöden under utveckling."
-              : "One capability solves a task. Combined, they support how you work — from open preview access today to extended individual capacity and shared team workflows in development."}
-          </p>
-        </div>
-        <div className="access-architecture" data-access-architecture data-ai-assembly-line data-active-tier={activeTier >= 0 ? activeTier : undefined} aria-hidden="true">
-          <div className="access-code-header">
-            <span>
-              {sv
-                ? "VÄRLD I → VÄRLD II / VERKSTADENS STRUKTUR VIKS UT TILL MÖJLIGHETERNAS ATLAS"
-                : "WORLD I → WORLD II / WORKSHOP STRUCTURE UNFOLDS INTO THE ATLAS OF POSSIBILITY"}
-            </span>
-            <code>{`workshop.components(6) -> atlas.routes(document | decision | plan | workflow)`}</code>
+        <ScrollReveal className="v2-access" delay={0.06}>
+          <div className="v2-access-heading">
+            <div><p className="v2-kicker">{sv ? "TILLGÅNG" : "ACCESS"}</p><h3>{sv ? "Börja gratis. Väx när du behöver." : "Start free. Grow when you need to."}</h3></div>
+            <p>{sv ? "Consumer och Business är under utveckling. Priser har inte satts ännu." : "Consumer and Business are in development. Pricing has not been set yet."}</p>
           </div>
-          <div className="access-fallback">
-            <svg viewBox="-5.2 -2.3 10.4 4.5" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
-              {/* Outer Cartographic Horizon & Compass Vernier Ring */}
-              <ellipse cx="0" cy="0.32" rx="4.7" ry="1.38" fill="none" stroke="#578fae" strokeOpacity="0.28" strokeWidth="0.018" strokeDasharray="0.08 0.05" />
-              <ellipse cx="0" cy="0.32" rx="3.85" ry="1.08" fill="none" stroke="#a8b4f8" strokeOpacity="0.36" strokeWidth="0.02" />
-              <ellipse cx="0" cy="0.32" rx="2.45" ry="0.68" fill="none" stroke="#7adbf0" strokeOpacity="0.42" strokeWidth="0.02" />
-              <path d="M -4.35 0.85 Q 0 -2.1 4.35 0.85" fill="none" stroke="#7adbf0" strokeOpacity="0.62" strokeWidth="0.026" strokeDasharray="0.12 0.06" />
-
-              {/* Elevated Polestar Synthesis Apex & 3 Meridian Beams */}
-              <polygon points="0,-1.55 0.16,-1.35 0,-1.15 -0.16,-1.35" fill="#15344f" stroke="#dff6ff" strokeWidth="0.024" />
-              <circle cx="0" cy="-1.35" r="0.26" fill="none" stroke="#7adbf0" strokeOpacity="0.68" strokeWidth="0.016" />
-              <line x1="0" y1="-1.35" x2="-3.15" y2="0.15" stroke="#7adbf0" strokeOpacity={activeTier === 0 ? "0.95" : "0.52"} strokeWidth={activeTier === 0 ? "0.032" : "0.02"} />
-              <line x1="0" y1="-1.35" x2="0" y2="-0.15" stroke="#a8b4f8" strokeOpacity={activeTier === 1 ? "0.95" : "0.52"} strokeWidth={activeTier === 1 ? "0.032" : "0.02"} />
-              <line x1="0" y1="-1.35" x2="3.15" y2="-0.42" stroke="#6ee7b7" strokeOpacity={activeTier === 2 ? "0.95" : "0.52"} strokeWidth={activeTier === 2 ? "0.032" : "0.02"} />
-
-              {/* West Terrace: 01 Basic (Available Now) */}
-              <polygon points="-4.55,0.68 -1.75,0.68 -1.35,-0.22 -4.15,-0.22" fill="#0b2032" fillOpacity={activeTier === 0 ? "0.96" : "0.86"} stroke="#7adbf0" strokeWidth={activeTier === 0 ? "0.04" : "0.026"} />
-              <ellipse cx="-2.95" cy="0.22" rx="0.95" ry="0.28" fill="none" stroke="#7adbf0" strokeOpacity={activeTier === 0 ? "0.8" : "0.45"} strokeWidth="0.016" />
-              <circle cx="-3.35" cy="0.18" r="0.08" fill="#7adbf0" />
-              <circle cx="-2.45" cy="0.24" r="0.08" fill="#6ee7b7" />
-
-              {/* Central Terrace: 02 Consumer (Coming Soon) */}
-              <polygon points="-1.3,0.36 1.3,0.36 1.62,-0.54 -0.98,-0.54" fill="#0d2238" fillOpacity={activeTier === 1 ? "0.96" : "0.88"} stroke="#a8b4f8" strokeWidth={activeTier === 1 ? "0.04" : "0.026"} />
-              <ellipse cx="0.16" cy="-0.09" rx="0.95" ry="0.28" fill="none" stroke="#a8b4f8" strokeOpacity={activeTier === 1 ? "0.8" : "0.45"} strokeWidth="0.016" />
-              <circle cx="-0.32" cy="-0.1" r="0.08" fill="#a8b4f8" />
-              <circle cx="0.58" cy="-0.08" r="0.08" fill="#7adbf0" />
-
-              {/* East Terrace: 03 Business (Coming Soon) */}
-              <polygon points="1.8,0.06 4.45,0.06 4.65,-0.84 2.02,-0.84" fill="#0d263b" fillOpacity={activeTier === 2 ? "0.96" : "0.9"} stroke="#6ee7b7" strokeWidth={activeTier === 2 ? "0.04" : "0.026"} />
-              <ellipse cx="3.22" cy="-0.39" rx="0.95" ry="0.28" fill="none" stroke="#6ee7b7" strokeOpacity={activeTier === 2 ? "0.8" : "0.45"} strokeWidth="0.016" />
-              <circle cx="2.75" cy="-0.38" r="0.08" fill="#6ee7b7" />
-              <circle cx="3.68" cy="-0.4" r="0.08" fill="#dff6ff" />
-
-              {/* Interconnected Multi-Strand Atlas Routes */}
-              <path d="M -3.35 0.18 Q -2.9 -0.35 -2.45 0.24 Q -1.4 -0.45 -0.32 -0.1 Q 0.15 -0.55 0.58 -0.08 Q 1.65 -0.68 2.75 -0.38 Q 3.2 -0.82 3.68 -0.4" fill="none" stroke="#6ee7b7" strokeOpacity="0.88" strokeWidth="0.028" />
-              <path d="M -3.35 0.18 Q -1.8 -0.72 -0.32 -0.1 Q 1.6 -0.85 3.68 -0.4" fill="none" stroke="#7adbf0" strokeOpacity="0.58" strokeWidth="0.02" strokeDasharray="0.09 0.05" />
-            </svg>
+          <div className="v2-plan-grid" data-plan-comparison>
+            {plans.map((plan) => (
+              <article key={plan.name} className={`v2-plan-card plan-${plan.name.toLowerCase()}`}>
+                <div className="v2-plan-title"><h4>{plan.name}</h4><span className={plan.name === "Basic" ? "is-live" : ""}>{plan.status}</span></div>
+                <p className="v2-plan-price">{plan.price}</p>
+                <p>{plan.description}</p>
+                <ul>{plan.features.map((feature) => <li key={feature}>{feature}</li>)}</ul>
+                <a
+                  href={plan.href}
+                  onClick={() => {
+                    if (plan.name === "Consumer" || plan.name === "Business") {
+                      window.dispatchEvent(new CustomEvent("budai:waitlist-plan", {
+                        detail: { accountType: plan.name === "Business" ? "company" : "individual", openDetails: plan.name === "Business" },
+                      }));
+                    }
+                  }}
+                >{plan.cta}<ArrowRight size={14} /></a>
+              </article>
+            ))}
           </div>
-          <div className="access-labels">
-            <span
-              className={activeTier === 0 ? "is-active" : undefined}
-              onPointerEnter={() => setActiveTier(0)}
-              onPointerLeave={() => setActiveTier(-1)}
-            >
-              <code>01 · DOCUMENT &amp; INTAKE ROUTE</code>
-              01 / BASIC
-              <small>{sv ? "Tillgänglig nu · Direkt skrivande, syn & röst i preview" : "Available now · Direct writing, vision & voice in preview"}</small>
-            </span>
-            <span
-              className={activeTier === 1 ? "is-active" : undefined}
-              onPointerEnter={() => setActiveTier(1)}
-              onPointerLeave={() => setActiveTier(-1)}
-            >
-              <code>02 · MEMORY &amp; BILINGUAL ROUTE</code>
-              02 / CONSUMER
-              <small>{sv ? "Kommer snart · Utökat minne, planer & djupanalys" : "Coming soon · Extended memory, plans & deep analysis"}</small>
-            </span>
-            <span
-              className={activeTier === 2 ? "is-active" : undefined}
-              onPointerEnter={() => setActiveTier(2)}
-              onPointerLeave={() => setActiveTier(-1)}
-            >
-              <code>03 · SHARED WORKFLOW &amp; DECISION ROUTE</code>
-              03 / BUSINESS
-              <small>{sv ? "Kommer snart · Gemensamma arbetsflöden för team" : "Coming soon · Shared team workflows & governance"}</small>
-            </span>
-          </div>
-        </div>
-        <div className="plan-comparison grid md:grid-cols-3 gap-4 mb-5" data-plan-comparison data-active-tier={activeTier >= 0 ? activeTier : undefined}>
-          {plans.map((pl, i) => (
-            <ScrollReveal key={pl.key} delay={i * 0.05}>
-              <div
-                className="h-full"
-                onPointerEnter={() => setActiveTier(i)}
-                onPointerLeave={() => setActiveTier(-1)}
-                onFocus={() => setActiveTier(i)}
-                onBlur={() => setActiveTier(-1)}
-              >
-              <SpotlightCard tilt={false} className={`plan-card plan-${pl.key} ${activeTier === i ? "is-tier-active" : ""} h-full rounded-2xl border ${pl.card}`}>
-                <div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${pl.bar}`} />
-                <div className={`pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full blur-3xl ${pl.blob}`} />
-                <div className="relative flex h-full flex-col p-6 pt-7">
-                  <div className="mb-5 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className={`flex h-10 w-10 items-center justify-center rounded-xl border ${pl.iconTone}`}>
-                        <pl.icon className="h-5 w-5" />
-                      </div>
-                      <h3 className="text-lg font-semibold text-white">{pl.name}</h3>
-                    </div>
-                    <span className={`rounded-full border px-2.5 py-1 text-[11px] font-medium ${pl.chip}`}>{pl.tag}</span>
-                  </div>
-                  <p className="text-3xl font-bold tracking-tight text-white">
-                    {pl.price} <span className="text-sm font-normal text-muted">{pl.sub}</span>
-                  </p>
-                  <p className="mt-1 mb-5 text-sm text-muted">{pl.note}</p>
-
-                  <p className="mb-2 text-[11px] font-medium uppercase tracking-wider text-accent-green/80">{sv ? "Du får" : "You get"}</p>
-                  <ul className="mb-4 space-y-2 text-sm text-white/85">
-                    {pl.pros.map((it) => (
-                      <li key={it} className="flex gap-2.5">
-                        <CheckIcon className="mt-0.5 h-4 w-4 shrink-0 text-accent-green" />
-                        {it}
-                      </li>
-                    ))}
-                  </ul>
-                  <p className="mb-2 text-[11px] font-medium uppercase tracking-wider text-amber-300/80">{sv ? "Begränsningar" : "Limits"}</p>
-                  <ul className="mb-6 space-y-2 text-sm text-muted">
-                    {pl.cons.map((it) => (
-                      <li key={it} className="flex gap-2.5">
-                        <XIcon className="mt-0.5 h-4 w-4 shrink-0 text-amber-300/70" />
-                        {it}
-                      </li>
-                    ))}
-                  </ul>
-                  <a
-                    href={pl.href}
-                    onClick={() => {
-                      if (pl.key === "consumer" || pl.key === "business") {
-                        window.dispatchEvent(
-                          new CustomEvent("budai:waitlist-plan", {
-                            detail: {
-                              accountType: pl.key === "business" ? "company" : "individual",
-                              openDetails: pl.key === "business",
-                            },
-                          })
-                        );
-                      }
-                    }}
-                    className={`mt-auto rounded-full py-2.5 text-center text-sm font-semibold transition-all hover:opacity-90 ${pl.btn}`}
-                  >
-                    {pl.cta}
-                  </a>
-                </div>
-              </SpotlightCard>
-              </div>
-            </ScrollReveal>
-          ))}
-        </div>
-        <p className="mb-10 text-center text-sm text-muted/80 max-w-2xl mx-auto">
-          {sv
-            ? `Samma kärnmodell i alla nivåer. Basic är gratis under preview (${LIMITS.guest.messagesPerDay} meddelanden/dag som gäst, ${LIMITS.member.messagesPerDay}/dag med gratis konto). Konsument och Företag är under utveckling — priserna är inte satta ännu.`
-            : `Same core intelligence across every tier. Basic is free during the preview (${LIMITS.guest.messagesPerDay} messages/day as guest, ${LIMITS.member.messagesPerDay}/day with a free account). Consumer and Business are in development — pricing has not been set yet.`}
-        </p>
+        </ScrollReveal>
 
         <Waitlist />
-
       </div>
     </section>
   );

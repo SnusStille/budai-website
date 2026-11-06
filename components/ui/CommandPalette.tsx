@@ -61,19 +61,33 @@ export default function CommandPalette() {
       },
       {
         id: "about",
-        label: sv ? "Möt Byggaren (Stilledev)" : "About the Builder (Stilledev)",
+        label: sv ? "Om Stilledev" : "About Stilledev",
         hint: "04",
         icon: Cpu,
-        action: () => goTo("about"),
-        keywords: "stilledev developer github contact byggaren kod",
+        action: () => { setOpen(false); router.push("/about"); },
+        keywords: "stilledev developer github contact byggaren kod company företag",
       },
       {
         id: "roadmap",
         label: sv ? "Se Roadmap" : "View Roadmap",
         hint: "05",
         icon: Map,
-        action: () => goTo("roadmap"),
+        action: () => { setOpen(false); router.push("/roadmap"); },
         keywords: "timeline plan future roadmap framtid",
+      },
+      {
+        id: "knowledge",
+        label: sv ? "Öppna Kunskapscenter" : "Open Knowledge Center",
+        icon: Search,
+        action: () => { setOpen(false); router.push("/knowledge"); },
+        keywords: "knowledge privacy memory models faq kunskap integritet minne modeller",
+      },
+      {
+        id: "labs",
+        label: "Projects / Labs",
+        icon: Cpu,
+        action: () => { setOpen(false); router.push("/labs"); },
+        keywords: "labs projects experiments confluence projekt experiment",
       },
       {
         id: "waitlist",
@@ -118,7 +132,12 @@ export default function CommandPalette() {
         icon: CornerDownLeft,
         action: () => {
           setOpen(false);
-          window.dispatchEvent(new Event("budai:shortcuts"));
+          if (document.getElementById("playground")) {
+            goTo("playground");
+            window.setTimeout(() => window.dispatchEvent(new Event("budai:shortcuts")), 350);
+          } else {
+            router.push("/#playground");
+          }
         },
         keywords: "keyboard shortcuts hotkeys genvägar tangentbord",
       },
@@ -128,7 +147,7 @@ export default function CommandPalette() {
         icon: MessageCircle,
         action: () => {
           setOpen(false);
-          window.dispatchEvent(new Event("budai:feedback"));
+          router.push("/feedback");
         },
         keywords: "feedback bug idea förslag",
       },
@@ -154,7 +173,7 @@ export default function CommandPalette() {
         keywords: "developer contact discord stilledev kontakt",
       },
     ],
-    [sv, setLang, goTo]
+    [sv, setLang, goTo, router]
   );
 
   const filtered = useMemo(() => {

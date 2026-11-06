@@ -33,11 +33,11 @@ export const translations = {
         "Skriv, automatisera, besluta och växla språk — samma yta du testar live i Playground.",
     },
     playground: {
-      badge: "AI Playground",
-      title: "Prata med",
-      titleHighlight: "BudAI",
+      badge: "Live Playground",
+      title: "Gör något av",
+      titleHighlight: "din nästa idé.",
       subtitle:
-        "En riktig AI-yta: chatt, historik, minne, bildanalys och röst. Gästläge fritt — konto låser mer.",
+        "En riktig AI-arbetsyta: chatt, historik, minne, bildanalys och röst. Prova som gäst eller logga in gratis.",
       placeholder: "Skriv din fråga till BudAI…",
       online: "Online — Utvecklarförhandsvisning",
       thinking: "Tänker…",
@@ -136,11 +136,11 @@ export const translations = {
         "Draft, automate, decide, and switch languages — the same surface you test live in the Playground.",
     },
     playground: {
-      badge: "AI Playground",
-      title: "Talk to",
-      titleHighlight: "BudAI",
+      badge: "Live Playground",
+      title: "Make something of",
+      titleHighlight: "your next idea.",
       subtitle:
-        "A real AI surface: chat, history, memory, image analysis, and voice. Guest mode free — account unlocks more.",
+        "A real AI workspace: chat, history, memory, image analysis and voice. Try as a guest or sign in free.",
       placeholder: "Message BudAI…",
       online: "Online — Developer Preview",
       thinking: "Thinking…",

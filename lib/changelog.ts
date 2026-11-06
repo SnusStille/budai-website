@@ -2,6 +2,8 @@
 // actually in this repository. Undated entries (date: "") are a snapshot of
 // the current developer preview, not a claim about a historical release.
 // Never invent a release date, a cadence promise or a customer metric here.
+export type ChangeType = "new" | "improved" | "fixed";
+export type Change = { type: ChangeType; en: string; sv: string };
 export type Entry = {
   id: string;
   date: string;
@@ -9,9 +11,41 @@ export type Entry = {
   titleSv: string;
   items: string[];
   itemsSv: string[];
+  changes?: Change[];
 };
 
+export function entryChanges(entry: Entry): Change[] {
+  return entry.changes ?? entry.items.map((en, index) => ({ type: "improved", en, sv: entry.itemsSv[index] ?? en }));
+}
+
 export const CHANGELOG: Entry[] = [
+  {
+    id: "2026-11-07-stilledev-evolution",
+    date: "2026-11-07",
+    title: "Stilledev website evolution V2",
+    titleSv: "Stilledev webbplatsevolution V2",
+    items: [
+      "A shorter, product-led homepage with a company-first Stilledev identity, an actual BudAI interface capture and direct paths into the working Playground.",
+      "New supporting experiences: a dedicated BudAI page, Projects / Labs, public roadmap, searchable Knowledge Center, About page and functional feedback portal.",
+      "A redesigned changelog with release types and dates, clearer social metadata, updated sitemap and a consistent bilingual navigation and footer.",
+      "Responsive layouts, keyboard-accessible tabs and menus, reduced-motion fallbacks and a lighter neural-core presentation replace the long multi-chapter homepage sequence.",
+      "The system indicator now reports only website reachability, rather than implying unverified provider or database health.",
+    ],
+    itemsSv: [
+      "En kortare, produktledd startsida med en företagsfokuserad Stilledev-identitet, en verklig BudAI-gränssnittsbild och direkt vägar till den fungerande Playgrounden.",
+      "Nya stödsidor: en egen BudAI-sida, Projekt / Labs, publik roadmap, sökbart Kunskapscenter, Om-sida och fungerande feedbackportal.",
+      "Omdesignad ändringslogg med release-typer och datum, tydligare social metadata, uppdaterad sajtkarta samt enhetlig tvåspråkig navigation och sidfot.",
+      "Responsiva layouter, tangentbordsanpassade flikar och menyer, reducerad rörelse och en lättare neuralkärna ersätter startsidans långa kapitelsekvens.",
+      "Statusindikatorn visar nu bara webbplatsens svar, utan att antyda overifierad hälsa hos leverantörer eller databas.",
+    ],
+    changes: [
+      { type: "new", en: "A shorter, product-led homepage with a company-first Stilledev identity, an actual BudAI interface capture and direct paths into the working Playground.", sv: "En kortare, produktledd startsida med en företagsfokuserad Stilledev-identitet, en verklig BudAI-gränssnittsbild och direkt vägar till den fungerande Playgrounden." },
+      { type: "new", en: "New supporting experiences: a dedicated BudAI page, Projects / Labs, public roadmap, searchable Knowledge Center, About page and functional feedback portal.", sv: "Nya stödsidor: en egen BudAI-sida, Projekt / Labs, publik roadmap, sökbart Kunskapscenter, Om-sida och fungerande feedbackportal." },
+      { type: "improved", en: "A redesigned changelog with release types and dates, clearer social metadata, updated sitemap and a consistent bilingual navigation and footer.", sv: "Omdesignad ändringslogg med release-typer och datum, tydligare social metadata, uppdaterad sajtkarta samt enhetlig tvåspråkig navigation och sidfot." },
+      { type: "improved", en: "Responsive layouts, keyboard-accessible tabs and menus, reduced-motion fallbacks and a lighter neural-core presentation replace the long multi-chapter homepage sequence.", sv: "Responsiva layouter, tangentbordsanpassade flikar och menyer, reducerad rörelse och en lättare neuralkärna ersätter startsidans långa kapitelsekvens." },
+      { type: "fixed", en: "The system indicator now reports only website reachability, rather than implying unverified provider or database health.", sv: "Statusindikatorn visar nu bara webbplatsens svar, utan att antyda overifierad hälsa hos leverantörer eller databas." },
+    ],
+  },
   {
     id: "2026-11-06-fas1",
     date: "2026-11-06",

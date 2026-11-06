@@ -11,13 +11,13 @@ test("one living Confluence identity reaches the real UI, installed icons and bo
   // Atomic snapshots: the loader's optional HUD and product states can unmount
   // marks; a sequence of nth() locators would inspect different DOM snapshots.
   const paths = await marks.evaluateAll(nodes => nodes.map(n=>n.getAttribute("d")));
-  expect(paths.length).toBeGreaterThanOrEqual(7);
+  expect(paths.length).toBeGreaterThanOrEqual(4);
   for (const path of paths) expect(path).toBe(BUDAI_MARK_PATH);
   const words = await page.locator("[data-budai-wordmark]").allTextContents();
   expect(words.length).toBeGreaterThanOrEqual(3);
   expect(new Set(words)).toEqual(new Set(["BudAI"]));
   await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveAttribute("href", "/apple-touch-icon.png");
-  await expect(page.locator("nav").getByText("STILLEDEV", { exact: true })).toBeVisible();
+  await expect(page.locator(".site-navigation").getByText("STILLEDEV", { exact: true })).toBeVisible();
   // The separate Stilledev S path is not the BudAI mark, and its attribution remains.
   expect(await page.locator('footer path[d^="M21.5 11.2"]').count()).toBeGreaterThan(0);
   const favicon = await request.get("/favicon.svg");
