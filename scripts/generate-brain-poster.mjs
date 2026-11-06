@@ -7,7 +7,10 @@ import {mkdir,writeFile,readFile} from 'node:fs/promises';
 import {createRequire} from 'node:module';
 import {chromium} from '@playwright/test';
 import {browserRuntime} from './browser-runtime.mjs';
-const require=createRequire(import.meta.url),wp=require('next/dist/compiled/webpack/webpack');wp.init();
+const require=createRequire(import.meta.url),wp=require('next/dist/compiled/webpack/webpack');
+// Next 16 no longer ships the `init()` bootstrap on its bundled webpack.
+// It is still required on Next 14/15, so keep it optional.
+if(typeof wp.init==='function')wp.init();
 const root=process.cwd(),work=path.join(root,'.cache/brain-poster');await mkdir(work,{recursive:true});await mkdir('public/brain',{recursive:true});
 const entry=`import React from 'react';import{createRoot}from'react-dom/client';import BrainFlight from '${path.join(root,'components/effects/BrainFlight.tsx')}';const motion={current:{kind:'intro',progress:0}};createRoot(document.getElementById('root')).render(React.createElement(BrainFlight,{motion,mode:'intro',active:true,onReady:()=>{const source=document.querySelector('canvas'),copy=document.createElement('canvas');copy.width=source.width;copy.height=source.height;const c=copy.getContext('2d');c.fillStyle='#020205';c.fillRect(0,0,copy.width,copy.height);c.drawImage(source,0,0);window.__posterImage=copy.toDataURL('image/webp',.88);window.__posterReady=true;},onFail:()=>window.__posterFailed=true}));`;
 await writeFile(path.join(work,'entry.js'),entry);
