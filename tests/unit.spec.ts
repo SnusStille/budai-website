@@ -15,6 +15,7 @@ import { aiUsageEvent } from "../lib/ai-usage";
 import { buildCsp } from "../lib/csp";
 import { KEYBOARD_OVERLAP_THRESHOLD_PX, keyboardOverlap } from "../lib/playground/viewport";
 import { LEGAL_SLUGS } from "../lib/legal-slugs";
+import { LEGAL_TITLES_SV } from "../lib/legal-slugs";
 import { resolveLang, canonicalPath, hasLanguageAlternate } from "../lib/lang";
 
 test("one readiness deadline and camera/reveal timing stay bounded without a logo timeline",()=>{
@@ -544,7 +545,7 @@ test("no dead hash-only logo links remain and legal slugs are a closed set (A6)"
     expect(readFileSync(file, "utf8"), file).not.toMatch(/href="#"/);
   }
   const page = readFileSync("app/legal/[slug]/page.tsx", "utf8");
-  expect(page).toContain("dynamicParams = false");
+  expect(page).not.toMatch(/export function generateStaticParams/);
   expect(page).toContain("notFound()");
   expect(readFileSync("app/legal/[slug]/LegalView.tsx", "utf8")).not.toContain("useParams");
   expect(LEGAL_SLUGS).toEqual(["privacy", "terms", "cookies", "gdpr", "data"]);
@@ -566,4 +567,14 @@ test("language resolution has a real Swedish URL, honest canonicals and no inven
   expect(layout).toContain("lang={lang}");
   expect(layout).toContain("generateMetadata");
   expect(readFileSync("app/sv/page.tsx", "utf8")).toContain("../page");
+});
+
+test("page-level metadata is localized for every indexable route (F1)", () => {
+  const legal = readFileSync("app/legal/[slug]/page.tsx", "utf8");
+  const changelog = readFileSync("app/changelog/page.tsx", "utf8");
+  expect(legal).toContain("LEGAL_TITLES_SV");
+  expect(legal).toContain('headers().get("x-budai-lang")');
+  expect(changelog).toContain('headers().get("x-budai-lang")');
+  expect(changelog).toContain('"Vad är nytt"');
+  expect(LEGAL_TITLES_SV.data).toBe("Så hanteras dina data");
 });

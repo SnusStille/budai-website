@@ -679,3 +679,17 @@ test("F1: /sv is a real Swedish page, hreflang is reciprocal and the cookie surv
   const cookies = await page.context().cookies();
   expect(cookies.find((c) => c.name === "budai-lang")?.value).toBe("sv");
 });
+
+test("F1: legal and changelog titles follow the server language", async ({ request }) => {
+  const sv = { headers: { cookie: "budai-lang=sv" } };
+  const enPrivacy = await (await request.get("/legal/privacy")).text();
+  expect(enPrivacy).toMatch(/<title>Privacy Policy/);
+  const svPrivacy = await (await request.get("/legal/privacy", sv)).text();
+  expect(svPrivacy).toMatch(/<title>Integritetspolicy/);
+  const svData = await (await request.get("/legal/data", sv)).text();
+  expect(svData).toMatch(/<title>Så hanteras dina data/);
+  const enChangelog = await (await request.get("/changelog")).text();
+  expect(enChangelog).toMatch(/<title>What(?:'|&#x27;)s new/); // React escapes the apostrophe in <title>
+  const svChangelog = await (await request.get("/changelog", sv)).text();
+  expect(svChangelog).toMatch(/<title>Vad är nytt/);
+});

@@ -1,22 +1,26 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
-import { LEGAL_SLUGS, LEGAL_TITLES, isLegalSlug } from "@/lib/legal-slugs";
+import { LEGAL_TITLES, LEGAL_TITLES_SV, isLegalSlug } from "@/lib/legal-slugs";
 import LegalView from "./LegalView";
 
 // Only these five slugs exist. Anything else must be a real 404 — previously
 // an unknown slug silently rendered the privacy policy with HTTP 200.
-export const dynamicParams = false;
-
-export function generateStaticParams() {
-  return LEGAL_SLUGS.map((slug) => ({ slug }));
-}
+// F1: this route is rendered per request (no generateStaticParams). Static
+// generation froze page-level metadata in English at build time even though
+// <html lang="sv"> was correct. The root layout is dynamic anyway (CSP nonce).
 
 export function generateMetadata({ params }: { params: { slug: string } }): Metadata {
   if (!isLegalSlug(params.slug)) return {};
-  const title = LEGAL_TITLES[params.slug];
+  // F1: page-level metadata must follow the same server-resolved language as
+  // the root layout, otherwise a Swedish page still has an English <title>.
+  const sv = headers().get("x-budai-lang") === "sv";
+  const title = (sv ? LEGAL_TITLES_SV : LEGAL_TITLES)[params.slug];
   return {
     title,
-    description: `${title} for the BudAI developer preview, available in English and Swedish.`,
+    description: sv
+      ? `${title} för BudAI:s utvecklarförhandsvisning, på svenska och engelska.`
+      : `${title} for the BudAI developer preview, available in English and Swedish.`,
     alternates: { canonical: `/legal/${params.slug}` },
     robots: { index: true, follow: true },
   };

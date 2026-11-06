@@ -13,3 +13,11 @@ export const LEGAL_TITLES: Record<LegalSlug, string> = {
   gdpr: "GDPR",
   data: "How your data is handled",
 };
+
+export const LEGAL_TITLES_SV: Record<LegalSlug, string> = {
+  privacy: "Integritetspolicy",
+  terms: "Användarvillkor",
+  cookies: "Cookiepolicy",
+  gdpr: "GDPR",
+  data: "Så hanteras dina data",
+};
