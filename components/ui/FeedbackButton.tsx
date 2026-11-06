@@ -69,7 +69,7 @@ export default function FeedbackButton() {
           <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-[#07070e] p-5" onClick={(e) => e.stopPropagation()}>
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-semibold text-white">{sv ? "Din feedback styr BudAI" : "Your feedback steers BudAI"}</h2>
-              <button type="button" onClick={() => setOpen(false)} aria-label="Close" className="text-white/60 hover:text-white"><X className="h-5 w-5" /></button>
+              <button type="button" onClick={() => setOpen(false)} aria-label="Close" className="text-ds-muted hover:text-white"><X className="h-5 w-5" /></button>
             </div>
             {state === "done" ? (
               <p className="py-6 text-center text-sm text-accent-green">{sv ? "Tack! Jag läser allt." : "Thanks! I read everything."}</p>

@@ -373,28 +373,28 @@ export function createCapabilityEngine(
   const cyanLineMat = new THREE.LineBasicMaterial({
     color: "#7adbf0",
     transparent: true,
-    opacity: 0.52,
+    opacity: lite ? 0.62 : 0.52,
     blending: THREE.AdditiveBlending,
     depthWrite: false,
   });
   const lavenderLineMat = new THREE.LineBasicMaterial({
     color: "#a8b4f8",
     transparent: true,
-    opacity: 0.48,
+    opacity: lite ? 0.58 : 0.48,
     blending: THREE.AdditiveBlending,
     depthWrite: false,
   });
   const emeraldLineMat = new THREE.LineBasicMaterial({
     color: "#6ee7b7",
     transparent: true,
-    opacity: 0.54,
+    opacity: lite ? 0.64 : 0.54,
     blending: THREE.AdditiveBlending,
     depthWrite: false,
   });
   const bgArchitecturalLineMat = new THREE.LineBasicMaterial({
     color: "#578fae",
     transparent: true,
-    opacity: 0.22,
+    opacity: lite ? 0.28 : 0.22,
     blending: THREE.AdditiveBlending,
     depthWrite: false,
   });
@@ -581,7 +581,10 @@ export function createCapabilityEngine(
 
   interface InstrumentPod {
     group: THREE.Group;
-    tetherGeo: THREE.BufferGeometry;
+    /** FAS2 round 3: six tethers share two LineSegments (one per accent),
+     * so a pod writes into a slice of one shared dynamic position buffer. */
+    tetherAttr: THREE.BufferAttribute;
+    tetherOffset: number;
     cradleRingMat: THREE.MeshBasicMaterial;
     sculpture: THREE.Group;
     writeBlocks?: Array<{ mesh: THREE.Mesh; rawPos: THREE.Vector3; rawRot: THREE.Euler; targetPos: THREE.Vector3 }>;
@@ -607,6 +610,22 @@ export function createCapabilityEngine(
 
   const pods: InstrumentPod[] = [];
 
+  // FAS2 round 3 — one draw call per accent colour instead of one per pod.
+  // Even pods use cyan, odd pods lavender; each colour buffer holds three
+  // two-vertex segments. The old code created six THREE.Line objects with six
+  // independent geometries and six buffer uploads every frame.
+  const tetherSegments = [cyanLineMat, lavenderLineMat].map(material => {
+    const geometry = new THREE.BufferGeometry();
+    const attribute = new THREE.BufferAttribute(new Float32Array(3 * 2 * 3), 3);
+    attribute.setUsage(THREE.DynamicDrawUsage);
+    geometry.setAttribute("position", attribute);
+    const lines = new THREE.LineSegments(geometry, material);
+    // The vertices move every frame; a stale bounding sphere must not cull them.
+    lines.frustumCulled = false;
+    root.add(lines);
+    return attribute;
+  });
+
   // Target positions in World Two (The Atlas of Possibility):
   // Stepped across 3 distinct topographic regions:
   // West Terrace (01 Basic - Available Now): Write (-3.22) & Vision/Voice (-2.10)
@@ -625,16 +644,10 @@ export function createCapabilityEngine(
     const group = new THREE.Group();
     root.add(group);
 
-    // Articulated Radial Caliper Tether connecting this instrument to the Central Crucible Spine
-    const tetherGeo = new THREE.BufferGeometry().setFromPoints([
-      new THREE.Vector3(0, 1.05, 0.25),
-      new THREE.Vector3(0, 1.05, 0.25),
-    ]);
-    const tetherLine = new THREE.Line(
-      tetherGeo,
-      idx % 2 === 0 ? cyanLineMat : lavenderLineMat
-    );
-    root.add(tetherLine);
+    // Articulated Radial Caliper Tether connecting this instrument to the
+    // Central Crucible Spine. Segment slot inside the shared colour buffer.
+    const tetherAttr = tetherSegments[idx % 2];
+    const tetherOffset = Math.floor(idx / 2) * 2;
 
     // Precision Circular Optical Stage & Gimbal Cradle (replaces the flat rectangular slab!)
     const cradleOuter = new THREE.Mesh(
@@ -688,7 +701,8 @@ export function createCapabilityEngine(
 
     const pod: InstrumentPod = {
       group,
-      tetherGeo,
+      tetherAttr,
+      tetherOffset,
       cradleRingMat,
       sculpture,
       atlasMonument,
@@ -1372,10 +1386,8 @@ export function createCapabilityEngine(
         const coreWorldX = crucibleGroup.position.x + synthesisCore.position.x;
         const coreWorldY = crucibleGroup.position.y + synthesisCore.position.y;
         const coreWorldZ = crucibleGroup.position.z + synthesisCore.position.z;
-        const tetherAttr = pod.tetherGeo.getAttribute("position") as THREE.BufferAttribute;
-        tetherAttr.setXYZ(0, coreWorldX, coreWorldY, coreWorldZ);
-        tetherAttr.setXYZ(1, pod.group.position.x, pod.group.position.y, pod.group.position.z);
-        tetherAttr.needsUpdate = true;
+        pod.tetherAttr.setXYZ(pod.tetherOffset, coreWorldX, coreWorldY, coreWorldZ);
+        pod.tetherAttr.setXYZ(pod.tetherOffset + 1, pod.group.position.x, pod.group.position.y, pod.group.position.z);
 
         relayAttr.setXYZ(idx, pod.group.position.x, pod.group.position.y, pod.group.position.z);
 
@@ -1479,6 +1491,8 @@ export function createCapabilityEngine(
       });
 
       relayAttr.needsUpdate = true;
+      // The six tethers now live in two buffers — two uploads instead of six.
+      tetherSegments.forEach(attr => { attr.needsUpdate = true; });
       workshopRelayLoop.visible = morph < 0.65;
       workshopRelayPulses.forEach((rpMesh, rpIdx) => {
         const segFloat = ((time * 0.42 + rpIdx / 3) % 1) * 6;

@@ -50,7 +50,7 @@ export default function Shortcuts() {
       <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-[#07070e] p-6" onClick={(e) => e.stopPropagation()}>
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-white">{sv ? "Tangentbordsgenvägar" : "Keyboard shortcuts"}</h2>
-          <button type="button" onClick={() => setOpen(false)} aria-label="Close" className="text-white/60 hover:text-white"><X className="h-5 w-5" /></button>
+          <button type="button" onClick={() => setOpen(false)} aria-label="Close" className="text-ds-muted hover:text-white"><X className="h-5 w-5" /></button>
         </div>
         <ul className="space-y-2.5">
           {rows.map(([k, d]) => (

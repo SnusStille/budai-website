@@ -4,6 +4,8 @@ import "@fontsource-variable/plus-jakarta-sans";
 import "@fontsource-variable/jetbrains-mono";
 import "./globals.css";
 import "./experience.css";
+/* FAS2 visual system: imported last so tokens/refinements win the cascade. */
+import "./design-system.css";
 import Providers from "@/components/Providers";
 import VercelAnalytics from "@/components/VercelAnalytics";
 import { introBootstrap } from "@/lib/experience/intro";
