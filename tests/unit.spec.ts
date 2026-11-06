@@ -200,6 +200,20 @@ test("daily-limit copy reads the single LIMITS source instead of hardcoded numbe
 });
 
 
+test("secret-scan baseline covers the full remote history, not just one branch (B4)", () => {
+  const baseline = JSON.parse(readFileSync("scripts/secret-scan-baseline.json", "utf8"));
+  const ids = baseline.findings.map((f: { id: string }) => f.id);
+  expect(ids.every((id: string) => /^[0-9a-f]{16}$/.test(id))).toBe(true);
+  expect(baseline.comment).toMatch(/FULL REMOTE HISTORY/i);
+  // Two reviewed 2026-07 demo values live only on abandoned remote branches.
+  // CI checks out every head (fetch-depth: 0), so they must be acknowledged.
+  expect(ids).toContain("b725484db7e98054");
+  expect(ids).toContain("af8ef060cc8f8d49");
+  // Hashes and paths only — never a credential value.
+  expect(JSON.stringify(baseline)).not.toMatch(/sk-ant-|sk-[A-Za-z0-9]{32}|gh[pousr]_|-----BEGIN/);
+});
+
+
 test("shared rate limiter enforces per-rule windows and reports Retry-After", () => {
   const rule = { name: "unit-b1-a", limit: 3, windowMs: 60_000 };
   const t = 1_700_000_000_000;

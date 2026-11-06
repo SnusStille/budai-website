@@ -34,7 +34,7 @@ Requests whose host ends in `.vercel.app` receive `X-Robots-Tag: noindex, nofoll
 
 ## Secret scanning
 
-`npm run scan:secrets` checks all tracked files **and every commit reachable from any ref** for provider keys, JWTs, private keys and hardcoded credential literals. CI runs the same command with `fetch-depth: 0`. New findings fail the build; reviewed historical findings are recorded as hashes in `scripts/secret-scan-baseline.json` (never the value itself). To investigate use `--working-tree` or regenerate the baseline with `--update-baseline` after review.
+`npm run scan:secrets` checks all tracked files **and every commit reachable from any ref** for provider keys, JWTs, private keys and hardcoded credential literals. CI runs the same command with `fetch-depth: 0`. New findings fail the build; reviewed historical findings are recorded as hashes in `scripts/secret-scan-baseline.json` (never the value itself). To investigate use `--working-tree` or regenerate the baseline with `--update-baseline` after review. Fetch all remote heads first (`git fetch origin '+refs/heads/*:refs/remotes/origin/*'`): CI checks out every branch, so a baseline built from only one branch's history is incomplete.
 
 A hardcoded admin password existed in three historical commits. It is gone from the tracked tree and the fallback was removed entirely by B3, so the old value no longer grants access. If it was reused anywhere else, rotate it. For stronger coverage, also enable GitHub secret scanning + push protection and run `gitleaks detect --source . --log-opts="--all"` against a full clone (`.gitleaks.toml` is included); those require repository admin access.
 

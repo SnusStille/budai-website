@@ -15,7 +15,7 @@ The site works without keys: the Playground then returns an honest "not configur
 
 ## Secrets
 
-Never commit `.env`, provider keys or service-role credentials. `npm run scan:secrets` runs in CI over the working tree and full git history; a new finding fails the build. If CI reports a real secret, remove it from the tree **and rotate it at the provider** — rewriting history is not enough.
+Never commit `.env`, provider keys or service-role credentials. `npm run scan:secrets` runs in CI over the working tree and full git history; a new finding fails the build. Before reviewing or regenerating `scripts/secret-scan-baseline.json`, fetch **every** remote head (`git fetch origin '+refs/heads/*:refs/remotes/origin/*'`) — a shallow or single-branch clone sees fewer commits than CI and yields an incomplete baseline. If CI reports a real secret, remove it from the tree **and rotate it at the provider** — rewriting history is not enough.
 
 ## Local environment
 
