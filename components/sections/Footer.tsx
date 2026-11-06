@@ -96,8 +96,8 @@ export default function Footer() {
       title: lang === "sv" ? "Cookiepolicy" : "Cookie Policy",
       content: [
         lang === "sv"
-          ? "BudAI sparar bara det sajten behöver för att fungera: språkval, inloggningssession och ditt cookieval. Den lagringen är alltid aktiv."
-          : "BudAI stores only what the site needs to work: your language choice, the sign-in session and your cookie choice. That storage is always active.",
+          ? "BudAI sparar bara det sajten behöver för att fungera: språkval (en funktionell budai-lang-kaka plus lokal lagring), inloggningssession och ditt cookieval. Den lagringen är alltid aktiv."
+          : "BudAI stores only what the site needs to work: your language choice (a functional budai-lang cookie plus local storage), the sign-in session and your cookie choice. That storage is always active.",
         lang === "sv"
           ? "Anonym trafikanalys (Vercel Analytics) laddas bara om du trycker Acceptera. Vid Avböj laddas den inte alls, och vi använder inga tredjeparts-annonsspårare. Du kan ändra eller återkalla ditt val när som helst via Cookieinställningar i sidfoten."
           : "Anonymous traffic analytics (Vercel Analytics) loads only after you press Accept. If you decline it never loads, and we use no third-party ad trackers. You can change or withdraw your choice at any time via Cookie settings in the footer.",

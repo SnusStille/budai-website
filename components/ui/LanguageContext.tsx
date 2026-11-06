@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { Lang, useTranslation } from "@/lib/i18n";
+import { LANG_COOKIE, LANG_COOKIE_MAX_AGE, SWEDISH_PATH } from "@/lib/lang";
 
 interface LangContextType {
   lang: Lang;
@@ -11,28 +12,45 @@ interface LangContextType {
 
 const LangContext = createContext<LangContextType | null>(null);
 
-export function LangProvider({ children }: { children: ReactNode }) {
-  // Default English (product default). Saved preference wins after mount.
-  const [lang, setLangState] = useState<Lang>("en");
+export function LangProvider({ children, initialLang }: { children: ReactNode; initialLang?: Lang }) {
+  // F1: start from the language the SERVER resolved, so SSR HTML and the first
+  // client render agree (no hydration mismatch, Swedish is in the raw HTML).
+  const serverLang: Lang = initialLang === "sv" ? "sv" : "en";
+  const [lang, setLangState] = useState<Lang>(serverLang);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
+    // The Swedish URL is authoritative for crawlers and humans; otherwise a
+    // saved preference wins. Mirror the result into a functional cookie so the
+    // next request is server-rendered in the same language.
+    let next: Lang = serverLang;
+    const onSwedishUrl = window.location.pathname === SWEDISH_PATH || window.location.pathname.startsWith(`${SWEDISH_PATH}/`);
     try {
-      const saved = localStorage.getItem("budai-lang") as Lang | null;
-      // EN is default. Only switch to SV if user explicitly saved sv.
-      const next: Lang = saved === "sv" ? "sv" : "en";
-      setLangState(next);
-      document.documentElement.lang = next;
+      const saved = localStorage.getItem(LANG_COOKIE) as Lang | null;
+      if (onSwedishUrl) {
+        next = "sv";
+        if (saved !== "sv") localStorage.setItem(LANG_COOKIE, "sv");
+      } else if (saved === "sv" || saved === "en") {
+        next = saved;
+      }
     } catch {
-      document.documentElement.lang = "en";
+      /* storage can be blocked; keep the server language */
+    }
+    setLangState(next);
+    document.documentElement.lang = next;
+    try {
+      document.cookie = `${LANG_COOKIE}=${next}; path=/; max-age=${LANG_COOKIE_MAX_AGE}; samesite=lax`;
+    } catch {
+      /* */
     }
     setReady(true);
-  }, []);
+  }, [serverLang]);
 
   const setLang = (l: Lang) => {
     setLangState(l);
     try {
-      localStorage.setItem("budai-lang", l);
+      localStorage.setItem(LANG_COOKIE, l);
+      document.cookie = `${LANG_COOKIE}=${l}; path=/; max-age=${LANG_COOKIE_MAX_AGE}; samesite=lax`;
     } catch {
       /* */
     }

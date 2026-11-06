@@ -57,12 +57,12 @@ const content: Record<LegalSlug, Page> = {
     icon: Cookie,
     paragraphs: {
       en: [
-        "BudAI stores only what the site and sign-in need to function: your language preference, the session, and your cookie choice. That storage is always active.",
+        "BudAI stores only what the site and sign-in need to function: your language preference (a functional budai-lang cookie plus local storage, so the page can be rendered in the right language by the server), the session, and your cookie choice. That storage is always active.",
         "Anonymous traffic analytics (Vercel Analytics) is loaded only after you press Accept. If you decline, it is not loaded at all. We do not use third-party ad trackers.",
         "You can change or withdraw your choice at any time with Cookie settings in the footer, or clear site data in your browser.",
       ],
       sv: [
-        "BudAI sparar bara det sajten och inloggningen behöver: språkval, session och ditt cookieval. Den lagringen är alltid aktiv.",
+        "BudAI sparar bara det sajten och inloggningen behöver: språkval (en funktionell budai-lang-kaka plus lokal lagring, så att servern kan rendera sidan på rätt språk), session och ditt cookieval. Den lagringen är alltid aktiv.",
         "Anonym trafikanalys (Vercel Analytics) laddas bara efter att du tryckt Acceptera. Om du avböjer laddas den inte alls. Vi använder inga tredjeparts-annonsspårare.",
         "Du kan ändra eller återkalla ditt val när som helst via Cookieinställningar i sidfoten, eller rensa webbplatsdata i webbläsaren.",
       ],

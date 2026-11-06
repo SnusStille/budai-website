@@ -633,3 +633,49 @@ test("unknown legal slugs are real 404s and logo links point home (A6)", async (
     page.locator("#continuation").getByRole("link", { name: "BudAI home", exact: true })
   ).toHaveAttribute("href", "/");
 });
+
+test("F1: /sv is a real Swedish page, hreflang is reciprocal and the cookie survives a reload", async ({ page, request }) => {
+  const enHtml = await (await request.get("/")).text();
+  expect(enHtml).toMatch(/<html[^>]*\blang="en"/);
+
+  const svResponse = await request.get("/sv");
+  expect(svResponse.status()).toBe(200);
+  const svHtml = await svResponse.text();
+  expect(svHtml).toMatch(/<html[^>]*\blang="sv"/);
+  expect(svHtml).toContain("Fortsätt samtalet.");
+
+  // A stored preference is respected by the server, not only after hydration.
+  const cookieHtml = await (await request.get("/", { headers: { cookie: "budai-lang=sv" } })).text();
+  expect(cookieHtml).toMatch(/<html[^>]*\blang="sv"/);
+
+  const sitemap = await (await request.get("/sitemap.xml")).text();
+  expect(sitemap).toContain("/sv");
+
+  // Next 14 streams metadata in the Flight payload, so read the real DOM.
+  await page.goto("/");
+  const alternates = await page.locator('link[rel="alternate"][hreflang]').evaluateAll((els) =>
+    els.map((el) => ({ lang: el.getAttribute("hreflang"), href: el.getAttribute("href") }))
+  );
+  expect(alternates).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({ lang: "en", href: "https://stilledev.se" }),
+      expect.objectContaining({ lang: "sv", href: "https://stilledev.se/sv" }),
+      expect.objectContaining({ lang: "x-default" }),
+    ])
+  );
+  // A non-homepage route must NOT claim an invented /sv/... alternate.
+  await page.goto("/changelog");
+  await expect(page.locator('link[rel="alternate"][hreflang="sv"]')).toHaveCount(0);
+
+  await page.goto("/sv");
+  await expect(page.locator("link[rel='canonical']")).toHaveAttribute("href", /\/sv$/);
+  await expect(page.locator("html")).toHaveAttribute("lang", "sv");
+  await expect(page.getByRole("heading", { name: "Fortsätt samtalet." })).toBeVisible();
+
+  // The nav switch persists the choice for the next server request.
+  await page.goto("/");
+  await page.locator(".site-navigation").getByRole("button", { name: "SV", exact: true }).first().click();
+  await expect(page.locator("html")).toHaveAttribute("lang", "sv");
+  const cookies = await page.context().cookies();
+  expect(cookies.find((c) => c.name === "budai-lang")?.value).toBe("sv");
+});

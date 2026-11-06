@@ -57,6 +57,7 @@ npm run scan:secrets && npm run lint && npm run typecheck && npm run test:unit &
 - All site copy is English with a working SV / EN switch.
 - No invented customers, testimonials, metrics, prices, discounts or launch dates.
 - Do not overclaim; this is a preview, not a production SLA.
+- Language (F1): `/` is English and `/sv` is the crawlable Swedish entry point. `lib/lang.ts` resolves the language server-side; the functional `budai-lang` cookie mirrors the localStorage choice so `<html lang>` and metadata are correct in the server HTML. Only the homepage declares hreflang — never point at `/sv/...` routes that do not exist.
 - `/changelog` is the single source of truth for What's new. Edit `lib/changelog.ts`: dated entries only for work actually in the repo, `date: ""` for a snapshot of current features. No invented release dates and no cadence promises. The quick-peek modal renders the same data and links to the page.
 
 ## Security

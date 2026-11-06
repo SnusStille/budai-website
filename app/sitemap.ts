@@ -10,6 +10,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: now,
       changeFrequency: "weekly",
       priority: 1,
+      alternates: { languages: { en: siteUrl, sv: `${siteUrl}/sv` } },
+    },
+    {
+      url: `${siteUrl}/sv`,
+      lastModified: now,
+      changeFrequency: "weekly",
+      priority: 0.9,
+      alternates: { languages: { en: siteUrl, sv: `${siteUrl}/sv` } },
     },
     {
       url: `${siteUrl}/legal/privacy`,

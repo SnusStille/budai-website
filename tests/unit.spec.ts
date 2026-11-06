@@ -15,6 +15,7 @@ import { aiUsageEvent } from "../lib/ai-usage";
 import { buildCsp } from "../lib/csp";
 import { KEYBOARD_OVERLAP_THRESHOLD_PX, keyboardOverlap } from "../lib/playground/viewport";
 import { LEGAL_SLUGS } from "../lib/legal-slugs";
+import { resolveLang, canonicalPath, hasLanguageAlternate } from "../lib/lang";
 
 test("one readiness deadline and camera/reveal timing stay bounded without a logo timeline",()=>{
   expect(INTRO_MS+INTRO_REVEAL_MS).toBeLessThanOrEqual(4000);
@@ -547,4 +548,22 @@ test("no dead hash-only logo links remain and legal slugs are a closed set (A6)"
   expect(page).toContain("notFound()");
   expect(readFileSync("app/legal/[slug]/LegalView.tsx", "utf8")).not.toContain("useParams");
   expect(LEGAL_SLUGS).toEqual(["privacy", "terms", "cookies", "gdpr", "data"]);
+});
+
+test("language resolution has a real Swedish URL, honest canonicals and no invented alternates (F1)", () => {
+  expect(resolveLang("/", undefined)).toBe("en");
+  expect(resolveLang("/", "sv")).toBe("sv");
+  expect(resolveLang("/sv", "en")).toBe("sv");
+  expect(resolveLang("/legal/privacy", "sv")).toBe("sv");
+  expect(canonicalPath("/")).toBe("/");
+  expect(canonicalPath("/sv")).toBe("/sv");
+  expect(canonicalPath("/legal/privacy/")).toBe("/legal/privacy");
+  expect(hasLanguageAlternate("/")).toBe(true);
+  expect(hasLanguageAlternate("/sv")).toBe(true);
+  expect(hasLanguageAlternate("/changelog")).toBe(false);
+  const layout = readFileSync("app/layout.tsx", "utf8");
+  expect(layout).toContain("<html");
+  expect(layout).toContain("lang={lang}");
+  expect(layout).toContain("generateMetadata");
+  expect(readFileSync("app/sv/page.tsx", "utf8")).toContain("../page");
 });
