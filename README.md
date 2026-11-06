@@ -17,11 +17,12 @@ Render order in `app/page.tsx`: `Hero` (Spark) → `BrainScrollStory` (Context) 
 ```bash
 cp .env.example .env.local   # fill in Supabase + Anthropic keys
 npm ci
+npm run check:env            # verifies your values without printing them
 npm run dev                  # http://localhost:3000
 npm run build                # production build
 ```
 
-Run the SQL files in `supabase/` in order: `schema.sql`, then `MIGRATION_v2` … `MIGRATION_v10_security_hardening.sql`. Set `ADMIN_PASSWORD` and `SUPABASE_SERVICE_ROLE_KEY` (both server-only) for the admin surface and durable quotas. See [SECURITY.md](SECURITY.md).
+Run the SQL files in `supabase/` in order: `schema.sql`, then `MIGRATION_v2` … `MIGRATION_v12_waitlist_insert_lockdown.sql`. Set `ADMIN_PASSWORD` and `SUPABASE_SERVICE_ROLE_KEY` (both server-only) for the admin surface and durable quotas. The full variable list and what each one unlocks is in [docs/setup/ENVIRONMENT.md](docs/setup/ENVIRONMENT.md). See [SECURITY.md](SECURITY.md).
 
 Never commit `.env.local`. If it was ever pushed, run `git rm --cached .env.local` and rotate the keys.
 
@@ -33,7 +34,7 @@ Memory is **on by default**. `app/api/playground/route.ts` may persist durable f
 
 ## Setup guides
 
-Step-by-step deployment, auth and admin instructions live in [docs/setup/](docs/setup/): `GO_LIVE.md`, `AUTH_SETUP.md`, `GOOGLE_LOGIN_SETUP.md` and `ADMIN.md`. The FAS 1 inventory is in [docs/audit/audit-2026-11.md](docs/audit/audit-2026-11.md).
+Step-by-step deployment, auth and admin instructions live in [docs/setup/](docs/setup/): `GO_LIVE.md`, `ENVIRONMENT.md`, `AUTH_SETUP.md`, `GOOGLE_LOGIN_SETUP.md` and `ADMIN.md`. The FAS 1 inventory is in [docs/audit/audit-2026-11.md](docs/audit/audit-2026-11.md).
 
 ## Contributing & security
 

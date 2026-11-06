@@ -8,11 +8,12 @@ import { ToastProvider } from "@/components/ui/ToastStack";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import AuthModal from "@/components/auth/AuthModal";
 import AuthHashHandler from "@/components/auth/AuthHashHandler";
+import type { Lang } from "@/lib/i18n";
 
-export default function Providers({ children }: { children: React.ReactNode }) {
+export default function Providers({ children, initialLang }: { children: React.ReactNode; initialLang?: Lang }) {
   return (
     <MotionConfig reducedMotion="user">
-      <LangProvider>
+      <LangProvider initialLang={initialLang}>
         <LoadingScreen />
         <AuthProvider>
           <ToastProvider>

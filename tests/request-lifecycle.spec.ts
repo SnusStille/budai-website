@@ -96,7 +96,7 @@ test("partial provider failure is visible and retry does not duplicate the faile
   await input.press("Enter");
   await expect(page.getByRole("log").getByText("Partial result")).toBeVisible();
   await expect(page.getByText("The response could not be completed. Please try again.")).toBeVisible();
-  await expect(page.locator("#playground").getByText("12/12 credits left")).toBeVisible();
+  await expect(page.locator("#playground").getByText("12/12 messages left today")).toBeVisible();
   await page.getByRole("button", { name: "Retry", exact: true }).click();
   await expect(page.getByRole("log").getByText("Successful retry")).toBeVisible();
   const calls = await page.evaluate(() => (window as any).requests);

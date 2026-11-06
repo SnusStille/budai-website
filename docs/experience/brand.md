@@ -26,7 +26,6 @@ The UI applies this identity selectively to navigation, Playground, Builder, Nex
 | `apple-touch-icon.png` | 180px |
 | `icon-192.png`, `icon-512.png` | Installed-app PNGs; 512 also maskable, safe-area padding |
 | `og.png` | 1200×630, actual self-hosted UI typography, preserved Stilledev attribution |
-| `app/opengraph-image.tsx` | Static response of the exact same social artwork |
 
 Files are under `public/`. Use `<BudAILogo variant="light" />` or the light-context SVG on white. Do not stretch the mark, add orbital rings, substitute the old B/`</>`, or animate installed icons. No SVG animation/filter/gradient is needed to recognise it.
 

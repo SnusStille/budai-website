@@ -3,7 +3,7 @@ import { INTRO_MS, INTRO_REVEAL_MS, INTRO_READY_MS } from "../lib/experience/int
 import { cameraAt, CHAPTERS, journeyAt, worldChapterAt, worldOpacityAt } from "../lib/experience/timeline";
 import { brainCameraAt, brainFovAt, brainJourneyProgress, brainVisualAt, playgroundProjectionAt, BRAIN_STORY_ORIGIN } from "../lib/experience/brain";
 import { codeCharactersAt, CODE_LENGTH, EXAMPLE_SOURCE, tokenizeLine } from "../lib/experience/code";
-import { readFileSync, mkdtempSync, rmSync, writeFileSync as fsWrite } from "node:fs";
+import { readFileSync, readdirSync, mkdtempSync, rmSync, writeFileSync as fsWrite } from "node:fs";
 import { execFileSync, spawnSync } from "node:child_process";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
@@ -14,6 +14,9 @@ import { signWaitlistEmail, verifyWaitlistToken } from "../lib/waitlist-status";
 import { aiUsageEvent } from "../lib/ai-usage";
 import { buildCsp } from "../lib/csp";
 import { KEYBOARD_OVERLAP_THRESHOLD_PX, keyboardOverlap } from "../lib/playground/viewport";
+import { LEGAL_SLUGS } from "../lib/legal-slugs";
+import { LEGAL_TITLES_SV } from "../lib/legal-slugs";
+import { resolveLang, canonicalPath, hasLanguageAlternate } from "../lib/lang";
 
 test("one readiness deadline and camera/reveal timing stay bounded without a logo timeline",()=>{
   expect(INTRO_MS+INTRO_REVEAL_MS).toBeLessThanOrEqual(4000);
@@ -184,7 +187,6 @@ test("daily-limit copy reads the single LIMITS source instead of hardcoded numbe
     "components/sections/Hero.tsx",
     "components/sections/Journey.tsx",
     "components/experience/CapabilityStudioScreen.tsx",
-    "lib/changelog.ts",
     "lib/experience/developer-room.ts",
   ];
   const stale = /12\s*\/\s*(?:dag|day)|80\s*\/\s*(?:dag|day)|12 meddelanden|80 meddelanden|12 messages\/day|80 messages\/day|10\s*\/\s*day|35\s*\/\s*day/;
@@ -193,6 +195,25 @@ test("daily-limit copy reads the single LIMITS source instead of hardcoded numbe
     expect(source, `${file} still hardcodes a daily limit`).not.toMatch(stale);
     expect(source, `${file} does not use LIMITS`).toContain("LIMITS.");
   }
+  // E6: the changelog deliberately points at the usage meter instead of
+  // repeating a number that could drift away from lib/limits.ts.
+  const changelog = readFileSync("lib/changelog.ts", "utf8");
+  expect(changelog).not.toMatch(stale);
+  expect(changelog).toContain("usage meter");
+});
+
+
+test("secret-scan baseline covers the full remote history, not just one branch (B4)", () => {
+  const baseline = JSON.parse(readFileSync("scripts/secret-scan-baseline.json", "utf8"));
+  const ids = baseline.findings.map((f: { id: string }) => f.id);
+  expect(ids.every((id: string) => /^[0-9a-f]{16}$/.test(id))).toBe(true);
+  expect(baseline.comment).toMatch(/FULL REMOTE HISTORY/i);
+  // Two reviewed 2026-07 demo values live only on abandoned remote branches.
+  // CI checks out every head (fetch-depth: 0), so they must be acknowledged.
+  expect(ids).toContain("b725484db7e98054");
+  expect(ids).toContain("af8ef060cc8f8d49");
+  // Hashes and paths only — never a credential value.
+  expect(JSON.stringify(baseline)).not.toMatch(/sk-ant-|sk-[A-Za-z0-9]{32}|gh[pousr]_|-----BEGIN/);
 });
 
 
@@ -251,22 +272,37 @@ test("waitlist validation sanitises input and never trusts client-side priority"
 });
 
 
-test("waitlist status proof is signed, tamper-proof and needs a server secret", () => {
-  const previous = process.env.ADMIN_PASSWORD;
-  delete process.env.ADMIN_PASSWORD;
-  delete process.env.SUPABASE_SERVICE_ROLE_KEY;
-  expect(signWaitlistEmail("person@example.com")).toBeNull();
+test("waitlist status proof is signed only with the service-role key", () => {
+  const saved = {
+    admin: process.env.ADMIN_PASSWORD,
+    service: process.env.SUPABASE_SERVICE_ROLE_KEY,
+  };
+  try {
+    delete process.env.ADMIN_PASSWORD;
+    delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+    expect(signWaitlistEmail("person@example.com")).toBeNull();
 
-  process.env.ADMIN_PASSWORD = "unit-test-secret";
-  const token = signWaitlistEmail("person@example.com");
-  expect(token).toBeTruthy();
-  expect(verifyWaitlistToken(token!)).toBe("person@example.com");
-  expect(verifyWaitlistToken(undefined)).toBeNull();
-  expect(verifyWaitlistToken(token!.replace(/.$/, "x"))).toBeNull();
-  expect(verifyWaitlistToken("garbage")).toBeNull();
+    // ADMIN_PASSWORD must NOT be a fallback signing key.
+    process.env.ADMIN_PASSWORD = "unit-test-admin-secret";
+    expect(signWaitlistEmail("person@example.com")).toBeNull();
 
-  if (previous === undefined) delete process.env.ADMIN_PASSWORD;
-  else process.env.ADMIN_PASSWORD = previous;
+    process.env.SUPABASE_SERVICE_ROLE_KEY = "unit-test-service-role-key";
+    const token = signWaitlistEmail("person@example.com");
+    expect(token).toBeTruthy();
+    expect(verifyWaitlistToken(token!)).toBe("person@example.com");
+    expect(verifyWaitlistToken(undefined)).toBeNull();
+    expect(verifyWaitlistToken(token!.replace(/.$/, "x"))).toBeNull();
+    expect(verifyWaitlistToken("garbage")).toBeNull();
+
+    // Rotating the signing key invalidates old cookies.
+    delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+    expect(verifyWaitlistToken(token!)).toBeNull();
+  } finally {
+    if (saved.admin === undefined) delete process.env.ADMIN_PASSWORD;
+    else process.env.ADMIN_PASSWORD = saved.admin;
+    if (saved.service === undefined) delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+    else process.env.SUPABASE_SERVICE_ROLE_KEY = saved.service;
+  }
 });
 
 
@@ -343,4 +379,202 @@ test("D12 keyboard overlap is bounded and ignores browser chrome", () => {
   expect(KEYBOARD_OVERLAP_THRESHOLD_PX).toBeGreaterThan(0);
   expect(keyboardOverlap(844, 844 - KEYBOARD_OVERLAP_THRESHOLD_PX, 0))
     .toBe(KEYBOARD_OVERLAP_THRESHOLD_PX);
+});
+
+
+test("env checker is redacted, strict only when asked, and catches anon/service-role confusion (step 18)", () => {
+  const checker = resolve(process.cwd(), "scripts/check-env.mjs");
+  const dir = mkdtempSync(join(tmpdir(), "budai-env-check-"));
+  const emptyEnv: NodeJS.ProcessEnv = {
+    PATH: process.env.PATH ?? "",
+    HOME: process.env.HOME ?? "",
+    NODE_ENV: "test",
+  };
+  // Build key-like literals at runtime so the secret scanner does not flag this file.
+  const secret = ["sk-ant-", "example-ONLY-FOR-TESTS-0123456789"].join("");
+  const longModelKey = ["sk-ant-", "example-long-enough-value-000000"].join("");
+  const run = (...args: string[]) =>
+    spawnSync(process.execPath, [checker, ...args], { cwd: dir, env: emptyEnv, encoding: "utf8" });
+
+  try {
+    const missing = run("--strict");
+    expect(missing.status).toBe(1);
+    expect(missing.stdout).toContain("SUPABASE_SERVICE_ROLE_KEY");
+    expect(run().status).toBe(0); // informational mode never fails
+
+    fsWrite(join(dir, ".env.local"), `ANTHROPIC_API_KEY=${secret}\n` + [
+      "NEXT_PUBLIC_SUPABASE_URL=https://abc123def.supabase.co",
+      "NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiJ9.long-enough-anon-value-000000",
+      "SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiJ9.long-enough-service-value-0000",
+      "ADMIN_PASSWORD=a-long-unique-local-password",
+      "NEXT_PUBLIC_SITE_URL=https://stilledev.se",
+    ].join("\n") + "\n");
+
+    const ok = run("--strict");
+    expect(ok.status).toBe(0);
+    expect(ok.stdout).toContain("5/5 required OK");
+    expect(`${ok.stdout}${ok.stderr}`).not.toContain(secret);
+    expect(`${ok.stdout}${ok.stderr}`).not.toContain("long-enough-service-value");
+
+    // A service-role key that is really the public anon key must be flagged.
+    fsWrite(join(dir, ".env.local"), [
+      "NEXT_PUBLIC_SUPABASE_URL=https://abc123def.supabase.co",
+      "NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiJ9.same-key-value-0000000000",
+      "SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiJ9.same-key-value-0000000000",
+      `ANTHROPIC_API_KEY=${longModelKey}`,
+      "ADMIN_PASSWORD=a-long-unique-local-password",
+      "NEXT_PUBLIC_SITE_URL=https://stilledev.se",
+      "BUDAI_AI_DISABLED=1",
+    ].join("\n") + "\n");
+    const confused = run();
+    expect(confused.status).toBe(0);
+    expect(confused.stdout).toContain("identical to the anon key");
+    expect(confused.stdout).toContain("currently paused");
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("server Supabase client requires the service role and never falls back to anon (step 19)", async () => {
+  const { serviceClient, hasServiceRole } = await import("../lib/supabase/service");
+  const keys = ["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_ANON_KEY", "SUPABASE_SERVICE_ROLE_KEY"] as const;
+  const saved = Object.fromEntries(keys.map((k) => [k, process.env[k]]));
+  try {
+    process.env.NEXT_PUBLIC_SUPABASE_URL = "https://abc123def.supabase.co";
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "public-anon-value-long-enough";
+    delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+    expect(hasServiceRole()).toBe(false);
+    expect(serviceClient()).toBeNull();
+
+    process.env.SUPABASE_SERVICE_ROLE_KEY = "server-service-role-value-long";
+    expect(hasServiceRole()).toBe(true);
+    expect(serviceClient()).not.toBeNull();
+
+    process.env.NEXT_PUBLIC_SUPABASE_URL = "https://your-project.supabase.co";
+    expect(hasServiceRole()).toBe(false);
+    expect(serviceClient()).toBeNull();
+  } finally {
+    for (const k of keys) {
+      if (saved[k] === undefined) delete process.env[k];
+      else process.env[k] = saved[k];
+    }
+  }
+});
+
+
+test("test:e2e lists every stable browser spec so CI never silently drops coverage (step 22)", () => {
+  const root = process.cwd();
+  const pkg = JSON.parse(readFileSync(join(root, "package.json"), "utf8")) as {
+    scripts: Record<string, string>;
+  };
+  const listed = pkg.scripts["test:e2e"]
+    .split(/\s+/)
+    .filter((part) => part.endsWith(".spec.ts"))
+    .sort();
+  const onDisk = readdirSync(join(root, "tests"))
+    .filter((file) => file.endsWith(".spec.ts") && file !== "unit.spec.ts" && file !== "waitlist-dev.spec.ts")
+    .sort();
+  expect(listed).toEqual(onDisk);
+  expect(new Set(listed).size).toBe(listed.length);
+});
+
+test("structured server logs are bounded JSON with a correlation id and no free-form secrets (B9)", async () => {
+  const { logEvent, newRequestId, errorMessage } = await import("../lib/log");
+  const lines: string[] = [];
+  const original = console.error;
+  console.error = (...args: unknown[]) => { lines.push(args.map(String).join(" ")); };
+  try {
+    logEvent("error", "test.scope", {
+      requestId: newRequestId(),
+      status: 502,
+      message: "x".repeat(500),
+      ok: true,
+      latencyMs: Number.NaN,
+      omitted: undefined,
+      nullable: null,
+    });
+  } finally {
+    console.error = original;
+  }
+  expect(lines).toHaveLength(1);
+  const entry = JSON.parse(lines[0]) as Record<string, unknown>;
+  expect(entry.level).toBe("error");
+  expect(entry.scope).toBe("test.scope");
+  expect(entry.ts).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+  expect(String(entry.requestId)).toHaveLength(16);
+  expect(String(entry.message).length).toBeLessThanOrEqual(240);
+  expect(entry.status).toBe(502);
+  expect(entry.ok).toBe(true);
+  expect(entry.latencyMs).toBe(0);
+  expect("omitted" in entry).toBe(false);
+  expect("nullable" in entry).toBe(false);
+  expect(newRequestId()).not.toBe(newRequestId());
+  expect(errorMessage(new Error("boom"))).toBe("boom");
+  expect(errorMessage(null)).toBe("null");
+});
+
+test("duplicate-domain guard only targets Vercel's default host (A5)", async () => {
+  const { isNonCanonicalHost, CANONICAL_HOST } = await import("../lib/host");
+  expect(CANONICAL_HOST).toBe("stilledev.se");
+  expect(isNonCanonicalHost("budai-website.vercel.app")).toBe(true);
+  expect(isNonCanonicalHost("budai-website-git-main-snusstille.vercel.app")).toBe(true);
+  expect(isNonCanonicalHost("stilledev.se")).toBe(false);
+  expect(isNonCanonicalHost("www.stilledev.se")).toBe(false);
+  expect(isNonCanonicalHost("127.0.0.1")).toBe(false);
+  expect(isNonCanonicalHost("localhost")).toBe(false);
+  expect(isNonCanonicalHost("")).toBe(false);
+  expect(isNonCanonicalHost("budai-website.vercel.app:443")).toBe(true);
+});
+
+test("waitlist writes are server-only: no public INSERT policy remains (E9/v12)", () => {
+  const schema = readFileSync("supabase/schema.sql", "utf8");
+  const migration = readFileSync("supabase/MIGRATION_v12_waitlist_insert_lockdown.sql", "utf8");
+  expect(schema).not.toMatch(/create policy\s+"waitlist_insert_public"/i);
+  expect(schema).toMatch(/revoke all on table public\.waitlist_users from public, anon, authenticated/i);
+  expect(migration).toMatch(/revoke all on table public\.waitlist_users from public, anon, authenticated/i);
+  expect(migration).toMatch(/grant select, insert, update, delete on table public\.waitlist_users to service_role/i);
+  // The only signup write path is the validated server route with the service role.
+  const route = readFileSync("app/api/waitlist/route.ts", "utf8");
+  expect(route).toContain("serviceClient()");
+  expect(readFileSync("docs/setup/ENVIRONMENT.md", "utf8")).toContain("MIGRATION_v12_waitlist_insert_lockdown.sql");
+  expect(readFileSync("README.md", "utf8")).toContain("MIGRATION_v12_waitlist_insert_lockdown.sql");
+});
+
+test("no dead hash-only logo links remain and legal slugs are a closed set (A6)", () => {
+  for (const file of ["components/sections/Footer.tsx", "components/sections/Navbar.tsx"]) {
+    expect(readFileSync(file, "utf8"), file).not.toMatch(/href="#"/);
+  }
+  const page = readFileSync("app/legal/[slug]/page.tsx", "utf8");
+  expect(page).not.toMatch(/export function generateStaticParams/);
+  expect(page).toContain("notFound()");
+  expect(readFileSync("app/legal/[slug]/LegalView.tsx", "utf8")).not.toContain("useParams");
+  expect(LEGAL_SLUGS).toEqual(["privacy", "terms", "cookies", "gdpr", "data"]);
+});
+
+test("language resolution has a real Swedish URL, honest canonicals and no invented alternates (F1)", () => {
+  expect(resolveLang("/", undefined)).toBe("en");
+  expect(resolveLang("/", "sv")).toBe("sv");
+  expect(resolveLang("/sv", "en")).toBe("sv");
+  expect(resolveLang("/legal/privacy", "sv")).toBe("sv");
+  expect(canonicalPath("/")).toBe("/");
+  expect(canonicalPath("/sv")).toBe("/sv");
+  expect(canonicalPath("/legal/privacy/")).toBe("/legal/privacy");
+  expect(hasLanguageAlternate("/")).toBe(true);
+  expect(hasLanguageAlternate("/sv")).toBe(true);
+  expect(hasLanguageAlternate("/changelog")).toBe(false);
+  const layout = readFileSync("app/layout.tsx", "utf8");
+  expect(layout).toContain("<html");
+  expect(layout).toContain("lang={lang}");
+  expect(layout).toContain("generateMetadata");
+  expect(readFileSync("app/sv/page.tsx", "utf8")).toContain("../page");
+});
+
+test("page-level metadata is localized for every indexable route (F1)", () => {
+  const legal = readFileSync("app/legal/[slug]/page.tsx", "utf8");
+  const changelog = readFileSync("app/changelog/page.tsx", "utf8");
+  expect(legal).toContain("LEGAL_TITLES_SV");
+  expect(legal).toContain('headers().get("x-budai-lang")');
+  expect(changelog).toContain('headers().get("x-budai-lang")');
+  expect(changelog).toContain('"Vad är nytt"');
+  expect(LEGAL_TITLES_SV.data).toBe("Så hanteras dina data");
 });

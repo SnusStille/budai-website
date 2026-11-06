@@ -37,10 +37,8 @@ test("one living Confluence identity reaches the real UI, installed icons and bo
     expect.objectContaining({ sizes: "512x512", purpose: "maskable" }),
   ]));
   const social = await request.get("/og.png");
-  const autoSocial = await request.get("/opengraph-image");
-  expect(autoSocial.ok()).toBe(true);
+  expect(social.ok()).toBe(true);
   const socialBytes = await social.body();
   expect([socialBytes.readUInt32BE(16), socialBytes.readUInt32BE(20)]).toEqual([1200, 630]);
-  expect(await autoSocial.body()).toEqual(socialBytes);
   await page.locator(".site-navigation").screenshot({ path: "test-results/brand-navigation-desktop.png" });
 });

@@ -10,6 +10,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: now,
       changeFrequency: "weekly",
       priority: 1,
+      alternates: { languages: { en: siteUrl, sv: `${siteUrl}/sv` } },
+    },
+    {
+      url: `${siteUrl}/sv`,
+      lastModified: now,
+      changeFrequency: "weekly",
+      priority: 0.9,
+      alternates: { languages: { en: siteUrl, sv: `${siteUrl}/sv` } },
     },
     {
       url: `${siteUrl}/legal/privacy`,
@@ -34,6 +42,18 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: now,
       changeFrequency: "yearly",
       priority: 0.3,
+    },
+    {
+      url: `${siteUrl}/legal/data`,
+      lastModified: now,
+      changeFrequency: "yearly",
+      priority: 0.3,
+    },
+    {
+      url: `${siteUrl}/changelog`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.4,
     },
   ];
 }

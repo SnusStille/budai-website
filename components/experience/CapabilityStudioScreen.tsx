@@ -367,7 +367,7 @@ export default function CapabilityStudioScreen() {
                   {
                     tier: "02 / CONSUMER",
                     title: sv
-                      ? "För dagligt bruk — fler dagliga credits och längre minne/historik"
+                      ? "För dagligt bruk — fler meddelanden per dag och längre minne/historik"
                       : "For daily individual work — higher limits & extended memory/history",
                     state: "COMING SOON",
                     col: "#99a8f0",
@@ -375,7 +375,7 @@ export default function CapabilityStudioScreen() {
                   {
                     tier: "03 / BUSINESS",
                     title: sv
-                      ? "För team — delade credits, gemensamma playbooks & administration"
+                      ? "För team — delad dagskvot, gemensamma playbooks & administration"
                       : "For teams — shared credit pools, team playbooks & admin controls",
                     state: "COMING SOON",
                     col: "#6ee7b7",

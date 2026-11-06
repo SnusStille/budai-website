@@ -100,12 +100,12 @@ export default function Capabilities() {
         : "Bring BudAI to your team — in development for shared workflows and governance.",
       pros: sv
         ? [
-            "Planerat: delade credits över flera teamkonton",
+            "Planerat: delad dagskvot över flera teamkonton",
             "Planerat: gemensamma playbooks och arbetsytor",
             "Planerat: administrationskontroller och prioriterad support",
           ]
         : [
-            "Planned: credits shared across multiple team accounts",
+            "Planned: a shared daily limit across multiple team accounts",
             "Planned: shared playbooks and team workspaces",
             "Planned: admin controls and priority support",
           ],

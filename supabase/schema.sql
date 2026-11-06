@@ -1,5 +1,5 @@
 -- ============================================================================
--- BudAI — Complete All-in-One Supabase Schema (v1 through v9 consolidated)
+-- BudAI — Complete All-in-One Supabase Schema (v1–v9 + v12 waitlist lockdown)
 -- Safe to re-run (100% idempotent). Paste into Supabase → SQL Editor → Run.
 --
 -- Includes:
@@ -11,6 +11,7 @@
 --   6. Shared Read-Only Conversations (shared_conversations)
 --   7. Legacy Preview Tables Locked Down (playground_conversations, playground_memory, playground_events)
 --   8. Row-Level Security (RLS) Policies & Indexes across all tables
+--   v10 / v11 / v12 are also supplied as standalone migrations for existing databases.
 -- ============================================================================
 
 create extension if not exists pgcrypto;
@@ -171,7 +172,9 @@ revoke all on function public.waitlist_status(text) from public, anon, authentic
 -- Server-only: /api/waitlist/status verifies a signed proof-of-signup cookie.
 grant execute on function public.waitlist_status(text) to service_role;
 
--- Lock down waitlist_users RLS: public can only insert valid pending rows; admin reads via service role
+-- Lock down waitlist_users RLS (v12): signups go through POST /api/waitlist
+-- with the service role. No public INSERT policy — consent, honeypot and
+-- per-IP throttling must not be bypassable from the browser.
 do $$
 declare p record;
 begin
@@ -184,18 +187,8 @@ end $$;
 
 alter table public.waitlist_users enable row level security;
 
-create policy "waitlist_insert_public"
-  on public.waitlist_users
-  for insert
-  to anon, authenticated
-  with check (
-    access_status = 'pending'
-    and coalesce(referral_count, 0) = 0
-    and char_length(email) between 5 and 254
-    and email ~* '^[^@\s]+@[^@\s]+\.[^@\s]+$'
-    and char_length(coalesce(name, '')) <= 120
-    and coalesce(priority, 50) between 0 and 100
-  );
+revoke all on table public.waitlist_users from public, anon, authenticated;
+grant select, insert, update, delete on table public.waitlist_users to service_role;
 
 -- ============================================================================
 -- 3. ADMIN EVENTS, PLATFORM EVENTS & FEEDBACK INBOX

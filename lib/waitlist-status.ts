@@ -11,8 +11,15 @@ import { createHmac, timingSafeEqual } from "crypto";
  */
 export const WAITLIST_STATUS_COOKIE = "budai_waitlist_status";
 
+/**
+ * Only the service-role key may sign these tokens. ADMIN_PASSWORD is a
+ * human-chosen admin credential that can be rotated independently and must
+ * never become a second, weaker signing key. Besides: the status lookup itself
+ * already requires the service role, so a fallback key could only produce
+ * cookies that can never be resolved. Fail closed when it is missing.
+ */
 function signingKey(): string {
-  return (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.ADMIN_PASSWORD || "").trim();
+  return (process.env.SUPABASE_SERVICE_ROLE_KEY || "").trim();
 }
 
 export function signWaitlistEmail(email: string): string | null {

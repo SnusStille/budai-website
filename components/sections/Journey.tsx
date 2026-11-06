@@ -45,8 +45,8 @@ export default function Journey() {
       title: sv ? "Paket och team" : "Plans and teams",
       lead: sv ? "Under utveckling för individer och företag." : "In development for individuals and teams.",
       items: sv
-        ? ["Konsument- och Företagspaket med högre kapacitet", "Delade team-credits och gemensamma playbooks", "Samma integritetsprincip: du äger ditt minne"]
-        : ["Consumer and Business plans with higher capacity", "Shared team credits and reusable playbooks", "Same privacy principle: you own your memory"],
+        ? ["Konsument- och Företagspaket med högre kapacitet", "Delad dagskvot för team och gemensamma playbooks", "Samma integritetsprincip: du äger ditt minne"]
+        : ["Consumer and Business plans with higher capacity", "A shared daily team limit and reusable playbooks", "Same privacy principle: you own your memory"],
     },
     {
       icon: Globe,

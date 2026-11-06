@@ -15,7 +15,11 @@ The site works without keys: the Playground then returns an honest "not configur
 
 ## Secrets
 
-Never commit `.env`, provider keys or service-role credentials. `npm run scan:secrets` runs in CI over the working tree and full git history; a new finding fails the build. If CI reports a real secret, remove it from the tree **and rotate it at the provider** — rewriting history is not enough.
+Never commit `.env`, provider keys or service-role credentials. `npm run scan:secrets` runs in CI over the working tree and full git history; a new finding fails the build. Before reviewing or regenerating `scripts/secret-scan-baseline.json`, fetch **every** remote head (`git fetch origin '+refs/heads/*:refs/remotes/origin/*'`) — a shallow or single-branch clone sees fewer commits than CI and yields an incomplete baseline. If CI reports a real secret, remove it from the tree **and rotate it at the provider** — rewriting history is not enough.
+
+## Local environment
+
+Copy `.env.example` to `.env.local`, fill in the required values, then run `npm run check:env` (it never prints secrets). The complete variable reference, SQL order and fail-closed behaviour are documented in [docs/setup/ENVIRONMENT.md](docs/setup/ENVIRONMENT.md). Never commit `.env.local`.
 
 ## Verification chain
 
@@ -33,8 +37,8 @@ npm run scan:secrets && npm run lint && npm run typecheck && npm run test:unit &
 
 `.github/workflows/ci.yml` runs exactly that on every push and pull request, with `fetch-depth: 0` so the secret scan sees the full history. Chromium comes from the `@sparticuz/chromium` npm package via `scripts/test-browser.mjs`.
 
-- `npm test` runs all 15 spec files (including the opt-in `waitlist-dev.spec.ts`).
-- `npm run test:e2e` runs the 8 core specs.
+- `npm test` runs all 15 spec files (`waitlist-dev.spec.ts` is skipped unless `TEST_WAITLIST_DEV=1`).
+- `npm run test:e2e` runs all 13 stable browser specs — everything except the unit spec and the opt-in waitlist-dev spec. CI uses this script, so a new spec file must be added to the list; `tests/unit.spec.ts` guards that.
 - `TEST_WAITLIST_DEV=1` enables the local mock-only waitlist test.
 
 ## Code conventions
@@ -53,6 +57,8 @@ npm run scan:secrets && npm run lint && npm run typecheck && npm run test:unit &
 - All site copy is English with a working SV / EN switch.
 - No invented customers, testimonials, metrics, prices, discounts or launch dates.
 - Do not overclaim; this is a preview, not a production SLA.
+- Language (F1): `/` is English and `/sv` is the crawlable Swedish entry point. `lib/lang.ts` resolves the language server-side; the functional `budai-lang` cookie mirrors the localStorage choice so `<html lang>` and metadata are correct in the server HTML. Only the homepage declares hreflang — never point at `/sv/...` routes that do not exist.
+- `/changelog` is the single source of truth for What's new. Edit `lib/changelog.ts`: dated entries only for work actually in the repo, `date: ""` for a snapshot of current features. No invented release dates and no cadence promises. The quick-peek modal renders the same data and links to the page.
 
 ## Security
 

@@ -45,7 +45,7 @@ jobs:
 
       # test:e2e starts `next start` against the existing .next build, so the
       # build must come BEFORE the browser suite (and again afterwards for the
-      # delivered artifact).
+      # delivered artifact). It runs every stable browser spec, not a subset.
       - name: Production build
         run: npm run build
 

@@ -102,12 +102,12 @@ test("Stop response cancels the existing stream reader and releases the composer
 test("Playground error/retry state remains functional without a configured model provider and preserves daily quota on failure", async ({ page }) => {
   await page.route("**/api/playground", route => route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ error: "Temporarily unavailable. Please retry." }) }));
   await page.goto("/#playground");
-  await expect(page.locator("#playground").getByText("12/12 credits left")).toBeVisible();
+  await expect(page.locator("#playground").getByText("12/12 messages left today")).toBeVisible();
   const input = page.getByRole("textbox", { name: "Message BudAI", exact: true });
   await input.fill("Help me plan tomorrow.");
   await input.press("Enter");
   await expect(page.getByText("Temporarily unavailable. Please retry.", { exact: true })).toBeVisible();
-  await expect(page.locator("#playground").getByText("12/12 credits left")).toBeVisible();
+  await expect(page.locator("#playground").getByText("12/12 messages left today")).toBeVisible();
   await expect(input).toBeEnabled();
   await expect(page.locator("[data-global-loader]")).toHaveCount(0);
 });
@@ -356,6 +356,10 @@ test("quota writes are server-owned and the waitlist status RPC is not public", 
 
 test("one keyboard owner: ⌘K opens the site palette and ⌘/ opens Playground shortcuts", async ({ page }) => {
   await page.goto("/#playground");
+  // Both shortcut owners register their keydown handlers in effects. Wait for
+  // AIPlayground's hydration marker before pressing keys, otherwise a cold
+  // bundle can miss the very first Ctrl+K and the test flakes.
+  await expect(page.locator("html")).toHaveAttribute("data-pg-keyboard", /open|closed/);
   const palette = page.getByRole("dialog", { name: "Command palette", exact: true });
   const playgroundKeys = page.getByRole("dialog", { name: "Playground shortcuts", exact: true });
   await expect(palette).toHaveCount(0);
@@ -373,18 +377,17 @@ test("one keyboard owner: ⌘K opens the site palette and ⌘/ opens Playground 
 });
 
 
-test("footer labels are honest and the What's new link resolves to a real element", async ({ page }) => {
+test("footer labels are honest and What's new resolves to the real changelog page", async ({ page }) => {
   await page.goto("/");
   const footer = page.locator("#continuation");
   await expect(footer.getByRole("link", { name: "Plans", exact: true })).toBeVisible();
   await expect(footer.getByRole("link", { name: "Pricing", exact: true })).toHaveCount(0);
 
-  await footer.getByRole("link", { name: "What's new", exact: true }).click();
-  const dialog = page.getByRole("dialog", { name: "What's new", exact: true });
-  await expect(dialog).toBeVisible();
-  await expect(page.locator("#whats-new")).toBeVisible();
-  // The modal intentionally cleans the hash after opening.
-  expect(new URL(page.url()).hash).toBe("");
+  const link = footer.getByRole("link", { name: "What's new", exact: true });
+  await expect(link).toHaveAttribute("href", "/changelog");
+  await link.click();
+  await expect(page).toHaveURL(/\/changelog$/);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(/What's new/);
 });
 
 test("security headers and a per-request CSP nonce let the app boot (B5)", async ({ page }) => {
@@ -511,4 +514,182 @@ test("mobile playground tracks the visible viewport and gives message tools 44px
     expect(size.w).toBeGreaterThanOrEqual(44);
     expect(size.h).toBeGreaterThanOrEqual(44);
   }
+});
+
+test("social metadata uses one image URL and publishes Organization JSON-LD (A7/F2)", async ({ page }) => {
+  const response = await page.goto("/");
+  expect(response?.status()).toBe(200);
+  const head = await page.evaluate(() => {
+    const meta = (selector: string) => document.querySelector(selector)?.getAttribute("content") ?? null;
+    const raw = document.querySelector('script[type="application/ld+json"]')?.textContent ?? "{}";
+    return {
+      og: meta('meta[property="og:image"]'),
+      twitter: meta('meta[name="twitter:image"]'),
+      ld: JSON.parse(raw) as { "@graph"?: Array<{ "@type"?: string }> },
+    };
+  });
+  expect(head.og).toBeTruthy();
+  expect(head.og).toBe(head.twitter);
+  expect(head.og).toContain("/og.png");
+  const types = (head.ld["@graph"] ?? []).map((node) => node["@type"]);
+  expect(types).toContain("SoftwareApplication");
+  expect(types).toContain("Organization");
+});
+
+test("daily-limit meter says messages, not credits, in both languages (D2)", async ({ page }) => {
+  await page.goto("/#playground");
+  const en = page.getByRole("link", { name: "Remaining messages today", exact: true });
+  await expect(en).toBeVisible();
+  await expect(en).toContainText("messages left today");
+  expect(await en.textContent()).not.toMatch(/credits/i);
+
+  await page.locator(".site-navigation").getByRole("button", { name: "SV", exact: true }).first().click();
+  const sv = page.getByRole("link", { name: "Dagens återstående meddelanden", exact: true });
+  await expect(sv).toBeVisible();
+  await expect(sv).toContainText("meddelanden kvar idag");
+  expect(await sv.textContent()).not.toMatch(/credits/i);
+});
+
+test("the Vercel mirror domain is noindexed but the canonical host is not (A5)", async ({ request }) => {
+  const mirror = await request.get("/", { headers: { host: "budai-website.vercel.app" } });
+  expect(mirror.status()).toBe(200);
+  expect(mirror.headers()["x-robots-tag"]).toContain("noindex");
+  const canonical = await request.get("/", { headers: { host: "stilledev.se" } });
+  expect(canonical.status()).toBe(200);
+  expect(canonical.headers()["x-robots-tag"] ?? "").not.toContain("noindex");
+});
+
+test("data-handling page is honest, linked and indexed in both languages (E5)", async ({ page, request }) => {
+  await page.goto("/legal/data");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(/How your data is handled/);
+  const en = await page.locator("main").innerText();
+  for (const phrase of ["Anthropic", "local storage", "Vercel Analytics", "noindex", "request id"]) {
+    expect(en).toContain(phrase);
+  }
+  expect(en).not.toMatch(/we (never|do not) (store|collect) (any|your) data/i);
+
+  const sitemap = await (await request.get("/sitemap.xml")).text();
+  expect(sitemap).toContain("/legal/data");
+
+  await page.goto("/");
+  await expect(
+    page.locator("#continuation").getByRole("link", { name: "How your data is handled", exact: true })
+  ).toBeVisible();
+
+  await page.addInitScript(() => localStorage.setItem("budai-lang", "sv"));
+  await page.reload();
+  await page.goto("/legal/data");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(/Så hanteras dina data/);
+  const sv = await page.locator("main").innerText();
+  for (const phrase of ["Anthropic", "lokala lagring", "Vercel Analytics", "noindex"]) {
+    expect(sv).toContain(phrase);
+  }
+});
+
+test("changelog page is indexable, bilingual and free of invented cadence claims (E6)", async ({ page, request }) => {
+  await page.goto("/changelog");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(/What's new/);
+  await expect(page.getByRole("heading", { name: "FAS1: security, honesty and CI" })).toBeVisible();
+  const en = await page.locator("main").innerText();
+  expect(en).toContain("2026-11-06");
+  expect(en).toContain("Current preview");
+  expect(en).toContain("How your data is handled");
+  expect(en).not.toContain("2026-10-26");
+  expect(en).not.toMatch(/every week|every month|updated weekly/i);
+
+  const sitemap = await (await request.get("/sitemap.xml")).text();
+  expect(sitemap).toContain("/changelog");
+  const canonical = await page.locator('link[rel="canonical"]').getAttribute("href");
+  expect(canonical).toContain("/changelog");
+
+  await page.getByRole("button", { name: "SV", exact: true }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(/Vad är nytt/);
+  const sv = await page.locator("main").innerText();
+  expect(sv).toContain("FAS1: säkerhet, ärlighet och CI");
+  expect(sv).toContain("Nuvarande förhandsvisning");
+  expect(sv).not.toMatch(/varje vecka|varje månad/i);
+  await page.getByRole("button", { name: "EN", exact: true }).click();
+
+  // The in-app quick peek still works, uses the same data and links to the page.
+  await page.goto("/#whats-new");
+  const dialog = page.getByRole("dialog", { name: "What's new", exact: true });
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByRole("link", { name: "View the full changelog" })).toHaveAttribute("href", "/changelog");
+  expect(await dialog.innerText()).not.toMatch(/every week/i);
+  expect(new URL(page.url()).hash).toBe("");
+});
+
+test("unknown legal slugs are real 404s and logo links point home (A6)", async ({ page, request }) => {
+  for (const slug of ["privacy", "terms", "cookies", "gdpr", "data"]) {
+    const res = await request.get(`/legal/${slug}`);
+    expect(res.status(), slug).toBe(200);
+  }
+  expect((await request.get("/legal/not-a-real-page")).status()).toBe(404);
+  expect((await request.get("/legal/")).status()).toBe(404);
+
+  await page.goto("/");
+  await expect(page.locator("[data-budai-logo]")).toHaveAttribute("href", "/");
+  await expect(
+    page.locator("#continuation").getByRole("link", { name: "BudAI home", exact: true })
+  ).toHaveAttribute("href", "/");
+});
+
+test("F1: /sv is a real Swedish page, hreflang is reciprocal and the cookie survives a reload", async ({ page, request }) => {
+  const enHtml = await (await request.get("/")).text();
+  expect(enHtml).toMatch(/<html[^>]*\blang="en"/);
+
+  const svResponse = await request.get("/sv");
+  expect(svResponse.status()).toBe(200);
+  const svHtml = await svResponse.text();
+  expect(svHtml).toMatch(/<html[^>]*\blang="sv"/);
+  expect(svHtml).toContain("Fortsätt samtalet.");
+
+  // A stored preference is respected by the server, not only after hydration.
+  const cookieHtml = await (await request.get("/", { headers: { cookie: "budai-lang=sv" } })).text();
+  expect(cookieHtml).toMatch(/<html[^>]*\blang="sv"/);
+
+  const sitemap = await (await request.get("/sitemap.xml")).text();
+  expect(sitemap).toContain("/sv");
+
+  // Next 14 streams metadata in the Flight payload, so read the real DOM.
+  await page.goto("/");
+  const alternates = await page.locator('link[rel="alternate"][hreflang]').evaluateAll((els) =>
+    els.map((el) => ({ lang: el.getAttribute("hreflang"), href: el.getAttribute("href") }))
+  );
+  expect(alternates).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({ lang: "en", href: "https://stilledev.se" }),
+      expect.objectContaining({ lang: "sv", href: "https://stilledev.se/sv" }),
+      expect.objectContaining({ lang: "x-default" }),
+    ])
+  );
+  // A non-homepage route must NOT claim an invented /sv/... alternate.
+  await page.goto("/changelog");
+  await expect(page.locator('link[rel="alternate"][hreflang="sv"]')).toHaveCount(0);
+
+  await page.goto("/sv");
+  await expect(page.locator("link[rel='canonical']")).toHaveAttribute("href", /\/sv$/);
+  await expect(page.locator("html")).toHaveAttribute("lang", "sv");
+  await expect(page.getByRole("heading", { name: "Fortsätt samtalet." })).toBeVisible();
+
+  // The nav switch persists the choice for the next server request.
+  await page.goto("/");
+  await page.locator(".site-navigation").getByRole("button", { name: "SV", exact: true }).first().click();
+  await expect(page.locator("html")).toHaveAttribute("lang", "sv");
+  const cookies = await page.context().cookies();
+  expect(cookies.find((c) => c.name === "budai-lang")?.value).toBe("sv");
+});
+
+test("F1: legal and changelog titles follow the server language", async ({ request }) => {
+  const sv = { headers: { cookie: "budai-lang=sv" } };
+  const enPrivacy = await (await request.get("/legal/privacy")).text();
+  expect(enPrivacy).toMatch(/<title>Privacy Policy/);
+  const svPrivacy = await (await request.get("/legal/privacy", sv)).text();
+  expect(svPrivacy).toMatch(/<title>Integritetspolicy/);
+  const svData = await (await request.get("/legal/data", sv)).text();
+  expect(svData).toMatch(/<title>Så hanteras dina data/);
+  const enChangelog = await (await request.get("/changelog")).text();
+  expect(enChangelog).toMatch(/<title>What(?:'|&#x27;)s new/); // React escapes the apostrophe in <title>
+  const svChangelog = await (await request.get("/changelog", sv)).text();
+  expect(svChangelog).toMatch(/<title>Vad är nytt/);
 });
