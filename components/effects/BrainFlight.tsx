@@ -56,7 +56,21 @@ out float vDepth;
 out float vRim;
 void main() {
   float breath = aRegion > -1.5 ? 1.0 + 0.007 * sin(uTime * 1.15 + aR * 3.2) : 1.0;
-  vec3 world = aPos * breath + vec3(0.0, 0.0, uOffset);
+  // FAS2 r5: relay nodes orbit the core on three tilted rings. Everything is
+  // done in the existing vertex shader, so no extra buffer, program or draw
+  // call is needed. aRegion = -4 identifies them.
+  vec3 world;
+  if (aRegion < -3.5) {
+    float ang = uTime * (0.16 + fract(aR * 7.0) * 0.13) + aSeed * 0.30;
+    float c = cos(ang), s = sin(ang);
+    world = vec3(
+      aPos.x * c - aPos.z * s,
+      aPos.y + 0.045 * sin(uTime * 0.72 + aSeed * 6.283),
+      aPos.x * s + aPos.z * c
+    ) + vec3(0.0, 0.0, uOffset);
+  } else {
+    world = aPos * breath + vec3(0.0, 0.0, uOffset);
+  }
   vec4 clip = uMVP * vec4(world, 1.0);
   gl_Position = clip;
   float front = fract(uTime * 0.26) * 1.4;
@@ -70,7 +84,7 @@ void main() {
   vR = aR;
   vRegion = aRegion;
   vDepth = clamp((5.4 - clip.w) / 3.8, 0.0, 1.0);
-  gl_PointSize = clamp(uSize * aSize / max(clip.w, 0.05), 1.0, aRegion < -1.5 ? 4.4 : 14.8);
+  gl_PointSize = clamp(uSize * aSize / max(clip.w, 0.05), 1.0, aRegion < -3.5 ? 9.0 : aRegion < -1.5 ? 4.4 : 14.8);
 }`;
 
 const FS_POINTS = `#version 300 es
@@ -86,6 +100,7 @@ uniform float uFocus;
 uniform float uActivity;
 uniform float uJourney;
 uniform float uCortex;
+uniform float uTime;
 out vec4 outColor;
 void main() {
   vec2 c = gl_PointCoord * 2.0 - 1.0;
@@ -93,6 +108,17 @@ void main() {
   if (r2 > 1.0) discard;
   float core = exp(-r2 * 4.8);
   float halo = smoothstep(1.0, 0.35, r2) * 0.36;
+  // FAS2 r5: relay nodes get their own cooler colour and a slow twinkle. They
+  // deliberately bypass the uJourney/uCortex gates that hide the digital
+  // volume on the landing page, so they are visible from the very first frame.
+  if (vRegion < -3.5) {
+    vec3 relay = mix(vec3(0.38, 0.84, 1.0), vec3(0.74, 0.60, 1.0), vSeed);
+    float twinkle = 0.62 + 0.38 * sin(uTime * 1.9 + vSeed * 31.0);
+    float relayI = (core + halo) * uGain * (0.80 + 0.55 * twinkle) * (0.55 + 0.45 * vRim);
+    vec3 rgb = relay * relayI;
+    outColor = vec4(rgb, max(max(rgb.r, rgb.g), rgb.b));
+    return;
+  }
   vec3 cyan = vec3(0.32, 0.82, 0.90);
   vec3 purple = vec3(0.48, 0.58, 0.86);
   vec3 white = vec3(0.93, 1.0, 1.0);
@@ -173,6 +199,11 @@ void main() {
     float signal=exp(-pow((vT-uSignalT)*22.0,2.0));
     rgb=vec3(.68,.92,.98)*(.08+.85*signal)*uArrival*uGain;
     if(uPointMark>.5){vec2 q=gl_PointCoord*2.0-1.0;if(dot(q,q)>1.0)discard;rgb=vec3(.84,.97,1.0)*exp(-dot(q,q)*1.8)*uArrival;}
+  } else {
+    // FAS2 r5: at full journey the synapse lattice used to become a white
+    // wall of lines that swallowed the copy. Calm it as the dive progresses;
+    // uJourney is 0 on the hero, so the landing-page brain is untouched.
+    rgb *= 1.0 - 0.58 * smoothstep(0.12, 0.62, uJourney);
   }
   outColor = vec4(rgb, max(max(rgb.r, rgb.g), rgb.b));
 }`;
@@ -410,7 +441,25 @@ function buildBrain(mobile: boolean) {
     }
   }
   const volumeCount=volume.length/3;
-  const all = [...surf, ...inner, ...volume];
+  // FAS2 r5 — orbiting relay nodes. They live in the SAME point buffer and are
+  // drawn by the SAME gl.drawArrays call as the brain, so they add zero draw
+  // calls and no new GL resource. aRegion = -4 selects the orbit branch in the
+  // point shaders; it is negative (excluded from pointer picking) and outside
+  // the digital (-2) and signal (-3) ranges. Three tilted rings give the core a
+  // real sense of depth and slow motion instead of a flat point cloud.
+  const orbitCount = mobile ? 42 : 72;
+  const orbit:number[]=[];
+  for(let k=0;k<orbitCount;k++){
+    const a=(k/orbitCount)*Math.PI*2;
+    const ring=k%3;
+    const radius=1.34+ring*0.13;
+    orbit.push(
+      Math.cos(a)*radius,
+      Math.sin(a)*radius*0.40+(ring-1)*0.16,
+      Math.sin(a)*radius*0.52+(ring-1)*0.10
+    );
+  }
+  const all = [...surf, ...inner, ...orbit, ...volume];
 
   const deg = new Uint8Array(nSurf);
   const edges: number[] = [];
@@ -431,20 +480,27 @@ function buildBrain(mobile: boolean) {
   }
 
   // point record: x y z seed r node size region (8 floats)
-  const N = nSurf + nInner + volumeCount;
+  // Layout: [surface | interior | ORBIT RELAYS | digital volume]. The volume
+  // must stay last: the hero/intro draw call uses N - volumeCount, while the
+  // journey dive draws all N.
+  const orbitStart = nSurf + nInner;
+  const volumeStart = orbitStart + orbitCount;
+  const N = volumeStart + volumeCount;
   const dustCount = 0;
   const pointData = new Float32Array((N + dustCount) * 8);
   for (let i = 0; i < N; i++) {
     const o = i * 8;
     const x = all[i * 3], y = all[i * 3 + 1], z = all[i * 3 + 2];
+    const isOrbit = i >= orbitStart && i < volumeStart;
+    const isVolume = i >= volumeStart;
     pointData[o] = x;
     pointData[o + 1] = y;
     pointData[o + 2] = z;
     pointData[o + 3] = random();
     pointData[o + 4] = Math.hypot(x, y, z);
-    pointData[o + 5] = (i < nSurf && deg[i] >= 2) || i >= nSurf + nInner ? 1 : 0;
-    pointData[o + 6] = i >= nSurf + nInner ? 1.5 : i < nSurf && deg[i] >= 2 ? 1.7 : 1.0;
-    pointData[o + 7] = i >= nSurf + nInner ? -2 : regionOf(x, y, z);
+    pointData[o + 5] = (i < nSurf && deg[i] >= 2) || isOrbit || isVolume ? 1 : 0;
+    pointData[o + 6] = isOrbit ? 1.9 : isVolume ? 1.5 : i < nSurf && deg[i] >= 2 ? 1.7 : 1.0;
+    pointData[o + 7] = isOrbit ? -4 : isVolume ? -2 : regionOf(x, y, z);
   }
   for (let k = 0; k < dustCount; k++) {
     const o = (N + k) * 8;
