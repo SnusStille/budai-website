@@ -102,3 +102,77 @@ or disappear. QA stills: `test-results/fas2-v3-*.png` (gitignored).
 
 > Note: these changes live on the FAS2 branch / PR. Production
 > `https://stilledev.se` still serves `main` until the PR is merged.
+
+## Round 3 — the neural core (2026-11-06)
+
+Round 2 graded `.universe-world > canvas[data-world-canvas]`, but the **hero
+brain renders into a separate `[data-brain-canvas]` inside
+`.intelligence-stage` (z-index 3)** — outside `.universe-world` and above the
+aurora plate. So the most prominent 3D object on the page received none of the
+colour work. Round 3 fixes that.
+
+- **Shared grade**: one `filter: saturate(1.24) contrast(1.07) brightness(1.045)`
+  rule targets **both** `canvas[data-brain-canvas]` and `.brain-poster img`. The
+  intro still and the live renderer must be graded identically, otherwise the
+  hand-off from poster to WebGL visibly jumps in colour. No shader, geometry or
+  poster asset changed — the checked-in `public/brain/entry-*.webp` stays intact.
+- **Instrument halo**: `.hero-light::before` paints a masked, concentric
+  graduation ring (repeating conic ticks + one cyan and one lavender hairline),
+  centred on the brain at 73%/55%, with `--journey-phase` fading it out as the
+  visitor leaves the hero. Only the tick layer rotates (`ds-core-orbit`, 96s),
+  and only under `prefers-reduced-motion: no-preference`; the radial hairlines
+  are rotationally symmetric so they stay still. `.hero-light::after` adds a warm
+  two-colour core glow behind it. On mobile the instrument follows the centred,
+  lifted brain (50%/32%).
+- **CSS pitfall caught in QA**: `radial-gradient(circle 26% 36% at …)` is
+  invalid — a `circle` accepts one radius only. The browser silently discarded
+  the whole glow. Two radii require `ellipse`. A unit guard now rejects that
+  pattern.
+- **Overflow pitfall caught in e2e**: a rotating *square* element has a larger
+  bounding box than the circle painted inside it. The 96s orbit grew up to 20px
+  of horizontal overflow on 360/390px viewports and failed five mobile specs.
+  `.hero-light { overflow: clip; }` removes the invisible corners without
+  touching the masked ring. A unit guard keeps the clip in place.
+
+### Performance: a real, measured draw-call reduction
+
+Six articulated tethers were six `THREE.Line` objects with six independent
+`BufferGeometry` instances and six `needsUpdate` uploads per frame. They are now
+two `THREE.LineSegments` (one per accent colour), each holding three two-vertex
+segments in one `DynamicDrawUsage` buffer. `frustumCulled = false` is required
+because the vertices move every frame and a stale bounding sphere would cull
+them. The update loop writes into a per-pod slice (`tetherOffset`) and uploads
+once per buffer.
+
+Chromium 153 / SwiftShader, DPR 1, `quality: lite`, 1440×1000 — same scroll
+positions as the earlier baseline:
+
+| Chapter | Before | Round 3 |
+| --- | --- | --- |
+| Capabilities | 140 | **136** |
+| Builder | 82 | 82 |
+| Roadmap | 34 | 34 |
+
+This is a small, honest win (4 draw calls and four buffer uploads per frame),
+not a fix for the `data-draw-budget="65"` target. Profiling showed the remaining
+~136 calls are the six articulated sculptures themselves — most have unique
+materials and independent per-frame transforms, so merging them needs
+`InstancedMesh` with per-instance matrices or geometry merging, which is a
+larger, riskier change. The pre-warm window experiment (1.15 → 0.92) was
+reverted: it saved only 1–5 calls and risked visible pop-in at chapter edges.
+
+### Tooling
+
+`scripts/generate-brain-poster.mjs` called `wp.init()` unconditionally. Next
+16.4.5's bundled webpack no longer exposes `init`, so `npm run brain:poster`
+failed with `TypeError: wp.init is not a function`. The call is now optional
+(`typeof wp.init === 'function'`), which keeps Next 14/15 working. The generator
+was re-run successfully; its output is still darker than the checked-in posters,
+so the assets were deliberately **not** overwritten.
+
+QA stills: `test-results/fas2-r3-{hero,capabilities,builder,roadmap}.png`
+(gitignored). Three unit guards cover the grade, the tether batching and the
+generator fix; unit suite is 41/41.
+
+> Note: these changes live on the FAS2 branch / PR. Production
+> `https://stilledev.se` still serves `main` until the PR is merged.

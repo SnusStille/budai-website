@@ -648,3 +648,41 @@ test("FAS2 round 2: ambient plate is small, referenced and chapter-reactive", ()
     expect(css, `${section} gets its own colour identity`).toContain(section);
   }
 });
+
+test("FAS2 round 3: the live brain and the still poster share one colour grade", () => {
+  const css = readFileSync("app/design-system.css", "utf8");
+  // The brain lives in [data-brain-canvas], outside .universe-world, so the
+  // world-canvas grade never reached it. Both surfaces must be graded together
+  // or the intro hand-off visibly jumps in colour.
+  expect(css).toContain("canvas[data-brain-canvas],");
+  expect(css).toContain(".brain-poster img {");
+  expect(css).toMatch(/canvas\[data-brain-canvas\],\s*\.brain-poster img \{\s*filter: saturate\(1\.24\) contrast\(1\.07\) brightness\(1\.045\)/);
+  for (const rule of [".hero-light::before", ".hero-light::after", "@keyframes ds-core-orbit", "prefers-reduced-motion: no-preference", "var(--journey-phase, 0) * 0.14"]) {
+    expect(css, `${rule} keeps the instrument halo alive`).toContain(rule);
+  }
+  // A rotating square box otherwise grows up to 20px of horizontal overflow.
+  expect(css).toContain(".hero-light { overflow: clip; }");
+  // A CSS circle accepts only ONE radius. Two radii require `ellipse`; using
+  // `circle 26% 36%` silently invalidates the whole gradient (seen in QA).
+  expect(css).not.toMatch(/radial-gradient\(circle\s+\d+(\.\d+)?%\s+\d+(\.\d+)?%/);
+});
+
+test("FAS2 round 3: six capability tethers are batched into two dynamic draw calls", () => {
+  const engine = readFileSync("lib/experience/capability-engine.ts", "utf8");
+  expect(engine).toContain("const tetherSegments = [cyanLineMat, lavenderLineMat]");
+  expect(engine).toContain("new THREE.LineSegments(geometry, material)");
+  expect(engine).toContain("attribute.setUsage(THREE.DynamicDrawUsage)");
+  expect(engine).toContain("lines.frustumCulled = false");
+  expect(engine).toContain("tetherSegments.forEach(attr => { attr.needsUpdate = true; })");
+  // The old six independent geometries and six per-frame uploads must not return.
+  expect(engine).not.toContain("tetherGeo");
+  expect(engine).not.toContain("pod.tetherGeo.getAttribute");
+  expect(engine).not.toContain("const tetherLine = new THREE.Line(");
+});
+
+test("FAS2 round 3: the poster generator tolerates Next 16's webpack bundle", () => {
+  const tool = readFileSync("scripts/generate-brain-poster.mjs", "utf8");
+  expect(tool).toContain("if(typeof wp.init==='function')wp.init();");
+  // The old unconditional call on the require line must not return.
+  expect(tool).not.toContain("webpack');wp.init();");
+});
