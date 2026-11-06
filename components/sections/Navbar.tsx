@@ -102,7 +102,7 @@ export default function Navbar() {
               </span>
               <span className="flex flex-col leading-none">
                 <BudAIWordmark className="nav-wordmark" />
-                <span className="mt-1.5 hidden items-center gap-1.5 font-mono text-[9px] uppercase tracking-[0.2em] text-white/40 sm:flex">
+                <span className="mt-1.5 hidden items-center gap-1.5 font-mono text-[9px] uppercase tracking-[0.2em] text-ds-muted sm:flex">
                   DEVELOPED BY <b className="font-bold text-accent-cyan [text-shadow:0_0_12px_rgba(0,229,255,0.55)]">STILLEDEV</b>
                 </span>
               </span>

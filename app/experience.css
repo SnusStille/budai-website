@@ -45,11 +45,15 @@ html[data-budai-intro="revealing"] .opening-surface {display:block;}
   pointer-events: none;
   perspective: 1100px;
   --veil-open: clamp(0, calc((var(--opening-progress, 0) - 0.38) * 2.2), 1);
+  /* FAS2 r4: the old veil started at 0.84/0.92/0.96 alpha, which buried the
+     brain poster behind an almost-black screen for the whole `preparing` phase.
+     Lighten the START only. The fully-open end state (0.12/0.14/0.10) is the
+     same as before, so the reveal animation itself is unchanged. */
   background: radial-gradient(
     circle at 50% 50%,
-    rgba(3, 10, 18, calc(0.84 - var(--veil-open) * 0.72)) 0%,
-    rgba(2, 4, 9, calc(0.92 - var(--veil-open) * 0.78)) 54%,
-    rgba(2, 2, 5, calc(0.96 - var(--veil-open) * 0.88)) 100%
+    rgba(3, 10, 18, calc(0.42 - var(--veil-open) * 0.30)) 0%,
+    rgba(2, 4, 9, calc(0.62 - var(--veil-open) * 0.48)) 54%,
+    rgba(2, 2, 5, calc(0.78 - var(--veil-open) * 0.68)) 100%
   );
 }
 .opening-depth-grid {
@@ -157,13 +161,16 @@ html[data-budai-intro="revealing"] .opening-surface {display:block;}
   padding: 36px 56px;
   border: 1px solid rgba(122, 219, 240, 0.14);
   border-radius: 18px;
+  /* FAS2 r4: let the lit brain poster read through the identity card. */
   background: radial-gradient(
     ellipse 74% 68% at 50% 50%,
-    rgba(3, 10, 20, 0.74) 0%,
-    rgba(2, 7, 15, 0.56) 58%,
-    rgba(2, 5, 11, 0.22) 100%
+    rgba(3, 10, 20, 0.50) 0%,
+    rgba(2, 7, 15, 0.36) 58%,
+    rgba(2, 5, 11, 0.14) 100%
   );
-  backdrop-filter: blur(6px);
+  /* FAS2 r4: 6px blurred the brain poster behind the card into a shapeless
+     blob during `preparing`. 2px still separates the wordmark from the wires. */
+  backdrop-filter: blur(2px);
   box-shadow: 0 20px 60px rgba(1, 4, 10, 0.65), inset 0 1px 0 rgba(166, 234, 248, 0.14);
   --exit-fade: clamp(0, calc((var(--opening-progress, 0) - 0.95) * 18), 1);
   opacity: calc(1 - var(--exit-fade));

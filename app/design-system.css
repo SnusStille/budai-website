@@ -1,0 +1,611 @@
+/*
+ * BudAI Visual System — FAS2 design pass.
+ *
+ * Imported LAST in app/layout.tsx, after globals.css and experience.css, so
+ * these tokens and refinements win the cascade. This layer is presentation
+ * only: it adds no DOM, no copy and no layout containers. That keeps the 3D
+ * journey, the scroll timeline and all browser regression tests intact.
+ *
+ * Goals:
+ *  1. One semantic colour system with WCAG AA text contrast on #020205.
+ *  2. A calmer, more consistent typographic hierarchy and reading measure.
+ *  3. Coherent surfaces (radius, border, elevation, glow) instead of dozens
+ *     of one-off glass/blur recipes.
+ *  4. One ambient backdrop (gradient + vignette + grain) instead of many
+ *     competing radial glows.
+ *  5. Shared motion tokens; decorative animation stays opt-out for
+ *     prefers-reduced-motion.
+ */
+
+:root {
+  /* Text tokens, measured against --bg (#020205). All >= 4.5:1 (WCAG AA). */
+  --ds-text-1: #f2f7fb; /* 17.6:1 — headings, primary copy */
+  --ds-text-2: #c6d3df; /* 12.7:1 — body copy */
+  --ds-text-3: #9fb0c1; /*  8.4:1 — secondary copy, labels */
+  --ds-text-4: #8394a8; /*  5.9:1 — micro labels, still AA */
+
+  --ds-accent: #7fe3f5;
+  --ds-accent-2: #a99bff;
+  --ds-accent-3: #6fe0c4;
+
+  --ds-surface-1: rgba(255, 255, 255, 0.035);
+  --ds-surface-2: rgba(255, 255, 255, 0.018);
+  --ds-border: rgba(169, 205, 224, 0.14);
+  --ds-border-strong: rgba(169, 205, 224, 0.28);
+
+  --ds-radius-sm: 10px;
+  --ds-radius-md: 16px;
+  --ds-radius-lg: 24px;
+
+  --ds-shadow-1:
+    inset 0 1px 0 rgba(255, 255, 255, 0.055),
+    0 18px 48px rgba(0, 0, 0, 0.42);
+  --ds-shadow-2:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    0 24px 70px rgba(0, 0, 0, 0.52),
+    0 0 0 1px rgba(127, 227, 245, 0.06);
+
+  /* One easing curve and three durations for the whole site. */
+  --ds-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --ds-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ds-dur-fast: 180ms;
+  --ds-dur: 320ms;
+  --ds-dur-slow: 620ms;
+
+  --ds-measure: 68ch;
+}
+
+/* ---------------------------------------------------------------- typography */
+
+body {
+  color: var(--ds-text-1);
+  font-feature-settings: "ss01" on, "cv11" on, "kern" on;
+}
+
+h1, h2, h3 {
+  letter-spacing: -0.045em;
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+/* Never let long-form copy turn into a wall of text. */
+.hero-description,
+.section-pad p,
+.about-copy p,
+.legal-copy p {
+  max-width: var(--ds-measure);
+  color: var(--ds-text-2);
+  line-height: 1.75;
+}
+
+:focus-visible {
+  outline: 2px solid var(--ds-accent);
+  outline-offset: 3px;
+}
+
+::selection {
+  background: rgba(127, 227, 245, 0.28);
+  color: #ffffff;
+}
+
+/* Single utility for micro copy that used to be white at 40–60% opacity.
+   Replaces text-white/40|50|60 in components; hover:text-white still wins. */
+.text-ds-muted { color: var(--ds-text-3); }
+.text-ds-faint { color: var(--ds-text-4); }
+
+/* ------------------------------------------------------------- hero clarity */
+
+.hero-title-accent {
+  background: linear-gradient(105deg, #f0fbfd -10%, #8adcef 46%, #b7bcf5 104%);
+  background-clip: text;
+  -webkit-background-clip: text;
+}
+
+.hero-eyebrow,
+.hero-locale,
+.hero-description,
+.hero-product-note,
+.hero-credit,
+.hero-bottom,
+.hero-bottom a,
+.hero-edition,
+.hero-features > span {
+  text-shadow: none;
+}
+
+.hero-eyebrow { color: var(--ds-text-3); letter-spacing: 0.14em; }
+.hero-locale { color: var(--ds-text-3); }
+.hero-description { color: var(--ds-text-2); }
+.hero-product-note,
+.hero-credit { color: var(--ds-text-3); }
+.hero-edition { color: var(--ds-text-4); }
+.hero-bottom { color: var(--ds-text-4); }
+.hero-bottom a { color: var(--ds-text-3); }
+.hero-features > span {
+  color: var(--ds-text-3);
+  border-color: var(--ds-border);
+  background: rgba(10, 22, 34, 0.62);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition:
+    color var(--ds-dur-fast) var(--ds-ease),
+    border-color var(--ds-dur) var(--ds-ease),
+    background var(--ds-dur) var(--ds-ease),
+    transform var(--ds-dur-fast) var(--ds-ease);
+}
+.hero-features > span:hover {
+  color: var(--ds-text-1);
+  border-color: var(--ds-border-strong);
+  transform: translateY(-1px);
+}
+
+/* One primary action, clearly dominant. */
+.btn-primary {
+  border-radius: var(--ds-radius-sm);
+  border: 1px solid rgba(210, 246, 253, 0.7);
+  background: linear-gradient(110deg, #d6f5fb 0%, #8fddf1 48%, #b6c9f7 100%);
+  color: #04121a;
+  font-weight: 650;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.65),
+    0 10px 30px rgba(0, 199, 232, 0.14);
+  transition:
+    transform var(--ds-dur-fast) var(--ds-ease),
+    box-shadow var(--ds-dur) var(--ds-ease),
+    filter var(--ds-dur-fast) var(--ds-ease);
+}
+.btn-primary:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.04);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    0 18px 44px rgba(0, 199, 232, 0.24);
+}
+.btn-primary:active { transform: translateY(0); }
+
+.hero-secondary {
+  color: var(--ds-text-2);
+  transition: color var(--ds-dur-fast) var(--ds-ease), transform var(--ds-dur-fast) var(--ds-ease);
+}
+.hero-secondary:hover { color: #ffffff; transform: translateX(2px); }
+
+/* --------------------------------------------------------------- surfaces */
+
+.glass,
+.glass-strong,
+.holo-card,
+.panel-premium,
+.surface-elevated,
+.early-access-card,
+.playground-shell,
+.waitlist-composer {
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-radius-md);
+  box-shadow: var(--ds-shadow-1);
+}
+
+/* Cheaper, consistent blur: 40px backdrop-filter was the single most
+   expensive paint on mid-range mobile GPUs and made cards look muddy. */
+.glass,
+.glass-strong,
+.holo-card {
+  backdrop-filter: blur(12px) saturate(120%);
+  -webkit-backdrop-filter: blur(12px) saturate(120%);
+}
+
+.holo-card::before {
+  /* Tone the four-colour shimmer down to a two-accent sheen. */
+  background: linear-gradient(
+    105deg,
+    transparent 42%,
+    rgba(127, 227, 245, 0.028) 48%,
+    rgba(169, 155, 255, 0.028) 54%,
+    transparent 60%
+  );
+  animation-duration: 11s;
+}
+
+.panel-premium,
+.surface-elevated {
+  background: linear-gradient(180deg, var(--ds-surface-1), var(--ds-surface-2));
+}
+
+.glass-hover {
+  transition:
+    background var(--ds-dur) var(--ds-ease),
+    border-color var(--ds-dur) var(--ds-ease),
+    transform var(--ds-dur) var(--ds-ease),
+    box-shadow var(--ds-dur) var(--ds-ease);
+}
+.glass-hover:hover {
+  border-color: var(--ds-border-strong);
+  box-shadow: var(--ds-shadow-2);
+}
+
+/* A single hairline grammar for section boundaries. */
+.section-hairline::before {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(127, 227, 245, 0.26) 45%,
+    rgba(169, 155, 255, 0.18) 55%,
+    transparent
+  );
+}
+
+/* --------------------------------------------------------------- ambience */
+
+/* One calm backdrop: a wide colour wash, a vignette that frames the 3D stage,
+   and a very light grain so large dark areas do not band on OLED screens.
+   Sits behind .universe-world (z-index 1) — never over the WebGL canvas. */
+.universe-atmosphere {
+  background:
+    radial-gradient(ellipse at 72% 38%, rgba(25, 58, 78, 0.22), transparent 62%),
+    radial-gradient(ellipse at 18% 82%, rgba(52, 42, 96, 0.16), transparent 58%),
+    linear-gradient(150deg, #020205, #03070d 58%, #050811);
+}
+
+.universe-atmosphere::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(90deg, rgba(2, 2, 5, 0.62) 0%, rgba(2, 2, 5, 0.22) 42%, transparent 68%),
+    radial-gradient(ellipse at 50% 44%, transparent 42%, rgba(1, 2, 6, 0.62) 100%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.32'/%3E%3C/svg%3E");
+  background-size: cover, cover, 140px 140px;
+  opacity: 0.42;
+}
+
+/* Keep the grid subtle now that grain + vignette add depth. */
+.universe-atmosphere::before { opacity: 0.55; }
+
+/* ----------------------------------------------------------------- motion */
+
+.glass-hover,
+.holo-card::after,
+.pg-suggest-chip,
+.site-navigation a,
+.site-navigation button,
+.roadmap-milestone > button {
+  transition-timing-function: var(--ds-ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .holo-card::before,
+  .bud-sheen,
+  .text-gradient,
+  .bud-spin-conic,
+  .bud-codescan {
+    animation: none !important;
+  }
+  .btn-primary,
+  .hero-secondary,
+  .hero-features > span {
+    transform: none !important;
+  }
+}
+
+/* ------------------------------------------------------- small-screen care */
+
+@media (max-width: 767px) {
+  :root { --ds-measure: 46ch; }
+  .hero-description { line-height: 1.7; }
+  .glass,
+  .glass-strong,
+  .holo-card {
+    /* Blur is disproportionately expensive on mobile GPUs. */
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+}
+
+/* ------------------------------------------------- capability legibility */
+
+/* The second line of the workshop heading and the tiny mono labels were the
+   dimmest readable text on the page. Keep the hierarchy, raise the contrast. */
+.capability-index h3 > span { color: var(--ds-text-2); }
+.capability-matrix-header,
+.capability-viewport-top,
+.capability-viewport-bottom,
+.capability-module > b,
+.capability-module small,
+.capability-module-file,
+.capability-matrix-note {
+  color: var(--ds-text-3);
+}
+.capability-pathway-switch > button { color: var(--ds-text-3); }
+.capability-pathway-switch > button.is-active { color: var(--ds-text-1); }
+
+/* Two accents instead of the old cyan/purple/green three-way gradient. */
+.text-gradient {
+  background: linear-gradient(115deg, #eaf8fc 0%, var(--ds-accent) 48%, var(--ds-accent-2) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+/* A gentle grade makes the fine WebGL line-work read against the dark page
+   without touching any geometry or material. One composited element only. */
+.universe-world > canvas[data-world-canvas] {
+  filter: saturate(1.12) contrast(1.045);
+}
+
+/* ==========================================================================
+ * FAS2 round 2 — a visibly stronger visual identity.
+ * All of this is paint-only (backgrounds, pseudo-elements, type scale), so
+ * the journey timeline and the DOM stay exactly as the tests expect.
+ * ========================================================================== */
+
+/* A real, hand-authored aurora plate behind the 3D scene. 12 kB WebP, parallax
+   and a slow hue drift driven by the existing --journey-phase variable that
+   WorldStage already writes on <html>. It sits behind .universe-world. */
+.universe-atmosphere {
+  --chapter: var(--journey-phase, 0);
+  background:
+    radial-gradient(ellipse 72% 56% at calc(78% - var(--chapter) * 5%) 36%, rgba(24, 96, 134, 0.30), transparent 68%),
+    radial-gradient(ellipse 62% 50% at calc(14% + var(--chapter) * 5%) 80%, rgba(86, 62, 156, 0.24), transparent 64%),
+    radial-gradient(ellipse 76% 58% at calc(48% + var(--chapter) * 3%) 54%, rgba(22, 112, 104, 0.13), transparent 72%),
+    linear-gradient(150deg, #020205, #03070d 58%, #050811);
+}
+
+.universe-atmosphere::before {
+  inset: -12% 0;
+  background-image:
+    url("/ambient/aurora.webp"),
+    repeating-linear-gradient(90deg, transparent 0 calc(16.666% - 1px), #8295b008 calc(16.666% - 1px) 16.666%);
+  background-size: cover, auto;
+  background-position: calc(34% + var(--journey-phase, 0) * 2.5%) center, 0 0;
+  background-repeat: no-repeat, repeat;
+  mask-image: linear-gradient(transparent, #000 14%, #000 88%, transparent);
+  opacity: 0.62;
+  filter: hue-rotate(calc(var(--journey-phase, 0) * 6deg));
+  transform: translateY(var(--journey-shift, 0px));
+}
+
+/* Each chapter gets its own colour identity instead of one endless blue wash. */
+.brain-journey {
+  background-image: radial-gradient(ellipse 62% 42% at 72% 44%, rgba(0, 190, 226, 0.11), transparent 72%);
+}
+.capabilities-universe {
+  background:
+    radial-gradient(ellipse 58% 46% at 80% 28%, rgba(124, 92, 255, 0.16), transparent 70%),
+    radial-gradient(ellipse 46% 38% at 12% 74%, rgba(0, 190, 226, 0.09), transparent 72%),
+    linear-gradient(#02020500, #02020540 6%, #0202052b 95%, transparent);
+}
+.builder-section {
+  background:
+    radial-gradient(ellipse 56% 44% at 22% 40%, rgba(45, 212, 191, 0.13), transparent 70%),
+    linear-gradient(#020205b0, transparent 15%, transparent 68%, #020205e6 88%);
+}
+.roadmap-section {
+  background:
+    radial-gradient(ellipse 60% 44% at 76% 42%, rgba(56, 189, 248, 0.14), transparent 70%),
+    linear-gradient(transparent, #03080f50 25%, #03080fed 65%, #020205);
+}
+.early-access-card {
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(0, 200, 232, 0.14), transparent 68%),
+    radial-gradient(ellipse 60% 50% at 50% 100%, rgba(124, 92, 255, 0.10), transparent 72%),
+    linear-gradient(180deg, #07111be6, #050a12ee);
+}
+
+/* A visible halo around the neural brain and a slightly bolder first screen. */
+.hero-light {
+  background:
+    radial-gradient(ellipse 34% 40% at 74% 47%, rgba(0, 214, 240, 0.13), transparent 72%),
+    radial-gradient(ellipse 26% 32% at 79% 39%, rgba(124, 92, 255, 0.11), transparent 72%),
+    radial-gradient(ellipse 44% 50% at 80% 43%, rgba(48, 71, 82, 0.07), transparent 60%);
+}
+
+.hero-content h1 {
+  font-size: clamp(54px, 6.6vw, 96px);
+  font-weight: 560;
+  letter-spacing: -0.065em;
+  line-height: 1.02;
+}
+
+.hero-eyebrow {
+  display: inline-flex;
+  width: fit-content;
+  padding: 7px 14px;
+  border: 1px solid var(--ds-border);
+  border-radius: 999px;
+  background: rgba(9, 21, 33, 0.62);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+.signal-dot {
+  height: 6px;
+  width: 6px;
+  background: var(--ds-accent);
+  box-shadow: 0 0 12px rgba(127, 227, 245, 0.85);
+}
+
+/* Section headings get a short accent rule — a small, very legible detail. */
+.chapter-label {
+  color: var(--ds-text-3);
+  letter-spacing: 0.16em;
+}
+.chapter-label i {
+  background: linear-gradient(90deg, var(--ds-accent), var(--ds-accent-2));
+  box-shadow: 0 0 10px rgba(127, 227, 245, 0.4);
+}
+
+/* Cards read as physical objects now, not flat translucent rectangles. */
+.plan-card,
+.waitlist-composer {
+  box-shadow:
+    var(--ds-shadow-1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 0 32px rgba(0, 190, 226, 0.05);
+}
+.plan-card:hover {
+  border-color: var(--ds-border-strong);
+  box-shadow:
+    var(--ds-shadow-2),
+    0 0 46px rgba(0, 190, 226, 0.10);
+}
+
+/* Stronger, more confident WebGL line-work. */
+.universe-world > canvas[data-world-canvas] {
+  filter: saturate(1.24) contrast(1.075);
+}
+
+@media (max-width: 767px) {
+  .hero-content h1 { font-size: clamp(44px, 11vw, 74px); }
+  .hero-eyebrow { font-size: 8px; padding: 6px 10px; }
+  .universe-atmosphere::before { opacity: 0.45; }
+}
+
+/* --------------------------------------------- navigation, dividers, ending */
+
+.site-navigation {
+  border-bottom: 1px solid rgba(169, 205, 224, 0.07);
+  background: linear-gradient(180deg, rgba(2, 2, 5, 0.94), rgba(2, 2, 5, 0.55) 68%, transparent);
+}
+.site-navigation.glass-strong {
+  background: rgba(6, 10, 16, 0.86);
+  border-bottom-color: var(--ds-border);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.45);
+}
+.site-navigation [data-budai-logo] svg { filter: saturate(1.05); }
+
+/* Section boundaries become a visible, two-accent light seam. */
+.section-hairline::before {
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(127, 227, 245, 0.5) 42%,
+    rgba(169, 155, 255, 0.42) 58%,
+    transparent
+  );
+  box-shadow: 0 0 18px rgba(127, 227, 245, 0.25);
+}
+
+/* The composer is the working surface — give it a little more presence. */
+.pg-composer-shell {
+  border-top: 1px solid var(--ds-border) !important;
+  background: linear-gradient(180deg, rgba(12, 24, 36, 0.72), rgba(6, 12, 20, 0.86));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.055), 0 -18px 44px rgba(0, 0, 0, 0.32);
+}
+
+/* A stronger, warmer ending so the page does not just fade to black. */
+.site-footer {
+  border-top-color: var(--ds-border) !important;
+  background:
+    radial-gradient(ellipse 70% 60% at 50% 118%, rgba(0, 190, 226, 0.16), transparent 70%),
+    radial-gradient(ellipse 50% 50% at 82% 0%, rgba(124, 92, 255, 0.12), transparent 72%),
+    linear-gradient(180deg, #020205, #04070e);
+}
+.closing-kicker {
+  color: var(--ds-text-3);
+  letter-spacing: 0.28em;
+  text-shadow: 0 0 18px rgba(127, 227, 245, 0.35);
+}
+
+/* ==========================================================================
+ * FAS2 round 3 — the neural core gets its own presence.
+ *
+ * The brain renders into [data-brain-canvas] inside .intelligence-stage
+ * (z-index 3), which is OUTSIDE .universe-world. The round-2 canvas grade and
+ * the aurora plate therefore never reached the single most prominent 3D object
+ * on the page. This round fixes that with one identical grade on the live
+ * canvas AND the still poster (so the intro hand-off is colour-continuous),
+ * plus a concentric instrument halo that reads as depth around the brain.
+ * Paint-only: no DOM, no scroll listener, no WebGL or geometry change.
+ * ========================================================================== */
+
+/* FAS2 r4 — NO CSS filter on the live WebGL canvas. A filter on a
+   preserveDrawingBuffer:false canvas forces an extra compositing pass and can
+   render blank on real GPUs (it happened on the landing page). The grade is
+   done in BrainFlight's shader instead, so the poster generated from that same
+   shader matches the live brain exactly without any CSS. */
+
+/* A rotated square has a larger bounding box than the circle painted inside
+   it. Without clipping, the 96s orbit grows up to 20px of horizontal overflow
+   on mobile. `clip` removes the invisible corners, not the masked ring. */
+.hero-light { overflow: clip; }
+
+/* FAS2 r5 — the signal chapter dives inside the brain, where the synapse
+   lattice covers the whole viewport. Its copy needs a readable field without
+   hiding the 3D entirely: a left-weighted scrim plus a top/bottom vignette,
+   applied only while the enhanced (WebGL) tour is active. The fallback poster
+   already has its own dark frame and must not be dimmed twice. */
+.brain-journey[data-enhanced="true"] .brain-journey-sticky {
+  background:
+    linear-gradient(90deg, rgba(2, 4, 9, .92) 0%, rgba(2, 4, 9, .78) 26%, rgba(2, 4, 9, .42) 48%, rgba(2, 4, 9, 0) 72%),
+    linear-gradient(180deg, rgba(2, 4, 9, .55) 0%, transparent 28%, transparent 72%, rgba(2, 4, 9, .55) 100%);
+}
+
+/* Concentric graduation ring: tick marks plus one cyan and one lavender
+   hairline. The tick layer rotates as a single composited element; the two
+   radial hairlines are rotationally symmetric, so they stay put. */
+.hero-light::before {
+  content: "";
+  position: absolute;
+  left: 73%;
+  top: 55%;
+  width: min(46vw, 650px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  background:
+    repeating-conic-gradient(
+      from 0deg,
+      rgba(127, 227, 245, 0.26) 0deg 0.3deg,
+      transparent 0.3deg 5deg
+    ),
+    radial-gradient(circle, transparent 64%, rgba(95, 227, 247, 0.22) 65%, transparent 66%),
+    radial-gradient(circle, transparent 78%, rgba(167, 139, 250, 0.18) 79%, transparent 80%);
+  -webkit-mask-image: radial-gradient(circle, transparent 0 63%, #000 64% 81%, transparent 82%);
+  mask-image: radial-gradient(circle, transparent 0 63%, #000 64% 81%, transparent 82%);
+  opacity: clamp(0.3, calc(1 - var(--journey-phase, 0) * 0.14), 0.92);
+}
+
+/* A warm core glow. Kept as a separate layer so the ring above never gets
+   washed out, and faded by the same chapter phase as the aurora. */
+.hero-light::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 26% 36% at 73% 55%, rgba(0, 214, 240, 0.16), transparent 70%),
+    radial-gradient(ellipse 18% 26% at 77% 47%, rgba(167, 139, 250, 0.13), transparent 72%);
+  opacity: clamp(0.35, calc(1 - var(--journey-phase, 0) * 0.13), 1);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .hero-light::before {
+    animation: ds-core-orbit 96s linear infinite;
+  }
+}
+@keyframes ds-core-orbit {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* On small screens the brain is centred and lifted (see .intelligence-frame
+   in experience.css), so the instrument has to follow it. */
+@media (max-width: 767px) {
+  .hero-light::before {
+    left: 50%;
+    top: 32%;
+    width: min(78vw, 420px);
+  }
+  .hero-light::after {
+    background:
+      radial-gradient(ellipse 42% 26% at 50% 32%, rgba(0, 214, 240, 0.15), transparent 70%),
+      radial-gradient(ellipse 30% 18% at 54% 27%, rgba(167, 139, 250, 0.12), transparent 72%);
+  }
+}
