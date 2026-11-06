@@ -511,3 +511,91 @@ p {
   letter-spacing: 0.28em;
   text-shadow: 0 0 18px rgba(127, 227, 245, 0.35);
 }
+
+/* ==========================================================================
+ * FAS2 round 3 — the neural core gets its own presence.
+ *
+ * The brain renders into [data-brain-canvas] inside .intelligence-stage
+ * (z-index 3), which is OUTSIDE .universe-world. The round-2 canvas grade and
+ * the aurora plate therefore never reached the single most prominent 3D object
+ * on the page. This round fixes that with one identical grade on the live
+ * canvas AND the still poster (so the intro hand-off is colour-continuous),
+ * plus a concentric instrument halo that reads as depth around the brain.
+ * Paint-only: no DOM, no scroll listener, no WebGL or geometry change.
+ * ========================================================================== */
+
+/* The still and the live renderer must share one grade, otherwise the intro
+   visibly jumps in colour at the moment the poster is replaced by the canvas. */
+canvas[data-brain-canvas],
+.brain-poster img {
+  filter: saturate(1.24) contrast(1.07) brightness(1.045);
+}
+
+/* A rotated square has a larger bounding box than the circle painted inside
+   it. Without clipping, the 96s orbit grows up to 20px of horizontal overflow
+   on mobile. `clip` removes the invisible corners, not the masked ring. */
+.hero-light { overflow: clip; }
+
+/* Concentric graduation ring: tick marks plus one cyan and one lavender
+   hairline. The tick layer rotates as a single composited element; the two
+   radial hairlines are rotationally symmetric, so they stay put. */
+.hero-light::before {
+  content: "";
+  position: absolute;
+  left: 73%;
+  top: 55%;
+  width: min(46vw, 650px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  background:
+    repeating-conic-gradient(
+      from 0deg,
+      rgba(127, 227, 245, 0.26) 0deg 0.3deg,
+      transparent 0.3deg 5deg
+    ),
+    radial-gradient(circle, transparent 64%, rgba(95, 227, 247, 0.22) 65%, transparent 66%),
+    radial-gradient(circle, transparent 78%, rgba(167, 139, 250, 0.18) 79%, transparent 80%);
+  -webkit-mask-image: radial-gradient(circle, transparent 0 63%, #000 64% 81%, transparent 82%);
+  mask-image: radial-gradient(circle, transparent 0 63%, #000 64% 81%, transparent 82%);
+  opacity: clamp(0.3, calc(1 - var(--journey-phase, 0) * 0.14), 0.92);
+}
+
+/* A warm core glow. Kept as a separate layer so the ring above never gets
+   washed out, and faded by the same chapter phase as the aurora. */
+.hero-light::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 26% 36% at 73% 55%, rgba(0, 214, 240, 0.16), transparent 70%),
+    radial-gradient(ellipse 18% 26% at 77% 47%, rgba(167, 139, 250, 0.13), transparent 72%);
+  opacity: clamp(0.35, calc(1 - var(--journey-phase, 0) * 0.13), 1);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .hero-light::before {
+    animation: ds-core-orbit 96s linear infinite;
+  }
+}
+@keyframes ds-core-orbit {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* On small screens the brain is centred and lifted (see .intelligence-frame
+   in experience.css), so the instrument has to follow it. */
+@media (max-width: 767px) {
+  .hero-light::before {
+    left: 50%;
+    top: 32%;
+    width: min(78vw, 420px);
+  }
+  .hero-light::after {
+    background:
+      radial-gradient(ellipse 42% 26% at 50% 32%, rgba(0, 214, 240, 0.15), transparent 70%),
+      radial-gradient(ellipse 30% 18% at 54% 27%, rgba(167, 139, 250, 0.12), transparent 72%);
+  }
+}
