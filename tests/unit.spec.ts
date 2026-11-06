@@ -270,22 +270,37 @@ test("waitlist validation sanitises input and never trusts client-side priority"
 });
 
 
-test("waitlist status proof is signed, tamper-proof and needs a server secret", () => {
-  const previous = process.env.ADMIN_PASSWORD;
-  delete process.env.ADMIN_PASSWORD;
-  delete process.env.SUPABASE_SERVICE_ROLE_KEY;
-  expect(signWaitlistEmail("person@example.com")).toBeNull();
+test("waitlist status proof is signed only with the service-role key", () => {
+  const saved = {
+    admin: process.env.ADMIN_PASSWORD,
+    service: process.env.SUPABASE_SERVICE_ROLE_KEY,
+  };
+  try {
+    delete process.env.ADMIN_PASSWORD;
+    delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+    expect(signWaitlistEmail("person@example.com")).toBeNull();
 
-  process.env.ADMIN_PASSWORD = "unit-test-secret";
-  const token = signWaitlistEmail("person@example.com");
-  expect(token).toBeTruthy();
-  expect(verifyWaitlistToken(token!)).toBe("person@example.com");
-  expect(verifyWaitlistToken(undefined)).toBeNull();
-  expect(verifyWaitlistToken(token!.replace(/.$/, "x"))).toBeNull();
-  expect(verifyWaitlistToken("garbage")).toBeNull();
+    // ADMIN_PASSWORD must NOT be a fallback signing key.
+    process.env.ADMIN_PASSWORD = "unit-test-admin-secret";
+    expect(signWaitlistEmail("person@example.com")).toBeNull();
 
-  if (previous === undefined) delete process.env.ADMIN_PASSWORD;
-  else process.env.ADMIN_PASSWORD = previous;
+    process.env.SUPABASE_SERVICE_ROLE_KEY = "unit-test-service-role-key";
+    const token = signWaitlistEmail("person@example.com");
+    expect(token).toBeTruthy();
+    expect(verifyWaitlistToken(token!)).toBe("person@example.com");
+    expect(verifyWaitlistToken(undefined)).toBeNull();
+    expect(verifyWaitlistToken(token!.replace(/.$/, "x"))).toBeNull();
+    expect(verifyWaitlistToken("garbage")).toBeNull();
+
+    // Rotating the signing key invalidates old cookies.
+    delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+    expect(verifyWaitlistToken(token!)).toBeNull();
+  } finally {
+    if (saved.admin === undefined) delete process.env.ADMIN_PASSWORD;
+    else process.env.ADMIN_PASSWORD = saved.admin;
+    if (saved.service === undefined) delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+    else process.env.SUPABASE_SERVICE_ROLE_KEY = saved.service;
+  }
 });
 
 
