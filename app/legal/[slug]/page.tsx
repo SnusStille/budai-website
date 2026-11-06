@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { LEGAL_TITLES, LEGAL_TITLES_SV, isLegalSlug } from "@/lib/legal-slugs";
 import LegalView from "./LegalView";
+import SiteShell from "@/components/site/SiteShell";
 
 // Only these five slugs exist. Anything else must be a real 404 — previously
 // an unknown slug silently rendered the privacy policy with HTTP 200.
@@ -32,5 +33,5 @@ export async function generateMetadata({ params }: LegalPageProps): Promise<Meta
 export default async function LegalPage({ params }: LegalPageProps) {
   const { slug } = await params;
   if (!isLegalSlug(slug)) notFound();
-  return <LegalView slug={slug} />;
+  return <SiteShell><LegalView slug={slug} /></SiteShell>;
 }

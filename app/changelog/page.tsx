@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import ChangelogView from "@/components/ui/ChangelogView";
+import SiteShell from "@/components/site/SiteShell";
 
 // F1: the changelog is an indexable page, so its title/description follow the
 // server-resolved language (the visible copy already does via LanguageContext).
@@ -17,5 +18,5 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default function ChangelogPage() {
-  return <ChangelogView />;
+  return <SiteShell><ChangelogView /></SiteShell>;
 }

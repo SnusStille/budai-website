@@ -2,7 +2,6 @@
 
 import { MotionConfig } from "framer-motion";
 import { LangProvider } from "@/components/ui/LanguageContext";
-import LoadingScreen from "@/components/effects/LoadingScreen";
 import CommandPalette from "@/components/ui/CommandPalette";
 import { ToastProvider } from "@/components/ui/ToastStack";
 import { AuthProvider } from "@/components/auth/AuthProvider";
@@ -14,7 +13,6 @@ export default function Providers({ children, initialLang }: { children: React.R
   return (
     <MotionConfig reducedMotion="user">
       <LangProvider initialLang={initialLang}>
-        <LoadingScreen />
         <AuthProvider>
           <ToastProvider>
             <AuthHashHandler />

@@ -387,7 +387,7 @@ test("footer labels are honest and What's new resolves to the real changelog pag
   await expect(link).toHaveAttribute("href", "/changelog");
   await link.click();
   await expect(page).toHaveURL(/\/changelog$/);
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText(/What's new/);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(/Progress, documented honestly/);
 });
 
 test("security headers and a per-request CSP nonce let the app boot (B5)", async ({ page }) => {
@@ -588,10 +588,11 @@ test("data-handling page is honest, linked and indexed in both languages (E5)", 
 
 test("changelog page is indexable, bilingual and free of invented cadence claims (E6)", async ({ page, request }) => {
   await page.goto("/changelog");
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText(/What's new/);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(/Progress, documented honestly/);
   await expect(page.getByRole("heading", { name: "FAS1: security, honesty and CI" })).toBeVisible();
   const en = await page.locator("main").innerText();
-  expect(en).toContain("2026-11-06");
+  await expect(page.locator('time[datetime="2026-11-06"]')).toBeVisible();
+  await expect(page.locator('time[datetime="2026-11-07"]')).toBeVisible();
   expect(en).toContain("Current preview");
   expect(en).toContain("How your data is handled");
   expect(en).not.toContain("2026-10-26");
@@ -603,16 +604,16 @@ test("changelog page is indexable, bilingual and free of invented cadence claims
   expect(canonical).toContain("/changelog");
 
   await page.getByRole("button", { name: "SV", exact: true }).click();
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText(/Vad är nytt/);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(/Framsteg, dokumenterade ärligt/);
   const sv = await page.locator("main").innerText();
   expect(sv).toContain("FAS1: säkerhet, ärlighet och CI");
-  expect(sv).toContain("Nuvarande förhandsvisning");
+  expect(sv).toContain("Aktuell preview");
   expect(sv).not.toMatch(/varje vecka|varje månad/i);
   await page.getByRole("button", { name: "EN", exact: true }).click();
 
   // The in-app quick peek still works, uses the same data and links to the page.
   await page.goto("/#whats-new");
-  const dialog = page.getByRole("dialog", { name: "What's new", exact: true });
+  const dialog = page.getByRole("dialog", { name: /What.s new/ });
   await expect(dialog).toBeVisible();
   await expect(dialog.getByRole("link", { name: "View the full changelog" })).toHaveAttribute("href", "/changelog");
   expect(await dialog.innerText()).not.toMatch(/every week/i);
@@ -630,8 +631,11 @@ test("unknown legal slugs are real 404s and logo links point home (A6)", async (
   await page.goto("/");
   await expect(page.locator("[data-budai-logo]")).toHaveAttribute("href", "/");
   await expect(
-    page.locator("#continuation").getByRole("link", { name: "BudAI home", exact: true })
+    page.locator("#continuation").getByRole("link", { name: "Stilledev home", exact: true })
   ).toHaveAttribute("href", "/");
+  await expect(
+    page.locator("#continuation").getByRole("link", { name: /BudAI Primary product/ })
+  ).toHaveAttribute("href", "/budai");
 });
 
 test("F1: /sv is a real Swedish page, hreflang is reciprocal and the cookie survives a reload", async ({ page, request }) => {

@@ -47,7 +47,7 @@ export default function CookieConsent() {
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 24, opacity: 0 }}
           transition={{ duration: 0.3 }}
-          className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[55] w-[calc(100%-1.5rem)] max-w-md"
+          className="cookie-consent fixed bottom-4 left-1/2 -translate-x-1/2 z-[55] w-[calc(100%-1.5rem)] max-w-md"
           role="dialog"
           aria-label={t.cookie.title}
         >
@@ -74,7 +74,7 @@ export default function CookieConsent() {
                 <button
                   type="button"
                   onClick={() => save("accepted")}
-                  className="px-3 py-1.5 text-[11px] font-semibold rounded-lg bg-gradient-to-r from-accent-cyan to-accent-purple text-white"
+                  className="cookie-consent-accept px-3 py-1.5 text-[11px] font-semibold rounded-lg"
                 >
                   {t.cookie.accept}
                 </button>

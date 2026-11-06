@@ -33,7 +33,7 @@ test("research is explicit about no search and workspace actions use the edited 
     };
   });
   await page.getByRole("button", { name: "Research", exact: true }).click();
-  await expect(page.getByText(/does not search the web/)).toBeVisible();
+  await expect(page.locator("#playground").getByText(/does not search the web/)).toBeVisible();
   await page.getByRole("textbox", { name: "Message BudAI" }).fill("A question");
   await page.getByRole("button", { name: "Send message" }).click();
   const editor = page.getByRole("textbox", { name: "Edit workspace" });

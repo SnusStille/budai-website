@@ -1,325 +1,187 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { Menu, X, Globe, Bell } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { ArrowUpRight, Command, Menu, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { useLang } from "@/components/ui/LanguageContext";
-import BudAIWordmark from "@/components/ui/BudAIWordmark";
-import BudAILogo from "@/components/ui/BudAILogo";
-import { subscribeJourney } from "@/lib/experience/scroll";
+import BudAILogo, { StilledevMark } from "@/components/ui/BudAILogo";
 
+const LINKS = [
+  { id: "budai", en: "BudAI", sv: "BudAI", href: "/budai" },
+  { id: "labs", en: "Labs", sv: "Lab", href: "/labs" },
+  { id: "changelog", en: "What’s new", sv: "Vad är nytt", href: "/changelog" },
+  { id: "roadmap", en: "Roadmap", sv: "Roadmap", href: "/roadmap" },
+  { id: "knowledge", en: "Knowledge", sv: "Kunskap", href: "/knowledge" },
+  { id: "about", en: "About", sv: "Om oss", href: "/about" },
+] as const;
 
 export default function Navbar() {
-  const [busy, setBusy] = useState(false);
-  useEffect(() => {
-    const on = (e: Event) => setBusy(!!(e as CustomEvent<boolean>).detail);
-    window.addEventListener("budai:busy", on);
-    return () => window.removeEventListener("budai:busy", on);
-  }, []);
+  const pathname = usePathname();
+  const { lang, setLang } = useLang();
+  const sv = lang === "sv";
+  const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [active, setActive] = useState("");
-  const { lang, setLang, t } = useLang();
-  const mobileMenu = useRef<HTMLDivElement>(null);
-  const menuToggle = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => subscribeJourney((frame) => {
-    setScrolled(frame.y > 40);
-    setActive(frame.active);
-  }), []);
+  const [busy, setBusy] = useState(false);
+  const toggle = useRef<HTMLButtonElement>(null);
+  const menu = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 24);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useEffect(() => {
+    const onBusy = (event: Event) => setBusy(Boolean((event as CustomEvent<boolean>).detail));
+    window.addEventListener("budai:busy", onBusy);
+    return () => window.removeEventListener("budai:busy", onBusy);
+  }, []);
+
+  useEffect(() => setOpen(false), [pathname]);
+
+  useEffect(() => {
+    if (!open) return;
     const previous = document.body.style.overflow;
-    if (mobileOpen) document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = previous; };
-  }, [mobileOpen]);
-
-  useEffect(() => {
-    if (!mobileOpen) return;
-    const toggle = menuToggle.current;
-    const wide = window.matchMedia("(min-width: 1024px)");
-    const focusable = () => [toggle, ...Array.from(mobileMenu.current?.querySelectorAll<HTMLElement>("a[href], button:not([disabled])") ?? [])].filter((element): element is HTMLElement => !!element);
-    mobileMenu.current?.querySelector<HTMLElement>("a[href]")?.focus({ preventScroll: true });
+    document.body.style.overflow = "hidden";
+    const toggleButton = toggle.current;
+    const first = menu.current?.querySelector<HTMLElement>("a[href]");
+    first?.focus({ preventScroll: true });
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") { event.preventDefault(); setMobileOpen(false); }
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setOpen(false);
+        return;
+      }
       if (event.key !== "Tab") return;
-      const items = focusable();
-      const first = items[0], last = items[items.length - 1];
-      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
-      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+      const items = [
+        toggleButton,
+        ...Array.from(menu.current?.querySelectorAll<HTMLElement>("a[href], button:not([disabled])") ?? []),
+      ].filter((item): item is HTMLElement => Boolean(item));
+      const firstItem = items[0];
+      const lastItem = items[items.length - 1];
+      if (event.shiftKey && document.activeElement === firstItem) {
+        event.preventDefault();
+        lastItem?.focus();
+      } else if (!event.shiftKey && document.activeElement === lastItem) {
+        event.preventDefault();
+        firstItem?.focus();
+      }
     };
-    const onWide = () => { if (wide.matches) setMobileOpen(false); };
+    const desktop = window.matchMedia("(min-width: 1100px)");
+    const onDesktop = () => desktop.matches && setOpen(false);
     window.addEventListener("keydown", onKey);
-    wide.addEventListener("change", onWide);
+    desktop.addEventListener("change", onDesktop);
     return () => {
+      document.body.style.overflow = previous;
       window.removeEventListener("keydown", onKey);
-      wide.removeEventListener("change", onWide);
-      toggle?.focus({ preventScroll: true });
+      desktop.removeEventListener("change", onDesktop);
+      toggleButton?.focus({ preventScroll: true });
     };
-  }, [mobileOpen]);
+  }, [open]);
 
-  const links = [
-    { label: t.nav.playground, href: "#playground", id: "playground" },
-    { label: t.nav.capabilities, href: "#capabilities", id: "capabilities" },
-    { label: lang === "sv" ? "Byggaren" : "Builder", href: "#about", id: "about" },
-    { label: t.nav.roadmap, href: "#roadmap", id: "roadmap" },
-  ];
+  const languageSwitcher = (mobile = false) => (
+    <div className={`v2-language ${mobile ? "v2-language-mobile" : ""}`} role="group" aria-label={sv ? "Språk" : "Language"}>
+      {(["en", "sv"] as const).map((code) => (
+        <button
+          key={code}
+          type="button"
+          onClick={() => setLang(code)}
+          aria-pressed={lang === code}
+          className={lang === code ? "is-active" : ""}
+        >
+          {code.toUpperCase()}
+        </button>
+      ))}
+    </div>
+  );
 
   return (
     <>
-      <motion.nav
-        initial={{ y: -80, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.6, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
-        className={`site-navigation fixed top-0 left-0 right-0 z-[60] transition-all duration-400 ${
-          scrolled
-            ? "glass-strong shadow-lg shadow-black/30 border-b border-white/[0.07] backdrop-blur-xl"
-            : "bg-transparent"
-        }`}
-      >
-        <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 lg:h-[4.5rem] lg:grid lg:grid-cols-[1fr_auto_1fr]">
-            <Link
-              href="/"
-              data-budai-logo
-              className="flex items-center gap-2.5 group outline-none focus-visible:ring-2 focus-visible:ring-accent-cyan/50 rounded-lg"
-              aria-label="BudAI home"
-              onClick={(e) => {
-                // On the landing page scroll to top instead of reloading; on any
-                // other route let the link navigate home. No dead hash-only links.
-                if (window.location.pathname === "/") {
-                  e.preventDefault();
-                  if (window.scrollY > 300) window.scrollTo({ top: 0, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
-                }
-                (e.currentTarget as HTMLElement).blur();
-                // Progressive easter egg: every click advances the sequence (see LogoEasterEgg)
-                window.dispatchEvent(new CustomEvent("budai:logo-click", { detail: { el: e.currentTarget } }));
-              }}
+      <header className={`site-navigation v2-nav ${scrolled || open ? "is-scrolled" : ""}`}>
+        <div className="v2-nav-inner">
+          <Link
+            href="/"
+            className="v2-brand"
+            aria-label="Stilledev home"
+            data-budai-logo
+            onClick={(event) => window.dispatchEvent(new CustomEvent("budai:logo-click", { detail: { el: event.currentTarget } }))}
+          >
+            <StilledevMark size={27} />
+            <span>STILLEDEV</span>
+            <i aria-hidden="true" />
+            <small>{sv ? "PROGRAMVARA & AI" : "SOFTWARE & AI"}</small>
+          </Link>
+
+          <nav className="v2-nav-links" aria-label={sv ? "Huvudnavigation" : "Main navigation"}>
+            {LINKS.map((link) => {
+              const active = pathname === link.href || (link.href === "/budai" && (pathname === "/" || pathname === "/sv"));
+              return (
+                <Link key={link.id} href={link.href} className={active ? "is-active" : ""} aria-current={active ? "page" : undefined}>
+                  {sv ? link.sv : link.en}
+                </Link>
+              );
+            })}
+          </nav>
+
+          <div className="v2-nav-actions">
+            {languageSwitcher()}
+            <button
+              type="button"
+              className="v2-command"
+              aria-label={sv ? "Öppna kommandopalett" : "Open command palette"}
+              title={sv ? "Kommandopalett (⌘K)" : "Command palette (⌘K)"}
+              onClick={() => window.dispatchEvent(new Event("budai:command-palette"))}
             >
-              <span className="transition-transform duration-300 group-active:scale-95 group-hover:scale-105 inline-flex">
-                <BudAILogo size="sm" animated mode={busy ? "thinking" : "idle"} />
-              </span>
-              <span className="flex flex-col leading-none">
-                <BudAIWordmark className="nav-wordmark" />
-                <span className="mt-1.5 hidden items-center gap-1.5 font-mono text-[9px] uppercase tracking-[0.2em] text-white/40 sm:flex">
-                  DEVELOPED BY <b className="font-bold text-accent-cyan [text-shadow:0_0_12px_rgba(0,229,255,0.55)]">STILLEDEV</b>
-                </span>
-              </span>
-            </Link>
-
-            <div className="hidden lg:flex items-center gap-0.5">
-              {links.map((l) => {
-                const isActive = active === l.id;
-                return (
-                  <a
-                    key={l.href}
-                    href={l.href}
-                    className={`relative px-3.5 py-2 text-sm rounded-lg transition-colors ${
-                      isActive
-                        ? "text-white"
-                        : l.id === "playground"
-                          ? "text-accent-cyan hover:text-white hover:bg-white/5"
-                          : "text-muted hover:text-white hover:bg-white/5"
-                    }`}
-                  >
-                    {l.label}
-                    <span
-                      className={`absolute bottom-1 left-1/2 -translate-x-1/2 h-0.5 rounded-full bg-accent-cyan transition-all duration-300 ${
-                        isActive ? "w-5 opacity-100 shadow-[0_0_8px_rgba(0,229,255,0.6)]" : "w-0 opacity-0"
-                      }`}
-                    />
-                  </a>
-                );
-              })}
-            </div>
-
-            <div className="hidden lg:flex items-center gap-2.5 lg:justify-self-end">
-              <div
-                className="flex items-center p-0.5 rounded-full bg-black/40 border border-white/[0.08] shadow-inner"
-                role="group"
-                aria-label="Language"
-              >
-                {(["en", "sv"] as const).map((code) => (
-                  <button
-                    key={code}
-                    type="button"
-                    onClick={() => setLang(code)}
-                    aria-pressed={lang === code}
-                    className={`relative min-w-[2.6rem] px-3 py-1.5 text-[11px] font-semibold tracking-wide rounded-full transition-all ${
-                      lang === code
-                        ? "bg-gradient-to-r from-accent-cyan to-accent-purple text-white shadow-[0_0_16px_rgba(0,229,255,0.25)]"
-                        : "text-muted/70 hover:text-white"
-                    }`}
-                  >
-                    {code === "en" ? "EN" : "SV"}
-                  </button>
-                ))}
-              </div>
-
-              <button
-                type="button"
-                onClick={() => window.dispatchEvent(new Event("budai:command-palette"))}
-                aria-label={lang === "sv" ? "Öppna kommandopalett (⌘K)" : "Open command palette (⌘K)"}
-                title={lang === "sv" ? "Kommandopalett (⌘K)" : "Command palette (⌘K)"}
-                className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.08] bg-black/30 px-2.5 py-1.5 font-mono text-[10px] text-white/70 transition-colors hover:border-accent-cyan/40 hover:text-white"
-              >
-                <span>⌘K</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => window.dispatchEvent(new Event("budai:whats-new"))}
-                aria-label={lang === "sv" ? "Vad är nytt" : "What's new"}
-                className="relative rounded-full border border-white/[0.08] p-2 text-white/70 transition-colors hover:border-accent-cyan/40 hover:text-white"
-              >
-                <Bell className="h-4 w-4" />
-                <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-accent-cyan" />
-              </button>
-              <a href="#playground" className="rounded-full border border-white/15 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:border-accent-cyan/40">
-                Playground
-              </a>
-              <a href="#waitlist" className="btn-primary !px-5 !py-2.5 text-sm">
-                <span>{t.nav.requestAccess}</span>
-              </a>
-            </div>
-
-            <div className="flex items-center gap-2 lg:hidden">
-              <div className="flex items-center rounded-full border border-white/[0.08] bg-black/40 p-0.5" role="group" aria-label="Language">
-                {(["en", "sv"] as const).map((code) => (
-                  <button
-                    key={code}
-                    type="button"
-                    onClick={() => setLang(code)}
-                    aria-pressed={lang === code}
-                    className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ${lang === code ? "bg-gradient-to-r from-accent-cyan to-accent-purple text-white" : "text-muted/70"}`}
-                  >
-                    {code.toUpperCase()}
-                  </button>
-                ))}
-              </div>
-              <a href="#playground" className="rounded-full bg-accent-cyan px-3.5 py-1.5 text-xs font-semibold text-[#020205]">
-                {lang === "sv" ? "Prova" : "Try"}
-              </a>
-              <button
-              ref={menuToggle}
-              aria-controls="mobile-navigation"
-              onClick={() => setMobileOpen(!mobileOpen)}
-              className="p-2 text-white rounded-lg hover:bg-white/5 transition-colors"
-              aria-label={mobileOpen ? "Close menu" : "Open menu"}
-              aria-expanded={mobileOpen}
-            >
-              {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              <Command size={13} aria-hidden="true" /><span>K</span>
             </button>
+            <Link href="/#playground" className="v2-nav-cta">
+              <BudAILogo size="xs" animated mode={busy ? "thinking" : "idle"} />
+              <span>{sv ? "Prova BudAI" : "Try BudAI"}</span>
+              <ArrowUpRight size={14} aria-hidden="true" />
+            </Link>
+          </div>
+
+          <div className="v2-nav-mobile-actions">
+            {languageSwitcher(true)}
+            <Link href="/#playground" className="v2-mobile-try">{sv ? "Prova" : "Try"}</Link>
+            <button
+              ref={toggle}
+              type="button"
+              className="v2-menu-toggle"
+              aria-label={open ? (sv ? "Stäng meny" : "Close menu") : (sv ? "Öppna meny" : "Open menu")}
+              aria-expanded={open}
+              aria-controls="mobile-navigation"
+              onClick={() => setOpen((value) => !value)}
+            >
+              {open ? <X size={22} /> : <Menu size={22} />}
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {open && (
+        <div className="v2-mobile-menu" id="mobile-navigation" ref={menu} role="navigation" aria-label={sv ? "Mobilnavigation" : "Mobile navigation"}>
+          <div className="v2-mobile-menu-inner">
+            <p>{sv ? "UTFORSKA STILLEDEV" : "EXPLORE STILLEDEV"}</p>
+            {LINKS.map((link, index) => {
+              const active = pathname === link.href || (link.href === "/budai" && (pathname === "/" || pathname === "/sv"));
+              return (
+                <Link key={link.id} href={link.href} className={active ? "is-active" : ""} onClick={() => setOpen(false)}>
+                  <span>0{index + 1}</span>{sv ? link.sv : link.en}<ArrowUpRight size={18} />
+                </Link>
+              );
+            })}
+            <div className="v2-mobile-menu-bottom">
+              <button type="button" onClick={() => { setOpen(false); window.dispatchEvent(new Event("budai:command-palette")); }}>
+                <Command size={15} />{sv ? "Kommandopalett" : "Command palette"}<kbd>⌘K</kbd>
+              </button>
+              <a href="mailto:Stilleinc@hotmail.com">Stilleinc@hotmail.com<ArrowUpRight size={14} /></a>
             </div>
           </div>
         </div>
-      </motion.nav>
-
-      <AnimatePresence>
-        {mobileOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[55] lg:hidden"
-          >
-            <div
-              className="absolute inset-0 bg-[#020205]/95 backdrop-blur-2xl"
-              onClick={() => setMobileOpen(false)}
-            />
-            <div ref={mobileMenu} id="mobile-navigation" role="navigation" aria-label="Mobile navigation" className="relative pt-24 px-6 flex flex-col gap-1 max-h-screen overflow-y-auto pb-10">
-              {links.map((l, i) => (
-                <motion.a
-                  key={l.href}
-                  href={l.href}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.04 }}
-                  onClick={() => setMobileOpen(false)}
-                  className={`px-4 py-3.5 text-lg rounded-xl transition-colors ${
-                    active === l.id
-                      ? "text-white bg-white/5 border border-accent-cyan/20"
-                      : "text-white/80 hover:text-white hover:bg-white/5"
-                  }`}
-                >
-                  {l.label}
-                </motion.a>
-              ))}
-
-              <div className="flex items-center gap-3 mt-4 px-4">
-                <Globe className="w-4 h-4 text-muted" />
-                <div className="flex p-0.5 rounded-full bg-black/40 border border-white/[0.08]">
-                  <button
-                    type="button"
-                    onClick={() => setLang("en")}
-                    className={`px-4 py-2 text-sm font-semibold rounded-full ${
-                      lang === "en"
-                        ? "bg-gradient-to-r from-accent-cyan to-accent-purple text-white"
-                        : "text-muted"
-                    }`}
-                  >
-                    English
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setLang("sv")}
-                    className={`px-4 py-2 text-sm font-semibold rounded-full ${
-                      lang === "sv"
-                        ? "bg-gradient-to-r from-accent-cyan to-accent-purple text-white"
-                        : "text-muted"
-                    }`}
-                  >
-                    Svenska
-                  </button>
-                </div>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-2 mt-3 px-4">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMobileOpen(false);
-                    window.dispatchEvent(new Event("budai:command-palette"));
-                  }}
-                  className="inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.03] px-3.5 py-2 text-xs font-medium text-white/85 hover:text-white"
-                >
-                  <span className="font-mono text-[10px] text-accent-cyan">⌘K</span>
-                  {lang === "sv" ? "Kommandopalett" : "Command palette"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMobileOpen(false);
-                    window.dispatchEvent(new Event("budai:whats-new"));
-                  }}
-                  className="inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.03] px-3.5 py-2 text-xs font-medium text-white/85 hover:text-white"
-                >
-                  <Bell className="h-3.5 w-3.5 text-accent-cyan" />
-                  {lang === "sv" ? "Vad är nytt" : "What's new"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMobileOpen(false);
-                    window.dispatchEvent(new Event("budai:feedback"));
-                  }}
-                  className="inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.03] px-3.5 py-2 text-xs font-medium text-white/85 hover:text-white"
-                >
-                  {lang === "sv" ? "Skicka feedback" : "Send feedback"}
-                </button>
-              </div>
-
-              <a
-                href="#waitlist"
-                onClick={() => setMobileOpen(false)}
-                className="mt-4 btn-primary !py-3.5 text-center"
-              >
-                <span>{t.nav.requestAccess}</span>
-              </a>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      )}
     </>
   );
 }
