@@ -634,3 +634,17 @@ test("FAS2: static 3D scenery is frozen and moving pulses are instanced", () => 
   expect(world).toContain("lite ? 1 : 2");
   expect(world).toContain("lite ? 1 : 3");
 });
+
+test("FAS2 round 2: ambient plate is small, referenced and chapter-reactive", () => {
+  const css = readFileSync("app/design-system.css", "utf8");
+  const plate = readFileSync("public/ambient/aurora.webp");
+  expect(plate.subarray(0, 4).toString("ascii")).toBe("RIFF");
+  expect(plate.subarray(8, 12).toString("ascii")).toBe("WEBP");
+  expect(plate.length, "ambient plate must stay lightweight").toBeLessThan(60_000);
+  expect(css).toContain('url("/ambient/aurora.webp")');
+  expect(css).toContain("var(--journey-phase, 0)");
+  expect(css).toContain("hue-rotate");
+  for (const section of [".brain-journey", ".capabilities-universe", ".builder-section", ".roadmap-section"]) {
+    expect(css, `${section} gets its own colour identity`).toContain(section);
+  }
+});

@@ -67,3 +67,38 @@ Next steps (not in this pass): three-tier quality (`lite / balanced / ultra`)
 selected by `deviceMemory` + measured frame time, a CI draw-call budget,
 `useReportWebVitals`/Lighthouse CI, and splitting `AIPlayground.tsx` to bring
 First Load JS down from ~377 kB.
+
+## Round 2 — a visibly stronger identity
+
+The first pass was deliberately subtle. Round 2 makes the difference obvious
+while staying paint-only:
+
+- **Ambient plate**: `public/ambient/aurora.webp` (12 kB, 1600×900, WebP). A
+  hand-authored dark aurora ribbon is painted on `.universe-atmosphere::before`
+  behind the WebGL canvas. It uses the existing `--journey-phase` variable that
+  `WorldStage` already writes on `<html>` for parallax (`background-position`)
+  and a slow `hue-rotate` drift, so the backdrop changes colour as the visitor
+  moves through the chapters. No new JS, no new scroll listener.
+- **Scrim**: `::after` adds a left-side dark gradient so the hero/workshop copy
+  stays readable over the bright part of the plate. The plate, the scrim and the
+  vignette all sit below `.universe-world` (`z-index: 1`) — the 3D is never
+  dimmed and the DOM content is never covered.
+- **Chapter identity**: `.brain-journey` (cyan), `.capabilities-universe`
+  (violet), `.builder-section` (teal), `.roadmap-section` (blue) and the
+  early-access card each get their own radial wash instead of one endless blue
+  gradient.
+- **Hero**: `h1` scales up to `clamp(54px, 6.6vw, 96px)`, the eyebrow becomes a
+  glass pill, and a two-colour halo sits behind the neural brain.
+- **Navigation, dividers, composer, footer**: one consistent accent seam,
+  a glass nav with a real border, a lifted composer surface and a warmer ending
+  gradient.
+- **3D palette**: `CYAN`/`LAVENDER` in `world.ts` saturated
+  (`#5fe3f7` / `#a78bfa`), and the WebGL canvas grade raised to
+  `saturate(1.24) contrast(1.075)`.
+
+`tests/unit.spec.ts` guards the WebP magic bytes, the 60 kB size cap, the CSS
+reference and the chapter-reactive variable so the asset cannot silently bloat
+or disappear. QA stills: `test-results/fas2-v3-*.png` (gitignored).
+
+> Note: these changes live on the FAS2 branch / PR. Production
+> `https://stilledev.se` still serves `main` until the PR is merged.
