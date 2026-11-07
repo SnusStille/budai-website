@@ -21,7 +21,7 @@ test("Builder opens the separate Labs page and project names are non-clickable",
   await expect(portal.getByRole("link", { name: /Enter Labs/ })).toHaveAttribute("href", "/labs");
   await portal.getByRole("link", { name: /Enter Labs/ }).click();
   await expect(page).toHaveURL(/\/labs$/);
-  await expect(page.getByRole("heading", { name: /Ideas brought.*to life/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Digital ideas.*Built for real life/ })).toBeVisible();
   const projects = page.locator("#projects");
   await expect(projects.locator(".lab-project-row")).toHaveCount(5);
   for (const name of ["BudAI", "StilleAffe", "Anna’s Second Brain", "Harvis", "Julia Stille Real Estate"]) await expect(projects.locator(".lab-project-list").getByRole("heading", { name, exact: true })).toBeVisible();
@@ -92,8 +92,8 @@ test("3D artwork loads when motion is enabled without blocking navigation", asyn
   await page.goto("/labs");
   await expect(page.locator(".lab-art")).toBeVisible();
   // A WebGL canvas is optional: the static artwork is the graceful fallback.
-  await expect(page.getByRole("link", { name: /Explore the projects/ })).toBeVisible();
-  await page.getByRole("link", { name: /Explore the projects/ }).click();
+  await expect(page.locator(".lab-primary")).toBeVisible();
+  await page.locator(".lab-primary").click();
   await expect(page).toHaveURL(/#projects$/);
 });
 
@@ -158,4 +158,45 @@ test("concept videos play when visible and respect a manual pause", async ({ pag
   await page.locator("#top").scrollIntoViewIfNeeded();
   await video.scrollIntoViewIfNeeded();
   await expect.poll(() => video.evaluate((v: HTMLVideoElement) => v.paused)).toBe(true);
+});
+
+
+test("canonical-domain phone visitors receive the desktop-first welcome, not the site", async ({ request }) => {
+  const iphone = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1";
+  const android = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Mobile Safari/537.36";
+  for (const path of ["/", "/sv", "/labs", "/sv/labs"]) {
+    for (const agent of [iphone, android]) {
+      const response = await request.get(path, { headers: { host: "stilledev.se", "user-agent": agent } });
+      expect(response.ok()).toBeTruthy();
+      expect(response.headers()["cache-control"]).toContain("no-store");
+      const html = await response.text();
+      expect(html).toContain("Fel branch");
+      expect(html).toContain("Om Stilledev");
+      expect(html).not.toContain('class="lab-page"');
+      expect(html).not.toContain('class="journey-page');
+    }
+  }
+  // Ordinary desktop browsers, tablets, crawlers and the preview host stay unchanged.
+  for (const [host, agent] of [["stilledev.se", "Mozilla/5.0 (X11; Linux x86_64) Chrome/120"], ["stilledev.se", "Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X)"], ["stilledev.se", "Mozilla/5.0 (Linux; Android 6.0; Nexus 5X) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Mobile Safari/537.36 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"], ["preview.vercel.app", iphone]]) {
+    const html = await (await request.get("/labs", { headers: { host, "user-agent": agent } })).text();
+    expect(html).toContain('class="lab-page"');
+  }
+});
+
+test("phone welcome preview is readable, expandable, bilingual and has no bypass", async ({ page, request }) => {
+  await quietChrome(page);
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.setViewportSize({ width: 320, height: 720 });
+  const response = await request.get("/phone-preview");
+  expect((await response.text())).toContain('name="robots" content="noindex, nofollow"');
+  await page.goto("/phone-preview");
+  await expect(page.getByRole("heading", { name: /Fel branch/ })).toBeVisible();
+  await expect(page.locator(".phone-content")).toContainText("dator");
+  await page.getByText("Om Stilledev", { exact: true }).click();
+  await expect(page.locator(".phone-about")).toContainText("företagare och privatpersoner");
+  await expect(page.locator(".phone-about a[href^='mailto:']")).toBeVisible();
+  await expect(page.locator(".phone-welcome a[href='/']")).toHaveCount(0);
+  await page.getByRole("button", { name: "EN", exact: true }).click();
+  await expect(page.getByRole("heading", { name: /Wrong branch/ })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
 });
