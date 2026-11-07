@@ -292,6 +292,15 @@ for (const ua of [iphone, android]) {
     expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
     await input.fill("First line"); await input.press("Enter"); await input.pressSequentially("Second line");
     await expect(input).toHaveValue("First line\nSecond line"); expect(calls).toBe(0);
+    const inputBox = await input.boundingBox(); expect(inputBox!.width).toBeGreaterThanOrEqual(140);
+    const more = page.getByRole("button", { name: "More options", exact: true });
+    await expect(more).toHaveAttribute("aria-expanded", "false");
+    await expect(page.getByRole("button", { name: "Routines", exact: true })).toBeHidden();
+    await more.click(); await expect(more).toHaveAttribute("aria-expanded", "true");
+    await page.locator("#phone-chat-options select[aria-label=Persona]").selectOption("coder");
+    await more.click(); await expect(page.getByText("Active persona: Coder", { exact: true })).toBeVisible();
+    await expect(input).toHaveValue("First line\nSecond line");
+    await more.click(); await expect(page.locator("#phone-chat-options select[aria-label=Persona]")).toHaveValue("coder");
     await page.getByRole("button", { name: "Routines", exact: true }).click();
     const panel = page.locator("[data-routines-panel]"); await expect(panel).toBeVisible();
     const panelBox = await panel.boundingBox(); expect(panelBox).not.toBeNull();
@@ -300,6 +309,10 @@ for (const ua of [iphone, android]) {
     await page.screenshot({ path: `test-results/phone-routines-${ua.includes("iPhone") ? "iphone" : "android"}.png` });
     expect(await panel.getByPlaceholder("Name").evaluate(el => parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(16);
     await panel.getByRole("button", { name: "Close routines" }).click(); await expect(panel).toHaveCount(0);
+    await expect(input).toHaveValue("First line\nSecond line"); expect(calls).toBe(0);
+    await page.getByRole("button", { name: "Tools", exact: true }).click();
+    page.once("dialog", dialog => dialog.dismiss());
+    await page.locator("[data-phone-tools]").getByRole("button", { name: "Surprise me", exact: true }).click();
     await expect(input).toHaveValue("First line\nSecond line"); expect(calls).toBe(0);
     const historyButton = page.getByRole("button", { name: "Chat history", exact: true });
     await historyButton.click();
@@ -336,3 +349,56 @@ for (const ua of [iphone, android]) {
     await context.close();
   });
 }
+
+for (const ua of [iphone, android]) {
+  test(`phone language choice survives reload without replacing a draft (${ua.includes("iPhone") ? "iPhone" : "Android"})`, async ({ browser }) => {
+    const context = await browser.newContext({ userAgent: ua, viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, reducedMotion: "reduce" });
+    const page = await context.newPage(); await quiet(page);
+    await page.goto("/sv#playground");
+    const input = page.getByRole("textbox", { name: "Meddelande till BudAI" });
+    await input.fill("Behåll mitt utkast.");
+    await page.locator(".phone-languages").getByRole("button", { name: "EN" }).click();
+    await expect(page).toHaveURL(/\/#playground$/);
+    await expect(page.getByRole("textbox", { name: "Message BudAI" })).toHaveValue("Behåll mitt utkast.");
+    await expect(page.locator("html")).toHaveAttribute("lang", "en");
+    await page.reload();
+    await expect(page.locator("html")).toHaveAttribute("lang", "en");
+    await expect(page.getByRole("heading", { name: /Big site.*Little screen/ })).toBeVisible();
+    await page.locator(".phone-languages").getByRole("button", { name: "SV" }).click();
+    await page.reload();
+    await expect(page.locator("html")).toHaveAttribute("lang", "sv");
+    await expect(page.getByRole("heading", { name: /Stor sajt.*Liten skärm/ })).toBeVisible();
+    await context.close();
+  });
+}
+
+test("switching phone language does not interrupt an active response", async ({ browser }) => {
+  const context = await browser.newContext({ userAgent: iphone, viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, reducedMotion: "reduce" });
+  const page = await context.newPage(); await quiet(page); await page.goto("/sv#playground");
+  await page.evaluate(() => {
+    const original = window.fetch.bind(window);
+    const state = window as Window & { finishMobileStream?: () => void; mobileStreamRequests?: number };
+    state.mobileStreamRequests = 0;
+    window.fetch = async (resource, init) => {
+      if (!String(resource).endsWith("/api/playground")) return original(resource, init);
+      state.mobileStreamRequests = (state.mobileStreamRequests || 0) + 1;
+      const encoder = new TextEncoder();
+      return new Response(new ReadableStream({
+        start(controller) {
+          controller.enqueue(encoder.encode("First part. "));
+          state.finishMobileStream = () => { controller.enqueue(encoder.encode('Second part.\u0000{"memory":null}')); controller.close(); };
+        },
+      }), { headers: { "Content-Type": "text/plain" } });
+    };
+  });
+  await page.getByRole("textbox", { name: "Meddelande till BudAI" }).fill("Fortsätt svara medan jag byter språk.");
+  await page.getByRole("button", { name: "Skicka meddelande" }).click();
+  await expect(page.getByRole("button", { name: "Stoppa svaret" })).toBeVisible();
+  await page.locator(".phone-languages").getByRole("button", { name: "EN" }).click();
+  await expect(page).toHaveURL(/\/#playground$/);
+  await expect(page.getByRole("button", { name: "Stop response" })).toBeVisible();
+  await page.evaluate(() => (window as Window & { finishMobileStream?: () => void }).finishMobileStream?.());
+  await expect(page.locator("#playground").getByText("First part. Second part.", { exact: true })).toBeVisible();
+  expect(await page.evaluate(() => (window as Window & { mobileStreamRequests?: number }).mobileStreamRequests)).toBe(1);
+  await context.close();
+});

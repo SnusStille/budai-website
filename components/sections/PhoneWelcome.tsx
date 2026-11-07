@@ -9,17 +9,27 @@ import { useLang } from "@/components/ui/LanguageContext";
 import { openCookieSettings } from "@/lib/consent";
 
 /** A small-screen home for the actual Playground; the rest of the site stays desktop-first. */
-export default function PhoneWelcome() {
+export default function PhoneWelcome({ normalizeLanguagePath = false }: { normalizeLanguagePath?: boolean }) {
   const { lang, setLang } = useLang();
   const sv = lang === "sv";
+  const changeLanguage = (next: "sv" | "en") => {
+    setLang(next);
+    // /sv is authoritative on reload. Leave it when English is explicitly chosen,
+    // without remounting the Playground or discarding a draft or active stream.
+    if (normalizeLanguagePath && next === "en" && (location.pathname === "/sv" || location.pathname.startsWith("/sv/"))) {
+      const url = new URL(location.href);
+      url.pathname = "/";
+      window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
+    }
+  };
 
   return (
     <div className="phone-welcome">
       <header className="phone-header">
         <div className="phone-brand"><BudAIWordmark size="sm" /><span>by Stilledev</span></div>
         <div className="phone-languages" role="group" aria-label={sv ? "Välj språk" : "Choose language"}>
-          <button type="button" onClick={() => setLang("sv")} aria-pressed={sv}>SV</button>
-          <button type="button" onClick={() => setLang("en")} aria-pressed={!sv}>EN</button>
+          <button type="button" onClick={() => changeLanguage("sv")} aria-pressed={sv}>SV</button>
+          <button type="button" onClick={() => changeLanguage("en")} aria-pressed={!sv}>EN</button>
         </div>
       </header>
 

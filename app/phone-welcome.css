@@ -58,3 +58,15 @@ html[data-pg-keyboard="open"] .phone-welcome [data-playground-surface].fixed { h
 .phone-welcome [data-routines-panel] button[aria-label] { min-width:44px; }
 @media (max-width:380px) { .phone-welcome [data-phone-guest-status] { display:none; } }
 .phone-welcome [data-phone-chat-toast] { top:12px; bottom:auto; left:12px; right:12px; max-width:none; pointer-events:none; }
+
+/* Keep the composer compact until a visitor needs the secondary controls. */
+.phone-composer-bar { display:flex; align-items:center; justify-content:space-between; gap:6px; margin-bottom:7px; }
+.phone-options-toggle { display:inline-flex; align-items:center; justify-content:center; gap:5px; min-height:44px; padding:0 10px; border:1px solid #29434d; border-radius:12px; color:#c6dbe0; background:#0d1d25; font-size:11px; font-weight:650; white-space:nowrap; }
+.phone-options-toggle:focus-visible { outline:2px solid #f5df9c; outline-offset:2px; }
+.phone-options-chevron-open { transform:rotate(180deg); }
+.phone-composer-bar>span { white-space:nowrap; color:#b1c6cd; }
+.phone-active-persona { margin:-2px 0 6px 2px; color:#a5bac4; font-size:11px; }
+.phone-welcome [data-phone-more-options] select { min-height:44px; font-size:16px; }
+.phone-welcome [data-phone-more-options] button { min-height:44px; }
+
+.phone-welcome [data-phone-tools] button { min-height:44px; }

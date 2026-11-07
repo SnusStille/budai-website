@@ -178,7 +178,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           nonce={nonce}
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
-        {phoneGate ? <MobileProviders initialLang={lang}>{phoneLegalPage ? children : <PhoneWelcome />}</MobileProviders> : <Providers initialLang={lang}>{children}</Providers>}
+        {phoneGate ? <MobileProviders initialLang={lang}>{phoneLegalPage ? children : <PhoneWelcome normalizeLanguagePath />}</MobileProviders> : <Providers initialLang={lang}>{children}</Providers>}
         <VercelAnalytics enabled={process.env.VERCEL === "1"} />
       </body>
     </html>

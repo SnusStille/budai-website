@@ -61,6 +61,8 @@ import {
   ThumbsDown,
   Share2,
   Globe2,
+  Settings2,
+  ChevronDown,
   Command,
 } from "lucide-react";
 import PlaygroundArrival from "@/components/experience/PlaygroundArrival";
@@ -679,6 +681,7 @@ export default function AIPlayground({ phoneOnly = false }: { phoneOnly?: boolea
     }
   }, [workspaceOwner]);
   const [toolsOpen, setToolsOpen] = useState(false);
+  const [phoneOptionsOpen, setPhoneOptionsOpen] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -2905,7 +2908,16 @@ export default function AIPlayground({ phoneOnly = false }: { phoneOnly?: boolea
                 )}
 
                 {toolsOpen && (
-                  <div className="mb-2 flex flex-wrap gap-1.5 p-2 rounded-xl border border-white/[0.07] bg-black/30">
+                  <div data-phone-tools={phoneOnly || undefined} className="mb-2 flex flex-wrap gap-1.5 p-2 rounded-xl border border-white/[0.07] bg-black/30">
+                    {phoneOnly && <button
+                      type="button"
+                      onClick={() => { runInspire(); setToolsOpen(false); }}
+                      disabled={busy}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] text-white/85 border border-white/[0.08] disabled:opacity-40"
+                    >
+                      <Dices className="w-3.5 h-3.5 text-accent-cyan" />
+                      {lang === "sv" ? "Inspirera mig" : "Surprise me"}
+                    </button>}
                     <button
                       type="button"
                       onClick={() => {
@@ -3005,13 +3017,22 @@ export default function AIPlayground({ phoneOnly = false }: { phoneOnly?: boolea
                     </button>
                   </div>
                 )}
-                <div className="mb-2 flex flex-wrap items-center gap-1.5" role="group" aria-label="Persona">
+                {phoneOnly && <div className="phone-composer-bar">
+                  <button type="button" className="phone-options-toggle" aria-expanded={phoneOptionsOpen} aria-controls="phone-chat-options" onClick={() => setPhoneOptionsOpen(open => !open)}>
+                    <Settings2 size={15} aria-hidden="true" />
+                    {lang === "sv" ? "Fler val" : "More options"}
+                    <ChevronDown size={14} aria-hidden="true" className={phoneOptionsOpen ? "phone-options-chevron-open" : undefined} />
+                  </button>
+                  <DailyUsageMeter rem={rem} lim={lim} sv={lang === "sv"} interactive={false} compact />
+                </div>}
+                {phoneOnly && !phoneOptionsOpen && persona !== "default" && <p className="phone-active-persona">{lang === "sv" ? "Valt läge" : "Active persona"}: {PERSONAS.find(p => p.id === persona)?.[lang]}</p>}
+                <div id={phoneOnly ? "phone-chat-options" : undefined} data-phone-more-options={phoneOnly || undefined} className={phoneOnly && !phoneOptionsOpen ? "hidden" : "mb-2 flex flex-wrap items-center gap-1.5"} role="group" aria-label={lang === "sv" ? "Personlighet och verktyg" : "Persona and tools"}>
                   <label className="flex items-center gap-1.5 rounded-full border border-white/[0.08] pl-3 pr-1 text-[11px] text-muted">
                     <span>{lang === "sv" ? "Läge" : "Persona"}</span>
                     <select
                       value={persona}
                       onChange={(e) => setPersona(e.target.value)}
-                      aria-label="Persona"
+                      aria-label={lang === "sv" ? "Personlighet" : "Persona"}
                       className="bg-transparent py-1 pr-2 text-[11px] text-accent-cyan outline-none [&>option]:bg-[#07070e]"
                     >
                       {PERSONAS.map((p) => (
@@ -3026,7 +3047,7 @@ export default function AIPlayground({ phoneOnly = false }: { phoneOnly?: boolea
                     <button type="button" onClick={() => setVoiceOpen(true)} className="rounded-full border border-white/[0.08] px-3 py-1 text-[11px] text-muted hover:text-white transition-colors">
                       {lang === "sv" ? "Röstläge" : "Voice mode"}
                     </button>
-                    <DailyUsageMeter rem={rem} lim={lim} sv={lang === "sv"} interactive={!phoneOnly} />
+                    {!phoneOnly && <DailyUsageMeter rem={rem} lim={lim} sv={lang === "sv"} />}
                   </div>
                 </div>
                 <VoiceOrb
@@ -3157,7 +3178,7 @@ export default function AIPlayground({ phoneOnly = false }: { phoneOnly?: boolea
                     disabled={busy}
                     className="flex-1 min-w-0 px-3.5 py-2.5 rounded-2xl bg-white/[0.04] border border-white/[0.09] text-sm text-white placeholder:text-muted/60 focus:outline-none focus:border-accent-cyan/40 resize-none min-h-[44px] max-h-[140px]"
                   />
-                  <button
+                  {!phoneOnly && <button
                     type="button"
                     onClick={runInspire}
                     disabled={busy}
@@ -3170,7 +3191,7 @@ export default function AIPlayground({ phoneOnly = false }: { phoneOnly?: boolea
                   >
                     <Dices className={`w-3.5 h-3.5 ${inspireSpin ? "animate-spin" : ""}`} />
                     <span className="hidden sm:inline">{lang === "sv" ? "Inspirera" : "Surprise"}</span>
-                  </button>
+                  </button>}
                   {busy ? (
                     <button
                       type="button"
