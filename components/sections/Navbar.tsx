@@ -64,7 +64,6 @@ export default function Navbar() {
     { label: t.nav.playground, href: "#playground", id: "playground" },
     { label: t.nav.capabilities, href: "#capabilities", id: "capabilities" },
     { label: lang === "sv" ? "Byggaren" : "Builder", href: "#about", id: "about" },
-    { label: "Labs", href: lang === "sv" ? "/sv/labs" : "/labs", id: "labs" },
     { label: t.nav.roadmap, href: "#roadmap", id: "roadmap" },
   ];
 
@@ -84,6 +83,7 @@ export default function Navbar() {
       >
         <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 lg:h-[4.5rem] lg:grid lg:grid-cols-[auto_1fr_auto] lg:gap-4">
+            <div className="flex items-center gap-3">
             <Link
               href="/"
               data-budai-logo
@@ -111,6 +111,8 @@ export default function Navbar() {
                 </span>
               </span>
             </Link>
+            <a href={lang === "sv" ? "/sv/labs" : "/labs"} className="hidden sm:inline-flex items-center rounded-full border border-accent-cyan/25 bg-accent-cyan/[0.06] px-3 py-1.5 text-[11px] font-semibold text-accent-cyan transition-colors hover:bg-accent-cyan/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-cyan">Labs <span aria-hidden="true" className="ml-1">↗</span></a>
+            </div>
 
             <div className="hidden lg:flex items-center justify-center gap-0.5">
               {links.map((l) => {
@@ -250,6 +252,7 @@ export default function Navbar() {
                 </motion.a>
               ))}
 
+              <a href={lang === "sv" ? "/sv/labs" : "/labs"} onClick={() => setMobileOpen(false)} className="px-4 py-3.5 text-lg rounded-xl text-accent-cyan hover:bg-white/5">Labs</a>
               <div className="flex items-center gap-3 mt-4 px-4">
                 <Globe className="w-4 h-4 text-muted" />
                 <div className="flex p-0.5 rounded-full bg-black/40 border border-white/[0.08]">
