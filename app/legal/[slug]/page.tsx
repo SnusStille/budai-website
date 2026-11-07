@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
+import { isPhoneUserAgent } from "@/lib/phone-gate";
 import { LEGAL_TITLES, LEGAL_TITLES_SV, isLegalSlug } from "@/lib/legal-slugs";
 import LegalView from "./LegalView";
 
@@ -32,5 +33,6 @@ export async function generateMetadata({ params }: LegalPageProps): Promise<Meta
 export default async function LegalPage({ params }: LegalPageProps) {
   const { slug } = await params;
   if (!isLegalSlug(slug)) notFound();
-  return <LegalView slug={slug} />;
+  const phoneOnly = isPhoneUserAgent((await headers()).get("user-agent") || "");
+  return <LegalView slug={slug} phoneOnly={phoneOnly} />;
 }

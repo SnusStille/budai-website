@@ -1,4 +1,3 @@
-import { isPhoneUserAgent } from "@/lib/phone-gate";
 import { MAX_PLAYGROUND_MESSAGE_CHARS, MAX_PLAYGROUND_HISTORY_MESSAGES } from "@/lib/playground/messageBudget";
 import { resolveModelTier } from "@/lib/ai-models";
 import Anthropic from "@anthropic-ai/sdk";
@@ -112,13 +111,6 @@ function stripMemoryTag(text: string): { clean: string; memory: string | null } 
 }
 
 export async function POST(req: NextRequest) {
-  // This is a device-experience rule, not an access-control boundary: user agents can be changed.
-  if (isPhoneUserAgent(req.headers.get("user-agent") || "")) {
-    return NextResponse.json(
-      { error: "Playground is available on desktop. Please open the site on a computer.", code: "desktop_only" },
-      { status: 403, headers: { "Cache-Control": "no-store" } }
-    );
-  }
   const limit = checkRateLimit(rateLimitKey(req, RULES.playground), RULES.playground);
   if (limit.limited) {
     return NextResponse.json(

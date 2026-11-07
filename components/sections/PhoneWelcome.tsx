@@ -1,19 +1,57 @@
 "use client";
 
-import { useState } from "react";
-import { ArrowDownRight, Monitor } from "lucide-react";
-import { StilledevMark } from "@/components/ui/BudAILogo";
-import "@/app/phone-welcome.css";
+/* eslint-disable @next/next/no-html-link-for-pages -- Phone shell is selected server-side; policy navigation must reload the root layout. */
 
-export default function PhoneWelcome({ initialLang = "sv" }: { initialLang?: "sv" | "en" }) {
-  const [lang, setLang] = useState(initialLang);
+import { ArrowDown, ArrowUpRight, Monitor, Sparkles } from "lucide-react";
+import AIPlayground from "@/components/sections/AIPlayground";
+import { BudAIWordmark } from "@/components/ui/BudAILogo";
+import { useLang } from "@/components/ui/LanguageContext";
+import { openCookieSettings } from "@/lib/consent";
+
+/** A small-screen home for the actual Playground; the rest of the site stays desktop-first. */
+export default function PhoneWelcome() {
+  const { lang, setLang } = useLang();
   const sv = lang === "sv";
-  return <main id="main" className="phone-welcome" lang={lang}>
-    <div className="phone-shell">
-      <header className="phone-header"><span className="phone-brand"><StilledevMark size={25} /><span>STILLEDEV<span className="phone-brand-dot">.</span></span></span><div className="phone-lang" role="group" aria-label={sv ? "Språk" : "Language"}><button type="button" aria-pressed={sv} onClick={() => setLang("sv")}>SV</button><button type="button" aria-pressed={!sv} onClick={() => setLang("en")}>EN</button></div></header>
-      <section className="phone-content" aria-labelledby="phone-title"><div className="phone-eyebrow"><span /> STILLEDEV / {sv ? "FEL BRANCH" : "WRONG BRANCH"} <b>01</b></div><div className="phone-visual" aria-hidden="true"><div className="phone-grid" /><div className="phone-ring phone-ring-one" /><div className="phone-ring phone-ring-two" /><div className="phone-core"><Monitor size={37} strokeWidth={1.1} /><i /></div><span>DESKTOP / CONNECTION</span></div><h1 id="phone-title">{sv ? <>Hoppsan.<br /><em>Fel branch.</em></> : <>Oops.<br /><em>Wrong branch.</em></>}</h1><p>{sv ? "Du och jag är på olika brancher just nu. Playground och resten av sidan väntar på en större skärm — öppna stilledev.se på din dator för att läsa mer om Stilledev och AI:n." : "You and I are on different branches right now. Playground and the rest of the site are waiting on a bigger screen — open stilledev.se on your computer to learn more about Stilledev and the AI."}</p><div className="phone-desktop-note"><Monitor size={17} /><span>{sv ? "BÄST PÅ DATOR" : "BEST ON DESKTOP"}</span><ArrowDownRight size={15} /></div>
-      </section>
-      <footer className="phone-footer"><span>STILLEDEV / SWEDEN</span><span>{sv ? "VI SES PÅ DATORN" : "SEE YOU ON DESKTOP"} ↗</span></footer>
+
+  return (
+    <div className="phone-welcome">
+      <header className="phone-header">
+        <div className="phone-brand"><BudAIWordmark size="sm" /><span>by Stilledev</span></div>
+        <div className="phone-languages" role="group" aria-label={sv ? "Välj språk" : "Choose language"}>
+          <button type="button" onClick={() => setLang("sv")} aria-pressed={sv}>SV</button>
+          <button type="button" onClick={() => setLang("en")} aria-pressed={!sv}>EN</button>
+        </div>
+      </header>
+
+      <main id="main">
+        <section className="phone-hero" aria-labelledby="phone-heading">
+          <div className="phone-eyebrow"><span className="phone-live-dot" />{sv ? "PLAYGROUND I FICKAN" : "PLAYGROUND IN YOUR POCKET"}<Sparkles size={14} aria-hidden="true" /></div>
+          <h1 id="phone-heading">{sv ? <>Stor sajt.<br /><span>Liten skärm.</span></> : <>Big site.<br /><span>Little screen.</span></>}</h1>
+          <p className="phone-hero-copy">{sv
+            ? "Playground får åka med i fickan. Resten av sajten behöver en dator – vår robot vägrar vika ihop hela kontoret till en mobil."
+            : "Playground can come along in your pocket. The rest of the site needs a computer – our robot refuses to fold the whole office into a phone."}</p>
+          <div className="phone-desktop-notice">
+            <div className="phone-monitor" aria-hidden="true"><Monitor size={24} strokeWidth={1.5} /></div>
+            <div><strong>{sv ? "Dator behövs för resten" : "Computer needed for the rest"}</strong><span>{sv ? "Men du kan chatta här, direkt." : "But you can chat right here."}</span></div>
+          </div>
+          <a className="phone-jump" href="#playground">{sv ? "Öppna Playground" : "Open Playground"}<ArrowDown size={17} aria-hidden="true" /></a>
+          <div className="phone-hero-foot"><span>{sv ? "INGEN STOR SKÄRM? INGEN PANIK." : "NO BIG SCREEN? NO BIG DEAL."}</span><span>01 / 01</span></div>
+        </section>
+
+        <div className="phone-playground-wrap">
+          <AIPlayground phoneOnly />
+        </div>
+      </main>
+      <footer className="phone-footer">
+        <div className="phone-footer-top"><div><strong>BudAI</strong><span> {sv ? "av" : "by"} Stilledev</span></div><a href="#phone-heading" aria-label={sv ? "Tillbaka till toppen" : "Back to top"}><ArrowUpRight size={17} aria-hidden="true" /></a></div>
+        <p>{sv ? "Byggd för stora idéer. Och nu även små skärmar." : "Built for big ideas. And now, little screens too."}</p>
+        <div className="phone-footer-links">
+          <a href="/legal/privacy">{sv ? "Integritet" : "Privacy"}</a>
+          <a href="/legal/terms">{sv ? "Villkor" : "Terms"}</a>
+          <a href="/legal/cookies">Cookies</a>
+          <button type="button" onClick={openCookieSettings}>{sv ? "Cookieinställningar" : "Cookie settings"}</button>
+        </div>
+      </footer>
     </div>
-  </main>;
+  );
 }

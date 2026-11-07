@@ -570,7 +570,7 @@ const INSPIRE_PROMPTS = {
 
 /* ─── component ───────────────────────────────────────── */
 
-export default function AIPlayground() {
+export default function AIPlayground({ phoneOnly = false }: { phoneOnly?: boolean }) {
   const { t, lang } = useLang();
   const auth = useAuth();
 
@@ -2064,6 +2064,13 @@ export default function AIPlayground() {
       <div className="product-ambient-light" aria-hidden="true" />
 
       <div className="max-w-[1500px] mx-auto px-2 sm:px-4 lg:px-6 relative z-10">
+        {phoneOnly ? (
+          <div className="playground-introduction">
+            <span className="section-badge text-accent-cyan">{lang === "sv" ? "DIN PLAYGROUND" : "YOUR PLAYGROUND"}</span>
+            <h2>{lang === "sv" ? "Vad tänker du på?" : "What’s on your mind?"}</h2>
+            <p>{lang === "sv" ? "Skriv, planera eller brainstorma. Testa som gäst eller logga in." : "Write, plan or brainstorm. Try it as a guest or sign in."}</p>
+          </div>
+        ) : (
         <div className="playground-introduction text-center mb-4 sm:mb-5">
           <span className="section-badge text-accent-cyan mb-4"><span className="font-mono text-[10px]" aria-hidden="true">02 /</span>{t.playground.badge}</span>
           <h2 className="text-2xl sm:text-3xl font-bold tracking-tight mb-1">
@@ -2074,6 +2081,7 @@ export default function AIPlayground() {
             ? `Du har sett vad som är möjligt — gör nu något eget. Skriv, planera, sammanfatta eller analysera på svenska och engelska. Prova direkt som gäst (${LIMITS.guest.messagesPerDay} meddelanden/dag) eller logga in gratis (${LIMITS.member.messagesPerDay}/dag) för minne du kan styra, historik och bildanalys.`
             : `You've seen what's possible — now make something of your own. Write, plan, summarize, or analyze in Swedish and English. Try free right now as a guest (${LIMITS.guest.messagesPerDay} messages/day) or sign in free (${LIMITS.member.messagesPerDay}/day) for memory you control, history, and image analysis.`}</p>
         </div>
+        )}
 
         <PlaygroundArrival expanded={expanded} overlay={voiceOpen||showShortcuts||!!lightbox||mobileDrawer||memoryOpen}>
           <div
@@ -2226,6 +2234,7 @@ export default function AIPlayground() {
                     <button
                       type="button"
                       onClick={() => auth.openAuth()}
+                      aria-label={lang === "sv" ? "Logga in" : "Sign in"}
                       className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-accent-cyan/15 border border-accent-cyan/25 text-accent-cyan text-[11px] font-semibold"
                     >
                       <LogIn className="w-3.5 h-3.5" />
@@ -2974,7 +2983,7 @@ export default function AIPlayground() {
                     <button type="button" onClick={() => setVoiceOpen(true)} className="rounded-full border border-white/[0.08] px-3 py-1 text-[11px] text-muted hover:text-white transition-colors">
                       {lang === "sv" ? "Röstläge" : "Voice mode"}
                     </button>
-                    <DailyUsageMeter rem={rem} lim={lim} sv={lang === "sv"} />
+                    <DailyUsageMeter rem={rem} lim={lim} sv={lang === "sv"} interactive={!phoneOnly} />
                   </div>
                 </div>
                 <VoiceOrb
@@ -3304,7 +3313,7 @@ export default function AIPlayground() {
             </div>
           </div>
         </PlaygroundArrival>
-        <div className="product-output" data-playground-bridge aria-hidden="true">
+        {!phoneOnly && <div className="product-output" data-playground-bridge aria-hidden="true">
           <div className="product-bridge-head">
             <span className="product-bridge-kicker">
               {lang === "sv" ? "02 → 03 · SIGNALÖVERFÖRING · LIVE ARBETSYTA → FÖRMÅGEARKITEKTUR" : "02 → 03 · SIGNAL HANDOFF · LIVE WORKSPACE → CAPABILITY ARCHITECTURE"}
@@ -3359,7 +3368,7 @@ export default function AIPlayground() {
               {lang === "sv" ? "6 KANALER KONVERGERAR I KAPITEL 03 ↓" : "6 CHANNELS CONVERGE INTO CHAPTER 03 ↓"}
             </small>
           </div>
-        </div>
+        </div>}
       </div>
 
 

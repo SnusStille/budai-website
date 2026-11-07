@@ -4,12 +4,14 @@ import "@fontsource-variable/plus-jakarta-sans";
 import "@fontsource-variable/jetbrains-mono";
 import "./globals.css";
 import "./experience.css";
+import "./phone-welcome.css";
 import Providers from "@/components/Providers";
 import VercelAnalytics from "@/components/VercelAnalytics";
 import { introBootstrap } from "@/lib/experience/intro";
 import { canonicalPath, hasLanguageAlternate, SWEDISH_PATH } from "@/lib/lang";
 import { isPhoneUserAgent } from "@/lib/phone-gate";
 import PhoneWelcome from "@/components/sections/PhoneWelcome";
+import MobileProviders from "@/components/MobileProviders";
 
 const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://stilledev.se").replace(/\/$/, "");
 
@@ -152,9 +154,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const nonce = h.get("x-nonce") ?? undefined;
   const lang = h.get("x-budai-lang") === "sv" ? "sv" : "en";
   const phoneGate = isPhoneUserAgent(h.get("user-agent") || "");
+  const path = canonicalPath(h.get("x-budai-path") || "/");
+  // Policies remain reachable, but no desktop marketing pages are shown on phones.
+  const phoneLegalPage = path.startsWith("/legal/");
   return (
     <html
-      lang={phoneGate ? "sv" : lang}
+      lang={lang}
       className="font-sans"
       suppressHydrationWarning
     >
@@ -173,7 +178,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           nonce={nonce}
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
-        {phoneGate ? <PhoneWelcome initialLang="sv" /> : <Providers initialLang={lang}>{children}</Providers>}
+        {phoneGate ? <MobileProviders initialLang={lang}>{phoneLegalPage ? children : <PhoneWelcome />}</MobileProviders> : <Providers initialLang={lang}>{children}</Providers>}
         <VercelAnalytics enabled={process.env.VERCEL === "1"} />
       </body>
     </html>

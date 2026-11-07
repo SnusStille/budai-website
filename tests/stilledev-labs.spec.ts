@@ -80,26 +80,81 @@ test("save-data uses the static mascot", async ({ page }) => {
 });
 
 for (const ua of [iphone, android]) {
-  test(`phones get only a desktop invitation across routes and hosts (${ua.includes("iPhone") ? "iPhone" : "Android"})`, async ({ browser, request }) => {
-    const context = await browser.newContext({ userAgent: ua, viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+  test(`phones get a usable Playground and desktop notice (${ua.includes("iPhone") ? "iPhone" : "Android"})`, async ({ browser, request }) => {
+    const context = await browser.newContext({ userAgent: ua, viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, reducedMotion: "reduce" });
     const page = await context.newPage(); await quiet(page);
-    for (const route of ["/", "/sv", "/labs", "/sv/labs", "/legal/privacy"]) {
+    const errors: string[] = []; page.on("pageerror", error => errors.push(error.message));
+    for (const route of ["/", "/sv", "/labs", "/sv/labs"]) {
       const response = await page.goto(route); expect(response?.headers()["cache-control"]).toMatch(/private|no-store/i);
       await expect(page.locator(".phone-welcome")).toBeVisible();
-      await expect(page.locator(".labs-wait, .builder-byline, nav, #playground")).toHaveCount(0);
+      await expect(page.locator("#playground")).toBeVisible();
+      await expect(page.locator(".labs-wait, .builder-byline, nav, [data-playground-bridge]")).toHaveCount(0);
       expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(1);
     }
-    await expect(page.getByRole("heading", { name: /Hoppsan/ })).toBeVisible();
-    await page.getByRole("button", { name: "EN", exact: true }).click();
-    await expect(page.getByRole("heading", { name: /Wrong branch/ })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Stor sajt.*Liten skärm/ })).toBeVisible();
+    await expect(page.locator(".phone-desktop-notice")).toContainText("Dator behövs för resten");
+    await page.locator(".phone-languages").getByRole("button", { name: "EN", exact: true }).click();
+    await expect(page.getByRole("heading", { name: /Big site.*Little screen/ })).toBeVisible();
+    await expect(page.locator(".phone-desktop-notice")).toContainText("Computer needed for the rest");
+    await expect(page.locator("html")).toHaveAttribute("lang", "en");
     await page.screenshot({ path: `test-results/phone-${ua.includes("iPhone") ? "iphone" : "android"}.png` });
+    for (const width of [320, 360, 390, 414]) {
+      await page.setViewportSize({ width, height: 844 });
+      expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth), `${width}px`).toBeLessThanOrEqual(1);
+    }
+    await page.setViewportSize({ width: 390, height: 844 });
+    const requests: unknown[] = [];
+    await page.route("**/api/playground", async route => {
+      requests.push(route.request().postDataJSON());
+      await route.fulfill({ status: 200, contentType: "text/plain", body: 'A pocket-sized answer.\u0000{"memory":null}' });
+    });
+    await page.getByRole("link", { name: "Open Playground" }).click();
+    const input = page.getByRole("textbox", { name: "Message BudAI", exact: true });
+    await expect(input).toBeVisible();
+    await input.fill("Hello from my phone");
+    await page.getByRole("button", { name: "Send message", exact: true }).click();
+    await expect(page.locator("#playground").getByText("A pocket-sized answer.", { exact: true })).toBeVisible();
+    expect(requests).toHaveLength(1);
+    expect(JSON.stringify(requests[0])).toContain("Hello from my phone");
+    await expect(input).toHaveValue("");
+    expect(await input.evaluate(el => parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(16);
+    await page.getByRole("button", { name: "Sign in", exact: true }).click();
+    await expect(page.getByRole("dialog").getByRole("heading", { name: "Your BudAI" })).toBeVisible();
+    await page.getByRole("dialog").getByRole("button", { name: "Close", exact: true }).click();
+    await page.getByRole("button", { name: "Expand Playground" }).click();
+    await expect(page.getByRole("button", { name: "Minimize Playground" })).toBeVisible();
+    await expect(page.locator("#playground").getByText("A pocket-sized answer.", { exact: true })).toBeVisible();
+    // Simulate a mobile keyboard changing the visual viewport, not the layout viewport.
+    await page.evaluate(() => {
+      const vv = window.visualViewport!;
+      Object.defineProperty(vv, "height", { configurable: true, value: 544 });
+      Object.defineProperty(vv, "offsetTop", { configurable: true, value: 0 });
+      vv.dispatchEvent(new Event("resize"));
+    });
+    await expect(page.locator("html")).toHaveAttribute("data-pg-keyboard", "open");
+    const inputBox = await input.boundingBox();
+    expect(inputBox && inputBox.y + inputBox.height).toBeLessThanOrEqual(545);
+    await page.evaluate(() => { Reflect.deleteProperty(window.visualViewport!, "height"); window.visualViewport!.dispatchEvent(new Event("resize")); });
+    await page.getByRole("button", { name: "Minimize Playground" }).click();
+    await expect(page.locator('#playground a[href="#capabilities"]')).toHaveCount(0);
+    await page.locator(".phone-footer").getByRole("link", { name: "Privacy" }).click();
+    await expect(page).toHaveURL(/\/legal\/privacy$/);
+    await expect(page.getByRole("heading", { name: "Privacy Policy" })).toBeVisible();
+    await page.getByRole("link", { name: "Back to BudAI" }).click();
+    await expect(page.locator("#playground")).toBeVisible();
+    await page.getByRole("button", { name: "Cookie settings" }).click();
+    await expect(page.getByRole("dialog")).toBeVisible();
+    await page.getByRole("dialog").getByRole("link", { name: "More" }).click();
+    await expect(page).toHaveURL(/\/legal\/cookies$/);
+    await expect(page.getByRole("heading", { name: "Cookie Policy" })).toBeVisible();
     for (const host of ["stilledev.se", "www.stilledev.se", "preview.vercel.app", "localhost:3000"]) {
       const response = await request.get("/labs", { headers: { host, "user-agent": ua } });
       const html = await response.text(); expect(html).toContain("phone-welcome"); expect(html).not.toContain("labs-wait-shell");
       expect(response.headers()["cache-control"]).toMatch(/private|no-store/i);
     }
     const api = await request.post("/api/playground", { headers: { "user-agent": ua }, data: {} });
-    expect(api.status()).toBe(403); expect(await api.json()).toMatchObject({ code: "desktop_only" });
+    expect(api.status()).not.toBe(403); expect(await api.json()).not.toMatchObject({ code: "desktop_only" });
+    expect(errors).toEqual([]);
     await context.close();
   });
 }
