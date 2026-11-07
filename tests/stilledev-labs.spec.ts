@@ -312,3 +312,37 @@ test("field notes and services remain readable and keyboard-operable at small wi
   await expect(page.locator("#services")).toContainText("GTA 5 och Roblox");
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });
+
+test("local examples never overwrite a custom goal or send a request", async ({ page }) => {
+  const apiRequests: string[] = [];
+  page.on("request", request => { if (request.url().includes("/api/playground")) apiRequests.push(request.url()); });
+  await page.goto("/labs");
+  const section = page.locator("#signal-studio");
+  const goal = section.getByLabel("What do you want to achieve?");
+  const examples = section.getByRole("group", { name: "Example goals" });
+  await examples.getByRole("button", { name: "Project plan" }).click();
+  await expect(goal).toHaveValue("Plan a new digital project step by step");
+  await expect(examples.getByRole("button", { name: "Project plan" })).toHaveAttribute("aria-pressed", "true");
+  await expect(section.getByLabel(/your starting brief/i)).toHaveValue(/Plan a new digital project step by step/);
+  await goal.fill("My own draft");
+  await expect(examples.getByRole("button", { name: "New idea" })).toBeDisabled();
+  await expect(goal).toHaveValue("My own draft");
+  await goal.clear();
+  await examples.getByRole("button", { name: "New idea" }).click();
+  await expect(goal).toHaveValue("Explore ideas for a simpler workflow");
+  expect(apiRequests).toEqual([]);
+});
+
+test("the Labs footer provides usable bilingual section navigation", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 800 });
+  await page.goto("/sv/labs");
+  const footer = page.locator(".lab-footer");
+  await expect(footer.getByRole("navigation", { name: "Länkar i sidfoten" })).toBeVisible();
+  await footer.getByRole("link", { name: "Tjänster" }).click();
+  await expect(page).toHaveURL(/#services$/);
+  await footer.getByRole("link", { name: /TILL TOPPEN/ }).click();
+  await expect(page).toHaveURL(/#top$/);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  await page.getByRole("group", { name: "Språk" }).getByRole("link", { name: "EN" }).click();
+  await expect(page.locator(".lab-footer").getByRole("navigation", { name: "Footer links" }).getByRole("link", { name: "Business & legal" })).toHaveAttribute("href", "#business");
+});
