@@ -1,5 +1,5 @@
 /* A dedicated small-screen shell around the real product, not a scaled desktop page. */
-.phone-welcome { min-height:100svh; color:#edf8fc; background:#050d14; font-family:var(--font-geist-sans),Arial,sans-serif; }
+.phone-welcome { min-height:100svh; color:#edf8fc; background:#050d14; font-family:var(--font-jakarta),Arial,sans-serif; }
 .phone-header, .phone-hero, .phone-playground-wrap, .phone-footer { width:min(100%,560px); margin-inline:auto; }
 .phone-header { display:flex; justify-content:space-between; align-items:center; min-height:72px; padding:12px 20px; border-bottom:1px solid rgba(154,220,239,.11); }
 .phone-brand { display:flex; align-items:center; gap:10px; }
@@ -9,7 +9,7 @@
 .phone-languages button[aria-pressed="true"] { background:#b9eaf0; color:#06151b; }
 .phone-hero { position:relative; padding:43px 20px 0; overflow:hidden; }
 .phone-hero::before { content:""; pointer-events:none; position:absolute; top:-140px; right:-165px; width:360px; height:360px; border-radius:50%; background:radial-gradient(circle,rgba(26,119,143,.19),transparent 68%); }
-.phone-eyebrow { position:relative; display:flex; align-items:center; gap:8px; color:#a8dbe5; font:700 10px/1.2 var(--font-geist-mono),monospace; letter-spacing:.14em; }
+.phone-eyebrow { position:relative; display:flex; align-items:center; gap:8px; color:#a8dbe5; font:700 10px/1.2 var(--font-jetbrains),monospace; letter-spacing:.14em; }
 .phone-eyebrow svg { margin-left:auto; color:#d9c896; }
 .phone-live-dot { width:7px; height:7px; border-radius:50%; background:#86d8c4; box-shadow:0 0 12px #86d8c4; }
 .phone-hero h1 { position:relative; margin:21px 0 16px; font-size:clamp(46px,13vw,70px); line-height:.99; letter-spacing:-.065em; font-weight:700; }
@@ -22,7 +22,7 @@
 .phone-desktop-notice span { margin-top:3px; color:#a7bdc4; font-size:12px; line-height:1.4; }
 .phone-jump { display:flex; justify-content:center; align-items:center; gap:10px; width:100%; min-height:52px; margin-top:16px; border-radius:12px; background:#aee4eb; color:#06181e; font-size:13px; font-weight:750; text-decoration:none; }
 .phone-jump:focus-visible,.phone-footer a:focus-visible,.phone-footer button:focus-visible,.phone-languages button:focus-visible { outline:2px solid #f5df9c; outline-offset:3px; }
-.phone-hero-foot { display:flex; justify-content:space-between; gap:8px; padding:23px 0; color:#718993; font:700 9px/1.4 var(--font-geist-mono),monospace; letter-spacing:.09em; border-bottom:1px solid rgba(154,220,239,.12); }
+.phone-hero-foot { display:flex; justify-content:space-between; gap:8px; padding:23px 0; color:#718993; font:700 9px/1.4 var(--font-jetbrains),monospace; letter-spacing:.09em; border-bottom:1px solid rgba(154,220,239,.12); }
 .phone-playground-wrap { padding:30px 12px 0; }
 .phone-welcome .playground-experience { margin-top:0; padding:0; }
 .phone-welcome .playground-experience>div.max-w-\[1500px\] { padding-inline:0; }
@@ -47,3 +47,14 @@ html[data-pg-keyboard="open"] .phone-welcome [data-playground-surface].fixed { h
 
 /* Framer owns the transform on this dialog, so center it with edges, not translateX. */
 .phone-cookie-dialog { left:12px; right:12px; width:auto; max-width:none; }
+
+/* Phone controls stay finger-sized without changing the desktop Playground. */
+.phone-welcome [data-phone-chat-header] button { min-width:44px; min-height:44px; }
+.phone-welcome [data-phone-chat-drawer] input,
+.phone-welcome [data-routines-panel] input { font-size:16px; }
+.phone-welcome [data-phone-chat-drawer] button { min-height:44px; }
+.phone-welcome [data-routines-panel] { position:fixed; left:max(12px,calc((100vw - 536px)/2)); right:max(12px,calc((100vw - 536px)/2)); bottom:calc(12px + env(safe-area-inset-bottom)); width:auto; max-height:min(80dvh,600px); overflow-y:auto; margin:0; }
+.phone-welcome [data-routines-panel] button { min-height:44px; }
+.phone-welcome [data-routines-panel] button[aria-label] { min-width:44px; }
+@media (max-width:380px) { .phone-welcome [data-phone-guest-status] { display:none; } }
+.phone-welcome [data-phone-chat-toast] { top:12px; bottom:auto; left:12px; right:12px; max-width:none; pointer-events:none; }

@@ -273,3 +273,66 @@ test("the static Builder scene does not overlap the heading on desktop", async (
     expect(heading && monitor && heading.y + heading.height <= monitor.y, `${width}px`).toBeTruthy();
   }
 });
+
+for (const ua of [iphone, android]) {
+  test(`phone chat keeps multiline drafts, touch controls, history and routines usable (${ua.includes("iPhone") ? "iPhone" : "Android"})`, async ({ browser }) => {
+    const context = await browser.newContext({ userAgent: ua, viewport: { width: 320, height: 740 }, isMobile: true, hasTouch: true, reducedMotion: "reduce" });
+    const page = await context.newPage(); await quiet(page);
+    let calls = 0;
+    await page.route("**/api/playground", async route => {
+      calls++;
+      await route.fulfill({ status: 200, contentType: "text/plain", body: 'Ready for the next idea.\u0000{"memory":null}' });
+    });
+    await page.goto("/"); await page.getByRole("link", { name: "Open Playground" }).click();
+    const input = page.getByRole("textbox", { name: "Message BudAI", exact: true });
+    await expect(page.getByRole("button", { name: "Keyboard shortcuts" })).toBeHidden();
+    for (const button of await page.locator("[data-phone-chat-header] button:visible").all()) {
+      const box = await button.boundingBox(); expect(box?.width).toBeGreaterThanOrEqual(44); expect(box?.height).toBeGreaterThanOrEqual(44);
+    }
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
+    await input.fill("First line"); await input.press("Enter"); await input.pressSequentially("Second line");
+    await expect(input).toHaveValue("First line\nSecond line"); expect(calls).toBe(0);
+    await page.getByRole("button", { name: "Routines", exact: true }).click();
+    const panel = page.locator("[data-routines-panel]"); await expect(panel).toBeVisible();
+    const panelBox = await panel.boundingBox(); expect(panelBox).not.toBeNull();
+    expect(panelBox!.x).toBeGreaterThanOrEqual(0); expect(panelBox!.x + panelBox!.width).toBeLessThanOrEqual(320);
+    await expect(panel.getByRole("button", { name: "Close routines" })).toBeVisible();
+    await page.screenshot({ path: `test-results/phone-routines-${ua.includes("iPhone") ? "iphone" : "android"}.png` });
+    expect(await panel.getByPlaceholder("Name").evaluate(el => parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(16);
+    await panel.getByRole("button", { name: "Close routines" }).click(); await expect(panel).toHaveCount(0);
+    await expect(input).toHaveValue("First line\nSecond line"); expect(calls).toBe(0);
+    const historyButton = page.getByRole("button", { name: "Chat history", exact: true });
+    await historyButton.click();
+    const history = page.getByRole("dialog", { name: "Chat history", exact: true });
+    await expect(history).toBeVisible(); await expect(history.getByRole("button", { name: "Close chat history" })).toBeFocused();
+    await expect(history.getByRole("button", { name: "Export chat (.md)" })).toBeDisabled();
+    expect(await history.getByPlaceholder("Search…").evaluate(el => parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(16);
+    await page.keyboard.press("Shift+Tab");
+    expect(await history.evaluate(el => el.contains(document.activeElement))).toBe(true);
+    await history.getByRole("button", { name: "Close chat history" }).click();
+    await expect(history).toHaveCount(0); await expect(historyButton).toBeFocused();
+    await page.getByRole("button", { name: "Send message", exact: true }).click();
+    await expect(page.locator("#playground").getByText("Ready for the next idea.", { exact: true })).toBeVisible();
+    expect(calls).toBe(1);
+    await historyButton.click(); await expect(history.getByRole("button", { name: "Export chat (.md)" })).toBeEnabled();
+    const downloadPromise = page.waitForEvent("download");
+    await history.getByRole("button", { name: "Export chat (.md)" }).click();
+    const download = await downloadPromise; expect(download.suggestedFilename()).toMatch(/\.md$/);
+    await expect(history).toHaveCount(0);
+    const toast = page.locator("[data-phone-chat-toast]");
+    await expect(toast).toBeVisible();
+    const toastBox = await toast.boundingBox(); expect(toastBox!.x).toBeGreaterThanOrEqual(0); expect(toastBox!.x + toastBox!.width).toBeLessThanOrEqual(320);
+    expect(await toast.evaluate(el => getComputedStyle(el).pointerEvents)).toBe("none");
+    await page.screenshot({ path: `test-results/phone-chat-${ua.includes("iPhone") ? "iphone" : "android"}.png` });
+    await page.locator(".phone-languages").getByRole("button", { name: "SV", exact: true }).click();
+    await expect(page.getByRole("textbox", { name: "Meddelande till BudAI" })).toBeVisible();
+    await page.getByRole("button", { name: "Chatthistorik", exact: true }).click();
+    const svHistory = page.getByRole("dialog", { name: "Chatthistorik" });
+    await expect(svHistory.getByRole("button", { name: "Exportera chatt (.md)" })).toBeEnabled();
+    await svHistory.getByRole("button", { name: "Stäng chatthistorik" }).click();
+    await page.getByRole("button", { name: "Rutiner", exact: true }).click();
+    await expect(page.locator("[data-routines-panel]").getByRole("button", { name: "Radera rutin" }).first()).toBeVisible();
+    await page.getByRole("button", { name: "Stäng rutiner" }).click();
+    await context.close();
+  });
+}

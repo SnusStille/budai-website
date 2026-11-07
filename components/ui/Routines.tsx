@@ -15,7 +15,7 @@ const SEED_SV: R[] = [
 const fieldsOf = (t: string) => Array.from(new Set(Array.from(t.matchAll(/\{\{\s*([^{}]+?)\s*\}\}/g)).map((m) => m[1].trim())));
 
 /** Reusable prompt templates with {{fields}}. Stored in this browser. */
-export default function Routines({ input, sv, onRun }: { input: string; sv: boolean; onRun: (text: string) => void }) {
+export default function Routines({ input, sv, phoneOnly = false, onRun }: { input: string; sv: boolean; phoneOnly?: boolean; onRun: (text: string) => void }) {
   const [open, setOpen] = useState(false);
   const [list, setList] = useState<R[]>([]);
   const [name, setName] = useState("");
@@ -51,7 +51,11 @@ export default function Routines({ input, sv, onRun }: { input: string; sv: bool
         {sv ? "Rutiner" : "Routines"}
       </button>
       {open && (
-        <div className="absolute bottom-full right-0 z-30 mb-2 w-72 rounded-2xl border border-white/10 bg-[#07070e]/95 p-3 shadow-2xl backdrop-blur-xl">
+        <div data-routines-panel className="absolute bottom-full right-0 z-30 mb-2 w-72 rounded-2xl border border-white/10 bg-[#07070e]/95 p-3 shadow-2xl backdrop-blur-xl">
+          {phoneOnly && <div className="flex items-center justify-between gap-3 mb-2 border-b border-white/10 pb-2">
+            <strong className="text-sm text-white">{sv ? "Rutiner" : "Routines"}</strong>
+            <button type="button" onClick={() => setOpen(false)} aria-label={sv ? "Stäng rutiner" : "Close routines"} className="min-h-11 min-w-11 rounded-lg text-muted hover:text-white">×</button>
+          </div>}
           {running ? (
             <div className="space-y-2">
               <p className="text-xs font-medium text-white">{running.name}</p>
@@ -75,7 +79,7 @@ export default function Routines({ input, sv, onRun }: { input: string; sv: bool
                     >
                       {r.name} <span className="text-muted/60">· {fieldsOf(r.text).length} {sv ? "fält" : "fields"}</span>
                     </button>
-                    <button type="button" aria-label="Delete" onClick={() => persist(list.filter((x) => x.id !== r.id))} className="px-1.5 text-xs text-muted/60 hover:text-white">×</button>
+                    <button type="button" aria-label={sv ? "Radera rutin" : "Delete routine"} onClick={() => persist(list.filter((x) => x.id !== r.id))} className="px-1.5 text-xs text-muted/60 hover:text-white">×</button>
                   </li>
                 ))}
               </ul>

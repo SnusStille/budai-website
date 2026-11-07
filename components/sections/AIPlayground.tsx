@@ -728,6 +728,7 @@ export default function AIPlayground({ phoneOnly = false }: { phoneOnly?: boolea
   const recogRef = useRef<{ stop: () => void } | null>(null);
   const persistTimer = useRef(0);
   const taRef = useRef<HTMLTextAreaElement>(null);
+  const mobileDrawerRef = useRef<HTMLDivElement>(null);
   const bootRef = useRef(false);
 
   const busy = activity !== "idle" && activity !== "error" && activity !== "listening";
@@ -778,6 +779,32 @@ export default function AIPlayground({ phoneOnly = false }: { phoneOnly?: boolea
     dialog.addEventListener("keydown", onTab);
     return () => { dialog.removeEventListener("keydown", onTab); previous?.focus({ preventScroll: true }); };
   }, [workspaceMessageId, workspaceVisible]); // Only when the sheet opens, not on each edit.
+
+  // On phones, keep keyboard and assistive-technology focus inside chat history.
+  useEffect(() => {
+    if (!phoneOnly || !mobileDrawer) return;
+    const dialog = mobileDrawerRef.current;
+    if (!dialog) return;
+    const previous = document.activeElement as HTMLElement | null;
+    dialog.querySelector<HTMLButtonElement>("[data-drawer-close]")?.focus({ preventScroll: true });
+    const onTab = (event: KeyboardEvent) => {
+      if (event.key !== "Tab") return;
+      const focusable = Array.from(dialog.querySelectorAll<HTMLElement>('button:not([disabled]), input:not([disabled]), a[href]'))
+        .filter(element => element.getClientRects().length > 0);
+      if (!focusable.length) return;
+      const first = focusable[0], last = focusable[focusable.length - 1];
+      if (event.shiftKey && (document.activeElement === first || !dialog.contains(document.activeElement))) {
+        event.preventDefault(); last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault(); first.focus();
+      }
+    };
+    dialog.addEventListener("keydown", onTab);
+    return () => {
+      dialog.removeEventListener("keydown", onTab);
+      if (dialog.contains(document.activeElement) || document.activeElement === document.body) previous?.focus({ preventScroll: true });
+    };
+  }, [phoneOnly, mobileDrawer]);
 
   const showToast = useCallback((kind: "ok" | "warn" | "err", text: string) => {
     setToast({ kind, text });
@@ -1924,6 +1951,17 @@ export default function AIPlayground({ phoneOnly = false }: { phoneOnly?: boolea
           <Plus className="w-4 h-4" />
           {lang === "sv" ? "Ny chatt" : "New chat"}
         </button>
+        {phoneOnly && (
+          <button
+            type="button"
+            onClick={() => { exportThread(); setMobileDrawer(false); }}
+            disabled={!messages.length}
+            className="w-full flex items-center justify-center gap-2 min-h-11 rounded-xl border border-white/[0.08] text-xs text-white/80 disabled:opacity-40"
+          >
+            <Download className="w-4 h-4" />
+            {lang === "sv" ? "Exportera chatt (.md)" : "Export chat (.md)"}
+          </button>
+        )}
         {auth.isMember && (
           <button
             type="button"
@@ -2114,7 +2152,7 @@ export default function AIPlayground({ phoneOnly = false }: { phoneOnly?: boolea
             <div className="flex-1 flex min-w-0 min-h-0">
             <div className="flex-1 flex flex-col min-w-0 min-h-0">
               {/* Header */}
-              <div className="flex items-center justify-between gap-2 px-2.5 sm:px-3 py-2 border-b border-white/[0.06] bg-[#080810]/90 shrink-0">
+              <div data-phone-chat-header={phoneOnly || undefined} className="flex items-center justify-between gap-2 px-2.5 sm:px-3 py-2 border-b border-white/[0.06] bg-[#080810]/90 shrink-0">
                 <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
                   <button
                     type="button"
@@ -2123,7 +2161,9 @@ export default function AIPlayground({ phoneOnly = false }: { phoneOnly?: boolea
                       else setSidebarOpen((v) => !v);
                     }}
                     className="p-2 rounded-lg border border-white/[0.06] text-muted hover:text-white"
-                    aria-label="Sidebar"
+                    aria-label={phoneOnly ? (lang === "sv" ? "Chatthistorik" : "Chat history") : "Sidebar"}
+                    aria-expanded={phoneOnly ? mobileDrawer : undefined}
+                    aria-controls={phoneOnly && mobileDrawer ? "phone-chat-history" : undefined}
                   >
                     <PanelLeft className="w-4 h-4" />
                   </button>
@@ -2132,6 +2172,7 @@ export default function AIPlayground({ phoneOnly = false }: { phoneOnly?: boolea
                     <div className="text-sm font-semibold text-white truncate flex items-center gap-1.5">
                       <BudAIWordmark />
                       <span
+                        data-phone-guest-status={phoneOnly || undefined}
                         className={`text-[10px] font-mono px-1.5 py-0.5 rounded-md border ${
                           auth.isMember
                             ? "text-accent-cyan border-accent-cyan/25 bg-accent-cyan/10"
@@ -2176,7 +2217,7 @@ export default function AIPlayground({ phoneOnly = false }: { phoneOnly?: boolea
                       <MessageSquarePlus className="w-4 h-4" />
                     </button>
                   )}
-                  <button
+                  {!phoneOnly && <button
                     type="button"
                     onClick={exportThread}
                     disabled={!messages.length}
@@ -2185,7 +2226,7 @@ export default function AIPlayground({ phoneOnly = false }: { phoneOnly?: boolea
                     title={lang === "sv" ? "Exportera tråd (.md) · ⌘E" : "Export thread (.md) · ⌘E"}
                   >
                     <Download className="w-4 h-4" />
-                  </button>
+                  </button>}
                   <details className="relative hidden sm:block">
                     <summary className="flex cursor-pointer list-none items-center gap-1 rounded-lg border border-white/[0.06] px-2.5 py-2 text-[11px] font-medium text-muted hover:text-white [&::-webkit-details-marker]:hidden">
                       {lang === "sv" ? "Exportera" : "Export"} ▾
@@ -2265,6 +2306,7 @@ export default function AIPlayground({ phoneOnly = false }: { phoneOnly?: boolea
                       key={it.id}
                       type="button"
                       title={it.hint}
+                      aria-pressed={intentId === it.id}
                       onClick={() => {
                         setIntentId(it.id);
                         setMode(it.id === "dual" ? "dual" : mode === "concise" ? "concise" : "single");
@@ -2293,6 +2335,7 @@ export default function AIPlayground({ phoneOnly = false }: { phoneOnly?: boolea
                           key={code}
                           type="button"
                           onClick={() => setAnswerLang(code)}
+                          aria-pressed={answerLang === code}
                           className={`px-2 py-0.5 text-[10px] font-bold rounded-full ${
                             answerLang === code
                               ? "bg-gradient-to-r from-accent-cyan to-accent-purple text-white"
@@ -2979,7 +3022,7 @@ export default function AIPlayground({ phoneOnly = false }: { phoneOnly?: boolea
                     </select>
                   </label>
                   <div className="ml-auto flex flex-wrap items-center gap-2">
-                    <Routines input={input} sv={lang === "sv"} onRun={(t) => void runPrompt(t)} />
+                    <Routines input={input} sv={lang === "sv"} phoneOnly={phoneOnly} onRun={(t) => void runPrompt(t)} />
                     <button type="button" onClick={() => setVoiceOpen(true)} className="rounded-full border border-white/[0.08] px-3 py-1 text-[11px] text-muted hover:text-white transition-colors">
                       {lang === "sv" ? "Röstläge" : "Voice mode"}
                     </button>
@@ -3083,7 +3126,7 @@ export default function AIPlayground({ phoneOnly = false }: { phoneOnly?: boolea
                           return;
                         }
                       }
-                      if (e.key === "Enter" && !e.shiftKey) {
+                      if (e.key === "Enter" && !e.shiftKey && !phoneOnly) {
                         e.preventDefault();
                         if ((input.trim() || attach) && !busy) {
                           if (genMode && imageGenEnabled) void runImageGen(input, true);
@@ -3112,7 +3155,7 @@ export default function AIPlayground({ phoneOnly = false }: { phoneOnly?: boolea
                           : "Message BudAI…"
                     }
                     disabled={busy}
-                    className="flex-1 px-3.5 py-2.5 rounded-2xl bg-white/[0.04] border border-white/[0.09] text-sm text-white placeholder:text-muted/60 focus:outline-none focus:border-accent-cyan/40 resize-none min-h-[44px] max-h-[140px]"
+                    className="flex-1 min-w-0 px-3.5 py-2.5 rounded-2xl bg-white/[0.04] border border-white/[0.09] text-sm text-white placeholder:text-muted/60 focus:outline-none focus:border-accent-cyan/40 resize-none min-h-[44px] max-h-[140px]"
                   />
                   <button
                     type="button"
@@ -3504,6 +3547,12 @@ export default function AIPlayground({ phoneOnly = false }: { phoneOnly?: boolea
               onClick={() => setMobileDrawer(false)}
             />
             <motion.div
+              ref={mobileDrawerRef}
+              id={phoneOnly ? "phone-chat-history" : undefined}
+              data-phone-chat-drawer={phoneOnly || undefined}
+              role={phoneOnly ? "dialog" : undefined}
+              aria-modal={phoneOnly ? true : undefined}
+              aria-label={phoneOnly ? (lang === "sv" ? "Chatthistorik" : "Chat history") : undefined}
               initial={{ x: -280 }}
               animate={{ x: 0 }}
               exit={{ x: -280 }}
@@ -3512,7 +3561,7 @@ export default function AIPlayground({ phoneOnly = false }: { phoneOnly?: boolea
             >
               <div className="flex items-center justify-between p-3 border-b border-white/[0.06]">
                 <span className="text-sm font-semibold text-white">BudAI</span>
-                <button type="button" onClick={() => setMobileDrawer(false)} className="p-2 text-muted">
+                <button type="button" data-drawer-close aria-label={lang === "sv" ? "Stäng chatthistorik" : "Close chat history"} onClick={() => setMobileDrawer(false)} className="min-w-11 min-h-11 flex items-center justify-center text-muted">
                   <X className="w-4 h-4" />
                 </button>
               </div>
@@ -3788,6 +3837,8 @@ export default function AIPlayground({ phoneOnly = false }: { phoneOnly?: boolea
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
+            role="status"
+            data-phone-chat-toast={phoneOnly || undefined}
             className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-[96] px-4 py-2.5 rounded-xl border text-sm shadow-xl max-w-[90vw] ${
               toast.kind === "err"
                 ? "border-red-400/30 bg-[#1a1014] text-red-100"
