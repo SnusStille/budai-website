@@ -213,6 +213,10 @@ test("local signal composer updates and copies an honest template without an AI 
   await section.getByRole("button", { name: "Questions" }).click();
   await expect(section.getByRole("button", { name: "Questions" })).toHaveAttribute("aria-pressed", "true");
   await expect(section.getByLabel(/your starting brief/i)).toHaveValue(/Goal: Make client follow-up clearer[\s\S]*Ask the most useful questions/);
+  await section.getByText("Add context and constraints").click();
+  await section.getByLabel("Context", { exact: true }).fill("A small team with shared inboxes");
+  await section.getByLabel("Constraints", { exact: true }).fill("Keep it under one week");
+  await expect(section.getByLabel(/your starting brief/i)).toHaveValue(/Context: A small team with shared inboxes[\s\S]*Constraints: Keep it under one week/);
   await section.getByRole("button", { name: "Copy the brief" }).click();
   await expect(section.getByRole("status")).toContainText("Copied");
   expect(await page.evaluate(() => navigator.clipboard.readText())).toContain("Make client follow-up clearer");
@@ -232,6 +236,10 @@ test("Swedish experiment and expandable ideas work with reduced motion", async (
   await section.getByRole("button", { name: "Idéer" }).click();
   await expect(section.getByLabel("DITT UNDERLAG")).toHaveValue(/Mål: Förbättra kunduppföljningen[\s\S]*Föreslå flera/);
   await expect(section.getByText(/fasta mallar, inte AI/)).toBeVisible();
+  await section.getByText("Lägg till sammanhang och ramar").click();
+  await section.getByLabel("Sammanhang", { exact: true }).fill("Ett litet team");
+  await section.getByLabel("Ramar", { exact: true }).fill("En vecka");
+  await expect(section.getByLabel("DITT UNDERLAG")).toHaveValue(/Sammanhang: Ett litet team[\s\S]*Begränsningar: En vecka/);
   await expect(page.locator(".lab-art canvas")).toHaveCount(0);
   const note = page.locator("#research details").first();
   await expect(note).not.toHaveAttribute("open", "");
@@ -267,6 +275,24 @@ test("Labs navigation and featured work remain usable at narrow widths", async (
   await expect(page).toHaveURL(/#projects$/);
   await expect(page.locator("#estate-case video")).toBeVisible();
   await expect(page.locator("#harvis-case video")).toBeVisible();
+  for (const id of ["estate-case", "harvis-case"]) {
+    const card = await page.locator(`#${id}`).boundingBox();
+    const copy = await page.locator(`#${id} .lab-case-copy`).boundingBox();
+    expect(card && copy && copy.width > card.width * 0.75, `${id} copy should not be squeezed on mobile`).toBeTruthy();
+  }
   await nav.getByRole("link", { name: "Experiment" }).click();
   await expect(page).toHaveURL(/#signal-studio$/);
+});
+
+
+test("featured project navigation stays on Labs and reaches the private stories", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/labs");
+  const featured = page.getByRole("navigation", { name: "Featured projects" });
+  await featured.getByRole("link", { name: /Harvis/ }).click();
+  await expect(page).toHaveURL(/\/labs#harvis-case$/);
+  await expect(page.locator("#harvis-case")).toBeVisible();
+  await featured.getByRole("link", { name: /Julia Stille/ }).click();
+  await expect(page).toHaveURL(/\/labs#estate-case$/);
+  await expect(page.locator("#estate-case")).toBeVisible();
 });
