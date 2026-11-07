@@ -21,7 +21,7 @@ test("Builder opens the separate Labs page and project names are non-clickable",
   await expect(portal.getByRole("link", { name: /Enter Labs/ })).toHaveAttribute("href", "/labs");
   await portal.getByRole("link", { name: /Enter Labs/ }).click();
   await expect(page).toHaveURL(/\/labs$/);
-  await expect(page.getByRole("heading", { name: /Digital ideas.*Built for real life/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Beyond the.*expected/i })).toBeVisible();
   const projects = page.locator("#projects");
   await expect(projects.locator(".lab-project-row")).toHaveCount(5);
   for (const name of ["BudAI", "StilleAffe", "Anna’s Second Brain", "Harvis", "Julia Stille Real Estate"]) await expect(projects.locator(".lab-project-list").getByRole("heading", { name, exact: true })).toBeVisible();
@@ -94,7 +94,7 @@ test("3D artwork loads when motion is enabled without blocking navigation", asyn
   // A WebGL canvas is optional: the static artwork is the graceful fallback.
   await expect(page.locator(".lab-primary")).toBeVisible();
   await page.locator(".lab-primary").click();
-  await expect(page).toHaveURL(/#projects$/);
+  await expect(page).toHaveURL(/#signal-studio$/);
 });
 
 
@@ -199,4 +199,60 @@ test("phone welcome preview is readable, expandable, bilingual and has no bypass
   await page.getByRole("button", { name: "EN", exact: true }).click();
   await expect(page.getByRole("heading", { name: /Wrong branch/ })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
+});
+
+
+test("local signal composer updates and copies an honest template without an AI request", async ({ page, context }) => {
+  await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+  const aiRequests: string[] = [];
+  page.on("request", request => { if (request.url().includes("/api/playground")) aiRequests.push(request.url()); });
+  await page.goto("/labs");
+  const section = page.locator("#signal-studio");
+  await expect(section.getByText(/fixed templates, not AI/i)).toBeVisible();
+  await section.getByLabel("What do you want to achieve?").fill("Make client follow-up clearer");
+  await section.getByRole("button", { name: "Questions" }).click();
+  await expect(section.getByRole("button", { name: "Questions" })).toHaveAttribute("aria-pressed", "true");
+  await expect(section.getByLabel(/your starting brief/i)).toHaveValue(/Goal: Make client follow-up clearer[\s\S]*Ask the most useful questions/);
+  await section.getByRole("button", { name: "Copy the brief" }).click();
+  await expect(section.getByRole("status")).toContainText("Copied");
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toContain("Make client follow-up clearer");
+  expect(aiRequests).toEqual([]);
+  await page.evaluate(() => Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: () => Promise.reject(new Error("unavailable")) } }));
+  await section.getByRole("button", { name: "Copy the brief" }).click();
+  await expect(section.getByRole("status")).toContainText("Copy it manually");
+  await expect(section.getByLabel(/your starting brief/i)).toBeFocused();
+  await expect(section.getByRole("link", { name: /open budai playground/i })).toHaveAttribute("href", "/#playground");
+});
+
+test("Swedish experiment and expandable ideas work with reduced motion", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/sv/labs");
+  const section = page.locator("#signal-studio");
+  await section.getByLabel("Vad vill du åstadkomma?").fill("Förbättra kunduppföljningen");
+  await section.getByRole("button", { name: "Idéer" }).click();
+  await expect(section.getByLabel("DITT UNDERLAG")).toHaveValue(/Mål: Förbättra kunduppföljningen[\s\S]*Föreslå flera/);
+  await expect(section.getByText(/fasta mallar, inte AI/)).toBeVisible();
+  await expect(page.locator(".lab-art canvas")).toHaveCount(0);
+  const note = page.locator("#research details").first();
+  await expect(note).not.toHaveAttribute("open", "");
+  await note.locator("summary").focus();
+  await page.keyboard.press("Enter");
+  await expect(note).toHaveAttribute("open", "");
+  await expect(note.locator("p")).toBeVisible();
+});
+
+test("new Labs sections fit a phone preview viewport", async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.goto("/labs");
+  await expect(page.locator("#signal-studio")).toBeVisible();
+  await expect(page.locator("#research")).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+});
+
+
+test("save-data mode keeps the sculpture fallback without creating a WebGL canvas", async ({ page }) => {
+  await page.addInitScript(() => Object.defineProperty(navigator, "connection", { configurable: true, value: { saveData: true } }));
+  await page.goto("/labs");
+  await expect(page.locator(".lab-art-fallback")).toBeVisible();
+  await expect(page.locator(".lab-art canvas")).toHaveCount(0);
 });

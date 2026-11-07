@@ -16,7 +16,8 @@ export default function LabsSculpture() {
     let disposed = false;
     let teardown: (() => void) | undefined;
     const start = async () => {
-      if (media.matches || disposed || teardown) return;
+      const connection = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection;
+      if (media.matches || connection?.saveData || disposed || teardown) return;
       let THREE: typeof import("three");
       try { THREE = await import("three"); } catch { return; }
       if (disposed || media.matches || teardown) return;
@@ -100,9 +101,25 @@ export default function LabsSculpture() {
       const light = new THREE.PointLight(0x86eaff, 30, 20); light.position.set(3, 3, 5); scene.add(light);
       const violet = new THREE.PointLight(0x837be8, 20, 20); violet.position.set(-4, -1, 2); scene.add(violet);
       let frame = 0; let visible = true;
+      let pointerX = 0, pointerY = 0, tiltX = 0, tiltY = 0, scrollDepth = 0;
+      const onPointer = (event: PointerEvent) => {
+        if (event.pointerType === "touch") return;
+        const rect = el.getBoundingClientRect();
+        pointerX = ((event.clientX - rect.left) / rect.width - .5) * 2;
+        pointerY = ((event.clientY - rect.top) / rect.height - .5) * 2;
+      };
+      const onPointerLeave = () => { pointerX = 0; pointerY = 0; };
+      const onScroll = () => { scrollDepth = Math.max(0, Math.min(1, window.scrollY / Math.max(window.innerHeight, 1))); };
+      el.addEventListener("pointermove", onPointer);
+      el.addEventListener("pointerleave", onPointerLeave);
+      window.addEventListener("scroll", onScroll, { passive: true });
+      onScroll();
       const draw = () => {
         if (disposed || !visible || document.hidden) return;
-        group.rotation.y += 0.0015; group.rotation.x = 0.14 + Math.sin(performance.now() * 0.00025) * 0.08;
+        tiltX += (pointerY * .12 - tiltX) * .035;
+        tiltY += (pointerX * .16 - tiltY) * .035;
+        group.rotation.y += 0.0015; group.rotation.x = 0.14 + Math.sin(performance.now() * 0.00025) * 0.08 + tiltX;
+        group.rotation.z = tiltY; group.position.y = scrollDepth * .22;
         core.rotation.y -= 0.001; shell.rotation.z += 0.0005; particles.rotation.y += .0003; satellites.forEach((satellite) => { satellite.rotation.y += .005; });
         renderer.render(scene, camera); frame = requestAnimationFrame(draw);
       };
@@ -115,6 +132,7 @@ export default function LabsSculpture() {
       observer.observe(el); resize(); draw(); setReady(true);
       teardown = () => {
         cancelAnimationFrame(frame); observer.disconnect(); window.removeEventListener("resize", resize); document.removeEventListener("visibilitychange", onVisibility);
+        el.removeEventListener("pointermove", onPointer); el.removeEventListener("pointerleave", onPointerLeave); window.removeEventListener("scroll", onScroll);
         renderer.domElement.removeEventListener("webglcontextlost", onLost); renderer.domElement.remove();
         coreGeometry.dispose(); coreMaterial.dispose(); edgesBase.dispose(); edgesGeometry.dispose(); edgesMaterial.dispose(); shellGeometry.dispose(); shellEdges.dispose(); shellMaterial.dispose();
         ringMaterials.forEach(m => m.dispose()); ringGeometries.forEach(g => g.dispose());

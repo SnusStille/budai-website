@@ -29,7 +29,7 @@ function ConceptVideo({ src, poster, label }: { src: string; poster: string; lab
 
 export default function LabsShowcase({ sv }: { sv: boolean }) {
   return <div className="lab-showcases">
-    <article className="lab-case lab-case-estate">
+    <article id="estate-case" className="lab-case lab-case-estate">
       <div className="lab-case-head"><span>01 / {sv ? "EN SMARTARE ARBETSDAG" : "A SMARTER WORKDAY"}</span><span><LockKeyhole size={12} /> {sv ? "PRIVAT PROJEKT" : "PRIVATE PROJECT"}</span></div>
       <div className="lab-case-grid">
         <div className="lab-case-copy"><div className="lab-case-kicker">JULIA STILLE / REAL ESTATE</div><h3>{sv ? <>Mer tid för <em>människor.</em></> : <>More time for <em>people.</em></>}</h3><p>{sv ? "En digital arbetsplats som samlar objekt, kunder, leads och visningar. Mindre tid på att leta — mer tid till relationer och nästa affär." : "A digital workspace for properties, clients, leads and viewings. Less time searching, more time for relationships and the next opportunity."}</p>
@@ -39,7 +39,7 @@ export default function LabsShowcase({ sv }: { sv: boolean }) {
         <div className="lab-case-screen"><div className="lab-screen-bar"><span><i /><i /><i /></span><span>JULIA STILLE / WORKSPACE</span><ArrowDownRight size={14} /></div><ConceptVideo src="/labs-media/julia.mp4" poster="/labs-media/julia-poster.jpg" label={sv ? "Konceptfilm för Julia Stille Real Estate med uppspelningskontroller" : "Julia Stille Real Estate concept film with playback controls"} /><div className="lab-screen-caption"><span>{sv ? "PRODUKTVISUALISERING · FIKTIV DATA" : "PRODUCT VISUALISATION · FICTIONAL DATA"}</span><span>01 / 02</span></div></div>
       </div>
     </article>
-    <article className="lab-case lab-case-harvis">
+    <article id="harvis-case" className="lab-case lab-case-harvis">
       <div className="lab-case-head"><span>02 / {sv ? "EN IDÉ I RÖRELSE" : "AN IDEA IN MOTION"}</span><span><LockKeyhole size={12} /> {sv ? "PRIVAT PROJEKT" : "PRIVATE PROJECT"}</span></div>
       <div className="lab-case-grid">
         <div className="lab-case-copy"><div className="lab-case-kicker">HARVIS / DIGITAL ASSISTANT</div><h3>{sv ? <>En extra <em>hjärna.</em></> : <>An extra <em>mind.</em></>}</h3><p>{sv ? "Harvis är idén om en personlig AI-assistent som hjälper till att skapa överblick, hantera dialoger och hålla arbetet i rörelse." : "Harvis is the idea of a personal AI assistant that helps create clarity, manage conversations and keep work moving."}</p>
