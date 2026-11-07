@@ -21,7 +21,7 @@ test("Builder opens the separate Labs page and project names are non-clickable",
   await expect(portal.getByRole("link", { name: /Enter Labs/ })).toHaveAttribute("href", "/labs");
   await portal.getByRole("link", { name: /Enter Labs/ }).click();
   await expect(page).toHaveURL(/\/labs$/);
-  await expect(page.getByRole("heading", { name: /Beyond the.*expected/i })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Ideas made.*real/i })).toBeVisible();
   const projects = page.locator("#projects");
   await expect(projects.locator(".lab-project-row")).toHaveCount(5);
   for (const name of ["BudAI", "StilleAffe", "Anna’s Second Brain", "Harvis", "Julia Stille Real Estate"]) await expect(projects.locator(".lab-project-list").getByRole("heading", { name, exact: true })).toBeVisible();
@@ -94,7 +94,7 @@ test("3D artwork loads when motion is enabled without blocking navigation", asyn
   // A WebGL canvas is optional: the static artwork is the graceful fallback.
   await expect(page.locator(".lab-primary")).toBeVisible();
   await page.locator(".lab-primary").click();
-  await expect(page).toHaveURL(/#signal-studio$/);
+  await expect(page).toHaveURL(/#projects$/);
 });
 
 
@@ -255,4 +255,18 @@ test("save-data mode keeps the sculpture fallback without creating a WebGL canva
   await page.goto("/labs");
   await expect(page.locator(".lab-art-fallback")).toBeVisible();
   await expect(page.locator(".lab-art canvas")).toHaveCount(0);
+});
+
+test("Labs navigation and featured work remain usable at narrow widths", async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/sv/labs");
+  const nav = page.getByRole("navigation", { name: "Labs navigering" });
+  await expect(nav.getByRole("link", { name: "Projekt" })).toBeVisible();
+  await nav.getByRole("link", { name: "Projekt" }).click();
+  await expect(page).toHaveURL(/#projects$/);
+  await expect(page.locator("#estate-case video")).toBeVisible();
+  await expect(page.locator("#harvis-case video")).toBeVisible();
+  await nav.getByRole("link", { name: "Experiment" }).click();
+  await expect(page).toHaveURL(/#signal-studio$/);
 });
