@@ -61,11 +61,19 @@ export default function CommandPalette() {
       },
       {
         id: "about",
-        label: sv ? "Möt Byggaren (Stilledev)" : "About the Builder (Stilledev)",
+        label: sv ? "Byggaren · 3D-miljö" : "The Builder · 3D Workspace",
         hint: "04",
         icon: Cpu,
         action: () => goTo("about"),
-        keywords: "stilledev developer github contact byggaren kod",
+        keywords: "builder 3d workspace ide byggaren kod",
+      },
+      {
+        id: "labs",
+        label: sv ? "Labs — projekt och studio" : "Labs — projects and studio",
+        hint: "↗",
+        icon: Sparkles,
+        action: () => { setOpen(false); router.push(sv ? "/sv/labs" : "/labs"); },
+        keywords: "labs stilledev projects studio oliver grundare",
       },
       {
         id: "roadmap",
@@ -154,7 +162,7 @@ export default function CommandPalette() {
         keywords: "developer contact discord stilledev kontakt",
       },
     ],
-    [sv, setLang, goTo]
+    [sv, setLang, goTo, router]
   );
 
   const filtered = useMemo(() => {

@@ -1,20 +1,16 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { ArrowDown, ArrowRight, Check, Code2, Copy, Github, Mail } from "lucide-react";
-import ScrollReveal from "@/components/ui/ScrollReveal";
+import { useEffect, useRef } from "react";
+import { ArrowRight, BriefcaseBusiness, Code2, MapPin, Sparkles } from "lucide-react";
+import { StilledevMark } from "@/components/ui/BudAILogo";
 import { useLang } from "@/components/ui/LanguageContext";
-import { EXAMPLE_SOURCE } from "@/lib/experience/code";
 import { subscribeJourney } from "@/lib/experience/scroll";
 import ProgressiveEditor from "@/components/experience/ProgressiveEditor";
-
-const STACK = ["Next.js", "TypeScript", "Tailwind", "Supabase", "Claude API"];
 
 export default function About() {
   const { lang } = useLang();
   const sv = lang === "sv";
   const status = useRef<HTMLDivElement>(null);
-  const [copiedSource, setCopiedSource] = useState(false);
 
   useEffect(() => subscribeJourney((frame) => {
     const p = frame.sections.about ?? 0;
@@ -56,13 +52,6 @@ export default function About() {
   const launchArchetypePrompt = (prompt: string) => {
     window.dispatchEvent(new CustomEvent("budai:prompt", { detail: prompt }));
     document.getElementById("playground")?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  const copyExampleSource = () => {
-    void navigator.clipboard?.writeText(EXAMPLE_SOURCE).then(() => {
-      setCopiedSource(true);
-      window.setTimeout(() => setCopiedSource(false), 1600);
-    });
   };
 
   return (
@@ -108,56 +97,28 @@ export default function About() {
             <span><b>01</b>{sv ? "Initiera" : "Initialize"}</span>
             <span><b>02</b>{sv ? "Skapa" : "Compose"}</span>
             <span><b>03</b>{sv ? "Utforska" : "Explore"}</span>
-            <a href="#builder-profile" aria-label={sv ? "Möt byggaren" : "Meet the builder"}><ArrowDown size={15} /></a>
+            <a href={sv ? "/sv/labs" : "/labs"} aria-label={sv ? "Öppna Labs" : "Open Labs"}><ArrowRight size={15} /></a>
           </div>
         </div>
       </div>
 
-      <div id="builder-profile" className="builder-profile">
-        <ScrollReveal>
-          <span className="chapter-label">THE HUMAN BEHIND THE INTELLIGENCE</span>
-          <h3>{sv ? "10 år av kod." : "10 years of code."}<br /><span className="text-gradient">{sv ? "2 år av BudAI." : "2 years of BudAI."}</span></h3>
-          <div className="builder-facts"><span><b>10</b>{sv ? "år av kodande" : "years of coding"}</span><span><b>02</b>{sv ? "år med BudAI" : "years on BudAI"}</span><span><b>SV / EN</b>{sv ? "Tvåspråkig" : "Bilingual"}</span></div>
-        </ScrollReveal>
-        <ScrollReveal delay={.1}>
-          <p>{sv ? "Jag är Stilledev. Efter tio år som mjukvaruutvecklare — och de senaste två med fullt fokus på BudAI — har målet varit tydligt: att bygga en arbetsyta som hanterar svenska och engelska naturligt, respekterar din integritet med minne du kan styra och förvandlar komplexa frågor till konkret handling. Idag är BudAI en öppen utvecklarförhandsvisning som vi bygger vidare steg för steg." : "I'm Stilledev. Over ten years of writing software — and the last two focused entirely on BudAI — my goal has been clear: build a workspace that handles Swedish and English naturally, respects your privacy with memory you control, and turns complex questions into clear action. Today BudAI is an open developer preview, evolving step by step into the everyday AI workspace for individuals and teams."}</p>
-          <div className="builder-stack">{STACK.map((item) => <span key={item}>{item}</span>)}</div>
-          <ul className="builder-values">{(sv ? ["Byggt steg för steg i öppen förhandsvisning", "Integritet först", "Öppet på GitHub"] : ["Built step by step in an open preview", "Privacy first", "Open on GitHub"]).map((item) => <li key={item}>{item}</li>)}</ul>
-          <div className="builder-links">
-            <a
-              href="#playground"
-              onClick={() =>
-                window.dispatchEvent(
-                  new CustomEvent("budai:prompt", {
-                    detail: sv
-                      ? "Skapa en tydlig lanseringsplan på svenska och engelska med milstolpar, risker och nästa steg."
-                      : "Create a clear bilingual launch plan in Swedish and English with milestones, risks, and next steps.",
-                  })
-                )
-              }
-            >
-              {sv ? "Prova exemplet i Playground" : "Try this prompt in Playground"}
-              <ArrowRight size={13} />
-            </a>
-            <a href="https://github.com/SnusStille/budai-website" target="_blank" rel="noopener noreferrer"><Github size={15} />GitHub<ArrowRight size={13} /></a>
-            <a href="mailto:Stilleinc@hotmail.com"><Mail size={15} />{sv ? "Kontakt" : "Contact"}</a>
-          </div>
-          <details className="builder-source-details">
-            <summary>{sv ? "Läs kodexemplet" : "Read the code example"}<Code2 size={14} /></summary>
-            <div className="mt-4 flex items-center justify-between gap-3">
-              <p className="!mt-0">{sv ? "Ett illustrativt anrop till Playground. Koden på skärmen körs inte och gör inga nätverksanrop." : "An illustrative request to the Playground. The code on the monitor is not executed and makes no network requests."}</p>
-              <button
-                type="button"
-                onClick={copyExampleSource}
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-accent-cyan/25 bg-accent-cyan/10 px-2.5 py-1 font-mono text-[10px] text-accent-cyan transition-colors hover:border-accent-cyan/50 hover:text-white"
-              >
-                {copiedSource ? <Check size={11} /> : <Copy size={11} />}
-                {copiedSource ? (sv ? "Kopierad" : "Copied") : (sv ? "Kopiera TS" : "Copy TS")}
-              </button>
-            </div>
-            <pre tabIndex={0}><code>{EXAMPLE_SOURCE}</code></pre>
-          </details>
-        </ScrollReveal>
+      <aside className="builder-person" aria-labelledby="builder-person-title">
+        <div className="builder-person-mark" aria-hidden="true"><StilledevMark size={50} /></div>
+        <div className="builder-person-copy">
+          <span className="builder-person-label"><i /> {sv ? "PERSONEN BAKOM" : "THE PERSON BEHIND"} / STILLEDEV EF</span>
+          <h3 id="builder-person-title">{sv ? <>Hej, jag är <em>Oliver.</em></> : <>Hi, I’m <em>Oliver.</em></>}</h3>
+          <p>{sv ? "Jag heter Oliver Stille och gillar raka besked och idéer som gör vardagen enklare. Jag har tidigare varit företagare och bygger gärna vidare på egna kod- och IT-projekt även på fritiden." : "I’m Oliver Stille. I like straightforward communication and ideas that make everyday life simpler. I’ve previously been an entrepreneur and enjoy building my own coding and IT projects in my spare time."}</p>
+          <div className="builder-person-facts"><span><MapPin size={15} /> Helsingborg, {sv ? "Sverige" : "Sweden"}</span><span><BriefcaseBusiness size={15} /> {sv ? "Mötesansvarig & kodare på SkandiaMäklarna" : "Meeting manager & coder at SkandiaMäklarna"}</span><span><Sparkles size={15} /> AI · {sv ? "kod & kreativa idéer" : "code & creative ideas"}</span></div>
+        </div>
+      </aside>
+      <div id="stilledev-labs" className="builder-labs-entry">
+        <div className="builder-labs-icon" aria-hidden="true"><span /><span /><span /></div>
+        <div className="builder-labs-copy">
+          <span className="builder-labs-label">04 / {sv ? "EN PLATS FÖR DET SOM BYGGS" : "A SPACE FOR WHAT'S NEXT"}</span>
+          <h3>Labs<span>.</span></h3>
+          <p>{sv ? "Labs är under utveckling. Hälsa på vår lilla byggrobot under tiden." : "Labs is under development. Say hello to our little builder bot in the meantime."}</p>
+        </div>
+        <a className="builder-labs-link" href={sv ? "/sv/labs" : "/labs"}>{sv ? "Öppna Labs" : "Enter Labs"}<ArrowRight size={16} /></a>
       </div>
     </section>
   );

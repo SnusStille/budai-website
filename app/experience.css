@@ -535,8 +535,8 @@ html[data-budai-intro="playing"] .hero-content > * { opacity: 0; transform: tran
 .plans-heading > p { font-size:11px; color:#8194a9; }
 
 /* 03 / Native-scroll camera approach. Sticky is presentation, never scroll capture. */
-.builder-section { position: relative; background: linear-gradient(#020205b0, transparent 15%, transparent 68%, #020205e6 88%); }
-.builder-scroll-track { position: relative; height: 205svh; }
+.builder-section { position: relative; }
+.builder-scroll-track { position: relative; height: 205svh; background: linear-gradient(#020205b0, transparent 20%, transparent 82%, #020205de 100%); }
 .builder-sticky { position: sticky; top: 0; height: 100svh; min-height: 750px; overflow: clip; }
 .builder-heading { position: absolute; top: 112px; left: 24px; right: 24px; text-align: center; margin: auto; z-index: 12; }
 .builder-heading h2 { font-size: clamp(35px, 3.65vw, 54px); line-height: 1.12; letter-spacing: -.045em; font-weight: 500; margin-top: 19px; }
@@ -570,7 +570,7 @@ html[data-budai-intro="playing"] .hero-content > * { opacity: 0; transform: tran
 .builder-links a { display: inline-flex; align-items: center; gap: 8px; font-size: 11px; color: #cce6f2; padding: 8px 14px; border-radius: 6px; border: 1px solid rgba(132, 206, 230, 0.22); background: rgba(10, 24, 36, 0.62); transition: color 220ms ease, border-color 220ms ease, background 220ms ease; }
 .builder-links a:first-child { border-color: rgba(126, 224, 246, 0.42); background: rgba(16, 42, 62, 0.72); color: #e8faff; }
 .builder-links a:hover { color: white; border-color: rgba(142, 232, 250, 0.55); background: rgba(20, 50, 74, 0.82); }
-.builder-source-details { border-top: 1px solid #8fb2cd25; margin-top: 30px; padding-top: 17px; }
+.builder-source-details { border-top: 1px solid #8fb2cd25; margin-top: 30px; padding-top: 17px; scroll-margin-top: 108px; }
 .builder-source-details summary { display: flex; align-items: center; justify-content: space-between; cursor: pointer; color: #8faac0; font-size: 11px; }
 .builder-source-details p { font-size: 11px; color: #8097ac; margin-top: 17px; line-height: 1.8; }
 .builder-source-details pre { font: 10px/1.8 var(--font-jetbrains), monospace; color: #a6c3d4; margin-top: 14px; overflow-x: auto; padding: 18px; background: #06101bf0; border: 1px solid #6f94ae25; border-radius: 6px; }
@@ -676,7 +676,7 @@ html[data-world-state="ready"] .builder-fallback-workspace { display: none; }
 .roadmap-telemetry-rail > span:hover, .roadmap-telemetry-rail > span.is-active { color: #fff; background: rgba(114, 215, 236, 0.16); }
 .roadmap-telemetry-rail > span > b { color: #7fe0f6; font-weight: 500; margin-right: 2px; }
 .roadmap-telemetry-rail > i { flex: 1; height: 1px; background: linear-gradient(90deg, rgba(126, 224, 246, 0.35), rgba(110, 231, 183, 0.25)); }
-.roadmap-fallback-path { position: absolute; inset: 42% 7% 35%; display: flex; align-items: center; justify-content: space-between; transform: perspective(500px) rotateY(-15deg) rotateX(35deg); border-top: 1px solid #88b2ce50; }
+.roadmap-fallback-path { position: absolute; inset: 42% 7% 35%; display: flex; align-items: center; justify-content: space-between; transform: perspective(500px) rotateY(-15deg) rotateX(35deg); border-top: 1px solid #88b2ce50; pointer-events: none; }
 .roadmap-fallback-path i { display: block; width: 22px; height: 22px; border: 1px solid #86c6db70; background: #122738; transform: translateY(-35px) rotate(45deg); box-shadow: 6px 6px #06101c, 7px 7px #5a8fab50; }
 html[data-world-state="ready"] .roadmap-fallback-path { opacity: .08; }
 .roadmap-milestones { list-style: none; display: grid; grid-template-columns: repeat(4, 1fr); margin-top: 20px; }
@@ -1162,3 +1162,27 @@ html[data-world-state="ready"] .closing-field>i {background:transparent;box-shad
   }
   .pg-msg-tools { gap: 0.25rem; }
 }
+
+/* A quiet portal from the Builder into the separate Labs experience. */
+.builder-labs-entry { max-width: 1120px; margin: 0 auto; padding: 52px 40px 72px; display: flex; align-items: center; gap: 26px; border-top: 1px solid rgba(151,210,227,.12); }
+.builder-labs-icon { width: 82px; height: 82px; flex: none; position: relative; display: grid; place-items: center; border-radius: 18px; border: 1px solid rgba(148,218,238,.2); background: radial-gradient(circle, #14394a, #07121d 70%); perspective: 200px; }
+.builder-labs-icon span { position: absolute; width: 35px; height: 35px; border: 1px solid #8cd8e7; transform: rotateX(58deg) rotateZ(45deg); }
+.builder-labs-icon span:nth-child(2) { transform: translateY(-7px) rotateX(58deg) rotateZ(45deg); opacity: .65; }
+.builder-labs-icon span:nth-child(3) { transform: translateY(7px) rotateX(58deg) rotateZ(45deg); opacity: .4; }
+.builder-labs-copy { flex: 1; }
+.builder-labs-label { font: 9px var(--font-jetbrains), monospace; color: #80b3c5; letter-spacing: .15em; }
+.builder-labs-copy h3 { margin: 6px 0; color: #f4fbff; font-size: 27px; letter-spacing: -.04em; }
+.builder-labs-copy h3 span { color: #8be1ef; }
+.builder-labs-copy p { font-size: 13px; color: #9ab2c1; }
+.builder-labs-link { display: inline-flex; flex: none; align-items: center; gap: 25px; border: 1px solid rgba(147,219,235,.4); border-radius: 9px; padding: 13px 16px; color: #e8faff; background: rgba(18,48,62,.5); font-size: 12px; transition: background .2s, border-color .2s; }
+.builder-labs-link:hover { background: rgba(33,84,103,.7); border-color: #a4e9f6; }
+@media (max-width: 650px) { .builder-labs-entry { padding: 42px 22px 56px; gap: 16px; flex-wrap: wrap; } .builder-labs-icon { width: 64px; height: 64px; } .builder-labs-copy { flex: 1 1 calc(100% - 85px); } .builder-labs-link { margin-left: 80px; } }
+
+/* A compact, privacy-conscious introduction to the person behind Stilledev. */
+.builder-person { max-width:1120px; margin:0 auto 24px; padding:42px; display:grid; grid-template-columns:100px minmax(0,1fr); gap:36px; border:1px solid rgba(150,219,237,.18); border-radius:16px; background:radial-gradient(ellipse at 5% 5%,rgba(28,91,113,.34),transparent 48%),linear-gradient(130deg,#0a1a25,#080d18); }
+.builder-person-mark { width:100px; height:100px; display:grid; place-items:center; border:1px solid rgba(153,225,241,.3); border-radius:24px; background:linear-gradient(145deg,rgba(43,103,125,.65),rgba(9,25,37,.8)); box-shadow:0 20px 50px #0006,inset 0 1px #c3f9ff29; transform:rotate(-6deg); }
+.builder-person-label { display:flex; align-items:center; gap:9px; color:#95bfce; font:9px var(--font-jetbrains),monospace; letter-spacing:.12em; }.builder-person-label i { width:6px; height:6px; border-radius:50%; background:#91eafa; box-shadow:0 0 12px #4ce4ff; }
+.builder-person-copy h3 { margin:16px 0; font-size:clamp(34px,4vw,52px); line-height:1.1; font-weight:600; letter-spacing:-.055em; }.builder-person-copy h3 em { color:#a1e1ef; font-style:normal; }.builder-person-copy > p { max-width:720px; color:#afc0cc; font-size:14px; line-height:1.9; }
+.builder-person-facts { display:flex; flex-wrap:wrap; gap:9px; margin-top:22px; }.builder-person-facts span { display:inline-flex; align-items:center; gap:8px; padding:9px 11px; border:1px solid rgba(153,218,234,.18); border-radius:6px; color:#bfd5dd; font-size:12px; line-height:1.4; }.builder-person-facts svg { color:#8cdbed; flex:none; }
+@media(max-width:1180px) { .builder-person { margin-inline:40px; } }
+@media(max-width:650px) { .builder-person { margin-inline:22px; padding:26px 22px; grid-template-columns:1fr; gap:23px; }.builder-person-mark { width:70px; height:70px; border-radius:18px; }.builder-person-mark svg { width:38px; height:38px; }.builder-person-copy h3 { font-size:38px; }.builder-person-facts { flex-direction:column; align-items:flex-start; }.builder-person-facts span { font-size:12px; } }

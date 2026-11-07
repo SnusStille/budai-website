@@ -46,7 +46,10 @@ function start() {
   const measure = () => {
     bounds = CHAPTERS.flatMap(({ id }) => {
       const el = document.getElementById(id);
-      return el ? [{ id, top: el.getBoundingClientRect().top + window.scrollY, height: el.offsetHeight }] : [];
+      if (!el) return [];
+      const builderScene = id === "about" ? document.getElementById("builder-scene") : null;
+      const height = builderScene ? Math.min(el.offsetHeight, builderScene.offsetHeight + 650) : el.offsetHeight;
+      return [{ id, top: el.getBoundingClientRect().top + window.scrollY, height }];
     });
     const footer = document.getElementById("continuation");
     footerTop = footer ? footer.getBoundingClientRect().top + scrollY : Infinity;

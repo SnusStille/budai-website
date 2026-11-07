@@ -8,6 +8,8 @@ import Providers from "@/components/Providers";
 import VercelAnalytics from "@/components/VercelAnalytics";
 import { introBootstrap } from "@/lib/experience/intro";
 import { canonicalPath, hasLanguageAlternate, SWEDISH_PATH } from "@/lib/lang";
+import { isPhoneUserAgent } from "@/lib/phone-gate";
+import PhoneWelcome from "@/components/sections/PhoneWelcome";
 
 const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://stilledev.se").replace(/\/$/, "");
 
@@ -34,7 +36,11 @@ const jsonLd = {
       "@id": `${siteUrl}/#organization`,
       name: "Stilledev",
       url: siteUrl,
-      description: "Independent software studio in Sweden building BudAI.",
+      founder: {
+        "@type": "Person",
+        name: "Oliver Stille",
+      },
+      description: "Independent software studio in Sweden founded by Oliver Stille, building BudAI and digital AI products.",
     },
   ],
 };
@@ -145,14 +151,15 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // The middleware generates a fresh nonce per request (see lib/csp.ts).
   const nonce = h.get("x-nonce") ?? undefined;
   const lang = h.get("x-budai-lang") === "sv" ? "sv" : "en";
+  const phoneGate = isPhoneUserAgent(h.get("user-agent") || "");
   return (
     <html
-      lang={lang}
+      lang={phoneGate ? "sv" : lang}
       className="font-sans"
       suppressHydrationWarning
     >
       <head>
-        <script id="budai-intro-policy" nonce={nonce} dangerouslySetInnerHTML={{ __html: introBootstrap }} />
+        {!phoneGate && <script id="budai-intro-policy" nonce={nonce} dangerouslySetInnerHTML={{ __html: introBootstrap }} />}
       </head>
       <body className="antialiased noise-overlay bg-background text-white">
         <a
@@ -166,7 +173,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           nonce={nonce}
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
-        <Providers initialLang={lang}>{children}</Providers>
+        {phoneGate ? <PhoneWelcome initialLang="sv" /> : <Providers initialLang={lang}>{children}</Providers>}
         <VercelAnalytics enabled={process.env.VERCEL === "1"} />
       </body>
     </html>

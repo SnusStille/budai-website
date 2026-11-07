@@ -1,0 +1,109 @@
+import { test, expect, type Page } from "@playwright/test";
+
+const iphone = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1";
+const android = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36";
+async function quiet(page: Page) {
+  await page.route("**/va.vercel-scripts.com/**", route => route.fulfill({ contentType: "application/javascript", body: "" }));
+  await page.addInitScript(() => { localStorage.setItem("budai-cookies", "declined"); sessionStorage.setItem("budai-buddy-popup-dismissed", "true"); sessionStorage.setItem("budai:cinematic-intro:v1", "1"); });
+}
+
+test("Builder introduces Oliver and links to the Labs holding page in both languages", async ({ page }) => {
+  await quiet(page); await page.emulateMedia({ reducedMotion: "reduce" });
+  for (const [path, title, button] of [["/", /Hi, I’m Oliver/i, /Enter Labs/i], ["/sv", /Hej, jag är Oliver/i, /Öppna Labs/i]] as const) {
+    await page.goto(`${path}#stilledev-labs`);
+    const person = page.locator(".builder-person");
+    await expect(person.getByRole("heading", { name: title })).toBeVisible();
+    await expect(person).toContainText("Helsingborg"); await expect(person).toContainText("SkandiaMäklarna");
+    await expect(person).toContainText("STILLEDEV EF");
+    const portal = page.locator("#stilledev-labs");
+    await expect(portal.getByRole("link", { name: button })).toHaveAttribute("href", path === "/sv" ? "/sv/labs" : "/labs");
+    await expect(page.locator("nav").getByRole("link", { name: /Labs/ }).first()).toBeAttached();
+  }
+});
+
+test("Labs is a bilingual holding page with no previous projects or links", async ({ page, request }) => {
+  await quiet(page); await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/sv/labs");
+  await expect(page.locator("html")).toHaveAttribute("lang", "sv");
+  await expect(page.getByRole("heading", { name: /Något kul.*är på gång/ })).toBeVisible();
+  await expect(page.locator(".labs-wait")).toContainText("UNDER UTVECKLING");
+  await expect(page.locator(".labs-wait")).toContainText("STILLEDEV EF");
+  await expect(page.locator(".labs-bot-fallback")).toBeVisible();
+  await expect(page.locator(".labs-bot canvas")).toHaveCount(0);
+  for (const old of ["StilleAffe", "Harvis", "Julia Stille Real Estate", "Anna’s Second Brain", "AI Video Studio"]) await expect(page.locator(".labs-wait")).not.toContainText(old);
+  await expect(page.locator(".labs-wait video, .labs-wait #projects, .labs-wait #services")).toHaveCount(0);
+  await expect(page.locator(".labs-wait a")).toHaveCount(5);
+  await page.getByRole("group", { name: "Språk" }).getByRole("link", { name: "EN" }).click();
+  await expect(page).toHaveURL(/\/labs$/);
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
+  await expect(page.getByRole("heading", { name: /Something good.*is brewing/ })).toBeVisible();
+  await page.locator(".labs-wait-cta").click(); await expect(page).toHaveURL(/\/$/);
+  for (const asset of ["julia.mp4", "harvis-concept.mp4", "labs-atmosphere.jpg"]) expect((await request.get(`/labs-media/${asset}`)).status()).toBe(404);
+});
+
+test("holding page metadata reflects the temporary state", async ({ request }) => {
+  for (const path of ["/labs", "/sv/labs"]) {
+    const response = await request.get(path); expect(response.ok()).toBeTruthy();
+    const html = await response.text();
+    expect(html).toContain('name="robots" content="noindex, follow"');
+    expect(html).toContain('hrefLang="en"'); expect(html).toContain('hrefLang="sv"');
+    expect(html).not.toContain("Julia Stille Real Estate"); expect(html).not.toContain("Harvis");
+  }
+});
+
+test("holding page layout fits narrow, tablet and desktop windows", async ({ page }) => {
+  await quiet(page); await page.emulateMedia({ reducedMotion: "reduce" }); await page.goto("/labs");
+  for (const width of [320, 360, 390, 600, 768, 900, 1024, 1440]) {
+    await page.setViewportSize({ width, height: 844 });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth), `${width}px`).toBeLessThanOrEqual(1);
+    await expect(page.locator(".labs-wait-cta")).toBeVisible();
+  }
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.screenshot({ path: "test-results/labs-holding-desktop.png" });
+});
+
+test("animated 3D has a graceful fallback and no client errors", async ({ page }) => {
+  await quiet(page); const errors: string[] = []; page.on("pageerror", error => errors.push(error.message));
+  await page.goto("/labs"); await expect(page.locator(".labs-bot")).toBeVisible();
+  await page.waitForTimeout(1800);
+  expect(await page.locator(".labs-bot canvas").count() || await page.locator(".labs-bot-fallback").isVisible()).toBeTruthy();
+  await page.screenshot({ path: "test-results/labs-holding-3d.png" });
+  expect(errors).toEqual([]);
+});
+
+test("save-data uses the static mascot", async ({ page }) => {
+  await quiet(page); await page.addInitScript(() => Object.defineProperty(navigator, "connection", { value: { saveData: true }, configurable: true }));
+  await page.goto("/labs"); await expect(page.locator(".labs-bot-fallback")).toBeVisible(); await expect(page.locator(".labs-bot canvas")).toHaveCount(0);
+});
+
+for (const ua of [iphone, android]) {
+  test(`phones get only a desktop invitation across routes and hosts (${ua.includes("iPhone") ? "iPhone" : "Android"})`, async ({ browser, request }) => {
+    const context = await browser.newContext({ userAgent: ua, viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+    const page = await context.newPage(); await quiet(page);
+    for (const route of ["/", "/sv", "/labs", "/sv/labs", "/legal/privacy"]) {
+      const response = await page.goto(route); expect(response?.headers()["cache-control"]).toMatch(/private|no-store/i);
+      await expect(page.locator(".phone-welcome")).toBeVisible();
+      await expect(page.locator(".labs-wait, .builder-person, nav, #playground")).toHaveCount(0);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(1);
+    }
+    await expect(page.getByRole("heading", { name: /Hoppsan/ })).toBeVisible();
+    await page.getByRole("button", { name: "EN", exact: true }).click();
+    await expect(page.getByRole("heading", { name: /Wrong branch/ })).toBeVisible();
+    await page.screenshot({ path: `test-results/phone-${ua.includes("iPhone") ? "iphone" : "android"}.png` });
+    for (const host of ["stilledev.se", "www.stilledev.se", "preview.vercel.app", "localhost:3000"]) {
+      const response = await request.get("/labs", { headers: { host, "user-agent": ua } });
+      const html = await response.text(); expect(html).toContain("phone-welcome"); expect(html).not.toContain("labs-wait-shell");
+      expect(response.headers()["cache-control"]).toMatch(/private|no-store/i);
+    }
+    const api = await request.post("/api/playground", { headers: { "user-agent": ua }, data: {} });
+    expect(api.status()).toBe(403); expect(await api.json()).toMatchObject({ code: "desktop_only" });
+    await context.close();
+  });
+}
+
+test("tablet and bot user agents retain the desktop site", async ({ request }) => {
+  for (const ua of ["Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Safari/604.1", "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"]) {
+    const response = await request.get("/labs", { headers: { "user-agent": ua } });
+    const html = await response.text(); expect(html).toContain("labs-wait-shell"); expect(html).not.toContain('class="phone-welcome"');
+  }
+});

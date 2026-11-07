@@ -45,7 +45,7 @@ export function BudAIWordmark({ size = "sm", className = "", animated = true, va
   return <span className={`inline-flex items-center gap-2.5 ${className}`}><BudAILogo size={size} animated={animated} variant={variant} /><Wordmark className={`${size === "xs" || size === "sm" ? "text-[15px]" : size === "md" ? "text-base" : "text-xl"} ${variant === "light" ? "text-slate-900" : "text-white"}`} /></span>;
 }
 
-// The Stilledev identity and attribution below are deliberately unchanged.
+// Stilledev’s independent faceted constellation mark.
 export function StilledevMark({
   size = 20,
   className = "",
@@ -67,21 +67,9 @@ export function StilledevMark({
             <stop offset="100%" stopColor="#8b5cf6" />
           </linearGradient>
         </defs>
-        <circle
-          cx="16"
-          cy="16"
-          r="14.5"
-          stroke={`url(#sm-${uid})`}
-          strokeWidth="1.5"
-          fill="rgba(0,229,255,0.06)"
-        />
-        <path
-          d="M21.5 11.2c-.6-1.8-2.2-2.9-4.4-2.9-2.8 0-4.6 1.5-4.6 3.5 0 1.9 1.3 2.9 4.2 3.5l1.4.3c2.1.5 3.1 1.2 3.1 2.6 0 1.6-1.5 2.7-3.7 2.7-2.1 0-3.6-1-4.3-2.7"
-          stroke={`url(#sm-${uid})`}
-          strokeWidth="2.2"
-          strokeLinecap="round"
-          fill="none"
-        />
+        <path d="M16 2.5 28.5 9.4v13.2L16 29.5 3.5 22.6V9.4L16 2.5Z" stroke={`url(#sm-${uid})`} strokeWidth="1.3" fill="rgba(0,229,255,0.05)" />
+        <path d="M8.2 19.9 16 7.7l7.8 12.2M11.1 15.6 16 24.3l4.9-8.7M8.2 19.9h15.6" stroke={`url(#sm-${uid})`} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+        <circle cx="16" cy="15.9" r="2" fill={`url(#sm-${uid})`} />
       </svg>
     </span>
   );

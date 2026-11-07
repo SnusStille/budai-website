@@ -564,7 +564,7 @@ test("language resolution has a real Swedish URL, honest canonicals and no inven
   expect(hasLanguageAlternate("/changelog")).toBe(false);
   const layout = readFileSync("app/layout.tsx", "utf8");
   expect(layout).toContain("<html");
-  expect(layout).toContain("lang={lang}");
+  expect(layout).toContain('lang={phoneGate ? "sv" : lang}');
   expect(layout).toContain("generateMetadata");
   expect(readFileSync("app/sv/page.tsx", "utf8")).toContain("../page");
 });

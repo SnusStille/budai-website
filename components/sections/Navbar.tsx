@@ -27,6 +27,7 @@ export default function Navbar() {
   useEffect(() => subscribeJourney((frame) => {
     setScrolled(frame.y > 40);
     setActive(frame.active);
+
   }), []);
 
   useEffect(() => {
@@ -66,6 +67,8 @@ export default function Navbar() {
     { label: t.nav.roadmap, href: "#roadmap", id: "roadmap" },
   ];
 
+  const isLinkActive = (id: string) => active === id;
+
   return (
     <>
       <motion.nav
@@ -79,7 +82,8 @@ export default function Navbar() {
         }`}
       >
         <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 lg:h-[4.5rem] lg:grid lg:grid-cols-[1fr_auto_1fr]">
+          <div className="flex items-center justify-between h-16 lg:h-[4.5rem] lg:grid lg:grid-cols-[auto_1fr_auto] lg:gap-4">
+            <div className="flex items-center gap-3">
             <Link
               href="/"
               data-budai-logo
@@ -107,15 +111,17 @@ export default function Navbar() {
                 </span>
               </span>
             </Link>
+            <a href={lang === "sv" ? "/sv/labs" : "/labs"} className="hidden sm:inline-flex items-center rounded-full border border-accent-cyan/25 bg-accent-cyan/[0.06] px-3 py-1.5 text-[11px] font-semibold text-accent-cyan transition-colors hover:bg-accent-cyan/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-cyan">Labs <span aria-hidden="true" className="ml-1">↗</span></a>
+            </div>
 
-            <div className="hidden lg:flex items-center gap-0.5">
+            <div className="hidden lg:flex items-center justify-center gap-0.5">
               {links.map((l) => {
-                const isActive = active === l.id;
+                const isActive = isLinkActive(l.id);
                 return (
                   <a
                     key={l.href}
                     href={l.href}
-                    className={`relative px-3.5 py-2 text-sm rounded-lg transition-colors ${
+                    className={`relative whitespace-nowrap px-2.5 xl:px-3.5 py-2 text-sm rounded-lg transition-colors ${
                       isActive
                         ? "text-white"
                         : l.id === "playground"
@@ -175,10 +181,10 @@ export default function Navbar() {
                 <Bell className="h-4 w-4" />
                 <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-accent-cyan" />
               </button>
-              <a href="#playground" className="rounded-full border border-white/15 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:border-accent-cyan/40">
+              <a href="#playground" className="hidden xl:inline-flex whitespace-nowrap rounded-full border border-white/15 px-4 py-2 text-sm font-medium text-white transition-colors hover:border-accent-cyan/40">
                 Playground
               </a>
-              <a href="#waitlist" className="btn-primary !px-5 !py-2.5 text-sm">
+              <a href="#waitlist" className="btn-primary whitespace-nowrap !px-4 xl:!px-5 !py-2.5 text-sm">
                 <span>{t.nav.requestAccess}</span>
               </a>
             </div>
@@ -237,7 +243,7 @@ export default function Navbar() {
                   transition={{ delay: i * 0.04 }}
                   onClick={() => setMobileOpen(false)}
                   className={`px-4 py-3.5 text-lg rounded-xl transition-colors ${
-                    active === l.id
+                    isLinkActive(l.id)
                       ? "text-white bg-white/5 border border-accent-cyan/20"
                       : "text-white/80 hover:text-white hover:bg-white/5"
                   }`}
@@ -246,6 +252,7 @@ export default function Navbar() {
                 </motion.a>
               ))}
 
+              <a href={lang === "sv" ? "/sv/labs" : "/labs"} onClick={() => setMobileOpen(false)} className="px-4 py-3.5 text-lg rounded-xl text-accent-cyan hover:bg-white/5">Labs</a>
               <div className="flex items-center gap-3 mt-4 px-4">
                 <Globe className="w-4 h-4 text-muted" />
                 <div className="flex p-0.5 rounded-full bg-black/40 border border-white/[0.08]">

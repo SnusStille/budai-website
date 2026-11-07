@@ -18,8 +18,8 @@ test("one living Confluence identity reaches the real UI, installed icons and bo
   expect(new Set(words)).toEqual(new Set(["BudAI"]));
   await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveAttribute("href", "/apple-touch-icon.png");
   await expect(page.locator("nav").getByText("STILLEDEV", { exact: true })).toBeVisible();
-  // The separate Stilledev S path is not the BudAI mark, and its attribution remains.
-  expect(await page.locator('footer path[d^="M21.5 11.2"]').count()).toBeGreaterThan(0);
+  // The separate faceted Stilledev mark is not the BudAI mark, and its attribution remains.
+  expect(await page.locator('footer path[d^="M16 2.5 28.5"]').count()).toBeGreaterThan(0);
   const favicon = await request.get("/favicon.svg");
   expect(favicon.ok()).toBe(true);
   expect(await favicon.text()).toContain(BUDAI_MARK_PATH);
