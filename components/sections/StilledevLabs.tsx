@@ -18,7 +18,7 @@ export default function StilledevLabs() {
     <header className="lab-header lab-wrap">
       <a href="#top" className="lab-brand" aria-label="Labs"><StilledevMark size={26} /><span>Labs<span className="lab-brand-dot">.</span><small>DEVELOPED BY STILLEDEV</small></span></a>
       <nav className="lab-header-nav" aria-label={sv ? "Labs navigering" : "Labs navigation"}><a href="#projects">{sv ? "Projekt" : "Work"}</a><a href="#signal-studio">{sv ? "Experiment" : "Experiment"}</a><a href="#research">{sv ? "Idéer" : "Ideas"}</a><a href="#about-labs">{sv ? "Om" : "About"}</a></nav>
-      <div className="lab-header-right"><div className="lab-lang" role="group" aria-label={sv ? "Språk" : "Language"}><a href="/labs" onClick={() => setLang("en")} aria-current={!sv ? "page" : undefined}>EN</a><a href="/sv/labs" onClick={() => setLang("sv")} aria-current={sv ? "page" : undefined}>SV</a></div><a href={home} className="lab-back"><ArrowLeft size={14} /><span>{sv ? "Tillbaka till BudAI" : "Back to BudAI"}</span></a></div>
+      <div className="lab-header-right"><div className="lab-lang" role="group" aria-label={sv ? "Språk" : "Language"}><a href="/labs" onClick={() => setLang("en")} aria-current={!sv ? "page" : undefined}>EN</a><a href="/sv/labs" onClick={() => setLang("sv")} aria-current={sv ? "page" : undefined}>SV</a></div><a href={home} className="lab-back" aria-label={sv ? "Tillbaka till BudAI" : "Back to BudAI"}><ArrowLeft size={14} /><span>{sv ? "Tillbaka till BudAI" : "Back to BudAI"}</span></a></div>
     </header>
 
     <section className="lab-hero lab-wrap" id="top">

@@ -313,3 +313,19 @@
   .lab-footer-bottom > div { gap:20px; }
 }
 @media(prefers-reduced-motion:reduce) { .lab-example-options button { transition:none; } }
+
+/* Persistent desktop wayfinding, without taking over the small-screen viewport. */
+@media (min-width:801px) {
+  .lab-header { position:sticky; top:12px; height:68px; margin-top:12px; padding-inline:18px; border:1px solid rgba(161,216,233,.16); border-radius:10px; background:rgba(5,12,19,.96); box-shadow:0 12px 32px rgba(0,0,0,.28); }
+  .lab-header-nav { gap:clamp(16px,2.5vw,36px); }
+  .lab-page :is(#projects,#signal-studio,#research,#services,#about-labs,#business,#contact,#estate-case,#harvis-case) { scroll-margin-top:95px; }
+}
+@media (prefers-reduced-motion:no-preference) { html:has(.lab-page) { scroll-behavior:smooth; } }
+@media (min-width:801px) and (max-width:1000px) {
+  .lab-header { grid-template-columns:auto 1fr auto; gap:12px; }
+  .lab-header-nav { justify-content:center; gap:16px; }
+  .lab-header-right { gap:8px; }
+  .lab-back { padding:10px; }
+  .lab-back span { display:none; }
+  .lab-hero h1 { font-size:clamp(50px,6vw,60px); }
+}

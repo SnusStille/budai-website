@@ -271,6 +271,7 @@ test("Labs navigation and featured work remain usable at narrow widths", async (
   await page.goto("/sv/labs");
   const nav = page.getByRole("navigation", { name: "Labs navigering" });
   await expect(nav.getByRole("link", { name: "Projekt" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Tillbaka till BudAI", exact: true }).first()).toBeVisible();
   await nav.getByRole("link", { name: "Projekt" }).click();
   await expect(page).toHaveURL(/#projects$/);
   await expect(page.locator("#estate-case video")).toBeVisible();
@@ -345,4 +346,26 @@ test("the Labs footer provides usable bilingual section navigation", async ({ pa
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await page.getByRole("group", { name: "Språk" }).getByRole("link", { name: "EN" }).click();
   await expect(page.locator(".lab-footer").getByRole("navigation", { name: "Footer links" }).getByRole("link", { name: "Business & legal" })).toHaveAttribute("href", "#business");
+});
+
+test("desktop Labs navigation stays available and takes visitors to a section", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/labs");
+  const header = page.locator(".lab-header");
+  await page.locator("#services").scrollIntoViewIfNeeded();
+  const rect = await header.boundingBox();
+  expect(rect && rect.y >= 0 && rect.y < 30).toBeTruthy();
+  await header.getByRole("link", { name: "Experiment" }).click();
+  await expect(page).toHaveURL(/#signal-studio$/);
+  await expect(page.locator("#signal-studio")).toBeVisible();
+});
+
+test("concept films are honestly identified in both languages", async ({ page }) => {
+  await page.goto("/labs");
+  await expect(page.locator("#estate-case")).toContainText("not footage of Julia");
+  await expect(page.locator("#harvis-case")).toContainText("Could help capture");
+  await page.getByRole("group", { name: "Language" }).getByRole("link", { name: "SV" }).click();
+  await expect(page.locator("#estate-case")).toContainText("inte en inspelning av Julia");
+  await expect(page.locator("#harvis-case")).toContainText("Kan fånga upp");
 });
