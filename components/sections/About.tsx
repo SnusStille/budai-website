@@ -1,11 +1,10 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { ArrowDown, Code2 } from "lucide-react";
+import { ArrowRight, Code2 } from "lucide-react";
 import { useLang } from "@/components/ui/LanguageContext";
 import { subscribeJourney } from "@/lib/experience/scroll";
 import ProgressiveEditor from "@/components/experience/ProgressiveEditor";
-import StilledevLabs from "@/components/sections/StilledevLabs";
 
 export default function About() {
   const { lang } = useLang();
@@ -97,12 +96,20 @@ export default function About() {
             <span><b>01</b>{sv ? "Initiera" : "Initialize"}</span>
             <span><b>02</b>{sv ? "Skapa" : "Compose"}</span>
             <span><b>03</b>{sv ? "Utforska" : "Explore"}</span>
-            <a href="#stilledev-labs" aria-label={sv ? "Utforska Stilledev Labs" : "Explore Stilledev Labs"}><ArrowDown size={15} /></a>
+            <a href={sv ? "/sv/labs" : "/labs"} aria-label={sv ? "Öppna Labs" : "Open Labs"}><ArrowRight size={15} /></a>
           </div>
         </div>
       </div>
 
-      <StilledevLabs />
+      <div id="stilledev-labs" className="builder-labs-entry">
+        <div className="builder-labs-icon" aria-hidden="true"><span /><span /><span /></div>
+        <div className="builder-labs-copy">
+          <span className="builder-labs-label">04 / {sv ? "EN PLATS FÖR DET SOM BYGGS" : "A SPACE FOR WHAT'S NEXT"}</span>
+          <h3>Labs<span>.</span></h3>
+          <p>{sv ? "Möt människan bakom koden och utforska projekten." : "Meet the person behind the code and explore the projects."}</p>
+        </div>
+        <a className="builder-labs-link" href={sv ? "/sv/labs" : "/labs"}>{sv ? "Öppna Labs" : "Enter Labs"}<ArrowRight size={16} /></a>
+      </div>
     </section>
   );
 }

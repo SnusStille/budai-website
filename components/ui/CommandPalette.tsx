@@ -68,28 +68,12 @@ export default function CommandPalette() {
         keywords: "builder 3d workspace ide byggaren kod",
       },
       {
-        id: "stilledev-labs",
-        label: sv ? "Stilledev Labs — Oliver Stille & Företaget" : "Stilledev Labs — Oliver Stille & Studio",
-        hint: "04.2",
+        id: "labs",
+        label: sv ? "Labs — projekt och studio" : "Labs — projects and studio",
+        hint: "↗",
         icon: Sparkles,
-        action: () => goTo("stilledev-labs"),
-        keywords: "stilledev labs oliver stille founder grundare enskild firma company om företaget",
-      },
-      {
-        id: "stilledev-projects",
-        label: sv ? "Stilledev Projects (BudAI, StilleAffe, Second Brain)" : "Stilledev Projects (BudAI, StilleAffe, Second Brain)",
-        hint: "03",
-        icon: Cpu,
-        action: () => goTo("stilledev-projects"),
-        keywords: "projects budai stilleaffe anna second brain projekt portfölj",
-      },
-      {
-        id: "stilledev-contact",
-        label: sv ? "Kontakt & samarbete (Oliver Stille)" : "Contact & Connect (Oliver Stille)",
-        hint: "→",
-        icon: Users,
-        action: () => goTo("stilledev-contact"),
-        keywords: "contact email github linkedin stilleinc oliver kontakt samarbete",
+        action: () => { setOpen(false); router.push(sv ? "/sv/labs" : "/labs"); },
+        keywords: "labs stilledev projects studio oliver grundare",
       },
       {
         id: "roadmap",
@@ -178,7 +162,7 @@ export default function CommandPalette() {
         keywords: "developer contact discord stilledev kontakt",
       },
     ],
-    [sv, setLang, goTo]
+    [sv, setLang, goTo, router]
   );
 
   const filtered = useMemo(() => {

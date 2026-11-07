@@ -20,7 +20,6 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [active, setActive] = useState("");
-  const [inLabs, setInLabs] = useState(false);
   const { lang, setLang, t } = useLang();
   const mobileMenu = useRef<HTMLDivElement>(null);
   const menuToggle = useRef<HTMLButtonElement>(null);
@@ -28,12 +27,7 @@ export default function Navbar() {
   useEffect(() => subscribeJourney((frame) => {
     setScrolled(frame.y > 40);
     setActive(frame.active);
-    if (frame.active === "about") {
-      const labsEl = document.getElementById("stilledev-labs");
-      setInLabs(!!labsEl && labsEl.getBoundingClientRect().top <= frame.height * 0.45);
-    } else {
-      setInLabs(false);
-    }
+
   }), []);
 
   useEffect(() => {
@@ -70,15 +64,11 @@ export default function Navbar() {
     { label: t.nav.playground, href: "#playground", id: "playground" },
     { label: t.nav.capabilities, href: "#capabilities", id: "capabilities" },
     { label: lang === "sv" ? "Byggaren" : "Builder", href: "#about", id: "about" },
-    { label: "Stilledev Labs", href: "#stilledev-labs", id: "stilledev-labs" },
+    { label: "Labs", href: lang === "sv" ? "/sv/labs" : "/labs", id: "labs" },
     { label: t.nav.roadmap, href: "#roadmap", id: "roadmap" },
   ];
 
-  const isLinkActive = (id: string) => {
-    if (id === "stilledev-labs") return active === "about" && inLabs;
-    if (id === "about") return active === "about" && !inLabs;
-    return active === id;
-  };
+  const isLinkActive = (id: string) => active === id;
 
   return (
     <>
