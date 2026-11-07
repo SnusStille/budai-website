@@ -21,11 +21,11 @@ test("Builder opens the separate Labs page and project names are non-clickable",
   await expect(portal.getByRole("link", { name: /Enter Labs/ })).toHaveAttribute("href", "/labs");
   await portal.getByRole("link", { name: /Enter Labs/ }).click();
   await expect(page).toHaveURL(/\/labs$/);
-  await expect(page.getByRole("heading", { name: /Labs.*Ideas in motion/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Ideas brought.*to life/ })).toBeVisible();
   const projects = page.locator("#projects");
   await expect(projects.locator(".lab-project-row")).toHaveCount(5);
   for (const name of ["BudAI", "StilleAffe", "Anna’s Second Brain", "Harvis", "Julia Stille Real Estate"]) await expect(projects.locator(".lab-project-list").getByRole("heading", { name, exact: true })).toBeVisible();
-  await expect(projects.locator("article a, article button")).toHaveCount(0);
+  await expect(projects.locator("article a")).toHaveCount(0);
   await expect(projects).toContainText("Project links are kept private");
   await expect(page.locator("#about-labs")).toContainText("Oliver");
   await expect(page.locator("#business")).toContainText("Swedish sole proprietorship");
@@ -102,14 +102,17 @@ test("featured videos, custom services and legal disclosure are accessible", asy
   await quietChrome(page);
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/labs");
-  const videos = page.locator(".lab-feature video");
+  const videos = page.locator(".lab-case video");
   await expect(videos).toHaveCount(2);
   for (const video of await videos.all()) {
     await expect(video).toHaveAttribute("controls", "");
     await expect(video).toHaveAttribute("poster", /labs-media/);
     expect(await video.evaluate((node: HTMLVideoElement) => node.paused)).toBeTruthy();
   }
-  await expect(page.locator(".lab-feature-credit")).toContainText("Illustrative stock footage");
+  await expect(page.locator(".lab-screen-caption").first()).toContainText("FICTIONAL DATA");
+  await expect(page.locator(".lab-duo-disclaimer")).toContainText("future scenario");
+  await expect(page.locator(".lab-case").first()).toContainText("leads");
+  await expect(page.locator(".lab-case").nth(1)).toContainText("not a claim of a live integration");
   await expect(page.locator("#services")).toContainText("GTA 5 and Roblox");
   const legal = page.locator("#legal");
   await expect(legal).not.toHaveAttribute("open", "");
@@ -136,4 +139,23 @@ test("homepage Labs is beside the developer attribution and reachable on mobile"
   await page.setViewportSize({ width: 390, height: 844 });
   await nav.getByRole("button", { name: "Open menu" }).click();
   await expect(page.locator("#mobile-navigation").getByRole("link", { name: "Labs" })).toHaveAttribute("href", "/labs");
+});
+
+
+test("concept videos play when visible and respect a manual pause", async ({ page, request }) => {
+  await quietChrome(page);
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  for (const path of ["/labs-media/julia.mp4", "/labs-media/harvis-concept.mp4"]) {
+    const response = await request.get(path);
+    expect(response.ok()).toBeTruthy();
+    expect(response.headers()["content-type"]).toContain("video/mp4");
+  }
+  await page.goto("/labs");
+  const video = page.locator(".lab-case video").first();
+  await video.scrollIntoViewIfNeeded();
+  await expect.poll(() => video.evaluate((v: HTMLVideoElement) => !v.paused && v.readyState >= 2)).toBe(true);
+  await video.evaluate((v: HTMLVideoElement) => v.pause());
+  await page.locator("#top").scrollIntoViewIfNeeded();
+  await video.scrollIntoViewIfNeeded();
+  await expect.poll(() => video.evaluate((v: HTMLVideoElement) => v.paused)).toBe(true);
 });
