@@ -2,8 +2,18 @@
 
 import { useRef, type ReactNode } from "react";
 
-/** Card with a soft cursor-following glow (Linear / Vercel style). */
-export default function SpotlightCard({ children, className = "", tilt = true }: { children: ReactNode; className?: string; tilt?: boolean }) {
+/** Card with a soft cursor-following glow and restrained 3D perspective depth. */
+export default function SpotlightCard({
+  children,
+  className = "",
+  tilt = true,
+  maxTilt = 4.5,
+}: {
+  children: ReactNode;
+  className?: string;
+  tilt?: boolean;
+  maxTilt?: number;
+}) {
   const ref = useRef<HTMLDivElement>(null);
   return (
     <div
@@ -14,16 +24,19 @@ export default function SpotlightCard({ children, className = "", tilt = true }:
         const r = el.getBoundingClientRect();
         el.style.setProperty("--mx", `${e.clientX - r.left}px`);
         el.style.setProperty("--my", `${e.clientY - r.top}px`);
-        if (tilt) {
+        if (
+          tilt &&
+          !window.matchMedia("(prefers-reduced-motion: reduce), (pointer: coarse)").matches
+        ) {
           const px = (e.clientX - r.left) / r.width - 0.5;
           const py = (e.clientY - r.top) / r.height - 0.5;
-          el.style.transform = `perspective(800px) rotateY(${px * 7}deg) rotateX(${-py * 7}deg) translateY(-4px)`;
+          el.style.transform = `perspective(960px) rotateY(${(px * maxTilt).toFixed(2)}deg) rotateX(${(-py * maxTilt).toFixed(2)}deg) translateY(-3px)`;
         }
       }}
       onMouseLeave={() => {
         if (ref.current) ref.current.style.transform = "";
       }}
-      className={`group relative overflow-hidden transition-transform duration-200 ease-out ${className}`}
+      className={`group relative overflow-hidden transition-transform duration-300 ease-out ${className}`}
     >
       <div
         aria-hidden

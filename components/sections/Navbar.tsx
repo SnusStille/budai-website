@@ -20,6 +20,7 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [active, setActive] = useState("");
+  const [inLabs, setInLabs] = useState(false);
   const { lang, setLang, t } = useLang();
   const mobileMenu = useRef<HTMLDivElement>(null);
   const menuToggle = useRef<HTMLButtonElement>(null);
@@ -27,6 +28,12 @@ export default function Navbar() {
   useEffect(() => subscribeJourney((frame) => {
     setScrolled(frame.y > 40);
     setActive(frame.active);
+    if (frame.active === "about") {
+      const labsEl = document.getElementById("stilledev-labs");
+      setInLabs(!!labsEl && labsEl.getBoundingClientRect().top <= frame.height * 0.45);
+    } else {
+      setInLabs(false);
+    }
   }), []);
 
   useEffect(() => {
@@ -63,8 +70,15 @@ export default function Navbar() {
     { label: t.nav.playground, href: "#playground", id: "playground" },
     { label: t.nav.capabilities, href: "#capabilities", id: "capabilities" },
     { label: lang === "sv" ? "Byggaren" : "Builder", href: "#about", id: "about" },
+    { label: "Stilledev Labs", href: "#stilledev-labs", id: "stilledev-labs" },
     { label: t.nav.roadmap, href: "#roadmap", id: "roadmap" },
   ];
+
+  const isLinkActive = (id: string) => {
+    if (id === "stilledev-labs") return active === "about" && inLabs;
+    if (id === "about") return active === "about" && !inLabs;
+    return active === id;
+  };
 
   return (
     <>
@@ -79,7 +93,7 @@ export default function Navbar() {
         }`}
       >
         <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 lg:h-[4.5rem] lg:grid lg:grid-cols-[1fr_auto_1fr]">
+          <div className="flex items-center justify-between h-16 lg:h-[4.5rem] lg:grid lg:grid-cols-[auto_1fr_auto] lg:gap-4">
             <Link
               href="/"
               data-budai-logo
@@ -108,14 +122,14 @@ export default function Navbar() {
               </span>
             </Link>
 
-            <div className="hidden lg:flex items-center gap-0.5">
+            <div className="hidden lg:flex items-center justify-center gap-0.5">
               {links.map((l) => {
-                const isActive = active === l.id;
+                const isActive = isLinkActive(l.id);
                 return (
                   <a
                     key={l.href}
                     href={l.href}
-                    className={`relative px-3.5 py-2 text-sm rounded-lg transition-colors ${
+                    className={`relative whitespace-nowrap px-2.5 xl:px-3.5 py-2 text-sm rounded-lg transition-colors ${
                       isActive
                         ? "text-white"
                         : l.id === "playground"
@@ -175,10 +189,10 @@ export default function Navbar() {
                 <Bell className="h-4 w-4" />
                 <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-accent-cyan" />
               </button>
-              <a href="#playground" className="rounded-full border border-white/15 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:border-accent-cyan/40">
+              <a href="#playground" className="hidden xl:inline-flex whitespace-nowrap rounded-full border border-white/15 px-4 py-2 text-sm font-medium text-white transition-colors hover:border-accent-cyan/40">
                 Playground
               </a>
-              <a href="#waitlist" className="btn-primary !px-5 !py-2.5 text-sm">
+              <a href="#waitlist" className="btn-primary whitespace-nowrap !px-4 xl:!px-5 !py-2.5 text-sm">
                 <span>{t.nav.requestAccess}</span>
               </a>
             </div>
@@ -237,7 +251,7 @@ export default function Navbar() {
                   transition={{ delay: i * 0.04 }}
                   onClick={() => setMobileOpen(false)}
                   className={`px-4 py-3.5 text-lg rounded-xl transition-colors ${
-                    active === l.id
+                    isLinkActive(l.id)
                       ? "text-white bg-white/5 border border-accent-cyan/20"
                       : "text-white/80 hover:text-white hover:bg-white/5"
                   }`}

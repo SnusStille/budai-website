@@ -34,7 +34,11 @@ const jsonLd = {
       "@id": `${siteUrl}/#organization`,
       name: "Stilledev",
       url: siteUrl,
-      description: "Independent software studio in Sweden building BudAI.",
+      founder: {
+        "@type": "Person",
+        name: "Oliver Stille",
+      },
+      description: "Independent software studio in Sweden founded by Oliver Stille, building BudAI and digital AI products.",
     },
   ],
 };

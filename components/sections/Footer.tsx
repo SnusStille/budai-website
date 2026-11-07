@@ -24,7 +24,9 @@ const groups = (lang: string) => [
     title: lang === "sv" ? "Företag" : "Company",
     links: [
       { label: "Stilledev", href: "https://stilledev.se", external: true },
+      { label: "Stilledev Labs", href: "#stilledev-labs" },
       { label: lang === "sv" ? "Byggaren" : "Builder", href: "#about" },
+      { label: lang === "sv" ? "Projekt" : "Projects", href: "#stilledev-projects" },
       { label: lang === "sv" ? "Early access" : "Early access", href: "#waitlist" },
       { label: lang === "sv" ? "Paket" : "Plans", href: "#capabilities" },
       { label: lang === "sv" ? "Kontakt" : "Contact", href: "mailto:Stilleinc@hotmail.com" },
