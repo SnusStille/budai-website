@@ -50,7 +50,8 @@ export default function About() {
 
   const launchArchetypePrompt = (prompt: string) => {
     window.dispatchEvent(new CustomEvent("budai:prompt", { detail: prompt }));
-    document.getElementById("playground")?.scrollIntoView({ behavior: "smooth" });
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    document.getElementById("playground")?.scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth" });
   };
 
   return (
@@ -67,21 +68,10 @@ export default function About() {
             </div>
             <div className="reality-creation-pills" data-thought-to-reality>
               {realityPills.map((pill) => (
-                <span
-                  key={pill.num}
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => launchArchetypePrompt(pill.prompt)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      launchArchetypePrompt(pill.prompt);
-                    }
-                  }}
-                >
+                <button key={pill.num} type="button" onClick={() => launchArchetypePrompt(pill.prompt)}>
                   <b>{pill.num}</b>
                   {pill.label}
-                </span>
+                </button>
               ))}
             </div>
           </div>
@@ -108,8 +98,8 @@ export default function About() {
       <div id="stilledev-labs" className="builder-labs-entry">
         <div className="builder-labs-icon" aria-hidden="true"><span /><span /><span /></div>
         <div className="builder-labs-copy">
-          <span className="builder-labs-label">04 / {sv ? "EN PLATS FÖR DET SOM BYGGS" : "A SPACE FOR WHAT'S NEXT"}</span>
-          <h3>Labs<span>.</span></h3>
+          <span className="builder-labs-label">STILLEDEV EF / LABS</span>
+          <h3>Labs<span>.</span> <small className="builder-labs-status"><i />{sv ? "UNDER UTVECKLING" : "UNDER DEVELOPMENT"}</small></h3>
           <p>{sv ? "Labs är under utveckling. Hälsa på vår lilla byggrobot under tiden." : "Labs is under development. Say hello to our little builder bot in the meantime."}</p>
         </div>
         <a className="builder-labs-link" href={sv ? "/sv/labs" : "/labs"}>{sv ? "Öppna Labs" : "Enter Labs"}<ArrowRight size={16} /></a>

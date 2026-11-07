@@ -154,3 +154,32 @@ test("the compact Builder introduction fits above its controls at desktop and ta
     if (width === 1440) { await page.locator(".builder-heading").scrollIntoViewIfNeeded(); await page.screenshot({ path: "test-results/builder-compact.png" }); }
   }
 });
+
+test("Builder shortcuts are real keyboard buttons and keep the Labs status clear", async ({ page }) => {
+  await quiet(page); await page.emulateMedia({ reducedMotion: "reduce" }); await page.goto("/#about");
+  const shortcuts = page.locator("[data-thought-to-reality]");
+  await expect(shortcuts.getByRole("button")).toHaveCount(4);
+  await page.evaluate(() => { (window as Window & { __builderPrompt?: string }).__builderPrompt = ""; window.addEventListener("budai:prompt", event => { (window as Window & { __builderPrompt?: string }).__builderPrompt = (event as CustomEvent<string>).detail; }); });
+  const button = shortcuts.getByRole("button", { name: /Website interface/ });
+  await button.focus(); await page.keyboard.press("Enter");
+  await expect.poll(() => page.evaluate(() => (window as Window & { __builderPrompt?: string }).__builderPrompt)).toContain("React");
+  await expect(page.locator("#stilledev-labs")).toContainText("UNDER DEVELOPMENT");
+});
+
+test("homepage stays within the viewport at common desktop and tablet widths", async ({ page }) => {
+  await quiet(page); await page.emulateMedia({ reducedMotion: "reduce" });
+  for (const width of [768, 834, 900, 1024, 1280, 1440]) {
+    await page.setViewportSize({ width, height: 900 }); await page.goto("/");
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth), `${width}px`).toBeLessThanOrEqual(1);
+  }
+});
+
+test("footer social links have comfortable targets and keyboard focus", async ({ page }) => {
+  await quiet(page); await page.emulateMedia({ reducedMotion: "reduce" }); await page.goto("/#continuation");
+  const footer = page.locator("#continuation");
+  for (const label of ["GitHub", "Discord", "LinkedIn", "Email"]) {
+    const link = footer.getByRole("link", { name: label, exact: true });
+    const bounds = await link.boundingBox(); expect(bounds?.width).toBeGreaterThanOrEqual(44); expect(bounds?.height).toBeGreaterThanOrEqual(44);
+    await link.focus(); await expect(link).toBeFocused();
+  }
+});

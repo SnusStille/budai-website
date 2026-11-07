@@ -84,7 +84,7 @@ export default function Footer() {
                   target={s.href.startsWith("mailto:") ? undefined : "_blank"}
                   rel={s.href.startsWith("mailto:") ? undefined : "noopener noreferrer"}
                   aria-label={s.label}
-                  className="w-9 h-9 rounded-lg bg-white/5 flex items-center justify-center text-muted hover:text-white hover:bg-white/10 hover:border-accent-cyan/20 border border-transparent transition-all"
+                  className="w-11 h-11 rounded-lg bg-white/5 flex items-center justify-center text-muted hover:text-white hover:bg-white/10 hover:border-accent-cyan/20 border border-transparent transition-all"
                 >
                   <s.icon className="w-4 h-4" />
                 </a>
@@ -98,15 +98,15 @@ export default function Footer() {
                 <span className={`h-1.5 w-1.5 rounded-full ${["bg-accent-cyan", "bg-accent-purple", "bg-accent-green"][gi % 3]}`} />
                 {g.title}
               </h4>
-              <ul className="space-y-3">
+              <ul className="space-y-1">
                 {g.links.map((l) => (
                   <li key={l.label}>
                     <a
                       href={l.href}
-                      className="text-sm text-muted hover:text-white transition-colors inline-flex items-center gap-1 group"
+                      className="min-h-8 text-sm text-muted hover:text-white focus-visible:text-white transition-colors inline-flex items-center gap-1 group"
                     >
                       {l.label}
-                      <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity" />
                     </a>
                   </li>
                 ))}

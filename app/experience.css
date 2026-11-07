@@ -543,9 +543,9 @@ html[data-budai-intro="playing"] .hero-content > * { opacity: 0; transform: tran
 .builder-heading h2 > span { color: #9cbfce; }
 .builder-heading p { max-width: 490px; margin: 14px auto 0; font-size: 11px; line-height: 1.75; color: #8da6b7; }
 .reality-creation-pills { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 14px; pointer-events: auto; }
-.reality-creation-pills > span { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; border: 1px solid rgba(118, 213, 234, 0.25); background: rgba(7, 20, 32, 0.78); font: 8px var(--font-jetbrains), monospace; letter-spacing: .08em; color: #bdecf8; cursor: pointer; transition: border-color 200ms ease, background 200ms ease, color 200ms ease, transform 200ms ease; }
-.reality-creation-pills > span:hover { border-color: rgba(136, 226, 246, 0.65); background: rgba(16, 42, 64, 0.92); color: #fff; transform: translateY(-1px); }
-.reality-creation-pills > span > b { color: #6ee7b7; font-weight: 600; }
+.reality-creation-pills > button { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; border: 1px solid rgba(118, 213, 234, 0.25); background: rgba(7, 20, 32, 0.78); font: 8px var(--font-jetbrains), monospace; letter-spacing: .08em; color: #bdecf8; cursor: pointer; transition: border-color 200ms ease, background 200ms ease, color 200ms ease, transform 200ms ease; }
+.reality-creation-pills > button:hover, .reality-creation-pills > button:focus-visible { border-color: rgba(136, 226, 246, 0.65); background: rgba(16, 42, 64, 0.92); color: #fff; transform: translateY(-1px); }
+.reality-creation-pills > button > b { color: #6ee7b7; font-weight: 600; }
 .builder-scene-caption { position: absolute; bottom: 140px; left: 7vw; right: 7vw; display: flex; align-items: center; justify-content: space-between; gap: 20px; font: 8px var(--font-jetbrains), monospace; letter-spacing: .1em; color: #7b9baf; }
 .builder-scene-caption span:first-child { display: inline-flex; align-items: center; gap: 9px; }
 .builder-scene-caption i { display: inline-block; width: 4px; height: 4px; border-radius: 50%; background: #83c6d9; }
@@ -667,7 +667,7 @@ html[data-world-state="ready"] .builder-fallback-workspace { display: none; }
 .roadmap-heading { display: flex; justify-content: space-between; align-items: end; gap: 50px; }
 .roadmap-heading h2 { font-size: clamp(38px, 4.5vw, 66px); letter-spacing: -.05em; font-weight: 500; margin-top: 22px; }
 .roadmap-heading > p { max-width: 330px; color: #91a6ba; font-size: 12px; line-height: 1.85; padding-bottom: 7px; }
-.roadmap-spatial-window { height: 280px; position: relative; display: flex; flex-direction: column; justify-content: space-between; padding: 30px 0; font: 8px var(--font-jetbrains), monospace; letter-spacing: .13em; color: #65869f; }
+.roadmap-spatial-window { height: 280px; position: relative; overflow: clip; display: flex; flex-direction: column; justify-content: space-between; padding: 30px 0; font: 8px var(--font-jetbrains), monospace; letter-spacing: .13em; color: #65869f; }
 .roadmap-spatial-window > span:last-child { text-align: right; font-size: 7px; }
 .roadmap-spatial-window > span:first-child { display: inline-flex; align-items: center; gap: 14px; }
 .roadmap-spatial-window > span > i { width: 20px; height: 1px; display: inline-block; background: #729cb654; }
@@ -1073,7 +1073,7 @@ html:not([data-brain-state="ready"]) .brain-journey-fallback {display:block;}
 }
 @media(scripting:none) { .playground-experience {margin-top:0;} .brain-journey {height:auto;} .original-brain-stage {position:relative;opacity:1;} }
 
-.playground-introduction::before {content:"";position:absolute;inset:-30px -80px;z-index:-1;background:radial-gradient(ellipse,#020205e8,transparent 72%);pointer-events:none;}
+.playground-introduction::before {content:"";position:absolute;inset:-30px 0;z-index:-1;background:radial-gradient(ellipse,#020205e8,transparent 72%);pointer-events:none;}
 .capability-drawing-fallback {inset:0;width:100%;height:100%;padding:0;transform:none;border:0;display:block;}
 .capability-drawing-fallback svg {width:100%;height:100%;}
 
@@ -1171,11 +1171,16 @@ html[data-world-state="ready"] .closing-field>i {background:transparent;box-shad
 .builder-labs-icon span:nth-child(3) { transform: translateY(7px) rotateX(58deg) rotateZ(45deg); opacity: .4; }
 .builder-labs-copy { flex: 1; }
 .builder-labs-label { font: 9px var(--font-jetbrains), monospace; color: #80b3c5; letter-spacing: .15em; }
-.builder-labs-copy h3 { margin: 6px 0; color: #f4fbff; font-size: 27px; letter-spacing: -.04em; }
+.builder-labs-copy h3 { margin: 6px 0; color: #f4fbff; font-size: 27px; letter-spacing: -.04em; display:flex; flex-wrap:wrap; align-items:center; gap:14px; }
+.builder-labs-status { display:inline-flex; align-items:center; gap:6px; color:#8db5c0; font:8px var(--font-jetbrains),monospace; letter-spacing:.1em; }
+.builder-labs-status i { width:5px; height:5px; border-radius:50%; background:#8ee5ef; box-shadow:0 0 8px #5bd7e8; }
 .builder-labs-copy h3 span { color: #8be1ef; }
 .builder-labs-copy p { font-size: 13px; color: #9ab2c1; }
 .builder-labs-link { display: inline-flex; flex: none; align-items: center; gap: 25px; border: 1px solid rgba(147,219,235,.4); border-radius: 9px; padding: 13px 16px; color: #e8faff; background: rgba(18,48,62,.5); font-size: 12px; transition: background .2s, border-color .2s; }
-.builder-labs-link:hover { background: rgba(33,84,103,.7); border-color: #a4e9f6; }
+.builder-labs-link:hover, .builder-labs-link:focus-visible { background: rgba(33,84,103,.7); border-color: #a4e9f6; }
+.builder-labs-link svg { transition:transform .2s ease; }
+.builder-labs-link:hover svg, .builder-labs-link:focus-visible svg { transform:translateX(3px); }
+@media (prefers-reduced-motion:reduce) { .builder-labs-link svg { transition:none; } .builder-labs-link:hover svg, .builder-labs-link:focus-visible svg { transform:none; } }
 @media (max-width: 650px) { .builder-labs-entry { padding: 42px 22px 56px; gap: 16px; flex-wrap: wrap; } .builder-labs-icon { width: 64px; height: 64px; } .builder-labs-copy { flex: 1 1 calc(100% - 85px); } .builder-labs-link { margin-left: 80px; } }
 
 /* A quiet introduction within the Builder heading, rather than a separate card. */
