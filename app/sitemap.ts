@@ -20,20 +20,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
       alternates: { languages: { en: siteUrl, sv: `${siteUrl}/sv` } },
     },
     {
-      url: `${siteUrl}/labs`,
-      lastModified: now,
-      changeFrequency: "monthly",
-      priority: 0.6,
-      alternates: { languages: { en: `${siteUrl}/labs`, sv: `${siteUrl}/sv/labs` } },
-    },
-    {
-      url: `${siteUrl}/sv/labs`,
-      lastModified: now,
-      changeFrequency: "monthly",
-      priority: 0.6,
-      alternates: { languages: { en: `${siteUrl}/labs`, sv: `${siteUrl}/sv/labs` } },
-    },
-    {
       url: `${siteUrl}/legal/privacy`,
       lastModified: now,
       changeFrequency: "yearly",

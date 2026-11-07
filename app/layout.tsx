@@ -8,7 +8,7 @@ import Providers from "@/components/Providers";
 import VercelAnalytics from "@/components/VercelAnalytics";
 import { introBootstrap } from "@/lib/experience/intro";
 import { canonicalPath, hasLanguageAlternate, SWEDISH_PATH } from "@/lib/lang";
-import { isCanonicalPhone } from "@/lib/phone-gate";
+import { isPhoneUserAgent } from "@/lib/phone-gate";
 import PhoneWelcome from "@/components/sections/PhoneWelcome";
 
 const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://stilledev.se").replace(/\/$/, "");
@@ -151,7 +151,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // The middleware generates a fresh nonce per request (see lib/csp.ts).
   const nonce = h.get("x-nonce") ?? undefined;
   const lang = h.get("x-budai-lang") === "sv" ? "sv" : "en";
-  const phoneGate = isCanonicalPhone(h.get("host") || "", h.get("user-agent") || "");
+  const phoneGate = isPhoneUserAgent(h.get("user-agent") || "");
   return (
     <html
       lang={phoneGate ? "sv" : lang}

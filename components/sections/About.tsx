@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { ArrowRight, Code2 } from "lucide-react";
+import { ArrowRight, BriefcaseBusiness, Code2, MapPin, Sparkles } from "lucide-react";
+import { StilledevMark } from "@/components/ui/BudAILogo";
 import { useLang } from "@/components/ui/LanguageContext";
 import { subscribeJourney } from "@/lib/experience/scroll";
 import ProgressiveEditor from "@/components/experience/ProgressiveEditor";
@@ -101,12 +102,21 @@ export default function About() {
         </div>
       </div>
 
+      <aside className="builder-person" aria-labelledby="builder-person-title">
+        <div className="builder-person-mark" aria-hidden="true"><StilledevMark size={50} /></div>
+        <div className="builder-person-copy">
+          <span className="builder-person-label"><i /> {sv ? "PERSONEN BAKOM" : "THE PERSON BEHIND"} / STILLEDEV EF</span>
+          <h3 id="builder-person-title">{sv ? <>Hej, jag är <em>Oliver.</em></> : <>Hi, I’m <em>Oliver.</em></>}</h3>
+          <p>{sv ? "Jag heter Oliver Stille och gillar raka besked och idéer som gör vardagen enklare. Jag har tidigare varit företagare och bygger gärna vidare på egna kod- och IT-projekt även på fritiden." : "I’m Oliver Stille. I like straightforward communication and ideas that make everyday life simpler. I’ve previously been an entrepreneur and enjoy building my own coding and IT projects in my spare time."}</p>
+          <div className="builder-person-facts"><span><MapPin size={15} /> Helsingborg, {sv ? "Sverige" : "Sweden"}</span><span><BriefcaseBusiness size={15} /> {sv ? "Mötesansvarig & kodare på SkandiaMäklarna" : "Meeting manager & coder at SkandiaMäklarna"}</span><span><Sparkles size={15} /> AI · {sv ? "kod & kreativa idéer" : "code & creative ideas"}</span></div>
+        </div>
+      </aside>
       <div id="stilledev-labs" className="builder-labs-entry">
         <div className="builder-labs-icon" aria-hidden="true"><span /><span /><span /></div>
         <div className="builder-labs-copy">
           <span className="builder-labs-label">04 / {sv ? "EN PLATS FÖR DET SOM BYGGS" : "A SPACE FOR WHAT'S NEXT"}</span>
           <h3>Labs<span>.</span></h3>
-          <p>{sv ? "Möt människan bakom koden och utforska projekten." : "Meet the person behind the code and explore the projects."}</p>
+          <p>{sv ? "Labs är under utveckling. Hälsa på vår lilla byggrobot under tiden." : "Labs is under development. Say hello to our little builder bot in the meantime."}</p>
         </div>
         <a className="builder-labs-link" href={sv ? "/sv/labs" : "/labs"}>{sv ? "Öppna Labs" : "Enter Labs"}<ArrowRight size={16} /></a>
       </div>

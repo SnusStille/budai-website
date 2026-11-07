@@ -10,10 +10,11 @@ export async function generateMetadata(): Promise<Metadata> {
   const base = (process.env.NEXT_PUBLIC_SITE_URL || "https://stilledev.se").replace(/\/$/, "");
   return {
     title: { absolute: "Labs" },
-    description: sv ? "Labs — digitala produkter och idéer av Oliver Stille." : "Labs — digital products and ideas by Oliver Stille.",
+    description: sv ? "Labs från Stilledev EF är under utveckling." : "Labs by Stilledev EF is under development.",
+    robots: { index: false, follow: true },
     alternates: { canonical: swedishPath ? "/sv/labs" : "/labs", languages: { en: `${base}/labs`, sv: `${base}/sv/labs`, "x-default": `${base}/labs` } },
-    openGraph: { title: "Labs", description: sv ? "Digitala produkter och idéer av Oliver Stille." : "Digital products and ideas by Oliver Stille." },
-    twitter: { card: "summary_large_image", title: "Labs", description: sv ? "Digitala produkter och idéer av Oliver Stille." : "Digital products and ideas by Oliver Stille.", images: ["/og.png"] },
+    openGraph: { title: "Labs", description: sv ? "Labs från Stilledev EF är under utveckling." : "Labs by Stilledev EF is under development." },
+    twitter: { card: "summary_large_image", title: "Labs", description: sv ? "Labs från Stilledev EF är under utveckling." : "Labs by Stilledev EF is under development.", images: ["/og.png"] },
   };
 }
 
