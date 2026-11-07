@@ -38,7 +38,9 @@ test("Labs is a bilingual holding page with no previous projects or links", asyn
   await expect(page).toHaveURL(/\/labs$/);
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
   await expect(page.getByRole("heading", { name: /Something good.*is brewing/ })).toBeVisible();
-  await page.locator(".labs-wait-cta").click(); await expect(page).toHaveURL(/\/$/);
+  await expect(page.locator(".labs-wait-cta")).toHaveText(/Back to Builder/);
+  await page.locator(".labs-wait-cta").click(); await expect(page).toHaveURL(/\/#stilledev-labs$/);
+  await expect(page.locator("#stilledev-labs")).toBeVisible();
   for (const asset of ["julia.mp4", "harvis-concept.mp4", "labs-atmosphere.jpg"]) expect((await request.get(`/labs-media/${asset}`)).status()).toBe(404);
 });
 
@@ -197,4 +199,22 @@ test("Builder examples protect unsent drafts and never send a request", async ({
   await page.waitForTimeout(600); expect(requests).toBe(0);
   const labsHeading = page.locator("#stilledev-labs").getByRole("heading", { name: "Labs.", exact: true });
   await expect(labsHeading).toBeVisible();
+});
+
+
+test("Labs offers a clear return to Builder in Swedish", async ({ page }) => {
+  await quiet(page); await page.emulateMedia({ reducedMotion: "reduce" }); await page.goto("/sv/labs");
+  await expect(page.locator(".labs-wait-cta")).toHaveAttribute("href", "/sv#stilledev-labs");
+  await page.locator(".labs-wait-cta").click(); await expect(page).toHaveURL(/\/sv#stilledev-labs$/);
+  await expect(page.locator("#stilledev-labs").getByRole("heading", { name: "Labs." })).toBeVisible();
+});
+
+test("the static Builder scene does not overlap the heading on desktop", async ({ page }) => {
+  await quiet(page); await page.emulateMedia({ reducedMotion: "reduce" });
+  for (const width of [1024, 1280, 1440]) {
+    await page.setViewportSize({ width, height: 900 }); await page.goto("/#about");
+    const heading = await page.locator(".builder-heading").boundingBox();
+    const monitor = await page.locator(".fallback-central-screen").boundingBox();
+    expect(heading && monitor && heading.y + heading.height <= monitor.y, `${width}px`).toBeTruthy();
+  }
 });

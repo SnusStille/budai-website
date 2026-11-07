@@ -40,8 +40,10 @@ export default function LabsMascot() {
       // Rounded head, glass face, bright eyes and an antenna.
       addBall(robot, shell, [1.08, .82, .72], [0, .7, 0]);
       addBall(robot, dark, [.88, .53, .16], [0, .7, .62]);
-      addBall(robot, glow, [.11, .13, .06], [-.33, .77, .77]);
-      addBall(robot, glow, [.11, .13, .06], [.33, .77, .77]);
+      const eyes = [
+        addBall(robot, glow, [.11, .13, .06], [-.33, .77, .77]),
+        addBall(robot, glow, [.11, .13, .06], [.33, .77, .77]),
+      ];
       const smileCurve = new THREE.EllipseCurve(0, 0, .19, .12, Math.PI * 1.1, Math.PI * 1.9, false, 0);
       const smileGeometry = new THREE.BufferGeometry().setFromPoints(smileCurve.getPoints(24).map(p => new THREE.Vector3(p.x, p.y, .79)));
       const smile = new THREE.Line(smileGeometry, new THREE.LineBasicMaterial({ color: 0x8ceeff })); smile.position.y = .53; robot.add(smile);
@@ -75,6 +77,12 @@ export default function LabsMascot() {
         const t = performance.now() * .001;
         robot.position.y = Math.sin(t * 1.15) * .08; robot.rotation.y += (pointerX * .35 - robot.rotation.y) * .025;
         robot.rotation.x += (-pointerY * .2 - robot.rotation.x) * .025;
+        robot.rotation.z = Math.sin(t * .65) * .025;
+        leftArm.rotation.z = -.48 + Math.sin(t * .8) * .045;
+        rightArm.rotation.z = .48 - Math.sin(t * .8) * .045;
+        const blinkPhase = (t + 2.4) % 7;
+        const blink = blinkPhase < .18 ? 1 - Math.sin(Math.PI * blinkPhase / .18) * .88 : 1;
+        eyes.forEach(eye => { eye.scale.y = .13 * blink; });
         ring.rotation.z = t * .08; sparks.rotation.y = t * .08;
         renderer.render(scene, camera); frame = requestAnimationFrame(draw);
       };

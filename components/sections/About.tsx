@@ -27,7 +27,7 @@ export default function About() {
     },
     {
       num: "02",
-      label: sv ? "Live-dashboard" : "Live dashboard",
+      label: "Dashboard",
       prompt: sv
         ? "Designa en strukturerad KPI-dashboard med nyckeltal, trendindikatorer och sammanfattande insikter."
         : "Design a structured KPI dashboard layout with key metrics, trend indicators, and executive takeaways.",
@@ -67,6 +67,7 @@ export default function About() {
               <p>{sv ? "Mötesansvarig och kodare på SkandiaMäklarna." : "Meeting manager and coder at SkandiaMäklarna."}</p>
             </div>
             <div className="reality-creation-pills" role="group" aria-label={sv ? "Prova en idé i Playground" : "Try an idea in Playground"} data-thought-to-reality>
+              <span className="builder-ideas-label" aria-hidden="true">{sv ? "PROVA EN IDÉ" : "TRY AN IDEA"} <ArrowRight size={11} /></span>
               {realityPills.map((pill) => (
                 <button key={pill.num} type="button" title={sv ? "Öppnar ett redigerbart exempel i Playground" : "Opens an editable example in Playground"} aria-label={`${pill.label} — ${sv ? "öppna som exempel i Playground" : "open as an example in Playground"}`} onClick={() => launchArchetypePrompt(pill.prompt)}>
                   <b>{pill.num}</b>
