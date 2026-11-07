@@ -1,43 +1,205 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ArrowRight,
   ArrowUpRight,
   Check,
   Code2,
   Copy,
+  FileText,
   Github,
   Globe,
+  Layers,
   Linkedin,
   Lock,
   Mail,
+  MessageSquare,
+  Sparkles,
 } from "lucide-react";
 import ScrollReveal from "@/components/ui/ScrollReveal";
 import SpotlightCard from "@/components/ui/SpotlightCard";
 import BudAILogo, { StilledevMark } from "@/components/ui/BudAILogo";
 import { useLang } from "@/components/ui/LanguageContext";
-import { EXAMPLE_SOURCE } from "@/lib/experience/code";
+import { CODE_LINES, EXAMPLE_SOURCE } from "@/lib/experience/code";
 import {
   COMPANY_REGISTRY,
   CONTACT_CHANNELS,
   FOUNDER_PROFILE,
+  INQUIRY_TOPICS,
   STILLEDEV_DOMAINS,
   STILLEDEV_PROJECTS,
+  type DomainSchematicKind,
+  type StilledevInquiryTopic,
   type StilledevProject,
 } from "@/lib/stilledev-labs";
 
-function ProjectVisual({ project, sv }: { project: StilledevProject; sv: boolean }) {
-  if (project.visual === "budai") {
+function useStockholmClock() {
+  const [clock, setClock] = useState<string | null>(null);
+
+  useEffect(() => {
+    const update = () => {
+      try {
+        const formatted = new Intl.DateTimeFormat("sv-SE", {
+          timeZone: "Europe/Stockholm",
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+        }).format(new Date());
+        setClock(formatted);
+      } catch {
+        setClock(null);
+      }
+    };
+    update();
+    const timer = window.setInterval(update, 30_000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  return clock;
+}
+
+function DomainSchematic({ kind, sv }: { kind: DomainSchematicKind; sv: boolean }) {
+  if (kind === "ai-pipeline") {
+    const stages = sv
+      ? [
+          { code: "IN", label: "Indata & röst" },
+          { code: "MEM", label: "Kontextminne" },
+          { code: "LLM", label: "SSE-ström" },
+          { code: "OUT", label: "Strukturerat svar" },
+        ]
+      : [
+          { code: "IN", label: "Prompt & voice" },
+          { code: "MEM", label: "Context gate" },
+          { code: "LLM", label: "SSE stream" },
+          { code: "OUT", label: "Structured output" },
+        ];
     return (
-      <div className="labs-project-visual labs-visual-budai" aria-hidden="true">
+      <div className="labs-schematic labs-schematic-ai" aria-hidden="true">
+        <div className="labs-ai-pipeline">
+          {stages.map((s, idx) => (
+            <div key={s.code} className="labs-ai-stage">
+              <div className={`labs-ai-node ${idx === 2 ? "is-core" : ""}`}>
+                <small>{s.code}</small>
+                <span>{s.label}</span>
+              </div>
+              {idx < stages.length - 1 && (
+                <span className="labs-ai-connector">
+                  <i />
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (kind === "web-craft") {
+    return (
+      <div className="labs-schematic" aria-hidden="true">
+        <div className="labs-web-frames">
+          <div className="labs-web-desktop">
+            <span className="labs-web-bar"><i /><i /></span>
+            <div className="labs-web-grid">
+              <span />
+              <span />
+            </div>
+          </div>
+          <div className="labs-web-mobile">
+            <span className="labs-web-notch" />
+            <i />
+          </div>
+          <div className="labs-web-metrics">
+            <code>SSR / Edge</code>
+            <code>Nonce CSP</code>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (kind === "saas-layers") {
+    const layers = sv
+      ? ["Auth & session", "Rollbaserad vy", "Postgres · RLS"]
+      : ["Auth & session", "Role workspace", "Postgres · RLS"];
+    return (
+      <div className="labs-schematic" aria-hidden="true">
+        <div className="labs-saas-stack">
+          {layers.map((layer, idx) => (
+            <div key={layer} className={`labs-saas-layer layer-${idx + 1}`}>
+              <b>L{idx + 1}</b>
+              <span>{layer}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (kind === "workflow-nodes") {
+    return (
+      <div className="labs-schematic" aria-hidden="true">
+        <div className="labs-flow-mini">
+          <span className="labs-flow-chip">{sv ? "Rådata" : "Raw signal"}</span>
+          <i className="labs-flow-line" />
+          <span className="labs-flow-chip is-hub">{sv ? "AI-syntes" : "Synthesis"}</span>
+          <i className="labs-flow-line" />
+          <span className="labs-flow-chip is-out">{sv ? "Åtgärdsplan" : "Action plan"}</span>
+        </div>
+      </div>
+    );
+  }
+
+  const milestones = sv
+    ? ["Idé", "Prototyp", "Preview", "Live"]
+    : ["Concept", "Prototype", "Preview", "Shipped"];
+  return (
+    <div className="labs-schematic" aria-hidden="true">
+      <div className="labs-rd-track">
+        {milestones.map((m, idx) => (
+          <div key={m} className={`labs-rd-step ${idx === 3 ? "is-live" : ""}`}>
+            <i />
+            <span>{m}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ProjectVisual({ project, sv }: { project: StilledevProject; sv: boolean }) {
+  const [budaiPreviewLang, setBudaiPreviewLang] = useState<"sv" | "en">(sv ? "sv" : "en");
+  const [affeRole, setAffeRole] = useState<"seller" | "manager">("seller");
+  const [brainNode, setBrainNode] = useState<"notes" | "context" | "tasks">("notes");
+
+  useEffect(() => {
+    setBudaiPreviewLang(sv ? "sv" : "en");
+  }, [sv]);
+
+  if (project.visual === "budai") {
+    const isSv = budaiPreviewLang === "sv";
+    return (
+      <div className="labs-project-visual labs-visual-budai">
         <div className="labs-visual-chrome">
-          <span className="labs-visual-dots"><i /><i /><i /></span>
+          <span className="labs-visual-dots" aria-hidden="true"><i /><i /><i /></span>
           <span className="labs-visual-host">stilledev.se · budai.core</span>
-          <span className="labs-visual-tag">SV ↔ EN</span>
+          <div className="labs-visual-switch" role="group" aria-label={sv ? "Språk för BudAI-förhandsvisning" : "BudAI preview language"}>
+            {(["sv", "en"] as const).map((code) => (
+              <button
+                key={code}
+                type="button"
+                onClick={() => setBudaiPreviewLang(code)}
+                aria-pressed={budaiPreviewLang === code}
+                className={budaiPreviewLang === code ? "is-active" : undefined}
+              >
+                {code.toUpperCase()}
+              </button>
+            ))}
+          </div>
         </div>
         <div className="labs-visual-stage">
-          <div className="labs-budai-orbit">
+          <div className="labs-budai-orbit" aria-hidden="true">
             <span className="labs-orbit-ring labs-orbit-ring-outer" />
             <span className="labs-orbit-ring labs-orbit-ring-inner" />
             <div className="labs-budai-core-wrap">
@@ -47,14 +209,18 @@ function ProjectVisual({ project, sv }: { project: StilledevProject; sv: boolean
           <div className="labs-budai-stream">
             <div className="labs-stream-pill">
               <b>01</b>
-              <span>{sv ? "Signal → Strukturerad handling" : "Signal → Structured action"}</span>
+              <span>
+                {isSv
+                  ? "Signal → 3 strukturerade nästa steg"
+                  : "Signal → 3 structured next actions"}
+              </span>
             </div>
-            <div className="labs-stream-lines">
-              <span className="w-[88%]" />
-              <span className="w-[66%]" />
+            <div className="labs-stream-lines" aria-hidden="true">
+              <span className={isSv ? "w-[92%]" : "w-[84%]"} />
+              <span className={isSv ? "w-[64%]" : "w-[72%]"} />
             </div>
             <div className="labs-stream-meta">
-              <code>memory: user_controlled</code>
+              <code>{isSv ? "minne: användarstyrt" : "memory: user_controlled"}</code>
               <b>LIVE</b>
             </div>
           </div>
@@ -64,26 +230,60 @@ function ProjectVisual({ project, sv }: { project: StilledevProject; sv: boolean
   }
 
   if (project.visual === "stilleaffe") {
+    const bars = affeRole === "seller" ? [44, 62, 56, 78, 92] : [66, 74, 81, 77, 95];
     return (
-      <div className="labs-project-visual labs-visual-affe" aria-hidden="true">
+      <div className="labs-project-visual labs-visual-affe">
         <div className="labs-visual-chrome">
-          <span className="labs-visual-dots"><i /><i /><i /></span>
+          <span className="labs-visual-dots" aria-hidden="true"><i /><i /><i /></span>
           <span className="labs-visual-host">stilleaffe · mission.control</span>
           <span className="labs-visual-tag labs-tag-emerald">AUTH</span>
         </div>
         <div className="labs-visual-stage labs-affe-stage">
           <div className="labs-affe-top">
-            <div className="labs-affe-roles">
-              <span className="is-active">S · {sv ? "Säljvy" : "Seller"}</span>
-              <span>A · {sv ? "Chefsvy" : "Manager"}</span>
+            <div className="labs-affe-roles" role="group" aria-label={sv ? "StilleAffe rollförhandsvisning" : "StilleAffe role preview"}>
+              <button
+                type="button"
+                onClick={() => setAffeRole("seller")}
+                aria-pressed={affeRole === "seller"}
+                className={affeRole === "seller" ? "is-active" : undefined}
+              >
+                S · {sv ? "Säljvy" : "Seller"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setAffeRole("manager")}
+                aria-pressed={affeRole === "manager"}
+                className={affeRole === "manager" ? "is-active" : undefined}
+              >
+                A · {sv ? "Chefsvy" : "Manager"}
+              </button>
             </div>
-            <code className="labs-affe-pace">{sv ? "DAGSRYTM · AKTIV" : "DAILY PACE · ACTIVE"}</code>
+            <code className="labs-affe-pace">
+              {affeRole === "seller"
+                ? sv
+                  ? "DAGSFOKUS · I FAS"
+                  : "DAILY PACE · ON TRACK"
+                : sv
+                  ? "TEAMVY · COACHNING"
+                  : "TEAM VIEW · COACHING"}
+            </code>
           </div>
-          <div className="labs-affe-bars">
-            {[44, 62, 56, 78, 92].map((h, idx) => (
+          <div className="labs-affe-bars" aria-hidden="true">
+            {bars.map((h, idx) => (
               <div key={idx} className="labs-affe-bar-col">
-                <span style={{ height: `${h}%` }} className={idx === 4 ? "is-peak" : undefined} />
-                <small>0{idx + 1}</small>
+                <span
+                  style={{ height: `${h}%` }}
+                  className={
+                    idx === 4
+                      ? affeRole === "manager"
+                        ? "is-peak is-manager"
+                        : "is-peak"
+                      : affeRole === "manager"
+                        ? "is-manager"
+                        : undefined
+                  }
+                />
+                <small>W{idx + 1}</small>
               </div>
             ))}
           </div>
@@ -93,40 +293,83 @@ function ProjectVisual({ project, sv }: { project: StilledevProject; sv: boolean
   }
 
   if (project.visual === "second-brain") {
+    const readout =
+      brainNode === "notes"
+        ? sv
+          ? "14 länkade anteckningar → sammanfattning klar"
+          : "14 linked notes → context summary ready"
+        : brainNode === "context"
+          ? sv
+            ? "Långsiktsminne → relevanta beslut hämtade"
+            : "Long-term memory → key decisions surfaced"
+          : sv
+            ? "Dagens fokus → 3 prioriterade uppgifter"
+            : "Daily focus → 3 prioritized actions";
+
     return (
-      <div className="labs-project-visual labs-visual-brain" aria-hidden="true">
+      <div className="labs-project-visual labs-visual-brain">
         <div className="labs-visual-chrome">
-          <span className="labs-visual-dots"><i /><i /><i /></span>
+          <span className="labs-visual-dots" aria-hidden="true"><i /><i /><i /></span>
           <span className="labs-visual-host">second.brain · knowledge.graph</span>
           <span className="labs-visual-tag labs-tag-lavender">AI</span>
         </div>
         <div className="labs-visual-stage labs-brain-stage">
-          <svg className="labs-brain-links" viewBox="0 0 280 110" fill="none">
+          <svg className="labs-brain-links" viewBox="0 0 280 96" fill="none" aria-hidden="true">
             <path
-              d="M62 32 C110 32, 112 56, 144 56"
-              stroke="rgba(122, 219, 240, 0.42)"
-              strokeWidth="1.2"
+              d="M62 22 C108 22, 112 48, 148 48"
+              stroke={brainNode === "notes" ? "rgba(122, 219, 240, 0.85)" : "rgba(122, 219, 240, 0.25)"}
+              strokeWidth={brainNode === "notes" ? "1.6" : "1.1"}
             />
             <path
-              d="M62 82 C110 82, 112 56, 144 56"
-              stroke="rgba(164, 175, 232, 0.42)"
-              strokeWidth="1.2"
+              d="M62 48 C104 48, 114 48, 148 48"
+              stroke={brainNode === "context" ? "rgba(164, 175, 232, 0.85)" : "rgba(164, 175, 232, 0.25)"}
+              strokeWidth={brainNode === "context" ? "1.6" : "1.1"}
             />
             <path
-              d="M144 56 C182 56, 192 56, 224 56"
-              stroke="rgba(110, 231, 183, 0.48)"
-              strokeWidth="1.2"
+              d="M62 74 C108 74, 112 48, 148 48"
+              stroke={brainNode === "tasks" ? "rgba(110, 231, 183, 0.85)" : "rgba(110, 231, 183, 0.25)"}
+              strokeWidth={brainNode === "tasks" ? "1.6" : "1.1"}
             />
-            <circle cx="62" cy="32" r="3.5" fill="#7adbf0" />
-            <circle cx="62" cy="82" r="3.5" fill="#a4afe8" />
-            <circle cx="144" cy="56" r="4.5" fill="#e6f7ff" />
-            <circle cx="224" cy="56" r="3.5" fill="#6ee7b7" />
+            <path
+              d="M148 48 C184 48, 196 48, 226 48"
+              stroke="rgba(122, 219, 240, 0.65)"
+              strokeWidth="1.4"
+            />
+            <circle cx="148" cy="48" r="4" fill="#e6f7ff" />
+            <circle cx="226" cy="48" r="3.5" fill="#6ee7b7" />
           </svg>
-          <div className="labs-brain-nodes">
-            <span className="labs-node labs-node-a">{sv ? "Anteckningar" : "Notes"}</span>
-            <span className="labs-node labs-node-b">{sv ? "Kontext" : "Context"}</span>
+          <div className="labs-brain-interactive">
+            <div className="labs-brain-inputs" role="group" aria-label={sv ? "Kunskapsgrafens indata" : "Knowledge graph inputs"}>
+              <button
+                type="button"
+                onClick={() => setBrainNode("notes")}
+                aria-pressed={brainNode === "notes"}
+                className={`labs-node ${brainNode === "notes" ? "is-selected" : ""}`}
+              >
+                {sv ? "Anteckningar" : "Notes"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setBrainNode("context")}
+                aria-pressed={brainNode === "context"}
+                className={`labs-node ${brainNode === "context" ? "is-selected" : ""}`}
+              >
+                {sv ? "Kontext" : "Context"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setBrainNode("tasks")}
+                aria-pressed={brainNode === "tasks"}
+                className={`labs-node ${brainNode === "tasks" ? "is-selected" : ""}`}
+              >
+                {sv ? "Uppgifter" : "Tasks"}
+              </button>
+            </div>
             <span className="labs-node labs-node-hub">{sv ? "AI-syntes" : "AI Synthesis"}</span>
             <span className="labs-node labs-node-out">{sv ? "Fokus & plan" : "Focus & plan"}</span>
+          </div>
+          <div className="labs-brain-readout">
+            <code>{readout}</code>
           </div>
         </div>
       </div>
@@ -151,30 +394,110 @@ function ProjectVisual({ project, sv }: { project: StilledevProject; sv: boolean
 export default function StilledevLabs() {
   const { lang } = useLang();
   const sv = lang === "sv";
+  const stockholmClock = useStockholmClock();
+
+  const [activeAnchor, setActiveAnchor] = useState<string>("builder-profile");
+  const [activeWorkflowIdx, setActiveWorkflowIdx] = useState<number>(0);
+  const [projectFilter, setProjectFilter] = useState<"all" | "public" | "private">("all");
+  const [projectTabById, setProjectTabById] = useState<Record<string, "overview" | "architecture">>({});
+
+  const [selectedTopicId, setSelectedTopicId] = useState<StilledevInquiryTopic["id"]>("ai");
+  const [inquiryNote, setInquiryNote] = useState("");
+
   const [copiedSource, setCopiedSource] = useState(false);
   const [copiedEmail, setCopiedEmail] = useState(false);
+  const [copiedBrief, setCopiedBrief] = useState(false);
+  const [copiedCompany, setCopiedCompany] = useState(false);
+
+  // Scroll-spy for the sticky Stilledev Labs telemetry sub-bar
+  useEffect(() => {
+    const ids = [
+      "builder-profile",
+      "about-stilledev",
+      "stilledev-projects",
+      "stilledev-contact",
+      "stilledev-company",
+    ];
+    const onScroll = () => {
+      const probeY = window.innerHeight * 0.36;
+      let current = ids[0];
+      for (const id of ids) {
+        const el = document.getElementById(id);
+        if (!el) continue;
+        if (el.getBoundingClientRect().top <= probeY) {
+          const contact = document.getElementById("stilledev-contact");
+          const sharesRow = id === "stilledev-company" && contact && Math.abs(contact.getBoundingClientRect().top - el.getBoundingClientRect().top) < 10;
+          if (!sharesRow || window.location.hash === "#stilledev-company") current = id;
+        }
+      }
+      setActiveAnchor(current);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("hashchange", onScroll);
+    onScroll();
+    return () => { window.removeEventListener("scroll", onScroll); window.removeEventListener("hashchange", onScroll); };
+  }, []);
 
   const copyExampleSource = () => {
     void navigator.clipboard?.writeText(EXAMPLE_SOURCE).then(() => {
       setCopiedSource(true);
       window.setTimeout(() => setCopiedSource(false), 1600);
-    });
+    }).catch(() => {});
   };
 
   const copyEmailAddress = () => {
     void navigator.clipboard?.writeText("Stilleinc@hotmail.com").then(() => {
       setCopiedEmail(true);
       window.setTimeout(() => setCopiedEmail(false), 1800);
-    });
+    }).catch(() => {});
+  };
+
+  const selectedTopic = useMemo(
+    () => INQUIRY_TOPICS.find((t) => t.id === selectedTopicId) ?? INQUIRY_TOPICS[0],
+    [selectedTopicId]
+  );
+
+  const composedSubject = sv ? selectedTopic.subject.sv : selectedTopic.subject.en;
+  const composedBody = useMemo(() => {
+    const intro = sv ? selectedTopic.template.sv : selectedTopic.template.en;
+    const trimmed = inquiryNote.trim();
+    const detail = trimmed
+      ? trimmed
+      : sv
+        ? "[Beskriv kort projektet, tidplan eller din fråga här]"
+        : "[Briefly describe your project, timeline, or question here]";
+    return `${intro}${detail}\n\n—`;
+  }, [inquiryNote, selectedTopic, sv]);
+
+  const composedMailto = useMemo(() => {
+    return `mailto:Stilleinc@hotmail.com?subject=${encodeURIComponent(composedSubject)}&body=${encodeURIComponent(composedBody)}`;
+  }, [composedSubject, composedBody]);
+
+  const copyFormattedBrief = () => {
+    const payload = `To: Stilleinc@hotmail.com\nSubject: ${composedSubject}\n\n${composedBody}`;
+    void navigator.clipboard?.writeText(payload).then(() => {
+      setCopiedBrief(true);
+      window.setTimeout(() => setCopiedBrief(false), 1800);
+    }).catch(() => {});
   };
 
   const navAnchors = [
-    { num: "A", label: sv ? "Grundaren" : "Founder", href: "#builder-profile" },
-    { num: "B", label: sv ? "Om Stilledev" : "About Stilledev", href: "#about-stilledev" },
-    { num: "C", label: sv ? "Projekt" : "Projects", href: "#stilledev-projects" },
-    { num: "D", label: sv ? "Kontakt" : "Contact", href: "#stilledev-contact" },
-    { num: "E", label: sv ? "Företagsinfo" : "Company", href: "#stilledev-company" },
+    { id: "builder-profile", num: "A", code: "04.A · FOUNDER", label: sv ? "Grundaren" : "Founder", href: "#builder-profile" },
+    { id: "about-stilledev", num: "B", code: "04.B · STUDIO", label: sv ? "Om Stilledev" : "About Stilledev", href: "#about-stilledev" },
+    { id: "stilledev-projects", num: "C", code: "04.C · PROJECTS", label: sv ? "Projekt" : "Projects", href: "#stilledev-projects" },
+    { id: "stilledev-contact", num: "D", code: "04.D · CONNECT", label: sv ? "Kontakt" : "Contact", href: "#stilledev-contact" },
+    { id: "stilledev-company", num: "E", code: "04.E · REGISTRY", label: sv ? "Företagsinfo" : "Company", href: "#stilledev-company" },
   ];
+
+  const activeDockMeta = navAnchors.find((n) => n.id === activeAnchor) ?? navAnchors[0];
+
+  const filteredProjects = useMemo(() => {
+    if (projectFilter === "all") return STILLEDEV_PROJECTS;
+    return STILLEDEV_PROJECTS.filter((p) => p.visibility === projectFilter);
+  }, [projectFilter]);
+
+  const publicCount = STILLEDEV_PROJECTS.filter((p) => p.visibility === "public").length;
+  const privateCount = STILLEDEV_PROJECTS.filter((p) => p.visibility === "private").length;
 
   const channelIcon = (id: (typeof CONTACT_CHANNELS)[number]["id"]) => {
     switch (id) {
@@ -209,6 +532,10 @@ export default function StilledevLabs() {
     {
       label: sv ? "Land" : "Country",
       value: sv ? COMPANY_REGISTRY.country.sv : COMPANY_REGISTRY.country.en,
+    },
+    {
+      label: sv ? "Arbetsspråk" : "Languages",
+      value: sv ? COMPANY_REGISTRY.languages.sv : COMPANY_REGISTRY.languages.en,
     },
   ];
 
@@ -246,8 +573,30 @@ export default function StilledevLabs() {
     });
   }
 
+  const copyCompanySummary = () => {
+    const lines = [
+      `${COMPANY_REGISTRY.name} (${sv ? COMPANY_REGISTRY.legalForm.sv : COMPANY_REGISTRY.legalForm.en})`,
+      `${sv ? "Grundare" : "Founder"}: ${COMPANY_REGISTRY.founder}`,
+      `${sv ? "Verksamhetsområde" : "Operations"}: ${sv ? COMPANY_REGISTRY.scope.sv : COMPANY_REGISTRY.scope.en}`,
+      `${sv ? "Land" : "Country"}: ${sv ? COMPANY_REGISTRY.country.sv : COMPANY_REGISTRY.country.en}`,
+      `Web: https://stilledev.se`,
+      `Email: Stilleinc@hotmail.com`,
+    ];
+    if (COMPANY_REGISTRY.orgNumber) {
+      lines.push(`${sv ? "Org.nr" : "Org. ID"}: ${COMPANY_REGISTRY.orgNumber}`);
+    }
+    void navigator.clipboard?.writeText(lines.join("\n")).then(() => {
+      setCopiedCompany(true);
+      window.setTimeout(() => setCopiedCompany(false), 1800);
+    }).catch(() => {});
+  };
+
+  const activeWorkflow = FOUNDER_PROFILE.workflow[activeWorkflowIdx] ?? FOUNDER_PROFILE.workflow[0];
+
   return (
     <div id="stilledev-labs" className="stilledev-labs-shell" data-stilledev-labs>
+      <div className="labs-blueprint-backdrop" aria-hidden="true" />
+
       <div className="stilledev-labs-container">
         {/* Studio conduit & Architectural Intro */}
         <ScrollReveal className="labs-intro">
@@ -274,19 +623,46 @@ export default function StilledevLabs() {
                 : "Behind BudAI is Stilledev — a Swedish digital development studio and personal tech lab where AI systems, web applications, and independent software products move from first concept to shipped reality."}
             </p>
           </div>
+        </ScrollReveal>
+
+        {/* Sticky Architectural Sub-Navigation & Live Studio Telemetry */}
+        <div className="labs-sticky-dock" data-labs-dock>
+          <div className="labs-dock-readout">
+            <StilledevMark size={15} />
+            <code>{activeDockMeta.code}</code>
+          </div>
 
           <nav
             className="labs-subnav"
             aria-label={sv ? "Navigering för Stilledev Labs" : "Stilledev Labs navigation"}
           >
-            {navAnchors.map((item) => (
-              <a key={item.href} href={item.href} className="labs-subnav-pill">
-                <b>{item.num}</b>
-                <span>{item.label}</span>
-              </a>
-            ))}
+            {navAnchors.map((item) => {
+              const isCurrent = activeAnchor === item.id;
+              return (
+                <a
+                  key={item.href}
+                  href={item.href}
+                  aria-current={isCurrent ? "location" : undefined}
+                  className={`labs-subnav-pill ${isCurrent ? "is-active" : ""}`}
+                >
+                  <b>{item.num}</b>
+                  <span>{item.label}</span>
+                </a>
+              );
+            })}
           </nav>
-        </ScrollReveal>
+
+          <div className="labs-dock-telemetry">
+            <span className="labs-clock-chip" title="Europe/Stockholm">
+              <i />
+              SE{stockholmClock ? ` · ${stockholmClock}` : " · CET"}
+            </span>
+            <a href="#stilledev-contact" className="labs-dock-cta">
+              <span>{sv ? "Kontakt" : "Inquire"}</span>
+              <ArrowRight size={12} />
+            </a>
+          </div>
+        </div>
 
         {/* A. Meet the Founder */}
         <div id="builder-profile" className="labs-founder-grid">
@@ -366,14 +742,32 @@ export default function StilledevLabs() {
                   {copiedSource ? (sv ? "Kopierad" : "Copied") : (sv ? "Kopiera TS" : "Copy TS")}
                 </button>
               </div>
-              <pre tabIndex={0}>
-                <code>{EXAMPLE_SOURCE}</code>
+              <pre tabIndex={0} className="labs-tokenized-pre">
+                <code>
+                  {CODE_LINES.map((tokens, lineIdx) => (
+                    <span key={lineIdx} className="labs-code-line">
+                      <span className="labs-code-ln" aria-hidden="true">
+                        {String(lineIdx + 1).padStart(2, "0")}
+                      </span>
+                      <span>
+                        {tokens.length === 0
+                          ? "\n"
+                          : tokens.map((tok, tokIdx) => (
+                              <span key={tokIdx} className={`token-${tok.tone}`}>
+                                {tok.text}
+                              </span>
+                            ))}
+                        {tokens.length > 0 && lineIdx < CODE_LINES.length - 1 ? "\n" : ""}
+                      </span>
+                    </span>
+                  ))}
+                </code>
               </pre>
             </details>
           </ScrollReveal>
 
           <ScrollReveal delay={0.08} className="labs-founder-card-wrap">
-            <SpotlightCard maxTilt={3.8} className="labs-founder-plate">
+            <SpotlightCard maxTilt={3.5} className="labs-founder-plate">
               <span className="labs-caliper labs-caliper-tl" aria-hidden="true" />
               <span className="labs-caliper labs-caliper-tr" aria-hidden="true" />
               <span className="labs-caliper labs-caliper-bl" aria-hidden="true" />
@@ -407,25 +801,55 @@ export default function StilledevLabs() {
               </div>
 
               <div className="labs-workflow-block">
-                <div className="labs-workflow-kicker">
-                  {sv ? "ARBETSSÄTT · FRÅN IDÉ TILL LEVERANS" : "APPROACH · IDEA TO PRODUCTION"}
+                <div className="labs-workflow-head">
+                  <div className="labs-workflow-kicker">
+                    {sv ? "ARBETSSÄTT · FRÅN IDÉ TILL LEVERANS" : "APPROACH · IDEA TO PRODUCTION"}
+                  </div>
+                  <span className="labs-workflow-hint">
+                    {sv ? "Välj fas" : "Inspect phase"}
+                  </span>
                 </div>
-                <ol className="labs-workflow-steps">
-                  {FOUNDER_PROFILE.workflow.map((w) => (
-                    <li key={w.step}>
-                      <span className="labs-step-num">{w.step}</span>
-                      <div>
-                        <strong>{sv ? w.title.sv : w.title.en}</strong>
-                        <small>{sv ? w.detail.sv : w.detail.en}</small>
-                      </div>
-                    </li>
-                  ))}
-                </ol>
+
+                <div
+                  className="labs-workflow-steps"
+                  role="group"
+                  aria-label={sv ? "Utvecklingsfaser" : "Engineering phases"}
+                >
+                  {FOUNDER_PROFILE.workflow.map((w, idx) => {
+                    const isSelected = activeWorkflowIdx === idx;
+                    return (
+                      <button
+                        key={w.step}
+                        type="button"
+                        aria-pressed={isSelected}
+                        onClick={() => setActiveWorkflowIdx(idx)}
+                        className={`labs-workflow-step-btn ${isSelected ? "is-active" : ""}`}
+                      >
+                        <span className="labs-step-num">{w.step}</span>
+                        <div className="labs-step-text">
+                          <strong>{sv ? w.title.sv : w.title.en}</strong>
+                          <small>{sv ? w.detail.sv : w.detail.en}</small>
+                        </div>
+                        <span className="labs-step-indicator" aria-hidden="true" />
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="labs-workflow-readout" >
+                  <p>{sv ? activeWorkflow.spec.sv : activeWorkflow.spec.en}</p>
+                  <div className="labs-workflow-outputs">
+                    {(sv ? activeWorkflow.outputs.sv : activeWorkflow.outputs.en).map((out) => (
+                      <code key={out}>{out}</code>
+                    ))}
+                  </div>
+                </div>
               </div>
 
               <div className="labs-founder-plate-foot">
                 <span>
                   {sv ? FOUNDER_PROFILE.base.sv : FOUNDER_PROFILE.base.en}
+                  {stockholmClock ? ` · ${stockholmClock}` : ""}
                 </span>
                 <div className="labs-founder-quicklinks">
                   <a
@@ -485,13 +909,39 @@ export default function StilledevLabs() {
                     <span className="labs-domain-num">{domain.num}</span>
                     <code>{domain.code}</code>
                   </div>
+
+                  <DomainSchematic kind={domain.schematic} sv={sv} />
+
                   <h4>{sv ? domain.title.sv : domain.title.en}</h4>
                   <p>{sv ? domain.description.sv : domain.description.en}</p>
-                  <ul className="labs-domain-tags">
-                    {(sv ? domain.highlights.sv : domain.highlights.en).map((tag) => (
-                      <li key={tag}>{tag}</li>
-                    ))}
-                  </ul>
+
+                  <div className="labs-domain-foot">
+                    <ul className="labs-domain-tags">
+                      {(sv ? domain.highlights.sv : domain.highlights.en).map((tag) => (
+                        <li key={tag}>{tag}</li>
+                      ))}
+                    </ul>
+
+                    {domain.playgroundPrompt && (
+                      <a
+                        href="#playground"
+                        onClick={() =>
+                          window.dispatchEvent(
+                            new CustomEvent("budai:prompt", {
+                              detail: sv ? domain.playgroundPrompt!.sv : domain.playgroundPrompt!.en,
+                            })
+                          )
+                        }
+                        className="labs-domain-prompt-link"
+                      >
+                        <Sparkles size={12} />
+                        <span>
+                          {sv ? "Testa arkitekturprompt i BudAI" : "Test architecture prompt in BudAI"}
+                        </span>
+                        <ArrowRight size={12} />
+                      </a>
+                    )}
+                  </div>
                 </SpotlightCard>
               </ScrollReveal>
             ))}
@@ -511,78 +961,161 @@ export default function StilledevLabs() {
                 <span>{sv ? "Produkter, verktyg och plattformar." : "Products, tools, and platforms."}</span>
               </h3>
             </div>
-            <p>
-              {sv
-                ? "Ett urval av system utvecklade under Stilledev — från den öppna förhandsvisningen av BudAI till specialiserade sälj- och kunskapsverktyg."
-                : "Systems engineered under Stilledev — from the open developer preview of BudAI to specialized sales and personal knowledge platforms."}
-            </p>
+            <div className="labs-projects-head-right">
+              <p>
+                {sv
+                  ? "Ett urval av system utvecklade under Stilledev — från den öppna förhandsvisningen av BudAI till specialiserade sälj- och kunskapsverktyg."
+                  : "Systems engineered under Stilledev — from the open developer preview of BudAI to specialized sales and personal knowledge platforms."}
+              </p>
+
+              <div
+                className="labs-project-filters"
+                role="group"
+                aria-label={sv ? "Filtrera projekt" : "Filter projects"}
+              >
+                <button
+                  type="button"
+                  onClick={() => setProjectFilter("all")}
+                  aria-pressed={projectFilter === "all"}
+                  className={projectFilter === "all" ? "is-active" : undefined}
+                >
+                  {sv ? "Alla" : "All"} <b>{STILLEDEV_PROJECTS.length}</b>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setProjectFilter("public")}
+                  aria-pressed={projectFilter === "public"}
+                  className={projectFilter === "public" ? "is-active" : undefined}
+                >
+                  {sv ? "Publika" : "Public Live"} <b>{publicCount}</b>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setProjectFilter("private")}
+                  aria-pressed={projectFilter === "private"}
+                  className={projectFilter === "private" ? "is-active" : undefined}
+                >
+                  {sv ? "Privata system" : "Private Systems"} <b>{privateCount}</b>
+                </button>
+              </div>
+            </div>
           </ScrollReveal>
 
           <div className="labs-projects-grid">
-            {STILLEDEV_PROJECTS.map((project, idx) => (
-              <ScrollReveal key={project.id} delay={idx * 0.06}>
-                <SpotlightCard maxTilt={4} className="labs-project-card h-full">
-                  <ProjectVisual project={project} sv={sv} />
+            {filteredProjects.map((project, idx) => {
+              const mode = projectTabById[project.id] ?? "overview";
+              return (
+                <ScrollReveal key={project.id} delay={idx * 0.05}>
+                  <SpotlightCard maxTilt={3.5} className="labs-project-card h-full">
+                    <ProjectVisual project={project} sv={sv} />
+                    <div className="labs-preview-caption">{sv ? "Illustrativ förhandsvisning · exempeldata" : "Illustrative preview · sample data"}</div>
 
-                  <div className="labs-project-body">
-                    <div className="labs-project-meta">
-                      <span className="labs-project-idx">{project.index}</span>
-                      {project.status && (
-                        <span className={`labs-status-badge labs-status-${project.status.tone}`}>
-                          <i />
-                          {sv ? project.status.label.sv : project.status.label.en}
-                        </span>
-                      )}
-                    </div>
+                    <div className="labs-project-body">
+                      <div className="labs-project-meta">
+                        <span className="labs-project-idx">{project.index}</span>
+                        {project.status && (
+                          <span className={`labs-status-badge labs-status-${project.status.tone}`}>
+                            <i />
+                            {sv ? project.status.label.sv : project.status.label.en}
+                          </span>
+                        )}
+                      </div>
 
-                    <h4>{project.name}</h4>
-                    <div className="labs-project-category">
-                      {sv ? project.category.sv : project.category.en}
-                    </div>
-                    <p>{sv ? project.summary.sv : project.summary.en}</p>
+                      <div className="labs-project-title-row">
+                        <div>
+                          <h4>{project.name}</h4>
+                          <div className="labs-project-category">
+                            {sv ? project.category.sv : project.category.en}
+                          </div>
+                        </div>
+                      </div>
 
-                    <div className="labs-project-stack">
-                      {project.stack.map((tech) => (
-                        <span key={tech}>{tech}</span>
-                      ))}
-                    </div>
+                      <div
+                        className="labs-project-mode-tabs"
+                        role="group"
+                        aria-label={`${project.name} ${sv ? "vy" : "view"}`}
+                      >
+                        <button
+                          type="button"
+                          aria-pressed={mode === "overview"}
+                          onClick={() =>
+                            setProjectTabById((prev) => ({ ...prev, [project.id]: "overview" }))
+                          }
+                          className={mode === "overview" ? "is-active" : undefined}
+                        >
+                          <FileText size={11} />
+                          <span>{sv ? "Översikt" : "Overview"}</span>
+                        </button>
+                        <button
+                          type="button"
+                          aria-pressed={mode === "architecture"}
+                          onClick={() =>
+                            setProjectTabById((prev) => ({ ...prev, [project.id]: "architecture" }))
+                          }
+                          className={mode === "architecture" ? "is-active" : undefined}
+                        >
+                          <Layers size={11} />
+                          <span>{sv ? "Arkitektur" : "Architecture"}</span>
+                        </button>
+                      </div>
 
-                    <div className="labs-project-actions">
-                      {project.links.length > 0 ? (
-                        project.links.map((link) => (
-                          <a
-                            key={`${project.id}-${link.href}`}
-                            href={link.href}
-                            target={link.external ? "_blank" : undefined}
-                            rel={link.external ? "noopener noreferrer" : undefined}
-                            className={
-                              link.kind === "primary"
-                                ? "labs-project-link labs-project-link-primary"
-                                : "labs-project-link"
-                            }
-                          >
-                            {link.kind === "github" && <Github size={13} />}
-                            <span>{sv ? link.label.sv : link.label.en}</span>
-                            {link.external ? <ArrowUpRight size={13} /> : <ArrowRight size={13} />}
-                          </a>
-                        ))
+                      {mode === "overview" ? (
+                        <>
+                          <p>{sv ? project.summary.sv : project.summary.en}</p>
+                          <div className="labs-project-stack">
+                            {project.stack.map((tech) => (
+                              <span key={tech}>{tech}</span>
+                            ))}
+                          </div>
+                        </>
                       ) : (
-                        <span className="labs-project-private">
-                          <Lock size={12} />
-                          {project.privateNote
-                            ? sv
-                              ? project.privateNote.sv
-                              : project.privateNote.en
-                            : sv
-                              ? "Privat system"
-                              : "Private system"}
-                        </span>
+                        <ul className="labs-project-arch-list">
+                          {(sv ? project.architecture.sv : project.architecture.en).map((item, i) => (
+                            <li key={i}>
+                              <b>0{i + 1}</b>
+                              <span>{item}</span>
+                            </li>
+                          ))}
+                        </ul>
                       )}
+
+                      <div className="labs-project-actions">
+                        {project.links.length > 0 ? (
+                          project.links.map((link) => (
+                            <a
+                              key={`${project.id}-${link.href}`}
+                              href={link.href}
+                              target={link.external ? "_blank" : undefined}
+                              rel={link.external ? "noopener noreferrer" : undefined}
+                              className={
+                                link.kind === "primary"
+                                  ? "labs-project-link labs-project-link-primary"
+                                  : "labs-project-link"
+                              }
+                            >
+                              {link.kind === "github" && <Github size={13} />}
+                              <span>{sv ? link.label.sv : link.label.en}</span>
+                              {link.external ? <ArrowUpRight size={13} /> : <ArrowRight size={13} />}
+                            </a>
+                          ))
+                        ) : (
+                          <span className="labs-project-private">
+                            <Lock size={12} />
+                            {project.privateNote
+                              ? sv
+                                ? project.privateNote.sv
+                                : project.privateNote.en
+                              : sv
+                                ? "Privat system"
+                                : "Private system"}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </SpotlightCard>
-              </ScrollReveal>
-            ))}
+                  </SpotlightCard>
+                </ScrollReveal>
+              );
+            })}
           </div>
         </div>
 
@@ -630,6 +1163,79 @@ export default function StilledevLabs() {
                 </div>
               </div>
 
+              {/* Guided Quick Inquiry Composer */}
+              <div className="labs-inquiry-composer">
+                <div className="labs-composer-header">
+                  <span className="labs-composer-kicker">
+                    <MessageSquare size={12} />
+                    {sv ? "SNABBFÖRFRÅGAN · ÄMNE & UTKAST" : "QUICK INQUIRY · TOPIC & BRIEF"}
+                  </span>
+                  <code>mailto · direct</code>
+                </div>
+
+                <div
+                  className="labs-topic-pills"
+                  role="group"
+                  aria-label={sv ? "Välj ämne för kontakt" : "Select inquiry topic"}
+                >
+                  {INQUIRY_TOPICS.map((topic) => {
+                    const active = selectedTopicId === topic.id;
+                    return (
+                      <button
+                        key={topic.id}
+                        type="button"
+                        onClick={() => setSelectedTopicId(topic.id)}
+                        aria-pressed={active}
+                        className={active ? "is-active" : undefined}
+                      >
+                        {sv ? topic.label.sv : topic.label.en}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <label className="sr-only" htmlFor="labs-inquiry-note">
+                  {sv ? "Kort projektbeskrivning eller meddelande" : "Short project note or message"}
+                </label>
+                <textarea
+                  id="labs-inquiry-note"
+                  rows={2}
+                  maxLength={600}
+                  value={inquiryNote}
+                  onChange={(e) => setInquiryNote(e.target.value)}
+                  placeholder={
+                    sv
+                      ? "Valfritt: beskriv kort vad du vill bygga eller diskutera..."
+                      : "Optional: add a line or two about what you want to build or discuss..."
+                  }
+                  className="labs-composer-textarea"
+                />
+
+                <div className="labs-composer-actions">
+                  <a href={composedMailto} className="labs-composer-send">
+                    <Mail size={13} />
+                    <span>{sv ? "Öppna förifyllt mejl" : "Open pre-filled email"}</span>
+                    <ArrowUpRight size={13} />
+                  </a>
+                  <button
+                    type="button"
+                    onClick={copyFormattedBrief}
+                    className="labs-composer-copy"
+                  >
+                    {copiedBrief ? <Check size={13} /> : <Copy size={13} />}
+                    <span>
+                      {copiedBrief
+                        ? sv
+                          ? "Utkast kopierat"
+                          : "Brief copied"
+                        : sv
+                          ? "Kopiera utkast"
+                          : "Copy brief"}
+                    </span>
+                  </button>
+                </div>
+              </div>
+
               <div className="labs-channels-grid">
                 {CONTACT_CHANNELS.map((channel) => {
                   const Icon = channelIcon(channel.id);
@@ -662,18 +1268,32 @@ export default function StilledevLabs() {
           </div>
 
           <div id="stilledev-company" className="labs-company-anchor">
-            <ScrollReveal delay={0.08} className="labs-company-panel h-full">
-              <div className="labs-company-card">
-                <div className="labs-company-head">
-                  <span className="chapter-label">
+            <ScrollReveal delay={0.06} className="labs-company-wrap">
+              <SpotlightCard maxTilt={2.5} className="labs-company-card">
+                <div className="labs-company-top-bar">
+                  <span className="chapter-label !mb-0">
                     <i />E · {sv ? "FÖRETAGSINFORMATION" : "COMPANY INFORMATION"}
                   </span>
-                  <div className="labs-company-brand">
-                    <StilledevMark size={24} />
-                    <div>
-                      <h4>{COMPANY_REGISTRY.name}</h4>
-                      <span>{sv ? "Enskild firma · Sverige" : "Sole proprietorship · Sweden"}</span>
-                    </div>
+                  <button
+                    type="button"
+                    onClick={copyCompanySummary}
+                    className="labs-company-copy-btn"
+                    aria-label={sv ? "Kopiera företagsinformation" : "Copy company information"}
+                  >
+                    {copiedCompany ? <Check size={11} /> : <Copy size={11} />}
+                    <span>
+                      {copiedCompany ? (sv ? "Kopierad" : "Copied") : sv ? "Kopiera" : "Copy specs"}
+                    </span>
+                  </button>
+                </div>
+
+                <div className="labs-company-head">
+                  <StilledevMark size={26} />
+                  <div>
+                    <h4>{COMPANY_REGISTRY.name}</h4>
+                    <span>
+                      {sv ? "Enskild firma · Sverige" : "Sole proprietorship · Sweden"}
+                    </span>
                   </div>
                 </div>
 
@@ -690,11 +1310,11 @@ export default function StilledevLabs() {
                   <span className="labs-company-dot" aria-hidden="true" />
                   <p>
                     {sv
-                      ? "Stilledev drivs från Sverige av Oliver Stille med fokus på långsiktig mjukvarukvalitet, transparens och integritet."
+                      ? "Stilledev drivs från Sverige av Oliver Stille med fokus på långsiktig kodkvalitet, transparens och dataskydd."
                       : "Stilledev is operated out of Sweden by Oliver Stille with a focus on dependable engineering, transparency, and privacy."}
                   </p>
                 </div>
-              </div>
+              </SpotlightCard>
             </ScrollReveal>
           </div>
         </div>

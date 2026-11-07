@@ -7,6 +7,8 @@ export type ProjectVisualKind = "budai" | "stilleaffe" | "second-brain" | "bluep
 
 export type ProjectStatusTone = "live" | "preview" | "private";
 
+export type ProjectVisibility = "public" | "private";
+
 export interface StilledevProjectLink {
   label: LocalizedText;
   href: string;
@@ -18,8 +20,14 @@ export interface StilledevProject {
   id: string;
   index: string;
   name: string;
+  visibility: ProjectVisibility;
   category: LocalizedText;
   summary: LocalizedText;
+  /** Verified architectural & engineering capabilities shown in the Architecture spec view. */
+  architecture: {
+    sv: string[];
+    en: string[];
+  };
   /** Only include when status is verified; omit or use "private" for internal/personal systems. */
   status?: {
     label: LocalizedText;
@@ -33,16 +41,25 @@ export interface StilledevProject {
   privateNote?: LocalizedText;
 }
 
+export type DomainSchematicKind =
+  | "ai-pipeline"
+  | "web-craft"
+  | "saas-layers"
+  | "workflow-nodes"
+  | "rd-track";
+
 export interface StilledevDomain {
   id: string;
   num: string;
   code: string;
+  schematic: DomainSchematicKind;
   title: LocalizedText;
   description: LocalizedText;
   highlights: {
     sv: string[];
     en: string[];
   };
+  playgroundPrompt?: LocalizedText;
 }
 
 export interface StilledevContactChannel {
@@ -52,6 +69,13 @@ export interface StilledevContactChannel {
   href: string;
   external?: boolean;
   note: LocalizedText;
+}
+
+export interface StilledevInquiryTopic {
+  id: "ai" | "webapp" | "partnership" | "product";
+  label: LocalizedText;
+  subject: LocalizedText;
+  template: LocalizedText;
 }
 
 /**
@@ -73,6 +97,10 @@ export const COMPANY_REGISTRY = {
   country: {
     sv: "Sverige",
     en: "Sweden",
+  },
+  languages: {
+    sv: "Svenska & Engelska",
+    en: "Swedish & English",
   },
   // Ready for future completion — never populated with placeholder or unverified numbers:
   orgNumber: null as string | null,
@@ -113,16 +141,40 @@ export const FOUNDER_PROFILE = {
       step: "01",
       title: { sv: "Koncept", en: "Concept" },
       detail: { sv: "Problem, struktur & riktning", en: "Problem framing & direction" },
+      spec: {
+        sv: "Tydlig avgränsning av kärnproblemet, användarflöden och gränssnittsstruktur på svenska och engelska innan första raden produktionskod skrivs.",
+        en: "Defining the core problem, user journeys, and interface hierarchy in Swedish and English before writing production code.",
+      },
+      outputs: {
+        sv: ["Produktstruktur", "UX-flöde", "Teknisk avgränsning"],
+        en: ["Product scope", "UX flow", "System boundaries"],
+      },
     },
     {
       step: "02",
       title: { sv: "Arkitektur", en: "Architecture" },
       detail: { sv: "Typsäker kod, data & AI", en: "Type-safe code, data & AI" },
+      spec: {
+        sv: "Fullstack-implementation med Next.js, strikt TypeScript, Supabase/Postgres med radnivåsäkerhet (RLS) och strömmande AI-integrationer.",
+        en: "Full-stack implementation with Next.js, strict TypeScript, Supabase/Postgres row-level security, and streaming AI pipelines.",
+      },
+      outputs: {
+        sv: ["Next.js + TS", "Supabase RLS", "Strömmande AI-API"],
+        en: ["Next.js + TS", "Supabase RLS", "Streaming AI API"],
+      },
     },
     {
       step: "03",
       title: { sv: "Färdig produkt", en: "Shipped product" },
       detail: { sv: "Design, drift & vidareutveckling", en: "Design, deployment & iteration" },
+      spec: {
+        sv: "Responsiv finish, automatiserade webbläsartester, CSP-säkerhet, driftsättning och löpande förbättringar utifrån verklig användning.",
+        en: "Responsive polish, automated browser testing, strict CSP headers, cloud deployment, and continuous iteration from real usage.",
+      },
+      outputs: {
+        sv: ["Playwright E2E", "CSP & säkerhet", "Molndrift"],
+        en: ["Playwright E2E", "CSP & security", "Cloud deploy"],
+      },
     },
   ],
   metrics: [
@@ -159,6 +211,7 @@ export const STILLEDEV_DOMAINS: StilledevDomain[] = [
     id: "ai-engineering",
     num: "01",
     code: "ai.systems · llm · memory",
+    schematic: "ai-pipeline",
     title: {
       sv: "AI-utveckling & AI-integrationer",
       en: "AI development & integrations",
@@ -171,11 +224,16 @@ export const STILLEDEV_DOMAINS: StilledevDomain[] = [
       sv: ["Strömmande svar & verktygsanrop", "Kontrollerat kontextminne", "Tvåspråkiga flöden (SV / EN)"],
       en: ["Streaming responses & tool use", "User-controlled context memory", "Bilingual workflows (SV / EN)"],
     },
+    playgroundPrompt: {
+      sv: "Skissa en teknisk arkitektur för en AI-integration i en befintlig webbapplikation med strömmande svar, dataskydd och tydlig felhantering.",
+      en: "Outline a clean technical architecture for integrating a streaming AI assistant into a web application with data privacy and resilient error handling.",
+    },
   },
   {
     id: "web-applications",
     num: "02",
     code: "web.app · nextjs · typescript",
+    schematic: "web-craft",
     title: {
       sv: "Webbplatser & webbapplikationer",
       en: "Websites & web applications",
@@ -193,6 +251,7 @@ export const STILLEDEV_DOMAINS: StilledevDomain[] = [
     id: "saas-products",
     num: "03",
     code: "product.saas · auth · data",
+    schematic: "saas-layers",
     title: {
       sv: "Digitala produkter & SaaS",
       en: "Digital products & SaaS",
@@ -210,6 +269,7 @@ export const STILLEDEV_DOMAINS: StilledevDomain[] = [
     id: "automation-workflows",
     num: "04",
     code: "workflow.automate · signal",
+    schematic: "workflow-nodes",
     title: {
       sv: "Automatisering & smarta arbetsflöden",
       en: "Automation & smart workflows",
@@ -227,6 +287,7 @@ export const STILLEDEV_DOMAINS: StilledevDomain[] = [
     id: "labs-rd",
     num: "05",
     code: "labs.rd · experiments",
+    schematic: "rd-track",
     title: {
       sv: "Egna experiment & produktutveckling",
       en: "Independent R&D & product lab",
@@ -252,6 +313,7 @@ export const STILLEDEV_PROJECTS: StilledevProject[] = [
     id: "budai",
     index: "01",
     name: "BudAI",
+    visibility: "public",
     category: {
       sv: "AI-assistent & digital arbetsplattform",
       en: "AI assistant & digital workspace",
@@ -259,6 +321,20 @@ export const STILLEDEV_PROJECTS: StilledevProject[] = [
     summary: {
       sv: "Tvåspråkig AI-arbetsyta byggd i Sverige för skrivande, analys, planering och automatisering på svenska och engelska — med live Playground, röst, bildanalys och minne du själv styr.",
       en: "Bilingual AI workspace built in Sweden for writing, analysis, planning, and automation in Swedish and English — featuring a live Playground, voice, vision, and user-controlled memory.",
+    },
+    architecture: {
+      sv: [
+        "Progressiv SSE-strömning med modellval och avbrytbara svar i realtid",
+        "Användarstyrt kontextminne, röstinmatning och multimodal bildanalys",
+        "Strikt per-request CSP-nonce, serverstyrd kvotering och Supabase PKCE-auth",
+        "Sammanhängande WebGL- och CSS3D-upplevelse med fallback för reducerad rörelse",
+      ],
+      en: [
+        "Progressive SSE token streaming with live cancellation and model tiering",
+        "User-controlled context memory, voice dictation, and multimodal vision",
+        "Per-request CSP nonces, server-owned rate limiting, and Supabase PKCE auth",
+        "Continuous WebGL + CSS3D spatial stage with full reduced-motion fallback",
+      ],
     },
     status: {
       label: {
@@ -287,6 +363,7 @@ export const STILLEDEV_PROJECTS: StilledevProject[] = [
     id: "stilleaffe",
     index: "02",
     name: "StilleAffe",
+    visibility: "public",
     category: {
       sv: "Dashboard & försäljningsverktyg",
       en: "Sales dashboard & performance tool",
@@ -294,6 +371,20 @@ export const STILLEDEV_PROJECTS: StilledevProject[] = [
     summary: {
       sv: "Rollanpassad sälj- och uppföljningsplattform för dagligt fokus och ledarskap — med dags-, vecko- och månadsmål, prognoser utifrån faktiska arbetsdagar, aktivitetsflöde och datagrundad AI-coachning.",
       en: "Role-tailored sales tracking and coaching dashboard built for daily execution — with daily, weekly, and monthly targets, workday-calibrated forecasts, activity streams, and data-grounded AI nudges.",
+    },
+    architecture: {
+      sv: [
+        "Separata rollvyer för säljare (mål & fokus) och chef (överblick & stöd)",
+        "Arbetstidskalibrerade prognoser på dags-, vecko- och månadsnivå",
+        "Servervaliderad autentisering och strukturerad datalagring i Supabase",
+        "Datagrundad AI-coachning kopplad direkt till faktisk aktivitetsrytm",
+      ],
+      en: [
+        "Dedicated role workspaces for Seller (daily focus) and Manager (team support)",
+        "Workday-calibrated pace forecasting across daily, weekly, and monthly goals",
+        "Server-authenticated session gate backed by structured Supabase storage",
+        "Data-grounded AI coaching nudges tied directly to real activity metrics",
+      ],
     },
     status: {
       label: {
@@ -323,6 +414,7 @@ export const STILLEDEV_PROJECTS: StilledevProject[] = [
     id: "annas-second-brain",
     index: "03",
     name: "Anna's Second Brain",
+    visibility: "private",
     category: {
       sv: "Personlig AI-driven organisations- & kunskapsplattform",
       en: "Personal AI-driven organization & knowledge platform",
@@ -330,6 +422,20 @@ export const STILLEDEV_PROJECTS: StilledevProject[] = [
     summary: {
       sv: "Skräddarsydd plattform för personlig struktur och kunskapshantering där anteckningar, idéer, uppgifter och kontext vävs samman med AI-stöd för snabb återblick och tydliga prioriteringar.",
       en: "Custom personal knowledge and organization system connecting notes, ideas, tasks, and long-term context with AI synthesis for fast recall and clear everyday priorities.",
+    },
+    architecture: {
+      sv: [
+        "Strukturerad kunskapsgraf som kopplar samman anteckningar, uppgifter och kontext",
+        "AI-assisterad syntes för sammanfattningar, prioritering och snabb återhämtning",
+        "Skräddarsytt arbetsflöde utformat för daglig personlig överblick utan brus",
+        "Privat enanvändarmiljö med full kontroll över personlig information",
+      ],
+      en: [
+        "Structured knowledge graph linking notes, active tasks, and long-term context",
+        "AI-assisted synthesis for clear summaries, recall, and daily prioritization",
+        "Custom low-friction interface tailored for calm everyday organization",
+        "Private single-tenant environment keeping personal data strictly isolated",
+      ],
     },
     status: {
       label: {
@@ -344,6 +450,57 @@ export const STILLEDEV_PROJECTS: StilledevProject[] = [
     privateNote: {
       sv: "Privat plattform · ingen publik länk",
       en: "Private platform · no public link",
+    },
+  },
+];
+
+export const INQUIRY_TOPICS: StilledevInquiryTopic[] = [
+  {
+    id: "ai",
+    label: { sv: "AI & integration", en: "AI & integration" },
+    subject: {
+      sv: "Förfrågan: AI-utveckling / integration — Stilledev",
+      en: "Inquiry: AI development / integration — Stilledev",
+    },
+    template: {
+      sv: "Hej Oliver,\n\nJag vill gärna diskutera ett AI- eller integrationsprojekt med Stilledev.\n\nKort om behovet:\n",
+      en: "Hi Oliver,\n\nI would like to discuss an AI or integration project with Stilledev.\n\nBrief context:\n",
+    },
+  },
+  {
+    id: "webapp",
+    label: { sv: "Webbapp / SaaS", en: "Web app / SaaS" },
+    subject: {
+      sv: "Förfrågan: Webbapplikation / digital produkt — Stilledev",
+      en: "Inquiry: Web application / digital product — Stilledev",
+    },
+    template: {
+      sv: "Hej Oliver,\n\nVi tittar på att bygga eller vidareutveckla en webbapplikation / digital produkt.\n\nKort om projektet:\n",
+      en: "Hi Oliver,\n\nWe are looking to build or evolve a web application / digital product.\n\nProject overview:\n",
+    },
+  },
+  {
+    id: "partnership",
+    label: { sv: "Samarbete", en: "Partnership" },
+    subject: {
+      sv: "Samarbetsförfrågan — Stilledev",
+      en: "Partnership inquiry — Stilledev",
+    },
+    template: {
+      sv: "Hej Oliver,\n\nJag hör av mig angående ett möjligt tekniskt eller affärsmässigt samarbete.\n\nBakgrund:\n",
+      en: "Hi Oliver,\n\nReaching out regarding a potential technical or business partnership.\n\nContext:\n",
+    },
+  },
+  {
+    id: "product",
+    label: { sv: "BudAI / Produkt", en: "BudAI / Product" },
+    subject: {
+      sv: "Fråga kring BudAI / Stilledev Labs",
+      en: "Question regarding BudAI / Stilledev Labs",
+    },
+    template: {
+      sv: "Hej Oliver,\n\nJag har en fråga eller feedback kring BudAI / Stilledev Labs:\n",
+      en: "Hi Oliver,\n\nI have a question or feedback regarding BudAI / Stilledev Labs:\n",
     },
   },
 ];
@@ -377,7 +534,7 @@ export const CONTACT_CHANNELS: StilledevContactChannel[] = [
     href: "https://github.com/SnusStille",
     external: true,
     note: {
-      sv: "Öppen källkod, arkitektur & publika repon",
+      sv: "Öppen källkod och publika repos",
       en: "Open-source repositories & code",
     },
   },
@@ -388,7 +545,7 @@ export const CONTACT_CHANNELS: StilledevContactChannel[] = [
     href: "https://www.linkedin.com/in/oliver-stille-8bb48a403/",
     external: true,
     note: {
-      sv: "Professionellt nätverk & kontakt",
+      sv: "Professionell profil och nätverk",
       en: "Professional profile & network",
     },
   },

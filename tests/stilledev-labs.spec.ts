@@ -170,3 +170,83 @@ test("Stilledev Labs maintains responsive layout and zero horizontal overflow ac
     }
   }
 });
+
+test("Labs instruments, previews and inquiry composer respond to real input", async ({ page }) => {
+  await quietChrome(page);
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, "clipboard", { value: { writeText: async (value: string) => { (window as unknown as { copied: string }).copied = value; } }, configurable: true });
+    window.addEventListener("budai:prompt", (event) => { (window as unknown as { promptValue: string }).promptValue = (event as CustomEvent<string>).detail; });
+  });
+  await page.goto("/#stilledev-labs");
+  const labs = page.locator("#stilledev-labs");
+  const dock = labs.locator("[data-labs-dock]");
+  await expect(dock.locator(".labs-clock-chip")).toContainText(/SE · \d\d:\d\d/);
+  await labs.locator("#builder-profile").scrollIntoViewIfNeeded();
+  await expect(dock.locator('a[href="#builder-profile"]')).toHaveAttribute("aria-current", "location");
+  const workflow = labs.getByRole("group", { name: "Engineering phases" });
+  await workflow.getByRole("button", { name: /Architecture/ }).click();
+  await expect(workflow.getByRole("button", { name: /Architecture/ })).toHaveAttribute("aria-pressed", "true");
+  await expect(labs.locator(".labs-workflow-readout")).toContainText("Supabase");
+  await workflow.getByRole("button", { name: /Shipped product/ }).click();
+  await expect(labs.locator(".labs-workflow-readout")).toContainText("Playwright E2E");
+  const details = labs.locator("details.builder-source-details");
+  await details.locator("summary").click();
+  const source = await details.locator(".labs-code-line > span:last-child").allTextContents();
+  const { EXAMPLE_SOURCE } = await import("../lib/experience/code");
+  expect(source.join("")).toBe(EXAMPLE_SOURCE);
+  await details.getByRole("button", { name: "Copy TS" }).click();
+  expect(await page.evaluate(() => (window as unknown as { copied: string }).copied)).toBe(EXAMPLE_SOURCE);
+
+  await labs.getByRole("link", { name: "Test architecture prompt in BudAI" }).click();
+  await expect.poll(() => page.evaluate(() => (window as unknown as { promptValue: string }).promptValue)).toContain("streaming AI assistant");
+  const projects = labs.locator("#stilledev-projects");
+  const filters = projects.getByRole("group", { name: "Filter projects" });
+  await filters.getByRole("button", { name: /Private Systems/ }).click();
+  await expect(projects.locator(".labs-project-card")).toHaveCount(1);
+  await expect(projects).toContainText("Anna's Second Brain");
+  await filters.getByRole("button", { name: /Public Live/ }).click();
+  await expect(projects.locator(".labs-project-card")).toHaveCount(2);
+  await filters.getByRole("button", { name: /^All/ }).click();
+  const budai = projects.locator(".labs-project-card").filter({ has: page.getByRole("heading", { name: "BudAI", exact: true }) });
+  await budai.getByRole("button", { name: "SV", exact: true }).click();
+  await expect(budai).toContainText("minne: användarstyrt");
+  await budai.getByRole("button", { name: "Architecture", exact: true }).click();
+  await expect(budai.locator(".labs-project-arch-list li")).not.toHaveCount(0);
+  await budai.getByRole("button", { name: "Overview", exact: true }).click();
+  await expect(budai.locator(".labs-project-arch-list")).toHaveCount(0);
+  const affe = projects.locator(".labs-project-card").filter({ has: page.getByRole("heading", { name: "StilleAffe", exact: true }) });
+  await affe.getByRole("button", { name: /Manager/ }).click();
+  await expect(affe).toContainText("TEAM VIEW · COACHING");
+  const brain = projects.locator(".labs-project-card").filter({ has: page.getByRole("heading", { name: "Anna's Second Brain", exact: true }) });
+  await brain.getByRole("button", { name: "Context", exact: true }).click();
+  await expect(brain.locator(".labs-brain-readout")).toContainText("Long-term memory");
+  await expect(brain).toContainText("Illustrative preview · sample data");
+  const composer = labs.locator(".labs-inquiry-composer");
+  await composer.getByRole("button", { name: "Partnership" }).click();
+  await composer.locator("textarea").fill("A & B: Let's build together!\nNext line.");
+  const href = await composer.locator(".labs-composer-send").getAttribute("href");
+  const params = new URLSearchParams(href!.split("?")[1]);
+  expect(params.get("subject")).toBe("Partnership inquiry — Stilledev");
+  expect(params.get("body")).toContain("A & B: Let's build together!\nNext line.");
+  await composer.getByRole("button", { name: "Copy brief" }).click();
+  expect(await page.evaluate(() => (window as unknown as { copied: string }).copied)).toContain("Partnership inquiry — Stilledev");
+  await labs.getByRole("button", { name: "Copy company information" }).click();
+  expect(await page.evaluate(() => (window as unknown as { copied: string }).copied)).toContain("Oliver Stille");
+});
+
+test("interactive instruments are localized in Swedish", async ({ page }) => {
+  await quietChrome(page);
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/sv#stilledev-labs");
+  const labs = page.locator("#stilledev-labs");
+  await labs.getByRole("group", { name: "Utvecklingsfaser" }).getByRole("button", { name: /Arkitektur/ }).click();
+  await expect(labs.locator(".labs-workflow-readout")).toContainText("Supabase");
+  await labs.getByRole("button", { name: /Privata system/ }).click();
+  await expect(labs.locator(".labs-project-card")).toHaveCount(1);
+  await expect(labs.locator(".labs-project-card")).toContainText("Illustrativ förhandsvisning · exempeldata");
+  await labs.getByRole("button", { name: "Samarbete", exact: true }).click();
+  const href = await labs.locator(".labs-composer-send").getAttribute("href");
+  expect(new URLSearchParams(href!.split("?")[1]).get("subject")).toBe("Samarbetsförfrågan — Stilledev");
+  await expect(labs.locator("#stilledev-company")).toContainText("Arbetsspråk");
+});
