@@ -69,11 +69,11 @@ export default function CommandPalette() {
       },
       {
         id: "labs",
-        label: sv ? "Labs — projekt och studio" : "Labs — projects and studio",
+        label: sv ? "Labs — under utveckling" : "Labs — under development",
         hint: "↗",
         icon: Sparkles,
         action: () => { setOpen(false); router.push(sv ? "/sv/labs" : "/labs"); },
-        keywords: "labs stilledev projects studio oliver grundare",
+        keywords: "labs stilledev studio development utveckling oliver grundare",
       },
       {
         id: "roadmap",

@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { ArrowRight, BriefcaseBusiness, Code2, MapPin, Sparkles } from "lucide-react";
-import { StilledevMark } from "@/components/ui/BudAILogo";
+import { ArrowRight, Code2 } from "lucide-react";
 import { useLang } from "@/components/ui/LanguageContext";
 import { subscribeJourney } from "@/lib/experience/scroll";
 import ProgressiveEditor from "@/components/experience/ProgressiveEditor";
@@ -62,6 +61,10 @@ export default function About() {
             <span className="chapter-label"><i />04 / {sv ? "FRÅN TANKE TILL VERKLIGHET · BYGGAREN" : "FROM THOUGHT TO REALITY · THE BUILDER"}</span>
             <h2 id="builder-title">{sv ? "Från en tanke." : "From a thought."}<br /><span>{sv ? "Till något verkligt." : "To something real."}</span></h2>
             <p>{sv ? "Från en kort specifikation till typsäker kod, gränssnitt och strukturerade arbetsflöden — byggd med samma arkitektur som driver BudAI." : "From a short brief to type-safe code, interfaces, and structured workflows — built with the same architecture that powers BudAI."}</p>
+            <div className="builder-byline" aria-label={sv ? "Om Oliver Stille" : "About Oliver Stille"}>
+              <span>STILLEDEV EF <i /> OLIVER STILLE · HELSINGBORG</span>
+              <p>{sv ? "Mötesansvarig och kodare på SkandiaMäklarna." : "Meeting manager and coder at SkandiaMäklarna."}</p>
+            </div>
             <div className="reality-creation-pills" data-thought-to-reality>
               {realityPills.map((pill) => (
                 <span
@@ -102,15 +105,6 @@ export default function About() {
         </div>
       </div>
 
-      <aside className="builder-person" aria-labelledby="builder-person-title">
-        <div className="builder-person-mark" aria-hidden="true"><StilledevMark size={50} /></div>
-        <div className="builder-person-copy">
-          <span className="builder-person-label"><i /> {sv ? "PERSONEN BAKOM" : "THE PERSON BEHIND"} / STILLEDEV EF</span>
-          <h3 id="builder-person-title">{sv ? <>Hej, jag är <em>Oliver.</em></> : <>Hi, I’m <em>Oliver.</em></>}</h3>
-          <p>{sv ? "Jag heter Oliver Stille och gillar raka besked och idéer som gör vardagen enklare. Jag har tidigare varit företagare och bygger gärna vidare på egna kod- och IT-projekt även på fritiden." : "I’m Oliver Stille. I like straightforward communication and ideas that make everyday life simpler. I’ve previously been an entrepreneur and enjoy building my own coding and IT projects in my spare time."}</p>
-          <div className="builder-person-facts"><span><MapPin size={15} /> Helsingborg, {sv ? "Sverige" : "Sweden"}</span><span><BriefcaseBusiness size={15} /> {sv ? "Mötesansvarig & kodare på SkandiaMäklarna" : "Meeting manager & coder at SkandiaMäklarna"}</span><span><Sparkles size={15} /> AI · {sv ? "kod & kreativa idéer" : "code & creative ideas"}</span></div>
-        </div>
-      </aside>
       <div id="stilledev-labs" className="builder-labs-entry">
         <div className="builder-labs-icon" aria-hidden="true"><span /><span /><span /></div>
         <div className="builder-labs-copy">

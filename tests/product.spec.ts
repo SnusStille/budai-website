@@ -380,7 +380,8 @@ test("one keyboard owner: ⌘K opens the site palette and ⌘/ opens Playground 
 test("footer labels are honest and What's new resolves to the real changelog page", async ({ page }) => {
   await page.goto("/");
   const footer = page.locator("#continuation");
-  await expect(footer.getByRole("link", { name: "Plans", exact: true })).toBeVisible();
+  await expect(footer.getByRole("link", { name: "Plans", exact: true })).toHaveCount(0);
+  await expect(footer.getByRole("link", { name: "Projects", exact: true })).toHaveCount(0);
   await expect(footer.getByRole("link", { name: "Pricing", exact: true })).toHaveCount(0);
 
   const link = footer.getByRole("link", { name: "What's new", exact: true });

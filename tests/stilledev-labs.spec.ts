@@ -9,12 +9,13 @@ async function quiet(page: Page) {
 
 test("Builder introduces Oliver and links to the Labs holding page in both languages", async ({ page }) => {
   await quiet(page); await page.emulateMedia({ reducedMotion: "reduce" });
-  for (const [path, title, button] of [["/", /Hi, I’m Oliver/i, /Enter Labs/i], ["/sv", /Hej, jag är Oliver/i, /Öppna Labs/i]] as const) {
+  for (const [path, button] of [["/", /Enter Labs/i], ["/sv", /Öppna Labs/i]] as const) {
     await page.goto(`${path}#stilledev-labs`);
-    const person = page.locator(".builder-person");
-    await expect(person.getByRole("heading", { name: title })).toBeVisible();
-    await expect(person).toContainText("Helsingborg"); await expect(person).toContainText("SkandiaMäklarna");
-    await expect(person).toContainText("STILLEDEV EF");
+    const person = page.locator(".builder-heading .builder-byline");
+    await expect(person).toBeVisible();
+    await expect(person).toContainText(/Oliver Stille/i); await expect(person).toContainText(/Helsingborg/i);
+    await expect(person).toContainText("SkandiaMäklarna"); await expect(person).toContainText("STILLEDEV EF");
+    await expect(page.locator(".builder-person")).toHaveCount(0);
     const portal = page.locator("#stilledev-labs");
     await expect(portal.getByRole("link", { name: button })).toHaveAttribute("href", path === "/sv" ? "/sv/labs" : "/labs");
     await expect(page.locator("nav").getByRole("link", { name: /Labs/ }).first()).toBeAttached();
@@ -83,7 +84,7 @@ for (const ua of [iphone, android]) {
     for (const route of ["/", "/sv", "/labs", "/sv/labs", "/legal/privacy"]) {
       const response = await page.goto(route); expect(response?.headers()["cache-control"]).toMatch(/private|no-store/i);
       await expect(page.locator(".phone-welcome")).toBeVisible();
-      await expect(page.locator(".labs-wait, .builder-person, nav, #playground")).toHaveCount(0);
+      await expect(page.locator(".labs-wait, .builder-byline, nav, #playground")).toHaveCount(0);
       expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(1);
     }
     await expect(page.getByRole("heading", { name: /Hoppsan/ })).toBeVisible();
@@ -105,5 +106,51 @@ test("tablet and bot user agents retain the desktop site", async ({ request }) =
   for (const ua of ["Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Safari/604.1", "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"]) {
     const response = await request.get("/labs", { headers: { "user-agent": ua } });
     const html = await response.text(); expect(html).toContain("labs-wait-shell"); expect(html).not.toContain('class="phone-welcome"');
+  }
+});
+
+test("footer navigation is concise, real and localized in both languages", async ({ page, request }) => {
+  await quiet(page); await page.emulateMedia({ reducedMotion: "reduce" });
+  for (const [path, groupLabels, banned, expectedLab] of [
+    ["/", ["Product", "Company", "Legal"], ["Plans", "Projects", "Pricing"], "/labs"],
+    ["/sv", ["Produkt", "Företag", "Juridik"], ["Paket", "Projekt", "Priser"], "/sv/labs"],
+  ] as const) {
+    await page.goto(path); const footer = page.locator("#continuation");
+    for (const name of groupLabels) await expect(footer.getByRole("navigation", { name, exact: true })).toBeAttached();
+    for (const name of banned) await expect(footer.getByRole("link", { name, exact: true })).toHaveCount(0);
+    await expect(footer.getByRole("link", { name: "Labs", exact: true })).toHaveAttribute("href", expectedLab);
+    await expect(footer).toContainText("Stilledev EF");
+    const links = await footer.locator("nav a").evaluateAll(nodes => nodes.map(node => node.getAttribute("href") || ""));
+    expect(new Set(links).size).toBe(links.length);
+    for (const link of links) {
+      if (link.startsWith("#")) expect(await page.locator(link).count(), `${path} ${link}`).toBeGreaterThan(0);
+      else if (link.startsWith("/")) expect((await request.get(link)).status(), `${path} ${link}`).toBe(200);
+      else expect(link).toMatch(/^mailto:/);
+    }
+  }
+  // Legal links lead directly to the full policy rather than a second, potentially stale summary.
+  await page.locator("#continuation").getByRole("link", { name: "Integritetspolicy", exact: true }).click();
+  await expect(page).toHaveURL(/\/legal\/privacy$/);
+  await expect(page.getByRole("heading", { name: "Integritetspolicy" })).toBeVisible();
+});
+
+test("footer health wording only describes the server ping", async ({ page }) => {
+  await quiet(page); await page.route("**/api/health", route => route.fulfill({ status: 200, contentType: "application/json", body: '{"ok":true}' }));
+  await page.goto("/");
+  await expect(page.locator("#continuation")).toContainText("Server responding");
+  await expect(page.locator("#continuation")).not.toContainText("All systems operational");
+});
+
+
+test("the compact Builder introduction fits above its controls at desktop and tablet widths", async ({ page }) => {
+  await quiet(page); await page.emulateMedia({ reducedMotion: "reduce" });
+  for (const width of [768, 1024, 1440]) {
+    await page.setViewportSize({ width, height: 900 }); await page.goto("/#about");
+    await expect(page.locator(".builder-byline")).toBeVisible();
+    const intro = await page.locator(".builder-byline").boundingBox();
+    const controls = await page.locator(".reality-creation-pills").boundingBox();
+    expect(intro && controls && intro.y + intro.height <= controls.y, `${width}px`).toBeTruthy();
+    expect(intro && intro.x >= 0 && intro.x + intro.width <= width + 1, `${width}px`).toBeTruthy();
+    if (width === 1440) { await page.locator(".builder-heading").scrollIntoViewIfNeeded(); await page.screenshot({ path: "test-results/builder-compact.png" }); }
   }
 });
