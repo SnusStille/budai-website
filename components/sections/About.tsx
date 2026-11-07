@@ -66,9 +66,9 @@ export default function About() {
               <span>STILLEDEV EF <i /> OLIVER STILLE · HELSINGBORG</span>
               <p>{sv ? "Mötesansvarig och kodare på SkandiaMäklarna." : "Meeting manager and coder at SkandiaMäklarna."}</p>
             </div>
-            <div className="reality-creation-pills" data-thought-to-reality>
+            <div className="reality-creation-pills" role="group" aria-label={sv ? "Prova en idé i Playground" : "Try an idea in Playground"} data-thought-to-reality>
               {realityPills.map((pill) => (
-                <button key={pill.num} type="button" onClick={() => launchArchetypePrompt(pill.prompt)}>
+                <button key={pill.num} type="button" title={sv ? "Öppnar ett redigerbart exempel i Playground" : "Opens an editable example in Playground"} aria-label={`${pill.label} — ${sv ? "öppna som exempel i Playground" : "open as an example in Playground"}`} onClick={() => launchArchetypePrompt(pill.prompt)}>
                   <b>{pill.num}</b>
                   {pill.label}
                 </button>
@@ -96,11 +96,15 @@ export default function About() {
       </div>
 
       <div id="stilledev-labs" className="builder-labs-entry">
-        <div className="builder-labs-icon" aria-hidden="true"><span /><span /><span /></div>
+        <div className="builder-labs-icon" aria-hidden="true">
+          <i className="builder-labs-orbit" /><i className="builder-labs-antenna" />
+          <div className="builder-labs-bot-head"><div className="builder-labs-bot-face"><i /><i /></div></div>
+          <div className="builder-labs-bot-body"><i /></div>
+        </div>
         <div className="builder-labs-copy">
-          <span className="builder-labs-label">STILLEDEV EF / LABS</span>
-          <h3>Labs<span>.</span> <small className="builder-labs-status"><i />{sv ? "UNDER UTVECKLING" : "UNDER DEVELOPMENT"}</small></h3>
-          <p>{sv ? "Labs är under utveckling. Hälsa på vår lilla byggrobot under tiden." : "Labs is under development. Say hello to our little builder bot in the meantime."}</p>
+          <span className="builder-labs-label">STILLEDEV EF <i /> LABS</span>
+          <div className="builder-labs-title-row"><h3>Labs<span>.</span></h3><span className="builder-labs-status"><i />{sv ? "UNDER UTVECKLING" : "UNDER DEVELOPMENT"}</span></div>
+          <p>{sv ? "Vår lilla byggrobot håller ställningarna medan Labs tar form." : "Our little builder bot is holding the fort while Labs takes shape."}</p>
         </div>
         <a className="builder-labs-link" href={sv ? "/sv/labs" : "/labs"}>{sv ? "Öppna Labs" : "Enter Labs"}<ArrowRight size={16} /></a>
       </div>

@@ -65,7 +65,7 @@ export default function Footer() {
       </div>
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent-cyan/20 to-transparent" />
       <div className="max-w-7xl mx-auto px-6 lg:px-8 py-14 md:py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 lg:gap-8">
+        <div className="site-footer-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 lg:gap-8">
           <div className="lg:col-span-2">
             <Link href={lang === "sv" ? "/sv" : "/"} aria-label={lang === "sv" ? "BudAI startsida" : "BudAI home"} className="flex items-center gap-2.5 mb-5 group">
               <BudAILogo size="md" animated />
@@ -93,7 +93,7 @@ export default function Footer() {
           </div>
 
           {groupsData.map((g, gi) => (
-            <nav key={g.title} aria-label={g.title}>
+            <nav key={g.title} aria-label={g.title} className="site-footer-nav">
               <h4 className="mb-4 flex items-center gap-2 text-sm font-semibold text-white">
                 <span className={`h-1.5 w-1.5 rounded-full ${["bg-accent-cyan", "bg-accent-purple", "bg-accent-green"][gi % 3]}`} />
                 {g.title}

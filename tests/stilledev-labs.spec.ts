@@ -183,3 +183,18 @@ test("footer social links have comfortable targets and keyboard focus", async ({
     await link.focus(); await expect(link).toBeFocused();
   }
 });
+
+test("Builder examples protect unsent drafts and never send a request", async ({ page }) => {
+  await quiet(page); await page.emulateMedia({ reducedMotion: "reduce" }); await page.goto("/#playground");
+  const input = page.getByRole("textbox", { name: "Message BudAI", exact: true });
+  let requests = 0; page.on("request", req => { if (req.url().endsWith("/api/playground")) requests++; });
+  await input.fill("Keep this draft");
+  const shortcut = page.locator("[data-thought-to-reality]").getByRole("button", { name: /Website interface/ });
+  page.once("dialog", dialog => dialog.dismiss());
+  await shortcut.click(); await expect(input).toHaveValue("Keep this draft");
+  await input.fill("");
+  await shortcut.click(); await expect(input).toHaveValue(/type-safe React/);
+  await page.waitForTimeout(600); expect(requests).toBe(0);
+  const labsHeading = page.locator("#stilledev-labs").getByRole("heading", { name: "Labs.", exact: true });
+  await expect(labsHeading).toBeVisible();
+});
