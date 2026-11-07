@@ -296,3 +296,19 @@ test("featured project navigation stays on Labs and reaches the private stories"
   await expect(page).toHaveURL(/\/labs#estate-case$/);
   await expect(page.locator("#estate-case")).toBeVisible();
 });
+
+test("field notes and services remain readable and keyboard-operable at small widths", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 800 });
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/sv/labs");
+  const notes = page.locator("#research details");
+  await expect(notes).toHaveCount(3);
+  for (const note of await notes.all()) {
+    await note.locator("summary").focus();
+    await page.keyboard.press("Enter");
+    await expect(note.locator("p")).toBeVisible();
+  }
+  await expect(page.locator("#services article")).toHaveCount(4);
+  await expect(page.locator("#services")).toContainText("GTA 5 och Roblox");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+});

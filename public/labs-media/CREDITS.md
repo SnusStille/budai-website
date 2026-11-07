@@ -5,3 +5,4 @@
 
 - `signal-field.jpg`: original AI-generated abstract image used as a decorative background for the local Signal Composer.
 - `labs-atmosphere.jpg`: original AI-generated abstract fibre-optic artwork used decoratively in the Labs hero.
+- `research-orbit.jpg`: original AI-generated abstract visual used decoratively alongside the open questions section.

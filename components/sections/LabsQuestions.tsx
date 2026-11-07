@@ -7,5 +7,19 @@ const NOTES = [
 ];
 
 export default function LabsQuestions({ sv }: { sv: boolean }) {
-  return <section id="research" className="lab-research lab-wrap" aria-labelledby="research-title"><div className="lab-section-intro"><div><div className="lab-eyebrow"><span /> {sv ? "TANKAR ATT UTFORSKA" : "QUESTIONS WORTH EXPLORING"} <b> / 04 · NOTES</b></div><h2 id="research-title">{sv ? <>Frågor före<br /><em>färdiga svar.</em></> : <>Questions before<br /><em>answers.</em></>}</h2></div><p>{sv ? "Några idéer som formar vad Labs kan bli. Det här är öppna frågor och designriktningar, inte publicerade forskningsresultat." : "A few ideas shaping what Labs could become. These are open questions and design directions, not published research findings."}</p></div><div className="lab-notes">{NOTES.map(note => <details className="lab-note" key={note.number}><summary><span className="lab-note-index">{note.number} / {note.tag}</span><span className="lab-note-title">{sv ? note.title.sv : note.title.en}</span><span className="lab-note-plus"><Plus size={16} /></span></summary><p>{sv ? note.text.sv : note.text.en}</p></details>)}</div><div className="lab-research-foot"><span>STILLEDEV / {sv ? "ÖPPNA FRÅGOR" : "OPEN QUESTIONS"}</span><span>THINK · TEST · BUILD</span></div></section>;
+  return <section id="research" className="lab-research lab-wrap" aria-labelledby="research-title">
+    <div className="lab-research-layout">
+      <div className="lab-research-intro">
+        <div className="lab-eyebrow"><span /> {sv ? "TANKAR ATT UTFORSKA" : "QUESTIONS WORTH EXPLORING"} <b> / 04 · NOTES</b></div>
+        <h2 id="research-title">{sv ? <>Frågor före<br /><em>färdiga svar.</em></> : <>Questions before<br /><em>answers.</em></>}</h2>
+        <p>{sv ? "Några idéer som formar vad Labs kan bli. Det här är öppna frågor och designriktningar, inte publicerade forskningsresultat." : "A few ideas shaping what Labs could become. These are open questions and design directions, not published research findings."}</p>
+        <div className="lab-research-art" aria-hidden="true"><span>LABS / FIELD NOTES</span><span>THINK · TEST · BUILD</span></div>
+      </div>
+      <div className="lab-research-content">
+        <div className="lab-research-index"><span>{sv ? "ÖPPNA FRÅGOR" : "OPEN QUESTIONS"}</span><span>01 — 03</span></div>
+        <div className="lab-notes">{NOTES.map(note => <details className="lab-note" key={note.number}><summary><span className="lab-note-index">{note.number} / {note.tag}</span><span className="lab-note-title">{sv ? note.title.sv : note.title.en}</span><span className="lab-note-plus"><Plus size={18} /></span></summary><p>{sv ? note.text.sv : note.text.en}</p></details>)}</div>
+        <div className="lab-research-foot"><span>STILLEDEV / LABS</span><span>{sv ? "IDÉER I RÖRELSE" : "IDEAS IN MOTION"}</span></div>
+      </div>
+    </div>
+  </section>;
 }
