@@ -2,6 +2,8 @@
 
 /* eslint-disable @next/next/no-html-link-for-pages -- Phone shell is selected server-side; policy navigation must reload the root layout. */
 
+import { useEffect, useState } from "react";
+import PhoneDesktopNotice from "@/components/sections/PhoneDesktopNotice";
 import { ArrowDown, ArrowUpRight, Monitor, Sparkles } from "lucide-react";
 import AIPlayground from "@/components/sections/AIPlayground";
 import { BudAIWordmark } from "@/components/ui/BudAILogo";
@@ -12,6 +14,14 @@ import { openCookieSettings } from "@/lib/consent";
 export default function PhoneWelcome({ normalizeLanguagePath = false }: { normalizeLanguagePath?: boolean }) {
   const { lang, setLang } = useLang();
   const sv = lang === "sv";
+  const [noticeOpen, setNoticeOpen] = useState(true);
+  useEffect(() => {
+    try { if (sessionStorage.getItem("stilledev:desktop-notice:v1") === "seen") setNoticeOpen(false); } catch { /* storage is optional */ }
+  }, []);
+  const confirmNotice = () => {
+    try { sessionStorage.setItem("stilledev:desktop-notice:v1", "seen"); } catch { /* dismissal still works for this visit */ }
+    setNoticeOpen(false);
+  };
   const changeLanguage = (next: "sv" | "en") => {
     setLang(next);
     // /sv is authoritative on reload. Leave it when English is explicitly chosen,
@@ -24,7 +34,8 @@ export default function PhoneWelcome({ normalizeLanguagePath = false }: { normal
   };
 
   return (
-    <div className="phone-welcome">
+    <>
+    <div className="phone-welcome" inert={noticeOpen}>
       <header className="phone-header">
         <div className="phone-brand"><BudAIWordmark size="sm" /><span>by Stilledev</span></div>
         <div className="phone-languages" role="group" aria-label={sv ? "Välj språk" : "Choose language"}>
@@ -63,5 +74,7 @@ export default function PhoneWelcome({ normalizeLanguagePath = false }: { normal
         </div>
       </footer>
     </div>
+    {noticeOpen && <PhoneDesktopNotice sv={sv} changeLanguage={changeLanguage} onConfirm={confirmNotice} />}
+    </>
   );
 }

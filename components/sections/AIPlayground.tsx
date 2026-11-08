@@ -1508,6 +1508,22 @@ export default function AIPlayground({ phoneOnly = false }: { phoneOnly?: boolea
     showToast("ok", lang === "sv" ? "Tråd exporterad (.md)" : "Thread exported (.md)");
   };
 
+  // Copies locally; unlike Share link this never publishes the conversation.
+  const copyThread = async () => {
+    if (!messages.length) return;
+    const transcript = messages.map((m) => {
+      const who = m.role === "user" ? (lang === "sv" ? "Du" : "You") : m.role === "assistant" ? "BudAI" : m.role;
+      const image = m.imageUrl ? (lang === "sv" ? "\n[Bild utelämnad]" : "\n[Image omitted]") : "";
+      return `${who}:\n${m.content}${image}`;
+    }).join("\n\n");
+    try {
+      await navigator.clipboard.writeText(transcript);
+      showToast("ok", lang === "sv" ? "Chatten kopierad – ingen länk skapades" : "Chat copied – no link created");
+    } catch {
+      showToast("err", lang === "sv" ? "Kunde inte kopiera chatten" : "Could not copy chat");
+    }
+  };
+
   const shareThread = async () => {
     if (!messages.length) {
       showToast("err", lang === "sv" ? "Ingen tråd att dela" : "No thread to share");
@@ -1965,6 +1981,12 @@ export default function AIPlayground({ phoneOnly = false }: { phoneOnly?: boolea
             {lang === "sv" ? "Exportera chatt (.md)" : "Export chat (.md)"}
           </button>
         )}
+        {phoneOnly && (
+          <button type="button" onClick={() => { void copyThread(); setMobileDrawer(false); }} disabled={!messages.length}
+            className="w-full flex items-center justify-center gap-2 min-h-11 rounded-xl border border-white/[0.08] text-xs text-white/80 disabled:opacity-40">
+            <Copy className="w-4 h-4" />{lang === "sv" ? "Kopiera chatt" : "Copy chat"}
+          </button>
+        )}
         {auth.isMember && (
           <button
             type="button"
@@ -2236,6 +2258,7 @@ export default function AIPlayground({ phoneOnly = false }: { phoneOnly?: boolea
                     </summary>
                     <div className="absolute right-0 z-30 mt-1 w-40 rounded-xl border border-white/10 bg-[#07070e]/95 p-1 shadow-2xl backdrop-blur-xl">
                       {[
+                        { label: lang === "sv" ? "Kopiera chatt (privat)" : "Copy chat (private)", run: () => void copyThread() },
                         { label: "Word (.doc)", run: () => exportRich("doc") },
                         { label: "PDF", run: () => exportRich("pdf") },
                         { label: lang === "sv" ? "Dela länk" : "Share link", run: () => void shareThread() },
