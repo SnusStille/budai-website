@@ -4,6 +4,7 @@
 
 import { useEffect, useState } from "react";
 import PhoneDesktopNotice from "@/components/sections/PhoneDesktopNotice";
+import BuilderCompanion from "@/components/sections/BuilderCompanion";
 import { ArrowDown, ArrowUpRight, Monitor, Sparkles } from "lucide-react";
 import AIPlayground from "@/components/sections/AIPlayground";
 import { BudAIWordmark } from "@/components/ui/BudAILogo";
@@ -75,6 +76,7 @@ export default function PhoneWelcome({ normalizeLanguagePath = false }: { normal
       </footer>
     </div>
     {noticeOpen && <PhoneDesktopNotice sv={sv} changeLanguage={changeLanguage} onConfirm={confirmNotice} />}
+    {!noticeOpen && <BuilderCompanion phone />}
     </>
   );
 }
