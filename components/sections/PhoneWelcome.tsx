@@ -4,6 +4,7 @@
 
 import { useEffect, useState } from "react";
 import PhoneDesktopNotice from "@/components/sections/PhoneDesktopNotice";
+import CompanionRestore from "@/components/ui/CompanionRestore";
 import BuilderCompanion from "@/components/sections/BuilderCompanion";
 import { ArrowDown, ArrowUpRight, Monitor, Sparkles } from "lucide-react";
 import AIPlayground from "@/components/sections/AIPlayground";
@@ -48,7 +49,7 @@ export default function PhoneWelcome({ normalizeLanguagePath = false }: { normal
       <main id="main">
         <section className="phone-hero" aria-labelledby="phone-heading">
           <div className="phone-eyebrow"><span className="phone-live-dot" />{sv ? "PLAYGROUND I FICKAN" : "PLAYGROUND IN YOUR POCKET"}<Sparkles size={14} aria-hidden="true" /></div>
-          <h1 id="phone-heading">{sv ? <>Stor sajt.<br /><span>Liten skärm.</span></> : <>Big site.<br /><span>Little screen.</span></>}</h1>
+          <h1 id="phone-heading" tabIndex={-1}>{sv ? <>Stor sajt.<br /><span>Liten skärm.</span></> : <>Big site.<br /><span>Little screen.</span></>}</h1>
           <p className="phone-hero-copy">{sv
             ? "Playground får åka med i fickan. Resten av sajten behöver en dator – vår robot vägrar vika ihop hela kontoret till en mobil."
             : "Playground can come along in your pocket. The rest of the site needs a computer – our robot refuses to fold the whole office into a phone."}</p>
@@ -71,6 +72,7 @@ export default function PhoneWelcome({ normalizeLanguagePath = false }: { normal
           <a href="/legal/privacy">{sv ? "Integritet" : "Privacy"}</a>
           <a href="/legal/terms">{sv ? "Villkor" : "Terms"}</a>
           <a href="/legal/cookies">Cookies</a>
+          <CompanionRestore phone />
           <button type="button" onClick={openCookieSettings}>{sv ? "Cookieinställningar" : "Cookie settings"}</button>
         </div>
       </footer>

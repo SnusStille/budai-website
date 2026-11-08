@@ -37,6 +37,12 @@ test("companion is quiet, keyboard accessible, localized and dismissible for the
   await expect(buddy).toHaveCount(0);
   expect(await page.evaluate(() => sessionStorage.getItem("budai:companion:hidden:v1"))).toBe("1");
   await page.reload(); await page.waitForTimeout(7500); await expect(buddy).toHaveCount(0);
+  const restore = page.locator("#continuation").getByRole("button", { name: "Bring back the BudAI companion" });
+  await restore.click();
+  await expect(page.locator("#hero-title")).toBeFocused();
+  await expect(buddy).toBeVisible();
+  expect(await page.evaluate(() => sessionStorage.getItem("budai:companion:hidden:v1"))).toBeNull();
+  await expect(restore).toHaveCount(0);
 });
 
 test("desktop companion uses the Labs model, gives way to dialogs and Playground, and supports Swedish", async ({ page }) => {
@@ -130,4 +136,79 @@ test("a visible companion waves and winks every 30 seconds without opening a new
   await page.clock.fastForward(65000);
   await expect(buddy.locator(".labs-bot")).not.toHaveAttribute("data-emote", /.+/);
   await expect(buddy.locator(".companion-hello")).toHaveCount(0);
+});
+
+
+test("companion idea starters protect drafts and never send a message", async ({ page }) => {
+  await quiet(page); await page.emulateMedia({ reducedMotion: "reduce" }); await page.clock.install();
+  let requests = 0; page.on("request", req => { if (req.url().endsWith("/api/playground")) requests++; });
+  await page.goto("/#playground");
+  const input = page.getByRole("textbox", { name: "Message BudAI", exact: true });
+  await expect.poll(() => page.evaluate(() => localStorage.getItem("budai_persona"))).not.toBeNull();
+  await input.fill("Keep this draft");
+  await page.evaluate(() => { (document.activeElement as HTMLElement)?.blur(); window.scrollTo(0, 0); });
+  await page.clock.fastForward(7200);
+  const buddy = page.locator("[data-builder-companion]"); await expect(buddy).toBeVisible();
+  await buddy.getByRole("button", { name: "Meet the BudAI companion" }).click();
+  const toggle = buddy.getByRole("button", { name: "Give me a starting point" });
+  await toggle.click(); await expect(toggle).toHaveAttribute("aria-expanded", "true");
+  await expect(buddy).toContainText("Nothing is sent automatically.");
+  await page.screenshot({ path: "test-results/companion-ideas-desktop.png" });
+  page.once("dialog", dialog => dialog.dismiss());
+  await buddy.getByRole("button", { name: "Plan my week" }).click();
+  await expect(buddy.locator(".companion-note")).toBeVisible();
+  await expect(input).toHaveValue("Keep this draft"); expect(requests).toBe(0);
+  page.once("dialog", dialog => dialog.accept());
+  await buddy.getByRole("button", { name: "Plan my week" }).click();
+  await expect(page.locator("#playground")).toBeInViewport();
+  await expect(input).toHaveValue("Help me plan my week. Ask me about my priorities first.");
+  expect(requests).toBe(0);
+});
+
+test("phone companion can be restored and offers localized editable starters", async ({ browser }) => {
+  const context = await browser.newContext({ userAgent: iphone, viewport: { width: 320, height: 640 }, isMobile: true, hasTouch: true, reducedMotion: "reduce" });
+  const page = await context.newPage(); await quiet(page);
+  await page.addInitScript(() => sessionStorage.setItem("stilledev:desktop-notice:v1", "seen"));
+  await page.clock.install(); await page.goto("/sv"); await page.clock.fastForward(7200);
+  const buddy = page.locator("[data-builder-companion]"); await expect(buddy).toBeVisible();
+  await buddy.getByRole("button", { name: "Möt BudAI-kompanjonen" }).click();
+  await buddy.getByRole("button", { name: "Dölj för besöket" }).click(); await expect(buddy).toHaveCount(0);
+  await page.locator(".phone-footer").getByRole("button", { name: "Visa BudAI-kompanjonen igen" }).click();
+  await expect(page.locator("#phone-heading")).toBeFocused(); await expect(buddy).toBeVisible();
+  await buddy.getByRole("button", { name: "Möt BudAI-kompanjonen" }).click();
+  await buddy.getByRole("button", { name: "Ge mig en start" }).click();
+  await expect(buddy).toContainText("Inget skickas automatiskt.");
+  await page.screenshot({ path: "test-results/companion-ideas-phone.png" });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
+  let requests = 0; page.on("request", req => { if (req.url().endsWith("/api/playground")) requests++; });
+  await buddy.getByRole("button", { name: "Red ut en idé" }).click();
+  await expect(page.getByRole("textbox", { name: "Meddelande till BudAI" })).toHaveValue("Hjälp mig göra en lös idé till tydliga nästa steg. Be mig beskriva den först.");
+  expect(requests).toBe(0);
+  await context.close();
+});
+
+test("an open companion card stays closed after another dialog takes priority", async ({ page }) => {
+  await quiet(page); await page.emulateMedia({ reducedMotion: "reduce" }); await page.clock.install();
+  await page.goto("/"); await page.clock.fastForward(7200);
+  const buddy = page.locator("[data-builder-companion]"); await expect(buddy).toBeVisible();
+  await buddy.getByRole("button", { name: "Meet the BudAI companion" }).click();
+  await buddy.getByRole("button", { name: "Give me a starting point" }).click();
+  await page.keyboard.press("Control+k"); await expect(page.getByRole("dialog")).toBeVisible(); await expect(buddy).toHaveCount(0);
+  await page.keyboard.press("Escape"); await expect(buddy).toBeVisible();
+  await expect(buddy.locator(".companion-note")).toHaveCount(0);
+});
+
+test("rapid repeated hellos restart the fallback animation without disturbing the card", async ({ page }) => {
+  await quiet(page); await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.addInitScript(() => Object.defineProperty(navigator, "connection", { value: { saveData: true }, configurable: true }));
+  await page.clock.install(); await page.goto("/"); await page.clock.fastForward(7200);
+  const buddy = page.locator("[data-builder-companion]"); await expect(buddy).toBeVisible();
+  await buddy.getByRole("button", { name: "Meet the BudAI companion" }).click();
+  const hi = buddy.getByRole("button", { name: "Say hi", exact: true });
+  const bot = buddy.locator(".labs-bot"); const arm = bot.locator(".labs-bot-arm.right");
+  await hi.click(); await expect(bot).toHaveAttribute("data-emote-phase", "1");
+  expect(await arm.evaluate(el => getComputedStyle(el).animationName)).toBe("bot-wave");
+  await hi.click(); await expect(bot).toHaveAttribute("data-emote-phase", "0");
+  expect(await arm.evaluate(el => getComputedStyle(el).animationName)).toBe("bot-wave-again");
+  await expect(buddy.locator(".companion-message")).toHaveText("Hi! Ready when you are.");
 });
