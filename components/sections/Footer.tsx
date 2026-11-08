@@ -1,5 +1,6 @@
 "use client";
 
+import CompanionRestore from "@/components/ui/CompanionRestore";
 import StatusPill from "@/components/ui/StatusPill";
 import Link from "next/link";
 import { useEffect, useRef } from "react";
@@ -123,6 +124,7 @@ export default function Footer() {
             <span className="text-muted/30">·</span>
             <span className="text-xs">{lang === "sv" ? "Sverige" : "Sweden"}</span>
           </p>
+          <CompanionRestore />
           <button
             type="button"
             onClick={openCookieSettings}

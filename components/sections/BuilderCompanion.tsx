@@ -3,13 +3,13 @@
 import dynamic from "next/dynamic";
 import { createPortal } from "react-dom";
 import { useEffect, useRef, useState } from "react";
-import { ArrowUpRight, ChevronRight, Hand, X } from "lucide-react";
+import { ArrowUpRight, ChevronRight, Hand, Lightbulb, X } from "lucide-react";
 import { useLang } from "@/components/ui/LanguageContext";
 import type { MascotGesture } from "@/components/sections/LabsMascot";
+import { readCompanionHidden, setCompanionHidden, COMPANION_VISIBILITY_EVENT } from "@/lib/companion/preferences";
 
 // Only load the shared Labs robot after the visitor has had a quiet arrival.
 const LabsMascot = dynamic(() => import("@/components/sections/LabsMascot"), { ssr: false });
-const HIDDEN = "budai:companion:hidden:v1";
 const APPEARANCES = "budai:companion:appearances:v1";
 const INTERACTED = "budai:companion:interacted:v1";
 const messages = {
@@ -33,6 +33,12 @@ const messages = {
   ],
 };
 
+const starters = [
+  { en: "Plan my week", sv: "Planera min vecka", enPrompt: "Help me plan my week. Ask me about my priorities first.", svPrompt: "Hjälp mig planera min vecka. Fråga först om mina prioriteringar." },
+  { en: "Write a message", sv: "Skriv ett meddelande", enPrompt: "Help me write a clear, friendly message. Ask me what it should say.", svPrompt: "Hjälp mig skriva ett tydligt och vänligt meddelande. Fråga vad det ska handla om." },
+  { en: "Untangle an idea", sv: "Red ut en idé", enPrompt: "Help me turn a rough idea into clear next steps. Ask me to describe it first.", svPrompt: "Hjälp mig göra en lös idé till tydliga nästa steg. Be mig beskriva den först." },
+] as const;
+
 function readSession(key: string) {
   try { return sessionStorage.getItem(key); } catch { return null; }
 }
@@ -52,6 +58,7 @@ export default function BuilderCompanion({ phone = false }: { phone?: boolean })
   const [blocked, setBlocked] = useState(true);
   const [heroVisible, setHeroVisible] = useState(false);
   const [open, setOpen] = useState(false);
+  const [ideasOpen, setIdeasOpen] = useState(false);
   const [automatic, setAutomatic] = useState(false);
   const [interacted, setInteracted] = useState(false);
   const [appearances, setAppearances] = useState(0);
@@ -68,12 +75,26 @@ export default function BuilderCompanion({ phone = false }: { phone?: boolean })
   }, []);
 
   useEffect(() => {
-    setHidden(readSession(HIDDEN) === "1");
+    setHidden(readCompanionHidden());
     setInteracted(readSession(INTERACTED) === "1");
     setAppearances(Math.min(2, Math.max(0, Number(readSession(APPEARANCES)) || 0)));
     // Avoid competing with the intro, consent and the first moments of a visit.
     const timer = window.setTimeout(() => setReady(true), 7000);
     return () => window.clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    const sync = (event: Event) => {
+      const nextHidden = (event as CustomEvent<boolean>).detail;
+      setHidden(nextHidden);
+      if (!nextHidden) {
+        setReady(true);
+        setInteracted(true);
+        writeSession(INTERACTED, "1");
+      }
+    };
+    window.addEventListener(COMPANION_VISIBILITY_EVENT, sync);
+    return () => window.removeEventListener(COMPANION_VISIBILITY_EVENT, sync);
   }, []);
 
   useEffect(() => {
@@ -93,7 +114,8 @@ export default function BuilderCompanion({ phone = false }: { phone?: boolean })
         const introActive = intro === "preparing" || intro === "playing";
         // On phones the companion sits in the hero's clear upper-right space;
         // it leaves before that space scrolls into the actual Playground.
-        const phoneHeroSafe = !phone || (!!hero && hero.getBoundingClientRect().bottom > 280);
+        const heroBounds = phone ? hero?.getBoundingClientRect() : undefined;
+        const phoneHeroSafe = !phone || (!!heroBounds && heroBounds.top >= 48 && heroBounds.bottom > 280);
         setBlocked((phone ? !phoneHeroSafe : playgroundVisible) || footerVisible || dialogs || editing || introActive || document.hidden ||
           document.documentElement.classList.contains("budai-focus") || document.documentElement.dataset.pgKeyboard === "open" ||
           !!document.querySelector(".phone-welcome[inert]"));
@@ -124,6 +146,12 @@ export default function BuilderCompanion({ phone = false }: { phone?: boolean })
       if (phone) window.removeEventListener("scroll", update);
     };
   }, [ready, hidden, phone]);
+
+  // Do not reopen a stale bubble after a dialog, scroll into the Playground,
+  // background tab, or focus mode. The visitor can always open it again.
+  useEffect(() => {
+    if (blocked) { setOpen(false); setAutomatic(false); setIdeasOpen(false); }
+  }, [blocked]);
 
   useEffect(() => {
     if (phone || !ready || hidden || blocked || !heroVisible || open || interacted || appearances >= 2 || reducedMotion) return;
@@ -164,9 +192,17 @@ export default function BuilderCompanion({ phone = false }: { phone?: boolean })
     takeControl(); setMessage(messages.en.length - 1); setGreetingAnnouncement(true);
     if (!matchMedia("(prefers-reduced-motion: reduce)").matches) setGesture({ id: ++gestureSequence.current, kind: "hello" });
   };
-  const minimize = () => { takeControl(); setOpen(false); launcherRef.current?.focus({ preventScroll: true }); };
+  const minimize = () => { takeControl(); setOpen(false); setIdeasOpen(false); launcherRef.current?.focus({ preventScroll: true }); };
+  const startIdea = (prompt: string) => {
+    takeControl();
+    const accepted = window.dispatchEvent(new CustomEvent("budai:prompt", { detail: prompt, cancelable: true }));
+    // Playground protects an existing draft. A rejected replacement leaves us here.
+    if (!accepted) return;
+    setOpen(false); setIdeasOpen(false);
+    document.getElementById("playground")?.scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth" });
+  };
   const dismiss = () => {
-    writeSession(HIDDEN, "1"); setHidden(true); setOpen(false);
+    setCompanionHidden(true); setOpen(false); setIdeasOpen(false);
     document.querySelector<HTMLElement>(phone ? ".phone-jump" : ".hero-actions a")?.focus({ preventScroll: true });
   };
   if (!ready || hidden || blocked || typeof document === "undefined") return null;
@@ -178,6 +214,11 @@ export default function BuilderCompanion({ phone = false }: { phone?: boolean })
         <p className="companion-message">{messages[lang][message]}</p>
         <div className="companion-signature">Think it. Build it. <b>BudAI.</b></div>
         <a href="#playground" className="companion-action" onClick={() => { takeControl(); setOpen(false); }}>{sv ? "Öppna Playground" : "Enter Playground"}<ArrowUpRight size={15} aria-hidden="true" /></a>
+        <button type="button" className="companion-ideas-toggle" aria-expanded={ideasOpen} aria-controls={ideasOpen ? "companion-ideas" : undefined} onClick={() => { takeControl(); setIdeasOpen(current => !current); }}><Lightbulb size={14} aria-hidden="true" />{sv ? "Ge mig en start" : "Give me a starting point"}<ChevronRight className={ideasOpen ? "is-open" : ""} size={14} aria-hidden="true" /></button>
+        {ideasOpen && <div id="companion-ideas" className="companion-ideas">
+          <p>{sv ? "Öppnas som ett redigerbart utkast. Inget skickas automatiskt." : "Opens as an editable draft. Nothing is sent automatically."}</p>
+          {starters.map(idea => <button type="button" key={idea.en} onClick={() => startIdea(sv ? idea.svPrompt : idea.enPrompt)}>{sv ? idea.sv : idea.en}<ArrowUpRight size={13} aria-hidden="true" /></button>)}
+        </div>}
         <div className="companion-interactions">
           <button type="button" onClick={sayHello}><Hand size={14} aria-hidden="true" />{sv ? "Säg hej" : "Say hi"}</button>
           <button type="button" onClick={() => { takeControl(); setGreetingAnnouncement(false); setMessage(current => (current + 1) % messages.en.length); }}>{sv ? "En tanke till" : "Another thought"}<ChevronRight size={13} aria-hidden="true" /></button>
@@ -187,7 +228,7 @@ export default function BuilderCompanion({ phone = false }: { phone?: boolean })
       </div>}
       <button ref={launcherRef} type="button" className="companion-launcher" onClick={toggle} aria-expanded={open} aria-controls={open ? "companion-note" : undefined} aria-label={open ? (sv ? "Minimera BudAI-kompanjonen" : "Minimize BudAI companion") : (sv ? "Möt BudAI-kompanjonen" : "Meet the BudAI companion")}>
         <span className="companion-orbit" aria-hidden="true" /><span className="companion-bot"><LabsMascot companion gesture={gesture} /></span>
-        {gesture?.kind === "hello" && <span className="companion-hello" aria-hidden="true">{sv ? "HEJ!" : "HI!"} <span>✳</span></span>}
+        {gesture?.kind === "hello" && <span key={gesture.id} className="companion-hello" aria-hidden="true">{sv ? "HEJ!" : "HI!"} <span>✳</span></span>}
         <span className="companion-tag" aria-hidden="true"><i /> BUDAI <span> / {sv ? "SÄG HEJ" : "SAY HI"}</span></span>
       </button>
     </aside>, document.body,

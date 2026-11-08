@@ -14,3 +14,8 @@
 @keyframes bot-wave { 0%,100% { transform:rotate(-23deg); } 25%,75% { transform:rotate(-145deg); } 40%,60% { transform:rotate(-125deg); } }
 @keyframes bot-wink { 0%,100% { transform:scaleY(1); } 50% { transform:scaleY(.08); } }
 @media (prefers-reduced-motion:reduce) { .labs-bot *, .labs-bot *::before, .labs-bot *::after { animation:none!important; transition:none!important; } }
+/* Alternate keyframes let repeated greetings restart even if pressed quickly. */
+.labs-bot[data-emote="hello"][data-emote-phase="0"] .labs-bot-arm.right { animation-name:bot-wave-again; }
+.labs-bot[data-emote][data-emote-phase="0"] .labs-bot-face > i:nth-child(2) { animation-name:bot-wink-again; }
+@keyframes bot-wave-again { 0%,100% { transform:rotate(-23deg); } 25%,75% { transform:rotate(-145deg); } 40%,60% { transform:rotate(-125deg); } }
+@keyframes bot-wink-again { 0%,100% { transform:scaleY(1); } 50% { transform:scaleY(.08); } }

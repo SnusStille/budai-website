@@ -61,7 +61,7 @@ export default function Hero() {
           {t.hero.badge}
           <span className="hero-edition">BUDAI / 01 · THE SPARK</span>
         </div>
-        <h1 id="hero-title">
+        <h1 id="hero-title" tabIndex={-1}>
           <span>{t.hero.title1}</span>
           <span className="hero-title-accent">{t.hero.title2}</span>
         </h1>

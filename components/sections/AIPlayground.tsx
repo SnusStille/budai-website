@@ -637,7 +637,11 @@ export default function AIPlayground({ phoneOnly = false }: { phoneOnly?: boolea
     const onPrompt = (e: Event) => {
       const text = (e as CustomEvent<string>).detail;
       if (typeof text !== "string") return;
-      if (inputRef.current.trim() && inputRef.current !== text && !window.confirm(languageRef.current === "sv" ? "Ersätta ditt oskickade meddelande?" : "Replace your unsent message?")) return;
+      if (inputRef.current.trim() && inputRef.current !== text && !window.confirm(languageRef.current === "sv" ? "Ersätta ditt oskickade meddelande?" : "Replace your unsent message?")) {
+        // A caller using a cancelable event can stay in place when the draft wins.
+        e.preventDefault();
+        return;
+      }
       setInput(text);
       clearTimeout(focusTimer);
       focusTimer = setTimeout(() => document.querySelector<HTMLTextAreaElement>("#playground textarea")?.focus({ preventScroll: true }), 450);

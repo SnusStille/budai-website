@@ -44,8 +44,10 @@ export default function LabsMascot({ companion = false, gesture = null }: { comp
       const dark = new THREE.MeshPhysicalMaterial({ color: 0x061827, metalness: .3, roughness: .24, clearcoat: 1 });
       const glow = new THREE.MeshBasicMaterial({ color: 0x80f2ff });
       const joint = new THREE.MeshStandardMaterial({ color: 0x183c51, metalness: .55, roughness: .3 });
+      // Share geometry between all the scaled spheres rather than allocating one per part.
+      const sphere = new THREE.SphereGeometry(1, companion ? 24 : 32, companion ? 16 : 24);
       const addBall = (parent: import("three").Object3D, material: import("three").Material, scale: [number, number, number], position: [number, number, number]) => {
-        const ball = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 24), material);
+        const ball = new THREE.Mesh(sphere, material);
         ball.scale.set(...scale); ball.position.set(...position); parent.add(ball); return ball;
       };
       // One shared robot for Labs and the companion. The head pivots as a unit.
@@ -75,9 +77,11 @@ export default function LabsMascot({ companion = false, gesture = null }: { comp
       const ring = new THREE.Mesh(new THREE.TorusGeometry(1.75, .012, 8, 120), new THREE.MeshBasicMaterial({ color: 0x70d9eb, transparent: true, opacity: .35 }));
       ring.rotation.x = Math.PI / 2.6; ring.position.y = -1.4; scene.add(ring);
       const sparks = new THREE.Group(); scene.add(sparks);
+      const smallSpark = new THREE.OctahedronGeometry(.02);
+      const bigSpark = new THREE.OctahedronGeometry(.045);
       for (let i = 0; i < 18; i++) {
         const angle = i * 2.39996, radius = 1.55 + (i % 4) * .2;
-        const spark = new THREE.Mesh(new THREE.OctahedronGeometry(i % 5 === 0 ? .045 : .02), glow);
+        const spark = new THREE.Mesh(i % 5 === 0 ? bigSpark : smallSpark, glow);
         spark.position.set(Math.cos(angle) * radius, Math.sin(angle) * 1.65, Math.sin(angle * 1.6) * .5); sparks.add(spark);
       }
       scene.add(new THREE.AmbientLight(0xbcecff, 1.6));
@@ -137,5 +141,5 @@ export default function LabsMascot({ companion = false, gesture = null }: { comp
     return () => { disposed = true; motion.removeEventListener("change", onMotion); teardown?.(); };
   }, [companion]);
 
-  return <div ref={host} className={`labs-bot ${ready ? "is-rendered" : ""}`} data-emote={gesture?.kind} aria-hidden="true"><div className="labs-bot-halo" /><div className="labs-bot-fallback"><i className="labs-bot-antenna" /><div className="labs-bot-head"><div className="labs-bot-face"><i /><i /><span /></div></div><i className="labs-bot-arm left" /><i className="labs-bot-arm right" /><div className="labs-bot-body"><i /></div><i className="labs-bot-foot left" /><i className="labs-bot-foot right" /><i className="labs-bot-orbit" /></div></div>;
+  return <div ref={host} className={`labs-bot ${ready ? "is-rendered" : ""}`} data-emote={gesture?.kind} data-emote-phase={gesture ? gesture.id % 2 : undefined} aria-hidden="true"><div className="labs-bot-halo" /><div className="labs-bot-fallback"><i className="labs-bot-antenna" /><div className="labs-bot-head"><div className="labs-bot-face"><i /><i /><span /></div></div><i className="labs-bot-arm left" /><i className="labs-bot-arm right" /><div className="labs-bot-body"><i /></div><i className="labs-bot-foot left" /><i className="labs-bot-foot right" /><i className="labs-bot-orbit" /></div></div>;
 }
