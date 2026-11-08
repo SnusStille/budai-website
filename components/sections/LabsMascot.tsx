@@ -2,10 +2,21 @@
 
 import { useEffect, useRef, useState } from "react";
 
-/** A small decorative robot. Reduced motion, save-data and WebGL failure use CSS art. */
-export default function LabsMascot({ companion = false }: { companion?: boolean } = {}) {
+export type MascotGesture = { id: number; kind: "hello" | "wink" };
+
+/** The same Builder Bot in Labs and on the homepage; no WebGL on reduced motion or save-data. */
+export default function LabsMascot({ companion = false, gesture = null }: { companion?: boolean; gesture?: MascotGesture | null } = {}) {
   const host = useRef<HTMLDivElement>(null);
   const [ready, setReady] = useState(false);
+  // Updating an expression must not tear down and recreate the WebGL scene.
+  const gestureRef = useRef<{ kind: MascotGesture["kind"]; started: number } | null>(null);
+  const previousGesture = useRef(gesture?.id);
+  useEffect(() => {
+    if (gesture && gesture.id !== previousGesture.current) {
+      previousGesture.current = gesture.id;
+      gestureRef.current = { kind: gesture.kind, started: performance.now() };
+    }
+  }, [gesture]);
 
   useEffect(() => {
     const el = host.current;
@@ -85,15 +96,22 @@ export default function LabsMascot({ companion = false }: { companion?: boolean 
         robot.rotation.x += (-pointerY * .2 - robot.rotation.x) * .025;
         robot.rotation.z = Math.sin(t * .65) * .025;
         leftArm.rotation.z = -.48 + Math.sin(t * .8) * .045;
-        // A brief wave every so often, rather than a permanent attention grab.
-        const waveTime = (t + 3) % 23;
-        const waveEnvelope = waveTime < 2.4 ? Math.sin(Math.PI * waveTime / 2.4) : 0;
+        // In the companion, gestures are scheduled by the UI only while visible.
+        // Labs keeps its own occasional wave; the geometry is shared unchanged.
+        const elapsed = gestureRef.current ? (now - gestureRef.current.started) / 1000 : -1;
+        const hello = companion && gestureRef.current?.kind === "hello";
+        const waveTime = companion ? (hello ? elapsed : -1) : (t + 3) % 23;
+        const waveEnvelope = waveTime >= 0 && waveTime < 2.4 ? Math.sin(Math.PI * waveTime / 2.4) : 0;
         rightArm.rotation.z = .48 + waveEnvelope * (1.65 + Math.sin(waveTime * 7) * .22);
-        head.rotation.z = Math.sin(t * .48) * .045;
+        head.rotation.z = Math.sin(t * .48) * .045 - waveEnvelope * .08;
         head.rotation.y = Math.sin(t * .37) * .07;
         const blinkPhase = (t + 2.4) % 7;
         const blink = blinkPhase < .18 ? 1 - Math.sin(Math.PI * blinkPhase / .18) * .88 : 1;
-        eyes.forEach(eye => { eye.scale.y = .13 * blink; });
+        const winkStart = hello ? .8 : .35;
+        const winkPhase = elapsed - winkStart;
+        const wink = companion && winkPhase >= 0 && winkPhase < .38 ? 1 - Math.sin(Math.PI * winkPhase / .38) * .92 : 1;
+        eyes[0].scale.y = .13 * blink;
+        eyes[1].scale.y = .13 * blink * wink;
         ring.rotation.z = t * .08; sparks.rotation.y = t * .08;
         renderer.render(scene, camera); frame = requestAnimationFrame(draw);
       };
@@ -119,5 +137,5 @@ export default function LabsMascot({ companion = false }: { companion?: boolean 
     return () => { disposed = true; motion.removeEventListener("change", onMotion); teardown?.(); };
   }, [companion]);
 
-  return <div ref={host} className={`labs-bot ${ready ? "is-rendered" : ""}`} aria-hidden="true"><div className="labs-bot-halo" /><div className="labs-bot-fallback"><i className="labs-bot-antenna" /><div className="labs-bot-head"><div className="labs-bot-face"><i /><i /><span /></div></div><div className="labs-bot-body"><i /></div><i className="labs-bot-orbit" /></div></div>;
+  return <div ref={host} className={`labs-bot ${ready ? "is-rendered" : ""}`} data-emote={gesture?.kind} aria-hidden="true"><div className="labs-bot-halo" /><div className="labs-bot-fallback"><i className="labs-bot-antenna" /><div className="labs-bot-head"><div className="labs-bot-face"><i /><i /><span /></div></div><i className="labs-bot-arm left" /><i className="labs-bot-arm right" /><div className="labs-bot-body"><i /></div><i className="labs-bot-foot left" /><i className="labs-bot-foot right" /><i className="labs-bot-orbit" /></div></div>;
 }

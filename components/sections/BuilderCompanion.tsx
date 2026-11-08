@@ -3,8 +3,9 @@
 import dynamic from "next/dynamic";
 import { createPortal } from "react-dom";
 import { useEffect, useRef, useState } from "react";
-import { ArrowUpRight, ChevronRight, X } from "lucide-react";
+import { ArrowUpRight, ChevronRight, Hand, X } from "lucide-react";
 import { useLang } from "@/components/ui/LanguageContext";
+import type { MascotGesture } from "@/components/sections/LabsMascot";
 
 // Only load the shared Labs robot after the visitor has had a quiet arrival.
 const LabsMascot = dynamic(() => import("@/components/sections/LabsMascot"), { ssr: false });
@@ -19,6 +20,7 @@ const messages = {
     "Less scrolling. More creating.",
     "Your next idea might be your best one.",
     "Something interesting is brewing in Labs. Still building, though.",
+    "Hi! Ready when you are.",
   ],
   sv: [
     "Nämen, titta vem som hittade hit.",
@@ -27,6 +29,7 @@ const messages = {
     "Mindre scrollande. Mer skapande.",
     "Din nästa idé kan vara din bästa.",
     "Något spännande gror i Labs. Vi bygger fortfarande, dock.",
+    "Hej! Jag är redo när du är det.",
   ],
 };
 
@@ -41,6 +44,8 @@ function writeSession(key: string, value: string) {
 export default function BuilderCompanion({ phone = false }: { phone?: boolean }) {
   const { lang } = useLang();
   const launcherRef = useRef<HTMLButtonElement>(null);
+  const gestureSequence = useRef(0);
+  const automaticSequence = useRef(0);
   const sv = lang === "sv";
   const [ready, setReady] = useState(false);
   const [hidden, setHidden] = useState(false);
@@ -51,6 +56,16 @@ export default function BuilderCompanion({ phone = false }: { phone?: boolean })
   const [interacted, setInteracted] = useState(false);
   const [appearances, setAppearances] = useState(0);
   const [message, setMessage] = useState(0);
+  const [gesture, setGesture] = useState<MascotGesture | null>(null);
+  const [greetingAnnouncement, setGreetingAnnouncement] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState(false);
+
+  useEffect(() => {
+    const media = matchMedia("(prefers-reduced-motion: reduce)");
+    const sync = () => { setReducedMotion(media.matches); if (media.matches) setGesture(null); };
+    sync(); media.addEventListener("change", sync);
+    return () => media.removeEventListener("change", sync);
+  }, []);
 
   useEffect(() => {
     setHidden(readSession(HIDDEN) === "1");
@@ -111,7 +126,7 @@ export default function BuilderCompanion({ phone = false }: { phone?: boolean })
   }, [ready, hidden, phone]);
 
   useEffect(() => {
-    if (phone || !ready || hidden || blocked || !heroVisible || open || interacted || appearances >= 2 || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (phone || !ready || hidden || blocked || !heroVisible || open || interacted || appearances >= 2 || reducedMotion) return;
     const delay = appearances === 0 ? 5000 + Math.random() * 3000 : 120000 + Math.random() * 60000;
     const timer = window.setTimeout(() => {
       setMessage(Math.floor(Math.random() * messages.en.length));
@@ -119,7 +134,7 @@ export default function BuilderCompanion({ phone = false }: { phone?: boolean })
       setAppearances(current => { const next = current + 1; writeSession(APPEARANCES, String(next)); return next; });
     }, delay);
     return () => window.clearTimeout(timer);
-  }, [ready, hidden, blocked, heroVisible, open, interacted, appearances, phone]);
+  }, [ready, hidden, blocked, heroVisible, open, interacted, appearances, phone, reducedMotion]);
 
   useEffect(() => {
     if (!open || !automatic || blocked) return;
@@ -127,8 +142,28 @@ export default function BuilderCompanion({ phone = false }: { phone?: boolean })
     return () => window.clearTimeout(timer);
   }, [open, automatic, blocked]);
 
+  // A tiny non-verbal hello about every 30 seconds, only while the companion is
+  // actually available. It does not open a bubble, make sound or steal focus.
+  useEffect(() => {
+    if (!ready || hidden || blocked || reducedMotion) return;
+    const timer = window.setInterval(() => {
+      automaticSequence.current += 1;
+      setGesture({ id: ++gestureSequence.current, kind: automaticSequence.current % 2 ? "hello" : "wink" });
+    }, 30000);
+    return () => window.clearInterval(timer);
+  }, [ready, hidden, blocked, reducedMotion]);
+  useEffect(() => {
+    if (!gesture) return;
+    const timer = window.setTimeout(() => setGesture(null), 2700);
+    return () => window.clearTimeout(timer);
+  }, [gesture]);
+
   const takeControl = () => { setInteracted(true); setAutomatic(false); writeSession(INTERACTED, "1"); };
   const toggle = () => { takeControl(); setOpen(current => !current); };
+  const sayHello = () => {
+    takeControl(); setMessage(messages.en.length - 1); setGreetingAnnouncement(true);
+    if (!matchMedia("(prefers-reduced-motion: reduce)").matches) setGesture({ id: ++gestureSequence.current, kind: "hello" });
+  };
   const minimize = () => { takeControl(); setOpen(false); launcherRef.current?.focus({ preventScroll: true }); };
   const dismiss = () => {
     writeSession(HIDDEN, "1"); setHidden(true); setOpen(false);
@@ -141,13 +176,19 @@ export default function BuilderCompanion({ phone = false }: { phone?: boolean })
       {open && <div className="companion-note" id="companion-note" onPointerEnter={takeControl} onFocus={takeControl}>
         <div className="companion-note-top"><span><i /> {sv ? "EN LITEN TANKE" : "A LITTLE THOUGHT"}</span><button type="button" onClick={minimize} aria-label={sv ? "Minimera BudAI" : "Minimize BudAI"}><X size={16} /></button></div>
         <p className="companion-message">{messages[lang][message]}</p>
-        <div className="companion-signature">THINK IT. BUILD IT. <b>BUDAI.</b></div>
+        <div className="companion-signature">Think it. Build it. <b>BudAI.</b></div>
         <a href="#playground" className="companion-action" onClick={() => { takeControl(); setOpen(false); }}>{sv ? "Öppna Playground" : "Enter Playground"}<ArrowUpRight size={15} aria-hidden="true" /></a>
-        <div className="companion-bottom"><button type="button" onClick={() => { takeControl(); setMessage(current => (current + 1) % messages.en.length); }}>{sv ? "En tanke till" : "Another thought"}<ChevronRight size={13} aria-hidden="true" /></button><button type="button" onClick={dismiss}>{sv ? "Dölj för besöket" : "Hide for this visit"}</button></div>
+        <div className="companion-interactions">
+          <button type="button" onClick={sayHello}><Hand size={14} aria-hidden="true" />{sv ? "Säg hej" : "Say hi"}</button>
+          <button type="button" onClick={() => { takeControl(); setGreetingAnnouncement(false); setMessage(current => (current + 1) % messages.en.length); }}>{sv ? "En tanke till" : "Another thought"}<ChevronRight size={13} aria-hidden="true" /></button>
+        </div>
+        <div className="companion-bottom"><span>BUDAI / STILLEDEV</span><button type="button" onClick={dismiss}>{sv ? "Dölj för besöket" : "Hide for this visit"}</button></div>
+        <span className="sr-only" role="status">{greetingAnnouncement ? messages[lang][messages.en.length - 1] : ""}</span>
       </div>}
       <button ref={launcherRef} type="button" className="companion-launcher" onClick={toggle} aria-expanded={open} aria-controls={open ? "companion-note" : undefined} aria-label={open ? (sv ? "Minimera BudAI-kompanjonen" : "Minimize BudAI companion") : (sv ? "Möt BudAI-kompanjonen" : "Meet the BudAI companion")}>
-        <span className="companion-orbit" aria-hidden="true" /><span className="companion-bot"><LabsMascot companion /></span>
-        <span className="companion-tag" aria-hidden="true"><i /> BUDAI <span>✳</span></span>
+        <span className="companion-orbit" aria-hidden="true" /><span className="companion-bot"><LabsMascot companion gesture={gesture} /></span>
+        {gesture?.kind === "hello" && <span className="companion-hello" aria-hidden="true">{sv ? "HEJ!" : "HI!"} <span>✳</span></span>}
+        <span className="companion-tag" aria-hidden="true"><i /> BUDAI <span> / {sv ? "SÄG HEJ" : "SAY HI"}</span></span>
       </button>
     </aside>, document.body,
   );

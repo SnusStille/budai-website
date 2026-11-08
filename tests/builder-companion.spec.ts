@@ -22,6 +22,12 @@ test("companion is quiet, keyboard accessible, localized and dismissible for the
   await launcher.focus(); await page.keyboard.press("Enter");
   await expect(buddy.locator(".companion-message")).toHaveText("Well, look who found us.");
   await expect(buddy.getByRole("link", { name: "Enter Playground" })).toHaveAttribute("href", "#playground");
+  await buddy.getByRole("button", { name: "Say hi", exact: true }).click();
+  await expect(buddy.locator(".companion-message")).toHaveText("Hi! Ready when you are.");
+  await expect(buddy.getByRole("status")).toHaveText("Hi! Ready when you are.");
+  await expect(buddy.locator(".labs-bot")).not.toHaveAttribute("data-emote", /.+/); // no motion under reduced motion
+  await buddy.getByRole("button", { name: "Another thought" }).click();
+  await expect(buddy.locator(".companion-message")).toHaveText("Well, look who found us.");
   await buddy.getByRole("button", { name: "Another thought" }).click();
   await expect(buddy.locator(".companion-message")).toHaveText("Think it. Build it. BudAI.");
   await buddy.getByRole("button", { name: "Minimize BudAI", exact: true }).click();
@@ -40,6 +46,10 @@ test("desktop companion uses the Labs model, gives way to dialogs and Playground
   await buddy.getByRole("button", { name: "Möt BudAI-kompanjonen" }).click();
   await expect(buddy.getByRole("link", { name: "Öppna Playground" })).toBeVisible();
   await expect(buddy.getByText("Think it. Build it. BudAI.")).toBeVisible();
+  await buddy.getByRole("button", { name: "Säg hej" }).click();
+  await expect(buddy.locator(".companion-message")).toHaveText("Hej! Jag är redo när du är det.");
+  await expect(buddy.locator(".labs-bot")).toHaveAttribute("data-emote", "hello");
+  await expect(buddy.locator(".companion-hello")).toContainText("HEJ!");
   await page.screenshot({ path: "test-results/companion-desktop.png" });
   await buddy.getByRole("link", { name: "Öppna Playground" }).click();
   await expect(page.locator("#playground")).toBeInViewport(); await expect(buddy).toHaveCount(0);
@@ -92,4 +102,32 @@ test("automatic thoughts are rare, temporary and stop when a visitor takes contr
   await expect(buddy.getByRole("button", { name: "Meet the BudAI companion" })).toBeFocused();
   await page.clock.fastForward(240000);
   await expect(buddy.locator(".companion-note")).toHaveCount(0);
+});
+
+
+test("a visible companion waves and winks every 30 seconds without opening a new bubble", async ({ page }) => {
+  await quiet(page); await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, "connection", { value: { saveData: true }, configurable: true });
+    sessionStorage.setItem("budai:companion:interacted:v1", "1");
+  });
+  await page.clock.install(); await page.goto("/"); await page.clock.fastForward(7200);
+  const buddy = page.locator("[data-builder-companion]"); await expect(buddy).toBeVisible();
+  const bot = buddy.locator(".labs-bot"); await expect(bot).toBeVisible();
+  await page.clock.fastForward(30010);
+  await expect(bot).toHaveAttribute("data-emote", "hello");
+  await expect(buddy.locator(".companion-hello")).toHaveText(/HI!/);
+  await expect(buddy.locator(".companion-note")).toHaveCount(0);
+  expect(await bot.locator(".labs-bot-arm.right").evaluate(el => getComputedStyle(el).animationName)).toBe("bot-wave");
+  await page.clock.fastForward(2800); await expect(bot).not.toHaveAttribute("data-emote", /.+/);
+  await page.clock.fastForward(27210); await expect(bot).toHaveAttribute("data-emote", "wink");
+  await expect(buddy.locator(".companion-note")).toHaveCount(0);
+  await page.keyboard.press("Control+k"); await expect(page.getByRole("dialog")).toBeVisible();
+  await expect(buddy).toHaveCount(0); await page.clock.fastForward(90000);
+  await page.keyboard.press("Escape"); await expect(buddy).toBeVisible();
+  await expect(buddy.locator(".labs-bot")).not.toHaveAttribute("data-emote", /.+/);
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.clock.fastForward(65000);
+  await expect(buddy.locator(".labs-bot")).not.toHaveAttribute("data-emote", /.+/);
+  await expect(buddy.locator(".companion-hello")).toHaveCount(0);
 });

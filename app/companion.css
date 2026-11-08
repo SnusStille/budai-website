@@ -30,3 +30,15 @@
 @keyframes companion-note-in { from { opacity:0; transform:translateY(8px) scale(.97); } to { opacity:1; transform:none; } }
 @media (max-width:767px) { .builder-companion.is-phone { right:max(8px,env(safe-area-inset-right)); top:82px; bottom:auto; width:110px; flex-direction:column-reverse; } .companion-launcher { width:110px; height:118px; } .companion-bot .labs-bot-fallback { transform:translate(-50%,-48%) scale(.33); } .companion-orbit { inset:14px 8px 16px; } .companion-note { width:min(245px,calc(100vw - 28px)); } .is-phone .companion-note { max-height:max(120px,calc(100dvh - 220px)); margin:4px 3px 0 0; border-radius:17px 5px 17px 17px; } .is-phone .companion-note:after { top:-7px; bottom:auto; transform:rotate(225deg); } .companion-message { font-size:16px; } .companion-bottom button { min-height:44px; } .companion-note-top button { width:44px; height:44px; margin:-10px -10px -3px 0; } }
 @media (prefers-reduced-motion:reduce) { .builder-companion, .builder-companion * { animation:none!important; transition:none!important; } }
+
+/* A gesture is a small visual aside, never another unsolicited chat popup. */
+.companion-hello { position:absolute; top:12px; right:101px; padding:6px 8px; color:#d9f9ef; background:#143a3c; border:1px solid #a4e9d77a; border-radius:9px 9px 3px 9px; box-shadow:0 5px 16px #0006; font:700 9px/1 var(--font-jetbrains),monospace; letter-spacing:.08em; white-space:nowrap; animation:companion-note-in .3s ease both; }
+.companion-hello span { color:#e6d5a2; }
+.companion-signature { font-size:9px; text-transform:uppercase; }
+.companion-interactions { display:flex; gap:8px; margin-top:8px; }
+.companion-interactions button { flex:1; display:flex; justify-content:center; align-items:center; gap:5px; min-height:38px; border:1px solid #a4d8d625; border-radius:8px; color:#c4dedb; font-size:10px; font-weight:600; }
+.companion-interactions button:hover { color:#f3fffb; border-color:#a4e9d77a; background:#b2eee90b; }
+.companion-interactions button:first-child svg { color:#a6e0d1; }
+.companion-bottom { border-top:1px solid #b4e9e415; margin-top:10px; padding-top:2px; }
+.companion-bottom>span { color:#7a9998; font:700 8px/1.3 var(--font-jetbrains),monospace; letter-spacing:.06em; }
+@media(max-width:767px) { .companion-hello { right:80px; top:8px; } .companion-interactions button { min-height:44px; } }
