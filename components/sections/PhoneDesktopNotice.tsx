@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { ArrowRight, Monitor, Sparkles } from "lucide-react";
+import LabsMascot from "@/components/sections/LabsMascot";
 
 /** An acknowledgement, not an access restriction: Playground remains usable on phones. */
 export default function PhoneDesktopNotice({ sv, changeLanguage, onConfirm }: {
@@ -52,6 +53,7 @@ export default function PhoneDesktopNotice({ sv, changeLanguage, onConfirm }: {
         <div className="desktop-notice-art" aria-hidden="true">
           <div className="desktop-notice-orbit orbit-one" /><div className="desktop-notice-orbit orbit-two" />
           <div className="desktop-notice-screen"><Monitor size={42} strokeWidth={1.15} /><Sparkles size={15} className="desktop-notice-spark" /></div>
+          <div className="desktop-notice-mascot"><LabsMascot staticOnly /></div>
           <span className="desktop-notice-coordinate">01 / BIGGER PICTURE</span>
         </div>
         <div className="desktop-notice-body">
