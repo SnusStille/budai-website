@@ -26,7 +26,8 @@ for(const width of[1440,390])test(`the signal continues ${width}: same roadmap, 
   const stopped=await page.evaluate(()=>window.__outroDraws);await page.waitForTimeout(600);expect(await page.evaluate(()=>window.__outroDraws)).toBe(stopped);
   await move(.55);await expect(canvas).toHaveAttribute("data-camera",cameras[1]);
   await page.locator("#continuation").getByRole("link",{name:"Privacy Policy",exact:true}).click();
-  await expect(page.getByRole("dialog",{name:"Privacy Policy",exact:true})).toBeVisible();await page.getByRole("dialog",{name:"Privacy Policy",exact:true}).getByRole("button",{name:"Close",exact:true}).click();
+  await expect(page).toHaveURL(/\/legal\/privacy$/);await expect(page.getByRole("heading",{name:"Privacy Policy",exact:true})).toBeVisible();
+  await page.goBack();await expect(page.locator("#continuation")).toBeAttached();
   await page.locator("#continuation").getByRole("link",{name:"Back to Playground",exact:true}).click();
   await expect(page).toHaveURL(/#playground/);await expect(page.getByRole("textbox",{name:"Message BudAI",exact:true})).toBeEnabled();
   expect(errors).toEqual([]);
@@ -36,6 +37,6 @@ test("reduced-motion ending is immediately readable and every existing footer de
   await page.emulateMedia({reducedMotion:"reduce"});await quiet(page);await page.goto("/#continuation");
   const footer=page.locator("#continuation");await expect(footer.getByRole("heading",{name:"Continue the conversation.",exact:true})).toBeVisible();
   await expect(footer.getByRole("link",{name:"Privacy Policy",exact:true})).toBeVisible();await expect(footer.getByRole("link",{name:"Terms of Service",exact:true})).toBeVisible();
-  await expect(footer.locator("p").filter({hasText:"Developed by"}).getByRole("link",{name:"Stilledev",exact:true})).toBeVisible();
+  await expect(footer.locator("p").filter({hasText:"Developed by"})).toContainText("Stilledev EF");
   await expect(footer.locator("p").filter({hasText:"Developed by"})).toHaveCount(1);await expect(page.locator("canvas")).toHaveCount(0);
 });

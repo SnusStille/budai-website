@@ -61,6 +61,8 @@ import {
   ThumbsDown,
   Share2,
   Globe2,
+  Settings2,
+  ChevronDown,
   Command,
 } from "lucide-react";
 import PlaygroundArrival from "@/components/experience/PlaygroundArrival";
@@ -570,7 +572,7 @@ const INSPIRE_PROMPTS = {
 
 /* ─── component ───────────────────────────────────────── */
 
-export default function AIPlayground() {
+export default function AIPlayground({ phoneOnly = false }: { phoneOnly?: boolean }) {
   const { t, lang } = useLang();
   const auth = useAuth();
 
@@ -679,6 +681,7 @@ export default function AIPlayground() {
     }
   }, [workspaceOwner]);
   const [toolsOpen, setToolsOpen] = useState(false);
+  const [phoneOptionsOpen, setPhoneOptionsOpen] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -728,6 +731,7 @@ export default function AIPlayground() {
   const recogRef = useRef<{ stop: () => void } | null>(null);
   const persistTimer = useRef(0);
   const taRef = useRef<HTMLTextAreaElement>(null);
+  const mobileDrawerRef = useRef<HTMLDivElement>(null);
   const bootRef = useRef(false);
 
   const busy = activity !== "idle" && activity !== "error" && activity !== "listening";
@@ -778,6 +782,32 @@ export default function AIPlayground() {
     dialog.addEventListener("keydown", onTab);
     return () => { dialog.removeEventListener("keydown", onTab); previous?.focus({ preventScroll: true }); };
   }, [workspaceMessageId, workspaceVisible]); // Only when the sheet opens, not on each edit.
+
+  // On phones, keep keyboard and assistive-technology focus inside chat history.
+  useEffect(() => {
+    if (!phoneOnly || !mobileDrawer) return;
+    const dialog = mobileDrawerRef.current;
+    if (!dialog) return;
+    const previous = document.activeElement as HTMLElement | null;
+    dialog.querySelector<HTMLButtonElement>("[data-drawer-close]")?.focus({ preventScroll: true });
+    const onTab = (event: KeyboardEvent) => {
+      if (event.key !== "Tab") return;
+      const focusable = Array.from(dialog.querySelectorAll<HTMLElement>('button:not([disabled]), input:not([disabled]), a[href]'))
+        .filter(element => element.getClientRects().length > 0);
+      if (!focusable.length) return;
+      const first = focusable[0], last = focusable[focusable.length - 1];
+      if (event.shiftKey && (document.activeElement === first || !dialog.contains(document.activeElement))) {
+        event.preventDefault(); last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault(); first.focus();
+      }
+    };
+    dialog.addEventListener("keydown", onTab);
+    return () => {
+      dialog.removeEventListener("keydown", onTab);
+      if (dialog.contains(document.activeElement) || document.activeElement === document.body) previous?.focus({ preventScroll: true });
+    };
+  }, [phoneOnly, mobileDrawer]);
 
   const showToast = useCallback((kind: "ok" | "warn" | "err", text: string) => {
     setToast({ kind, text });
@@ -1924,6 +1954,17 @@ export default function AIPlayground() {
           <Plus className="w-4 h-4" />
           {lang === "sv" ? "Ny chatt" : "New chat"}
         </button>
+        {phoneOnly && (
+          <button
+            type="button"
+            onClick={() => { exportThread(); setMobileDrawer(false); }}
+            disabled={!messages.length}
+            className="w-full flex items-center justify-center gap-2 min-h-11 rounded-xl border border-white/[0.08] text-xs text-white/80 disabled:opacity-40"
+          >
+            <Download className="w-4 h-4" />
+            {lang === "sv" ? "Exportera chatt (.md)" : "Export chat (.md)"}
+          </button>
+        )}
         {auth.isMember && (
           <button
             type="button"
@@ -2064,6 +2105,13 @@ export default function AIPlayground() {
       <div className="product-ambient-light" aria-hidden="true" />
 
       <div className="max-w-[1500px] mx-auto px-2 sm:px-4 lg:px-6 relative z-10">
+        {phoneOnly ? (
+          <div className="playground-introduction">
+            <span className="section-badge text-accent-cyan">{lang === "sv" ? "DIN PLAYGROUND" : "YOUR PLAYGROUND"}</span>
+            <h2>{lang === "sv" ? "Vad tänker du på?" : "What’s on your mind?"}</h2>
+            <p>{lang === "sv" ? "Skriv, planera eller brainstorma. Testa som gäst eller logga in." : "Write, plan or brainstorm. Try it as a guest or sign in."}</p>
+          </div>
+        ) : (
         <div className="playground-introduction text-center mb-4 sm:mb-5">
           <span className="section-badge text-accent-cyan mb-4"><span className="font-mono text-[10px]" aria-hidden="true">02 /</span>{t.playground.badge}</span>
           <h2 className="text-2xl sm:text-3xl font-bold tracking-tight mb-1">
@@ -2074,6 +2122,7 @@ export default function AIPlayground() {
             ? `Du har sett vad som är möjligt — gör nu något eget. Skriv, planera, sammanfatta eller analysera på svenska och engelska. Prova direkt som gäst (${LIMITS.guest.messagesPerDay} meddelanden/dag) eller logga in gratis (${LIMITS.member.messagesPerDay}/dag) för minne du kan styra, historik och bildanalys.`
             : `You've seen what's possible — now make something of your own. Write, plan, summarize, or analyze in Swedish and English. Try free right now as a guest (${LIMITS.guest.messagesPerDay} messages/day) or sign in free (${LIMITS.member.messagesPerDay}/day) for memory you control, history, and image analysis.`}</p>
         </div>
+        )}
 
         <PlaygroundArrival expanded={expanded} overlay={voiceOpen||showShortcuts||!!lightbox||mobileDrawer||memoryOpen}>
           <div
@@ -2106,7 +2155,7 @@ export default function AIPlayground() {
             <div className="flex-1 flex min-w-0 min-h-0">
             <div className="flex-1 flex flex-col min-w-0 min-h-0">
               {/* Header */}
-              <div className="flex items-center justify-between gap-2 px-2.5 sm:px-3 py-2 border-b border-white/[0.06] bg-[#080810]/90 shrink-0">
+              <div data-phone-chat-header={phoneOnly || undefined} className="flex items-center justify-between gap-2 px-2.5 sm:px-3 py-2 border-b border-white/[0.06] bg-[#080810]/90 shrink-0">
                 <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
                   <button
                     type="button"
@@ -2115,7 +2164,9 @@ export default function AIPlayground() {
                       else setSidebarOpen((v) => !v);
                     }}
                     className="p-2 rounded-lg border border-white/[0.06] text-muted hover:text-white"
-                    aria-label="Sidebar"
+                    aria-label={phoneOnly ? (lang === "sv" ? "Chatthistorik" : "Chat history") : "Sidebar"}
+                    aria-expanded={phoneOnly ? mobileDrawer : undefined}
+                    aria-controls={phoneOnly && mobileDrawer ? "phone-chat-history" : undefined}
                   >
                     <PanelLeft className="w-4 h-4" />
                   </button>
@@ -2124,6 +2175,7 @@ export default function AIPlayground() {
                     <div className="text-sm font-semibold text-white truncate flex items-center gap-1.5">
                       <BudAIWordmark />
                       <span
+                        data-phone-guest-status={phoneOnly || undefined}
                         className={`text-[10px] font-mono px-1.5 py-0.5 rounded-md border ${
                           auth.isMember
                             ? "text-accent-cyan border-accent-cyan/25 bg-accent-cyan/10"
@@ -2168,7 +2220,7 @@ export default function AIPlayground() {
                       <MessageSquarePlus className="w-4 h-4" />
                     </button>
                   )}
-                  <button
+                  {!phoneOnly && <button
                     type="button"
                     onClick={exportThread}
                     disabled={!messages.length}
@@ -2177,7 +2229,7 @@ export default function AIPlayground() {
                     title={lang === "sv" ? "Exportera tråd (.md) · ⌘E" : "Export thread (.md) · ⌘E"}
                   >
                     <Download className="w-4 h-4" />
-                  </button>
+                  </button>}
                   <details className="relative hidden sm:block">
                     <summary className="flex cursor-pointer list-none items-center gap-1 rounded-lg border border-white/[0.06] px-2.5 py-2 text-[11px] font-medium text-muted hover:text-white [&::-webkit-details-marker]:hidden">
                       {lang === "sv" ? "Exportera" : "Export"} ▾
@@ -2226,6 +2278,7 @@ export default function AIPlayground() {
                     <button
                       type="button"
                       onClick={() => auth.openAuth()}
+                      aria-label={lang === "sv" ? "Logga in" : "Sign in"}
                       className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-accent-cyan/15 border border-accent-cyan/25 text-accent-cyan text-[11px] font-semibold"
                     >
                       <LogIn className="w-3.5 h-3.5" />
@@ -2256,6 +2309,7 @@ export default function AIPlayground() {
                       key={it.id}
                       type="button"
                       title={it.hint}
+                      aria-pressed={intentId === it.id}
                       onClick={() => {
                         setIntentId(it.id);
                         setMode(it.id === "dual" ? "dual" : mode === "concise" ? "concise" : "single");
@@ -2284,6 +2338,7 @@ export default function AIPlayground() {
                           key={code}
                           type="button"
                           onClick={() => setAnswerLang(code)}
+                          aria-pressed={answerLang === code}
                           className={`px-2 py-0.5 text-[10px] font-bold rounded-full ${
                             answerLang === code
                               ? "bg-gradient-to-r from-accent-cyan to-accent-purple text-white"
@@ -2853,7 +2908,16 @@ export default function AIPlayground() {
                 )}
 
                 {toolsOpen && (
-                  <div className="mb-2 flex flex-wrap gap-1.5 p-2 rounded-xl border border-white/[0.07] bg-black/30">
+                  <div data-phone-tools={phoneOnly || undefined} className="mb-2 flex flex-wrap gap-1.5 p-2 rounded-xl border border-white/[0.07] bg-black/30">
+                    {phoneOnly && <button
+                      type="button"
+                      onClick={() => { runInspire(); setToolsOpen(false); }}
+                      disabled={busy}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] text-white/85 border border-white/[0.08] disabled:opacity-40"
+                    >
+                      <Dices className="w-3.5 h-3.5 text-accent-cyan" />
+                      {lang === "sv" ? "Inspirera mig" : "Surprise me"}
+                    </button>}
                     <button
                       type="button"
                       onClick={() => {
@@ -2953,13 +3017,22 @@ export default function AIPlayground() {
                     </button>
                   </div>
                 )}
-                <div className="mb-2 flex flex-wrap items-center gap-1.5" role="group" aria-label="Persona">
+                {phoneOnly && <div className="phone-composer-bar">
+                  <button type="button" className="phone-options-toggle" aria-expanded={phoneOptionsOpen} aria-controls="phone-chat-options" onClick={() => setPhoneOptionsOpen(open => !open)}>
+                    <Settings2 size={15} aria-hidden="true" />
+                    {lang === "sv" ? "Fler val" : "More options"}
+                    <ChevronDown size={14} aria-hidden="true" className={phoneOptionsOpen ? "phone-options-chevron-open" : undefined} />
+                  </button>
+                  <DailyUsageMeter rem={rem} lim={lim} sv={lang === "sv"} interactive={false} compact />
+                </div>}
+                {phoneOnly && !phoneOptionsOpen && persona !== "default" && <p className="phone-active-persona">{lang === "sv" ? "Valt läge" : "Active persona"}: {PERSONAS.find(p => p.id === persona)?.[lang]}</p>}
+                <div id={phoneOnly ? "phone-chat-options" : undefined} data-phone-more-options={phoneOnly || undefined} className={phoneOnly && !phoneOptionsOpen ? "hidden" : "mb-2 flex flex-wrap items-center gap-1.5"} role="group" aria-label={lang === "sv" ? "Personlighet och verktyg" : "Persona and tools"}>
                   <label className="flex items-center gap-1.5 rounded-full border border-white/[0.08] pl-3 pr-1 text-[11px] text-muted">
                     <span>{lang === "sv" ? "Läge" : "Persona"}</span>
                     <select
                       value={persona}
                       onChange={(e) => setPersona(e.target.value)}
-                      aria-label="Persona"
+                      aria-label={lang === "sv" ? "Personlighet" : "Persona"}
                       className="bg-transparent py-1 pr-2 text-[11px] text-accent-cyan outline-none [&>option]:bg-[#07070e]"
                     >
                       {PERSONAS.map((p) => (
@@ -2970,11 +3043,11 @@ export default function AIPlayground() {
                     </select>
                   </label>
                   <div className="ml-auto flex flex-wrap items-center gap-2">
-                    <Routines input={input} sv={lang === "sv"} onRun={(t) => void runPrompt(t)} />
+                    <Routines input={input} sv={lang === "sv"} phoneOnly={phoneOnly} onRun={(t) => void runPrompt(t)} />
                     <button type="button" onClick={() => setVoiceOpen(true)} className="rounded-full border border-white/[0.08] px-3 py-1 text-[11px] text-muted hover:text-white transition-colors">
                       {lang === "sv" ? "Röstläge" : "Voice mode"}
                     </button>
-                    <DailyUsageMeter rem={rem} lim={lim} sv={lang === "sv"} />
+                    {!phoneOnly && <DailyUsageMeter rem={rem} lim={lim} sv={lang === "sv"} />}
                   </div>
                 </div>
                 <VoiceOrb
@@ -3074,7 +3147,7 @@ export default function AIPlayground() {
                           return;
                         }
                       }
-                      if (e.key === "Enter" && !e.shiftKey) {
+                      if (e.key === "Enter" && !e.shiftKey && !phoneOnly) {
                         e.preventDefault();
                         if ((input.trim() || attach) && !busy) {
                           if (genMode && imageGenEnabled) void runImageGen(input, true);
@@ -3103,9 +3176,9 @@ export default function AIPlayground() {
                           : "Message BudAI…"
                     }
                     disabled={busy}
-                    className="flex-1 px-3.5 py-2.5 rounded-2xl bg-white/[0.04] border border-white/[0.09] text-sm text-white placeholder:text-muted/60 focus:outline-none focus:border-accent-cyan/40 resize-none min-h-[44px] max-h-[140px]"
+                    className="flex-1 min-w-0 px-3.5 py-2.5 rounded-2xl bg-white/[0.04] border border-white/[0.09] text-sm text-white placeholder:text-muted/60 focus:outline-none focus:border-accent-cyan/40 resize-none min-h-[44px] max-h-[140px]"
                   />
-                  <button
+                  {!phoneOnly && <button
                     type="button"
                     onClick={runInspire}
                     disabled={busy}
@@ -3118,7 +3191,7 @@ export default function AIPlayground() {
                   >
                     <Dices className={`w-3.5 h-3.5 ${inspireSpin ? "animate-spin" : ""}`} />
                     <span className="hidden sm:inline">{lang === "sv" ? "Inspirera" : "Surprise"}</span>
-                  </button>
+                  </button>}
                   {busy ? (
                     <button
                       type="button"
@@ -3304,7 +3377,7 @@ export default function AIPlayground() {
             </div>
           </div>
         </PlaygroundArrival>
-        <div className="product-output" data-playground-bridge aria-hidden="true">
+        {!phoneOnly && <div className="product-output" data-playground-bridge aria-hidden="true">
           <div className="product-bridge-head">
             <span className="product-bridge-kicker">
               {lang === "sv" ? "02 → 03 · SIGNALÖVERFÖRING · LIVE ARBETSYTA → FÖRMÅGEARKITEKTUR" : "02 → 03 · SIGNAL HANDOFF · LIVE WORKSPACE → CAPABILITY ARCHITECTURE"}
@@ -3359,7 +3432,7 @@ export default function AIPlayground() {
               {lang === "sv" ? "6 KANALER KONVERGERAR I KAPITEL 03 ↓" : "6 CHANNELS CONVERGE INTO CHAPTER 03 ↓"}
             </small>
           </div>
-        </div>
+        </div>}
       </div>
 
 
@@ -3495,6 +3568,12 @@ export default function AIPlayground() {
               onClick={() => setMobileDrawer(false)}
             />
             <motion.div
+              ref={mobileDrawerRef}
+              id={phoneOnly ? "phone-chat-history" : undefined}
+              data-phone-chat-drawer={phoneOnly || undefined}
+              role={phoneOnly ? "dialog" : undefined}
+              aria-modal={phoneOnly ? true : undefined}
+              aria-label={phoneOnly ? (lang === "sv" ? "Chatthistorik" : "Chat history") : undefined}
               initial={{ x: -280 }}
               animate={{ x: 0 }}
               exit={{ x: -280 }}
@@ -3503,7 +3582,7 @@ export default function AIPlayground() {
             >
               <div className="flex items-center justify-between p-3 border-b border-white/[0.06]">
                 <span className="text-sm font-semibold text-white">BudAI</span>
-                <button type="button" onClick={() => setMobileDrawer(false)} className="p-2 text-muted">
+                <button type="button" data-drawer-close aria-label={lang === "sv" ? "Stäng chatthistorik" : "Close chat history"} onClick={() => setMobileDrawer(false)} className="min-w-11 min-h-11 flex items-center justify-center text-muted">
                   <X className="w-4 h-4" />
                 </button>
               </div>
@@ -3779,6 +3858,8 @@ export default function AIPlayground() {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
+            role="status"
+            data-phone-chat-toast={phoneOnly || undefined}
             className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-[96] px-4 py-2.5 rounded-xl border text-sm shadow-xl max-w-[90vw] ${
               toast.kind === "err"
                 ? "border-red-400/30 bg-[#1a1014] text-red-100"

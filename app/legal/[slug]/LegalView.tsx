@@ -118,23 +118,24 @@ const content: Record<LegalSlug, Page> = {
   },
 };
 
-export default function LegalView({ slug }: { slug: LegalSlug }) {
+export default function LegalView({ slug, phoneOnly = false }: { slug: LegalSlug; phoneOnly?: boolean }) {
   const page = content[slug];
   const Icon = page.icon;
   const { lang } = useLang();
   const L = lang === "sv" ? "sv" : "en";
 
+  const BackLink = phoneOnly ? "a" : Link;
   return (
     <main id="main" tabIndex={-1} className="min-h-screen bg-background text-white pt-20 pb-16 px-4 sm:px-6">
       <div className="max-w-2xl mx-auto">
         <div className="flex items-center justify-between gap-3 mb-8">
-          <Link
+          <BackLink
             href="/"
             className="inline-flex items-center gap-2 text-sm text-muted hover:text-white transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
             {L === "sv" ? "Tillbaka till BudAI" : "Back to BudAI"}
-          </Link>
+          </BackLink>
           <BudAILogo size="sm" animated />
         </div>
 

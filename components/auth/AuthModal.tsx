@@ -82,7 +82,8 @@ export default function AuthModal() {
                 clearAuthFlash();
                 closeAuth();
               }}
-              className="absolute top-4 right-4 p-2 rounded-lg text-muted hover:text-white"
+              aria-label={lang === "sv" ? "Stäng" : "Close"}
+              className="absolute top-4 right-4 min-h-11 min-w-11 flex items-center justify-center rounded-lg text-muted hover:text-white"
             >
               <X className="w-4 h-4" />
             </button>

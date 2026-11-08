@@ -9,12 +9,13 @@ async function quiet(page: Page) {
 
 test("Builder introduces Oliver and links to the Labs holding page in both languages", async ({ page }) => {
   await quiet(page); await page.emulateMedia({ reducedMotion: "reduce" });
-  for (const [path, title, button] of [["/", /Hi, I’m Oliver/i, /Enter Labs/i], ["/sv", /Hej, jag är Oliver/i, /Öppna Labs/i]] as const) {
+  for (const [path, button] of [["/", /Enter Labs/i], ["/sv", /Öppna Labs/i]] as const) {
     await page.goto(`${path}#stilledev-labs`);
-    const person = page.locator(".builder-person");
-    await expect(person.getByRole("heading", { name: title })).toBeVisible();
-    await expect(person).toContainText("Helsingborg"); await expect(person).toContainText("SkandiaMäklarna");
-    await expect(person).toContainText("STILLEDEV EF");
+    const person = page.locator(".builder-heading .builder-byline");
+    await expect(person).toBeVisible();
+    await expect(person).toContainText(/Oliver Stille/i); await expect(person).toContainText(/Helsingborg/i);
+    await expect(person).toContainText("SkandiaMäklarna"); await expect(person).toContainText("STILLEDEV EF");
+    await expect(page.locator(".builder-person")).toHaveCount(0);
     const portal = page.locator("#stilledev-labs");
     await expect(portal.getByRole("link", { name: button })).toHaveAttribute("href", path === "/sv" ? "/sv/labs" : "/labs");
     await expect(page.locator("nav").getByRole("link", { name: /Labs/ }).first()).toBeAttached();
@@ -37,7 +38,9 @@ test("Labs is a bilingual holding page with no previous projects or links", asyn
   await expect(page).toHaveURL(/\/labs$/);
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
   await expect(page.getByRole("heading", { name: /Something good.*is brewing/ })).toBeVisible();
-  await page.locator(".labs-wait-cta").click(); await expect(page).toHaveURL(/\/$/);
+  await expect(page.locator(".labs-wait-cta")).toHaveText(/Back to Builder/);
+  await page.locator(".labs-wait-cta").click(); await expect(page).toHaveURL(/\/#stilledev-labs$/);
+  await expect(page.locator("#stilledev-labs")).toBeVisible();
   for (const asset of ["julia.mp4", "harvis-concept.mp4", "labs-atmosphere.jpg"]) expect((await request.get(`/labs-media/${asset}`)).status()).toBe(404);
 });
 
@@ -77,26 +80,81 @@ test("save-data uses the static mascot", async ({ page }) => {
 });
 
 for (const ua of [iphone, android]) {
-  test(`phones get only a desktop invitation across routes and hosts (${ua.includes("iPhone") ? "iPhone" : "Android"})`, async ({ browser, request }) => {
-    const context = await browser.newContext({ userAgent: ua, viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+  test(`phones get a usable Playground and desktop notice (${ua.includes("iPhone") ? "iPhone" : "Android"})`, async ({ browser, request }) => {
+    const context = await browser.newContext({ userAgent: ua, viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, reducedMotion: "reduce" });
     const page = await context.newPage(); await quiet(page);
-    for (const route of ["/", "/sv", "/labs", "/sv/labs", "/legal/privacy"]) {
+    const errors: string[] = []; page.on("pageerror", error => errors.push(error.message));
+    for (const route of ["/", "/sv", "/labs", "/sv/labs"]) {
       const response = await page.goto(route); expect(response?.headers()["cache-control"]).toMatch(/private|no-store/i);
       await expect(page.locator(".phone-welcome")).toBeVisible();
-      await expect(page.locator(".labs-wait, .builder-person, nav, #playground")).toHaveCount(0);
+      await expect(page.locator("#playground")).toBeVisible();
+      await expect(page.locator(".labs-wait, .builder-byline, nav, [data-playground-bridge]")).toHaveCount(0);
       expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(1);
     }
-    await expect(page.getByRole("heading", { name: /Hoppsan/ })).toBeVisible();
-    await page.getByRole("button", { name: "EN", exact: true }).click();
-    await expect(page.getByRole("heading", { name: /Wrong branch/ })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Stor sajt.*Liten skärm/ })).toBeVisible();
+    await expect(page.locator(".phone-desktop-notice")).toContainText("Dator behövs för resten");
+    await page.locator(".phone-languages").getByRole("button", { name: "EN", exact: true }).click();
+    await expect(page.getByRole("heading", { name: /Big site.*Little screen/ })).toBeVisible();
+    await expect(page.locator(".phone-desktop-notice")).toContainText("Computer needed for the rest");
+    await expect(page.locator("html")).toHaveAttribute("lang", "en");
     await page.screenshot({ path: `test-results/phone-${ua.includes("iPhone") ? "iphone" : "android"}.png` });
+    for (const width of [320, 360, 390, 414]) {
+      await page.setViewportSize({ width, height: 844 });
+      expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth), `${width}px`).toBeLessThanOrEqual(1);
+    }
+    await page.setViewportSize({ width: 390, height: 844 });
+    const requests: unknown[] = [];
+    await page.route("**/api/playground", async route => {
+      requests.push(route.request().postDataJSON());
+      await route.fulfill({ status: 200, contentType: "text/plain", body: 'A pocket-sized answer.\u0000{"memory":null}' });
+    });
+    await page.getByRole("link", { name: "Open Playground" }).click();
+    const input = page.getByRole("textbox", { name: "Message BudAI", exact: true });
+    await expect(input).toBeVisible();
+    await input.fill("Hello from my phone");
+    await page.getByRole("button", { name: "Send message", exact: true }).click();
+    await expect(page.locator("#playground").getByText("A pocket-sized answer.", { exact: true })).toBeVisible();
+    expect(requests).toHaveLength(1);
+    expect(JSON.stringify(requests[0])).toContain("Hello from my phone");
+    await expect(input).toHaveValue("");
+    expect(await input.evaluate(el => parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(16);
+    await page.getByRole("button", { name: "Sign in", exact: true }).click();
+    await expect(page.getByRole("dialog").getByRole("heading", { name: "Your BudAI" })).toBeVisible();
+    await page.getByRole("dialog").getByRole("button", { name: "Close", exact: true }).click();
+    await page.getByRole("button", { name: "Expand Playground" }).click();
+    await expect(page.getByRole("button", { name: "Minimize Playground" })).toBeVisible();
+    await expect(page.locator("#playground").getByText("A pocket-sized answer.", { exact: true })).toBeVisible();
+    // Simulate a mobile keyboard changing the visual viewport, not the layout viewport.
+    await page.evaluate(() => {
+      const vv = window.visualViewport!;
+      Object.defineProperty(vv, "height", { configurable: true, value: 544 });
+      Object.defineProperty(vv, "offsetTop", { configurable: true, value: 0 });
+      vv.dispatchEvent(new Event("resize"));
+    });
+    await expect(page.locator("html")).toHaveAttribute("data-pg-keyboard", "open");
+    const inputBox = await input.boundingBox();
+    expect(inputBox && inputBox.y + inputBox.height).toBeLessThanOrEqual(545);
+    await page.evaluate(() => { Reflect.deleteProperty(window.visualViewport!, "height"); window.visualViewport!.dispatchEvent(new Event("resize")); });
+    await page.getByRole("button", { name: "Minimize Playground" }).click();
+    await expect(page.locator('#playground a[href="#capabilities"]')).toHaveCount(0);
+    await page.locator(".phone-footer").getByRole("link", { name: "Privacy" }).click();
+    await expect(page).toHaveURL(/\/legal\/privacy$/);
+    await expect(page.getByRole("heading", { name: "Privacy Policy" })).toBeVisible();
+    await page.getByRole("link", { name: "Back to BudAI" }).click();
+    await expect(page.locator("#playground")).toBeVisible();
+    await page.getByRole("button", { name: "Cookie settings" }).click();
+    await expect(page.getByRole("dialog")).toBeVisible();
+    await page.getByRole("dialog").getByRole("link", { name: "More" }).click();
+    await expect(page).toHaveURL(/\/legal\/cookies$/);
+    await expect(page.getByRole("heading", { name: "Cookie Policy" })).toBeVisible();
     for (const host of ["stilledev.se", "www.stilledev.se", "preview.vercel.app", "localhost:3000"]) {
       const response = await request.get("/labs", { headers: { host, "user-agent": ua } });
       const html = await response.text(); expect(html).toContain("phone-welcome"); expect(html).not.toContain("labs-wait-shell");
       expect(response.headers()["cache-control"]).toMatch(/private|no-store/i);
     }
     const api = await request.post("/api/playground", { headers: { "user-agent": ua }, data: {} });
-    expect(api.status()).toBe(403); expect(await api.json()).toMatchObject({ code: "desktop_only" });
+    expect(api.status()).not.toBe(403); expect(await api.json()).not.toMatchObject({ code: "desktop_only" });
+    expect(errors).toEqual([]);
     await context.close();
   });
 }
@@ -106,4 +164,244 @@ test("tablet and bot user agents retain the desktop site", async ({ request }) =
     const response = await request.get("/labs", { headers: { "user-agent": ua } });
     const html = await response.text(); expect(html).toContain("labs-wait-shell"); expect(html).not.toContain('class="phone-welcome"');
   }
+});
+
+test("footer navigation is concise, real and localized in both languages", async ({ page, request }) => {
+  await quiet(page); await page.emulateMedia({ reducedMotion: "reduce" });
+  for (const [path, groupLabels, banned, expectedLab] of [
+    ["/", ["Product", "Company", "Legal"], ["Plans", "Projects", "Pricing"], "/labs"],
+    ["/sv", ["Produkt", "Företag", "Juridik"], ["Paket", "Projekt", "Priser"], "/sv/labs"],
+  ] as const) {
+    await page.goto(path); const footer = page.locator("#continuation");
+    for (const name of groupLabels) await expect(footer.getByRole("navigation", { name, exact: true })).toBeAttached();
+    for (const name of banned) await expect(footer.getByRole("link", { name, exact: true })).toHaveCount(0);
+    await expect(footer.getByRole("link", { name: "Labs", exact: true })).toHaveAttribute("href", expectedLab);
+    await expect(footer).toContainText("Stilledev EF");
+    const links = await footer.locator("nav a").evaluateAll(nodes => nodes.map(node => node.getAttribute("href") || ""));
+    expect(new Set(links).size).toBe(links.length);
+    for (const link of links) {
+      if (link.startsWith("#")) expect(await page.locator(link).count(), `${path} ${link}`).toBeGreaterThan(0);
+      else if (link.startsWith("/")) expect((await request.get(link)).status(), `${path} ${link}`).toBe(200);
+      else expect(link).toMatch(/^mailto:/);
+    }
+  }
+  // Legal links lead directly to the full policy rather than a second, potentially stale summary.
+  await page.locator("#continuation").getByRole("link", { name: "Integritetspolicy", exact: true }).click();
+  await expect(page).toHaveURL(/\/legal\/privacy$/);
+  await expect(page.getByRole("heading", { name: "Integritetspolicy" })).toBeVisible();
+});
+
+test("footer health wording only describes the server ping", async ({ page }) => {
+  await quiet(page); await page.route("**/api/health", route => route.fulfill({ status: 200, contentType: "application/json", body: '{"ok":true}' }));
+  await page.goto("/");
+  await expect(page.locator("#continuation")).toContainText("Server responding");
+  await expect(page.locator("#continuation")).not.toContainText("All systems operational");
+});
+
+
+test("the compact Builder introduction fits above its controls at desktop and tablet widths", async ({ page }) => {
+  await quiet(page); await page.emulateMedia({ reducedMotion: "reduce" });
+  for (const width of [768, 1024, 1440]) {
+    await page.setViewportSize({ width, height: 900 }); await page.goto("/#about");
+    await expect(page.locator(".builder-byline")).toBeVisible();
+    const intro = await page.locator(".builder-byline").boundingBox();
+    const controls = await page.locator(".reality-creation-pills").boundingBox();
+    expect(intro && controls && intro.y + intro.height <= controls.y, `${width}px`).toBeTruthy();
+    expect(intro && intro.x >= 0 && intro.x + intro.width <= width + 1, `${width}px`).toBeTruthy();
+    if (width === 1440) { await page.locator(".builder-heading").scrollIntoViewIfNeeded(); await page.screenshot({ path: "test-results/builder-compact.png" }); }
+  }
+});
+
+test("Builder shortcuts are real keyboard buttons and keep the Labs status clear", async ({ page }) => {
+  await quiet(page); await page.emulateMedia({ reducedMotion: "reduce" }); await page.goto("/#about");
+  const shortcuts = page.locator("[data-thought-to-reality]");
+  await expect(shortcuts.getByRole("button")).toHaveCount(4);
+  await page.evaluate(() => { (window as Window & { __builderPrompt?: string }).__builderPrompt = ""; window.addEventListener("budai:prompt", event => { (window as Window & { __builderPrompt?: string }).__builderPrompt = (event as CustomEvent<string>).detail; }); });
+  const button = shortcuts.getByRole("button", { name: /Website interface/ });
+  await button.focus(); await page.keyboard.press("Enter");
+  await expect.poll(() => page.evaluate(() => (window as Window & { __builderPrompt?: string }).__builderPrompt)).toContain("React");
+  await expect(page.locator("#stilledev-labs")).toContainText("UNDER DEVELOPMENT");
+});
+
+test("homepage stays within the viewport at common desktop and tablet widths", async ({ page }) => {
+  await quiet(page); await page.emulateMedia({ reducedMotion: "reduce" });
+  for (const width of [768, 834, 900, 1024, 1280, 1440]) {
+    await page.setViewportSize({ width, height: 900 }); await page.goto("/");
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth), `${width}px`).toBeLessThanOrEqual(1);
+  }
+});
+
+test("footer social links have comfortable targets and keyboard focus", async ({ page }) => {
+  await quiet(page); await page.emulateMedia({ reducedMotion: "reduce" }); await page.goto("/#continuation");
+  const footer = page.locator("#continuation");
+  for (const label of ["GitHub", "Discord", "LinkedIn", "Email"]) {
+    const link = footer.getByRole("link", { name: label, exact: true });
+    const bounds = await link.boundingBox(); expect(bounds?.width).toBeGreaterThanOrEqual(44); expect(bounds?.height).toBeGreaterThanOrEqual(44);
+    await link.focus(); await expect(link).toBeFocused();
+  }
+});
+
+test("Builder examples protect unsent drafts and never send a request", async ({ page }) => {
+  await quiet(page); await page.emulateMedia({ reducedMotion: "reduce" }); await page.goto("/#playground");
+  const input = page.getByRole("textbox", { name: "Message BudAI", exact: true });
+  let requests = 0; page.on("request", req => { if (req.url().endsWith("/api/playground")) requests++; });
+  await input.fill("Keep this draft");
+  const shortcut = page.locator("[data-thought-to-reality]").getByRole("button", { name: /Website interface/ });
+  page.once("dialog", dialog => dialog.dismiss());
+  await shortcut.click(); await expect(input).toHaveValue("Keep this draft");
+  await input.fill("");
+  await shortcut.click(); await expect(input).toHaveValue(/type-safe React/);
+  await page.waitForTimeout(600); expect(requests).toBe(0);
+  const labsHeading = page.locator("#stilledev-labs").getByRole("heading", { name: "Labs.", exact: true });
+  await expect(labsHeading).toBeVisible();
+});
+
+
+test("Labs offers a clear return to Builder in Swedish", async ({ page }) => {
+  await quiet(page); await page.emulateMedia({ reducedMotion: "reduce" }); await page.goto("/sv/labs");
+  await expect(page.locator(".labs-wait-cta")).toHaveAttribute("href", "/sv#stilledev-labs");
+  await page.locator(".labs-wait-cta").click(); await expect(page).toHaveURL(/\/sv#stilledev-labs$/);
+  await expect(page.locator("#stilledev-labs").getByRole("heading", { name: "Labs." })).toBeVisible();
+});
+
+test("the static Builder scene follows the heading at desktop sizes and in both languages", async ({ page }) => {
+  await quiet(page); await page.emulateMedia({ reducedMotion: "reduce" });
+  for (const path of ["/", "/sv"]) {
+    for (const [width, height] of [[1024, 850], [1280, 900], [1440, 900], [1440, 1000]]) {
+      await page.setViewportSize({ width, height }); await page.goto(`${path}#about`);
+      await page.evaluate(() => document.fonts.ready);
+      const heading = await page.locator(".builder-heading").boundingBox();
+      const monitor = await page.locator(".fallback-central-screen").boundingBox();
+      expect(heading && monitor && heading.y + heading.height + 10 <= monitor.y, `${path} ${width}x${height}`).toBeTruthy();
+    }
+  }
+});
+
+for (const ua of [iphone, android]) {
+  test(`phone chat keeps multiline drafts, touch controls, history and routines usable (${ua.includes("iPhone") ? "iPhone" : "Android"})`, async ({ browser }) => {
+    const context = await browser.newContext({ userAgent: ua, viewport: { width: 320, height: 740 }, isMobile: true, hasTouch: true, reducedMotion: "reduce" });
+    const page = await context.newPage(); await quiet(page);
+    let calls = 0;
+    await page.route("**/api/playground", async route => {
+      calls++;
+      await route.fulfill({ status: 200, contentType: "text/plain", body: 'Ready for the next idea.\u0000{"memory":null}' });
+    });
+    await page.goto("/"); await page.getByRole("link", { name: "Open Playground" }).click();
+    const input = page.getByRole("textbox", { name: "Message BudAI", exact: true });
+    await expect(page.getByRole("button", { name: "Keyboard shortcuts" })).toBeHidden();
+    for (const button of await page.locator("[data-phone-chat-header] button:visible").all()) {
+      const box = await button.boundingBox(); expect(box?.width).toBeGreaterThanOrEqual(44); expect(box?.height).toBeGreaterThanOrEqual(44);
+    }
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
+    await input.fill("First line"); await input.press("Enter"); await input.pressSequentially("Second line");
+    await expect(input).toHaveValue("First line\nSecond line"); expect(calls).toBe(0);
+    const inputBox = await input.boundingBox(); expect(inputBox!.width).toBeGreaterThanOrEqual(140);
+    const more = page.getByRole("button", { name: "More options", exact: true });
+    await expect(more).toHaveAttribute("aria-expanded", "false");
+    await expect(page.getByRole("button", { name: "Routines", exact: true })).toBeHidden();
+    await more.click(); await expect(more).toHaveAttribute("aria-expanded", "true");
+    await page.locator("#phone-chat-options select[aria-label=Persona]").selectOption("coder");
+    await more.click(); await expect(page.getByText("Active persona: Coder", { exact: true })).toBeVisible();
+    await expect(input).toHaveValue("First line\nSecond line");
+    await more.click(); await expect(page.locator("#phone-chat-options select[aria-label=Persona]")).toHaveValue("coder");
+    await page.getByRole("button", { name: "Routines", exact: true }).click();
+    const panel = page.locator("[data-routines-panel]"); await expect(panel).toBeVisible();
+    const panelBox = await panel.boundingBox(); expect(panelBox).not.toBeNull();
+    expect(panelBox!.x).toBeGreaterThanOrEqual(0); expect(panelBox!.x + panelBox!.width).toBeLessThanOrEqual(320);
+    await expect(panel.getByRole("button", { name: "Close routines" })).toBeVisible();
+    await page.screenshot({ path: `test-results/phone-routines-${ua.includes("iPhone") ? "iphone" : "android"}.png` });
+    expect(await panel.getByPlaceholder("Name").evaluate(el => parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(16);
+    await panel.getByRole("button", { name: "Close routines" }).click(); await expect(panel).toHaveCount(0);
+    await expect(input).toHaveValue("First line\nSecond line"); expect(calls).toBe(0);
+    await page.getByRole("button", { name: "Tools", exact: true }).click();
+    page.once("dialog", dialog => dialog.dismiss());
+    await page.locator("[data-phone-tools]").getByRole("button", { name: "Surprise me", exact: true }).click();
+    await expect(input).toHaveValue("First line\nSecond line"); expect(calls).toBe(0);
+    const historyButton = page.getByRole("button", { name: "Chat history", exact: true });
+    await historyButton.click();
+    const history = page.getByRole("dialog", { name: "Chat history", exact: true });
+    await expect(history).toBeVisible(); await expect(history.getByRole("button", { name: "Close chat history" })).toBeFocused();
+    await expect(history.getByRole("button", { name: "Export chat (.md)" })).toBeDisabled();
+    expect(await history.getByPlaceholder("Search…").evaluate(el => parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(16);
+    await page.keyboard.press("Shift+Tab");
+    expect(await history.evaluate(el => el.contains(document.activeElement))).toBe(true);
+    await history.getByRole("button", { name: "Close chat history" }).click();
+    await expect(history).toHaveCount(0); await expect(historyButton).toBeFocused();
+    await page.getByRole("button", { name: "Send message", exact: true }).click();
+    await expect(page.locator("#playground").getByText("Ready for the next idea.", { exact: true })).toBeVisible();
+    expect(calls).toBe(1);
+    await historyButton.click(); await expect(history.getByRole("button", { name: "Export chat (.md)" })).toBeEnabled();
+    const downloadPromise = page.waitForEvent("download");
+    await history.getByRole("button", { name: "Export chat (.md)" }).click();
+    const download = await downloadPromise; expect(download.suggestedFilename()).toMatch(/\.md$/);
+    await expect(history).toHaveCount(0);
+    const toast = page.locator("[data-phone-chat-toast]");
+    await expect(toast).toBeVisible();
+    const toastBox = await toast.boundingBox(); expect(toastBox!.x).toBeGreaterThanOrEqual(0); expect(toastBox!.x + toastBox!.width).toBeLessThanOrEqual(320);
+    expect(await toast.evaluate(el => getComputedStyle(el).pointerEvents)).toBe("none");
+    await page.screenshot({ path: `test-results/phone-chat-${ua.includes("iPhone") ? "iphone" : "android"}.png` });
+    await page.locator(".phone-languages").getByRole("button", { name: "SV", exact: true }).click();
+    await expect(page.getByRole("textbox", { name: "Meddelande till BudAI" })).toBeVisible();
+    await page.getByRole("button", { name: "Chatthistorik", exact: true }).click();
+    const svHistory = page.getByRole("dialog", { name: "Chatthistorik" });
+    await expect(svHistory.getByRole("button", { name: "Exportera chatt (.md)" })).toBeEnabled();
+    await svHistory.getByRole("button", { name: "Stäng chatthistorik" }).click();
+    await page.getByRole("button", { name: "Rutiner", exact: true }).click();
+    await expect(page.locator("[data-routines-panel]").getByRole("button", { name: "Radera rutin" }).first()).toBeVisible();
+    await page.getByRole("button", { name: "Stäng rutiner" }).click();
+    await context.close();
+  });
+}
+
+for (const ua of [iphone, android]) {
+  test(`phone language choice survives reload without replacing a draft (${ua.includes("iPhone") ? "iPhone" : "Android"})`, async ({ browser }) => {
+    const context = await browser.newContext({ userAgent: ua, viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, reducedMotion: "reduce" });
+    const page = await context.newPage(); await quiet(page);
+    await page.goto("/sv#playground");
+    const input = page.getByRole("textbox", { name: "Meddelande till BudAI" });
+    await input.fill("Behåll mitt utkast.");
+    await page.locator(".phone-languages").getByRole("button", { name: "EN" }).click();
+    await expect(page).toHaveURL(/\/#playground$/);
+    await expect(page.getByRole("textbox", { name: "Message BudAI" })).toHaveValue("Behåll mitt utkast.");
+    await expect(page.locator("html")).toHaveAttribute("lang", "en");
+    await page.reload();
+    await expect(page.locator("html")).toHaveAttribute("lang", "en");
+    await expect(page.getByRole("heading", { name: /Big site.*Little screen/ })).toBeVisible();
+    await page.locator(".phone-languages").getByRole("button", { name: "SV" }).click();
+    await page.reload();
+    await expect(page.locator("html")).toHaveAttribute("lang", "sv");
+    await expect(page.getByRole("heading", { name: /Stor sajt.*Liten skärm/ })).toBeVisible();
+    await context.close();
+  });
+}
+
+test("switching phone language does not interrupt an active response", async ({ browser }) => {
+  const context = await browser.newContext({ userAgent: iphone, viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, reducedMotion: "reduce" });
+  const page = await context.newPage(); await quiet(page); await page.goto("/sv#playground");
+  await page.evaluate(() => {
+    const original = window.fetch.bind(window);
+    const state = window as Window & { finishMobileStream?: () => void; mobileStreamRequests?: number };
+    state.mobileStreamRequests = 0;
+    window.fetch = async (resource, init) => {
+      if (!String(resource).endsWith("/api/playground")) return original(resource, init);
+      state.mobileStreamRequests = (state.mobileStreamRequests || 0) + 1;
+      const encoder = new TextEncoder();
+      return new Response(new ReadableStream({
+        start(controller) {
+          controller.enqueue(encoder.encode("First part. "));
+          state.finishMobileStream = () => { controller.enqueue(encoder.encode('Second part.\u0000{"memory":null}')); controller.close(); };
+        },
+      }), { headers: { "Content-Type": "text/plain" } });
+    };
+  });
+  await page.getByRole("textbox", { name: "Meddelande till BudAI" }).fill("Fortsätt svara medan jag byter språk.");
+  await page.getByRole("button", { name: "Skicka meddelande" }).click();
+  await expect(page.getByRole("button", { name: "Stoppa svaret" })).toBeVisible();
+  await page.locator(".phone-languages").getByRole("button", { name: "EN" }).click();
+  await expect(page).toHaveURL(/\/#playground$/);
+  await expect(page.getByRole("button", { name: "Stop response" })).toBeVisible();
+  await page.evaluate(() => (window as Window & { finishMobileStream?: () => void }).finishMobileStream?.());
+  await expect(page.locator("#playground").getByText("First part. Second part.", { exact: true })).toBeVisible();
+  expect(await page.evaluate(() => (window as Window & { mobileStreamRequests?: number }).mobileStreamRequests)).toBe(1);
+  await context.close();
 });

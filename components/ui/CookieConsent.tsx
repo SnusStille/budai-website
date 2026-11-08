@@ -17,7 +17,7 @@ import {
  * The choice is written to the shared consent store, which also decides
  * whether Vercel Analytics is allowed to load.
  */
-export default function CookieConsent() {
+export default function CookieConsent({ forceDocumentNavigation = false }: { forceDocumentNavigation?: boolean } = {}) {
   const [visible, setVisible] = useState(false);
   const { t, lang } = useLang();
 
@@ -47,7 +47,7 @@ export default function CookieConsent() {
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 24, opacity: 0 }}
           transition={{ duration: 0.3 }}
-          className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[55] w-[calc(100%-1.5rem)] max-w-md"
+          className={`fixed bottom-4 left-1/2 -translate-x-1/2 z-[55] w-[calc(100%-1.5rem)] max-w-md ${forceDocumentNavigation ? "phone-cookie-dialog" : ""}`}
           role="dialog"
           aria-label={t.cookie.title}
         >
@@ -85,12 +85,12 @@ export default function CookieConsent() {
                 >
                   {t.cookie.decline}
                 </button>
-                <Link
-                  href="/legal/cookies"
-                  className="text-[11px] text-accent-cyan hover:text-white ml-auto"
-                >
-                  {lang === "sv" ? "Mer" : "More"}
-                </Link>
+                {forceDocumentNavigation ? (
+                  /* eslint-disable-next-line @next/next/no-html-link-for-pages -- The phone shell must re-evaluate on document navigation. */
+                  <a href="/legal/cookies" className="text-[11px] text-accent-cyan hover:text-white ml-auto">{lang === "sv" ? "Mer" : "More"}</a>
+                ) : (
+                  <Link href="/legal/cookies" className="text-[11px] text-accent-cyan hover:text-white ml-auto">{lang === "sv" ? "Mer" : "More"}</Link>
+                )}
               </div>
             </div>
           </div>

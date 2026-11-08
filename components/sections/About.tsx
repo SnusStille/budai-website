@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { ArrowRight, BriefcaseBusiness, Code2, MapPin, Sparkles } from "lucide-react";
-import { StilledevMark } from "@/components/ui/BudAILogo";
+import { ArrowRight, Code2 } from "lucide-react";
 import { useLang } from "@/components/ui/LanguageContext";
 import { subscribeJourney } from "@/lib/experience/scroll";
 import ProgressiveEditor from "@/components/experience/ProgressiveEditor";
@@ -28,7 +27,7 @@ export default function About() {
     },
     {
       num: "02",
-      label: sv ? "Live-dashboard" : "Live dashboard",
+      label: "Dashboard",
       prompt: sv
         ? "Designa en strukturerad KPI-dashboard med nyckeltal, trendindikatorer och sammanfattande insikter."
         : "Design a structured KPI dashboard layout with key metrics, trend indicators, and executive takeaways.",
@@ -51,7 +50,8 @@ export default function About() {
 
   const launchArchetypePrompt = (prompt: string) => {
     window.dispatchEvent(new CustomEvent("budai:prompt", { detail: prompt }));
-    document.getElementById("playground")?.scrollIntoView({ behavior: "smooth" });
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    document.getElementById("playground")?.scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth" });
   };
 
   return (
@@ -62,23 +62,17 @@ export default function About() {
             <span className="chapter-label"><i />04 / {sv ? "FRÅN TANKE TILL VERKLIGHET · BYGGAREN" : "FROM THOUGHT TO REALITY · THE BUILDER"}</span>
             <h2 id="builder-title">{sv ? "Från en tanke." : "From a thought."}<br /><span>{sv ? "Till något verkligt." : "To something real."}</span></h2>
             <p>{sv ? "Från en kort specifikation till typsäker kod, gränssnitt och strukturerade arbetsflöden — byggd med samma arkitektur som driver BudAI." : "From a short brief to type-safe code, interfaces, and structured workflows — built with the same architecture that powers BudAI."}</p>
-            <div className="reality-creation-pills" data-thought-to-reality>
+            <div className="builder-byline" aria-label={sv ? "Om Oliver Stille" : "About Oliver Stille"}>
+              <span>STILLEDEV EF <i /> OLIVER STILLE · HELSINGBORG</span>
+              <p>{sv ? "Mötesansvarig och kodare på SkandiaMäklarna." : "Meeting manager and coder at SkandiaMäklarna."}</p>
+            </div>
+            <div className="reality-creation-pills" role="group" aria-label={sv ? "Prova en idé i Playground" : "Try an idea in Playground"} data-thought-to-reality>
+              <span className="builder-ideas-label" aria-hidden="true">{sv ? "PROVA EN IDÉ" : "TRY AN IDEA"} <ArrowRight size={11} /></span>
               {realityPills.map((pill) => (
-                <span
-                  key={pill.num}
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => launchArchetypePrompt(pill.prompt)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      launchArchetypePrompt(pill.prompt);
-                    }
-                  }}
-                >
+                <button key={pill.num} type="button" title={sv ? "Öppnar ett redigerbart exempel i Playground" : "Opens an editable example in Playground"} aria-label={`${pill.label} — ${sv ? "öppna som exempel i Playground" : "open as an example in Playground"}`} onClick={() => launchArchetypePrompt(pill.prompt)}>
                   <b>{pill.num}</b>
                   {pill.label}
-                </span>
+                </button>
               ))}
             </div>
           </div>
@@ -102,21 +96,16 @@ export default function About() {
         </div>
       </div>
 
-      <aside className="builder-person" aria-labelledby="builder-person-title">
-        <div className="builder-person-mark" aria-hidden="true"><StilledevMark size={50} /></div>
-        <div className="builder-person-copy">
-          <span className="builder-person-label"><i /> {sv ? "PERSONEN BAKOM" : "THE PERSON BEHIND"} / STILLEDEV EF</span>
-          <h3 id="builder-person-title">{sv ? <>Hej, jag är <em>Oliver.</em></> : <>Hi, I’m <em>Oliver.</em></>}</h3>
-          <p>{sv ? "Jag heter Oliver Stille och gillar raka besked och idéer som gör vardagen enklare. Jag har tidigare varit företagare och bygger gärna vidare på egna kod- och IT-projekt även på fritiden." : "I’m Oliver Stille. I like straightforward communication and ideas that make everyday life simpler. I’ve previously been an entrepreneur and enjoy building my own coding and IT projects in my spare time."}</p>
-          <div className="builder-person-facts"><span><MapPin size={15} /> Helsingborg, {sv ? "Sverige" : "Sweden"}</span><span><BriefcaseBusiness size={15} /> {sv ? "Mötesansvarig & kodare på SkandiaMäklarna" : "Meeting manager & coder at SkandiaMäklarna"}</span><span><Sparkles size={15} /> AI · {sv ? "kod & kreativa idéer" : "code & creative ideas"}</span></div>
-        </div>
-      </aside>
       <div id="stilledev-labs" className="builder-labs-entry">
-        <div className="builder-labs-icon" aria-hidden="true"><span /><span /><span /></div>
+        <div className="builder-labs-icon" aria-hidden="true">
+          <i className="builder-labs-orbit" /><i className="builder-labs-antenna" />
+          <div className="builder-labs-bot-head"><div className="builder-labs-bot-face"><i /><i /></div></div>
+          <div className="builder-labs-bot-body"><i /></div>
+        </div>
         <div className="builder-labs-copy">
-          <span className="builder-labs-label">04 / {sv ? "EN PLATS FÖR DET SOM BYGGS" : "A SPACE FOR WHAT'S NEXT"}</span>
-          <h3>Labs<span>.</span></h3>
-          <p>{sv ? "Labs är under utveckling. Hälsa på vår lilla byggrobot under tiden." : "Labs is under development. Say hello to our little builder bot in the meantime."}</p>
+          <span className="builder-labs-label">STILLEDEV EF <i /> LABS</span>
+          <div className="builder-labs-title-row"><h3>Labs<span>.</span></h3><span className="builder-labs-status"><i />{sv ? "UNDER UTVECKLING" : "UNDER DEVELOPMENT"}</span></div>
+          <p>{sv ? "Vår lilla byggrobot håller ställningarna medan Labs tar form." : "Our little builder bot is holding the fort while Labs takes shape."}</p>
         </div>
         <a className="builder-labs-link" href={sv ? "/sv/labs" : "/labs"}>{sv ? "Öppna Labs" : "Enter Labs"}<ArrowRight size={16} /></a>
       </div>
