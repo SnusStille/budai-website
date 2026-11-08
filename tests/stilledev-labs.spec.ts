@@ -264,13 +264,16 @@ test("Labs offers a clear return to Builder in Swedish", async ({ page }) => {
   await expect(page.locator("#stilledev-labs").getByRole("heading", { name: "Labs." })).toBeVisible();
 });
 
-test("the static Builder scene does not overlap the heading on desktop", async ({ page }) => {
+test("the static Builder scene follows the heading at desktop sizes and in both languages", async ({ page }) => {
   await quiet(page); await page.emulateMedia({ reducedMotion: "reduce" });
-  for (const width of [1024, 1280, 1440]) {
-    await page.setViewportSize({ width, height: 900 }); await page.goto("/#about");
-    const heading = await page.locator(".builder-heading").boundingBox();
-    const monitor = await page.locator(".fallback-central-screen").boundingBox();
-    expect(heading && monitor && heading.y + heading.height <= monitor.y, `${width}px`).toBeTruthy();
+  for (const path of ["/", "/sv"]) {
+    for (const [width, height] of [[1024, 850], [1280, 900], [1440, 900], [1440, 1000]]) {
+      await page.setViewportSize({ width, height }); await page.goto(`${path}#about`);
+      await page.evaluate(() => document.fonts.ready);
+      const heading = await page.locator(".builder-heading").boundingBox();
+      const monitor = await page.locator(".fallback-central-screen").boundingBox();
+      expect(heading && monitor && heading.y + heading.height + 10 <= monitor.y, `${path} ${width}x${height}`).toBeTruthy();
+    }
   }
 });
 

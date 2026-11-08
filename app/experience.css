@@ -1210,3 +1210,18 @@ html[data-world-state="ready"] .closing-field>i {background:transparent;box-shad
   .builder-heading .builder-byline { margin-top: 3px; }
   .builder-heading .builder-byline p { display: none; }
 }
+
+/* In the static desktop fallback, flow the monitor after the actual heading
+   instead of guessing its height. This also handles font and language changes. */
+@media (min-width:768px) and (min-height:801px) {
+  html:not([data-world-state="ready"]) .builder-sticky { display:flex; flex-direction:column; align-items:center; }
+  html:not([data-world-state="ready"]) .builder-heading { position:relative; top:auto; left:auto; right:auto; width:calc(100% - 48px); margin:96px auto 0; flex:none; }
+  html:not([data-world-state="ready"]) .builder-fallback-workspace { position:relative; top:auto; left:auto; transform:none; margin:20px auto 0; flex:none; }
+  html:not([data-world-state="ready"]) .fallback-central-screen { height:clamp(160px,calc(100svh - 640px),340px); }
+  html:not([data-world-state="ready"]) .fallback-side-screen { height:clamp(130px,calc(100svh - 710px),225px); }
+  html:not([data-world-state="ready"]) .fallback-central-screen .builder-editor { display:flex; flex-direction:column; }
+  html:not([data-world-state="ready"]) .fallback-central-screen .editor-titlebar,
+  html:not([data-world-state="ready"]) .fallback-central-screen .editor-tabs,
+  html:not([data-world-state="ready"]) .fallback-central-screen .editor-statusbar { flex:none; }
+  html:not([data-world-state="ready"]) .fallback-central-screen .editor-source { height:auto; min-height:0; flex:1; }
+}
