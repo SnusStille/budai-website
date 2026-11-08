@@ -115,3 +115,57 @@ test("pristine visitor defaults stay clean after timers: no promotional logo car
   await expect(page.getByText("You made it to the end",{exact:true})).toHaveCount(0);
   await expect(page.locator("#continuation").getByRole("link",{name:"Back to Playground",exact:true})).toBeEnabled();
 });
+
+for (const width of [1440, 390, 320]) test(`the Labs bot waves and winks once during the intro without another canvas (${width}px)`, async ({ page }) => {
+  await page.setViewportSize({ width, height: width === 1440 ? 1000 : width === 320 ? 568 : 844 });
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await instrument(page);
+  await page.goto("/", { waitUntil: "domcontentloaded" });
+  const bot = page.locator("[data-intro-bot]");
+  await expect(bot).toBeVisible({ timeout: 8000 });
+  await expect(bot.locator(".labs-bot")).toHaveAttribute("data-emote", "hello");
+  await expect(bot.locator("canvas")).toHaveCount(0);
+  await expect(page.locator("[data-brain-canvas]")).toHaveCount(1);
+  expect(await bot.locator(".labs-bot-arm.right").evaluate(el => getComputedStyle(el).animationName)).toBe("bot-wave");
+  expect(await bot.locator(".labs-bot-face > i:nth-child(2)").evaluate(el => getComputedStyle(el).animationName)).toBe("bot-wink");
+  const robotBox = await bot.boundingBox();
+  const skipBox = await page.getByRole("button", { name: /Skip intro/ }).boundingBox();
+  expect(robotBox && skipBox && robotBox.y + robotBox.height < skipBox.y).toBeTruthy();
+  await page.waitForTimeout(700);
+  const greeting = await bot.boundingBox();
+  const nameplate = await page.locator(".opening-identity-stage").boundingBox();
+  expect(greeting && nameplate && (greeting.x + greeting.width <= nameplate.x || greeting.x >= nameplate.x + nameplate.width || greeting.y + greeting.height <= nameplate.y || greeting.y >= nameplate.y + nameplate.height)).toBeTruthy();
+  await page.screenshot({ path: `test-results/intro-bot-${width}.png` });
+  await settledHero(page);
+  await expect(bot).toHaveCount(0);
+  await page.reload(); await settledHero(page); await expect(bot).toHaveCount(0);
+  await verify(page);
+});
+
+test("intro greeting never runs for reduced motion, save-data, or skipped visits", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" }); await instrument(page); await page.goto("/");
+  await settledHero(page, false); await expect(page.locator("[data-intro-bot]")).toHaveCount(0);
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.addInitScript(() => { sessionStorage.removeItem("budai:cinematic-intro:v1"); Object.defineProperty(navigator, "connection", { value: { saveData: true }, configurable: true }); });
+  await page.reload(); await settledHero(page, false); await expect(page.locator("[data-intro-bot]")).toHaveCount(0);
+});
+
+
+test("the greeting immediately gives way to Skip and a mid-intro reduced-motion change", async ({ browser }) => {
+  for (const action of ["skip", "reduce"] as const) {
+    const context = await browser.newContext({ reducedMotion: "no-preference" });
+    const page = await context.newPage(); await instrument(page);
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await expect(page.locator("[data-intro-bot]")).toBeVisible();
+    if (action === "skip") {
+      await page.getByRole("button", { name: /Skip intro/ }).click();
+      await expect(page.locator("#main")).toBeFocused();
+    } else {
+      await page.emulateMedia({ reducedMotion: "reduce" });
+    }
+    await expect(page.locator("[data-global-loader]")).toHaveCount(0);
+    await expect(page.locator("[data-intro-bot]")).toHaveCount(0);
+    await expect(page.locator("#main")).not.toHaveAttribute("inert");
+    await context.close();
+  }
+});

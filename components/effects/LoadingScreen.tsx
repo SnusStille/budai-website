@@ -4,11 +4,14 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { markIntroDone } from "./introState";
 import BrainPoster from "./BrainPoster";
+import LabsMascot, { type MascotGesture } from "@/components/sections/LabsMascot";
 import { INTRO_MS, INTRO_REVEAL_MS, INTRO_READY_MS, INTRO_SESSION_KEY } from "@/lib/experience/intro";
 import { refreshJourney, subscribeJourney } from "@/lib/experience/scroll";
 import { clamp, smooth } from "@/lib/experience/timeline";
 import type { BrainDriver } from "./BrainFlight";
 import type { BrainMotion } from "@/lib/experience/brain";
+
+const INTRO_HELLO: MascotGesture = { id: 1, kind: "hello" };
 
 const useClientLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
@@ -419,6 +422,11 @@ export default function LoadingScreen() {
               <span className="opening-identity-sub">DEVELOPED BY STILLEDEV · SWEDEN</span>
             </div>
           </div>
+          {phase === "playing" && <div className="opening-bot-peek" data-intro-bot aria-hidden="true">
+            <span className="opening-bot-orbit" />
+            <LabsMascot companion staticOnly gesture={INTRO_HELLO} />
+            <span className="opening-bot-label"><i /> BUILDER BOT</span>
+          </div>}
           <div className="opening-caption">
             <span>01 SPARK → 02 PLAYGROUND → 03 WORKSHOP &amp; ATLAS</span>
             <button type="button" onClick={() => finish.current()}>
