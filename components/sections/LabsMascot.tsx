@@ -2,10 +2,21 @@
 
 import { useEffect, useRef, useState } from "react";
 
-/** A small decorative robot. Reduced motion, save-data and WebGL failure use CSS art. */
-export default function LabsMascot() {
+export type MascotGesture = { id: number; kind: "hello" | "wink" };
+
+/** The same Builder Bot in Labs and on the homepage; no WebGL on reduced motion or save-data. */
+export default function LabsMascot({ companion = false, gesture = null }: { companion?: boolean; gesture?: MascotGesture | null } = {}) {
   const host = useRef<HTMLDivElement>(null);
   const [ready, setReady] = useState(false);
+  // Updating an expression must not tear down and recreate the WebGL scene.
+  const gestureRef = useRef<{ kind: MascotGesture["kind"]; started: number } | null>(null);
+  const previousGesture = useRef(gesture?.id);
+  useEffect(() => {
+    if (gesture && gesture.id !== previousGesture.current) {
+      previousGesture.current = gesture.id;
+      gestureRef.current = { kind: gesture.kind, started: performance.now() };
+    }
+  }, [gesture]);
 
   useEffect(() => {
     const el = host.current;
@@ -21,7 +32,7 @@ export default function LabsMascot() {
       if (disposed || motion.matches || teardown) return;
       let renderer: import("three").WebGLRenderer;
       try { renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: "low-power" }); } catch { return; }
-      renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 1.5));
+      renderer.setPixelRatio(Math.min(devicePixelRatio || 1, companion ? 1.25 : 1.5));
       renderer.setClearColor(0x000000, 0);
       el.appendChild(renderer.domElement);
       const scene = new THREE.Scene();
@@ -37,26 +48,29 @@ export default function LabsMascot() {
         const ball = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 24), material);
         ball.scale.set(...scale); ball.position.set(...position); parent.add(ball); return ball;
       };
-      // Rounded head, glass face, bright eyes and an antenna.
-      addBall(robot, shell, [1.08, .82, .72], [0, .7, 0]);
-      addBall(robot, dark, [.88, .53, .16], [0, .7, .62]);
+      // One shared robot for Labs and the companion. The head pivots as a unit.
+      const head = new THREE.Group(); head.position.y = .7; robot.add(head);
+      addBall(head, shell, [1.08, .82, .72], [0, 0, 0]);
+      addBall(head, dark, [.88, .53, .16], [0, 0, .62]);
       const eyes = [
-        addBall(robot, glow, [.11, .13, .06], [-.33, .77, .77]),
-        addBall(robot, glow, [.11, .13, .06], [.33, .77, .77]),
+        addBall(head, glow, [.11, .13, .06], [-.33, .07, .77]),
+        addBall(head, glow, [.11, .13, .06], [.33, .07, .77]),
       ];
       const smileCurve = new THREE.EllipseCurve(0, 0, .19, .12, Math.PI * 1.1, Math.PI * 1.9, false, 0);
       const smileGeometry = new THREE.BufferGeometry().setFromPoints(smileCurve.getPoints(24).map(p => new THREE.Vector3(p.x, p.y, .79)));
-      const smile = new THREE.Line(smileGeometry, new THREE.LineBasicMaterial({ color: 0x8ceeff })); smile.position.y = .53; robot.add(smile);
-      const antenna = new THREE.Mesh(new THREE.CylinderGeometry(.025, .025, .4, 12), joint); antenna.position.set(0, 1.63, 0); robot.add(antenna);
-      addBall(robot, glow, [.09, .09, .09], [0, 1.86, 0]);
-      addBall(robot, joint, [.16, .22, .2], [-1.05, .7, 0]); addBall(robot, joint, [.16, .22, .2], [1.05, .7, 0]);
+      const smile = new THREE.Line(smileGeometry, new THREE.LineBasicMaterial({ color: 0x8ceeff })); smile.position.y = -.17; head.add(smile);
+      const antenna = new THREE.Mesh(new THREE.CylinderGeometry(.025, .025, .4, 12), joint); antenna.position.set(0, .93, 0); head.add(antenna);
+      addBall(head, glow, [.09, .09, .09], [0, 1.16, 0]);
+      addBall(head, joint, [.16, .22, .2], [-1.05, 0, 0]); addBall(head, joint, [.16, .22, .2], [1.05, 0, 0]);
       // Small body, arms and feet: a friendly little work-in-progress companion.
       addBall(robot, shell, [.68, .72, .48], [0, -.48, 0]);
       addBall(robot, dark, [.37, .25, .08], [0, -.42, .45]);
       addBall(robot, glow, [.085, .085, .035], [0, -.42, .52]);
       const leftArm = addBall(robot, shell, [.22, .52, .22], [-.78, -.46, 0]); leftArm.rotation.z = -.48;
-      const rightArm = addBall(robot, shell, [.22, .52, .22], [.78, -.46, 0]); rightArm.rotation.z = .48;
-      addBall(robot, joint, [.23, .23, .23], [-.97, -.83, .05]); addBall(robot, joint, [.23, .23, .23], [.97, -.83, .05]);
+      const rightArm = new THREE.Group(); rightArm.position.set(.69, -.12, 0); rightArm.rotation.z = .48; robot.add(rightArm);
+      addBall(rightArm, shell, [.22, .52, .22], [.08, -.34, 0]);
+      addBall(rightArm, joint, [.23, .23, .23], [.08, -.76, .05]);
+      addBall(robot, joint, [.23, .23, .23], [-.97, -.83, .05]);
       addBall(robot, shell, [.28, .18, .34], [-.36, -1.25, .08]); addBall(robot, shell, [.28, .18, .34], [.36, -1.25, .08]);
       const ring = new THREE.Mesh(new THREE.TorusGeometry(1.75, .012, 8, 120), new THREE.MeshBasicMaterial({ color: 0x70d9eb, transparent: true, opacity: .35 }));
       ring.rotation.x = Math.PI / 2.6; ring.position.y = -1.4; scene.add(ring);
@@ -69,24 +83,39 @@ export default function LabsMascot() {
       scene.add(new THREE.AmbientLight(0xbcecff, 1.6));
       const light = new THREE.PointLight(0x8cf2ff, 45, 25); light.position.set(3, 4, 5); scene.add(light);
       const violet = new THREE.PointLight(0x8674ff, 32, 20); violet.position.set(-4, 1, 1); scene.add(violet);
-      let frame = 0, visible = false, pointerX = 0, pointerY = 0;
+      let frame = 0, visible = false, pointerX = 0, pointerY = 0, lastDraw = 0;
       const pointer = (event: PointerEvent) => { if (event.pointerType === "touch") return; const rect = el.getBoundingClientRect(); pointerX = (event.clientX - rect.left) / rect.width - .5; pointerY = (event.clientY - rect.top) / rect.height - .5; };
       const leave = () => { pointerX = 0; pointerY = 0; };
       const draw = () => {
         if (disposed || !visible || document.hidden) return;
-        const t = performance.now() * .001;
+        const now = performance.now();
+        if (companion && now - lastDraw < 40) { frame = requestAnimationFrame(draw); return; }
+        lastDraw = now;
+        const t = now * .001;
         robot.position.y = Math.sin(t * 1.15) * .08; robot.rotation.y += (pointerX * .35 - robot.rotation.y) * .025;
         robot.rotation.x += (-pointerY * .2 - robot.rotation.x) * .025;
         robot.rotation.z = Math.sin(t * .65) * .025;
         leftArm.rotation.z = -.48 + Math.sin(t * .8) * .045;
-        rightArm.rotation.z = .48 - Math.sin(t * .8) * .045;
+        // In the companion, gestures are scheduled by the UI only while visible.
+        // Labs keeps its own occasional wave; the geometry is shared unchanged.
+        const elapsed = gestureRef.current ? (now - gestureRef.current.started) / 1000 : -1;
+        const hello = companion && gestureRef.current?.kind === "hello";
+        const waveTime = companion ? (hello ? elapsed : -1) : (t + 3) % 23;
+        const waveEnvelope = waveTime >= 0 && waveTime < 2.4 ? Math.sin(Math.PI * waveTime / 2.4) : 0;
+        rightArm.rotation.z = .48 + waveEnvelope * (1.65 + Math.sin(waveTime * 7) * .22);
+        head.rotation.z = Math.sin(t * .48) * .045 - waveEnvelope * .08;
+        head.rotation.y = Math.sin(t * .37) * .07;
         const blinkPhase = (t + 2.4) % 7;
         const blink = blinkPhase < .18 ? 1 - Math.sin(Math.PI * blinkPhase / .18) * .88 : 1;
-        eyes.forEach(eye => { eye.scale.y = .13 * blink; });
+        const winkStart = hello ? .8 : .35;
+        const winkPhase = elapsed - winkStart;
+        const wink = companion && winkPhase >= 0 && winkPhase < .38 ? 1 - Math.sin(Math.PI * winkPhase / .38) * .92 : 1;
+        eyes[0].scale.y = .13 * blink;
+        eyes[1].scale.y = .13 * blink * wink;
         ring.rotation.z = t * .08; sparks.rotation.y = t * .08;
         renderer.render(scene, camera); frame = requestAnimationFrame(draw);
       };
-      const resize = () => { const { width, height } = el.getBoundingClientRect(); if (!width || !height) return; renderer.setSize(width, height, false); camera.aspect = width / height; camera.position.z = width < 400 ? 9.5 : 8.6; camera.updateProjectionMatrix(); };
+      const resize = () => { const { width, height } = el.getBoundingClientRect(); if (!width || !height) return; renderer.setSize(width, height, false); camera.aspect = width / height; camera.position.z = companion ? 7.4 : width < 400 ? 9.5 : 8.6; camera.updateProjectionMatrix(); };
       const observer = new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; cancelAnimationFrame(frame); if (visible && !document.hidden) draw(); });
       const onVisibility = () => { cancelAnimationFrame(frame); if (visible && !document.hidden) draw(); };
       const onLost = (event: Event) => { event.preventDefault(); teardown?.(); };
@@ -106,7 +135,7 @@ export default function LabsMascot() {
     const onMotion = () => { if (motion.matches) teardown?.(); else void start(); };
     motion.addEventListener("change", onMotion); void start();
     return () => { disposed = true; motion.removeEventListener("change", onMotion); teardown?.(); };
-  }, []);
+  }, [companion]);
 
-  return <div ref={host} className={`labs-bot ${ready ? "is-rendered" : ""}`} aria-hidden="true"><div className="labs-bot-halo" /><div className="labs-bot-fallback"><i className="labs-bot-antenna" /><div className="labs-bot-head"><div className="labs-bot-face"><i /><i /><span /></div></div><div className="labs-bot-body"><i /></div><i className="labs-bot-orbit" /></div></div>;
+  return <div ref={host} className={`labs-bot ${ready ? "is-rendered" : ""}`} data-emote={gesture?.kind} aria-hidden="true"><div className="labs-bot-halo" /><div className="labs-bot-fallback"><i className="labs-bot-antenna" /><div className="labs-bot-head"><div className="labs-bot-face"><i /><i /><span /></div></div><i className="labs-bot-arm left" /><i className="labs-bot-arm right" /><div className="labs-bot-body"><i /></div><i className="labs-bot-foot left" /><i className="labs-bot-foot right" /><i className="labs-bot-orbit" /></div></div>;
 }

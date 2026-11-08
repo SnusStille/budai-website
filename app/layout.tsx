@@ -5,6 +5,8 @@ import "@fontsource-variable/jetbrains-mono";
 import "./globals.css";
 import "./experience.css";
 import "./phone-welcome.css";
+import "./mascot.css";
+import "./companion.css";
 import Providers from "@/components/Providers";
 import VercelAnalytics from "@/components/VercelAnalytics";
 import { introBootstrap } from "@/lib/experience/intro";

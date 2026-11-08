@@ -364,6 +364,10 @@ for (const ua of [iphone, android]) {
     const page = await context.newPage(); await quiet(page);
     await page.goto("/sv#playground");
     const input = page.getByRole("textbox", { name: "Meddelande till BudAI" });
+    // fill() can bypass an inert SSR shell before React hydrates. A real user
+    // must first be able to focus the composer after the session notice closes.
+    await expect(page.locator(".phone-welcome")).not.toHaveAttribute("inert", "");
+    await input.click();
     await input.fill("Behåll mitt utkast.");
     await page.locator(".phone-languages").getByRole("button", { name: "EN" }).click();
     await expect(page).toHaveURL(/\/#playground$/);
