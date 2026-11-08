@@ -122,7 +122,7 @@ test("a visible companion waves and winks every 30 seconds without opening a new
   const bot = buddy.locator(".labs-bot"); await expect(bot).toBeVisible();
   await page.clock.fastForward(30010);
   await expect(bot).toHaveAttribute("data-emote", "hello");
-  await expect(buddy.locator(".companion-hello")).toHaveText(/HI!/);
+  await expect(buddy.locator(".companion-hello")).toHaveCount(0); // automatic gestures never produce a speech bubble
   await expect(buddy.locator(".companion-note")).toHaveCount(0);
   expect(await bot.locator(".labs-bot-arm.right").evaluate(el => getComputedStyle(el).animationName)).toBe("bot-wave");
   await page.clock.fastForward(2800); await expect(bot).not.toHaveAttribute("data-emote", /.+/);
@@ -211,4 +211,85 @@ test("rapid repeated hellos restart the fallback animation without disturbing th
   await hi.click(); await expect(bot).toHaveAttribute("data-emote-phase", "0");
   expect(await arm.evaluate(el => getComputedStyle(el).animationName)).toBe("bot-wave-again");
   await expect(buddy.locator(".companion-message")).toHaveText("Hi! Ready when you are.");
+});
+
+test("the shared companion winks on request, including repeated fallback gestures", async ({ page }) => {
+  await quiet(page); await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.addInitScript(() => Object.defineProperty(navigator, "connection", { value: { saveData: true }, configurable: true }));
+  await page.clock.install(); await page.goto("/"); await page.clock.fastForward(7200);
+  const buddy = page.locator("[data-builder-companion]"); await expect(buddy).toBeVisible();
+  await buddy.getByRole("button", { name: "Meet the BudAI companion" }).click();
+  const bot = buddy.locator(".labs-bot");
+  const wink = buddy.getByRole("button", { name: "Wink" });
+  await wink.click();
+  await expect(buddy.locator(".companion-message")).toHaveText("One eye on the details.");
+  await expect(buddy.getByRole("status")).toHaveText("One eye on the details.");
+  await expect(bot).toHaveAttribute("data-emote", "wink");
+  await expect(bot).toHaveAttribute("data-emote-phase", "1");
+  await wink.click(); await expect(bot).toHaveAttribute("data-emote-phase", "0");
+  expect(await bot.locator(".labs-bot-face > i:nth-child(2)").evaluate(el => getComputedStyle(el).animationName)).toBe("bot-wink-again");
+});
+
+test("small phones show the real bot without covering the heading, and keep chat controls usable", async ({ browser }) => {
+  const context = await browser.newContext({ userAgent: iphone, viewport: { width: 320, height: 568 }, isMobile: true, hasTouch: true, reducedMotion: "reduce" });
+  const page = await context.newPage(); await quiet(page); await page.goto("/");
+  const notice = page.locator(".desktop-notice");
+  await expect(notice.locator(".desktop-notice-mascot .labs-bot-fallback")).toBeVisible();
+  await expect(notice.locator(".desktop-notice-mascot canvas")).toHaveCount(0);
+  const confirmBox = await notice.getByRole("button", { name: "I understand, continue" }).boundingBox();
+  const dialogBox = await notice.boundingBox();
+  expect(confirmBox && dialogBox && confirmBox.y + confirmBox.height <= dialogBox.y + dialogBox.height).toBeTruthy();
+  await page.screenshot({ path: "test-results/phone-notice-small.png" });
+  await notice.getByRole("button", { name: "I understand, continue" }).click();
+  const buddy = page.locator("[data-builder-companion]"); await expect(buddy).toBeVisible({ timeout: 12000 });
+  const launcher = await buddy.locator(".companion-launcher").boundingBox();
+  const heading = await page.locator("#phone-heading").boundingBox();
+  expect(launcher && heading && launcher.y + launcher.height <= heading.y).toBeTruthy();
+  await expect(buddy.locator(".labs-bot-fallback")).toBeVisible();
+  await page.screenshot({ path: "test-results/phone-hero-small.png" });
+  await buddy.getByRole("button", { name: "Meet the BudAI companion" }).click();
+  await buddy.getByRole("button", { name: "Wink" }).click();
+  await expect(buddy.locator(".companion-message")).toHaveText("One eye on the details.");
+  await expect(buddy.locator(".labs-bot")).not.toHaveAttribute("data-emote", /.+/);
+  await page.screenshot({ path: "test-results/phone-bot-small.png" });
+  await buddy.getByRole("link", { name: "Enter Playground" }).click();
+  await expect(buddy).toHaveCount(0);
+  const modes = page.getByRole("group", { name: "Choose mode" });
+  const modeHeight = await modes.getByRole("button", { name: "2 angles" }).evaluate(el => el.getBoundingClientRect().height);
+  expect(modeHeight).toBeGreaterThanOrEqual(44);
+  await modes.getByRole("button", { name: "2 angles" }).click();
+  await expect(modes.getByRole("button", { name: "2 angles" })).toHaveAttribute("aria-pressed", "true");
+  await page.getByRole("group", { name: "Answer language" }).getByRole("button", { name: "SV" }).click();
+  await expect(page.getByRole("group", { name: "Answer language" }).getByRole("button", { name: "SV" })).toHaveAttribute("aria-pressed", "true");
+  await page.screenshot({ path: "test-results/phone-chat-small.png" });
+  const composer = page.getByRole("textbox", { name: "Message BudAI", exact: true });
+  await composer.click(); await composer.fill("A real draft on a small screen");
+  await expect(composer).toHaveValue("A real draft on a small screen");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
+  await context.close();
+});
+
+test("phone entry lands on the working composer without summoning the keyboard", async ({ browser }) => {
+  for (const [width, height] of [[320, 568], [390, 844]]) {
+    const context = await browser.newContext({ userAgent: iphone, viewport: { width, height }, isMobile: true, hasTouch: true, reducedMotion: "reduce" });
+    const page = await context.newPage(); await quiet(page);
+    await page.addInitScript(() => sessionStorage.setItem("stilledev:desktop-notice:v1", "seen"));
+    await page.goto("/");
+    await page.getByRole("link", { name: "Open Playground" }).click();
+    await expect(page).toHaveURL(/#phone-chat$/);
+    const input = page.getByRole("textbox", { name: "Message BudAI", exact: true });
+    await expect(input).toBeInViewport({ ratio: 1 });
+    await expect(input).not.toBeFocused();
+    await expect(page.locator("html")).not.toHaveAttribute("data-pg-keyboard", "open");
+    await expect(page.locator(".phone-empty-welcome")).toBeInViewport();
+    await page.screenshot({ path: `test-results/phone-chat-entry-${width}.png` });
+    let requests = 0; page.on("request", req => { if (req.url().endsWith("/api/playground")) requests++; });
+    await page.getByRole("button", { name: "Start with: Plan my day" }).click();
+    await expect(input).toHaveValue(/6 hours/);
+    expect(requests).toBe(0);
+    page.once("dialog", dialog => dialog.dismiss());
+    await page.getByRole("button", { name: "Start with: Create" }).click();
+    await expect(input).toHaveValue(/6 hours/);
+    await context.close();
+  }
 });

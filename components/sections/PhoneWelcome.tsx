@@ -57,7 +57,7 @@ export default function PhoneWelcome({ normalizeLanguagePath = false }: { normal
             <div className="phone-monitor" aria-hidden="true"><Monitor size={24} strokeWidth={1.5} /></div>
             <div><strong>{sv ? "Dator behövs för resten" : "Computer needed for the rest"}</strong><span>{sv ? "Men du kan chatta här, direkt." : "But you can chat right here."}</span></div>
           </div>
-          <a className="phone-jump" href="#playground">{sv ? "Öppna Playground" : "Open Playground"}<ArrowDown size={17} aria-hidden="true" /></a>
+          <a className="phone-jump" href="#phone-chat">{sv ? "Öppna Playground" : "Open Playground"}<ArrowDown size={17} aria-hidden="true" /></a>
           <div className="phone-hero-foot"><span>{sv ? "INGEN STOR SKÄRM? INGEN PANIK." : "NO BIG SCREEN? NO BIG DEAL."}</span><span>01 / 01</span></div>
         </section>
 

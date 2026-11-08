@@ -103,3 +103,56 @@ html[data-pg-keyboard="open"] .phone-welcome [data-playground-surface].fixed { h
 .desktop-notice button:focus-visible { outline:2px solid #f5df9c; outline-offset:3px; }
 .desktop-notice-after { display:flex; justify-content:space-between; margin-top:14px; color:#87a4aa; font:700 8px/1.3 var(--font-jetbrains),monospace; letter-spacing:.09em; }
 @media (max-height:700px) { .desktop-notice-art { height:86px; } .desktop-notice-screen { width:58px; height:58px; } .desktop-notice-screen>svg:first-child { width:32px; } .desktop-notice-body { padding-top:16px; } }
+
+/* A static version of the actual Labs bot welcomes visitors without a second WebGL scene. */
+.desktop-notice-screen { position:absolute; left:32%; top:50%; transform:translate(-50%,-50%) rotate(-7deg); }
+.desktop-notice-mascot { position:absolute; left:68%; top:50%; width:120px; height:128px; transform:translate(-50%,-50%); }
+.desktop-notice-mascot .labs-bot-fallback { transform:translate(-50%,-48%) scale(.43); }
+.desktop-notice-mascot .labs-bot-halo { filter:blur(12px); }
+@media(max-height:700px) { .desktop-notice-mascot { width:90px; height:90px; } .desktop-notice-mascot .labs-bot-fallback { transform:translate(-50%,-48%) scale(.31); } }
+
+/* Keep all modes available in one touch-scrollable row and the answer controls visible. */
+.phone-intent-list { display:flex; flex:1 1 100%; gap:6px; overflow-x:auto; overscroll-behavior-inline:contain; scrollbar-width:thin; scrollbar-color:#55838b transparent; padding:0 0 4px; }
+.phone-intent-list button { flex:none; min-height:44px; padding-inline:12px; white-space:nowrap; }
+.phone-intent-list button[aria-pressed="true"] { background:#183c44; border-color:#78bdbd; }
+.phone-welcome [data-phone-answer-controls] { margin-left:0; }
+.phone-welcome [data-phone-answer-controls] button { min-height:44px; min-width:44px; }
+.phone-welcome [data-phone-answer-controls] [aria-pressed="true"] { background:#b9eaf0; color:#06151b; }
+.phone-welcome [data-phone-empty] { justify-content:flex-start; min-height:0; padding-top:22px; text-align:center; }
+.phone-welcome [data-phone-empty] > div:nth-child(2) { margin-bottom:12px; }
+.phone-welcome [data-phone-empty] > p { margin-bottom:16px; }
+/* Reserve the small upper-right pocket for the companion, even at 320px. */
+.phone-hero h1 { margin-top:30px; }
+/* Keep the acknowledgement and its action together on short phone screens. */
+@media(max-height:650px) {
+  .desktop-notice-top { padding:8px 16px; }
+  .desktop-notice-top .phone-languages button { min-height:36px; }
+  .desktop-notice-art { height:68px; }
+  .desktop-notice-mascot { width:76px; height:76px; }
+  .desktop-notice-mascot .labs-bot-fallback { transform:translate(-50%,-48%) scale(.26); }
+  .desktop-notice-screen { width:50px; height:50px; border-radius:15px; }
+  .desktop-notice-body { padding:12px 18px 14px; }
+  .desktop-notice h2 { margin:7px 0 8px; font-size:30px; }
+  .desktop-notice-body>p#desktop-notice-description { font-size:12px; line-height:1.45; }
+  .desktop-notice-card { margin-top:10px; padding:10px; }
+  .desktop-notice-card p { margin:6px 0 4px; }
+  .desktop-notice-card .desktop-notice-labs { margin-top:3px; }
+  .desktop-notice-confirm { min-height:48px; margin-top:10px; }
+  .desktop-notice-after { margin-top:8px; }
+}
+.phone-intent-list button[aria-pressed="true"] { color:#e8fbfc; }
+.phone-welcome [data-phone-mode-hint] { color:#a2bbc2; }
+.phone-mode-swipe { flex:none; margin-left:auto; color:#a9c5c8; font-size:10px; white-space:nowrap; }
+/* Jump straight to the working chat, including its composer, on a small screen. */
+.phone-welcome #phone-chat { scroll-margin-top:8px; }
+/* Phones have no fixed desktop navigation, so do not reserve its 80px offset. */
+html:has(.phone-welcome) { scroll-padding-top:0; }
+/* A focused welcome makes the real composer and editable starters obvious. */
+.phone-empty-welcome { position:relative; width:100%; text-align:left; padding:0 0 14px; }
+.phone-empty-welcome > span { color:#8cc8ca; font:700 9px/1.3 var(--font-jetbrains),monospace; letter-spacing:.1em; }
+.phone-empty-welcome h3 { margin:7px 0 3px; color:#f3faf9; font-size:19px; font-weight:700; letter-spacing:-.04em; line-height:1.2; }
+.phone-empty-welcome p { color:#aec2c6; font-size:12px; line-height:1.4; }
+.phone-quick-ideas { display:flex; gap:6px; overflow-x:auto; margin-top:10px; padding-bottom:2px; scrollbar-width:thin; }
+.phone-quick-ideas button { flex:none; min-height:44px; padding:0 10px; border:1px solid #5b929666; border-radius:10px; color:#d9f1ef; background:#17353a; font-size:11px; font-weight:650; white-space:nowrap; }
+.phone-quick-ideas button:focus-visible { outline:2px solid #f5df9c; outline-offset:-3px; }
+.phone-empty-welcome small { display:block; margin-top:6px; color:#a1bbbd; font-size:10px; }

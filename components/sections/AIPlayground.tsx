@@ -974,9 +974,11 @@ export default function AIPlayground({ phoneOnly = false }: { phoneOnly?: boolea
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
+    // An empty phone conversation starts at its welcome, not halfway down its ideas.
+    if (phoneOnly && messages.length === 0 && activity === "idle") { el.scrollTop = 0; stickRef.current = true; return; }
     if (messages[messages.length - 1]?.role === "user") stickRef.current = true;
     if (stickRef.current) el.scrollTop = el.scrollHeight; // don't yank the view if the reader scrolled up
-  }, [messages, typingText, activity]);
+  }, [messages, typingText, activity, phoneOnly]);
 
   const authHeaders = useCallback(async (): Promise<HeadersInit> => {
     const h: Record<string, string> = { "Content-Type": "application/json" };
@@ -2152,6 +2154,7 @@ export default function AIPlayground({ phoneOnly = false }: { phoneOnly?: boolea
 
         <PlaygroundArrival expanded={expanded} overlay={voiceOpen||showShortcuts||!!lightbox||mobileDrawer||memoryOpen}>
           <div
+            id={phoneOnly ? "phone-chat" : undefined}
             data-playground-surface
             className={`playground-surface rounded-2xl sm:rounded-3xl overflow-hidden border border-white/[0.12] bg-[#05050a]/98 shadow-[0_0_100px_rgba(0,229,255,0.12),0_40px_80px_rgba(0,0,0,0.45)] flex ${
               expanded
@@ -2331,6 +2334,7 @@ export default function AIPlayground({ phoneOnly = false }: { phoneOnly?: boolea
               {/* Intent + controls strip — ChatGPT/Claude/Perplexity-inspired, honest */}
               <div className="flex flex-col gap-2 px-2.5 sm:px-3 py-2 border-b border-white/[0.06] bg-gradient-to-b from-black/35 to-black/15 shrink-0">
                 <div className="flex flex-wrap items-center gap-1.5">
+                  <div className={phoneOnly ? "phone-intent-list" : "contents"} role={phoneOnly ? "group" : undefined} aria-label={phoneOnly ? (lang === "sv" ? "Välj läge" : "Choose mode") : undefined}>
                   {(INTENT_PRESETS[lang] || INTENT_PRESETS.en).map((it) => (
                     <button
                       key={it.id}
@@ -2350,7 +2354,8 @@ export default function AIPlayground({ phoneOnly = false }: { phoneOnly?: boolea
                       {it.label}
                     </button>
                   ))}
-                  <div className="ml-auto flex items-center gap-1.5">
+                  </div>
+                  <div className="ml-auto flex items-center gap-1.5" data-phone-answer-controls={phoneOnly || undefined}>
                     <span className="hidden sm:inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-mono text-accent-cyan/80 border border-accent-cyan/20 bg-accent-cyan/5">
                       <span className="w-1.5 h-1.5 rounded-full bg-accent-green animate-pulse" />
                       {modelOptions.length>1?<select aria-label={lang==="sv"?"AI-modell":"AI model"} value={modelTier} onChange={e=>{const id=e.target.value as "quality"|"fast"|"deep";setModelTier(id);try{localStorage.setItem("budai_model_tier",id);}catch{/* optional */}}} className="pg-model-picker">{modelOptions.map(o=><option key={o.id} value={o.id}>{lang==="sv"?({quality:"Kvalitet",fast:"Snabb",deep:"Djup"}[o.id]):o.label}</option>)}</select>:"BudAI Core"}
@@ -2379,6 +2384,8 @@ export default function AIPlayground({ phoneOnly = false }: { phoneOnly?: boolea
                     <button
                       type="button"
                       onClick={() => setMode((m) => (m === "concise" ? "single" : "concise"))}
+                      aria-pressed={mode === "concise"}
+                      data-phone-short={phoneOnly || undefined}
                       className={`px-2 py-1 rounded-lg text-[10px] font-medium border ${
                         mode === "concise"
                           ? "border-accent-purple/40 text-accent-purple bg-accent-purple/10"
@@ -2390,12 +2397,13 @@ export default function AIPlayground({ phoneOnly = false }: { phoneOnly?: boolea
                     </button>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 text-[10px] text-muted/50 px-0.5">
+                <div data-phone-mode-hint={phoneOnly || undefined} className="flex items-center gap-2 text-[10px] text-muted/50 px-0.5">
                   <Globe2 className="w-3 h-3" />
                   <span className="truncate">
                     {(INTENT_PRESETS[lang] || INTENT_PRESETS.en).find((x) => x.id === intentId)?.hint ||
                       (lang === "sv" ? "Välj läge ovan" : "Pick a mode above")}
                   </span>
+                  {phoneOnly && <span className="phone-mode-swipe" aria-hidden="true">↔ {lang === "sv" ? "Dra" : "Swipe"}</span>}
                   <span className="ml-auto font-mono text-muted/40 hidden sm:inline">
                     {lang === "sv" ? "⌘/ genvägar · ⌘K meny" : "⌘/ shortcuts · ⌘K menu"}
                   </span>
@@ -2417,11 +2425,22 @@ export default function AIPlayground({ phoneOnly = false }: { phoneOnly?: boolea
                 style={{ WebkitOverflowScrolling: "touch" }}
               >
                 {isEmpty && (
-                  <div className="flex flex-col items-center justify-center min-h-[300px] sm:min-h-[380px] px-2 relative">
+                  <div data-phone-empty={phoneOnly || undefined} className="flex flex-col items-center justify-center min-h-[300px] sm:min-h-[380px] px-2 relative">
                     <div className="absolute inset-0 pointer-events-none opacity-40">
                       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-full bg-accent-cyan/10 blur-3xl" />
                       <div className="absolute top-1/3 left-1/3 w-40 h-40 rounded-full bg-accent-purple/10 blur-3xl" />
                     </div>
+                    {phoneOnly ? <div className="phone-empty-welcome">
+                      <span>BUDAI / {lang === "sv" ? "FÖRHANDSVISNING" : "PREVIEW"}</span>
+                      <h3>{lang === "sv" ? "Vad skapar vi idag?" : "What shall we make?"}</h3>
+                      <p>{lang === "sv" ? "Skriv nedan eller börja med en idé." : "Write below or start with an idea."}</p>
+                      <div className="phone-quick-ideas" role="group" aria-label={lang === "sv" ? "Snabba idéer" : "Quick ideas"}>
+                        {caps.filter(c => c.icon === "create" || c.icon === "analyze" || c.icon === "plan").map(c =>
+                          <button key={c.icon} type="button" aria-label={`${lang === "sv" ? "Börja med" : "Start with"}: ${c.title}`} onClick={() => replaceComposer(c.prompt)}>{c.title}</button>
+                        )}
+                      </div>
+                      <small>{lang === "sv" ? "Fler idéer nedanför ↓" : "More ideas below ↓"}</small>
+                    </div> : <>
                     <div className="mb-6 relative">
                       <BudAILogo size="xl" animated />
                     </div>
@@ -2437,6 +2456,7 @@ export default function AIPlayground({ phoneOnly = false }: { phoneOnly?: boolea
                         ? "Skriv, analysera, planera eller bifoga en bild på svenska och engelska — längre strukturerade svar öppnas i Workspace."
                         : "Write, analyze, plan, or attach an image in Swedish and English — longer structured outputs open in Workspace."}
                     </p>
+                    </>}
                     <SignalWorkflows lang={lang} onSelect={(prompt, intent) => {
                       if (!replaceComposer(prompt)) return;
                       setIntentId(intent);

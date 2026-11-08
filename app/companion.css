@@ -64,3 +64,16 @@
   .companion-ideas button { gap:4px; padding-inline:6px; line-height:1.3; }
   .companion-ideas button svg { flex:none; }
 }
+
+/* On small phones the launcher lives above the headline rather than covering it. */
+@media(max-width:767px) {
+  .builder-companion.is-phone { top:76px; width:78px; }
+  .is-phone .companion-launcher { width:78px; height:78px; }
+  .is-phone .companion-bot .labs-bot-fallback { transform:translate(-50%,-48%) scale(.24); }
+  .is-phone .companion-orbit { inset:8px 4px; }
+  .is-phone .companion-tag { bottom:0; padding:4px 5px; font-size:7px; }
+  .is-phone .companion-tag span { display:none; }
+  .is-phone .companion-hello { right:62px; top:6px; }
+  .is-phone .companion-note { position:fixed; right:max(12px,env(safe-area-inset-right)); bottom:max(12px,env(safe-area-inset-bottom)); width:min(340px,calc(100vw - 24px)); max-height:calc(100dvh - 100px); margin:0; border-radius:17px; }
+  .is-phone .companion-note:after { display:none; }
+}
