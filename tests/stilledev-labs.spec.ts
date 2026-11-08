@@ -2,9 +2,9 @@ import { test, expect, type Page } from "@playwright/test";
 
 const iphone = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1";
 const android = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36";
-async function quiet(page: Page) {
+async function quiet(page: Page, preacceptNotice = true) {
   await page.route("**/va.vercel-scripts.com/**", route => route.fulfill({ contentType: "application/javascript", body: "" }));
-  await page.addInitScript(() => { localStorage.setItem("budai-cookies", "declined"); sessionStorage.setItem("budai-buddy-popup-dismissed", "true"); sessionStorage.setItem("budai:cinematic-intro:v1", "1"); });
+  await page.addInitScript((preaccept: boolean) => { localStorage.setItem("budai-cookies", "declined"); sessionStorage.setItem("budai-buddy-popup-dismissed", "true"); sessionStorage.setItem("budai:cinematic-intro:v1", "1"); if (preaccept) sessionStorage.setItem("stilledev:desktop-notice:v1", "seen"); }, preacceptNotice);
 }
 
 test("Builder introduces Oliver and links to the Labs holding page in both languages", async ({ page }) => {
@@ -331,6 +331,11 @@ for (const ua of [iphone, android]) {
     await expect(page.locator("#playground").getByText("Ready for the next idea.", { exact: true })).toBeVisible();
     expect(calls).toBe(1);
     await historyButton.click(); await expect(history.getByRole("button", { name: "Export chat (.md)" })).toBeEnabled();
+    await expect(history.getByRole("button", { name: "Copy chat", exact: true })).toBeEnabled();
+    await page.evaluate(() => { Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: async (text: string) => { (window as Window & { copied?: string }).copied = text; } } }); });
+    await history.getByRole("button", { name: "Copy chat", exact: true }).click();
+    await expect.poll(() => page.evaluate(() => (window as Window & { copied?: string }).copied)).toContain("Ready for the next idea.");
+    await historyButton.click();
     const downloadPromise = page.waitForEvent("download");
     await history.getByRole("button", { name: "Export chat (.md)" }).click();
     const download = await downloadPromise; expect(download.suggestedFilename()).toMatch(/\.md$/);
@@ -404,4 +409,78 @@ test("switching phone language does not interrupt an active response", async ({ 
   await expect(page.locator("#playground").getByText("First part. Second part.", { exact: true })).toBeVisible();
   expect(await page.evaluate(() => (window as Window & { mobileStreamRequests?: number }).mobileStreamRequests)).toBe(1);
   await context.close();
+});
+
+for (const ua of [iphone, android]) {
+  test(`desktop invitation requires confirmation without blocking phone Playground (${ua.includes("iPhone") ? "iPhone" : "Android"})`, async ({ browser }) => {
+    const context = await browser.newContext({ userAgent: ua, viewport: { width: 320, height: 568 }, isMobile: true, hasTouch: true, reducedMotion: "reduce" });
+    const page = await context.newPage(); await quiet(page, false);
+    await page.goto("/");
+    const dialog = page.locator(".desktop-notice");
+    await expect(dialog).toBeVisible();
+    await expect(dialog).toContainText("you can still use Playground");
+    await expect(page.locator(".phone-welcome")).toHaveAttribute("inert", "");
+    await expect(dialog.getByRole("button", { name: "I understand, continue" })).toBeFocused();
+    await page.keyboard.press("Tab");
+    await expect(dialog.getByRole("button", { name: "SV", exact: true })).toBeFocused();
+    await page.keyboard.press("Shift+Tab");
+    await expect(dialog.getByRole("button", { name: "I understand, continue" })).toBeFocused();
+    await dialog.getByRole("button", { name: "SV", exact: true }).click();
+    await expect(dialog).toContainText("Playground kan du använda här på mobilen");
+    await expect(page.locator("html")).toHaveAttribute("lang", "sv");
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
+    await dialog.getByRole("button", { name: "Jag förstår, fortsätt" }).scrollIntoViewIfNeeded();
+    await page.screenshot({ path: `test-results/desktop-notice-small-${ua.includes("iPhone") ? "iphone" : "android"}.png` });
+    await dialog.getByRole("button", { name: "Jag förstår, fortsätt" }).click();
+    await expect(dialog).toHaveCount(0);
+    await expect(page.locator(".phone-welcome")).not.toHaveAttribute("inert", "");
+    await expect(page.getByRole("textbox", { name: "Meddelande till BudAI", exact: true })).toBeVisible();
+    await page.reload();
+    await expect(page.getByRole("dialog", { name: /helheten/i })).toHaveCount(0);
+    await context.close();
+  });
+}
+
+test("desktop invitation is phone-only, and phone consent remains accessible afterwards", async ({ browser, page }) => {
+  await quiet(page); await page.goto("/");
+  await expect(page.locator(".desktop-notice")).toHaveCount(0);
+  const context = await browser.newContext({ userAgent: iphone, viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, reducedMotion: "reduce" });
+  const phone = await context.newPage();
+  await phone.goto("/");
+  const dialog = phone.getByRole("dialog", { name: /missing the bigger picture/i });
+  await expect(dialog).toBeVisible();
+  await phone.screenshot({ path: "test-results/desktop-notice-iphone.png" });
+  await dialog.getByRole("button", { name: /I understand/ }).click();
+  await expect(phone.locator(".phone-cookie-dialog")).toBeVisible();
+  await phone.locator(".phone-cookie-dialog").getByRole("button", { name: /essential|decline|reject/i }).first().click();
+  await expect(phone.locator(".phone-cookie-dialog")).toHaveCount(0);
+  await context.close();
+});
+
+test("hero ideas are real buttons and Swedish studio time reflects Stockholm", async ({ page }) => {
+  await quiet(page); await page.emulateMedia({ reducedMotion: "reduce" }); await page.goto("/");
+  const hero = page.locator("#intelligence");
+  await expect(hero.locator(".hero-features").getByRole("button")).toHaveCount(4);
+  await expect(hero.locator(".studio-clock time")).toHaveText(/^[0-9]{2}:[0-9]{2}$/);
+  const expectedTime = await page.evaluate(() => new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Stockholm", hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date()));
+  await expect(hero.locator(".studio-clock time")).toHaveText(expectedTime);
+  const button = hero.getByRole("button", { name: /Personal.*write/ });
+  await button.focus(); await page.keyboard.press("Enter");
+  await expect(page.getByRole("textbox", { name: "Message BudAI", exact: true })).toHaveValue("Help me write a clear, friendly email.");
+});
+
+test("copy chat copies a local transcript without publishing it", async ({ page }) => {
+  await quiet(page); await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.route("**/api/playground", route => route.fulfill({ status: 200, contentType: "text/plain", body: 'A private answer.\u0000{"memory":null}' }));
+  let shares = 0; page.on("request", request => { if (request.url().endsWith("/api/share")) shares++; });
+  await page.goto("/#playground");
+  await page.evaluate(() => { Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: async (text: string) => { (window as Window & { copied?: string }).copied = text; } } }); });
+  const input = page.getByRole("textbox", { name: "Message BudAI", exact: true });
+  await input.fill("My private question"); await page.getByRole("button", { name: "Send message", exact: true }).click();
+  await expect(page.getByText("A private answer.", { exact: true })).toBeVisible();
+  await page.locator("#playground summary").filter({ hasText: "Export" }).click();
+  await page.getByRole("button", { name: "Copy chat (private)" }).click();
+  await expect.poll(() => page.evaluate(() => (window as Window & { copied?: string }).copied)).toContain("My private question");
+  expect(await page.evaluate(() => (window as Window & { copied?: string }).copied)).toContain("A private answer.");
+  expect(shares).toBe(0);
 });

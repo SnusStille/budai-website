@@ -3,6 +3,7 @@ import { LIMITS } from "@/lib/limits";
 
 import { ArrowDown, ArrowRight, FileText, Languages, Network, Zap } from "lucide-react";
 import { useLang } from "@/components/ui/LanguageContext";
+import StockholmClock from "@/components/ui/StockholmClock";
 import { StilledevLink } from "@/components/ui/BudAILogo";
 
 /** Landing hero paired with the persistent single-owner 3D Neural Brain stage. */
@@ -80,28 +81,23 @@ export default function Hero() {
             <ArrowRight size={16} />
           </a>
         </div>
-        <div className="hero-features">
+        <div className="hero-features" aria-label={sv ? "Prova en idé i Playground" : "Try an idea in Playground"}>
+          <span className="hero-feature-hint">{sv ? "VÄLJ EN IDÉ ATT BÖRJA MED" : "PICK AN IDEA TO GET STARTED"} <ArrowRight size={12} aria-hidden="true" /></span>
           {chips.map(({ icon: Icon, label, region, prompt }) => (
-            <span
+            <button
+              type="button"
               key={label}
-              role="button"
-              tabIndex={0}
+              title={sv ? "Fyll i en idé i Playground" : "Fill an idea into Playground"}
               data-hero-brain-region={region}
               onPointerEnter={() => focusRegion(region)}
               onPointerLeave={() => focusRegion(-1)}
               onFocus={() => focusRegion(region)}
               onBlur={() => focusRegion(-1)}
               onClick={() => activateChipPrompt(prompt)}
-              onKeyDown={e => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  activateChipPrompt(prompt);
-                }
-              }}
             >
               <Icon size={13} />
-              {label}
-            </span>
+              {label} <ArrowRight className="hero-feature-arrow" size={12} aria-hidden="true" />
+            </button>
           ))}
         </div>
         <p className="hero-product-note">
@@ -113,6 +109,7 @@ export default function Hero() {
           {sv ? "Utvecklad av " : "Built by "}
           <StilledevLink /> <span>·</span> Sweden
         </p>
+        <StockholmClock />
       </div>
       <div className="hero-bottom">
         <span>
