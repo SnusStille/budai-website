@@ -4,6 +4,7 @@ import { logEvent, newRequestId } from "@/lib/log";
 import { validateWaitlist } from "@/lib/waitlist-validation";
 import { RULES, checkRateLimit, rateLimitKey } from "@/lib/rate-limit";
 import { WAITLIST_STATUS_COOKIE, signWaitlistEmail } from "@/lib/waitlist-status";
+import { sendEmail } from "@/lib/email";
 
 /**
  * Server-authoritative waitlist signup.
@@ -47,6 +48,8 @@ export async function POST(req: NextRequest) {
     logEvent("error", "waitlist.insert", { requestId, message: error.message.slice(0, 200) });
     return NextResponse.json({ error: "could_not_save" }, { status: 500 });
   }
+  void sendEmail(result.value.email, "You're on the BudAI waitlist — Stilledev", "Hi,\n\nThanks for joining the BudAI waitlist. We'll email you when access opens.\n\n— Stilledev");
+  const wlNotify = process.env.ADMIN_NOTIFICATION_EMAIL; if (wlNotify) void sendEmail(wlNotify, "New BudAI waitlist registration", "A new registration arrived. Open /admin -> Waitlist to review.");
   const res = NextResponse.json({ ok: true });
   const token = signWaitlistEmail(result.value.email);
   if (token) {

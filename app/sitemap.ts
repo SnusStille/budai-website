@@ -68,6 +68,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: now,
       changeFrequency: "yearly",
       priority: 0.5,
+      alternates: { languages: { en: `${siteUrl}/contact`, sv: `${siteUrl}/sv/contact` } },
+    },
+    {
+      url: `${siteUrl}/sv/contact`,
+      lastModified: now,
+      changeFrequency: "yearly",
+      priority: 0.4,
+      alternates: { languages: { en: `${siteUrl}/contact`, sv: `${siteUrl}/sv/contact` } },
     },
     {
       url: `${siteUrl}/changelog`,

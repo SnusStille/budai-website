@@ -38,3 +38,13 @@ Add `RESEND_API_KEY` later to enable confirmation emails.
 ## Still needs owner confirmation
 - Org.nr / VAT number for web publication (deliberately not invented).
 - Email provider choice. - Whether Labs stays noindex (currently intentional).
+
+## 2.1 upgrade (same day)
+- Feedback triage section (requires `MIGRATION_v14_feedback_triage.sql`: adds feedback.status/is_read).
+- Optional Resend emails: contact + waitlist confirmations and admin lead alerts when
+  RESEND_API_KEY + EMAIL_FROM are set; in-app notifications remain the fallback.
+- Custom date range is now fully wired (admin overview API accepts from/to).
+- GDPR retention: Analytics -> "Purge >180d" deletes old page_views (audit-logged).
+- Dashboard widget preferences (persisted per browser) + optional 60s auto-refresh.
+- Announcement live preview; contact notes now actually load when a lead is opened.
+- Swedish contact page at /sv/contact (same DB-backed form), added to sitemap.
