@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { serviceClient } from "@/lib/supabase/service";
 import { RULES, checkRateLimit, rateLimitKey } from "@/lib/rate-limit";
 import { logEvent, newRequestId } from "@/lib/log";
+import { sendEmail } from "@/lib/email";
 export async function POST(req: NextRequest) {
   const requestId = newRequestId();
   const limit = checkRateLimit(rateLimitKey(req, RULES.feedback, "contact"), { name:"contact", limit:10, windowMs:3600_000 });
@@ -17,5 +18,7 @@ export async function POST(req: NextRequest) {
   if (!sb) { if (process.env.NODE_ENV==="development") return NextResponse.json({ ok:true, dev:true }); return NextResponse.json({ error:"not_configured" }, { status:503 }); }
   const { error } = await sb.from("contact_submissions").insert({ name, email, company, subject, message, source:"contact_form" });
   if (error) { logEvent("error","contact.insert",{ requestId, message:error.message.slice(0,200) }); return NextResponse.json({ error:"could_not_save" }, { status:500 }); }
+  void sendEmail(email, "We received your message — Stilledev", `Hi ${name},\n\nThanks for contacting Stilledev. Your message is saved in our system and we will reply to this email address.\n\n— Stilledev (Sweden)`);
+  const notify = process.env.ADMIN_NOTIFICATION_EMAIL; if (notify) void sendEmail(notify, `New contact: ${subject}`, `New contact submission from ${name} (${email}). Open /admin -> Contact / Leads to reply.`);
   return NextResponse.json({ ok:true });
 }

@@ -7,8 +7,10 @@ export async function GET(req: NextRequest) {
   if (!isAdmin(req)) return NextResponse.json({ error:"Unauthorized" }, { status:401 });
   const sb = serviceClient(); if (!sb) return NextResponse.json({ error:"Service role not configured", configured:false }, { status:503 });
   const rangeKey = req.nextUrl.searchParams.get("range") || "30d";
-  const days = RANGES[rangeKey] ?? 30;
-  const since = new Date(Date.now() - days*86400_000).toISOString();
+  const fromParam = req.nextUrl.searchParams.get("from"), toParam = req.nextUrl.searchParams.get("to");
+  let days = RANGES[rangeKey] ?? 30; let sinceMs = Date.now() - days*86400_000;
+  if (rangeKey === "custom" && fromParam) { const f = new Date(fromParam).getTime(); if (Number.isFinite(f)) { sinceMs = f; const end = toParam ? new Date(toParam).getTime() : Date.now(); days = Math.max(1, Math.min(366, Math.ceil((end - f) / 86400_000) || 1)); } }
+  const since = new Date(sinceMs).toISOString();
   const today = new Date(); today.setHours(0,0,0,0);
   const safe = async <T,>(p: Promise<{data:T|null; error:unknown; count?:number|null}>): Promise<{data:T|null;count:number|null}> => { try { const r = await p; return { data: r.error?null:r.data, count: r.count??null }; } catch { return { data:null, count:null }; } };
   const [waitlist, wlToday, feedback, contacts, unreadContacts, views, convs, profiles, audit] = await Promise.all([

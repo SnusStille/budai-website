@@ -5,6 +5,8 @@ export const dynamic="force-dynamic";
 function guard(req:NextRequest){ if(!isAdmin(req)) return {err:NextResponse.json({error:"Unauthorized"},{status:401})}; const sb=serviceClient(); if(!sb) return {err:NextResponse.json({error:"Service role not configured"},{status:503})}; return {sb}; }
 export async function GET(req:NextRequest){
   const g=guard(req); if(g.err) return g.err;
+  const notesFor=req.nextUrl.searchParams.get("notesFor");
+  if(notesFor){ const {data:n,error:ne}=await g.sb!.from("contact_notes").select("*").eq("submission_id",notesFor).order("created_at",{ascending:true}); if(ne) return NextResponse.json({error:ne.message},{status:500}); return NextResponse.json({notes:n||[]}); }
   const q=(req.nextUrl.searchParams.get("q")||"").trim(), status=req.nextUrl.searchParams.get("status")||"all";
   let query=g.sb!.from("contact_submissions").select("*").order("created_at",{ascending:false}).limit(200);
   if(status!=="all") query=query.eq("status",status);
