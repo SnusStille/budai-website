@@ -26,7 +26,7 @@ const groups = (lang: string) => [
     links: [
       { label: "Labs", href: lang === "sv" ? "/sv/labs" : "/labs" },
       { label: lang === "sv" ? "Byggaren" : "Builder", href: "#about" },
-      { label: lang === "sv" ? "Kontakt" : "Contact", href: "mailto:Stilleinc@hotmail.com" },
+      { label: lang === "sv" ? "Kontakt" : "Contact", href: "/contact" },
       { label: lang === "sv" ? "Vad är nytt" : "What's new", href: "/changelog" },
     ],
   },

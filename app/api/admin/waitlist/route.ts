@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isAdmin, serviceClient } from "@/lib/adminAuth";
+import { logAudit } from "@/lib/admin/audit";
 
 const ALLOWED = ["access_status", "notes", "priority", "last_contacted_at", "tags"];
 
@@ -26,6 +27,7 @@ export async function PATCH(req: NextRequest) {
   const clean = Object.fromEntries(Object.entries(fields).filter(([k]) => ALLOWED.includes(k)));
   const { error } = await g.sb!.from("waitlist_users").update({ ...clean, updated_at: new Date().toISOString() }).eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  await logAudit(req, "waitlist.update", "waitlist_users", id, { status: String(clean.access_status||"") });
   return NextResponse.json({ ok: true });
 }
 
@@ -36,5 +38,6 @@ export async function DELETE(req: NextRequest) {
   if (!id) return NextResponse.json({ error: "Bad request" }, { status: 400 });
   const { error } = await g.sb!.from("waitlist_users").delete().eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  await logAudit(req, "waitlist.delete", "waitlist_users", id);
   return NextResponse.json({ ok: true });
 }

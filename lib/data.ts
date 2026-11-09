@@ -205,7 +205,7 @@ async function mutate(id: string, fields: Record<string, unknown>): Promise<void
 }
 
 export async function getWaitlistUsers(): Promise<WaitlistUser[]> {
-  if (!getSupabase()) return new Promise((r) => setTimeout(() => r([...mockUsers]), 400));
+  if (!getSupabase()) return process.env.NODE_ENV === "development" ? [...mockUsers] : [];
   try {
     const { users } = await adminApi("GET");
     return (users as Record<string, unknown>[]).map(normalizeUser);
@@ -278,9 +278,7 @@ export async function getWaitlistCount(): Promise<number | null> {
 
 export async function getAdminEvents(limit = 30): Promise<AdminEvent[]> {
   const supabase = getSupabase();
-  if (!supabase) {
-    return [...mockEvents];
-  }
+  if (!supabase) return process.env.NODE_ENV === "development" ? [...mockEvents] : [];
 
   const { data, error } = await supabase
     .from("admin_events")
@@ -288,11 +286,7 @@ export async function getAdminEvents(limit = 30): Promise<AdminEvent[]> {
     .order("created_at", { ascending: false })
     .limit(limit);
 
-  if (error) {
-    // table may not exist yet
-    console.warn("admin_events:", error.message);
-    return mockEvents;
-  }
+  if (error) { console.warn("admin_events:", error.message); return process.env.NODE_ENV === "development" ? mockEvents : []; }
 
   return (data || []).map((r) => ({
     id: String(r.id),

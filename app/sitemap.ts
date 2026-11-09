@@ -50,6 +50,26 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.3,
     },
     {
+      url: `${siteUrl}/labs`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.6,
+      alternates: { languages: { en: `${siteUrl}/labs`, sv: `${siteUrl}/sv/labs` } },
+    },
+    {
+      url: `${siteUrl}/sv/labs`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.5,
+      alternates: { languages: { en: `${siteUrl}/labs`, sv: `${siteUrl}/sv/labs` } },
+    },
+    {
+      url: `${siteUrl}/contact`,
+      lastModified: now,
+      changeFrequency: "yearly",
+      priority: 0.5,
+    },
+    {
       url: `${siteUrl}/changelog`,
       lastModified: now,
       changeFrequency: "monthly",

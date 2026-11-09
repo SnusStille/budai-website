@@ -9,6 +9,8 @@ import "./mascot.css";
 import "./companion.css";
 import Providers from "@/components/Providers";
 import VercelAnalytics from "@/components/VercelAnalytics";
+import PageViewTracker from "@/components/analytics/PageViewTracker";
+import SiteConfigBanner from "@/components/site/SiteConfigBanner";
 import { introBootstrap } from "@/lib/experience/intro";
 import { canonicalPath, hasLanguageAlternate, SWEDISH_PATH } from "@/lib/lang";
 import { isPhoneUserAgent } from "@/lib/phone-gate";
@@ -181,6 +183,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
         {phoneGate ? <MobileProviders initialLang={lang}>{phoneLegalPage ? children : <PhoneWelcome normalizeLanguagePath />}</MobileProviders> : <Providers initialLang={lang}>{children}</Providers>}
+        <SiteConfigBanner />
+        <PageViewTracker />
         <VercelAnalytics enabled={process.env.VERCEL === "1"} />
       </body>
     </html>
