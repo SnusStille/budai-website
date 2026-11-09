@@ -11,6 +11,7 @@ import {
   passwordOk,
 } from "@/lib/adminAuth";
 import { clientIp } from "@/lib/rate-limit";
+import { logAudit } from "@/lib/admin/audit";
 
 export async function POST(req: NextRequest) {
   if (!adminConfigured()) return NextResponse.json({ ok: false, reason: "not_configured" }, { status: 503 });
@@ -23,11 +24,13 @@ export async function POST(req: NextRequest) {
   const { password } = (await req.json().catch(() => ({}))) as { password?: string };
   if (!passwordOk(password || "")) {
     noteLoginFailure(ip);
+    await logAudit(req, "admin.login_failed", "admin");
     await new Promise((r) => setTimeout(r, 600));
     return NextResponse.json({ ok: false }, { status: 401 });
   }
 
   clearLoginFailures(ip);
+  await logAudit(req, "admin.login", "admin");
   const res = NextResponse.json({ ok: true });
   // The password is never returned to or stored in the browser.
   res.cookies.set(ADMIN_SESSION_COOKIE, adminSessionToken(), {
