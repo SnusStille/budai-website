@@ -9,7 +9,6 @@ export default function BotAvatar({ size = 32, state = "idle" }: { size?: number
   return (
     <span className={`bot-avatar bot-avatar-${state}`} style={{ width: size, height: size }} aria-hidden="true">
       <Image src="/images/builder-bot.png" alt="" width={96} height={96} sizes="96px" className="bot-avatar-img" priority={false} />
-      <span className="bot-avatar-eye left" /><span className="bot-avatar-eye right" />
     </span>
   );
 }
