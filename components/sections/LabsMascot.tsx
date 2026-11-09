@@ -2,10 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 
-export type MascotGesture = { id: number; kind: "hello" | "wink" };
+export type MascotGesture = { id: number; kind: "hello" | "wink" | "celebrate" | "think" };
 
 /** The same Builder Bot in Labs and on the homepage; no WebGL on reduced motion or save-data. */
-export default function LabsMascot({ companion = false, gesture = null, staticOnly = false }: { companion?: boolean; gesture?: MascotGesture | null; staticOnly?: boolean } = {}) {
+export default function LabsMascot({ companion = false, gesture = null, staticOnly = false, hardHat = false }: { companion?: boolean; gesture?: MascotGesture | null; staticOnly?: boolean; hardHat?: boolean } = {}) {
   const host = useRef<HTMLDivElement>(null);
   const [ready, setReady] = useState(false);
   // Updating an expression must not tear down and recreate the WebGL scene.
@@ -71,6 +71,22 @@ export default function LabsMascot({ companion = false, gesture = null, staticOn
       const antenna = new THREE.Mesh(new THREE.CylinderGeometry(.025, .025, .4, 12), joint); antenna.position.set(0, .93, 0); head.add(antenna);
       addBall(head, glow, [.09, .09, .09], [0, 1.16, 0]);
       addBall(head, joint, [.16, .22, .2], [-1.05, 0, 0]); addBall(head, joint, [.16, .22, .2], [1.05, 0, 0]);
+      // Labs upgrade: the Builder Bot now wears its safety hard hat (and keeps a wrench handy).
+      let hat: import("three").Group | null = null;
+      if (hardHat) {
+        hat = new THREE.Group(); hat.position.set(.18, .62, 0); hat.rotation.z = -.1; head.add(hat);
+        const hatMat = new THREE.MeshPhysicalMaterial({ color: 0xf5b921, metalness: .15, roughness: .35, clearcoat: .7 });
+        const dome = new THREE.Mesh(new THREE.SphereGeometry(.78, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2), hatMat); dome.scale.set(1.05, .62, .88); hat.add(dome);
+        const brim = new THREE.Mesh(new THREE.CylinderGeometry(.86, .9, .07, 32), hatMat); brim.scale.set(1.08, 1, .9); brim.position.y = .02; hat.add(brim);
+        const ridge = new THREE.Mesh(new THREE.BoxGeometry(.16, .1, .62), hatMat); ridge.position.y = .42; hat.add(ridge);
+      }
+      const wrench = new THREE.Group();
+      if (hardHat) {
+        const steel = new THREE.MeshStandardMaterial({ color: 0x9fb6c4, metalness: .8, roughness: .3 });
+        const handle = new THREE.Mesh(new THREE.CylinderGeometry(.045, .045, .5, 10), steel); wrench.add(handle);
+        const jaw = new THREE.Mesh(new THREE.TorusGeometry(.11, .045, 8, 20, Math.PI * 1.45), steel); jaw.position.y = .3; wrench.add(jaw);
+        wrench.position.set(-1.02, -.95, .12); wrench.rotation.z = .5; robot.add(wrench);
+      }
       // Small body, arms and feet: a friendly little work-in-progress companion.
       addBall(robot, shell, [.68, .72, .48], [0, -.48, 0]);
       addBall(robot, dark, [.37, .25, .08], [0, -.42, .45]);
@@ -126,6 +142,20 @@ export default function LabsMascot({ companion = false, gesture = null, staticOn
         const winkStart = hello ? .8 : .35;
         const winkPhase = elapsed - winkStart;
         const wink = companion && winkPhase >= 0 && winkPhase < .38 ? 1 - Math.sin(Math.PI * winkPhase / .38) * .92 : 1;
+        const celebrate = gestureRef.current?.kind === "celebrate" ? elapsed : -1;
+        const celebrateEnv = celebrate >= 0 && celebrate < 2.6 ? Math.sin(Math.PI * celebrate / 2.6) : 0;
+        if (celebrateEnv > 0) {
+          robot.position.y += Math.abs(Math.sin(celebrate * 5.2)) * .34 * celebrateEnv;
+          robot.rotation.y += celebrateEnv * .14;
+          leftArm.rotation.z = -.48 - celebrateEnv * 1.9;
+        }
+        const thinking = gestureRef.current?.kind === "think" ? elapsed : -1;
+        const thinkEnv = thinking >= 0 && thinking < 2.8 ? Math.sin(Math.PI * thinking / 2.8) : 0;
+        if (thinkEnv > 0) {
+          head.rotation.z += thinkEnv * .16;
+          head.rotation.x = -thinkEnv * .12;
+          eyes[0].position.y = .07 + thinkEnv * .035; eyes[1].position.y = .07 + thinkEnv * .035;
+        }
         // The face tracks gently within its visor; the core breathes rather than flashes.
         eyes[0].position.x = -.33 + pointerX * .035; eyes[1].position.x = .33 + pointerX * .035;
         const corePulse = 1 + Math.sin(t * 1.5) * .08;
@@ -155,7 +185,7 @@ export default function LabsMascot({ companion = false, gesture = null, staticOn
     const onMotion = () => { if (motion.matches) teardown?.(); else void start(); };
     motion.addEventListener("change", onMotion); void start();
     return () => { disposed = true; motion.removeEventListener("change", onMotion); teardown?.(); };
-  }, [companion, staticOnly]);
+  }, [companion, staticOnly, hardHat]);
 
-  return <div ref={host} className={`labs-bot ${ready ? "is-rendered" : ""}`} data-emote={gesture?.kind} data-emote-phase={gesture ? gesture.id % 2 : undefined} aria-hidden="true"><div className="labs-bot-halo" /><div className="labs-bot-fallback"><i className="labs-bot-antenna" /><div className="labs-bot-head"><div className="labs-bot-face"><i /><i /><span /></div></div><i className="labs-bot-arm left" /><i className="labs-bot-arm right" /><div className="labs-bot-body"><i /></div><i className="labs-bot-foot left" /><i className="labs-bot-foot right" /><i className="labs-bot-orbit" /></div></div>;
+  return <div ref={host} className={`labs-bot ${ready ? "is-rendered" : ""}`} data-emote={gesture?.kind} data-emote-phase={gesture ? gesture.id % 2 : undefined} data-hardhat={hardHat || undefined} aria-hidden="true"><div className="labs-bot-halo" /><div className="labs-bot-fallback"><i className="labs-bot-antenna" /><i className="labs-bot-hat" /><div className="labs-bot-head"><div className="labs-bot-face"><i /><i /><span /></div></div><i className="labs-bot-arm left" /><i className="labs-bot-arm right" /><div className="labs-bot-body"><i /></div><i className="labs-bot-foot left" /><i className="labs-bot-foot right" /><i className="labs-bot-orbit" /></div></div>;
 }

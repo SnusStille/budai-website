@@ -68,6 +68,7 @@ import {
 import PlaygroundArrival from "@/components/experience/PlaygroundArrival";
 import BudAIWordmark from "@/components/ui/BudAIWordmark";
 import BudAILogo from "@/components/ui/BudAILogo";
+import BotAvatar from "@/components/ui/BotAvatar";
 import { useLang } from "@/components/ui/LanguageContext";
 import { useAuth } from "@/components/auth/AuthProvider";
 import {
@@ -2533,19 +2534,13 @@ export default function AIPlayground({ phoneOnly = false }: { phoneOnly?: boolea
                     key={msg.id}
                     className={`flex gap-2.5 pg-msg-enter ${msg.role === "user" ? "flex-row-reverse" : ""}`}
                   >
-                    <div
-                      className={`w-8 h-8 rounded-xl shrink-0 flex items-center justify-center ${
-                        msg.role === "user"
-                          ? "bg-white/10"
-                          : "bg-gradient-to-br from-accent-cyan/80 to-accent-purple/80 p-1.5"
-                      }`}
-                    >
-                      {msg.role === "user" ? (
+                    {msg.role === "user" ? (
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white/10">
                         <User className="w-4 h-4 text-white/70" />
-                      ) : (
-                        <BudAILogo size="xs" animated className="!w-full !h-full" />
-                      )}
-                    </div>
+                      </div>
+                    ) : (
+                      <BotAvatar size={34} state={msg.id === messages[messages.length - 1]?.id && activity !== "idle" ? "talking" : "idle"} />
+                    )}
                     <div
                       className={`min-w-0 max-w-[min(100%,820px)] space-y-2 ${
                         msg.role === "user" ? "items-end" : ""
@@ -2595,6 +2590,12 @@ export default function AIPlayground({ phoneOnly = false }: { phoneOnly?: boolea
                           ))}
                         </div>
                       ) : (
+                        <>
+                        {msg.role === "assistant" && (
+                          <p className="flex items-center gap-1.5 px-1 text-[10px] font-semibold uppercase tracking-wider text-accent-cyan/80">
+                            BudAI <span className="font-normal normal-case tracking-normal text-muted">· {lang === "sv" ? "Byggroboten" : "Builder Bot"}</span>
+                          </p>
+                        )}
                         <div
                           className={`px-3.5 py-2.5 rounded-2xl text-[13px] sm:text-sm border leading-relaxed ${
                             msg.role === "user"
@@ -2608,7 +2609,7 @@ export default function AIPlayground({ phoneOnly = false }: { phoneOnly?: boolea
                             <AlertCircle className="w-3.5 h-3.5 inline mr-1.5 mb-0.5 text-red-300" />
                           )}
                           {renderMarkdown(msg.content)}
-                        </div>
+                        </div></>
                       )}
                       {msg.role === "user" && !msg.imageUrl && activity === "idle" && editingId !== msg.id && (
                         <button
@@ -2851,7 +2852,7 @@ export default function AIPlayground({ phoneOnly = false }: { phoneOnly?: boolea
                   <div className="flex gap-2.5">
                     <div className="relative w-9 h-9 rounded-xl bg-gradient-to-br from-accent-cyan/90 to-accent-purple/90 p-[2px] shrink-0 shadow-[0_0_24px_rgba(0,229,255,0.35)]">
                       <div className="w-full h-full rounded-[10px] bg-[#07070e] flex items-center justify-center overflow-hidden">
-                        <BudAILogo size="xs" animated mode="thinking" className="!w-[22px] !h-[22px]" />
+                        <BotAvatar size={26} state="thinking" />
                       </div>
                       {busy && !typingText && (
                         <span className="absolute -inset-1 rounded-xl border border-accent-cyan/30 logo-pulse-ring pointer-events-none" />
