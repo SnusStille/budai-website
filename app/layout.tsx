@@ -10,6 +10,7 @@ import "./companion.css";
 import Providers from "@/components/Providers";
 import VercelAnalytics from "@/components/VercelAnalytics";
 import PageViewTracker from "@/components/analytics/PageViewTracker";
+import { serviceClient } from "@/lib/supabase/service";
 import SiteConfigBanner from "@/components/site/SiteConfigBanner";
 import { introBootstrap } from "@/lib/experience/intro";
 import { canonicalPath, hasLanguageAlternate, SWEDISH_PATH } from "@/lib/lang";
@@ -83,14 +84,27 @@ export async function generateMetadata(): Promise<Metadata> {
   const path = canonicalPath(pathname);
   const canonical = path === "/" ? siteUrl : `${siteUrl}${path}`;
   const copy = META[lang];
+  // Admin SEO overrides (Admin -> Website & Content) win over code defaults when set.
+  // Fail-safe: any DB problem falls back to the defaults above; rendering never depends on it.
+  let seoTitle = "", seoDescription = "", seoImage = "";
+  try {
+    const sb = serviceClient();
+    if (sb) {
+      const timeout = new Promise<null>((r) => setTimeout(() => r(null), 900));
+      const query = sb.from("site_settings").select("key,value").in("key", ["seo_title", "seo_description", "og_image"]).then(({ data }) => data);
+      const rows = await Promise.race([query, timeout]);
+      const get = (k: string) => { const v = (rows || []).find((r) => r.key === k)?.value as { value?: string } | undefined; return typeof v?.value === "string" ? v.value.slice(0, 300) : ""; };
+      seoTitle = get("seo_title"); seoDescription = get("seo_description"); seoImage = get("og_image");
+    }
+  } catch { /* defaults */ }
 
   return {
     metadataBase: new URL(siteUrl),
     title: {
-      default: "Stilledev.se · BudAI",
+      default: seoTitle || "Stilledev.se · BudAI",
       template: "%s · BudAI",
     },
-    description: copy.description,
+    description: seoDescription || copy.description,
     keywords: [
       "AI",
       "artificial intelligence",
@@ -116,7 +130,7 @@ export async function generateMetadata(): Promise<Metadata> {
       description: copy.ogDescription,
       images: [
         {
-          url: "/og.png",
+          url: seoImage || "/og.png",
           width: 1200,
           height: 630,
           alt: "BudAI — AI work for Sweden",
@@ -127,7 +141,7 @@ export async function generateMetadata(): Promise<Metadata> {
       card: "summary_large_image",
       title: copy.ogTitle,
       description: copy.ogDescription,
-      images: ["/og.png"],
+      images: [seoImage || "/og.png"],
     },
     icons: {
       icon: [{ url: "/favicon.svg", type: "image/svg+xml" }, { url: "/favicon-32.png", sizes: "32x32", type: "image/png" }],
@@ -160,7 +174,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const phoneGate = isPhoneUserAgent(h.get("user-agent") || "");
   const path = canonicalPath(h.get("x-budai-path") || "/");
   // Policies remain reachable, but no desktop marketing pages are shown on phones.
-  const phoneLegalPage = path.startsWith("/legal/");
+  // Release fix: contact + admin are functional pages, not marketing — they must
+  // work on phones too (both have responsive layouts).
+  const phoneLegalPage = path.startsWith("/legal/") || path === "/contact" || path === "/sv/contact" || path === "/admin" || path.startsWith("/admin/");
   return (
     <html
       lang={lang}

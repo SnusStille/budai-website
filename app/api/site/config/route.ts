@@ -13,6 +13,7 @@ export async function GET() {
     ]);
     const map = Object.fromEntries((settings||[]).map(s=>[s.key, s.value]));
     const maint = map["maintenance_mode"] as { enabled?:boolean }|undefined;
-    return NextResponse.json({ announcement: ann?.[0]||null, maintenance: !!maint?.enabled, seo: { title: String((map["seo_title"] as {value?:string})?.value||""), description: String((map["seo_description"] as {value?:string})?.value||"") } }, { headers:{ "Cache-Control":"public, s-maxage=30, stale-while-revalidate=120" } });
+    const safeAnn = ann?.[0] ? { ...ann[0], href: typeof ann[0].href==="string" && (/^\//.test(ann[0].href) || /^https:\/\//.test(ann[0].href)) ? ann[0].href : null } : null;
+    return NextResponse.json({ announcement: safeAnn, maintenance: !!maint?.enabled, seo: { title: String((map["seo_title"] as {value?:string})?.value||""), description: String((map["seo_description"] as {value?:string})?.value||"") } }, { headers:{ "Cache-Control":"public, s-maxage=30, stale-while-revalidate=120" } });
   } catch { return NextResponse.json(fallback); }
 }

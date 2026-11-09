@@ -22,7 +22,7 @@ npm run dev                  # http://localhost:3000
 npm run build                # production build
 ```
 
-Run the SQL files in `supabase/` in order: `schema.sql`, then `MIGRATION_v2` … `MIGRATION_v12_waitlist_insert_lockdown.sql`. Set `ADMIN_PASSWORD` and `SUPABASE_SERVICE_ROLE_KEY` (both server-only) for the admin surface and durable quotas. The full variable list and what each one unlocks is in [docs/setup/ENVIRONMENT.md](docs/setup/ENVIRONMENT.md). See [SECURITY.md](SECURITY.md).
+Run the SQL files in `supabase/` in order: `schema.sql`, then `MIGRATION_v2` … `MIGRATION_v12_waitlist_insert_lockdown.sql`, then `MIGRATION_v13_admin_panel.sql` and `MIGRATION_v14_feedback_triage.sql` (Admin Panel 2.0/2.1: analytics, contact CRM, content, audit — see docs/admin/ADMIN_PANEL_2.md). Set `ADMIN_PASSWORD` and `SUPABASE_SERVICE_ROLE_KEY` (both server-only) for the admin surface and durable quotas. The full variable list and what each one unlocks is in [docs/setup/ENVIRONMENT.md](docs/setup/ENVIRONMENT.md). See [SECURITY.md](SECURITY.md).
 
 Never commit `.env.local`. If it was ever pushed, run `git rm --cached .env.local` and rotate the keys.
 

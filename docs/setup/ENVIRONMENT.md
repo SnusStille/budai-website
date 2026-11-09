@@ -37,7 +37,7 @@ The checker reads `.env`, then `.env.local` (local wins), then the real process 
 
 ## Required SQL (run once per database)
 
-In Supabase SQL Editor, in order: `supabase/schema.sql`, then `MIGRATION_v2` … `MIGRATION_v9`, `MIGRATION_v10_security_hardening.sql`, `MIGRATION_v11_message_feedback.sql`, `MIGRATION_v12_waitlist_insert_lockdown.sql`. `v10` removes public read/write on guest quota rows and makes `waitlist_status()` service-role-only; `v11` adds bounded columns for Playground message ratings; `v12` removes the public INSERT policy on `waitlist_users` so signups cannot bypass consent, honeypot and throttling by writing from the browser. Without `v10`/`v12` the security hardening is incomplete, and without `v11` ratings stay local only (the UI says so honestly).
+In Supabase SQL Editor, in order: `supabase/schema.sql`, then `MIGRATION_v2` … `MIGRATION_v9`, `MIGRATION_v10_security_hardening.sql`, `MIGRATION_v11_message_feedback.sql`, `MIGRATION_v12_waitlist_insert_lockdown.sql`, then `MIGRATION_v13_admin_panel.sql` (Admin Panel 2.0 tables: page_views, contact_submissions/notes, site_settings/announcements/content, app_admins, admin_audit_logs, admin_notifications — RLS on, service-role only) and `MIGRATION_v14_feedback_triage.sql` (feedback status/read). v13/v14 are idempotent and non-destructive; without them the admin shows honest 'not configured' states and contact/analytics degrade gracefully. `v10` removes public read/write on guest quota rows and makes `waitlist_status()` service-role-only; `v11` adds bounded columns for Playground message ratings; `v12` removes the public INSERT policy on `waitlist_users` so signups cannot bypass consent, honeypot and throttling by writing from the browser. Without `v10`/`v12` the security hardening is incomplete, and without `v11` ratings stay local only (the UI says so honestly).
 
 ## Partial configuration is deliberately fail-closed
 
@@ -50,3 +50,6 @@ In Supabase SQL Editor, in order: `supabase/schema.sql`, then `MIGRATION_v2` …
 Set the same variables in Project Settings → Environment Variables (server-only ones as plain values, not `NEXT_PUBLIC_*`). Redeploy after changing them. Do not enable a Vercel preview deployment until the full verification chain is green; CI runs `npm run scan:secrets` over the full git history, so no credential should ever be committed.
 
 See also [SECURITY.md](../../SECURITY.md) and [GO_LIVE.md](GO_LIVE.md).
+
+
+Optional email: `RESEND_API_KEY` + `EMAIL_FROM` (verified domain) enable contact/waitlist confirmation emails and admin lead alerts (`ADMIN_NOTIFICATION_EMAIL`). Without them, in-app admin notifications are used and nothing is emailed.
