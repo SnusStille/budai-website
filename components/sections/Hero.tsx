@@ -49,7 +49,7 @@ export default function Hero() {
   };
   const activateChipPrompt = (prompt: string) => {
     window.dispatchEvent(new CustomEvent("budai:prompt", { detail: prompt }));
-    document.getElementById("playground")?.scrollIntoView({ behavior: "smooth" });
+    document.getElementById("playground")?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
   };
 
   return (
@@ -67,8 +67,8 @@ export default function Hero() {
         </h1>
         <p className="hero-locale">
           {sv
-            ? "Varje handling börjar med en signal. Byggd i Sverige för arbete på svenska och engelska."
-            : "Every action starts with a signal. Built in Sweden for Swedish and English work."}
+            ? "BudAI är en AI-arbetsyta utvecklad av Stilledev."
+            : "BudAI is an AI workspace developed by Stilledev."}
         </p>
         <p className="hero-description">{t.hero.subtitle}</p>
         <div className="hero-actions">

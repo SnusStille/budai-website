@@ -63,8 +63,8 @@ export default function About() {
             <h2 id="builder-title">{sv ? "Från en tanke." : "From a thought."}<br /><span>{sv ? "Till något verkligt." : "To something real."}</span></h2>
             <p>{sv ? "Från en kort specifikation till typsäker kod, gränssnitt och strukturerade arbetsflöden — byggd med samma arkitektur som driver BudAI." : "From a short brief to type-safe code, interfaces, and structured workflows — built with the same architecture that powers BudAI."}</p>
             <div className="builder-byline" aria-label={sv ? "Om Oliver Stille" : "About Oliver Stille"}>
-              <span>STILLEDEV EF <i /> OLIVER STILLE · HELSINGBORG</span>
-              <p>{sv ? "Mötesansvarig och kodare på SkandiaMäklarna." : "Meeting manager and coder at SkandiaMäklarna."}</p>
+              <span>STILLEDEV EF <i /> OLIVER STILLE</span>
+              <p>{sv ? "Utvecklar BudAI och digitala verktyg." : "Building BudAI and digital tools."}</p>
             </div>
             <div className="reality-creation-pills" role="group" aria-label={sv ? "Prova en idé i Playground" : "Try an idea in Playground"} data-thought-to-reality>
               <span className="builder-ideas-label" aria-hidden="true">{sv ? "PROVA EN IDÉ" : "TRY AN IDEA"} <ArrowRight size={11} /></span>
@@ -105,7 +105,7 @@ export default function About() {
         <div className="builder-labs-copy">
           <span className="builder-labs-label">STILLEDEV EF <i /> LABS</span>
           <div className="builder-labs-title-row"><h3>Labs<span>.</span></h3><span className="builder-labs-status"><i />{sv ? "UNDER UTVECKLING" : "UNDER DEVELOPMENT"}</span></div>
-          <p>{sv ? "Vår lilla byggrobot håller ställningarna medan Labs tar form." : "Our little builder bot is holding the fort while Labs takes shape."}</p>
+          <p>{sv ? "Produkter, experiment och idéer under utveckling — utforska arbetet bakom Stilledev." : "Products, experiments and ideas in progress — explore the work behind Stilledev."}</p>
         </div>
         <a className="builder-labs-link" href={sv ? "/sv/labs" : "/labs"}>{sv ? "Öppna Labs" : "Enter Labs"}<ArrowRight size={16} /></a>
       </div>

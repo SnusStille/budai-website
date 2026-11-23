@@ -70,6 +70,7 @@ test("desktop companion uses the Labs model, gives way to dialogs and Playground
 test("phone companion waits for the desktop notice, avoids the working chat and can be hidden", async ({ browser }) => {
   const context = await browser.newContext({ userAgent: iphone, viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, reducedMotion: "reduce" });
   const page = await context.newPage(); await quiet(page); await page.goto("/");
+  await page.getByRole("button", { name: "About the 3D journey" }).click();
   const notice = page.locator(".desktop-notice"); await expect(notice).toBeVisible();
   await page.waitForTimeout(7200); await expect(page.locator("[data-builder-companion]")).toHaveCount(0);
   await notice.getByRole("button", { name: "I understand, continue" }).click();
@@ -233,6 +234,7 @@ test("the shared companion winks on request, including repeated fallback gesture
 test("small phones show the real bot without covering the heading, and keep chat controls usable", async ({ browser }) => {
   const context = await browser.newContext({ userAgent: iphone, viewport: { width: 320, height: 568 }, isMobile: true, hasTouch: true, reducedMotion: "reduce" });
   const page = await context.newPage(); await quiet(page); await page.goto("/");
+  await page.getByRole("button", { name: "About the 3D journey" }).click();
   const notice = page.locator(".desktop-notice");
   await expect(notice.locator(".desktop-notice-mascot .labs-bot-fallback")).toBeVisible();
   await expect(notice.locator(".desktop-notice-mascot canvas")).toHaveCount(0);
@@ -241,6 +243,7 @@ test("small phones show the real bot without covering the heading, and keep chat
   expect(confirmBox && dialogBox && confirmBox.y + confirmBox.height <= dialogBox.y + dialogBox.height).toBeTruthy();
   await page.screenshot({ path: "test-results/phone-notice-small.png" });
   await notice.getByRole("button", { name: "I understand, continue" }).click();
+  await page.evaluate(() => window.scrollTo(0, 0));
   const buddy = page.locator("[data-builder-companion]"); await expect(buddy).toBeVisible({ timeout: 12000 });
   const launcher = await buddy.locator(".companion-launcher").boundingBox();
   const heading = await page.locator("#phone-heading").boundingBox();

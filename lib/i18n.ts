@@ -21,7 +21,7 @@ export const translations = {
       titleAccent: "Sverige",
       words: [],
       subtitle:
-        "Byggd i Sverige för riktigt vardagsarbete. Skriv, analysera, planera och gör rörig kontext till konkret handling på svenska och engelska — prova gratis direkt i Playground.",
+        "Skriv, analysera och planera på svenska eller engelska. Börja med en idé och prova BudAI gratis i Playground.",
       ctaPrimary: "Öppna Playground",
       ctaSecondary: "Gå med i väntelistan",
     },
@@ -124,7 +124,7 @@ export const translations = {
       titleAccent: "Sweden",
       words: [],
       subtitle:
-        "Built in Sweden for real everyday work. Write, analyze, plan, and turn messy context into clear action in Swedish and English — free to try in the live Playground right now.",
+        "Write, analyze and plan in Swedish or English. Start with an idea and try BudAI free in the Playground.",
       ctaPrimary: "Open Playground",
       ctaSecondary: "Join the waitlist",
     },

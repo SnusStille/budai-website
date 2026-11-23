@@ -22,32 +22,39 @@ export default function BrainScrollStory() {
     "core.module(\"03-decide.ts\") · risk & next step",
     "core.module(\"06-multimodal.ts\") · vision + voice",
   ];
-  useEffect(()=>subscribeJourney(frame=>{
-    const node=section.current;if(!node)return;
+  useEffect(()=>{
+    const node=section.current;
+    if(!node)return;
+    // These elements are stable across language changes. Cache the references once
+    // instead of querying the same subtree on every shared journey frame.
+    const skip=node.querySelector<HTMLAnchorElement>(".neural-hud-top>a");
+    const stages=Array.from(node.querySelectorAll<HTMLElement>("[data-original-stage]"));
+    const synth=node.querySelector<HTMLElement>("[data-digital-synthesis]");
+    let posterVisible=true;
+    return subscribeJourney(frame=>{
     const p=frame.sections.signal??0;
     const save=Boolean((navigator as Navigator&{connection?:{saveData?:boolean}}).connection?.saveData);
     const state=document.documentElement.dataset.brainState;
     const enhanced=!frame.reduced&&!save&&state!=="fallback";
     node.dataset.enhanced=String(enhanced);
     const showPoster=(!enhanced||state!=="ready")&&p<.6;
-    setPoster(previous=>previous===showPoster?previous:showPoster);
+    if(posterVisible!==showPoster){posterVisible=showPoster;setPoster(showPoster);}
     node.style.setProperty("--neural-progress",String(p));
     node.dataset.journeyProgress=p.toFixed(4);
-    const skip=node.querySelector<HTMLAnchorElement>(".neural-hud-top>a");
     if(skip){skip.tabIndex=enhanced&&p>.79?-1:0;skip.setAttribute("aria-hidden",String(enhanced&&p>.79));}
-    node.querySelectorAll<HTMLElement>("[data-original-stage]").forEach((element,i)=>{
+    stages.forEach((element,i)=>{
       const center=.16+i*.125;
       const opacity=smooth(1-Math.abs(p-center)/.06);
       element.style.setProperty("--stage-opacity",String(opacity));
       element.setAttribute("aria-hidden",String(enhanced&&opacity<.15));
     });
-    const synth=node.querySelector<HTMLElement>("[data-digital-synthesis]");
     if(synth){
       const sOpacity=smooth(1-Math.abs(p-.69)/.07);
       synth.style.setProperty("--stage-opacity",String(sOpacity));
       synth.setAttribute("aria-hidden",String(enhanced&&sOpacity<.15));
     }
-  }),[]);
+    });
+  },[]);
   return (
     <section ref={section} id="signal" className="brain-journey" aria-labelledby="signal-title" data-brain-journey data-original-source="43f44c9">
       <div className="brain-journey-sticky">

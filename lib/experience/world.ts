@@ -475,7 +475,7 @@ export function createWorld(
         const pose = cameraAt(chapter, frame.sections.about ?? 0, mobile, frame.closing ?? 0);
         camera.clearViewOffset();
         camera.position.fromArray(pose.position);
-        camera.lookAt(new THREE.Vector3(...pose.target));
+        camera.lookAt(...pose.target);
         camera.updateMatrixWorld();
         if (!capSystem?.isConnected) capSystem = document.querySelector<HTMLElement>("[data-capability-system]");
         if (!capViewport?.isConnected) capViewport = document.querySelector<HTMLElement>("[data-capability-viewport]");
@@ -570,7 +570,7 @@ export function createWorld(
         renderer.domElement.dataset.chamberProgress = capProgress.toFixed(3);
         renderer.domElement.dataset.assemblyProgress = assemblyProgress.toFixed(3);
         renderer.domElement.dataset.realityProgress = (frame.sections.about ?? 0).toFixed(3);
-        key.position.copy(camera.position).add(new THREE.Vector3(-3, 6, 3));
+        key.position.set(camera.position.x - 3, camera.position.y + 6, camera.position.z + 3);
         key.target.position.fromArray(pose.target);
         key.target.updateMatrixWorld();
         groups.forEach((group, i) => {

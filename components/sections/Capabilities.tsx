@@ -59,8 +59,8 @@ export default function Capabilities() {
       key: "consumer",
       icon: UserIcon,
       name: sv ? "Konsument" : "Consumer",
-      tag: "Coming soon",
-      price: "Coming soon",
+      tag: sv ? "Kommer senare" : "Coming soon",
+      price: sv ? "Kommer senare" : "Coming soon",
       sub: sv ? "planerat privatpaket" : "planned individual plan",
       note: sv
         ? "Använd BudAI varje dag — under utveckling för regelbundet individuellt arbete."
@@ -92,8 +92,8 @@ export default function Capabilities() {
       key: "business",
       icon: BuildingIcon,
       name: sv ? "Företag" : "Business",
-      tag: "Coming soon",
-      price: "Coming soon",
+      tag: sv ? "Kommer senare" : "Coming soon",
+      price: sv ? "Kommer senare" : "Coming soon",
       sub: sv ? "planerat teampaket" : "planned team plan",
       note: sv
         ? "Ta BudAI till ditt team — under utveckling för gemensamma arbetsflöden."
