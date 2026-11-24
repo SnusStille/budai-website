@@ -31,6 +31,15 @@ export default function CapabilityMap() {
     window.dispatchEvent(new CustomEvent("budai:pathway-mode", { detail: mode }));
   };
 
+  const launchPrompt = (prompt: string) => {
+    const accepted = window.dispatchEvent(new CustomEvent("budai:prompt", { detail: prompt, cancelable: true }));
+    if (accepted) {
+      const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      document.getElementById("playground")?.scrollIntoView({ behavior: reduced ? "auto" : "smooth" });
+    }
+    return accepted;
+  };
+
   const capabilities = [
     {
       icon: FileText,
@@ -42,7 +51,7 @@ export default function CapabilityMap() {
       codeLines: [
         "import { BudAI, DocumentCard } from '@budai/studio';",
         'const draft = await budai.write({ lang: "sv-SE", format: "proposal" });',
-        "return <DocumentCard status='VERIFIED' payload={draft} />;",
+        "return <DocumentCard status='DRAFT' payload={draft} />;",
       ],
     },
     {
@@ -199,6 +208,7 @@ export default function CapabilityMap() {
               ? "Välj ett verktyg för att öppna det direkt i Playground ovan, eller skrolla genom verkstaden för att se hur varje förmåga formar rå kontext till tydlig handling."
               : "Select any instrument to open its prompt in the Playground above, or scroll through the workshop to see how each capability shapes raw context into clear action."}
           </p>
+          <p className="capability-example-note">{sv ? "Visualiseringen och koden är illustrativa. Förslagen öppnas som utkast och skickas inte automatiskt." : "The visualization and code are illustrative. Suggestions open as drafts and are not sent automatically."}</p>
           <div className="capability-pathway-switch" role="group" aria-label={sv ? "Välj visuell väg" : "Choose visual pathway"} data-pathway-toggle>
             <button
               type="button"
@@ -223,7 +233,7 @@ export default function CapabilityMap() {
                 href="#playground"
                 className={`capability-module ${active === i ? "is-active" : ""}`}
                 key={i}
-                onClick={() => window.dispatchEvent(new CustomEvent("budai:prompt", { detail: prompts[i] }))}
+                onClick={(event) => { event.preventDefault(); launchPrompt(prompts[i]); }}
                 onPointerEnter={() => setHover(i)}
                 onPointerLeave={() => setHover(-1)}
                 onFocus={() => setHover(i)}
@@ -380,8 +390,7 @@ export default function CapabilityMap() {
                 type="button"
                 className="capability-readout-launch"
                 onClick={() => {
-                  window.dispatchEvent(new CustomEvent("budai:prompt", { detail: prompts[active] ?? prompts[0] }));
-                  document.getElementById("playground")?.scrollIntoView({ behavior: "smooth" });
+                  launchPrompt(prompts[active] ?? prompts[0]);
                 }}
               >
                 {sv ? "Prova ↗" : "Try ↗"}

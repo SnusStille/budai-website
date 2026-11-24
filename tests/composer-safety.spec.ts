@@ -125,3 +125,30 @@ test("Swedish mobile composer shows the real budget without losing text", async 
   await expect(input).toHaveValue(text);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
+
+test("desktop capability and Builder suggestions respect a rejected draft replacement", async ({ page }) => {
+  await page.goto("/#playground");
+  const input = page.getByRole("textbox", { name: "Message BudAI" });
+  await input.fill("Keep my unfinished thought");
+  let calls = 0;
+  page.on("request", req => { if (req.url().endsWith("/api/playground")) calls++; });
+  const capability = page.locator(".capability-modules a").first();
+  await capability.scrollIntoViewIfNeeded();
+  page.once("dialog", dialog => dialog.dismiss());
+  await capability.click();
+  await expect(input).toHaveValue("Keep my unfinished thought");
+  await expect(capability).toBeInViewport();
+  const builder = page.locator("[data-thought-to-reality] button").first();
+  await builder.scrollIntoViewIfNeeded();
+  page.once("dialog", dialog => dialog.dismiss());
+  await builder.click();
+  await expect(input).toHaveValue("Keep my unfinished thought");
+  await expect(builder).toBeInViewport();
+  expect(calls).toBe(0);
+  await capability.scrollIntoViewIfNeeded();
+  page.once("dialog", dialog => dialog.accept());
+  await capability.click();
+  await expect(input).toHaveValue("Help me write a clear, friendly email.");
+  expect(calls).toBe(0);
+  await expect(page.locator(".capability-example-note")).toContainText("illustrative");
+});

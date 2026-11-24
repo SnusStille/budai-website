@@ -49,7 +49,8 @@ export default function About() {
   ];
 
   const launchArchetypePrompt = (prompt: string) => {
-    window.dispatchEvent(new CustomEvent("budai:prompt", { detail: prompt }));
+    const accepted = window.dispatchEvent(new CustomEvent("budai:prompt", { detail: prompt, cancelable: true }));
+    if (!accepted) return;
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     document.getElementById("playground")?.scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth" });
   };
