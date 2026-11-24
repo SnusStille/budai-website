@@ -222,3 +222,11 @@ html:has(.phone-welcome) { scroll-padding-top:0; }
 .phone-faq details[open] summary::after { content:"−"; }
 .phone-faq details p { margin:0; padding:0 28px 20px 0; color:#b1c3cd; font-size:13px; line-height:1.7; }
 .phone-faq summary:focus-visible { outline:2px solid #9cefff; outline-offset:3px; }
+
+/* The mobile Builder has its own lightweight spatial illustration. */
+.phone-builder-illustration { position:relative; overflow:hidden; margin-top:32px; border:1px solid #a6dce332; background:radial-gradient(ellipse at 50% 48%,#153d4bcc,transparent 65%),#07131c; }
+.phone-builder-illustration::before { content:""; position:absolute; inset:0; background-image:linear-gradient(#a3d8e20b 1px,transparent 1px),linear-gradient(90deg,#a3d8e20b 1px,transparent 1px); background-size:28px 28px; }
+.phone-builder-top,.phone-builder-caption { position:relative; display:flex; justify-content:space-between; gap:10px; padding:16px; color:#8eb8c5; font:9px var(--font-jetbrains),monospace; letter-spacing:.08em; }
+.phone-builder-scene { position:relative; display:block; width:100%; height:auto; max-height:270px; }
+.phone-builder-caption { border-top:1px solid #a6dce31a; }
+.phone-studio-list li { border-radius:2px; background:linear-gradient(100deg,#0e222c99,#08151c66); }

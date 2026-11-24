@@ -68,6 +68,21 @@ export default function PhoneStudio() {
       <span className="phone-studio-kicker">04 / STILLEDEV</span>
       <h2 id="phone-builder-title">{sv ? <>Från idé till<br /><em>digitalt verktyg.</em></> : <>From an idea to<br /><em>a digital tool.</em></>}</h2>
       <p>{sv ? "Stilledev utvecklar BudAI och utforskar webbapplikationer, gränssnitt, integrationer och arbetsflöden." : "Stilledev builds BudAI and explores web applications, interfaces, integrations and workflows."}</p>
+      <div className="phone-builder-illustration" aria-hidden="true">
+        <div className="phone-builder-top"><span>STILLEDEV / BUILDER</span><span>01 — 04</span></div>
+        <svg viewBox="0 0 360 220" fill="none" className="phone-builder-scene">
+          <defs><linearGradient id="phone-builder-pane" x1="65" y1="28" x2="304" y2="190" gradientUnits="userSpaceOnUse"><stop stopColor="#366c7b" stopOpacity=".5"/><stop offset="1" stopColor="#101e31" stopOpacity=".28"/></linearGradient></defs>
+          <path d="M24 169 174 216 339 168 190 121Z" stroke="#7fcada" strokeOpacity=".22"/>
+          <path d="M51 158 177 196 309 158M88 146l126 38m-80-52 126 38m-141-12 58-17m-22 29 58-17m-22 29 58-17" stroke="#7fcada" strokeOpacity=".12"/>
+          <path d="M72 50 225 23 296 48 143 78Z" fill="#163b49" fillOpacity=".45" stroke="#a8e7f0" strokeOpacity=".38"/>
+          <path d="M72 50v96l71 31V78Z" fill="#0d2330" stroke="#a8e7f0" strokeOpacity=".3"/><path d="M143 78 296 48v95l-153 34Z" fill="url(#phone-builder-pane)" stroke="#a8e7f0" strokeOpacity=".5"/>
+          <path d="M161 91 277 69v8L161 99Zm0 19 74-14m-74 24 97-19m-97 29 56-11" stroke="#a9e5ef" strokeOpacity=".5"/>
+          <path d="M90 77 126 91m-36-5 29 11m-29-2 36 14m-36-5 23 9m-23 0 32 12" stroke="#90d6e6" strokeOpacity=".45"/>
+          <circle cx="255" cy="118" r="16" stroke="#b1eff4" strokeOpacity=".52"/><path d="M244 118h22m-11-11v22" stroke="#b1eff4" strokeOpacity=".55"/>
+          <circle cx="72" cy="50" r="3" fill="#b8f4f9"/><circle cx="296" cy="48" r="3" fill="#b8f4f9"/><circle cx="143" cy="177" r="3" fill="#b8f4f9"/>
+        </svg>
+        <div className="phone-builder-caption"><span>{sv ? "ILLUSTRATIV MILJÖ" : "ILLUSTRATIVE ENVIRONMENT"}</span><span>IDEA → BUILD</span></div>
+      </div>
       <div className="phone-studio-tags"><span>Web</span><span>Dashboards</span><span>AI</span><span>Automation</span></div>
       <div className="phone-studio-actions"><a className="phone-studio-link" href={sv ? "/sv/labs" : "/labs"}>{sv ? "Utforska Labs" : "Explore Labs"} <ArrowUpRight size={16} /></a><a className="phone-studio-link" href={sv ? "/sv/contact" : "/contact"}>{sv ? "Kontakta oss" : "Get in touch"} <ArrowUpRight size={16} /></a></div>
     </section>

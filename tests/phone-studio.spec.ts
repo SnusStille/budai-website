@@ -88,3 +88,18 @@ test("optional desktop notice closes with Escape and restores focus", async ({ b
   await expect(opener).toBeFocused();
   await context.close();
 });
+
+test("mobile Builder illustration stays readable and decorative in both languages", async ({ browser }) => {
+  const context = await browser.newContext({ userAgent: iphone, viewport: { width: 320, height: 640 }, isMobile: true, hasTouch: true, reducedMotion: "reduce" });
+  const page = await context.newPage();
+  await page.addInitScript(() => { localStorage.setItem("budai-cookies", "declined"); sessionStorage.setItem("budai-buddy-popup-dismissed", "true"); });
+  await page.goto("/#about");
+  const art = page.locator(".phone-builder-illustration");
+  await expect(art).toHaveAttribute("aria-hidden", "true");
+  await expect(art).toContainText("ILLUSTRATIVE ENVIRONMENT");
+  await expect(page.locator("#about").getByRole("link", { name: "Explore Labs" })).toHaveAttribute("href", "/labs");
+  await page.locator(".phone-header .phone-languages").getByRole("button", { name: "SV" }).click();
+  await expect(art).toContainText("ILLUSTRATIV MILJÖ");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
+  await context.close();
+});
