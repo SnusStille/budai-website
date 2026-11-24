@@ -33,7 +33,7 @@ test("Labs presents a bilingual index without unverified projects", async ({ pag
   for (const old of ["StilleAffe", "Harvis", "Julia Stille Real Estate", "Anna’s Second Brain", "AI Video Studio"]) await expect(page.locator(".labs-wait")).not.toContainText(old);
   await expect(page.locator(".labs-wait video, .labs-wait #projects, .labs-wait #services")).toHaveCount(0);
   await expect(page.locator(".labs-index-list li")).toHaveCount(5);
-  await expect(page.getByRole("link", { name: /Kontakta Stilledev/ })).toHaveAttribute("href", "/sv/contact");
+  await expect(page.locator(".labs-index-list").getByRole("link", { name: /Kontakta Stilledev/ })).toHaveAttribute("href", "/sv/contact");
   await expect(page.getByRole("link", { name: /Prova BudAI/ })).toHaveAttribute("href", "/sv#playground");
   await page.getByRole("group", { name: "Språk" }).getByRole("link", { name: "EN" }).click();
   await expect(page).toHaveURL(/\/labs$/);
@@ -504,4 +504,36 @@ test("copy chat copies a local transcript without publishing it", async ({ page 
   await expect.poll(() => page.evaluate(() => (window as Window & { copied?: string }).copied)).toContain("My private question");
   expect(await page.evaluate(() => (window as Window & { copied?: string }).copied)).toContain("A private answer.");
   expect(shares).toBe(0);
+});
+
+
+test("Labs presents a real product, working links and a bilingual approach on desktop and phone", async ({ browser }) => {
+  for (const mobile of [false, true]) {
+    const context = await browser.newContext({ viewport: mobile ? { width: 320, height: 640 } : { width: 1440, height: 900 }, ...(mobile ? { userAgent: iphone, isMobile: true, hasTouch: true } : {}), reducedMotion: "reduce" });
+    const page = await context.newPage(); await quiet(page);
+    await page.goto("/sv/labs");
+    await expect(page.locator(".labs-feature").getByRole("heading", { name: "BudAI." })).toBeVisible();
+    await expect(page.locator(".labs-feature").getByRole("link", { name: "Öppna Playground" })).toHaveAttribute("href", "/sv#playground");
+    await expect(page.locator(".labs-process li")).toHaveCount(3);
+    await expect(page.locator(".labs-contact a")).toHaveAttribute("href", "/sv/contact");
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
+    await page.getByRole("group", { name: "Språk" }).getByRole("link", { name: "EN" }).click();
+    await expect(page.locator(".labs-feature").getByRole("link", { name: "Open Playground" })).toHaveAttribute("href", "/#playground");
+    await expect(page.locator(".labs-process")).toContainText("Understand");
+    await page.locator(".labs-feature").getByRole("link", { name: "Open Playground" }).click();
+    await expect(page.locator("#playground")).toBeVisible();
+    await context.close();
+  }
+});
+
+test("hero prompt cancellation keeps the current draft and does not navigate", async ({ page }) => {
+  await quiet(page); await page.emulateMedia({ reducedMotion: "reduce" }); await page.goto("/");
+  const composer = page.getByRole("textbox", { name: "Message BudAI", exact: true });
+  await composer.fill("Keep this draft");
+  await page.evaluate(() => window.scrollTo(0, 0));
+  const before = await page.evaluate(() => window.scrollY);
+  page.once("dialog", dialog => dialog.dismiss());
+  await page.locator(".hero-features").getByRole("button").first().click();
+  await expect(composer).toHaveValue("Keep this draft");
+  expect(await page.evaluate(() => window.scrollY)).toBeLessThan(before + 100);
 });

@@ -9,6 +9,15 @@ export function originalStageAt(progress: number) {
   return Math.min(3, Math.floor(clamp((progress - 0.075) / 0.55) * 4));
 }
 
+// Immutable camera anchors are shared across frames rather than allocated on every scroll sample.
+const JOURNEY_BEATS = [
+  { at: 0, z: 4.6, y: 0.25, yaw: 0.10, tilt: 0.10 },
+  { at: 0.25, z: 3.6, y: 0.22, yaw: -0.14, tilt: 0.13 },
+  { at: 0.56, z: 0.62, y: 0.13, yaw: 0.04, tilt: 0.06 },
+  { at: 0.80, z: -1.2, y: 0.06, yaw: 0, tilt: 0 },
+  { at: 1, z: -2.8, y: 0.03, yaw: 0, tilt: 0 },
+] as const;
+
 type DepthBeat = { at: number; z: number };
 /** Monotone cubic depth avoids stopping at every beat without overshoot or temporal lag. */
 function depthAt(beats: readonly DepthBeat[], index: number, progress: number) {
@@ -48,13 +57,7 @@ export function brainCameraAt({ kind, progress }: BrainMotion) {
       tilt: lerp(0.14, HERO_POSE.tilt, settle),
     };
   }
-  const beats = [
-    { at: 0, z: 4.6, y: 0.25, yaw: 0.10, tilt: 0.10 },
-    { at: 0.25, z: 3.6, y: 0.22, yaw: -0.14, tilt: 0.13 },
-    { at: 0.56, z: 0.62, y: 0.13, yaw: 0.04, tilt: 0.06 },
-    { at: 0.80, z: -1.2, y: 0.06, yaw: 0, tilt: 0 },
-    { at: 1, z: -2.8, y: 0.03, yaw: 0, tilt: 0 },
-  ];
+  const beats = JOURNEY_BEATS;
   let i = 0;
   while (i < beats.length - 2 && p > beats[i + 1].at) i++;
   const a = beats[i], b = beats[i + 1], t = smooth((p - a.at) / (b.at - a.at));

@@ -48,7 +48,8 @@ export default function Hero() {
     window.dispatchEvent(new CustomEvent("budai:brain-region", { detail: region }));
   };
   const activateChipPrompt = (prompt: string) => {
-    window.dispatchEvent(new CustomEvent("budai:prompt", { detail: prompt }));
+    const accepted = window.dispatchEvent(new CustomEvent("budai:prompt", { detail: prompt, cancelable: true }));
+    if (!accepted) return;
     document.getElementById("playground")?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
   };
 

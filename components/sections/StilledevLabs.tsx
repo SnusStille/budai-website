@@ -16,7 +16,7 @@ const EMOTES: { kind: Emote; en: string; sv: string; icon: typeof Hand }[] = [
 const LINES: Record<Emote, { en: string; sv: string; moodEn: string; moodSv: string }> = {
   hello: { en: "Hi! I'm the Builder Bot. Hard hat on — building in progress!", sv: "Hej! Jag är Byggroboten. Hjälmen är på — bygge pågår!", moodEn: "SAYING HI", moodSv: "HÄLSAR" },
   wink: { en: "Don't tell anyone… the coffee machine is my best friend.", sv: "Berätta inte för någon… kaffemaskinen är min bästa vän.", moodEn: "BEING CHEEKY", moodSv: "ÄR BUSIG" },
-  celebrate: { en: "Another bolt tightened! Labs is getting closer every day.", sv: "En bult till åtdragen! Labs kommer närmare varje dag.", moodEn: "CELEBRATING", moodSv: "FIRAR" },
+  celebrate: { en: "Another bolt tightened! Thanks for exploring Labs.", sv: "En bult till åtdragen! Tack för att du utforskar Labs.", moodEn: "CELEBRATING", moodSv: "FIRAR" },
   think: { en: "Hmm… if I move this wall, the whole idea gets bigger. Noted!", sv: "Hmm… flyttar jag den här väggen blir hela idén större. Noterat!", moodEn: "THINKING", moodSv: "FUNDERAR" },
 };
 const IDLE = { en: "Explore the directions behind the work, try BudAI, or get in touch about an idea. Labs will continue to evolve as new work is ready to share.", sv: "Utforska riktningarna bakom arbetet, prova BudAI eller hör av dig med en idé. Labs fortsätter att utvecklas när nytt arbete är redo att visas." };
@@ -86,6 +86,15 @@ export default function StilledevLabs({ phone = false }: { phone?: boolean }) {
           </li>)}
         </ol>
       </section>
+      <section className="labs-feature" aria-labelledby="labs-feature-title">
+        <div className="labs-feature-intro"><span className="labs-section-label">01 / {sv ? "PRODUKT I FOKUS" : "FEATURED PRODUCT"}</span><h2 id="labs-feature-title">BudAI<span>.</span></h2><p>{sv ? "En AI-arbetsyta utvecklad av Stilledev – från idé och text till nästa steg." : "An AI workspace developed by Stilledev – from ideas and writing to the next step."}</p><a className="labs-feature-link" href={`${home}#playground`}>{sv ? "Öppna Playground" : "Open Playground"} <ArrowUpRight size={17} aria-hidden="true" /></a></div>
+        <div className="labs-feature-detail"><div className="labs-feature-topline"><span>BUDAI / PREVIEW</span><span>{sv ? "PROVA IDAG" : "TRY IT TODAY"}</span></div><p className="labs-feature-statement">{sv ? <>En tanke.<br /><em>Flera vägar vidare.</em></> : <>One thought.<br /><em>More ways forward.</em></>}</p><div className="labs-feature-lines" aria-hidden="true"><i /><i /><i /><i /><i /><i /></div><p>{sv ? "Skriv, planera och utforska på svenska eller engelska. Prova som gäst eller logga in för fler funktioner." : "Write, plan and explore in Swedish or English. Try it as a guest or sign in for more features."}</p></div>
+      </section>
+      <section className="labs-process" aria-labelledby="labs-process-title">
+        <div><span className="labs-section-label">02 / {sv ? "ARBETSSÄTT" : "APPROACH"}</span><h2 id="labs-process-title">{sv ? <>Från fråga till<br /><em>fungerande verktyg.</em></> : <>From a question to<br /><em>a working tool.</em></>}</h2><p>{sv ? "Ett sätt att närma sig nya idéer: börja med behovet, utforska lösningar och förbättra med återkoppling." : "A way to approach new ideas: start with the need, explore solutions and refine with feedback."}</p></div>
+        <ol><li><span>01</span><div><h3>{sv ? "Förstå" : "Understand"}</h3><p>{sv ? "Vad behöver lösas, och för vem?" : "What needs solving, and for whom?"}</p></div></li><li><span>02</span><div><h3>{sv ? "Utforska" : "Explore"}</h3><p>{sv ? "Prova idéer och tekniska möjligheter." : "Explore ideas and technical possibilities."}</p></div></li><li><span>03</span><div><h3>{sv ? "Utveckla" : "Develop"}</h3><p>{sv ? "Bygg vidare på det som fungerar och förfina detaljerna." : "Build on what works and refine the details."}</p></div></li></ol>
+      </section>
+      <section className="labs-contact" aria-labelledby="labs-contact-title"><div><span className="labs-section-label">03 / CONNECT</span><h2 id="labs-contact-title">{sv ? "Har du en idé?" : "Have an idea?"}</h2><p>{sv ? "Berätta vad du vill utforska eller bygga." : "Tell us what you would like to explore or build."}</p></div><a href={sv ? "/sv/contact" : "/contact"}>{sv ? "Kontakta Stilledev" : "Contact Stilledev"} <ArrowUpRight size={18} aria-hidden="true" /></a></section>
       <footer className="labs-wait-footer"><span>STILLEDEV EF / LABS</span><span>{sv ? "BYGGT MED NYFIKENHET" : "BUILT WITH CURIOSITY"} ✳</span></footer>
     </div>
   </main>;
