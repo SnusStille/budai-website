@@ -537,3 +537,33 @@ test("hero prompt cancellation keeps the current draft and does not navigate", a
   await expect(composer).toHaveValue("Keep this draft");
   expect(await page.evaluate(() => window.scrollY)).toBeLessThan(before + 100);
 });
+
+test("idea workshop keeps a bilingual brief local, copyable and usable on phone", async ({ browser }) => {
+  for (const mobile of [false, true]) {
+    const context = await browser.newContext({ viewport: mobile ? { width: 320, height: 640 } : { width: 1440, height: 900 }, ...(mobile ? { userAgent: iphone, isMobile: true, hasTouch: true } : {}), reducedMotion: "reduce" });
+    const page = await context.newPage(); await quiet(page);
+    await page.goto("/sv/labs");
+    const workshop = page.locator(".labs-brief");
+    await expect(workshop.getByRole("button", { name: "Kopiera utkast" })).toBeDisabled();
+    let requests = 0; page.on("request", req => { if (req.method() !== "GET") requests++; });
+    await workshop.getByLabel("Vad vill du lösa?").fill("Hitta information snabbare");
+    await workshop.getByLabel("Vem är det för?").fill("Vårt team");
+    await expect(workshop.locator("pre")).toContainText("Hitta information snabbare");
+    await page.evaluate(() => { Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: async (text: string) => { (window as Window & { copiedBrief?: string }).copiedBrief = text; } } }); });
+    await workshop.getByRole("button", { name: "Kopiera utkast" }).click();
+    await expect(workshop.getByRole("status")).toHaveText("Utkastet har kopierats.");
+    expect(await page.evaluate(() => (window as Window & { copiedBrief?: string }).copiedBrief)).toContain("Vårt team");
+    expect(requests).toBe(0);
+    await expect(workshop.getByRole("link", { name: /Kontakta oss/ })).toHaveAttribute("href", "/sv/contact");
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
+    await page.reload();
+    await expect(workshop.getByLabel("Vad vill du lösa?")).toHaveValue("");
+    await page.getByRole("group", { name: "Språk" }).getByRole("link", { name: "EN" }).click();
+    await expect(workshop.getByRole("heading", { name: /An idea starts/ })).toBeVisible();
+    await workshop.getByLabel("What would you like to solve?").fill("A private idea");
+    await page.evaluate(() => { Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: async () => { throw new Error("denied"); } } }); });
+    await workshop.getByRole("button", { name: "Copy draft" }).click();
+    await expect(workshop.getByRole("status")).toContainText("Select and copy");
+    await context.close();
+  }
+});

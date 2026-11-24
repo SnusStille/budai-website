@@ -10,3 +10,8 @@ Captured with Chromium at 1440×900 for desktop and 390×844 with an iPhone user
 - `after-phone-labs.jpg` (local phone view; no matching before image captured)
 
 The comparison is not a substitute for testing the animated experience or a configured deployment.
+
+The Labs idea workshop is a new section, so there is no equivalent before image. These section captures show the local work with an illustrative entered draft, not live or Preview:
+
+- `after-labs-workshop-desktop.jpg`
+- `after-labs-workshop-phone.jpg`

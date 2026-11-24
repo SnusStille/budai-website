@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowUpRight, Sparkles, Hand, Eye, PartyPopper, Lightbulb, Coffee } from "lucide-react";
 import { useLang } from "@/components/ui/LanguageContext";
 import { StilledevMark } from "@/components/ui/BudAILogo";
+import LabsBrief from "@/components/sections/LabsBrief";
 import LabsMascot, { type MascotGesture } from "@/components/sections/LabsMascot";
 
 type Emote = MascotGesture["kind"];
@@ -94,7 +95,8 @@ export default function StilledevLabs({ phone = false }: { phone?: boolean }) {
         <div><span className="labs-section-label">02 / {sv ? "ARBETSSÄTT" : "APPROACH"}</span><h2 id="labs-process-title">{sv ? <>Från fråga till<br /><em>fungerande verktyg.</em></> : <>From a question to<br /><em>a working tool.</em></>}</h2><p>{sv ? "Ett sätt att närma sig nya idéer: börja med behovet, utforska lösningar och förbättra med återkoppling." : "A way to approach new ideas: start with the need, explore solutions and refine with feedback."}</p></div>
         <ol><li><span>01</span><div><h3>{sv ? "Förstå" : "Understand"}</h3><p>{sv ? "Vad behöver lösas, och för vem?" : "What needs solving, and for whom?"}</p></div></li><li><span>02</span><div><h3>{sv ? "Utforska" : "Explore"}</h3><p>{sv ? "Prova idéer och tekniska möjligheter." : "Explore ideas and technical possibilities."}</p></div></li><li><span>03</span><div><h3>{sv ? "Utveckla" : "Develop"}</h3><p>{sv ? "Bygg vidare på det som fungerar och förfina detaljerna." : "Build on what works and refine the details."}</p></div></li></ol>
       </section>
-      <section className="labs-contact" aria-labelledby="labs-contact-title"><div><span className="labs-section-label">03 / CONNECT</span><h2 id="labs-contact-title">{sv ? "Har du en idé?" : "Have an idea?"}</h2><p>{sv ? "Berätta vad du vill utforska eller bygga." : "Tell us what you would like to explore or build."}</p></div><a href={sv ? "/sv/contact" : "/contact"}>{sv ? "Kontakta Stilledev" : "Contact Stilledev"} <ArrowUpRight size={18} aria-hidden="true" /></a></section>
+      <LabsBrief />
+      <section className="labs-contact" aria-labelledby="labs-contact-title"><div><span className="labs-section-label">04 / CONNECT</span><h2 id="labs-contact-title">{sv ? "Har du en idé?" : "Have an idea?"}</h2><p>{sv ? "Berätta vad du vill utforska eller bygga." : "Tell us what you would like to explore or build."}</p></div><a href={sv ? "/sv/contact" : "/contact"}>{sv ? "Kontakta Stilledev" : "Contact Stilledev"} <ArrowUpRight size={18} aria-hidden="true" /></a></section>
       <footer className="labs-wait-footer"><span>STILLEDEV EF / LABS</span><span>{sv ? "BYGGT MED NYFIKENHET" : "BUILT WITH CURIOSITY"} ✳</span></footer>
     </div>
   </main>;
