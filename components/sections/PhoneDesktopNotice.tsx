@@ -18,6 +18,7 @@ export default function PhoneDesktopNotice({ sv, changeLanguage, onConfirm }: {
     document.body.style.overflow = "hidden";
     confirm.current?.focus({ preventScroll: true });
     const trap = (event: KeyboardEvent) => {
+      if (event.key === "Escape") { event.preventDefault(); onConfirm(); return; }
       if (event.key !== "Tab" || !dialog.current) return;
       const controls = Array.from(dialog.current.querySelectorAll<HTMLButtonElement>("button:not(:disabled)"));
       const first = controls[0];
@@ -38,7 +39,7 @@ export default function PhoneDesktopNotice({ sv, changeLanguage, onConfirm }: {
       document.removeEventListener("keydown", trap);
       document.removeEventListener("focusin", keepFocus);
     };
-  }, []);
+  }, [onConfirm]);
 
   return (
     <div className="desktop-notice-overlay">
@@ -59,10 +60,10 @@ export default function PhoneDesktopNotice({ sv, changeLanguage, onConfirm }: {
         <div className="desktop-notice-body">
           <p className="desktop-notice-kicker">{sv ? "DET FINNS MER ATT SE" : "THERE'S MORE TO SEE"}</p>
           <h2 id="desktop-notice-title">{sv ? <>Du missar <em>helheten.</em></> : <>You&apos;re missing the <em>bigger picture.</em></>}</h2>
-          <p id="desktop-notice-description">{sv ? "Stilledev upplevs bäst på dator. Hela sajten behöver en större skärm – men Playground kan du använda här på mobilen." : "Stilledev is best experienced on desktop. The full site needs a bigger screen – but you can still use Playground right here on your phone."}</p>
+          <p id="desktop-notice-description">{sv ? "3D-resan är anpassad för dator – men Playground kan du använda här på mobilen, tillsammans med en lättare version av studion." : "The 3D journey is designed for desktop – but you can still use Playground and explore a lighter version of the studio on your phone."}</p>
           <div className="desktop-notice-card">
             <div><span>{sv ? "DATORUPPLEVELSE" : "DESKTOP EXPERIENCE"}</span><strong>{sv ? "Rekommenderas" : "Recommended"}</strong></div>
-            <p><b>100%</b> {sv ? "av sajten tillgänglig" : "of the site available"}</p>
+            <p><b>100%</b> {sv ? "3D-upplevelse på dator" : "3D experience on desktop"}</p>
             <small>Labs · Builder · Playground <span>✳</span></small>
             <small className="desktop-notice-labs">{sv ? "Labs är under utveckling" : "Labs is under development"}</small>
           </div>

@@ -9,6 +9,33 @@ export function originalStageAt(progress: number) {
   return Math.min(3, Math.floor(clamp((progress - 0.075) / 0.55) * 4));
 }
 
+// Immutable camera anchors are shared across frames rather than allocated on every scroll sample.
+const JOURNEY_BEATS = [
+  { at: 0, z: 4.6, y: 0.25, yaw: 0.10, tilt: 0.10 },
+  { at: 0.25, z: 3.6, y: 0.22, yaw: -0.14, tilt: 0.13 },
+  { at: 0.56, z: 0.62, y: 0.13, yaw: 0.04, tilt: 0.06 },
+  { at: 0.80, z: -1.2, y: 0.06, yaw: 0, tilt: 0 },
+  { at: 1, z: -2.8, y: 0.03, yaw: 0, tilt: 0 },
+] as const;
+
+type DepthBeat = { at: number; z: number };
+/** Monotone cubic depth avoids stopping at every beat without overshoot or temporal lag. */
+function depthAt(beats: readonly DepthBeat[], index: number, progress: number) {
+  const slope = (a: number, b: number) => (beats[b].z - beats[a].z) / (beats[b].at - beats[a].at);
+  const tangent = (i: number) => {
+    if (i === 0 || i === beats.length - 1) return 0;
+    const left = slope(i - 1, i), right = slope(i, i + 1);
+    if (left * right <= 0) return 0;
+    const h0 = beats[i].at - beats[i - 1].at, h1 = beats[i + 1].at - beats[i].at;
+    const w0 = 2 * h1 + h0, w1 = h1 + 2 * h0;
+    return (w0 + w1) / (w0 / left + w1 / right);
+  };
+  const a = beats[index], b = beats[index + 1], span = b.at - a.at;
+  const u = clamp((progress - a.at) / span), u2 = u * u, u3 = u2 * u;
+  return (2 * u3 - 3 * u2 + 1) * a.z + (u3 - 2 * u2 + u) * span * tangent(index)
+    + (-2 * u3 + 3 * u2) * b.z + (u3 - u2) * span * tangent(index + 1);
+}
+
 /**
  * Absolute, C1-continuous camera poses across intro → hero → journey.
  * At intro(1), hero(0), and journey(0), world pose is HERO_POSE (z = -1.65)
@@ -30,20 +57,14 @@ export function brainCameraAt({ kind, progress }: BrainMotion) {
       tilt: lerp(0.14, HERO_POSE.tilt, settle),
     };
   }
-  const beats = [
-    { at: 0, z: 4.6, y: 0.25, yaw: 0.10, tilt: 0.10 },
-    { at: 0.25, z: 3.6, y: 0.22, yaw: -0.14, tilt: 0.13 },
-    { at: 0.56, z: 0.62, y: 0.13, yaw: 0.04, tilt: 0.06 },
-    { at: 0.80, z: -1.2, y: 0.06, yaw: 0, tilt: 0 },
-    { at: 1, z: -2.8, y: 0.03, yaw: 0, tilt: 0 },
-  ];
+  const beats = JOURNEY_BEATS;
   let i = 0;
   while (i < beats.length - 2 && p > beats[i + 1].at) i++;
   const a = beats[i], b = beats[i + 1], t = smooth((p - a.at) / (b.at - a.at));
   return {
     x: 0.04 * Math.sin(p * Math.PI * 2),
     y: lerp(a.y, b.y, t),
-    z: BRAIN_STORY_ORIGIN + lerp(a.z, b.z, t),
+    z: BRAIN_STORY_ORIGIN + depthAt(beats, i, p),
     yaw: lerp(a.yaw, b.yaw, t),
     tilt: lerp(a.tilt, b.tilt, t),
   };

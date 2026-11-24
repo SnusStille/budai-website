@@ -85,14 +85,14 @@ export default function Navbar() {
           <div className="flex items-center justify-between h-16 lg:h-[4.5rem] lg:grid lg:grid-cols-[auto_1fr_auto] lg:gap-4">
             <div className="flex items-center gap-3">
             <Link
-              href="/"
+              href={lang === "sv" ? "/sv" : "/"}
               data-budai-logo
               className="flex items-center gap-2.5 group outline-none focus-visible:ring-2 focus-visible:ring-accent-cyan/50 rounded-lg"
-              aria-label="BudAI home"
+              aria-label={lang === "sv" ? "BudAI startsida" : "BudAI home"}
               onClick={(e) => {
                 // On the landing page scroll to top instead of reloading; on any
                 // other route let the link navigate home. No dead hash-only links.
-                if (window.location.pathname === "/") {
+                if (window.location.pathname === (lang === "sv" ? "/sv" : "/")) {
                   e.preventDefault();
                   if (window.scrollY > 300) window.scrollTo({ top: 0, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
                 }
@@ -121,6 +121,7 @@ export default function Navbar() {
                   <a
                     key={l.href}
                     href={l.href}
+                    aria-current={isActive ? "location" : undefined}
                     className={`relative whitespace-nowrap px-2.5 xl:px-3.5 py-2 text-sm rounded-lg transition-colors ${
                       isActive
                         ? "text-white"
@@ -238,6 +239,7 @@ export default function Navbar() {
                 <motion.a
                   key={l.href}
                   href={l.href}
+                  aria-current={isLinkActive(l.id) ? "location" : undefined}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.04 }}

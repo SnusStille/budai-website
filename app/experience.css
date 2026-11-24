@@ -453,12 +453,12 @@ html[data-budai-intro="preparing"] body>a[href="#main"],html[data-budai-intro="p
 .hero-secondary { font-size: 12px; color: #b8c9d3; display: inline-flex; align-items: center; gap: 12px; }
 .hero-secondary:hover { color: white; }
 .hero-features { display: flex; flex-wrap: wrap; gap: 10px 12px; margin-top: 35px; }
-.hero-features > button { display: inline-flex; gap: 6px; align-items: center; font-size: 10px; color: #7a94a4; padding: 5px 10px; border-radius: 999px; border: 1px solid rgba(125, 200, 224, 0.14); background: rgba(9, 20, 32, 0.55); cursor: pointer; transition: color 240ms ease, border-color 240ms ease, background 240ms ease, box-shadow 240ms ease; }
+.hero-features > button { display: inline-flex; gap: 6px; align-items: center; font-size: 10px; color: #a6bdc9; padding: 5px 10px; border-radius: 999px; border: 1px solid rgba(125, 200, 224, 0.14); background: rgba(9, 20, 32, 0.55); cursor: pointer; transition: color 240ms ease, border-color 240ms ease, background 240ms ease, box-shadow 240ms ease; }
 .hero-features > button:hover { color: #d8f6ff; border-color: rgba(136, 226, 246, 0.55); background: rgba(16, 42, 62, 0.72); box-shadow: 0 0 18px rgba(114, 212, 236, 0.2); }
 .hero-features svg { color: #87b8cc; transition: color 240ms ease; }
 .hero-features > button:hover svg { color: #9bf0ff; }
-.hero-product-note { color: #637684; font-size: 11px; line-height: 1.65; max-width: 420px; margin-top: 17px; }
-.hero-credit { font-size: 10px; color: #647784; margin-top: 22px; display: flex; align-items: center; gap: 4px; }
+.hero-product-note { color: #9bb0bd; font-size: 11px; line-height: 1.65; max-width: 420px; margin-top: 17px; }
+.hero-credit { font-size: 10px; color: #91a9b7; margin-top: 22px; display: flex; align-items: center; gap: 4px; }
 .hero-credit > span { margin: 0 7px; }
 .hero-bottom { position: absolute; bottom: 28px; left: 6vw; right: 6vw; padding-top: 20px; border-top: 1px solid #8db0c516; display: flex; justify-content: space-between; align-items: center; gap: 20px; color: #6b8496; font: 9px var(--font-jetbrains), monospace; letter-spacing: .13em; }
 .hero-bottom > span { display: flex; align-items: center; gap: 10px; }
@@ -844,6 +844,7 @@ html[data-budai-intro="playing"] body > a[href="#main"] { visibility: hidden; }
 .capability-index { position:relative; z-index:2; padding:12px 0; }
 .capability-index h3 { font-size:clamp(28px,3vw,43px); font-weight:400; letter-spacing:-.05em; line-height:1.15; margin:20px 0 16px; }
 .capability-index h3 > span { color:#90acbb; }
+.capability-example-note { max-width: 36rem; margin: 0 0 14px; color: #a2bfcc; font-size: 11px; line-height: 1.55; }
 .capability-pathway-switch { display:inline-flex; flex-wrap:wrap; gap:6px; margin-bottom:14px; padding:3px; border-radius:16px; border:1px solid #7fcbe026; background:#07131fd6; max-width:100%; }
 .capability-pathway-switch > button { padding:5px 11px; border-radius:999px; font:8.5px var(--font-jetbrains),monospace; letter-spacing:.05em; color:#7c97aa; transition:background 220ms ease, color 220ms ease, border-color 220ms ease; border:1px solid transparent; }
 .capability-pathway-switch > button:hover { color:#d2eef8; }

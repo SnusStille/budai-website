@@ -13,8 +13,7 @@ test("Builder introduces Oliver and links to the Labs holding page in both langu
     await page.goto(`${path}#stilledev-labs`);
     const person = page.locator(".builder-heading .builder-byline");
     await expect(person).toBeVisible();
-    await expect(person).toContainText(/Oliver Stille/i); await expect(person).toContainText(/Helsingborg/i);
-    await expect(person).toContainText("SkandiaMäklarna"); await expect(person).toContainText("STILLEDEV EF");
+    await expect(person).toContainText(/Oliver Stille/i); await expect(person).toContainText("STILLEDEV EF");
     await expect(page.locator(".builder-person")).toHaveCount(0);
     const portal = page.locator("#stilledev-labs");
     await expect(portal.getByRole("link", { name: button })).toHaveAttribute("href", path === "/sv" ? "/sv/labs" : "/labs");
@@ -22,22 +21,24 @@ test("Builder introduces Oliver and links to the Labs holding page in both langu
   }
 });
 
-test("Labs is a bilingual holding page with no previous projects or links", async ({ page, request }) => {
+test("Labs presents a bilingual index without unverified projects", async ({ page, request }) => {
   await quiet(page); await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/sv/labs");
   await expect(page.locator("html")).toHaveAttribute("lang", "sv");
-  await expect(page.getByRole("heading", { name: /Något kul.*är på gång/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Idéer tar.*form här/ })).toBeVisible();
   await expect(page.locator(".labs-wait")).toContainText("UNDER UTVECKLING");
   await expect(page.locator(".labs-wait")).toContainText("STILLEDEV EF");
   await expect(page.locator(".labs-bot-fallback")).toBeVisible();
   await expect(page.locator(".labs-bot canvas")).toHaveCount(0);
   for (const old of ["StilleAffe", "Harvis", "Julia Stille Real Estate", "Anna’s Second Brain", "AI Video Studio"]) await expect(page.locator(".labs-wait")).not.toContainText(old);
   await expect(page.locator(".labs-wait video, .labs-wait #projects, .labs-wait #services")).toHaveCount(0);
-  await expect(page.locator(".labs-wait a")).toHaveCount(5);
+  await expect(page.locator(".labs-index-list li")).toHaveCount(5);
+  await expect(page.locator(".labs-index-list").getByRole("link", { name: /Kontakta Stilledev/ })).toHaveAttribute("href", "/sv/contact");
+  await expect(page.getByRole("link", { name: /Prova BudAI/ })).toHaveAttribute("href", "/sv#playground");
   await page.getByRole("group", { name: "Språk" }).getByRole("link", { name: "EN" }).click();
   await expect(page).toHaveURL(/\/labs$/);
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
-  await expect(page.getByRole("heading", { name: /Something good.*is brewing/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Where ideas.*take shape/ })).toBeVisible();
   await expect(page.locator(".labs-wait-cta")).toHaveText(/Back to Builder/);
   await page.locator(".labs-wait-cta").click(); await expect(page).toHaveURL(/\/#stilledev-labs$/);
   await expect(page.locator("#stilledev-labs")).toBeVisible();
@@ -84,18 +85,18 @@ for (const ua of [iphone, android]) {
     const context = await browser.newContext({ userAgent: ua, viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, reducedMotion: "reduce" });
     const page = await context.newPage(); await quiet(page);
     const errors: string[] = []; page.on("pageerror", error => errors.push(error.message));
-    for (const route of ["/", "/sv", "/labs", "/sv/labs"]) {
+    for (const route of ["/", "/sv"]) {
       const response = await page.goto(route); expect(response?.headers()["cache-control"]).toMatch(/private|no-store/i);
       await expect(page.locator(".phone-welcome")).toBeVisible();
       await expect(page.locator("#playground")).toBeVisible();
-      await expect(page.locator(".labs-wait, .builder-byline, nav, [data-playground-bridge]")).toHaveCount(0);
+      await expect(page.locator(".labs-wait, .builder-byline, [data-playground-bridge]")).toHaveCount(0);
       expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(1);
     }
-    await expect(page.getByRole("heading", { name: /Stor sajt.*Liten skärm/ })).toBeVisible();
-    await expect(page.locator(".phone-desktop-notice")).toContainText("Dator behövs för resten");
+    await expect(page.getByRole("heading", { name: /AI som tar.*arbetet vidare/ })).toBeVisible();
+    await expect(page.locator(".phone-desktop-notice")).toContainText("Om 3D-resan");
     await page.locator(".phone-languages").getByRole("button", { name: "EN", exact: true }).click();
-    await expect(page.getByRole("heading", { name: /Big site.*Little screen/ })).toBeVisible();
-    await expect(page.locator(".phone-desktop-notice")).toContainText("Computer needed for the rest");
+    await expect(page.getByRole("heading", { name: /AI that moves.*work forward/ })).toBeVisible();
+    await expect(page.locator(".phone-desktop-notice")).toContainText("About the 3D journey");
     await expect(page.locator("html")).toHaveAttribute("lang", "en");
     await page.screenshot({ path: `test-results/phone-${ua.includes("iPhone") ? "iphone" : "android"}.png` });
     for (const width of [320, 360, 390, 414]) {
@@ -149,7 +150,7 @@ for (const ua of [iphone, android]) {
     await expect(page.getByRole("heading", { name: "Cookie Policy" })).toBeVisible();
     for (const host of ["stilledev.se", "www.stilledev.se", "preview.vercel.app", "localhost:3000"]) {
       const response = await request.get("/labs", { headers: { host, "user-agent": ua } });
-      const html = await response.text(); expect(html).toContain("phone-welcome"); expect(html).not.toContain("labs-wait-shell");
+      const html = await response.text(); expect(html).toContain("labs-wait-shell"); expect(html).not.toContain("phone-welcome");
       expect(response.headers()["cache-control"]).toMatch(/private|no-store/i);
     }
     const api = await request.post("/api/playground", { headers: { "user-agent": ua }, data: {} });
@@ -158,6 +159,19 @@ for (const ua of [iphone, android]) {
     await context.close();
   });
 }
+
+test("Labs is reachable on a phone without replacing the Playground home", async ({ browser }) => {
+  const context = await browser.newContext({ userAgent: iphone, viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, reducedMotion: "reduce" });
+  const page = await context.newPage(); await quiet(page);
+  await page.goto("/sv/labs");
+  await expect(page.getByRole("heading", { name: /Idéer tar.*form här/ })).toBeVisible();
+  await expect(page.locator(".labs-index-list li")).toHaveCount(5);
+  await expect(page.locator(".labs-wait-cta")).toHaveAttribute("href", "/sv#about");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
+  await page.getByRole("link", { name: /Prova BudAI/ }).click();
+  await expect(page.locator("#playground")).toBeVisible();
+  await context.close();
+});
 
 test("tablet and bot user agents retain the desktop site", async ({ request }) => {
   for (const ua of ["Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Safari/604.1", "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"]) {
@@ -375,11 +389,11 @@ for (const ua of [iphone, android]) {
     await expect(page.locator("html")).toHaveAttribute("lang", "en");
     await page.reload();
     await expect(page.locator("html")).toHaveAttribute("lang", "en");
-    await expect(page.getByRole("heading", { name: /Big site.*Little screen/ })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /AI that moves.*work forward/ })).toBeVisible();
     await page.locator(".phone-languages").getByRole("button", { name: "SV" }).click();
     await page.reload();
     await expect(page.locator("html")).toHaveAttribute("lang", "sv");
-    await expect(page.getByRole("heading", { name: /Stor sajt.*Liten skärm/ })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /AI som tar.*arbetet vidare/ })).toBeVisible();
     await context.close();
   });
 }
@@ -416,11 +430,13 @@ test("switching phone language does not interrupt an active response", async ({ 
 });
 
 for (const ua of [iphone, android]) {
-  test(`desktop invitation requires confirmation without blocking phone Playground (${ua.includes("iPhone") ? "iPhone" : "Android"})`, async ({ browser }) => {
+  test(`desktop invitation is optional and accessible without blocking phone Playground (${ua.includes("iPhone") ? "iPhone" : "Android"})`, async ({ browser }) => {
     const context = await browser.newContext({ userAgent: ua, viewport: { width: 320, height: 568 }, isMobile: true, hasTouch: true, reducedMotion: "reduce" });
     const page = await context.newPage(); await quiet(page, false);
     await page.goto("/");
     const dialog = page.locator(".desktop-notice");
+    await expect(dialog).toHaveCount(0);
+    await page.getByRole("button", { name: "About the 3D journey" }).click();
     await expect(dialog).toBeVisible();
     await expect(dialog).toContainText("you can still use Playground");
     await expect(page.locator(".phone-welcome")).toHaveAttribute("inert", "");
@@ -451,12 +467,13 @@ test("desktop invitation is phone-only, and phone consent remains accessible aft
   const context = await browser.newContext({ userAgent: iphone, viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, reducedMotion: "reduce" });
   const phone = await context.newPage();
   await phone.goto("/");
+  await expect(phone.locator(".phone-cookie-dialog")).toBeVisible();
+  await phone.locator(".phone-cookie-dialog").getByRole("button", { name: /essential|decline|reject/i }).first().click();
+  await phone.getByRole("button", { name: "About the 3D journey" }).click();
   const dialog = phone.getByRole("dialog", { name: /missing the bigger picture/i });
   await expect(dialog).toBeVisible();
   await phone.screenshot({ path: "test-results/desktop-notice-iphone.png" });
   await dialog.getByRole("button", { name: /I understand/ }).click();
-  await expect(phone.locator(".phone-cookie-dialog")).toBeVisible();
-  await phone.locator(".phone-cookie-dialog").getByRole("button", { name: /essential|decline|reject/i }).first().click();
   await expect(phone.locator(".phone-cookie-dialog")).toHaveCount(0);
   await context.close();
 });
@@ -487,4 +504,66 @@ test("copy chat copies a local transcript without publishing it", async ({ page 
   await expect.poll(() => page.evaluate(() => (window as Window & { copied?: string }).copied)).toContain("My private question");
   expect(await page.evaluate(() => (window as Window & { copied?: string }).copied)).toContain("A private answer.");
   expect(shares).toBe(0);
+});
+
+
+test("Labs presents a real product, working links and a bilingual approach on desktop and phone", async ({ browser }) => {
+  for (const mobile of [false, true]) {
+    const context = await browser.newContext({ viewport: mobile ? { width: 320, height: 640 } : { width: 1440, height: 900 }, ...(mobile ? { userAgent: iphone, isMobile: true, hasTouch: true } : {}), reducedMotion: "reduce" });
+    const page = await context.newPage(); await quiet(page);
+    await page.goto("/sv/labs");
+    await expect(page.locator(".labs-feature").getByRole("heading", { name: "BudAI." })).toBeVisible();
+    await expect(page.locator(".labs-feature").getByRole("link", { name: "Öppna Playground" })).toHaveAttribute("href", "/sv#playground");
+    await expect(page.locator(".labs-process li")).toHaveCount(3);
+    await expect(page.locator(".labs-contact a")).toHaveAttribute("href", "/sv/contact");
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
+    await page.getByRole("group", { name: "Språk" }).getByRole("link", { name: "EN" }).click();
+    await expect(page.locator(".labs-feature").getByRole("link", { name: "Open Playground" })).toHaveAttribute("href", "/#playground");
+    await expect(page.locator(".labs-process")).toContainText("Understand");
+    await page.locator(".labs-feature").getByRole("link", { name: "Open Playground" }).click();
+    await expect(page.locator("#playground")).toBeVisible();
+    await context.close();
+  }
+});
+
+test("hero prompt cancellation keeps the current draft and does not navigate", async ({ page }) => {
+  await quiet(page); await page.emulateMedia({ reducedMotion: "reduce" }); await page.goto("/");
+  const composer = page.getByRole("textbox", { name: "Message BudAI", exact: true });
+  await composer.fill("Keep this draft");
+  await page.evaluate(() => window.scrollTo(0, 0));
+  const before = await page.evaluate(() => window.scrollY);
+  page.once("dialog", dialog => dialog.dismiss());
+  await page.locator(".hero-features").getByRole("button").first().click();
+  await expect(composer).toHaveValue("Keep this draft");
+  expect(await page.evaluate(() => window.scrollY)).toBeLessThan(before + 100);
+});
+
+test("idea workshop keeps a bilingual brief local, copyable and usable on phone", async ({ browser }) => {
+  for (const mobile of [false, true]) {
+    const context = await browser.newContext({ viewport: mobile ? { width: 320, height: 640 } : { width: 1440, height: 900 }, ...(mobile ? { userAgent: iphone, isMobile: true, hasTouch: true } : {}), reducedMotion: "reduce" });
+    const page = await context.newPage(); await quiet(page);
+    await page.goto("/sv/labs");
+    const workshop = page.locator(".labs-brief");
+    await expect(workshop.getByRole("button", { name: "Kopiera utkast" })).toBeDisabled();
+    let requests = 0; page.on("request", req => { if (req.method() !== "GET") requests++; });
+    await workshop.getByLabel("Vad vill du lösa?").fill("Hitta information snabbare");
+    await workshop.getByLabel("Vem är det för?").fill("Vårt team");
+    await expect(workshop.locator("pre")).toContainText("Hitta information snabbare");
+    await page.evaluate(() => { Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: async (text: string) => { (window as Window & { copiedBrief?: string }).copiedBrief = text; } } }); });
+    await workshop.getByRole("button", { name: "Kopiera utkast" }).click();
+    await expect(workshop.getByRole("status")).toHaveText("Utkastet har kopierats.");
+    expect(await page.evaluate(() => (window as Window & { copiedBrief?: string }).copiedBrief)).toContain("Vårt team");
+    expect(requests).toBe(0);
+    await expect(workshop.getByRole("link", { name: "Gå till kontakt" })).toHaveAttribute("href", "/sv/contact");
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
+    await page.reload();
+    await expect(workshop.getByLabel("Vad vill du lösa?")).toHaveValue("");
+    await page.getByRole("group", { name: "Språk" }).getByRole("link", { name: "EN" }).click();
+    await expect(workshop.getByRole("heading", { name: /An idea starts/ })).toBeVisible();
+    await workshop.getByLabel("What would you like to solve?").fill("A private idea");
+    await page.evaluate(() => { Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: async () => { throw new Error("denied"); } } }); });
+    await workshop.getByRole("button", { name: "Copy draft" }).click();
+    await expect(workshop.getByRole("status")).toContainText("Select and copy");
+    await context.close();
+  }
 });

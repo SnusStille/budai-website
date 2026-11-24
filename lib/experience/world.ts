@@ -80,6 +80,30 @@ export function createWorld(
     host.appendChild(cssRenderer.domElement);
     scene.fog = new THREE.FogExp2("#03070f", 0.029);
     const camera = new THREE.PerspectiveCamera(mobile ? 48 : 43, 1, 0.1, 100);
+    // A single camera-space depth field joins the later chapters without a second
+    // renderer or scroll loop. Its geometry is shared, low-poly and behind the UI.
+    const fieldVertices: number[] = [];
+    const segments = lite ? 36 : 64;
+    const appendFieldLine = (vertical: boolean, lane: number) => {
+      for (let i = 0; i < segments; i++) {
+        for (const t of [i / segments, (i + 1) / segments]) {
+          const across = (t - 0.5) * 62;
+          const x = vertical ? lane : across;
+          const y = vertical ? (t - 0.5) * 30 : lane;
+          const bend = Math.sin(x * 0.14 + lane * 0.19) * 1.4 + Math.cos(y * 0.21) * 0.8;
+          fieldVertices.push(x, y + (vertical ? 0 : bend * 0.38), -38 - bend);
+        }
+      }
+    };
+    for (let i = -7; i <= 7; i++) appendFieldLine(false, i * 2.2);
+    for (let i = -9; i <= 9; i++) appendFieldLine(true, i * 3.2);
+    const backdropGeometry = new THREE.BufferGeometry();
+    backdropGeometry.setAttribute("position", new THREE.Float32BufferAttribute(fieldVertices, 3));
+    const backdropMaterial = new THREE.LineBasicMaterial({ color: "#69b8d1", transparent: true, opacity: 0, depthWrite: false, fog: false, blending: THREE.AdditiveBlending });
+    const backdrop = new THREE.LineSegments(backdropGeometry, backdropMaterial);
+    backdrop.frustumCulled = false;
+    camera.add(backdrop);
+    scene.add(camera);
     if (!lite) {
       const pmrem = new THREE.PMREMGenerator(renderer);
       const environmentRoom = new RoomEnvironment();
@@ -475,7 +499,7 @@ export function createWorld(
         const pose = cameraAt(chapter, frame.sections.about ?? 0, mobile, frame.closing ?? 0);
         camera.clearViewOffset();
         camera.position.fromArray(pose.position);
-        camera.lookAt(new THREE.Vector3(...pose.target));
+        camera.lookAt(...pose.target);
         camera.updateMatrixWorld();
         if (!capSystem?.isConnected) capSystem = document.querySelector<HTMLElement>("[data-capability-system]");
         if (!capViewport?.isConnected) capViewport = document.querySelector<HTMLElement>("[data-capability-viewport]");
@@ -516,6 +540,12 @@ export function createWorld(
         const activeModule = focus >= 0 ? focus : Math.min(5, Math.floor(capProgress * 6));
         const px = frame.pointerX ?? 0;
         const py = frame.pointerY ?? 0;
+        // Absolute chapter/pointer input keeps scroll reversal deterministic.
+        backdrop.rotation.z = lerp(-0.075, 0.045, smooth((chapter - 2.1) / 3));
+        backdrop.position.set(px * 0.22, py * 0.12, 0);
+        backdropMaterial.opacity = (mobile ? 0.07 : 0.12) * smooth((chapter - 2.08) / 0.75) * (1 - close);
+        backdrop.visible = backdropMaterial.opacity > 0.001;
+        renderer.domElement.dataset.depthField = backdrop.visible ? "active" : "idle";
         engine.root.position.set(
           0,
           lerp(-0.22, mobile ? -0.08 : -0.05, morph) - (1 - arrival) * 0.18,
@@ -570,7 +600,7 @@ export function createWorld(
         renderer.domElement.dataset.chamberProgress = capProgress.toFixed(3);
         renderer.domElement.dataset.assemblyProgress = assemblyProgress.toFixed(3);
         renderer.domElement.dataset.realityProgress = (frame.sections.about ?? 0).toFixed(3);
-        key.position.copy(camera.position).add(new THREE.Vector3(-3, 6, 3));
+        key.position.set(camera.position.x - 3, camera.position.y + 6, camera.position.z + 3);
         key.target.position.fromArray(pose.target);
         key.target.updateMatrixWorld();
         groups.forEach((group, i) => {

@@ -20,7 +20,9 @@ export default function CompanionRestore({ phone = false }: { phone?: boolean })
     const heading = document.getElementById(phone ? "phone-heading" : "hero-title");
     if (heading) {
       heading.focus({ preventScroll: true });
-      heading.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center" });
+      const behavior = matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+      if (phone) window.scrollTo({ top: 0, behavior });
+      else heading.scrollIntoView({ behavior, block: "center" });
     }
   };
   return <button type="button" className="companion-restore" onClick={restore}>{lang === "sv" ? "Visa BudAI-kompanjonen igen" : "Bring back the BudAI companion"} <span aria-hidden="true">↗</span></button>;

@@ -77,7 +77,9 @@ export function cameraAt(chapter: number, builderProgress: number, mobile = fals
   const k = smooth(c - a);
   const position = POSES[a].position.map((v, i) => lerp(v, POSES[b].position[i], k)) as CameraPose["position"];
   const target = POSES[a].target.map((v, i) => lerp(v, POSES[b].target[i], k)) as CameraPose["target"];
-  const builderWeight = Math.max(0, 1 - Math.abs(c - 4));
+  // Smooth the approach and departure as well as the shared pose: a triangular
+  // weight had a velocity kink at the centre of the Builder chapter.
+  const builderWeight = smooth(1 - Math.abs(c - 4));
   const p = smooth(builderProgress);
   position[0] -= (1.5 + p * 0.9) * builderWeight;
   position[1] -= p * 1.05 * builderWeight;
@@ -97,7 +99,9 @@ export function worldChapterAt({ chapter, departure = 0 }: Pick<JourneyFrame, "c
 }
 export function worldOpacityAt(frame: Pick<JourneyFrame, "chapter" | "departure" | "sections">) {
   const chapter = worldChapterAt(frame);
-  return chapter < 2.8 ? 0.95 * smooth((chapter - 2.05) / 0.75) : chapter > 4.6 ? 0.65 : 0.95;
+  const entry = 0.95 * smooth((chapter - 2.05) / 0.75);
+  // Fade into the quieter roadmap instead of an abrupt opacity step at 4.6.
+  return entry * lerp(1, 0.65 / 0.95, smooth((chapter - 4.35) / 0.5));
 }
 
 /** Footer is part of the existing final chapter, never another loading scene. */

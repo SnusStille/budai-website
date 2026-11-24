@@ -173,10 +173,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const lang = h.get("x-budai-lang") === "sv" ? "sv" : "en";
   const phoneGate = isPhoneUserAgent(h.get("user-agent") || "");
   const path = canonicalPath(h.get("x-budai-path") || "/");
-  // Policies remain reachable, but no desktop marketing pages are shown on phones.
+  // Policies, contact and Labs remain reachable; the phone homepage keeps its dedicated Playground.
   // Release fix: contact + admin are functional pages, not marketing — they must
   // work on phones too (both have responsive layouts).
-  const phoneLegalPage = path.startsWith("/legal/") || path === "/contact" || path === "/sv/contact" || path === "/admin" || path.startsWith("/admin/");
+  const phoneLegalPage = path.startsWith("/legal/") || path === "/contact" || path === "/sv/contact" || path === "/labs" || path === "/sv/labs" || path === "/admin" || path.startsWith("/admin/");
   return (
     <html
       lang={lang}

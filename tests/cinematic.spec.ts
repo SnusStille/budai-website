@@ -162,3 +162,27 @@ test("05 / THE NEXT SIGNAL standalone section remains removed while early-access
   await expect(email).toBeFocused();
   await page.screenshot({ path: "test-results/next-signal-form-desktop.png" });
 });
+
+test("shared depth field follows the existing world and returns to the same scroll pose", async ({ page }) => {
+  await prepare(page);
+  const errors: string[] = []; page.on("pageerror", error => errors.push(error.message));
+  await page.goto("/#capabilities");
+  const canvas = page.locator("[data-world-canvas]");
+  await expect(canvas).toHaveCount(1);
+  await expect(canvas).toHaveAttribute("data-depth-field", "active");
+  await move(page, "#about");
+  await expect(canvas).toHaveAttribute("data-depth-field", "active");
+  const builderPose = await canvas.getAttribute("data-camera");
+  await move(page, "#capabilities");
+  await move(page, "#about");
+  await expect.poll(() => canvas.getAttribute("data-camera")).toBe(builderPose);
+  await expect(page.locator("[data-world-canvas]")).toHaveCount(1);
+  expect(errors).toEqual([]);
+});
+
+test("depth field is absent when reduced motion selects the existing fallback", async ({ page }) => {
+  await prepare(page); await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/#capabilities");
+  await expect(page.locator("[data-world-canvas]")).toHaveCount(0);
+  await expect(page.locator("#capabilities")).toBeVisible();
+});

@@ -38,6 +38,29 @@ test("camera path is finite, continuous at all chapter boundaries, and exactly r
   }
 });
 
+test("Builder camera and roadmap opacity ease through the handoff in both directions", () => {
+  const step = 0.0001;
+  for (const mobile of [false, true]) {
+    for (const boundary of [3, 4, 5]) {
+      const left = cameraAt(boundary - step, .5, mobile).position;
+      const middle = cameraAt(boundary, .5, mobile).position;
+      const right = cameraAt(boundary + step, .5, mobile).position;
+      for (let axis = 0; axis < 3; axis++) {
+        const leftVelocity = (middle[axis] - left[axis]) / step;
+        const rightVelocity = (right[axis] - middle[axis]) / step;
+        expect(Math.abs(leftVelocity - rightVelocity)).toBeLessThan(.1);
+      }
+    }
+  }
+  const values = Array.from({ length: 101 }, (_, i) => worldOpacityAt({ chapter: 4.2 + i * .01, sections: {} }));
+  for (let i = 1; i < values.length; i++) {
+    expect(values[i]).toBeLessThanOrEqual(values[i - 1]);
+    expect(Math.abs(values[i] - values[i - 1])).toBeLessThan(.02);
+  }
+  expect(values[0]).toBeCloseTo(.95);
+  expect(values.at(-1)).toBeCloseTo(.65);
+});
+
 test("native scroll reconstructs every chapter in both directions", () => {
   const bounds = CHAPTERS.map((s, i) => ({ id: s.id, top: i * 2000, height: 2000 }));
   const forward = Array.from({ length: 121 }, (_, i) => journeyAt(i * 100, 900, 12000, bounds));
@@ -73,6 +96,18 @@ test("code reveal is deterministic, monotonic, bounded, and preserves every sour
   expect(brainJourneyProgress(2800,1000,2800,1000)).toBe(1);
   expect(brainJourneyProgress(500,1000,2800,1000)).toBe(0);
  });
+
+test("neural depth travels smoothly through each beat without reversing", () => {
+  const step = .00001;
+  for (const p of [.25, .56, .8]) {
+    const before = brainCameraAt({kind:"journey",progress:p-step}).z;
+    const at = brainCameraAt({kind:"journey",progress:p}).z;
+    const after = brainCameraAt({kind:"journey",progress:p+step}).z;
+    expect(before).toBeGreaterThan(at);
+    expect(at).toBeGreaterThan(after);
+    expect(Math.abs((at-before)/step - (after-at)/step)).toBeLessThan(.01);
+  }
+});
 
 test("mobile brain uses one full-height target and a finite reversible perspective lens", () => {
   const hero = brainFovAt({ kind:"intro", progress:0 }, 844, true);

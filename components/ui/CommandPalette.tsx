@@ -98,14 +98,15 @@ export default function CommandPalette() {
         icon: Languages,
         action: () => {
           setOpen(false);
-          window.dispatchEvent(
+          const accepted = window.dispatchEvent(
             new CustomEvent("budai:prompt", {
+              cancelable: true,
               detail: sv
                 ? "Skriv ett kort lanseringsmeddelande på både svenska och engelska med samma ton."
                 : "Write a short launch note in both Swedish and English keeping the exact same tone.",
             })
           );
-          goTo("playground");
+          if (accepted) goTo("playground");
         },
         keywords: "prompt bilingual swedish english svenska engelska",
       },

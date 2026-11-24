@@ -15,9 +15,10 @@ export default function HeroAsk() {
 
   const go = (text: string) => {
     if (!text.trim()) return;
-    window.dispatchEvent(new CustomEvent("budai:prompt", { detail: text.trim() }));
+    const accepted = window.dispatchEvent(new CustomEvent("budai:prompt", { detail: text.trim(), cancelable: true }));
+    if (!accepted) return;
     const ta = document.querySelector<HTMLTextAreaElement>("#playground textarea");
-    (ta ?? document.getElementById("playground"))?.scrollIntoView({ behavior: "smooth", block: "center" });
+    (ta ?? document.getElementById("playground"))?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center" });
   };
 
   return (
@@ -39,7 +40,7 @@ export default function HeroAsk() {
           aria-label={sv ? "Fråga BudAI" : "Ask BudAI"}
           className="min-w-0 flex-1 bg-transparent py-2.5 text-[15px] text-white outline-none placeholder:text-muted/70"
         />
-        <button type="submit" aria-label="Send" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-cyan text-[#020205] transition-opacity hover:opacity-90">
+        <button type="submit" aria-label={sv ? "Öppna i Playground" : "Open in Playground"} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-cyan text-[#020205] transition-opacity hover:opacity-90">
           <ArrowUp className="h-5 w-5" />
         </button>
       </form>
