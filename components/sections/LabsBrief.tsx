@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { ArrowUpRight, Check, Copy } from "lucide-react";
 import { useLang } from "@/components/ui/LanguageContext";
+import { LABS_BRIEF_HANDOFF } from "@/lib/labs-brief";
 
 /** A local-only starting point, not an AI-generated or submitted proposal. */
 export default function LabsBrief() {
@@ -13,6 +14,7 @@ export default function LabsBrief() {
   const [need, setNeed] = useState("");
   const [audience, setAudience] = useState("");
   const [outcome, setOutcome] = useState("");
+  const [handoffError, setHandoffError] = useState(false);
   const [copyState, setCopyState] = useState<"idle" | "copied" | "error">("idle");
   const fields = [
     { id: "need", number: "01", label: sv ? "Vad vill du lösa?" : "What would you like to solve?", placeholder: sv ? "Beskriv behovet eller problemet" : "Describe the need or problem", value: need, set: setNeed },
@@ -27,6 +29,14 @@ export default function LabsBrief() {
       setCopyState("copied");
     } catch {
       setCopyState("error");
+    }
+  };
+  const sendToContact = () => {
+    try {
+      sessionStorage.setItem(LABS_BRIEF_HANDOFF, brief);
+      window.location.assign(sv ? "/sv/contact" : "/contact");
+    } catch {
+      setHandoffError(true);
     }
   };
   return <section className="labs-brief" aria-labelledby="labs-brief-title">
@@ -49,8 +59,10 @@ export default function LabsBrief() {
         <button type="button" onClick={copy} disabled={!hasContent}>{copyState === "copied" ? <Check size={15} aria-hidden="true" /> : <Copy size={15} aria-hidden="true" />}{copyState === "copied" ? (sv ? "Kopierat" : "Copied") : (sv ? "Kopiera utkast" : "Copy draft")}</button>
         <p className="labs-brief-copy-status" role="status">{copyState === "error" ? (sv ? "Kopiering misslyckades. Markera och kopiera texten ovan manuellt." : "Could not copy. Select and copy the text above manually.") : copyState === "copied" ? (sv ? "Utkastet har kopierats." : "Draft copied.") : ""}</p>
       </div>
-      <a className="labs-brief-contact" href={sv ? "/sv/contact" : "/contact"}>{sv ? "Vill du diskutera idén? Kontakta oss" : "Want to discuss your idea? Contact us"} <ArrowUpRight size={16} aria-hidden="true" /></a>
-      <p className="labs-brief-contact-note">{sv ? "Klistra in utkastet i kontaktformuläret om du vill dela det." : "Paste your draft into the contact form if you want to share it."}</p>
+      <button type="button" className="labs-brief-contact" onClick={sendToContact} disabled={!hasContent}>{sv ? "Ta utkastet till kontaktformuläret" : "Take draft to contact form"} <ArrowUpRight size={16} aria-hidden="true" /></button>
+      <p className="labs-brief-contact-note">{sv ? "Vid val sparas utkastet tillfälligt i den här fliken. Du väljer på kontaktsidan om du vill använda det – inget skickas automatiskt." : "If selected, your draft is stored temporarily in this tab. Choose whether to use it on the contact page – nothing is sent automatically."}</p>
+      {handoffError && <p className="labs-brief-contact-note" role="alert">{sv ? "Kunde inte överföra utkastet. Kopiera det ovan och klistra in det på kontaktsidan i stället." : "Could not transfer the draft. Copy it above and paste it on the contact page instead."}</p>}
+      <a className="labs-brief-direct-link" href={sv ? "/sv/contact" : "/contact"}>{sv ? "Gå till kontakt" : "Go to contact"}</a>
     </div>
   </section>;
 }

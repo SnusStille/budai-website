@@ -93,7 +93,8 @@
 .labs-brief-output button { display:inline-flex; align-items:center; gap:8px; min-height:42px; padding:0 15px; border:1px solid #a5e1ec65; border-radius:4px; color:#d8f6fb; font-size:12px; font-weight:600; }
 .labs-brief-output button:hover:not(:disabled) { background:#9fe7f21c; }.labs-brief-output button:disabled { opacity:.45; cursor:not-allowed; }
 .labs-brief-output .labs-brief-copy-status { margin:8px 0 0; color:#bbdce3; font-size:12px; line-height:1.5; }.labs-brief-copy-status:empty { display:none; }
-.labs-brief-contact { display:inline-flex; align-items:center; gap:12px; margin-top:25px; color:#b8eef8; font-size:13px; font-weight:600; }.labs-brief-contact:hover { color:#fff; }
+.labs-brief-contact { display:inline-flex; align-items:center; gap:12px; margin-top:25px; color:#b8eef8; font-size:13px; font-weight:600; }.labs-brief-contact:hover:not(:disabled) { color:#fff; }.labs-brief-contact:disabled { opacity:.45; cursor:not-allowed; }
+.labs-brief-direct-link { display:inline-flex; margin-top:14px; color:#a9d9e4; font-size:12px; text-decoration:underline; text-underline-offset:3px; }
 .labs-brief-contact-note { margin:8px 0 0; color:#9ebac5; font-size:12px; line-height:1.55; }
 @media(max-width:800px) { .labs-brief { grid-template-columns:1fr; gap:35px; padding:70px 0; } }
 @media(max-width:600px) { .labs-brief { padding:65px 0; }.labs-brief-workspace { padding:20px; }.labs-brief-topline { font-size:8px; } }

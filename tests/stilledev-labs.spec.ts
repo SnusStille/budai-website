@@ -554,7 +554,7 @@ test("idea workshop keeps a bilingual brief local, copyable and usable on phone"
     await expect(workshop.getByRole("status")).toHaveText("Utkastet har kopierats.");
     expect(await page.evaluate(() => (window as Window & { copiedBrief?: string }).copiedBrief)).toContain("Vårt team");
     expect(requests).toBe(0);
-    await expect(workshop.getByRole("link", { name: /Kontakta oss/ })).toHaveAttribute("href", "/sv/contact");
+    await expect(workshop.getByRole("link", { name: "Gå till kontakt" })).toHaveAttribute("href", "/sv/contact");
     expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
     await page.reload();
     await expect(workshop.getByLabel("Vad vill du lösa?")).toHaveValue("");
