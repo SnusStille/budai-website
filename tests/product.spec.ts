@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 
 declare global {
-  interface Window { __chatRequest: Record<string, unknown> | null; __streamCancelled: boolean; __analyticsEvents: unknown[][]; }
+  interface Window { __chatRequest: Record<string, unknown> | null; __streamCancelled: boolean; __analyticsEvents: unknown[][]; __clipboardWrites: string[]; __sharePayloads: Array<{ title: string; text: string; url: string }>; }
 }
 
 test.beforeEach(async ({ page }) => {
@@ -603,6 +603,90 @@ test("contact email is canonical in both languages and the enquiry form gives a 
   await page.goto("/sv/contact");
   await expect(page.getByRole("link", { name: "info@stilledev.se", exact: true }).first()).toHaveAttribute("href", "mailto:info@stilledev.se");
   await expect(page.getByRole("heading", { name: "Kontakta Stilledev" })).toBeVisible();
+});
+
+test("contact email copy gives localized confirmation without losing the mailto action", async ({ page }) => {
+  await page.addInitScript(() => {
+    window.__clipboardWrites = [];
+    Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: async (text: string) => { window.__clipboardWrites.push(text); } } });
+  });
+  await page.goto("/contact");
+  await expect(page.getByRole("link", { name: /info@stilledev\.se/ }).first()).toHaveAttribute("href", "mailto:info@stilledev.se");
+  await page.getByRole("button", { name: "Copy email", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Copied", exact: true })).toBeVisible();
+  expect(await page.evaluate(() => window.__clipboardWrites)).toEqual(["info@stilledev.se"]);
+
+  await page.goto("/sv/contact");
+  await page.getByRole("button", { name: "Kopiera e-post", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Kopierad", exact: true })).toBeVisible();
+});
+
+test("footer sharing copies the localized URL and the back-to-top control doubles as a quiet reading-progress cue", async ({ page }) => {
+  await page.addInitScript(() => {
+    window.__clipboardWrites = [];
+    Object.defineProperty(navigator, "share", { configurable: true, value: undefined });
+    Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: async (text: string) => { window.__clipboardWrites.push(text); } } });
+  });
+  await page.goto("/");
+  await page.locator("#continuation").scrollIntoViewIfNeeded();
+  await page.getByRole("button", { name: "Share BudAI", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Link copied", exact: true })).toBeVisible();
+  const homeUrl = new URL("/", page.url()).href;
+  expect(await page.evaluate(() => window.__clipboardWrites)).toEqual([homeUrl]);
+  const progressRing = page.locator("[data-scroll-progress]");
+  await expect(progressRing).toBeVisible();
+  await expect.poll(async () => Number(await progressRing.getAttribute("data-scroll-progress"))).toBeGreaterThan(0.8);
+  await page.getByRole("button", { name: "Back to top", exact: true }).click();
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
+
+  await page.goto("/sv");
+  await page.locator("#continuation").scrollIntoViewIfNeeded();
+  await page.getByRole("button", { name: "Dela BudAI", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Länk kopierad", exact: true })).toBeVisible();
+  const svUrl = new URL("/sv", page.url()).href;
+  expect(await page.evaluate(() => window.__clipboardWrites.at(-1))).toBe(svUrl);
+  await expect(page.getByRole("button", { name: "Till toppen", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Till toppen", exact: true }).click();
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
+});
+
+test("contact and footer utility actions keep touch targets and avoid horizontal overflow on narrow phones", async ({ page }) => {
+  for (const width of [320, 390]) {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto("/sv/contact");
+    const copyButton = page.getByRole("button", { name: "Kopiera e-post", exact: true });
+    await expect(copyButton).toBeVisible();
+    expect(await copyButton.evaluate(element => element.getBoundingClientRect().height)).toBeGreaterThanOrEqual(44);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
+
+    await page.goto("/sv");
+    await page.locator("#continuation").scrollIntoViewIfNeeded();
+    const shareButton = page.getByRole("button", { name: "Dela BudAI", exact: true });
+    await expect(shareButton).toBeVisible();
+    const bounds = await shareButton.boundingBox();
+    expect(bounds).toBeTruthy();
+    expect(bounds!.x).toBeGreaterThanOrEqual(0);
+    expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(width + 1);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
+  }
+});
+
+test("footer uses the native share sheet when available without calling the clipboard", async ({ page }) => {
+  await page.addInitScript(() => {
+    window.__sharePayloads = [];
+    window.__clipboardWrites = [];
+    Object.defineProperty(navigator, "share", { configurable: true, value: async (payload: { title: string; text: string; url: string }) => { window.__sharePayloads.push(payload); } });
+    Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: async (text: string) => { window.__clipboardWrites.push(text); } } });
+  });
+  await page.goto("/sv");
+  await page.locator("#continuation").scrollIntoViewIfNeeded();
+  await page.getByRole("button", { name: "Dela BudAI", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Delat", exact: true })).toBeVisible();
+  const payloads = await page.evaluate(() => window.__sharePayloads);
+  expect(payloads).toHaveLength(1);
+  const localizedHome = new URL("/sv", page.url()).href;
+  expect(payloads[0]).toMatchObject({ title: "BudAI by Stilledev", url: localizedHome });
+  expect(await page.evaluate(() => window.__clipboardWrites)).toHaveLength(0);
 });
 
 test("business analytics events are opt-in and exclude form or email values", async ({ page }) => {

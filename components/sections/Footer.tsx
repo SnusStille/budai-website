@@ -3,8 +3,8 @@
 import StatusPill from "@/components/ui/StatusPill";
 import CompanionRestore from "@/components/ui/CompanionRestore";
 import Link from "next/link";
-import { useEffect, useRef } from "react";
-import { Github, Linkedin, Mail, ArrowUpRight } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Github, Linkedin, Mail, ArrowUpRight, Share2 } from "lucide-react";
 import BudAIWordmark from "@/components/ui/BudAIWordmark";
 import {subscribeJourney} from "@/lib/experience/scroll";
 import BudAILogo, { StilledevMark } from "@/components/ui/BudAILogo";
@@ -54,6 +54,35 @@ export default function Footer() {
   useEffect(()=>subscribeJourney(frame=>{const el=footer.current;if(!el)return;const p=frame.closing??0;el.style.setProperty("--closing-progress",String(p));el.dataset.closingProgress=p.toFixed(4);}),[]);
   const { lang, t } = useLang();
   const groupsData = groups(lang);
+  const [shareState, setShareState] = useState<"idle" | "shared" | "copied" | "error">("idle");
+
+  const shareBudAI = async () => {
+    const url = new URL(lang === "sv" ? "/sv" : "/", window.location.origin).href;
+    const payload = {
+      title: "BudAI by Stilledev",
+      text: lang === "sv" ? "Upptäck BudAI från Stilledev." : "Explore BudAI by Stilledev.",
+      url,
+    };
+    if (navigator.share) {
+      try {
+        await navigator.share(payload);
+        setShareState("shared");
+        window.setTimeout(() => setShareState("idle"), 2400);
+        return;
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      setShareState("copied");
+      window.setTimeout(() => setShareState("idle"), 2400);
+    } catch {
+      setShareState("error");
+      window.setTimeout(() => setShareState("idle"), 3000);
+    }
+  };
+
 
   return (
     <footer ref={footer} id="continuation" className="site-footer relative border-t border-white/[0.04]">
@@ -114,6 +143,16 @@ export default function Footer() {
               </ul>
             </nav>
           ))}
+        </div>
+
+        <div className="mt-10 flex flex-wrap items-center justify-end gap-3 border-t border-white/[0.04] pt-6">
+          <button type="button" onClick={shareBudAI} className="inline-flex min-h-11 items-center gap-2 rounded-full border border-white/10 px-4 py-2 text-sm text-muted transition-colors hover:border-accent-cyan/30 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-cyan/50">
+            <Share2 className="h-4 w-4 text-accent-cyan" aria-hidden="true" />
+            {shareState === "shared" ? (lang === "sv" ? "Delat" : "Shared") : shareState === "copied" ? (lang === "sv" ? "Länk kopierad" : "Link copied") : shareState === "error" ? (lang === "sv" ? "Kunde inte dela" : "Could not share") : (lang === "sv" ? "Dela BudAI" : "Share BudAI")}
+          </button>
+          <span className="sr-only" role="status" aria-live="polite">
+            {shareState === "shared" ? (lang === "sv" ? "Delningsmenyn öppnad." : "Share sheet opened.") : shareState === "copied" ? (lang === "sv" ? "Länk kopierad." : "Link copied.") : shareState === "error" ? (lang === "sv" ? "Kunde inte dela eller kopiera länken." : "Could not share or copy the link.") : ""}
+          </span>
         </div>
 
         <div className="mt-14 pt-8 border-t border-white/[0.04] flex flex-col sm:flex-row items-center justify-between gap-4">

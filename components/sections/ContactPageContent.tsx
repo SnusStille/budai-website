@@ -1,9 +1,9 @@
 import { headers } from "next/headers";
 import Link from "next/link";
-import { ArrowLeft, ArrowUpRight, Mail } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import ContactForm from "@/components/sections/ContactForm";
+import ContactEmailActions from "@/components/sections/ContactEmailActions";
 import CookieSettingsButton from "@/components/ui/CookieSettingsButton";
-import { CONTACT_EMAIL, CONTACT_MAILTO } from "@/lib/contact";
 
 const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://stilledev.se").replace(/\/$/, "");
 const organizationId = `${siteUrl}/#organization`;
@@ -46,11 +46,7 @@ export default async function ContactPageContent({ sv = false }: { sv?: boolean 
               ? "Stilledev är en svensk mjukvarustudio grundad av Oliver Stille. Hör av dig om BudAI, digital utveckling, AI-projekt, samarbeten eller andra professionella frågor."
               : "Stilledev is a Swedish software studio founded by Oliver Stille. Get in touch about BudAI, digital development, AI projects, partnerships or other professional enquiries."}
           </p>
-          <a href={CONTACT_MAILTO} className="mt-7 inline-flex min-h-12 items-center gap-3 rounded-lg border border-accent-cyan/25 bg-accent-cyan/[0.05] px-4 py-3 text-sm text-white transition-colors hover:border-accent-cyan/50 hover:bg-accent-cyan/[0.09]">
-            <Mail size={16} className="text-accent-cyan" aria-hidden="true" />
-            <span><span className="block text-[10px] uppercase tracking-[0.12em] text-muted">{sv ? "Skriv direkt" : "Email directly"}</span><span className="font-medium">{CONTACT_EMAIL}</span></span>
-            <ArrowUpRight size={14} className="ml-3 text-accent-cyan" aria-hidden="true" />
-          </a>
+          <ContactEmailActions />
         </header>
 
         <section className="mt-12 grid gap-8 border-t border-white/[0.08] pt-8 lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.72fr)] lg:gap-12" aria-labelledby="contact-form-title">
