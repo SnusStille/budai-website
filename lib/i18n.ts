@@ -21,7 +21,7 @@ export const translations = {
       titleAccent: "Sverige",
       words: [],
       subtitle:
-        "Byggd i Sverige för riktigt vardagsarbete. Skriv, analysera, planera och gör rörig kontext till konkret handling på svenska och engelska — prova gratis direkt i Playground.",
+        "Skriv, analysera och planera — gör sedan rörig kontext till tydliga nästa steg. Prova gratis i Playground.",
       ctaPrimary: "Öppna Playground",
       ctaSecondary: "Gå med i väntelistan",
     },
@@ -124,7 +124,7 @@ export const translations = {
       titleAccent: "Sweden",
       words: [],
       subtitle:
-        "Built in Sweden for real everyday work. Write, analyze, plan, and turn messy context into clear action in Swedish and English — free to try in the live Playground right now.",
+        "Write, analyze and plan — then turn messy context into clear next steps. Try it free in the live Playground.",
       ctaPrimary: "Open Playground",
       ctaSecondary: "Join the waitlist",
     },

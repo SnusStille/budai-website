@@ -1,0 +1,56 @@
+.oliver-profile { min-height:100svh; padding:calc(72px + clamp(30px,5vw,68px)) 24px 80px; color:#eaf4f7; background:radial-gradient(ellipse at 78% 15%,#15344866,transparent 42%),linear-gradient(145deg,#03070c,#05090f 58%,#080c17); }
+.oliver-profile-shell { width:min(100%,1000px); margin-inline:auto; }
+.oliver-profile-nav { display:flex; align-items:center; justify-content:space-between; gap:20px; padding-bottom:18px; border-bottom:1px solid #9bd9e21c; color:#aac0ca; font-size:12px; }
+.oliver-profile-nav a,.oliver-profile-card a,.oliver-profile-socials a,.oliver-profile-contact>a { display:inline-flex; align-items:center; gap:9px; text-decoration:none; transition:color .18s,border-color .18s,background .18s,transform .18s; }
+.oliver-profile-nav a:hover,.oliver-profile-card a:hover,.oliver-profile-socials a:hover,.oliver-profile-contact>a:hover { color:#e7fcff; }
+.oliver-profile-back { color:#d0e4e9; }
+.oliver-profile-hero { max-width:760px; padding:clamp(60px,10vw,132px) 0 clamp(58px,8vw,102px); }
+.oliver-profile-kicker,.oliver-profile-card-label { display:flex; align-items:center; gap:9px; color:#8dbdca; font:9px/1.6 var(--font-jetbrains),monospace; letter-spacing:.15em; text-transform:uppercase; }
+.oliver-profile-kicker>span { width:6px; height:6px; border-radius:50%; background:#93e3ec; box-shadow:0 0 12px #85e5ed88; }
+.oliver-profile-hero h1 { margin:17px 0 12px; font-size:clamp(58px,10vw,112px); line-height:.98; letter-spacing:-.085em; font-weight:500; background:linear-gradient(115deg,#f4fbff 0%,#b8e7ef 57%,#9ba9e9 100%); color:transparent; background-clip:text; -webkit-background-clip:text; }
+.oliver-profile-role { margin:0; color:#d6e7ec; font-size:clamp(14px,2vw,18px); }
+.oliver-profile-role span { color:#6c9aa9; padding-inline:5px; }
+.oliver-profile-intro { max-width:680px; margin:30px 0 0; color:#c4d4dc; font-size:clamp(17px,2.2vw,22px); line-height:1.68; letter-spacing:-.02em; }
+.oliver-profile-focus { max-width:640px; margin:15px 0 0; color:#8ea3af; font-size:14px; line-height:1.8; }
+.oliver-profile-section { padding:30px 0 58px; border-top:1px solid #a2cfdb1d; }
+.oliver-profile-section-heading { display:flex; align-items:center; gap:14px; margin-bottom:22px; }
+.oliver-profile-section-heading>span { color:#70cde0; font:9px var(--font-jetbrains),monospace; letter-spacing:.1em; }
+.oliver-profile-section-heading h2,.oliver-profile-contact h2 { margin:0; color:#edf7fa; font-size:clamp(22px,3vw,30px); font-weight:450; letter-spacing:-.045em; }
+.oliver-profile-cards { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+.oliver-profile-card { min-height:235px; display:flex; flex-direction:column; align-items:flex-start; padding:23px 24px 20px; border:1px solid #a1d5e225; border-radius:8px; background:linear-gradient(145deg,#10212b9c,#080d14c9); }
+.oliver-profile-card h3,.oliver-profile-experience h3 { margin:19px 0 9px; color:#e9f6f8; font-size:23px; font-weight:500; letter-spacing:-.04em; }
+.oliver-profile-card p,.oliver-profile-experience p,.oliver-profile-contact p { margin:0; color:#94a8b2; font-size:13px; line-height:1.8; }
+.oliver-profile-card a { min-height:42px; margin-top:auto; padding-top:17px; color:#a8e5ef; font-size:12px; }
+.oliver-profile-experience { display:grid; grid-template-columns:minmax(210px,.7fr) 1.3fr; align-items:start; gap:30px; padding:22px 0 2px; }
+.oliver-profile-experience h3 { margin:7px 0 0; }
+.oliver-profile-experience p { max-width:580px; }
+.oliver-profile-socials { display:flex; flex-wrap:wrap; gap:10px; }
+.oliver-profile-socials a { min-height:48px; padding:0 15px; border:1px solid #a1d5e22b; border-radius:5px; background:#0a151d; color:#c5dce3; font-size:12px; }
+.oliver-profile-socials a>svg:first-child { color:#87dbe9; }
+.oliver-profile-contact { display:flex; align-items:center; justify-content:space-between; gap:24px; margin-top:6px; padding:24px; border:1px solid #86d6e42d; border-radius:8px; background:linear-gradient(110deg,#0b1a23,#0b121b); }
+.oliver-profile-contact h2 { margin-top:5px; }
+.oliver-profile-contact p { margin-top:5px; }
+.oliver-profile-contact>a { flex:none; min-height:44px; padding:0 12px; border:1px solid #9be4ef35; border-radius:5px; color:#c8edf2; font-size:12px; }
+.oliver-profile-privacy { margin:23px 0 0; color:#718893; font-size:10px; line-height:1.7; }
+.oliver-profile :is(a,button):focus-visible { outline:2px solid #9cefff; outline-offset:4px; }
+@media(max-width:640px) {
+ .oliver-profile { padding:calc(66px + 25px) 20px 54px; }
+ .oliver-profile-nav { font-size:11px; }
+ .oliver-profile-hero { padding-top:68px; padding-bottom:55px; }
+ .oliver-profile-hero h1 { font-size:clamp(56px,15vw,78px); }
+ .oliver-profile-intro { margin-top:23px; }
+ .oliver-profile-cards { grid-template-columns:1fr; }
+ .oliver-profile-card { min-height:205px; }
+ .oliver-profile-experience { grid-template-columns:1fr; gap:13px; }
+ .oliver-profile-contact { align-items:flex-start; flex-direction:column; padding:20px; }
+}
+@media(prefers-reduced-motion:reduce) { .oliver-profile * { scroll-behavior:auto!important; transition:none!important; } }
+.oliver-profile-nav ol { display:flex; align-items:center; gap:11px; margin:0; padding:0; list-style:none; }
+.oliver-profile-nav ol li+li::before { content:"/"; margin-right:11px; color:#62818e; }
+.oliver-profile-nav ol [aria-current="page"] { color:#87a5b1; }
+@media(max-width:640px) { .oliver-profile-nav ol { gap:6px; }.oliver-profile-nav ol li+li::before { margin-right:6px; } }
+.oliver-profile-nav-actions { display:flex; align-items:center; gap:17px; }
+.oliver-profile-languages { display:flex; align-items:center; gap:2px; padding:3px; border:1px solid #a1d5e220; border-radius:24px; background:#08131c; font:9px var(--font-jetbrains),monospace; }
+.oliver-profile-languages a { min-width:31px; min-height:28px; display:grid; place-items:center; border-radius:18px; color:#91a8b2; }
+.oliver-profile-languages a[aria-current="page"] { color:#07151a; background:#a8e8f2; }
+@media(max-width:640px) { .oliver-profile-nav-actions { gap:9px; }.oliver-profile-languages a { min-width:27px; }.oliver-profile-nav-actions>a { font-size:10px; } }

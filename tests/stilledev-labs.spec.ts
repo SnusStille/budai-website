@@ -13,7 +13,7 @@ test("Builder introduces Oliver and links to the Labs holding page in both langu
     await page.goto(`${path}#stilledev-labs`);
     const person = page.locator(".builder-heading .builder-byline");
     await expect(person).toBeVisible();
-    await expect(person).toContainText(/Oliver Stille/i); await expect(person).toContainText(/Helsingborg/i);
+    await expect(person).toContainText(/Oliver Stille/i); await expect(person).not.toContainText(/Helsingborg/i);
     await expect(person).toContainText("SkandiaMäklarna"); await expect(person).toContainText("STILLEDEV EF");
     await expect(page.locator(".builder-person")).toHaveCount(0);
     const portal = page.locator("#stilledev-labs");
@@ -53,34 +53,40 @@ test("Labs keeps cookie controls in its footer instead of a stray bottom-left la
   await expect(page.getByRole("dialog", { name: /cookies|cookie/i })).toBeVisible();
 });
 
-test("Labs is a bilingual holding page with no previous projects or links", async ({ page, request }) => {
+test("Labs is a bilingual indexable page with truthful current work and no fabricated projects", async ({ page, request }) => {
   await quiet(page); await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/sv/labs");
   await expect(page.locator("html")).toHaveAttribute("lang", "sv");
-  await expect(page.getByRole("heading", { name: /Något kul.*är på gång/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Stilledev Labs" })).toBeVisible();
+  await expect(page.locator(".labs-wait-details")).toContainText("BudAI");
+  await expect(page.locator(".labs-wait-details")).toContainText("Oliver Stille");
   await expect(page.locator(".labs-wait")).toContainText("UNDER UTVECKLING");
   await expect(page.locator(".labs-wait")).toContainText("STILLEDEV EF");
   await expect(page.locator(".labs-bot-fallback")).toBeVisible();
   await expect(page.locator(".labs-bot canvas")).toHaveCount(0);
   for (const old of ["StilleAffe", "Harvis", "Julia Stille Real Estate", "Anna’s Second Brain", "AI Video Studio"]) await expect(page.locator(".labs-wait")).not.toContainText(old);
   await expect(page.locator(".labs-wait video, .labs-wait #projects, .labs-wait #services")).toHaveCount(0);
-  await expect(page.locator(".labs-wait a")).toHaveCount(5);
+  await expect(page.locator(".labs-wait a")).toHaveCount(7);
   await page.getByRole("group", { name: "Språk" }).getByRole("link", { name: "EN" }).click();
   await expect(page).toHaveURL(/\/labs$/);
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
-  await expect(page.getByRole("heading", { name: /Something good.*is brewing/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Stilledev Labs" })).toBeVisible();
   await expect(page.locator(".labs-wait-cta")).toHaveText(/Back to Builder/);
+  await page.getByRole("button", { name: "Celebrate", exact: true }).click();
+  await expect(page.getByRole("status")).toContainText("Labs is still in development");
+  await expect(page.getByRole("status")).not.toContainText("every day");
   await page.locator(".labs-wait-cta").click(); await expect(page).toHaveURL(/\/#stilledev-labs$/);
   await expect(page.locator("#stilledev-labs")).toBeVisible();
   for (const asset of ["julia.mp4", "harvis-concept.mp4", "labs-atmosphere.jpg"]) expect((await request.get(`/labs-media/${asset}`)).status()).toBe(404);
 });
 
-test("holding page metadata reflects the temporary state", async ({ request }) => {
+test("Labs metadata is unique, indexable, canonical and bilingual", async ({ request }) => {
   for (const path of ["/labs", "/sv/labs"]) {
     const response = await request.get(path); expect(response.ok()).toBeTruthy();
     const html = await response.text();
-    expect(html).toContain('name="robots" content="noindex, follow"');
+    expect(html).toContain('name="robots" content="index, follow"');
     expect(html).toContain('hrefLang="en"'); expect(html).toContain('hrefLang="sv"');
+    expect(html).toContain("Stilledev Labs");
     expect(html).not.toContain("Julia Stille Real Estate"); expect(html).not.toContain("Harvis");
   }
 });
@@ -115,7 +121,7 @@ for (const ua of [iphone, android]) {
     const context = await browser.newContext({ userAgent: ua, viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, reducedMotion: "reduce" });
     const page = await context.newPage(); await quiet(page);
     const errors: string[] = []; page.on("pageerror", error => errors.push(error.message));
-    for (const route of ["/", "/sv", "/labs", "/sv/labs"]) {
+    for (const route of ["/", "/sv"]) {
       const response = await page.goto(route); expect(response?.headers()["cache-control"]).toMatch(/private|no-store/i);
       await expect(page.locator(".phone-welcome")).toBeVisible();
       await expect(page.locator("#playground")).toBeVisible();
@@ -179,7 +185,7 @@ for (const ua of [iphone, android]) {
     await expect(page).toHaveURL(/\/legal\/cookies$/);
     await expect(page.getByRole("heading", { name: "Cookie Policy" })).toBeVisible();
     for (const host of ["stilledev.se", "www.stilledev.se", "preview.vercel.app", "localhost:3000"]) {
-      const response = await request.get("/labs", { headers: { host, "user-agent": ua } });
+      const response = await request.get("/", { headers: { host, "user-agent": ua } });
       const html = await response.text(); expect(html).toContain("phone-welcome"); expect(html).not.toContain("labs-wait-shell");
       expect(response.headers()["cache-control"]).toMatch(/private|no-store/i);
     }

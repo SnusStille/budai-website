@@ -27,6 +27,16 @@ test("restored neural journey is after landing and before the REAL Playground; o
   const brain = page.locator("[data-brain-canvas]");
   await expect(brain).toHaveAttribute("data-rendered", "true");
   await expect(brain).toHaveCount(1);
+  await expect(page.locator(".hero-sculpture-core, .hero-sculpture-ring")).toHaveCount(0);
+  await expect(page.locator(".hero-signal-sculpture path")).toHaveCount(4);
+  await expect(page.locator(".hero-bottom a")).toHaveAttribute("href", "#signal");
+  await expect(page.locator(".hero-bottom a")).toContainText("Explore the signal path");
+  await expect(page.locator(".journey-route-label")).toContainText("SIGNAL → CONTEXT → ACTION");
+  await expect(page.getByText("THE SPARK · INTELLIGENCE CORE", { exact: false })).toHaveCount(0);
+  await expect(page.getByText("From intelligence to action", { exact: false })).toHaveCount(0);
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior }));
+  await page.waitForTimeout(350);
+  await page.screenshot({ path: "test-results/landing-transition-desktop.png" });
   expect(await page.evaluate(() => {
     const hero = document.querySelector("#intelligence")!, signal = document.querySelector("#signal")!, pg = document.querySelector("#playground")!;
     return !!(hero.compareDocumentPosition(signal) & Node.DOCUMENT_POSITION_FOLLOWING) && !!(signal.compareDocumentPosition(pg) & Node.DOCUMENT_POSITION_FOLLOWING);
@@ -35,6 +45,7 @@ test("restored neural journey is after landing and before the REAL Playground; o
   await expect(page.getByRole("textbox", { name: "Ask BudAI", exact: true })).toHaveCount(0);
   await dive(page, .12);
   await expect(brain).toHaveAttribute("data-sequence", "journey");
+  await expect(page.locator(".neural-hud-bottom[role=progressbar]")).toHaveAttribute("aria-valuenow", "12");
   const a = await brain.getAttribute("data-camera-pose");
   await page.screenshot({ path: "test-results/neural-entry-desktop.png" });
   await dive(page, .55);

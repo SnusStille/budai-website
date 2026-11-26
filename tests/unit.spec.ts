@@ -77,8 +77,9 @@ test("code reveal is deterministic, monotonic, bounded, and preserves every sour
 test("mobile brain uses one full-height target and a finite reversible perspective lens", () => {
   const hero = brainFovAt({ kind:"intro", progress:0 }, 844, true);
   expect(hero).toBeGreaterThan(.87);
-  expect(brainFovAt({ kind:"journey", progress:0, entry:0 },844,true)).toBe(.87);
-  expect(brainFovAt({ kind:"journey", progress:.5, entry:1 },844,true)).toBe(.87);
+  expect(brainFovAt({ kind:"journey", progress:0, entry:0 },844,true)).toBe(1.28);
+  expect(brainFovAt({ kind:"journey", progress:.5, entry:1 },844,true)).toBe(1.28);
+  expect(brainFovAt({ kind:"journey", progress:.5, entry:1 },1000,false)).toBe(.87);
   expect(brainFovAt({ kind:"intro", progress:0 },1000,false)).toBe(.87);
   for (const height of [0, 370, 667, 844, 1200]) for (const entry of [0,.1,.5,.9,1]) {
     const fov = brainFovAt({ kind:"journey",progress:entry,entry },height,true);

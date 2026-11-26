@@ -26,6 +26,7 @@ const groups = (lang: string) => [
     title: lang === "sv" ? "Företag" : "Company",
     links: [
       { label: "Labs", href: lang === "sv" ? "/sv/labs" : "/labs" },
+      { label: "Oliver Stille", href: lang === "sv" ? "/sv/oliver-stille" : "/oliver-stille" },
       { label: lang === "sv" ? "Byggaren" : "Builder", href: "#about" },
       { label: lang === "sv" ? "Kontakt" : "Contact", href: lang === "sv" ? "/sv/contact" : "/contact" },
       { label: lang === "sv" ? "Vad är nytt" : "What's new", href: "/changelog" },

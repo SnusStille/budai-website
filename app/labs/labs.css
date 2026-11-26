@@ -75,3 +75,15 @@
 }
 @media(prefers-reduced-motion:reduce) { .labs-bot-stage { transition:none!important; } }
 .labs-wait h1 em { color:transparent; background-clip:text; -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+
+/* Search landing pages also need a real, crawlable description of the work. */
+.labs-wait-details { padding:33px 0 64px; border-top:1px solid #bce9ff1c; }
+.labs-wait-details-kicker,.labs-wait-details-grid article>span { color:#84b7c4; font:9px/1.6 var(--font-jetbrains),monospace; letter-spacing:.14em; }
+.labs-wait-details h2 { margin:12px 0 8px; color:#e9f5f8; font-size:clamp(24px,3.3vw,38px); font-weight:450; letter-spacing:-.05em; }
+.labs-wait-details-intro { max-width:700px; margin:0; color:#9eb3bd; font-size:14px; line-height:1.8; }
+.labs-wait-details-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; margin-top:24px; }
+.labs-wait-details-grid article { display:flex; flex-direction:column; align-items:flex-start; min-height:190px; padding:19px 21px; border:1px solid #9ad9e31b; border-radius:5px; background:linear-gradient(145deg,#0d202b9c,#081019bc); }
+.labs-wait-details-grid article h3 { margin:12px 0 5px; color:#e6f4f7; font-size:20px; font-weight:500; letter-spacing:-.04em; }
+.labs-wait-details-grid article p { max-width:500px; margin:0; color:#9bafb9; font-size:12px; line-height:1.75; }
+.labs-wait-details-grid article a { display:inline-flex; align-items:center; gap:7px; min-height:40px; margin-top:auto; padding-top:12px; color:#9be2ed; font-size:11px; }
+@media(max-width:600px) { .labs-wait-details { padding:27px 0 42px; }.labs-wait-details-grid { grid-template-columns:1fr; }.labs-wait-details-grid article { min-height:175px; } }

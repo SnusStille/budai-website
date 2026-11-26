@@ -20,13 +20,24 @@ import MobileProviders from "@/components/MobileProviders";
 import { CONTACT_EMAIL } from "@/lib/contact";
 
 const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://stilledev.se").replace(/\/$/, "");
+const websiteId = `${siteUrl}/#website`;
+const organizationId = `${siteUrl}/#organization`;
+const personId = `${siteUrl}/oliver-stille#person`;
 
-// A7/F2: one @graph so crawlers see both a standalone Organization and the
-// SoftwareApplication that references it. Public/og.png is the single social
-// image for both og:image and twitter:image (no duplicate route).
+// One stable entity graph: company, person, website and the actual product.
+// Public links in sameAs are limited to the GitHub and LinkedIn profiles already
+// linked from Stilledev's own public footer.
 const jsonLd = {
   "@context": "https://schema.org",
   "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": websiteId,
+      name: "Stilledev",
+      url: siteUrl,
+      publisher: { "@id": organizationId },
+      inLanguage: ["en", "sv"],
+    },
     {
       "@type": "SoftwareApplication",
       "@id": `${siteUrl}/#app`,
@@ -36,16 +47,16 @@ const jsonLd = {
       description:
         "AI work assistant for Swedish companies and individuals — write, automate, and think faster in Swedish and English.",
       url: siteUrl,
-      author: { "@id": `${siteUrl}/#organization` },
+      author: { "@id": organizationId },
       offers: { "@type": "Offer", price: "0", priceCurrency: "SEK", description: "Developer preview" },
     },
     {
       "@type": "Organization",
-      "@id": `${siteUrl}/#organization`,
+      "@id": organizationId,
       name: "Stilledev",
       url: siteUrl,
       email: CONTACT_EMAIL,
-      founder: { "@id": `${siteUrl}/#oliver-stille` },
+      founder: { "@id": personId },
       contactPoint: {
         "@type": "ContactPoint",
         contactType: "business enquiries",
@@ -56,10 +67,12 @@ const jsonLd = {
     },
     {
       "@type": "Person",
-      "@id": `${siteUrl}/#oliver-stille`,
+      "@id": personId,
       name: "Oliver Stille",
-      url: `${siteUrl}/#oliver-stille`,
-      worksFor: { "@id": `${siteUrl}/#organization` },
+      url: `${siteUrl}/oliver-stille`,
+      jobTitle: "Founder of Stilledev",
+      description: "Founder of Stilledev, working in digital development and AI.",
+      worksFor: { "@id": organizationId },
       sameAs: [
         "https://github.com/SnusStille",
         "https://www.linkedin.com/in/oliver-stille-8bb48a403/",
@@ -191,10 +204,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const lang = h.get("x-budai-lang") === "sv" ? "sv" : "en";
   const phoneGate = isPhoneUserAgent(h.get("user-agent") || "");
   const path = canonicalPath(h.get("x-budai-path") || "/");
-  // Policies remain reachable, but no desktop marketing pages are shown on phones.
-  // Release fix: contact + admin are functional pages, not marketing — they must
-  // work on phones too (both have responsive layouts).
-  const phoneLegalPage = path.startsWith("/legal/") || path === "/contact" || path === "/sv/contact" || path === "/admin" || path.startsWith("/admin/");
+  // These pages have deliberate responsive layouts and must remain available
+  // on phones, including search-result landings for the public Labs/profile pages.
+  const phoneAccessiblePage = path.startsWith("/legal/") || path === "/contact" || path === "/sv/contact" || path === "/admin" || path.startsWith("/admin/") || path === "/labs" || path === "/sv/labs" || path === "/oliver-stille" || path === "/sv/oliver-stille";
   return (
     <html
       lang={lang}
@@ -216,7 +228,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           nonce={nonce}
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
-        {phoneGate ? <MobileProviders initialLang={lang}>{phoneLegalPage ? children : <PhoneWelcome normalizeLanguagePath />}</MobileProviders> : <Providers initialLang={lang}>{children}</Providers>}
+        {phoneGate ? <MobileProviders initialLang={lang}>{phoneAccessiblePage ? children : <PhoneWelcome normalizeLanguagePath />}</MobileProviders> : <Providers initialLang={lang}>{children}</Providers>}
         <SiteConfigBanner />
         <PageViewTracker />
         <VercelAnalytics enabled={process.env.VERCEL === "1"} />
