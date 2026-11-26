@@ -67,10 +67,9 @@ export default function Navbar() {
     { label: t.nav.capabilities, href: "#capabilities", id: "capabilities" },
     { label: lang === "sv" ? "Byggaren" : "Builder", href: "#about", id: "about" },
     { label: t.nav.roadmap, href: "#roadmap", id: "roadmap" },
-    { label: "Labs", href: lang === "sv" ? "/sv/labs" : "/labs", id: "labs", route: true },
   ];
 
-  const isLinkActive = (id: string) => id === "labs" ? pathname?.endsWith("/labs") : active === id;
+  const isLinkActive = (id: string) => active === id;
 
   return (
     <>
@@ -123,9 +122,8 @@ export default function Navbar() {
                   <a
                     key={l.href}
                     href={l.href}
-                    onClick={l.route ? () => setMobileOpen(false) : undefined}
-                    aria-current={l.route && isActive ? "page" : undefined}
-                    data-nav-labs={l.route ? "true" : undefined}
+                    onClick={() => setMobileOpen(false)}
+                    aria-current={isActive ? "location" : undefined}
                     className={`relative whitespace-nowrap px-2.5 xl:px-3.5 py-2 text-sm rounded-lg transition-colors ${
                       isActive
                         ? "text-white"

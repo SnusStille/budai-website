@@ -22,7 +22,7 @@ import { CONTACT_EMAIL } from "@/lib/contact";
 const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://stilledev.se").replace(/\/$/, "");
 const websiteId = `${siteUrl}/#website`;
 const organizationId = `${siteUrl}/#organization`;
-const personId = `${siteUrl}/oliver-stille#person`;
+const personId = `${siteUrl}/#person`;
 
 // One stable entity graph: company, person, website and the actual product.
 // Public links in sameAs are limited to the GitHub and LinkedIn profiles already
@@ -69,9 +69,10 @@ const jsonLd = {
       "@type": "Person",
       "@id": personId,
       name: "Oliver Stille",
-      url: `${siteUrl}/oliver-stille`,
+      url: siteUrl,
+      mainEntityOfPage: siteUrl,
       jobTitle: "Founder of Stilledev",
-      description: "Founder of Stilledev, working in digital development and AI.",
+      description: "Oliver Stille founded Stilledev and works in digital development and AI.",
       worksFor: { "@id": organizationId },
       sameAs: [
         "https://github.com/SnusStille",
@@ -86,17 +87,17 @@ const jsonLd = {
 const META = {
   en: {
     description:
-      "BudAI by Swedish developer Oliver Stille and Stilledev — an AI workspace for work in Swedish and English. Write, automate and analyze with memory you control.",
-    ogTitle: "BudAI — AI Workspace for Swedish & English Work",
+      "Stilledev is a Swedish software studio founded by Oliver Stille. We build BudAI, an AI workspace for writing, planning and analysis in Swedish and English.",
+    ogTitle: "Stilledev — BudAI by Oliver Stille",
     ogDescription:
-      "Built in Sweden by Stilledev. Write, analyze, plan, and automate in Swedish and English with a live Playground and memory you control.",
+      "A Swedish software studio building BudAI for writing, planning and analysis in Swedish and English.",
   },
   sv: {
     description:
-      "BudAI av Stilledev och Oliver Stille — AI-arbetsyta byggd i Sverige för arbete på svenska och engelska. Skriv, automatisera och analysera med minne du styr.",
-    ogTitle: "BudAI — AI-arbetsyta för arbete på svenska och engelska",
+      "Stilledev är en svensk mjukvarustudio grundad av Oliver Stille. Vi utvecklar BudAI, en AI-arbetsyta för skrivande, planering och analys på svenska och engelska.",
+    ogTitle: "Stilledev — BudAI av Oliver Stille",
     ogDescription:
-      "Byggd i Sverige av Stilledev. Skriv, analysera, planera och automatisera på svenska och engelska med live Playground och minne du styr.",
+      "En svensk mjukvarustudio som utvecklar BudAI för skrivande, planering och analys på svenska och engelska.",
   },
 } as const;
 
@@ -130,7 +131,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     metadataBase: new URL(siteUrl),
     title: {
-      default: seoTitle || "Stilledev · Oliver Stille · BudAI",
+      default: seoTitle || (sv ? "Stilledev – BudAI av Oliver Stille" : "Stilledev – BudAI by Oliver Stille"),
       template: "%s · BudAI",
     },
     description: seoDescription || copy.description,
@@ -156,7 +157,7 @@ export async function generateMetadata(): Promise<Metadata> {
       locale: sv ? "sv_SE" : "en_US",
       alternateLocale: [sv ? "en_US" : "sv_SE"],
       url: canonical,
-      siteName: "BudAI",
+      siteName: "Stilledev",
       title: copy.ogTitle,
       description: copy.ogDescription,
       images: [
@@ -205,8 +206,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const phoneGate = isPhoneUserAgent(h.get("user-agent") || "");
   const path = canonicalPath(h.get("x-budai-path") || "/");
   // These pages have deliberate responsive layouts and must remain available
-  // on phones, including search-result landings for the public Labs/profile pages.
-  const phoneAccessiblePage = path.startsWith("/legal/") || path === "/contact" || path === "/sv/contact" || path === "/admin" || path.startsWith("/admin/") || path === "/labs" || path === "/sv/labs" || path === "/oliver-stille" || path === "/sv/oliver-stille";
+  // on phones, including direct entry to contact, Labs, and legal pages.
+  const phoneAccessiblePage = path.startsWith("/legal/") || path === "/contact" || path === "/sv/contact" || path === "/labs" || path === "/sv/labs" || path === "/admin" || path.startsWith("/admin/");
   return (
     <html
       lang={lang}

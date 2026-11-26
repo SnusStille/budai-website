@@ -7,6 +7,11 @@ import { CONTACT_EMAIL, CONTACT_MAILTO } from "@/lib/contact";
 import { trackBusinessEvent } from "@/lib/analytics/events";
 
 const field = "w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white placeholder:text-muted/70 focus:border-accent-cyan/50 focus:outline-none focus:ring-1 focus:ring-accent-cyan/30";
+const subjects = [
+  ["General enquiry", "Allmän förfrågan"], ["BudAI access", "Åtkomst till BudAI"],
+  ["AI development project", "AI-utvecklingsprojekt"], ["Automation", "Automatisering"],
+  ["Partnership", "Samarbete"], ["Support", "Support"], ["Other", "Annat"],
+] as const;
 
 type FormState = "idle" | "sending" | "sent" | "error";
 
@@ -71,7 +76,7 @@ export default function ContactForm() {
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="block text-sm"><span className="mb-1.5 block text-white/80">{sv ? "Företag" : "Company"}</span><input maxLength={160} className={field} value={form.company} onChange={set("company")} autoComplete="organization" placeholder={sv ? "Valfritt" : "Optional"} /></label>
-        <label className="block text-sm"><span className="mb-1.5 block text-white/80">{sv ? "Ämne" : "Subject"}</span><select className={field} value={form.subject} onChange={set("subject")}><option>General enquiry</option><option>BudAI access</option><option>AI development project</option><option>Automation</option><option>Partnership</option><option>Support</option><option>Other</option></select></label>
+        <label className="block text-sm"><span className="mb-1.5 block text-white/80">{sv ? "Ämne" : "Subject"}</span><select className={field} value={form.subject} onChange={set("subject")}>{subjects.map(([value, svLabel]) => <option key={value} value={value}>{sv ? svLabel : value}</option>)}</select></label>
       </div>
       <label className="block text-sm"><span className="mb-1.5 block text-white/80">{sv ? "Meddelande" : "Message"} *</span><textarea required rows={6} maxLength={5000} className={field} value={form.message} onChange={set("message")} placeholder={sv ? "Hur kan vi hjälpa dig?" : "How can we help?"} /></label>
       <input tabIndex={-1} autoComplete="off" aria-hidden="true" className="hidden" name="website" value={form.website} onChange={set("website")} />

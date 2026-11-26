@@ -702,7 +702,7 @@ test("F1: /sv is a real Swedish page, hreflang is reciprocal and the cookie surv
   expect(svResponse.status()).toBe(200);
   const svHtml = await svResponse.text();
   expect(svHtml).toMatch(/<html[^>]*\blang="sv"/);
-  expect(svHtml).toContain("Fortsätt samtalet.");
+  expect(svHtml).toContain("Prova BudAI.");
 
   // A stored preference is respected by the server, not only after hydration.
   const cookieHtml = await (await request.get("/", { headers: { cookie: "budai-lang=sv" } })).text();
@@ -730,7 +730,7 @@ test("F1: /sv is a real Swedish page, hreflang is reciprocal and the cookie surv
   await page.goto("/sv");
   await expect(page.locator("link[rel='canonical']")).toHaveAttribute("href", /\/sv$/);
   await expect(page.locator("html")).toHaveAttribute("lang", "sv");
-  await expect(page.getByRole("heading", { name: "Fortsätt samtalet." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Prova BudAI." })).toBeVisible();
 
   // The nav switch persists the choice for the next server request.
   await page.goto("/");

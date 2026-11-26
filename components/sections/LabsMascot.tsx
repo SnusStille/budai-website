@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 
 export type MascotGesture = { id: number; kind: "hello" | "wink" | "celebrate" | "think" };
 
-/** The same Builder Bot in Labs and on the homepage; no WebGL on reduced motion or save-data. */
+/** The lightweight Builder Bot companion; no WebGL when static-only, reduced motion, or save-data is enabled. */
 export default function LabsMascot({ companion = false, gesture = null, staticOnly = false, hardHat = false }: { companion?: boolean; gesture?: MascotGesture | null; staticOnly?: boolean; hardHat?: boolean } = {}) {
   const host = useRef<HTMLDivElement>(null);
   const [ready, setReady] = useState(false);
@@ -71,7 +71,7 @@ export default function LabsMascot({ companion = false, gesture = null, staticOn
       const antenna = new THREE.Mesh(new THREE.CylinderGeometry(.025, .025, .4, 12), joint); antenna.position.set(0, .93, 0); head.add(antenna);
       addBall(head, glow, [.09, .09, .09], [0, 1.16, 0]);
       addBall(head, joint, [.16, .22, .2], [-1.05, 0, 0]); addBall(head, joint, [.16, .22, .2], [1.05, 0, 0]);
-      // Labs upgrade: the Builder Bot now wears its safety hard hat (and keeps a wrench handy).
+      // Optional hard-hat styling is retained for internal design experiments.
       let hat: import("three").Group | null = null;
       if (hardHat) {
         hat = new THREE.Group(); hat.position.set(.18, .62, 0); hat.rotation.z = -.1; head.add(hat);
@@ -127,7 +127,7 @@ export default function LabsMascot({ companion = false, gesture = null, staticOn
         robot.rotation.z = Math.sin(t * .65) * .025;
         leftArm.rotation.z = -.48 + Math.sin(t * .8) * .045;
         // In the companion, gestures are scheduled by the UI only while visible.
-        // Labs keeps its own occasional wave; the geometry is shared unchanged.
+        // Keep the shared mascot expression responsive without rebuilding the scene.
         const elapsed = gestureRef.current ? (now - gestureRef.current.started) / 1000 : -1;
         const hello = companion && gestureRef.current?.kind === "hello";
         const waveTime = companion ? (hello ? elapsed : -1) : (t + 3) % 23;

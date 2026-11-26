@@ -24,7 +24,7 @@ export default function CookieConsent({ forceDocumentNavigation = false }: { for
   const [choice, setChoice] = useState<ConsentChoice | null>(null);
   const pathname = usePathname();
   const { t, lang } = useLang();
-  const hasCookieSettingsInFooter = (pathname === "/" || pathname === "/sv" || pathname === "/labs" || pathname === "/sv/labs") && !forceDocumentNavigation;
+  const hasCookieSettingsInFooter = (pathname === "/" || pathname === "/sv") && !forceDocumentNavigation;
   const isAdminPage = pathname?.startsWith("/admin") ?? false;
 
   useEffect(() => {

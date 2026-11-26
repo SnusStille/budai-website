@@ -2,7 +2,6 @@
 
 import { useEffect, useRef } from "react";
 import { ArrowRight, Monitor, Sparkles } from "lucide-react";
-import LabsMascot from "@/components/sections/LabsMascot";
 
 /** An acknowledgement, not an access restriction: Playground remains usable on phones. */
 export default function PhoneDesktopNotice({ sv, changeLanguage, onConfirm }: {
@@ -53,18 +52,16 @@ export default function PhoneDesktopNotice({ sv, changeLanguage, onConfirm }: {
         <div className="desktop-notice-art" aria-hidden="true">
           <div className="desktop-notice-orbit orbit-one" /><div className="desktop-notice-orbit orbit-two" />
           <div className="desktop-notice-screen"><Monitor size={42} strokeWidth={1.15} /><Sparkles size={15} className="desktop-notice-spark" /></div>
-          <div className="desktop-notice-mascot"><LabsMascot staticOnly /></div>
           <span className="desktop-notice-coordinate">01 / BIGGER PICTURE</span>
         </div>
         <div className="desktop-notice-body">
           <p className="desktop-notice-kicker">{sv ? "DET FINNS MER ATT SE" : "THERE'S MORE TO SEE"}</p>
           <h2 id="desktop-notice-title">{sv ? <>Du missar <em>helheten.</em></> : <>You&apos;re missing the <em>bigger picture.</em></>}</h2>
-          <p id="desktop-notice-description">{sv ? "Stilledev upplevs bäst på dator. Hela sajten behöver en större skärm – men Playground kan du använda här på mobilen." : "Stilledev is best experienced on desktop. The full site needs a bigger screen – but you can still use Playground right here on your phone."}</p>
+          <p id="desktop-notice-description">{sv ? "Den interaktiva helheten fungerar bäst på en större skärm. Playground är redo att användas direkt här i mobilen." : "The full interactive experience works best on a larger screen. The Playground is ready to use right here on your phone."}</p>
           <div className="desktop-notice-card">
-            <div><span>{sv ? "DATORUPPLEVELSE" : "DESKTOP EXPERIENCE"}</span><strong>{sv ? "Rekommenderas" : "Recommended"}</strong></div>
-            <p><b>100%</b> {sv ? "av sajten tillgänglig" : "of the site available"}</p>
-            <small>Labs · Builder · Playground <span>✳</span></small>
-            <small className="desktop-notice-labs">{sv ? "Labs är under utveckling" : "Labs is under development"}</small>
+            <div><span>{sv ? "STILLEDEV" : "STILLEDEV"}</span><strong>{sv ? "Dator rekommenderas" : "Desktop recommended"}</strong></div>
+            <p>{sv ? "Playground fungerar på mobilen" : "Playground works on mobile"}</p>
+            <small>BUDAI · PLAYGROUND <span>✳</span></small>
           </div>
           <button ref={confirm} className="desktop-notice-confirm" type="button" onClick={onConfirm}>{sv ? "Jag förstår, fortsätt" : "I understand, continue"}<ArrowRight size={18} aria-hidden="true" /></button>
           <p className="desktop-notice-after">{sv ? "PLAYGROUND ÄR REDO PÅ MOBILEN" : "PLAYGROUND IS READY ON MOBILE"} <span>↗</span></p>

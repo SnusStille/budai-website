@@ -1,10 +1,10 @@
 "use client";
 
-import CompanionRestore from "@/components/ui/CompanionRestore";
 import StatusPill from "@/components/ui/StatusPill";
+import CompanionRestore from "@/components/ui/CompanionRestore";
 import Link from "next/link";
 import { useEffect, useRef } from "react";
-import { Github, MessageSquare, Linkedin, Mail, ArrowUpRight } from "lucide-react";
+import { Github, Linkedin, Mail, ArrowUpRight } from "lucide-react";
 import BudAIWordmark from "@/components/ui/BudAIWordmark";
 import {subscribeJourney} from "@/lib/experience/scroll";
 import BudAILogo, { StilledevMark } from "@/components/ui/BudAILogo";
@@ -25,9 +25,8 @@ const groups = (lang: string) => [
   {
     title: lang === "sv" ? "Företag" : "Company",
     links: [
-      { label: "Labs", href: lang === "sv" ? "/sv/labs" : "/labs" },
-      { label: "Oliver Stille", href: lang === "sv" ? "/sv/oliver-stille" : "/oliver-stille" },
-      { label: lang === "sv" ? "Byggaren" : "Builder", href: "#about" },
+      { label: "Oliver Stille", href: "#oliver-stille" },
+      { label: lang === "sv" ? "Om Stilledev" : "About Stilledev", href: "#about" },
       { label: lang === "sv" ? "Kontakt" : "Contact", href: lang === "sv" ? "/sv/contact" : "/contact" },
       { label: lang === "sv" ? "Vad är nytt" : "What's new", href: "/changelog" },
     ],
@@ -46,7 +45,6 @@ const groups = (lang: string) => [
 
 const socials = [
   { icon: Github, href: "https://github.com/SnusStille", label: "GitHub" },
-  { icon: MessageSquare, href: "https://discord.com/users/353944097301594123", label: "Discord" },
   { icon: Linkedin, href: "https://www.linkedin.com/in/oliver-stille-8bb48a403/", label: "LinkedIn" },
   { icon: Mail, href: CONTACT_MAILTO, label: "Email" },
 ];
@@ -61,10 +59,10 @@ export default function Footer() {
     <footer ref={footer} id="continuation" className="site-footer relative border-t border-white/[0.04]">
       <div className="closing-composition">
         <div className="closing-field" aria-hidden="true"><span/><i data-outro-anchor/><span/></div>
-        <span className="closing-kicker">{lang==="sv"?"SIGNALEN FORTSÄTTER":"THE SIGNAL CONTINUES"}</span>
-        <h2>{lang==="sv"?"Fortsätt samtalet.":"Continue the conversation."}</h2>
-        <p>{lang==="sv"?"Öppna Playground för att testa på svenska eller engelska — och var med när nästa steg byggs.":"Open the Playground to test live in Swedish or English — and help shape what gets built next."}</p>
-        <a href="#playground">{lang==="sv"?"Tillbaka till Playground":"Back to Playground"}<ArrowUpRight size={15}/></a>
+        <span className="closing-kicker">{lang==="sv"?"STILLEDEV · BUDAI":"STILLEDEV · BUDAI"}</span>
+        <h2>{lang==="sv"?"Prova BudAI.":"Try BudAI."}</h2>
+        <p>{lang==="sv"?"Testa arbetsytan på svenska eller engelska. För projektförfrågningar och samarbeten, kontakta Stilledev.":"Try the workspace in Swedish or English. For project enquiries and collaborations, contact Stilledev."}</p>
+        <a href="#playground">{lang==="sv"?"Öppna Playground":"Open the Playground"}<ArrowUpRight size={15}/></a>
       </div>
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent-cyan/20 to-transparent" />
       <div className="max-w-7xl mx-auto px-6 lg:px-8 py-14 md:py-16">
@@ -76,8 +74,8 @@ export default function Footer() {
             </Link>
             <p className="text-sm text-muted leading-relaxed max-w-sm mb-6">
               {lang === "sv"
-                ? "Utvecklad i Sverige av Stilledev för riktigt arbete på svenska och engelska — med live Playground, minne du kan styra och tydlig väg från tanke till handling."
-                : "Built in Sweden by Stilledev for real work in Swedish and English — featuring a live Playground, memory you control, and a clear path from raw context to action."}
+                ? "BudAI utvecklas av Stilledev, grundat av Oliver Stille i Sverige. En AI-arbetsyta för skrivande, planering och analys på svenska och engelska."
+                : "BudAI is built by Stilledev, founded by Oliver Stille in Sweden. An AI workspace for writing, planning and analysis in Swedish and English."}
             </p>
             <div className="flex items-center gap-2.5">
               {socials.map((s) => (

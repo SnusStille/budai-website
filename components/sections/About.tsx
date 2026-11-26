@@ -62,10 +62,9 @@ export default function About() {
             <span className="chapter-label"><i />04 / {sv ? "FRÅN TANKE TILL VERKLIGHET · BYGGAREN" : "FROM THOUGHT TO REALITY · THE BUILDER"}</span>
             <h2 id="builder-title">{sv ? "Från en tanke." : "From a thought."}<br /><span>{sv ? "Till något verkligt." : "To something real."}</span></h2>
             <p>{sv ? "Från en kort specifikation till typsäker kod, gränssnitt och strukturerade arbetsflöden — byggd med samma arkitektur som driver BudAI." : "From a short brief to type-safe code, interfaces, and structured workflows — built with the same architecture that powers BudAI."}</p>
-            <div id="oliver-stille" className="builder-byline scroll-mt-24" aria-label={sv ? "Om Oliver Stille" : "About Oliver Stille"}>
-              <span>STILLEDEV EF <i /> OLIVER STILLE</span>
-              <p>{sv ? "Mötesansvarig och kodare på SkandiaMäklarna." : "Meeting manager and coder at SkandiaMäklarna."}</p>
-              <a className="builder-profile-link" href={sv ? "/sv/oliver-stille" : "/oliver-stille"}>{sv ? "Läs Olivers professionella profil" : "Read Oliver’s professional profile"}<ArrowRight size={12} aria-hidden="true" /></a>
+            <div id="oliver-stille" className="builder-byline scroll-mt-24" aria-label={sv ? "Om Stilledev och dess grundare" : "About Stilledev and its founder"}>
+              <span>STILLEDEV EF <i /> {sv ? "GRUNDAT AV OLIVER STILLE" : "FOUNDED BY OLIVER STILLE"}</span>
+              <p>{sv ? "Oliver Stille grundade Stilledev och arbetar med digital utveckling och AI." : "Oliver Stille founded Stilledev and works in digital development and AI."}</p>
             </div>
             <div className="reality-creation-pills" role="group" aria-label={sv ? "Prova en idé i Playground" : "Try an idea in Playground"} data-thought-to-reality>
               <span className="builder-ideas-label" aria-hidden="true">{sv ? "PROVA EN IDÉ" : "TRY AN IDEA"} <ArrowRight size={11} /></span>
@@ -92,24 +91,11 @@ export default function About() {
             <span><b>01</b>{sv ? "Initiera" : "Initialize"}</span>
             <span><b>02</b>{sv ? "Skapa" : "Compose"}</span>
             <span><b>03</b>{sv ? "Utforska" : "Explore"}</span>
-            <a href={sv ? "/sv/labs" : "/labs"} aria-label={sv ? "Öppna Labs" : "Open Labs"}><ArrowRight size={15} /></a>
+            <span aria-hidden="true"><ArrowRight size={15} /></span>
           </div>
         </div>
       </div>
 
-      <div id="stilledev-labs" className="builder-labs-entry">
-        <div className="builder-labs-icon" aria-hidden="true">
-          <i className="builder-labs-orbit" /><i className="builder-labs-antenna" />
-          <div className="builder-labs-bot-head"><div className="builder-labs-bot-face"><i /><i /></div></div>
-          <div className="builder-labs-bot-body"><i /></div>
-        </div>
-        <div className="builder-labs-copy">
-          <span className="builder-labs-label">STILLEDEV EF <i /> LABS</span>
-          <div className="builder-labs-title-row"><h3>Labs<span>.</span></h3><span className="builder-labs-status"><i />{sv ? "UNDER UTVECKLING" : "UNDER DEVELOPMENT"}</span></div>
-          <p>{sv ? "Vår lilla byggrobot håller ställningarna medan Labs tar form." : "Our little builder bot is holding the fort while Labs takes shape."}</p>
-        </div>
-        <a className="builder-labs-link" href={sv ? "/sv/labs" : "/labs"}>{sv ? "Öppna Labs" : "Enter Labs"}<ArrowRight size={16} /></a>
-      </div>
     </section>
   );
 }
