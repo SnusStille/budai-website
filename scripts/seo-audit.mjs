@@ -12,10 +12,11 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const base = new URL(process.env.SEO_BASE_URL || "http://127.0.0.1:3000");
 const canonicalOrigin = process.env.SEO_CANONICAL_ORIGIN || "https://stilledev.se";
 const indexablePaths = [
-  "/", "/sv", "/oliver-stille", "/sv/oliver-stille", "/labs", "/sv/labs",
-  "/contact", "/sv/contact", "/changelog", "/legal/privacy", "/legal/terms",
-  "/legal/cookies", "/legal/gdpr", "/legal/data",
+  "/", "/sv", "/contact", "/sv/contact", "/changelog",
+  "/legal/privacy", "/legal/terms", "/legal/cookies", "/legal/gdpr", "/legal/data",
 ];
+const noindexPaths = ["/labs", "/sv/labs"];
+const retiredProfileRedirects = [["/oliver-stille", "/"], ["/sv/oliver-stille", "/sv"]];
 const timeoutMs = 12_000;
 const issues = [];
 const pages = [];
@@ -41,12 +42,12 @@ function jsonLd(html, pathName) {
   }
   return output;
 }
-async function fetchPage(pathName) {
+async function fetchPage(pathName, { redirect = "follow" } = {}) {
   const url = new URL(pathName, base);
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const response = await fetch(url, { redirect: "follow", signal: controller.signal, headers: { "user-agent": "StilledevSeoAudit/1.0" } });
+    const response = await fetch(url, { redirect, signal: controller.signal, headers: { "user-agent": "StilledevSeoAudit/1.0" } });
     const body = await response.text();
     return { response, body };
   } finally { clearTimeout(timer); }
@@ -78,9 +79,28 @@ for (const pathName of indexablePaths) {
     if (/\bnoindex\b/.test(robots)) issue("error", pathName, "A sitemap/public page is marked noindex");
     if (!lang) issue("error", pathName, "Missing html lang attribute");
     if (h1Count !== 1) issue("warning", pathName, `Expected one server-rendered H1; found ${h1Count}`);
-    if (pathName === "/oliver-stille" || pathName === "/sv/oliver-stille") {
-      if (!types.includes("ProfilePage")) issue("error", pathName, "Missing ProfilePage JSON-LD");
-      if (!body.includes("Oliver Stille")) issue("error", pathName, "Profile page does not contain the named profile in server-rendered HTML");
+  } catch (error) {
+    issue("error", pathName, `Request failed: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
+for (const pathName of noindexPaths) {
+  try {
+    const { response, body } = await fetchPage(pathName);
+    if (!response.ok) issue("error", pathName, `HTTP ${response.status}`);
+    if (!/\bnoindex\b/i.test(robotsValue(body))) issue("error", pathName, "Placeholder is missing its intentional noindex directive");
+  } catch (error) {
+    issue("error", pathName, `Request failed: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
+for (const [pathName, destination] of retiredProfileRedirects) {
+  try {
+    const { response } = await fetchPage(pathName, { redirect: "manual" });
+    const location = response.headers.get("location");
+    const target = location ? new URL(location, base).pathname : "";
+    if (![301, 308].includes(response.status) || target !== destination) {
+      issue("error", pathName, `Expected permanent redirect to ${destination}; received ${response.status} ${location || "without Location"}`);
     }
   } catch (error) {
     issue("error", pathName, `Request failed: ${error instanceof Error ? error.message : String(error)}`);

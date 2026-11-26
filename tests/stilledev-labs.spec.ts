@@ -23,12 +23,12 @@ test("Labs is a static bilingual under-development placeholder with no interacti
   }
 });
 
-test("public navigation and homepage have no links into Labs or retired founder routes", async ({ page }) => {
+test("public navigation links to localized Labs while keeping placeholders off the homepage", async ({ page }) => {
   await quiet(page);
-  for (const path of ["/", "/sv"]) {
+  for (const [path, href] of [["/", "/labs"], ["/sv", "/sv/labs"]]) {
     await page.goto(path);
-    await expect(page.locator('a[href="/labs"],a[href="/sv/labs"],a[href="/oliver-stille"],a[href="/sv/oliver-stille"]')).toHaveCount(0);
-    await expect(page.locator("[data-nav-labs]")).toHaveCount(0);
+    await expect(page.locator(`a[href="${href}"]`).first()).toHaveText("Labs");
+    await expect(page.locator('a[href="/oliver-stille"],a[href="/sv/oliver-stille"]')).toHaveCount(0);
     expect(await page.locator("body").innerText()).not.toMatch(/Labs is under development|Labs är under utveckling/i);
   }
 });

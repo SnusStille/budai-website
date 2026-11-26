@@ -67,6 +67,7 @@ export default function Navbar() {
     { label: t.nav.capabilities, href: "#capabilities", id: "capabilities" },
     { label: lang === "sv" ? "Byggaren" : "Builder", href: "#about", id: "about" },
     { label: t.nav.roadmap, href: "#roadmap", id: "roadmap" },
+    { label: "Labs", href: lang === "sv" ? "/sv/labs" : "/labs", id: "labs" },
   ];
 
   const isLinkActive = (id: string) => active === id;

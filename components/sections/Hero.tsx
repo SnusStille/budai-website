@@ -4,8 +4,6 @@ import { LIMITS } from "@/lib/limits";
 import { ArrowDown, ArrowRight, FileText, Languages, Mail, Network, Zap } from "lucide-react";
 import { useLang } from "@/components/ui/LanguageContext";
 import StockholmClock from "@/components/ui/StockholmClock";
-import { StilledevLink } from "@/components/ui/BudAILogo";
-import { CONTACT_EMAIL, CONTACT_MAILTO } from "@/lib/contact";
 
 /** Landing hero paired with the persistent single-owner 3D Neural Brain stage. */
 export default function Hero() {
@@ -92,9 +90,9 @@ export default function Hero() {
             <ArrowRight size={16} />
           </a>
         </div>
-        <a className="hero-contact" href={CONTACT_MAILTO}>
+        <a className="hero-contact" href={sv ? "/sv/contact" : "/contact"}>
           <span className="hero-contact-icon"><Mail size={15} aria-hidden="true" /></span>
-          <span><small>{sv ? "EN DIREKT LINJE TILL STILLEDEV" : "A DIRECT LINE TO STILLEDEV"}</small><b>{CONTACT_EMAIL}</b></span>
+          <span><small>{sv ? "KONTAKTA STILLEDEV" : "CONTACT STILLEDEV"}</small><b>{sv ? "Kontakta oss" : "Contact us"}</b></span>
           <ArrowRight size={14} aria-hidden="true" />
         </a>
         <div className="hero-features" aria-label={sv ? "Prova en idé i Playground" : "Try an idea in Playground"}>
@@ -123,7 +121,7 @@ export default function Hero() {
         </p>
         <p className="hero-credit">
           {sv ? "Utvecklad av " : "Built by "}
-          <StilledevLink /> <span>·</span> Sweden
+          <a href="#about" className="text-accent-cyan hover:text-white">Stilledev</a> <span>·</span> Sweden
         </p>
         <StockholmClock />
       </div>

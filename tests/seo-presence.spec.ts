@@ -30,6 +30,8 @@ test("homepage has Stilledev-first metadata and a linked founder entity without 
   expect(organization?.url).toBe("https://stilledev.se");
   expect(person).toMatchObject({ name: "Oliver Stille", url: "https://stilledev.se", worksFor: { "@id": "https://stilledev.se/#organization" } });
   await expect(page.getByRole("link", { name: "Oliver Stille" })).toHaveAttribute("href", "#oliver-stille");
+  await expect(page.locator(".hero-credit a", { hasText: "Stilledev" })).toHaveAttribute("href", "#about");
+  await expect(page.locator(".hero-credit a")).not.toHaveAttribute("href", /discord\.com/);
   await expect(page.locator(".builder-byline")).not.toContainText("SkandiaMäklarna");
   await expect(page.locator(".builder-byline")).not.toHaveAttribute("href", /oliver-stille/);
 });

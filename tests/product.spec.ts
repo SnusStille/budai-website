@@ -573,6 +573,20 @@ test("daily-limit meter says messages, not credits, in both languages (D2)", asy
   expect(await sv.textContent()).not.toMatch(/credits/i);
 });
 
+test("hero contact action opens the localized contact page", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.locator(".hero-contact")).toHaveAttribute("href", "/contact");
+  await expect(page.locator(".hero-contact")).toContainText("Contact us");
+
+  await page.goto("/sv");
+  const heroContact = page.locator(".hero-contact");
+  await expect(heroContact).toHaveAttribute("href", "/sv/contact");
+  await expect(heroContact).toContainText("Kontakta oss");
+  await heroContact.click();
+  await expect(page).toHaveURL(/\/sv\/contact$/);
+  await expect(page.getByRole("link", { name: "info@stilledev.se", exact: true }).first()).toBeVisible();
+});
+
 test("contact email is canonical in both languages and the enquiry form gives a durable success state", async ({ page }) => {
   await page.route("**/api/contact", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true }) }));
   await page.goto("/contact");
