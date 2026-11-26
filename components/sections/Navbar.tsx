@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Menu, X, Globe, Bell } from "lucide-react";
 import { useLang } from "@/components/ui/LanguageContext";
 import BudAIWordmark from "@/components/ui/BudAIWordmark";
@@ -21,6 +22,7 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [active, setActive] = useState("");
   const { lang, setLang, t } = useLang();
+  const pathname = usePathname();
   const mobileMenu = useRef<HTMLDivElement>(null);
   const menuToggle = useRef<HTMLButtonElement>(null);
 
@@ -65,9 +67,10 @@ export default function Navbar() {
     { label: t.nav.capabilities, href: "#capabilities", id: "capabilities" },
     { label: lang === "sv" ? "Byggaren" : "Builder", href: "#about", id: "about" },
     { label: t.nav.roadmap, href: "#roadmap", id: "roadmap" },
+    { label: "Labs", href: lang === "sv" ? "/sv/labs" : "/labs", id: "labs", route: true },
   ];
 
-  const isLinkActive = (id: string) => active === id;
+  const isLinkActive = (id: string) => id === "labs" ? pathname?.endsWith("/labs") : active === id;
 
   return (
     <>
@@ -111,7 +114,6 @@ export default function Navbar() {
                 </span>
               </span>
             </Link>
-            <a href={lang === "sv" ? "/sv/labs" : "/labs"} className="hidden sm:inline-flex items-center rounded-full border border-accent-cyan/25 bg-accent-cyan/[0.06] px-3 py-1.5 text-[11px] font-semibold text-accent-cyan transition-colors hover:bg-accent-cyan/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-cyan">Labs <span aria-hidden="true" className="ml-1">↗</span></a>
             </div>
 
             <div className="hidden lg:flex items-center justify-center gap-0.5">
@@ -121,6 +123,9 @@ export default function Navbar() {
                   <a
                     key={l.href}
                     href={l.href}
+                    onClick={l.route ? () => setMobileOpen(false) : undefined}
+                    aria-current={l.route && isActive ? "page" : undefined}
+                    data-nav-labs={l.route ? "true" : undefined}
                     className={`relative whitespace-nowrap px-2.5 xl:px-3.5 py-2 text-sm rounded-lg transition-colors ${
                       isActive
                         ? "text-white"
@@ -252,7 +257,6 @@ export default function Navbar() {
                 </motion.a>
               ))}
 
-              <a href={lang === "sv" ? "/sv/labs" : "/labs"} onClick={() => setMobileOpen(false)} className="px-4 py-3.5 text-lg rounded-xl text-accent-cyan hover:bg-white/5">Labs</a>
               <div className="flex items-center gap-3 mt-4 px-4">
                 <Globe className="w-4 h-4 text-muted" />
                 <div className="flex p-0.5 rounded-full bg-black/40 border border-white/[0.08]">

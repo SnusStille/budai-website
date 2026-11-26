@@ -1,10 +1,11 @@
 "use client";
 import { LIMITS } from "@/lib/limits";
 
-import { ArrowDown, ArrowRight, FileText, Languages, Network, Zap } from "lucide-react";
+import { ArrowDown, ArrowRight, FileText, Languages, Mail, Network, Zap } from "lucide-react";
 import { useLang } from "@/components/ui/LanguageContext";
 import StockholmClock from "@/components/ui/StockholmClock";
 import { StilledevLink } from "@/components/ui/BudAILogo";
+import { CONTACT_EMAIL, CONTACT_MAILTO } from "@/lib/contact";
 
 /** Landing hero paired with the persistent single-owner 3D Neural Brain stage. */
 export default function Hero() {
@@ -55,6 +56,15 @@ export default function Hero() {
   return (
     <section id="intelligence" className="hero-universe" aria-labelledby="hero-title">
       <div className="hero-light" aria-hidden="true" />
+      <div className="hero-signal-sculpture" aria-hidden="true">
+        <span className="hero-sculpture-core" />
+        <i className="hero-sculpture-ring hero-sculpture-ring-a" />
+        <i className="hero-sculpture-ring hero-sculpture-ring-b" />
+        <i className="hero-sculpture-ring hero-sculpture-ring-c" />
+        <b className="hero-sculpture-node hero-sculpture-node-a" />
+        <b className="hero-sculpture-node hero-sculpture-node-b" />
+        <b className="hero-sculpture-node hero-sculpture-node-c" />
+      </div>
       <div className="hero-content">
         <div className="hero-eyebrow">
           <i className="signal-dot" aria-hidden="true" />
@@ -81,6 +91,11 @@ export default function Hero() {
             <ArrowRight size={16} />
           </a>
         </div>
+        <a className="hero-contact" href={CONTACT_MAILTO}>
+          <span className="hero-contact-icon"><Mail size={15} aria-hidden="true" /></span>
+          <span><small>{sv ? "EN DIREKT LINJE TILL STILLEDEV" : "A DIRECT LINE TO STILLEDEV"}</small><b>{CONTACT_EMAIL}</b></span>
+          <ArrowRight size={14} aria-hidden="true" />
+        </a>
         <div className="hero-features" aria-label={sv ? "Prova en idé i Playground" : "Try an idea in Playground"}>
           <span className="hero-feature-hint">{sv ? "VÄLJ EN IDÉ ATT BÖRJA MED" : "PICK AN IDEA TO GET STARTED"} <ArrowRight size={12} aria-hidden="true" /></span>
           {chips.map(({ icon: Icon, label, region, prompt }) => (

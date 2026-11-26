@@ -45,6 +45,34 @@ test("companion is quiet, keyboard accessible, localized and dismissible for the
   await expect(restore).toHaveCount(0);
 });
 
+test("companion guide navigates real content modes, supports direct selection and closes cleanly", async ({ page }) => {
+  await quiet(page);
+  await page.addInitScript(() => Object.defineProperty(navigator, "connection", { value: { saveData: true }, configurable: true }));
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+  const buddy = page.locator("[data-builder-companion]");
+  await expect(buddy).toBeVisible({ timeout: 12000 });
+  await buddy.getByRole("button", { name: "Meet the BudAI companion" }).click();
+  const tour = buddy.locator(".companion-mode-panel");
+  await expect(tour.getByRole("heading", { name: "Discover" })).toBeVisible();
+  await buddy.getByRole("button", { name: "Next mode" }).click();
+  await expect(tour.getByRole("heading", { name: "What I build" })).toBeVisible();
+  await expect(tour.getByRole("link", { name: "Explore capabilities" })).toHaveAttribute("href", "#capabilities");
+  await buddy.getByRole("button", { name: "Previous mode" }).click();
+  await expect(tour.getByRole("heading", { name: "Discover" })).toBeVisible();
+  await buddy.getByRole("button", { name: "Stilledev Labs" }).click();
+  await expect(tour.getByRole("heading", { name: "Stilledev Labs" })).toBeVisible();
+  await expect(tour.getByRole("link", { name: "Visit Labs" })).toHaveAttribute("href", "/labs");
+  await buddy.getByRole("button", { name: "Let's collaborate" }).click();
+  await expect(tour.getByRole("link", { name: "Write to Stilledev" })).toHaveAttribute("href", "mailto:info@stilledev.se");
+  await buddy.getByRole("button", { name: "Minimize BudAI", exact: true }).click();
+  await expect(buddy.locator(".companion-note")).toHaveCount(0);
+  await buddy.getByRole("button", { name: "Meet the BudAI companion" }).click();
+  await expect(buddy.locator(".companion-mode-panel").getByRole("heading", { name: "Discover" })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(buddy.locator(".companion-note")).toHaveCount(0);
+});
+
 test("desktop companion uses the Labs model, gives way to dialogs and Playground, and supports Swedish", async ({ page }) => {
   await quiet(page); await page.emulateMedia({ reducedMotion: "no-preference" }); await page.goto("/sv");
   const buddy = page.locator("[data-builder-companion]"); await expect(buddy).toBeVisible({ timeout: 12000 });

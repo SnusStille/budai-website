@@ -22,6 +22,37 @@ test("Builder introduces Oliver and links to the Labs holding page in both langu
   }
 });
 
+test("the home hero presents a working inbox link and Labs lives in the balanced nav", async ({ page }) => {
+  await quiet(page);
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+  const inbox = page.locator(".hero-contact");
+  await expect(inbox).toBeVisible();
+  await expect(inbox).toHaveAttribute("href", "mailto:info@stilledev.se");
+  await expect(inbox).toContainText("info@stilledev.se");
+  await expect(inbox.locator("svg.lucide-mail")).toBeVisible();
+  const labs = page.locator("nav.site-navigation [data-nav-labs]");
+  await expect(labs).toHaveAttribute("href", "/labs");
+  await expect(labs).toHaveCount(1);
+  for (const width of [320, 360, 390]) {
+    await page.setViewportSize({ width, height: 812 });
+    await page.goto("/");
+    await expect(page.locator(".hero-contact")).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth), `${width}px`).toBeLessThanOrEqual(1);
+  }
+});
+
+test("Labs keeps cookie controls in its footer instead of a stray bottom-left label", async ({ page }) => {
+  await quiet(page);
+  await page.addInitScript(() => localStorage.setItem("budai-cookies", "declined"));
+  await page.goto("/labs");
+  await expect(page.locator(".labs-cookie-settings")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Cookie settings" })).toHaveCount(1);
+  await expect(page.locator(".fixed.bottom-4.left-4")).toHaveCount(0);
+  await page.locator(".labs-cookie-settings").click();
+  await expect(page.getByRole("dialog", { name: /cookies|cookie/i })).toBeVisible();
+});
+
 test("Labs is a bilingual holding page with no previous projects or links", async ({ page, request }) => {
   await quiet(page); await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/sv/labs");

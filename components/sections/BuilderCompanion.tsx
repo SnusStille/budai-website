@@ -1,8 +1,10 @@
 "use client";
 
 import { createPortal } from "react-dom";
+import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
-import { ArrowUpRight, ChevronRight, Eye, Hand, Lightbulb, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, ArrowUpRight, ChevronRight, Compass, Eye, FlaskConical, Hand, Layers3, Lightbulb, Mail, X } from "lucide-react";
+import { CONTACT_EMAIL, CONTACT_MAILTO } from "@/lib/contact";
 import { useLang } from "@/components/ui/LanguageContext";
 import LabsMascot, { type MascotGesture } from "@/components/sections/LabsMascot";
 import { readCompanionHidden, setCompanionHidden, COMPANION_VISIBILITY_EVENT } from "@/lib/companion/preferences";
@@ -39,6 +41,13 @@ const starters = [
   { en: "Untangle an idea", sv: "Red ut en idé", enPrompt: "Help me turn a rough idea into clear next steps. Ask me to describe it first.", svPrompt: "Hjälp mig göra en lös idé till tydliga nästa steg. Be mig beskriva den först." },
 ] as const;
 
+const companionModes = [
+  { icon: Compass, en: "Discover", sv: "Upptäck", eyebrowEn: "THE STILLEDEV WORLD", eyebrowSv: "STILLEDEVS VÄRLD", textEn: "Meet BudAI: a Swedish-built workspace for turning everyday work into clear next steps.", textSv: "Möt BudAI: en svenskbyggd arbetsyta som gör vardagsarbete till tydliga nästa steg.", href: "#intelligence", ctaEn: "Start exploring", ctaSv: "Börja utforska", emote: "hello" as const },
+  { icon: Layers3, en: "What I build", sv: "Det jag bygger", eyebrowEn: "PRODUCT CAPABILITIES", eyebrowSv: "PRODUKTENS FÖRMÅGOR", textEn: "Explore the real capabilities and see how the Builder brings ideas into a working flow.", textSv: "Utforska de faktiska förmågorna och se hur Builder för idéer vidare till ett arbetsflöde.", href: "#capabilities", ctaEn: "Explore capabilities", ctaSv: "Utforska förmågor", emote: "think" as const },
+  { icon: FlaskConical, en: "Stilledev Labs", sv: "Stilledev Labs", eyebrowEn: "EXPERIMENTS IN PROGRESS", eyebrowSv: "EXPERIMENT PÅGÅR", textEn: "A peek at the studio’s evolving experiments. Labs is still under development.", textSv: "En glimt av studions experiment under utveckling. Labs är fortfarande under arbete.", href: "labs", ctaEn: "Visit Labs", ctaSv: "Besök Labs", emote: "celebrate" as const },
+  { icon: Mail, en: "Let's collaborate", sv: "Samarbeta", eyebrowEn: "A HUMAN NEXT STEP", eyebrowSv: "NÄSTA STEG TILLSAMMANS", textEn: `Have a thoughtful idea or a question? Write directly to ${CONTACT_EMAIL}.`, textSv: `Har du en genomtänkt idé eller fråga? Skriv direkt till ${CONTACT_EMAIL}.`, href: CONTACT_MAILTO, ctaEn: "Write to Stilledev", ctaSv: "Skriv till Stilledev", emote: "wink" as const },
+] as const;
+
 function readSession(key: string) {
   try { return sessionStorage.getItem(key); } catch { return null; }
 }
@@ -59,6 +68,7 @@ export default function BuilderCompanion({ phone = false }: { phone?: boolean })
   const [heroVisible, setHeroVisible] = useState(false);
   const [open, setOpen] = useState(false);
   const [ideasOpen, setIdeasOpen] = useState(false);
+  const [modeIndex, setModeIndex] = useState(0);
   const [automatic, setAutomatic] = useState(false);
   const [interacted, setInteracted] = useState(false);
   const [appearances, setAppearances] = useState(0);
@@ -189,7 +199,13 @@ export default function BuilderCompanion({ phone = false }: { phone?: boolean })
   }, [gesture]);
 
   const takeControl = () => { setInteracted(true); setAutomatic(false); writeSession(INTERACTED, "1"); };
-  const toggle = () => { takeControl(); setOpen(current => !current); };
+  const toggle = () => { takeControl(); setOpen(current => { if (!current) setModeIndex(0); return !current; }); };
+  const chooseMode = (index: number) => {
+    if (index < 0 || index >= companionModes.length) return;
+    takeControl(); setModeIndex(index); setIdeasOpen(false); setManualGesture(false);
+    if (!reducedMotion) setGesture({ id: ++gestureSequence.current, kind: companionModes[index].emote });
+  };
+  const stepMode = (direction: -1 | 1) => chooseMode(modeIndex + direction);
   const sayHello = () => {
     takeControl(); setMessage(messages.en.length - 1); setAnnouncedMessage(messages.en.length - 1); setManualGesture(true);
     if (!matchMedia("(prefers-reduced-motion: reduce)").matches) setGesture({ id: ++gestureSequence.current, kind: "hello" });
@@ -211,12 +227,34 @@ export default function BuilderCompanion({ phone = false }: { phone?: boolean })
     setCompanionHidden(true); setOpen(false); setIdeasOpen(false);
     document.querySelector<HTMLElement>(phone ? ".phone-jump" : ".hero-actions a")?.focus({ preventScroll: true });
   };
+  const currentMode = companionModes[modeIndex];
+  const modeHref = currentMode.href === "labs" ? (sv ? "/sv/labs" : "/labs") : currentMode.href;
   if (!ready || hidden || blocked || typeof document === "undefined") return null;
 
   return createPortal(
     <aside className={`builder-companion ${phone ? "is-phone" : ""}`} aria-label={sv ? "BudAI-kompanjon" : "BudAI companion"} data-builder-companion onKeyDown={event => { if (event.key === "Escape" && open) { event.stopPropagation(); minimize(); } }}>
-      {open && <div className="companion-note" id="companion-note" onPointerEnter={takeControl} onFocus={takeControl}>
-        <div className="companion-note-top"><span><i /> {sv ? "EN LITEN TANKE" : "A LITTLE THOUGHT"}</span><button type="button" onClick={minimize} aria-label={sv ? "Minimera BudAI" : "Minimize BudAI"}><X size={16} /></button></div>
+      <AnimatePresence initial={false}>
+      {open && <motion.div
+        className="companion-note" id="companion-note" onPointerEnter={takeControl} onFocus={takeControl}
+        initial={reducedMotion ? { opacity: 0 } : { opacity: 0, y: 12, scale: 0.97 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={reducedMotion ? { opacity: 0 } : { opacity: 0, y: 10, scale: 0.98 }}
+        transition={{ duration: reducedMotion ? 0.12 : 0.24, ease: [0.2, 0.8, 0.2, 1] }}
+      >
+        <div className="companion-note-top"><span><i /> {sv ? "DIN DIGITALA GUIDE" : "YOUR DIGITAL GUIDE"}</span><button type="button" onClick={minimize} aria-label={sv ? "Minimera BudAI" : "Minimize BudAI"}><X size={16} /></button></div>
+        <section className="companion-mode-panel" data-mode={modeIndex} aria-live="polite" aria-atomic="true">
+          <div className="companion-mode-meta"><span>{String(modeIndex + 1).padStart(2, "0")} / {String(companionModes.length).padStart(2, "0")}</span><span>{sv ? currentMode.eyebrowSv : currentMode.eyebrowEn}</span></div>
+          <div className="companion-mode-heading"><currentMode.icon size={17} aria-hidden="true" /><h3>{sv ? currentMode.sv : currentMode.en}</h3></div>
+          <p>{sv ? currentMode.textSv : currentMode.textEn}</p>
+          <a href={modeHref} className="companion-mode-action" onClick={() => { takeControl(); setOpen(false); }}>{sv ? currentMode.ctaSv : currentMode.ctaEn}<ArrowUpRight size={14} aria-hidden="true" /></a>
+          <div className="companion-mode-controls">
+            <button type="button" onClick={() => stepMode(-1)} disabled={modeIndex === 0} aria-label={sv ? "Föregående läge" : "Previous mode"}><ArrowLeft size={14} aria-hidden="true" />{sv ? "Tillbaka" : "Back"}</button>
+            <div role="group" aria-label={sv ? "Välj ett läge" : "Choose a mode"} className="companion-mode-dots">
+              {companionModes.map((item, index) => <button type="button" key={item.en} aria-label={sv ? item.sv : item.en} aria-pressed={index === modeIndex} onClick={() => chooseMode(index)} />)}
+            </div>
+            <button type="button" onClick={() => stepMode(1)} disabled={modeIndex === companionModes.length - 1} aria-label={sv ? "Nästa läge" : "Next mode"}>{sv ? "Nästa" : "Next"}<ArrowRight size={14} aria-hidden="true" /></button>
+          </div>
+        </section>
         <p className="companion-message">{messages[lang][message]}</p>
         <div className="companion-signature">Think it. Build it. <b>BudAI.</b></div>
         <a href={phone ? "#phone-chat" : "#playground"} className="companion-action" onClick={() => { takeControl(); setOpen(false); }}>{sv ? "Öppna Playground" : "Enter Playground"}<ArrowUpRight size={15} aria-hidden="true" /></a>
@@ -232,7 +270,8 @@ export default function BuilderCompanion({ phone = false }: { phone?: boolean })
         </div>
         <div className="companion-bottom"><span>BUDAI / STILLEDEV</span><button type="button" onClick={dismiss}>{sv ? "Dölj för besöket" : "Hide for this visit"}</button></div>
         <span className="sr-only" role="status">{announcedMessage !== null ? messages[lang][announcedMessage] : ""}</span>
-      </div>}
+      </motion.div>}
+      </AnimatePresence>
       <button ref={launcherRef} type="button" className="companion-launcher" onClick={toggle} aria-expanded={open} aria-controls={open ? "companion-note" : undefined} aria-label={open ? (sv ? "Minimera BudAI-kompanjonen" : "Minimize BudAI companion") : (sv ? "Möt BudAI-kompanjonen" : "Meet the BudAI companion")}>
         <span className="companion-orbit" aria-hidden="true" /><span className="companion-bot"><LabsMascot companion gesture={gesture} /></span>
         {manualGesture && gesture?.kind === "hello" && <span key={gesture.id} className="companion-hello" aria-hidden="true">{sv ? "HEJ!" : "HI!"} <span>✳</span></span>}

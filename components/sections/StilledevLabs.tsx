@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowLeft, ArrowUpRight, Sparkles, Hand, Eye, PartyPopper, Lightbulb, Coffee } from "lucide-react";
+import { ArrowLeft, ArrowUpRight, Cookie, Sparkles, Hand, Eye, PartyPopper, Lightbulb, Coffee } from "lucide-react";
+import { openCookieSettings } from "@/lib/consent";
 import { useLang } from "@/components/ui/LanguageContext";
 import { StilledevMark } from "@/components/ui/BudAILogo";
 import LabsMascot, { type MascotGesture } from "@/components/sections/LabsMascot";
@@ -67,7 +68,7 @@ export default function StilledevLabs() {
           <div className={`labs-bot-bubble ${line ? "is-visible" : ""}`} role="status" aria-live="polite">{line || (sv ? "…" : "…")}</div>
           <div className="labs-wait-art-caption"><span /> {sv ? "BYGGROBOTEN" : "BUILDER BOT"} / {mood ? (sv ? mood.sv : mood.en) : (sv ? "JOBBAR PÅ DET · NU MED HJÄLM & SKIFTNYCKEL" : "ON THE JOB · NOW WITH HARD HAT & WRENCH")}</div><span className="labs-wait-coordinate" aria-hidden="true">01 / LABS</span></div>
       </section>
-      <footer className="labs-wait-footer"><span>STILLEDEV EF / LABS</span><span>{sv ? "VI SES SNART" : "SEE YOU SOON"} ✳</span></footer>
+      <footer className="labs-wait-footer"><span>STILLEDEV EF / LABS</span><button type="button" onClick={openCookieSettings} className="labs-cookie-settings"><Cookie size={13} aria-hidden="true" />{sv ? "Cookieinställningar" : "Cookie settings"}</button><span>{sv ? "VI SES SNART" : "SEE YOU SOON"} ✳</span></footer>
     </div>
   </main>;
 }
