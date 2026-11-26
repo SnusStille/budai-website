@@ -8,6 +8,7 @@ import { ToastProvider } from "@/components/ui/ToastStack";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import AuthModal from "@/components/auth/AuthModal";
 import AuthHashHandler from "@/components/auth/AuthHashHandler";
+import CookieConsent from "@/components/ui/CookieConsent";
 import type { Lang } from "@/lib/i18n";
 
 export default function Providers({ children, initialLang }: { children: React.ReactNode; initialLang?: Lang }) {
@@ -19,6 +20,7 @@ export default function Providers({ children, initialLang }: { children: React.R
           <ToastProvider>
             <AuthHashHandler />
             {children}
+            <CookieConsent />
             <CommandPalette />
             <AuthModal />
           </ToastProvider>

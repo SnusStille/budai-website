@@ -96,7 +96,7 @@ export const translations = {
     },
     cookie: {
       title: "Vi använder cookies",
-      text: "Nödvändig lagring för sajten. Anonym analys laddas bara om du accepterar.",
+      text: "Nödvändig lagring för sajten. Sidvisningar och grova kontakt-/väntelistehändelser mäts bara om du accepterar.",
       accept: "Acceptera",
       decline: "Avböj",
       more: "Läs mer",
@@ -199,7 +199,7 @@ export const translations = {
     },
     cookie: {
       title: "We use cookies",
-      text: "Essential storage for the site. Anonymous analytics loads only if you accept.",
+      text: "Essential site storage. Page views and coarse contact/waitlist events are measured only if you accept.",
       accept: "Accept",
       decline: "Decline",
       more: "Learn more",

@@ -17,6 +17,7 @@ import { canonicalPath, hasLanguageAlternate, SWEDISH_PATH } from "@/lib/lang";
 import { isPhoneUserAgent } from "@/lib/phone-gate";
 import PhoneWelcome from "@/components/sections/PhoneWelcome";
 import MobileProviders from "@/components/MobileProviders";
+import { CONTACT_EMAIL } from "@/lib/contact";
 
 const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://stilledev.se").replace(/\/$/, "");
 
@@ -43,11 +44,26 @@ const jsonLd = {
       "@id": `${siteUrl}/#organization`,
       name: "Stilledev",
       url: siteUrl,
-      founder: {
-        "@type": "Person",
-        name: "Oliver Stille",
+      email: CONTACT_EMAIL,
+      founder: { "@id": `${siteUrl}/#oliver-stille` },
+      contactPoint: {
+        "@type": "ContactPoint",
+        contactType: "business enquiries",
+        email: CONTACT_EMAIL,
+        availableLanguage: ["Swedish", "English"],
       },
       description: "Independent software studio in Sweden founded by Oliver Stille, building BudAI and digital AI products.",
+    },
+    {
+      "@type": "Person",
+      "@id": `${siteUrl}/#oliver-stille`,
+      name: "Oliver Stille",
+      url: `${siteUrl}/#oliver-stille`,
+      worksFor: { "@id": `${siteUrl}/#organization` },
+      sameAs: [
+        "https://github.com/SnusStille",
+        "https://www.linkedin.com/in/oliver-stille-8bb48a403/",
+      ],
     },
   ],
 };
@@ -57,14 +73,14 @@ const jsonLd = {
 const META = {
   en: {
     description:
-      "BudAI by Stilledev — AI workspace built in Sweden for real work in Swedish and English. Write, automate, analyze, and turn messy context into clear action with memory you control.",
+      "BudAI by Swedish developer Oliver Stille and Stilledev — an AI workspace for work in Swedish and English. Write, automate and analyze with memory you control.",
     ogTitle: "BudAI — AI Workspace for Swedish & English Work",
     ogDescription:
       "Built in Sweden by Stilledev. Write, analyze, plan, and automate in Swedish and English with a live Playground and memory you control.",
   },
   sv: {
     description:
-      "BudAI av Stilledev — AI-arbetsyta byggd i Sverige för riktigt arbete på svenska och engelska. Skriv, automatisera, analysera och gör rörig kontext till tydlig handling med minne du styr.",
+      "BudAI av Stilledev och Oliver Stille — AI-arbetsyta byggd i Sverige för arbete på svenska och engelska. Skriv, automatisera och analysera med minne du styr.",
     ogTitle: "BudAI — AI-arbetsyta för arbete på svenska och engelska",
     ogDescription:
       "Byggd i Sverige av Stilledev. Skriv, analysera, planera och automatisera på svenska och engelska med live Playground och minne du styr.",
@@ -101,7 +117,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     metadataBase: new URL(siteUrl),
     title: {
-      default: seoTitle || "Stilledev.se · BudAI",
+      default: seoTitle || "Stilledev · Oliver Stille · BudAI",
       template: "%s · BudAI",
     },
     description: seoDescription || copy.description,
@@ -112,12 +128,14 @@ export async function generateMetadata(): Promise<Metadata> {
       "Sverige",
       "business automation",
       "digital assistant",
+      "software studio Sweden",
+      "Oliver Stille",
       "Stilledev",
       "BudAI",
       "automatisering",
     ],
-    authors: [{ name: "Stilledev" }],
-    creator: "Stilledev",
+    authors: [{ name: "Oliver Stille" }, { name: "Stilledev" }],
+    creator: "Oliver Stille · Stilledev",
     publisher: "Stilledev",
     robots: { index: true, follow: true },
     openGraph: {

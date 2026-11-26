@@ -5,6 +5,7 @@ import { validateWaitlist } from "@/lib/waitlist-validation";
 import { RULES, checkRateLimit, rateLimitKey } from "@/lib/rate-limit";
 import { WAITLIST_STATUS_COOKIE, signWaitlistEmail } from "@/lib/waitlist-status";
 import { sendEmail } from "@/lib/email";
+import { CONTACT_EMAIL } from "@/lib/contact";
 
 /**
  * Server-authoritative waitlist signup.
@@ -48,8 +49,15 @@ export async function POST(req: NextRequest) {
     logEvent("error", "waitlist.insert", { requestId, message: error.message.slice(0, 200) });
     return NextResponse.json({ error: "could_not_save" }, { status: 500 });
   }
+  // Save before attempting email: the CRM remains authoritative if a provider
+  // is not configured or temporarily unavailable.
+  const notificationSent = await sendEmail(
+    CONTACT_EMAIL,
+    "New BudAI waitlist registration",
+    `New waitlist signup\n\nName: ${result.value.name}\nEmail: ${result.value.email}\nType: ${result.value.account_type}\nCompany: ${result.value.company || "—"}\nInterest: ${result.value.interest}\n\nReview and manage this lead in /admin → Waitlist.`,
+  );
+  if (!notificationSent) logEvent("warn", "waitlist.email_not_delivered", { requestId });
   void sendEmail(result.value.email, "You're on the BudAI waitlist — Stilledev", "Hi,\n\nThanks for joining the BudAI waitlist. We'll email you when access opens.\n\n— Stilledev");
-  const wlNotify = process.env.ADMIN_NOTIFICATION_EMAIL; if (wlNotify) void sendEmail(wlNotify, "New BudAI waitlist registration", "A new registration arrived. Open /admin -> Waitlist to review.");
   const res = NextResponse.json({ ok: true });
   const token = signWaitlistEmail(result.value.email);
   if (token) {

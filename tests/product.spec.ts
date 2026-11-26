@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 
 declare global {
-  interface Window { __chatRequest: Record<string, unknown> | null; __streamCancelled: boolean; }
+  interface Window { __chatRequest: Record<string, unknown> | null; __streamCancelled: boolean; __analyticsEvents: unknown[][]; }
 }
 
 test.beforeEach(async ({ page }) => {
@@ -130,6 +130,8 @@ test("capability actions prefill the REAL Playground instead of a second Hero As
 });
 
 test("waitlist keeps native validation, company details, referral controls, and honest failure", async ({ page }) => {
+  const qaIp = `192.0.2.${Math.floor(Math.random() * 254) + 1}`;
+  await page.route("**/api/waitlist", (route) => route.continue({ headers: { ...route.request().headers(), "x-forwarded-for": qaIp } }));
   await page.goto("/#waitlist");
   const form = page.locator("#waitlist form");
   const email = form.getByRole("textbox", { name: "Email", exact: true });
@@ -271,6 +273,19 @@ test("cookie choice is the single consent source and can be changed later", asyn
 });
 
 
+test("cookie consent and withdrawal are reachable from a direct contact-page visit", async ({ page }) => {
+  await page.addInitScript(() => localStorage.removeItem("budai-cookies"));
+  await page.goto("/contact");
+  const banner = page.getByRole("dialog", { name: /cookies/i });
+  await expect(banner).toBeVisible({ timeout: 10_000 });
+  await banner.getByRole("button", { name: "Accept", exact: true }).click();
+  const settings = page.getByRole("button", { name: "Cookie settings", exact: true }).last();
+  await expect(settings).toBeVisible();
+  await settings.click();
+  await banner.getByRole("button", { name: "Decline", exact: true }).click();
+  expect(await page.evaluate(() => localStorage.getItem("budai-cookies"))).toBe("declined");
+});
+
 test("plans and waitlist make no discount, price or launch-date promise", async ({ page }) => {
   await page.goto("/#waitlist");
   const waitlist = page.locator("#waitlist");
@@ -324,19 +339,21 @@ test("admin auth uses a server-set session cookie and /admin stays out of indexe
 
 test("waitlist API validates server-side, requires consent and quietly drops bots", async ({ request }) => {
   const base = { email: "qa-signup@example.invalid", name: "QA", consent: true, account_type: "individual" };
-  const noConsent = await request.post("/api/waitlist", { data: { ...base, consent: false } });
+  // Keep repeated local runs isolated from the app's in-memory rate limit.
+  const headers = { "x-forwarded-for": `192.0.2.${Math.floor(Math.random() * 254) + 1}` };
+  const noConsent = await request.post("/api/waitlist", { data: { ...base, consent: false }, headers });
   expect(noConsent.status()).toBe(400);
   expect((await noConsent.json()).error).toBe("consent_required");
 
-  const badEmail = await request.post("/api/waitlist", { data: { ...base, email: "not-an-email" } });
+  const badEmail = await request.post("/api/waitlist", { data: { ...base, email: "not-an-email" }, headers });
   expect(badEmail.status()).toBe(400);
   expect((await badEmail.json()).error).toBe("invalid_email");
 
   // A filled honeypot gets a 200 but must never reach the database.
-  const bot = await request.post("/api/waitlist", { data: { ...base, website: "https://spam.example" } });
+  const bot = await request.post("/api/waitlist", { data: { ...base, website: "https://spam.example" }, headers });
   expect(bot.status()).toBe(200);
 
-  const real = await request.post("/api/waitlist", { data: base });
+  const real = await request.post("/api/waitlist", { data: base, headers });
   // No database is configured in the browser QA environment.
   expect([200, 503]).toContain(real.status());
 });
@@ -526,7 +543,8 @@ test("social metadata uses one image URL and publishes Organization JSON-LD (A7/
     return {
       og: meta('meta[property="og:image"]'),
       twitter: meta('meta[name="twitter:image"]'),
-      ld: JSON.parse(raw) as { "@graph"?: Array<{ "@type"?: string }> },
+      title: document.title,
+      ld: JSON.parse(raw) as { "@graph"?: Array<{ "@type"?: string; name?: string; email?: string }> },
     };
   });
   expect(head.og).toBeTruthy();
@@ -535,6 +553,10 @@ test("social metadata uses one image URL and publishes Organization JSON-LD (A7/
   const types = (head.ld["@graph"] ?? []).map((node) => node["@type"]);
   expect(types).toContain("SoftwareApplication");
   expect(types).toContain("Organization");
+  expect(types).toContain("Person");
+  expect(head.title).toContain("Oliver Stille");
+  const organization = head.ld["@graph"]?.find((node) => node["@type"] === "Organization");
+  expect(organization?.email).toBe("info@stilledev.se");
 });
 
 test("daily-limit meter says messages, not credits, in both languages (D2)", async ({ page }) => {
@@ -549,6 +571,43 @@ test("daily-limit meter says messages, not credits, in both languages (D2)", asy
   await expect(sv).toBeVisible();
   await expect(sv).toContainText("meddelanden kvar idag");
   expect(await sv.textContent()).not.toMatch(/credits/i);
+});
+
+test("contact email is canonical in both languages and the enquiry form gives a durable success state", async ({ page }) => {
+  await page.route("**/api/contact", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true }) }));
+  await page.goto("/contact");
+  await expect(page.getByRole("link", { name: "info@stilledev.se", exact: true }).first()).toHaveAttribute("href", "mailto:info@stilledev.se");
+  const form = page.locator("form").last();
+  await form.locator('input[autocomplete="name"]').fill("QA Visitor");
+  await form.locator('input[autocomplete="email"]').fill("qa@example.invalid");
+  await form.locator("textarea").fill("A test enquiry.");
+  await form.locator('input[type="checkbox"]').check();
+  await form.getByRole("button", { name: "Send message" }).click();
+  await expect(page.getByRole("heading", { name: "Message received" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "info@stilledev.se", exact: true }).last()).toHaveAttribute("href", "mailto:info@stilledev.se");
+
+  await page.goto("/sv/contact");
+  await expect(page.getByRole("link", { name: "info@stilledev.se", exact: true }).first()).toHaveAttribute("href", "mailto:info@stilledev.se");
+  await expect(page.getByRole("heading", { name: "Kontakta Stilledev" })).toBeVisible();
+});
+
+test("business analytics events are opt-in and exclude form or email values", async ({ page }) => {
+  await page.addInitScript(() => {
+    window.__analyticsEvents = [];
+    window.va = (...args) => window.__analyticsEvents.push(args);
+  });
+  await page.goto("/contact");
+  const emailLink = page.getByRole("link", { name: "info@stilledev.se", exact: true }).first();
+  await emailLink.evaluate((element) => element.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true })));
+  expect(await page.evaluate(() => window.__analyticsEvents)).toHaveLength(0);
+
+  await page.getByRole("button", { name: "Cookie settings", exact: true }).last().click();
+  await page.getByRole("dialog").getByRole("button", { name: "Accept", exact: true }).click();
+  await emailLink.evaluate((element) => element.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true })));
+  const events = await page.evaluate(() => window.__analyticsEvents);
+  expect(events.length).toBeGreaterThan(0);
+  expect(JSON.stringify(events)).toContain("contact_email_click");
+  expect(JSON.stringify(events)).not.toContain("info@stilledev.se");
 });
 
 test("the Vercel mirror domain is noindexed but the canonical host is not (A5)", async ({ request }) => {

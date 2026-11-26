@@ -177,6 +177,7 @@ test("footer navigation is concise, real and localized in both languages", async
     for (const name of banned) await expect(footer.getByRole("link", { name, exact: true })).toHaveCount(0);
     await expect(footer.getByRole("link", { name: "Labs", exact: true })).toHaveAttribute("href", expectedLab);
     await expect(footer).toContainText("Stilledev EF");
+    await expect(footer.getByRole("link", { name: "Email", exact: true })).toHaveAttribute("href", "mailto:info@stilledev.se");
     const links = await footer.locator("nav a").evaluateAll(nodes => nodes.map(node => node.getAttribute("href") || ""));
     expect(new Set(links).size).toBe(links.length);
     for (const link of links) {

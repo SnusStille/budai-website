@@ -62,7 +62,7 @@ export default function About() {
             <span className="chapter-label"><i />04 / {sv ? "FRÅN TANKE TILL VERKLIGHET · BYGGAREN" : "FROM THOUGHT TO REALITY · THE BUILDER"}</span>
             <h2 id="builder-title">{sv ? "Från en tanke." : "From a thought."}<br /><span>{sv ? "Till något verkligt." : "To something real."}</span></h2>
             <p>{sv ? "Från en kort specifikation till typsäker kod, gränssnitt och strukturerade arbetsflöden — byggd med samma arkitektur som driver BudAI." : "From a short brief to type-safe code, interfaces, and structured workflows — built with the same architecture that powers BudAI."}</p>
-            <div className="builder-byline" aria-label={sv ? "Om Oliver Stille" : "About Oliver Stille"}>
+            <div id="oliver-stille" className="builder-byline scroll-mt-24" aria-label={sv ? "Om Oliver Stille" : "About Oliver Stille"}>
               <span>STILLEDEV EF <i /> OLIVER STILLE · HELSINGBORG</span>
               <p>{sv ? "Mötesansvarig och kodare på SkandiaMäklarna." : "Meeting manager and coder at SkandiaMäklarna."}</p>
             </div>

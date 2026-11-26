@@ -8,6 +8,7 @@ import Confetti from "@/components/ui/Confetti";
 import { addWaitlistUser } from "@/lib/data";
 import WaitlistStatus from "@/components/sections/WaitlistStatus";
 import { useLang } from "@/components/ui/LanguageContext";
+import { trackBusinessEvent } from "@/lib/analytics/events";
 
 const employeeRanges = ["1-10", "10-50", "50-200", "200-1000", "1000+"];
 const interestsEn = ["Writing and documents", "Automation", "Data analysis", "Customer support", "Marketing content", "Problem solving", "Other"];
@@ -87,6 +88,7 @@ export default function Waitlist() {
         last_contacted_at: null,
         tags: company ? ["company"] : ["individual"],
       }, { consent, website: honeypot, referral: referral.trim().slice(0, 64) });
+      trackBusinessEvent("waitlist_signup");
       setSubmitted(true);
       setConfetti(true);
       setTimeout(() => setConfetti(false), 4000);

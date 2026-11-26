@@ -10,6 +10,7 @@ import {subscribeJourney} from "@/lib/experience/scroll";
 import BudAILogo, { StilledevMark } from "@/components/ui/BudAILogo";
 import { useLang } from "@/components/ui/LanguageContext";
 import { openCookieSettings } from "@/lib/consent";
+import { CONTACT_MAILTO } from "@/lib/contact";
 
 const groups = (lang: string) => [
   {
@@ -46,7 +47,7 @@ const socials = [
   { icon: Github, href: "https://github.com/SnusStille", label: "GitHub" },
   { icon: MessageSquare, href: "https://discord.com/users/353944097301594123", label: "Discord" },
   { icon: Linkedin, href: "https://www.linkedin.com/in/oliver-stille-8bb48a403/", label: "LinkedIn" },
-  { icon: Mail, href: "mailto:Stilleinc@hotmail.com", label: "Email" },
+  { icon: Mail, href: CONTACT_MAILTO, label: "Email" },
 ];
 
 export default function Footer() {

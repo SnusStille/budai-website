@@ -3,7 +3,6 @@
 import { useEffect } from "react";
 import ScrollProgress from "@/components/ui/ScrollProgress";
 import SectionDots from "@/components/ui/SectionDots";
-import CookieConsent from "@/components/ui/CookieConsent";
 import BackToTop from "@/components/ui/BackToTop";
 import SurpriseToasts from "@/components/ui/SurpriseToasts";
 import Signature from "@/components/ui/Signature";
@@ -103,7 +102,6 @@ export default function Home() {
       <SurpriseToasts />
       <Signature />
       <FocusMode />
-      <CookieConsent />
       <BuilderCompanion />
     </main>
   );

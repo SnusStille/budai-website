@@ -51,7 +51,7 @@ const ENV_KEYS = [
   "NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_ANON_KEY", "SUPABASE_SERVICE_ROLE_KEY",
   "ADMIN_PASSWORD", "ANTHROPIC_API_KEY", "OPENAI_API_KEY", "OPENAI_IMAGE_MODEL",
   "NEXT_PUBLIC_SITE_URL", "ANTHROPIC_MODEL", "ANTHROPIC_MODEL_FAST", "ANTHROPIC_MODEL_DEEP",
-  "BUDAI_AI_DISABLED", "ANTHROPIC_WORKSPACE_ID", "RESEND_API_KEY", "EMAIL_FROM", "ADMIN_NOTIFICATION_EMAIL",
+  "BUDAI_AI_DISABLED", "ANTHROPIC_WORKSPACE_ID", "RESEND_API_KEY", "EMAIL_FROM",
 ];
 const values = { ...fileValues };
 for (const key of ENV_KEYS) {
@@ -86,11 +86,9 @@ const VARS = [
   { key: "OPENAI_IMAGE_MODEL", tier: "optional", label: "OpenAI image model",
     ok: real, hint: "Defaults to gpt-image-1." },
   { key: "RESEND_API_KEY", tier: "optional", label: "Resend email key",
-    ok: real, hint: "Enables contact/waitlist confirmation emails + admin lead alerts (with EMAIL_FROM)." },
+    ok: real, hint: "Enables contact/waitlist lead notifications to info@stilledev.se and submitter confirmations (with EMAIL_FROM)." },
   { key: "EMAIL_FROM", tier: "optional", label: "Email sender",
-    ok: (v) => !!v && /@/.test(v), hint: "Verified sender, e.g. BudAI <hello@stilledev.se>. Needed with RESEND_API_KEY." },
-  { key: "ADMIN_NOTIFICATION_EMAIL", tier: "optional", label: "Lead alert inbox",
-    ok: (v) => !!v && /@/.test(v), hint: "Where new contact/waitlist alerts are emailed (optional)." },
+    ok: (v) => !!v && /@/.test(v), hint: "Verified sender on a domain you control. Needed with RESEND_API_KEY." },
   { key: "BUDAI_AI_DISABLED", tier: "optional", label: "Emergency AI switch",
     ok: (v) => !v || v === "0" || v === "1", hint: "Set to 1 only to pause all Playground generation." },
 ];
