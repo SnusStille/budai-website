@@ -15,7 +15,9 @@ test("Labs is a static bilingual under-development placeholder with no interacti
     await expect(page.getByRole("heading", { name: "STILLEDEV LABS" })).toBeVisible();
     await expect(page.locator(".labs-hold-status")).toHaveText(status);
     await expect(page.locator(".labs-hold-line")).toHaveText(statement);
-    await expect(page.getByRole("link", { name: /Back to BudAI|Tillbaka till BudAI/ })).toHaveAttribute("href", language === "sv" ? "/sv" : "/");
+    const back = page.getByRole("link", { name: /Back to BudAI|Tillbaka till BudAI/ });
+    await expect(back).toHaveAttribute("href", language === "sv" ? "/sv" : "/");
+    await expect(back.locator("[data-budai-mark=confluence]")).toHaveCount(1);
     await expect(page.locator(".labs-bot, .labs-hold-page input")).toHaveCount(0);
     await expect(page.getByRole("button", { name: /Share Labs|Dela Labs/ })).toBeVisible();
     const html = await response!.text();
@@ -25,12 +27,12 @@ test("Labs is a static bilingual under-development placeholder with no interacti
   }
 });
 
-test("public navigation links to localized Labs while keeping placeholders off the homepage", async ({ page }) => {
+test("public navigation links to localized Labs and the founder profile", async ({ page }) => {
   await quiet(page);
   for (const [path, href] of [["/", "/labs"], ["/sv", "/sv/labs"]]) {
     await page.goto(path);
     await expect(page.locator(`a[href="${href}"]`).first()).toHaveText("Labs");
-    await expect(page.locator('a[href="/oliver-stille"],a[href="/sv/oliver-stille"]')).toHaveCount(0);
+    await expect(page.locator("footer").getByRole("link", { name: "Oliver Stille" })).toHaveAttribute("href", path === "/sv" ? "/sv/oliver-stille" : "/oliver-stille");
     expect(await page.locator("body").innerText()).not.toMatch(/Labs is under development|Labs är under utveckling/i);
   }
 });

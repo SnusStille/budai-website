@@ -29,6 +29,7 @@ export function buildCsp(nonce: string): string {
     "font-src 'self' data:",
     "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://vitals.vercel-analytics.com https://va.vercel-scripts.com",
     "media-src 'self' blob:",
+    "frame-src 'self' https://streamable.com",
     "worker-src 'self' blob:",
     "manifest-src 'self'",
   ].join("; ");

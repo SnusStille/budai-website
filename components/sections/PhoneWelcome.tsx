@@ -8,7 +8,6 @@ import { ArrowDown, ArrowUpRight, Monitor, Sparkles } from "lucide-react";
 import AIPlayground from "@/components/sections/AIPlayground";
 import { BudAIWordmark } from "@/components/ui/BudAILogo";
 import { useLang } from "@/components/ui/LanguageContext";
-import { openCookieSettings } from "@/lib/consent";
 
 /** A small-screen home for the actual Playground; the rest of the site stays desktop-first. */
 export default function PhoneWelcome({ normalizeLanguagePath = false }: { normalizeLanguagePath?: boolean }) {
@@ -69,8 +68,7 @@ export default function PhoneWelcome({ normalizeLanguagePath = false }: { normal
         <div className="phone-footer-links">
           <a href="/legal/privacy">{sv ? "Integritet" : "Privacy"}</a>
           <a href="/legal/terms">{sv ? "Villkor" : "Terms"}</a>
-          <a href="/legal/cookies">Cookies</a>
-          <button type="button" onClick={openCookieSettings}>{sv ? "Cookieinställningar" : "Cookie settings"}</button>
+          <a href="/legal/cookies">{sv ? "Cookiepolicy" : "Cookie policy"}</a>
         </div>
       </footer>
     </div>

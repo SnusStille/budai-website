@@ -7,12 +7,13 @@ declare global {
 test.beforeEach(async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.addInitScript(() => {
-    localStorage.setItem("budai-cookies", "declined");
+    if (localStorage.getItem("budai-cookies") === null) localStorage.setItem("budai-cookies", "declined");
     sessionStorage.setItem("budai-buddy-popup-dismissed", "true");
     sessionStorage.setItem("budai-end-toast", "1");
   });
   await page.route("**/va.vercel-scripts.com/**", route => route.fulfill({ contentType: "application/javascript", body: "" }));
   await page.route("**/_vercel/insights/**", route => route.fulfill({ contentType: "application/javascript", body: "" }));
+  await page.route("**/e/bhs4y1**", route => route.fulfill({ status: 200, contentType: "text/html", body: "<!doctype html><title>Mock Stilledev film</title>" }));
   // Never write to a real external database during the browser regression suite.
   await page.route("**/*.supabase.co/**", route => route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ message: "Database unavailable in browser QA" }) }));
 });
@@ -263,10 +264,11 @@ test("cookie choice is the single consent source and can be changed later", asyn
   expect(await page.evaluate(() => localStorage.getItem("budai-cookies"))).toBe("declined");
   await expect(banner).toHaveCount(0);
 
+  await expect(page.getByRole("button", { name: "Cookie settings", exact: true })).toHaveCount(0);
+  await page.goto("/legal/cookies");
   const settings = page.getByRole("button", { name: "Cookie settings", exact: true });
   await expect(settings).toBeVisible();
-  // Fixed UI (back-to-top etc.) can cover the footer row; trigger the real button.
-  await settings.evaluate((el) => (el as HTMLButtonElement).click());
+  await settings.click();
   await expect(banner).toBeVisible();
   await banner.getByRole("button", { name: "Accept", exact: true }).click();
   expect(await page.evaluate(() => localStorage.getItem("budai-cookies"))).toBe("accepted");
@@ -279,7 +281,8 @@ test("cookie consent and withdrawal are reachable from a direct contact-page vis
   const banner = page.getByRole("dialog", { name: /cookies/i });
   await expect(banner).toBeVisible({ timeout: 10_000 });
   await banner.getByRole("button", { name: "Accept", exact: true }).click();
-  const settings = page.getByRole("button", { name: "Cookie settings", exact: true }).last();
+  await page.goto("/legal/cookies");
+  const settings = page.getByRole("button", { name: "Cookie settings", exact: true });
   await expect(settings).toBeVisible();
   await settings.click();
   await banner.getByRole("button", { name: "Decline", exact: true }).click();
@@ -549,7 +552,7 @@ test("social metadata uses one image URL and publishes Organization JSON-LD (A7/
   });
   expect(head.og).toBeTruthy();
   expect(head.og).toBe(head.twitter);
-  expect(head.og).toContain("/og.png");
+  expect(head.og).toContain("/stilledev-social.png");
   const types = (head.ld["@graph"] ?? []).map((node) => node["@type"]);
   expect(types).toContain("SoftwareApplication");
   expect(types).toContain("Organization");
@@ -689,14 +692,16 @@ test("footer uses the native share sheet when available without calling the clip
   expect(await page.evaluate(() => window.__clipboardWrites)).toHaveLength(0);
 });
 
-test("cookie preferences never duplicate the footer control with a fixed bottom button", async ({ page }) => {
+test("cookie preference controls live on Cookie Policy rather than at the footer edge", async ({ page }) => {
   const settings = page.getByRole("button", { name: /Cookie settings|Cookieinställningar/ });
   for (const path of ["/", "/sv", "/contact", "/sv/contact", "/legal/privacy", "/labs", "/changelog"]) {
     await page.goto(path);
-    await expect.poll(() => settings.count()).toBeLessThanOrEqual(1);
+    await expect(settings).toHaveCount(0);
   }
+  await page.goto("/legal/cookies");
+  await expect(settings).toHaveCount(1);
   await page.goto("/");
-  await expect(page.getByRole("button", { name: /Cookie settings|Cookieinställningar/ })).toHaveCount(1);
+  await expect(settings).toHaveCount(0);
 });
 
 test("the landing keeps gentle depth and starter prompts without a random Surprise me action", async ({ page }) => {
@@ -751,8 +756,10 @@ test("business analytics events are opt-in and exclude form or email values", as
   await emailLink.evaluate((element) => element.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true })));
   expect(await page.evaluate(() => window.__analyticsEvents)).toHaveLength(0);
 
-  await page.getByRole("button", { name: "Cookie settings", exact: true }).last().click();
+  await page.goto("/legal/cookies");
+  await page.getByRole("button", { name: "Cookie settings", exact: true }).click();
   await page.getByRole("dialog").getByRole("button", { name: "Accept", exact: true }).click();
+  await page.goto("/contact");
   await emailLink.evaluate((element) => element.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true })));
   const events = await page.evaluate(() => window.__analyticsEvents);
   expect(events.length).toBeGreaterThan(0);

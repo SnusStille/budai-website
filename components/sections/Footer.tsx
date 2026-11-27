@@ -8,7 +8,6 @@ import BudAIWordmark from "@/components/ui/BudAIWordmark";
 import {subscribeJourney} from "@/lib/experience/scroll";
 import BudAILogo, { StilledevMark } from "@/components/ui/BudAILogo";
 import { useLang } from "@/components/ui/LanguageContext";
-import { openCookieSettings } from "@/lib/consent";
 import { CONTACT_MAILTO } from "@/lib/contact";
 
 const groups = (lang: string) => [
@@ -25,7 +24,7 @@ const groups = (lang: string) => [
   {
     title: lang === "sv" ? "Företag" : "Company",
     links: [
-      { label: "Oliver Stille", href: "#oliver-stille" },
+      { label: "Oliver Stille", href: lang === "sv" ? "/sv/oliver-stille" : "/oliver-stille" },
       { label: lang === "sv" ? "Om Stilledev" : "About Stilledev", href: "#about" },
       { label: lang === "sv" ? "Kontakt" : "Contact", href: lang === "sv" ? "/sv/contact" : "/contact" },
       { label: lang === "sv" ? "Vad är nytt" : "What's new", href: "/changelog" },
@@ -159,17 +158,10 @@ export default function Footer() {
           <p className="text-sm text-muted">{t.footer.rights}</p>
           <p className="text-sm text-muted flex items-center gap-1.5">
             {lang === "sv" ? "Utvecklad av" : "Developed by"}{" "}
-            <span className="inline-flex items-center gap-1.5 text-accent-cyan font-medium"><StilledevMark size={16} />Stilledev EF</span>
+            <span className="inline-flex items-center gap-1.5 text-accent-cyan font-medium"><StilledevMark size={16} />Stilledev</span>
             <span className="text-muted/30">·</span>
             <span className="text-xs">{lang === "sv" ? "Sverige" : "Sweden"}</span>
           </p>
-          <button
-            type="button"
-            onClick={openCookieSettings}
-            className="text-xs text-muted underline decoration-white/20 underline-offset-4 hover:text-white transition-colors"
-          >
-            {lang === "sv" ? "Cookieinställningar" : "Cookie settings"}
-          </button>
         </div>
       </div>
 

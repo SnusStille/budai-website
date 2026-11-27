@@ -9,6 +9,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
   return [
     { url: siteUrl, changeFrequency: "weekly", priority: 1, alternates: pair(siteUrl, `${siteUrl}/sv`) },
     { url: `${siteUrl}/sv`, changeFrequency: "weekly", priority: 0.9, alternates: pair(siteUrl, `${siteUrl}/sv`) },
+    { url: `${siteUrl}/oliver-stille`, changeFrequency: "yearly", priority: 0.7, alternates: pair(`${siteUrl}/oliver-stille`, `${siteUrl}/sv/oliver-stille`) },
+    { url: `${siteUrl}/sv/oliver-stille`, changeFrequency: "yearly", priority: 0.6, alternates: pair(`${siteUrl}/oliver-stille`, `${siteUrl}/sv/oliver-stille`) },
     { url: `${siteUrl}/contact`, changeFrequency: "yearly", priority: 0.5, alternates: pair(`${siteUrl}/contact`, `${siteUrl}/sv/contact`) },
     { url: `${siteUrl}/sv/contact`, changeFrequency: "yearly", priority: 0.4, alternates: pair(`${siteUrl}/contact`, `${siteUrl}/sv/contact`) },
     { url: `${siteUrl}/changelog`, changeFrequency: "monthly", priority: 0.4 },

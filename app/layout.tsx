@@ -8,6 +8,8 @@ import "./contact.css";
 import "./feedback.css";
 import "./ambient-depth.css";
 import "./showcase.css";
+import "./founder-profile.css";
+import "./page-chrome.css";
 import "./home-surprises.css";
 import "./faq.css";
 import "./phone-welcome.css";
@@ -27,6 +29,8 @@ const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://stilledev.se").rep
 const websiteId = `${siteUrl}/#website`;
 const organizationId = `${siteUrl}/#organization`;
 const personId = `${siteUrl}/#person`;
+const founderUrl = `${siteUrl}/oliver-stille`;
+const stilledevLogoUrl = `${siteUrl}/stilledev-mark-512.png`;
 
 // One stable entity graph: company, person, website and the actual product.
 // Public links in sameAs are limited to the GitHub and LinkedIn profiles already
@@ -60,6 +64,14 @@ const jsonLd = {
       name: "Stilledev",
       url: siteUrl,
       email: CONTACT_EMAIL,
+      logo: {
+        "@type": "ImageObject",
+        "@id": `${siteUrl}/#logo`,
+        url: stilledevLogoUrl,
+        contentUrl: stilledevLogoUrl,
+        width: 512,
+        height: 512,
+      },
       founder: { "@id": personId },
       contactPoint: {
         "@type": "ContactPoint",
@@ -73,8 +85,8 @@ const jsonLd = {
       "@type": "Person",
       "@id": personId,
       name: "Oliver Stille",
-      url: siteUrl,
-      mainEntityOfPage: siteUrl,
+      url: founderUrl,
+      mainEntityOfPage: founderUrl,
       jobTitle: "Founder of Stilledev",
       description: "Oliver Stille founded Stilledev and works in digital development and AI.",
       worksFor: { "@id": organizationId },
@@ -91,17 +103,17 @@ const jsonLd = {
 const META = {
   en: {
     description:
-      "Stilledev is a Swedish software studio founded by Oliver Stille. We build BudAI, an AI workspace for writing, planning and analysis in Swedish and English.",
+      "Stilledev is a Swedish software studio founded by Oliver Stille. Explore independent digital products and applied AI built in Sweden, including BudAI.",
     ogTitle: "Stilledev — BudAI by Oliver Stille",
     ogDescription:
-      "A Swedish software studio building BudAI for writing, planning and analysis in Swedish and English.",
+      "A Swedish software studio founded by Oliver Stille, building independent digital products and applied AI.",
   },
   sv: {
     description:
-      "Stilledev är en svensk mjukvarustudio grundad av Oliver Stille. Vi utvecklar BudAI, en AI-arbetsyta för skrivande, planering och analys på svenska och engelska.",
+      "Stilledev är en svensk mjukvarustudio grundad av Oliver Stille. Utforska fristående digitala produkter och tillämpad AI utvecklade i Sverige, bland annat BudAI.",
     ogTitle: "Stilledev — BudAI av Oliver Stille",
     ogDescription:
-      "En svensk mjukvarustudio som utvecklar BudAI för skrivande, planering och analys på svenska och engelska.",
+      "En svensk mjukvarustudio grundad av Oliver Stille som utvecklar fristående digitala produkter och tillämpad AI.",
   },
 } as const;
 
@@ -135,7 +147,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     metadataBase: new URL(siteUrl),
     title: {
-      default: seoTitle || (sv ? "Stilledev – BudAI av Oliver Stille" : "Stilledev – BudAI by Oliver Stille"),
+      default: seoTitle || (sv ? "Stilledev – svensk mjukvarustudio av Oliver Stille" : "Stilledev — Software studio by Oliver Stille"),
       template: "%s · BudAI",
     },
     description: seoDescription || copy.description,
@@ -166,10 +178,10 @@ export async function generateMetadata(): Promise<Metadata> {
       description: copy.ogDescription,
       images: [
         {
-          url: seoImage || "/og.png",
+          url: seoImage || "/stilledev-social.png",
           width: 1200,
           height: 630,
-          alt: "BudAI — AI work for Sweden",
+          alt: "Stilledev — software studio founded by Oliver Stille",
         },
       ],
     },
@@ -177,10 +189,15 @@ export async function generateMetadata(): Promise<Metadata> {
       card: "summary_large_image",
       title: copy.ogTitle,
       description: copy.ogDescription,
-      images: [seoImage || "/og.png"],
+      images: [seoImage || "/stilledev-social.png"],
     },
     icons: {
-      icon: [{ url: "/favicon.svg", type: "image/svg+xml" }, { url: "/favicon-32.png", sizes: "32x32", type: "image/png" }],
+      icon: [
+        { url: "/favicon.svg", type: "image/svg+xml" },
+        { url: "/favicon-32.png", sizes: "32x32", type: "image/png" },
+        { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+        { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+      ],
       apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
     },
     alternates: {

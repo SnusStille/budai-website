@@ -4,6 +4,7 @@ import { BUDAI_MARK_PATH } from "../lib/brand";
 test("one living Confluence identity reaches the real UI, installed icons and both social metadata paths", async ({ page, request }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.addInitScript(() => { localStorage.setItem("budai-cookies", "declined"); sessionStorage.setItem("budai-buddy-popup-dismissed", "true"); });
+  await page.route("**/e/bhs4y1**", route => route.fulfill({ status: 200, contentType: "text/html", body: "<!doctype html><title>Mock Stilledev film</title>" }));
   await page.goto("/");
   await expect(page.locator("html")).toHaveAttribute("data-budai-intro", "done");
   await expect(page.locator("[data-global-loader]")).toHaveCount(0);

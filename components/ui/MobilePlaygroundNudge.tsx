@@ -13,18 +13,20 @@ export default function MobilePlaygroundNudge() {
     const hero = document.getElementById("intelligence");
     const playground = document.getElementById("playground");
     if (!hero || !playground) return;
-    let heroVisible = true;
-    let playgroundVisible = false;
-    const observer = new IntersectionObserver(entries => {
-      for (const entry of entries) {
-        if (entry.target === hero) heroVisible = entry.isIntersecting;
-        if (entry.target === playground) playgroundVisible = entry.isIntersecting;
-      }
-      setShow(!heroVisible && !playgroundVisible);
-    }, { threshold: .08 });
+    const update = () => {
+      const mobile = window.matchMedia("(max-width: 767px)").matches;
+      const pastHero = hero.getBoundingClientRect().bottom < window.innerHeight * .35;
+      const beforePlayground = playground.getBoundingClientRect().top > window.innerHeight * .58;
+      setShow(mobile && pastHero && beforePlayground);
+    };
+    const observer = new IntersectionObserver(update, { threshold: .08 });
     observer.observe(hero);
     observer.observe(playground);
-    return () => observer.disconnect();
+    window.addEventListener("resize", update, { passive: true });
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", update);
+    };
   }, []);
 
   if (!show) return null;

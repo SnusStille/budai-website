@@ -1,6 +1,6 @@
 import {test,expect,type Page} from "@playwright/test";
 declare global{interface Window{__outroDraws:number;}}
-async function quiet(page:Page){await page.addInitScript(()=>{sessionStorage.setItem("budai:cinematic-intro:v1","1");localStorage.setItem("budai-cookies","declined");sessionStorage.setItem("budai-buddy-popup-dismissed","true");sessionStorage.setItem("budai-end-toast","1");});}
+async function quiet(page:Page){await page.addInitScript(()=>{sessionStorage.setItem("budai:cinematic-intro:v1","1");localStorage.setItem("budai-cookies","declined");sessionStorage.setItem("budai-buddy-popup-dismissed","true");sessionStorage.setItem("budai-end-toast","1");});await page.route("**/e/bhs4y1**",route=>route.fulfill({status:200,contentType:"text/html",body:"<!doctype html><title>Mock Stilledev film</title>"}));}
 for(const width of[1440,390])test(`the signal continues ${width}: same roadmap, calm reversible retreat, settled GPU and usable footer`,async({page})=>{
   await page.setViewportSize({width,height:width===1440?1000:844});await quiet(page);
   const errors:string[]=[];page.on("pageerror",e=>errors.push(e.message));
@@ -37,6 +37,7 @@ test("reduced-motion ending is immediately readable and every existing footer de
   await page.emulateMedia({reducedMotion:"reduce"});await quiet(page);await page.goto("/#continuation");
   const footer=page.locator("#continuation");await expect(footer.getByRole("heading",{name:"Try BudAI.",exact:true})).toBeVisible();
   await expect(footer.getByRole("link",{name:"Privacy Policy",exact:true})).toBeVisible();await expect(footer.getByRole("link",{name:"Terms of Service",exact:true})).toBeVisible();
-  await expect(footer.locator("p").filter({hasText:"Developed by"})).toContainText("Stilledev EF");
+  await expect(footer.locator("p").filter({hasText:"Developed by"})).toContainText("Stilledev");
+  await expect(footer.locator("p").filter({hasText:"Developed by"})).not.toContainText("EF");
   await expect(footer.locator("p").filter({hasText:"Developed by"})).toHaveCount(1);await expect(page.locator("canvas")).toHaveCount(0);
 });

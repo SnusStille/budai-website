@@ -93,10 +93,10 @@ export default function Home() {
         <LazyEgg />
         <Hero />
         <BrainScrollStory />
-        <ShowcaseFilm />
         <ErrorBoundary>
           <AIPlayground />
         </ErrorBoundary>
+        <ShowcaseFilm />
         <Capabilities />
         <About />
         <Faq />
