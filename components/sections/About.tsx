@@ -64,7 +64,7 @@ export default function About() {
             <h2 id="builder-title">{sv ? "Från en tanke." : "From a thought."}<br /><span>{sv ? "Till något verkligt." : "To something real."}</span></h2>
             <p>{sv ? "Från en kort specifikation till typsäker kod, gränssnitt och strukturerade arbetsflöden — byggd med samma arkitektur som driver BudAI." : "From a short brief to type-safe code, interfaces, and structured workflows — built with the same architecture that powers BudAI."}</p>
             <div id="oliver-stille" className="builder-byline scroll-mt-24" aria-label={sv ? "Om Stilledev och dess grundare" : "About Stilledev and its founder"}>
-              <span>STILLEDEV EF <i /> {sv ? "GRUNDAT AV OLIVER STILLE" : "FOUNDED BY OLIVER STILLE"}</span>
+              <span>STILLEDEV <i /> {sv ? "GRUNDAT AV OLIVER STILLE" : "FOUNDED BY OLIVER STILLE"}</span>
               <p>{sv ? <><Link href="/sv/oliver-stille" className="founder-byline-link">Oliver Stille</Link> grundade Stilledev och arbetar med digital utveckling och AI.</> : <><Link href="/oliver-stille" className="founder-byline-link">Oliver Stille</Link> founded Stilledev and works in digital development and AI.</>}</p>
             </div>
             <div className="reality-creation-pills" role="group" aria-label={sv ? "Prova en idé i Playground" : "Try an idea in Playground"} data-thought-to-reality>

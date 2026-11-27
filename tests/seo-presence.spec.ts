@@ -31,16 +31,32 @@ test("Oliver Stille has crawlable, bilingual profile pages linked to the Stilled
   }
 });
 
-test("homepage identifies Oliver and publishes Stilledev's own search logo and Person relationship", async ({ page }) => {
+test("repeated Back to BudAI controls share one upper-left position and the BudAI mark", async ({ page }) => {
+  await prepare(page);
+  for (const path of ["/labs", "/oliver-stille", "/changelog", "/legal/privacy", "/sv/labs", "/sv/oliver-stille"]) {
+    await page.goto(path);
+    const back = page.locator(".standalone-back-link");
+    await expect(back).toBeVisible();
+    await expect(back.locator("[data-budai-mark=confluence]")).toHaveCount(1);
+    const rect = await back.boundingBox();
+    expect(rect).not.toBeNull();
+    expect(rect!.y).toBeLessThan(150);
+    expect(rect!.x).toBeLessThan((await page.evaluate(() => innerWidth)) / 2);
+  }
+});
+
+test("homepage uses BudAI site icons while keeping Stilledev and Oliver linked in search metadata", async ({ page }) => {
   await prepare(page);
   await page.goto("/");
   await expect(page).toHaveTitle(/Stilledev.*Oliver Stille/i);
   await expect(page.locator("meta[name='description']")).toHaveAttribute("content", /Stilledev.*Oliver Stille/);
   await expect(page.locator("meta[property='og:image']")).toHaveAttribute("content", /stilledev-social\.png/);
   const icons = await page.locator('link[rel="icon"]').evaluateAll(nodes => nodes.map(node => (node as HTMLLinkElement).href).join(" "));
-  expect(icons).toContain("stilledev-mark.svg");
+  expect(icons).toContain("favicon.svg");
+  expect(icons).toContain("favicon-32.png");
+  expect(icons).not.toContain("stilledev-mark.svg");
   const appleIcon = await page.locator('link[rel="apple-touch-icon"]').getAttribute("href");
-  expect(appleIcon).toContain("stilledev-icon-180.png");
+  expect(appleIcon).toBe("/apple-touch-icon.png");
 
   const scripts = await page.locator('script[type="application/ld+json"]').evaluateAll(nodes => nodes.map(node => JSON.parse(node.textContent || "{}")));
   const graph = scripts.find(item => Array.isArray(item["@graph"]))?.["@graph"] as Array<Record<string, unknown>>;
@@ -81,6 +97,7 @@ test("founder profile pages remain readable and overflow-free on mobile", async 
   for (const [path, heading, contact] of [["/oliver-stille", "Oliver Stille", "Contact Stilledev"], ["/sv/oliver-stille", "Oliver Stille", "Kontakta Stilledev"]]) {
     await page.goto(path);
     await expect(page.getByRole("heading", { name: heading, level: 1 })).toBeVisible();
+    await expect(page.getByRole("link", { name: /Back to BudAI|Tillbaka till BudAI/ })).toHaveAttribute("href", path.startsWith("/sv") ? "/sv" : "/");
     await expect(page.getByRole("link", { name: contact })).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
   }

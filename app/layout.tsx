@@ -9,6 +9,7 @@ import "./feedback.css";
 import "./ambient-depth.css";
 import "./showcase.css";
 import "./founder-profile.css";
+import "./page-chrome.css";
 import "./home-surprises.css";
 import "./faq.css";
 import "./phone-welcome.css";
@@ -192,10 +193,12 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     icons: {
       icon: [
-        { url: "/stilledev-mark.svg", type: "image/svg+xml" },
-        { url: "/stilledev-icon-48.png", sizes: "48x48", type: "image/png" },
+        { url: "/favicon.svg", type: "image/svg+xml" },
+        { url: "/favicon-32.png", sizes: "32x32", type: "image/png" },
+        { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+        { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
       ],
-      apple: [{ url: "/stilledev-icon-180.png", sizes: "180x180", type: "image/png" }],
+      apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
     },
     alternates: {
       canonical,

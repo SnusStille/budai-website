@@ -4,9 +4,9 @@
 // WhatsNew.tsx renders the same CHANGELOG data and links here.
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowLeft, ArrowUpRight, History } from "lucide-react";
-import BudAILogo from "@/components/ui/BudAILogo";
+import { ArrowUpRight, History } from "lucide-react";
 import { useLang } from "@/components/ui/LanguageContext";
+import BackToBudAI from "@/components/ui/BackToBudAI";
 import { CHANGELOG } from "@/lib/changelog";
 
 export default function ChangelogView() {
@@ -17,14 +17,7 @@ export default function ChangelogView() {
     <main id="main" tabIndex={-1} className="min-h-screen bg-background text-white pt-20 pb-16 px-4 sm:px-6">
       <div className="max-w-2xl mx-auto">
         <div className="flex items-center justify-between gap-3 mb-8">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 text-sm text-muted hover:text-white transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            {sv ? "Tillbaka till BudAI" : "Back to BudAI"}
-          </Link>
-          <BudAILogo size="sm" animated />
+          <BackToBudAI lang={sv ? "sv" : "en"} />
         </div>
 
         <motion.div

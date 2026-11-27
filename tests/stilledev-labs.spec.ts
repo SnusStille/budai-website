@@ -15,7 +15,9 @@ test("Labs is a static bilingual under-development placeholder with no interacti
     await expect(page.getByRole("heading", { name: "STILLEDEV LABS" })).toBeVisible();
     await expect(page.locator(".labs-hold-status")).toHaveText(status);
     await expect(page.locator(".labs-hold-line")).toHaveText(statement);
-    await expect(page.getByRole("link", { name: /Back to BudAI|Tillbaka till BudAI/ })).toHaveAttribute("href", language === "sv" ? "/sv" : "/");
+    const back = page.getByRole("link", { name: /Back to BudAI|Tillbaka till BudAI/ });
+    await expect(back).toHaveAttribute("href", language === "sv" ? "/sv" : "/");
+    await expect(back.locator("[data-budai-mark=confluence]")).toHaveCount(1);
     await expect(page.locator(".labs-bot, .labs-hold-page input")).toHaveCount(0);
     await expect(page.getByRole("button", { name: /Share Labs|Dela Labs/ })).toBeVisible();
     const html = await response!.text();

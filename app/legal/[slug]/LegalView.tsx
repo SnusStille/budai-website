@@ -2,12 +2,11 @@
 
 import type { LegalSlug } from "@/lib/legal-slugs";
 import { motion } from "framer-motion";
-import { ArrowLeft, Shield, FileText, Cookie, Scale, Database } from "lucide-react";
-import Link from "next/link";
-import BudAILogo from "@/components/ui/BudAILogo";
+import { Shield, FileText, Cookie, Scale, Database } from "lucide-react";
 import { useLang } from "@/components/ui/LanguageContext";
 import { CONTACT_EMAIL, CONTACT_MAILTO } from "@/lib/contact";
 import CookieSettingsButton from "@/components/ui/CookieSettingsButton";
+import BackToBudAI from "@/components/ui/BackToBudAI";
 
 type Page = {
   title: { en: string; sv: string };
@@ -69,12 +68,12 @@ const content: Record<LegalSlug, Page> = {
       en: [
         "BudAI stores only what the site and sign-in need to function: your language preference (a functional budai-lang cookie plus local storage, so the page can be rendered in the right language by the server), the session, and your cookie choice. That storage is always active.",
         "Optional analytics is off until you press Accept. If accepted, Vercel Analytics and our first-party page-view endpoint may process the page path, referring hostname, coarse country, device/browser category and a daily-rotating pseudonymous session hash. We do not store raw IP addresses, full user-agent strings, or form contents in page-view analytics. Declining prevents these analytics from loading. Vercel Analytics also receives coarse contact, email and waitlist event types with page path only, never the form values. No advertising trackers are used.",
-        "You can change or withdraw your choice at any time with Cookie settings in the footer, or clear site data in your browser.",
+        "You can change or withdraw your choice with the Cookie settings button on this page, or clear site data in your browser."
       ],
       sv: [
         "BudAI sparar bara det sajten och inloggningen behöver: språkval (en funktionell budai-lang-kaka plus lokal lagring, så att servern kan rendera sidan på rätt språk), session och ditt cookieval. Den lagringen är alltid aktiv.",
         "Valfri analys är avstängd tills du trycker Acceptera. Om du tackar ja kan Vercel Analytics och vår förstapartsfunktion för sidvisningar behandla sidans sökväg, hänvisande värdnamn, grov landskod, enhets-/webbläsarkategori och en dagligt roterande pseudonymiserad sessionshash. Rå IP-adress, fullständig user-agent och formulärinnehåll sparas inte i sidvisningsanalysen. Om du avböjer laddas analysen inte. Vercel Analytics får också grova händelsetyper för kontakt, e-post och väntelista med endast sidans sökväg, aldrig formulärvärden. Vi använder inga annonsspårare.",
-        "Du kan ändra eller återkalla ditt val när som helst via Cookieinställningar i sidfoten, eller rensa webbplatsdata i webbläsaren.",
+        "Du kan ändra eller återkalla ditt val via knappen Cookieinställningar på den här sidan, eller rensa webbplatsdata i webbläsaren."
       ],
     },
   },
@@ -134,19 +133,11 @@ export default function LegalView({ slug, phoneOnly = false }: { slug: LegalSlug
   const { lang } = useLang();
   const L = lang === "sv" ? "sv" : "en";
 
-  const BackLink = phoneOnly ? "a" : Link;
   return (
     <main id="main" tabIndex={-1} className="min-h-screen bg-background text-white pt-20 pb-16 px-4 sm:px-6">
       <div className="max-w-2xl mx-auto">
         <div className="flex items-center justify-between gap-3 mb-8">
-          <BackLink
-            href="/"
-            className="inline-flex items-center gap-2 text-sm text-muted hover:text-white transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            {L === "sv" ? "Tillbaka till BudAI" : "Back to BudAI"}
-          </BackLink>
-          <BudAILogo size="sm" animated />
+          <BackToBudAI lang={L} nativeLink={phoneOnly} />
         </div>
 
         <motion.div
@@ -174,7 +165,7 @@ export default function LegalView({ slug, phoneOnly = false }: { slug: LegalSlug
           </div>
 
           <p className="mt-5 text-sm text-muted">{L === "sv" ? "Frågor eller begäran om personuppgifter? Kontakta Stilledev: " : "Questions or data requests? Contact Stilledev: "}<a className="text-accent-cyan underline" href={CONTACT_MAILTO}>{CONTACT_EMAIL}</a></p>
-          <CookieSettingsButton lang={L} />
+          {slug === "cookies" && <CookieSettingsButton lang={L} />}
           <p className="mt-8 text-xs text-muted/60">
             {L === "sv"
               ? "Detta är en tydlig preview-policy. Fullständiga bolagsdokument kan uppdateras före bred lansering."

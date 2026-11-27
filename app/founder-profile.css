@@ -1,7 +1,6 @@
 .founder-profile { isolation:isolate; position:relative; display:flex; min-height:100svh; flex-direction:column; overflow:hidden; padding:0 clamp(24px,7vw,104px); color:#edf7fa; background:radial-gradient(ellipse at 76% 42%,#123343 0%,#091722 34%,#03070c 76%); }
 .founder-profile-grid { position:absolute; z-index:-1; inset:0; pointer-events:none; opacity:.32; background-image:linear-gradient(#9cdaef0b 1px,transparent 1px),linear-gradient(90deg,#9cdaef0b 1px,transparent 1px); background-size:60px 60px; mask-image:radial-gradient(ellipse at 75% 44%,#000,transparent 72%); }
 .founder-profile-header { display:flex; min-height:78px; align-items:center; justify-content:space-between; border-bottom:1px solid #bce9ff1a; }
-.founder-profile-brand { display:inline-flex; align-items:center; gap:11px; color:#e7f4f7; font-size:12px; font-weight:650; letter-spacing:.14em; }
 .founder-profile-languages { display:flex; gap:4px; padding:3px; border:1px solid #bce9ff1a; border-radius:99px; font:10px var(--font-jetbrains),monospace; }
 .founder-profile-languages a { display:grid; min-width:38px; min-height:34px; place-items:center; border-radius:99px; color:#9aadb8; }
 .founder-profile-languages a[aria-current="page"] { color:#07151a; background:#a8e8f2; }
@@ -15,7 +14,6 @@
 .founder-profile-links a { display:inline-flex; min-height:42px; align-items:center; gap:8px; border-bottom:1px solid #a1dfe62a; color:#d7eef1; font-size:12px; transition:color .18s,border-color .18s; }
 .founder-profile-links a:hover { border-color:#9de6ef; color:#a9edf3; }
 .founder-profile-footer { display:flex; min-height:68px; align-items:center; justify-content:space-between; border-top:1px solid #bce9ff1a; color:#819ba6; font:8px/1.5 var(--font-jetbrains),monospace; letter-spacing:.12em; }
-.founder-profile-footer a { display:inline-flex; align-items:center; gap:8px; color:#bdd5dc; font:11px/1.4 var(--font-jakarta),sans-serif; letter-spacing:0; }
 .founder-byline-link { color:#a8e5ed; text-decoration:underline; text-decoration-color:#9cdded44; text-underline-offset:3px; transition:text-decoration-color .16s,color .16s; }
 .founder-byline-link:hover { color:#e8fbff; text-decoration-color:#9cdded; }
 .founder-profile :is(a):focus-visible { outline:2px solid #a9f1fa; outline-offset:4px; }

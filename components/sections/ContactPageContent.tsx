@@ -1,10 +1,9 @@
 import { headers } from "next/headers";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 import ContactForm from "@/components/sections/ContactForm";
 import ContactEmailActions from "@/components/sections/ContactEmailActions";
-import CookieSettingsButton from "@/components/ui/CookieSettingsButton";
 import { StilledevMark } from "@/components/ui/BudAILogo";
+import BackToBudAI from "@/components/ui/BackToBudAI";
 
 const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://stilledev.se").replace(/\/$/, "");
 const organizationId = `${siteUrl}/#organization`;
@@ -30,11 +29,7 @@ export default async function ContactPageContent({ sv = false }: { sv?: boolean 
     <main id="main" tabIndex={-1} className="min-h-screen bg-background px-4 py-12 text-white sm:px-6 sm:py-16">
       <div className="mx-auto max-w-5xl">
         <nav className="mb-12 flex items-center justify-between gap-4 border-b border-white/[0.08] pb-5" aria-label={sv ? "Sidnavigering" : "Page navigation"}>
-          <Link href={sv ? "/sv" : "/"} aria-label={sv ? "Stilledev startsida" : "Stilledev home"} className="inline-flex min-h-11 items-center gap-2.5 rounded-lg text-sm text-muted transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-cyan/50">
-            <ArrowLeft size={15} aria-hidden="true" />
-            <StilledevMark size={26} />
-            <span className="font-semibold tracking-wide text-accent-cyan">Stilledev</span>
-          </Link>
+          <BackToBudAI href={sv ? "/sv" : "/"} lang={sv ? "sv" : "en"} />
           <div className="flex items-center gap-2 text-xs font-medium" aria-label={sv ? "Välj språk" : "Choose language"}>
             <Link href="/contact" aria-current={!sv ? "page" : undefined} className={!sv ? "rounded-full bg-white/10 px-3 py-2 text-white" : "rounded-full px-3 py-2 text-muted hover:text-white"}>EN</Link>
             <Link href="/sv/contact" aria-current={sv ? "page" : undefined} className={sv ? "rounded-full bg-white/10 px-3 py-2 text-white" : "rounded-full px-3 py-2 text-muted hover:text-white"}>SV</Link>
@@ -84,8 +79,7 @@ export default async function ContactPageContent({ sv = false }: { sv?: boolean 
           </aside>
         </section>
         <div className="mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-white/[0.08] pt-5 text-xs text-muted">
-          <span>STILLEDEV EF · {sv ? "SVERIGE" : "SWEDEN"}</span>
-          <CookieSettingsButton lang={sv ? "sv" : "en"} />
+          <span>{sv ? "UTVECKLAD AV STILLEDEV · SVERIGE" : "DEVELOPED BY STILLEDEV · SWEDEN"}</span>
         </div>
         <script type="application/ld+json" nonce={nonce} dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, "\\u003c") }} />
       </div>

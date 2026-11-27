@@ -24,7 +24,7 @@ test("the landing has one ambient orbit, no robot, and no command-key control in
   expect(box).toBeLessThanOrEqual(1);
 });
 
-test("the exact Streamable film is lazy, responsive, and introduced between the neural story and Playground", async ({ page }) => {
+test("the Stilledev film has an integrated responsive dock, clean player options, and useful controls", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.emulateMedia({ reducedMotion: "no-preference" });
   await page.addInitScript(() => {
@@ -32,7 +32,7 @@ test("the exact Streamable film is lazy, responsive, and introduced between the 
     sessionStorage.setItem("budai:cinematic-intro:v1", "1");
     sessionStorage.setItem("budai-buddy-popup-dismissed", "true");
   });
-  await page.route("https://streamable.com/e/bhs4y1", route => route.fulfill({
+  await page.route("**/e/bhs4y1**", route => route.fulfill({
     status: 200,
     contentType: "text/html",
     body: "<!doctype html><title>Mock Streamable player</title><body>Embed test</body>",
@@ -42,11 +42,15 @@ test("the exact Streamable film is lazy, responsive, and introduced between the 
   expect(csp).toContain("frame-src 'self' https://streamable.com");
 
   const section = page.locator(".showcase-film-section");
-  const frame = section.locator("iframe");
-  await expect(frame).toHaveAttribute("src", "https://streamable.com/e/bhs4y1");
+  const dock = page.locator(".showcase-film-player");
+  const frame = dock.locator("iframe");
+  await expect(frame).toHaveAttribute("src", "https://streamable.com/e/bhs4y1?autoplay=1&muted=1&loop=1&logo=0");
   await expect(frame).toHaveAttribute("loading", "lazy");
   await expect(frame).toHaveAttribute("title", "Stilledev showcase film");
   await expect(frame).toHaveAttribute("allowfullscreen", "");
+  await expect(dock).toHaveAttribute("data-dock-visible", "true");
+  await expect(dock.locator(".showcase-film-player-brand [data-budai-mark=confluence]")).toHaveCount(1);
+  await expect(dock.locator(".showcase-film-player-brand strong")).toHaveText("BUDAI");
 
   const order = await page.evaluate(() => ["#signal", "#playground", ".showcase-film-section", "#capabilities"]
     .map(selector => [...document.querySelectorAll("main *")].findIndex(node => node.matches(selector))));
@@ -57,14 +61,22 @@ test("the exact Streamable film is lazy, responsive, and introduced between the 
   await section.scrollIntoViewIfNeeded();
   await expect(section).toHaveAttribute("data-revealed", "true");
   await expect(page.locator(".mobile-playground-nudge")).toBeHidden();
-  const frameBox = await section.locator(".showcase-film-frame").boundingBox();
-  expect(frameBox).not.toBeNull();
-  expect(Math.abs(frameBox!.width / frameBox!.height - 16 / 9)).toBeLessThan(.03);
-  expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
+  await expect(section.getByRole("link", { name: "Try it now" })).toHaveAttribute("href", "#playground");
+  const desktopFrame = await dock.locator(".showcase-film-player-screen").boundingBox();
+  expect(desktopFrame).not.toBeNull();
+  expect(Math.abs(desktopFrame!.width / desktopFrame!.height - 16 / 9)).toBeLessThan(.03);
+
+  await page.getByRole("button", { name: "View fullscreen" }).click();
+  await expect(dock).toHaveAttribute("aria-modal", "true");
+  await page.keyboard.press("Escape");
+  await expect(dock).toHaveAttribute("data-expanded", "false");
+  await page.getByRole("button", { name: "Minimize film player" }).click();
+  await expect(page.locator(".showcase-film-mini")).toBeVisible();
+  await page.getByRole("button", { name: "Expand showcase film" }).click();
+  await expect(frame).toBeVisible();
 
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.locator(".showcase-film-section").scrollIntoViewIfNeeded();
-  const mobileFrame = await section.locator(".showcase-film-frame").boundingBox();
+  const mobileFrame = await dock.locator(".showcase-film-player-screen").boundingBox();
   expect(mobileFrame).not.toBeNull();
   expect(Math.abs(mobileFrame!.width / mobileFrame!.height - 16 / 9)).toBeLessThan(.03);
   expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
@@ -72,7 +84,9 @@ test("the exact Streamable film is lazy, responsive, and introduced between the 
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.reload();
   await expect(page.locator(".showcase-film-section")).toHaveAttribute("data-revealed", "true");
-  await expect(page.locator(".showcase-film-frame")).toHaveCSS("animation-name", "none");
+  await expect(page.locator(".showcase-film-player iframe")).toHaveAttribute("src", "https://streamable.com/e/bhs4y1?muted=1&logo=0");
+  await expect(page.locator(".showcase-film-player")).toHaveCSS("animation-name", "none");
+  await expect(page.locator(".showcase-film-art")).toHaveCSS("animation-name", "none");
 });
 
 test("the bilingual FAQ opens natively and uses the same centrally configured limits", async ({ page }) => {
@@ -99,6 +113,7 @@ test("the mobile Playground shortcut only appears between the landing and Playgr
   await page.goto("/");
   const nudge = page.locator(".mobile-playground-nudge");
   await expect(nudge).toHaveCount(0);
+  await page.getByRole("button", { name: "Close film player" }).click();
   await page.locator("#signal").scrollIntoViewIfNeeded();
   await expect(nudge).toBeVisible();
   await nudge.click();

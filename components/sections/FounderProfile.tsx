@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { ArrowLeft, ArrowUpRight } from "lucide-react";
-import { StilledevMark } from "@/components/ui/BudAILogo";
+import { ArrowUpRight } from "lucide-react";
+import BackToBudAI from "@/components/ui/BackToBudAI";
 
 const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://stilledev.se").replace(/\/$/, "");
 
@@ -22,10 +22,7 @@ export default function FounderProfile({ sv = false }: { sv?: boolean }) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(profilePage).replace(/</g, "\\u003c") }} />
       <div className="founder-profile-grid" aria-hidden="true" />
       <header className="founder-profile-header">
-        <Link href={home} className="founder-profile-brand" aria-label={sv ? "Stilledev startsida" : "Stilledev home"}>
-          <StilledevMark size={25} />
-          <span>STILLEDEV</span>
-        </Link>
+        <BackToBudAI href={home} lang={sv ? "sv" : "en"} />
         <nav className="founder-profile-languages" aria-label={sv ? "Välj språk" : "Choose language"}>
           <Link href="/oliver-stille" aria-current={!sv ? "page" : undefined}>EN</Link>
           <Link href="/sv/oliver-stille" aria-current={sv ? "page" : undefined}>SV</Link>
@@ -59,7 +56,7 @@ export default function FounderProfile({ sv = false }: { sv?: boolean }) {
       </article>
 
       <footer className="founder-profile-footer">
-        <Link href={home}><ArrowLeft size={14} aria-hidden="true" />{sv ? "Till Stilledev" : "Back to Stilledev"}</Link>
+        <span>STILLEDEV · BUDAI</span>
         <span>{sv ? "UTVECKLAT I SVERIGE" : "BUILT IN SWEDEN"}</span>
       </footer>
     </main>

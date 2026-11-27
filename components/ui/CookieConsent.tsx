@@ -32,7 +32,7 @@ export default function CookieConsent({ forceDocumentNavigation = false }: { for
   }, [isAdminPage]);
 
 
-  // "Cookie settings" in the footer lets a visitor change or withdraw consent.
+  // The Cookie Policy page provides a durable route to change or withdraw consent.
   useEffect(() => {
     const reopen = () => setVisible(true);
     window.addEventListener(CONSENT_SETTINGS_EVENT, reopen);
