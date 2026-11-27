@@ -6,6 +6,8 @@ import { ArrowLeft, Shield, FileText, Cookie, Scale, Database } from "lucide-rea
 import Link from "next/link";
 import BudAILogo from "@/components/ui/BudAILogo";
 import { useLang } from "@/components/ui/LanguageContext";
+import { CONTACT_EMAIL, CONTACT_MAILTO } from "@/lib/contact";
+import CookieSettingsButton from "@/components/ui/CookieSettingsButton";
 
 type Page = {
   title: { en: string; sv: string };
@@ -21,16 +23,24 @@ const content: Record<LegalSlug, Page> = {
       en: [
         "BudAI values your privacy. We only collect data necessary to provide our services. Personal information is processed in line with GDPR and stored on secure infrastructure.",
         "We do not sell your data. We do not share personal data with third parties without a lawful basis or your consent where required.",
-        "Data we may process includes: waitlist contact details, account email (if you sign in), saved memory facts (signed-in accounts), anonymized usage metrics, and short-lived API logs needed to operate the preview.",
+        "Data we may process includes the details you submit in a contact or waitlist form, account email and user-controlled memory (if you sign in), consented analytics, and limited operational logs. Contact submissions are stored in the private Stilledev lead inbox; contact and waitlist submissions are also emailed to the inbox address when the transactional email provider is configured. A delivery failure does not remove the saved submission.",
+        "Optional analytics starts only after you accept. Our page-view endpoint records the page path, referring site hostname, coarse country code supplied by the hosting edge, broad device and browser categories, and a daily-rotating pseudonymous session hash. It does not store a raw IP address, full user-agent, name or email. With consent, Vercel Analytics also records coarse business events (contact/email/waitlist CTA clicks and successful form submissions) with the page path only; it never receives form values or message content. You can withdraw consent in Cookie settings. Analytics records can be purged by an administrator; the admin interface offers a 180-day purge action, which is manual rather than automatic.",
+        "We use infrastructure providers needed to run the service (including Vercel for hosting, Supabase for database/authentication, Anthropic for AI replies, and Resend for email when configured). Provider and data-region settings depend on the production account configuration.",
+        "We keep enquiry and waitlist details only for follow-up and service administration, then delete or anonymise them when no longer needed or when a valid deletion request applies. Account data and memories can be managed in the product. A fixed retention schedule for lead records should be set by the controller.",
+        "For privacy requests, contact the controller using the address below. You may also complain to the Swedish Authority for Privacy Protection (IMY). This page is general information and does not replace advice on your specific rights.",
         "Memory (signed-in accounts): memory is on by default. The assistant may automatically save durable facts it notices in a chat — such as your name, role, company or preferences — as separate long-term memories tied to your account, and use them to shape later replies. Open Playground → Memory to see every saved fact, switch memory off, or edit and delete them. Guest chats save no memories.",
-        "You can request access, correction, or deletion by contacting Stilleinc@hotmail.com. We will respond within a reasonable time under GDPR.",
+        `You can request access, correction, or deletion by contacting ${CONTACT_EMAIL}. We will respond within a reasonable time under GDPR.`,
       ],
       sv: [
         "BudAI värnar din integritet. Vi samlar bara in data som behövs för att leverera tjänsten. Personuppgifter behandlas enligt GDPR och lagras på säker infrastruktur.",
         "Vi säljer inte dina data. Vi delar inte personuppgifter med tredje part utan laglig grund eller ditt samtycke när det krävs.",
-        "Uppgifter vi kan behandla: kontaktuppgifter från väntelistan, konto-e-post (om du loggar in), sparade minnesfakta (inloggade konton), anonymiserad användningsstatistik och kortlivade API-loggar för preview-drift.",
+        "Uppgifter vi kan behandla är det du lämnar i kontakt- eller väntelisteformulär, konto-e-post och minnen du själv kan styra (om du loggar in), statistik efter samtycke samt begränsade driftloggar. Kontaktförfrågningar sparas i Stilledevs privata förfrågningsinkorg. Kontakt- och väntelisteförfrågningar skickas även till inkorgens e-postadress när e-postleverantören är konfigurerad. Ett leveransfel raderar inte den sparade förfrågan.",
+        "Valfri analys startar först efter att du har tackat ja. Vår sidvisningsfunktion registrerar sidans sökväg, hänvisande webbplatsens värdnamn, grov landskod från webbhotellets edge, breda kategorier för enhet och webbläsare samt en dagligt roterande pseudonymiserad sessionshash. Den lagrar inte rå IP-adress, fullständig user-agent, namn eller e-postadress. Med samtycke registrerar Vercel Analytics även grova affärshändelser (klick på kontakt-/e-post-/väntelisteknappar och genomförda formulär) med endast sidans sökväg; fältvärden och meddelandeinnehåll skickas aldrig. Du kan återkalla samtycket under Cookieinställningar. En administratör kan rensa analysdata; adminpanelen erbjuder manuell rensning av data äldre än 180 dagar, inte automatisk radering.",
+        "Vi använder nödvändiga infrastrukturtjänster för driften, bland annat Vercel för webbhotell, Supabase för databas/inloggning, Anthropic för AI-svar och Resend för e-post när det är konfigurerat. Leverantörernas inställningar och datalagringsregion beror på produktionskontots konfiguration.",
+        "Kontakt- och väntelisteuppgifter sparas för uppföljning och administration och raderas eller anonymiseras när de inte längre behövs eller när en giltig begäran om radering gäller. Kontodata och minnen kan hanteras i produkten. Den personuppgiftsansvarige behöver fastställa ett bestämt lagringsschema för kontaktärenden.",
+        "Kontakta den personuppgiftsansvarige på adressen nedan om integritetsfrågor. Du kan även lämna klagomål till Integritetsskyddsmyndigheten (IMY). Informationen ersätter inte rådgivning om dina specifika rättigheter.",
         "Minne (inloggade konton): minnet är på som standard. Assistenten kan automatiskt spara beständiga fakta den upptäcker i ett samtal — till exempel namn, roll, företag eller preferenser — som separata långtidsminnen kopplade till ditt konto och använda dem i senare svar. Öppna Playground → Minne för att se alla sparade fakta, stänga av minnet eller redigera och radera dem. Gästchattar sparar inga minnen.",
-        "Du kan begära tillgång, rättelse eller radering via Stilleinc@hotmail.com. Vi svarar inom rimlig tid enligt GDPR.",
+        `Du kan begära tillgång, rättelse eller radering via ${CONTACT_EMAIL}. Vi svarar inom rimlig tid enligt GDPR.`,
       ],
     },
   },
@@ -58,12 +68,12 @@ const content: Record<LegalSlug, Page> = {
     paragraphs: {
       en: [
         "BudAI stores only what the site and sign-in need to function: your language preference (a functional budai-lang cookie plus local storage, so the page can be rendered in the right language by the server), the session, and your cookie choice. That storage is always active.",
-        "Anonymous traffic analytics (Vercel Analytics) is loaded only after you press Accept. If you decline, it is not loaded at all. We do not use third-party ad trackers.",
+        "Optional analytics is off until you press Accept. If accepted, Vercel Analytics and our first-party page-view endpoint may process the page path, referring hostname, coarse country, device/browser category and a daily-rotating pseudonymous session hash. We do not store raw IP addresses, full user-agent strings, or form contents in page-view analytics. Declining prevents these analytics from loading. Vercel Analytics also receives coarse contact, email and waitlist event types with page path only, never the form values. No advertising trackers are used.",
         "You can change or withdraw your choice at any time with Cookie settings in the footer, or clear site data in your browser.",
       ],
       sv: [
         "BudAI sparar bara det sajten och inloggningen behöver: språkval (en funktionell budai-lang-kaka plus lokal lagring, så att servern kan rendera sidan på rätt språk), session och ditt cookieval. Den lagringen är alltid aktiv.",
-        "Anonym trafikanalys (Vercel Analytics) laddas bara efter att du tryckt Acceptera. Om du avböjer laddas den inte alls. Vi använder inga tredjeparts-annonsspårare.",
+        "Valfri analys är avstängd tills du trycker Acceptera. Om du tackar ja kan Vercel Analytics och vår förstapartsfunktion för sidvisningar behandla sidans sökväg, hänvisande värdnamn, grov landskod, enhets-/webbläsarkategori och en dagligt roterande pseudonymiserad sessionshash. Rå IP-adress, fullständig user-agent och formulärinnehåll sparas inte i sidvisningsanalysen. Om du avböjer laddas analysen inte. Vercel Analytics får också grova händelsetyper för kontakt, e-post och väntelista med endast sidans sökväg, aldrig formulärvärden. Vi använder inga annonsspårare.",
         "Du kan ändra eller återkalla ditt val när som helst via Cookieinställningar i sidfoten, eller rensa webbplatsdata i webbläsaren.",
       ],
     },
@@ -102,15 +112,15 @@ const content: Record<LegalSlug, Page> = {
     paragraphs: {
       en: [
         "BudAI is designed with GDPR in mind. Your rights include access, rectification, erasure, restriction, portability, and objection where applicable.",
-        "Controller contact: Stilledev · Stilleinc@hotmail.com.",
-        "Processing bases may include consent (waitlist/marketing), contract/pre-contract steps (account), and legitimate interests (security, service improvement) balanced against your rights.",
+        `Controller contact: Stilledev · ${CONTACT_EMAIL}.`,
+        "Depending on the feature and purpose, processing may be based on consent, steps you request before a contract, an account service, or a documented legitimate interest. The controller must identify the applicable basis for each processing activity and honour withdrawal or objections where the law provides for them.",
         "Automatic long-term memory is part of the account service and is on by default. You can turn it off or erase individual facts at any time in Playground → Memory, and you can request full erasure by contacting the controller.",
         "If a personal data breach occurs that requires notification, we will follow applicable GDPR timelines.",
       ],
       sv: [
         "BudAI är utformad med GDPR i åtanke. Dina rättigheter inkluderar tillgång, rättelse, radering, begränsning, dataportabilitet och invändning där det är tillämpligt.",
-        "Personuppgiftsansvarig: Stilledev · Stilleinc@hotmail.com.",
-        "Rättslig grund kan vara samtycke (väntelista), avtal/förberedande steg (konto) och berättigat intresse (säkerhet, förbättring) vägt mot dina rättigheter.",
+        `Personuppgiftsansvarig: Stilledev · ${CONTACT_EMAIL}.`,
+        "Beroende på funktion och ändamål kan behandlingen grundas på samtycke, åtgärder som du begär inför ett avtal, en kontotjänst eller ett dokumenterat berättigat intresse. Den personuppgiftsansvarige ska fastställa rättslig grund för varje behandling och respektera återkallelser eller invändningar där lagen ger rätt till det.",
         "Automatiskt långtidsminne ingår i kontotjänsten och är på som standard. Du kan när som helst stänga av det eller radera enskilda fakta i Playground → Minne, och begära full radering via personuppgiftsansvarig.",
         "Om en personuppgiftsincident inträffar som kräver anmälan följer vi tillämpliga GDPR-tidsramar.",
       ],
@@ -163,6 +173,8 @@ export default function LegalView({ slug, phoneOnly = false }: { slug: LegalSlug
             ))}
           </div>
 
+          <p className="mt-5 text-sm text-muted">{L === "sv" ? "Frågor eller begäran om personuppgifter? Kontakta Stilledev: " : "Questions or data requests? Contact Stilledev: "}<a className="text-accent-cyan underline" href={CONTACT_MAILTO}>{CONTACT_EMAIL}</a></p>
+          <CookieSettingsButton lang={L} />
           <p className="mt-8 text-xs text-muted/60">
             {L === "sv"
               ? "Detta är en tydlig preview-policy. Fullständiga bolagsdokument kan uppdateras före bred lansering."

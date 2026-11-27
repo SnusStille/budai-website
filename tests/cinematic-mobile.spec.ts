@@ -29,6 +29,7 @@ for (const width of [390, 360]) test(`mobile ${width}: full-height neural perspe
   // needs is: no competing global loader, then exactly one rendered canvas.
   await expect(page.locator("[data-global-loader]")).toHaveCount(0);
   await page.waitForTimeout(300);
+  await expect.poll(() => page.locator("[data-intelligence-stage]").evaluate(el => getComputedStyle(el).opacity)).toBe("0.2");
   await page.screenshot({ path:`test-results/hero-${width}.png` });
   const dive = async (p: number) => {
     await page.locator("#signal").evaluate((el,p) => scrollTo({ top:el.getBoundingClientRect().top+scrollY+(el.clientHeight-innerHeight)*p,behavior:"instant" as ScrollBehavior }),p);
@@ -37,6 +38,7 @@ for (const width of [390, 360]) test(`mobile ${width}: full-height neural perspe
   await dive(.1);
   await expect(brain).toHaveCount(1);
   await expect(brain).toHaveAttribute("data-rendered","true");
+  expect(Number(await brain.getAttribute("data-fov"))).toBeCloseTo(1.28,2);
   await page.screenshot({ path:`test-results/neural-entry-${width}.png` });
   await dive(.86);
   await expect(brain).toHaveAttribute("data-sequence", "journey");

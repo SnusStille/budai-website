@@ -6,6 +6,12 @@ const nextConfig = {
   images: {
     formats: ["image/avif", "image/webp"],
   },
+  async redirects() {
+    return [
+      { source: "/oliver-stille", destination: "/", permanent: true },
+      { source: "/sv/oliver-stille", destination: "/sv", permanent: true },
+    ];
+  },
   async headers() {
     return [
       {

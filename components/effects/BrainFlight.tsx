@@ -331,16 +331,19 @@ function freeTarget(gl: WebGL2RenderingContext, t: Target | null) {
 function sdfBrain(x: number, y: number, z: number) {
   const ax = Math.max(Math.abs(x) - 0.1, 0);
   const low = Math.min(1, Math.max(0, (-y - 0.12) / 0.55));
-  const rx = 0.98 * (1 - 0.22 * low);
-  const ry = 0.74 * (1 - 0.1 * low);
-  const rz = 0.84 * (1 - 0.08 * low) * (z > 0 ? 1.08 : 1);
+  // Give the cortex a wider, shallower silhouette and a visible inter-hemisphere
+  // cleft; a smooth sphere reads as a decorative orb, not a brain.
+  const rx = 1.08 * (1 - 0.22 * low);
+  const ry = 0.78 * (1 - 0.1 * low);
+  const rz = 0.72 * (1 - 0.08 * low) * (z > 0 ? 1.08 : 1);
   const e = Math.sqrt((ax / rx) ** 2 + (y / ry) ** 2 + (z / rz) ** 2) - 1;
   const fold =
     0.045 *
     Math.sin(3.4 * x + 1.9 * Math.sin(2.6 * y)) *
     Math.sin(3.1 * y + 1.4 * Math.sin(3.7 * z)) *
     Math.sin(3.7 * z + 1.2 * Math.sin(3.0 * x));
-  const dBrain = e * 0.74 + fold;
+  const midlineCleft = 0.17 * Math.exp(-((x / 0.075) ** 2)) * Math.min(1, Math.max(0, (y + 0.38) / 0.95));
+  const dBrain = e * 0.74 + fold + midlineCleft;
 
   const by = -0.8, bz = -0.07;
   const ay = y + 0.45, az = z + 0.05;

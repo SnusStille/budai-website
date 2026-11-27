@@ -3,7 +3,6 @@
 import { useEffect } from "react";
 import ScrollProgress from "@/components/ui/ScrollProgress";
 import SectionDots from "@/components/ui/SectionDots";
-import CookieConsent from "@/components/ui/CookieConsent";
 import BackToTop from "@/components/ui/BackToTop";
 import SurpriseToasts from "@/components/ui/SurpriseToasts";
 import Signature from "@/components/ui/Signature";
@@ -20,9 +19,12 @@ import WhatsNew from "@/components/ui/WhatsNew";
 import Shortcuts from "@/components/ui/Shortcuts";
 import Footer from "@/components/sections/Footer";
 import WorldStage from "@/components/experience/WorldStage";
+import AmbientDepthField from "@/components/experience/AmbientDepthField";
+import ShowcaseFilm from "@/components/sections/ShowcaseFilm";
+import Faq from "@/components/sections/Faq";
+import MobilePlaygroundNudge from "@/components/ui/MobilePlaygroundNudge";
 import About from "@/components/sections/About";
 import AIPlayground from "@/components/sections/AIPlayground";
-import BuilderCompanion from "@/components/sections/BuilderCompanion";
 
 
 export default function Home() {
@@ -81,6 +83,7 @@ export default function Home() {
       <ScrollProgress />
       <SectionDots />
       <div className="universe-atmosphere" aria-hidden="true" />
+      <AmbientDepthField />
 
       <div className="relative z-10">
         <Navbar />
@@ -90,21 +93,22 @@ export default function Home() {
         <LazyEgg />
         <Hero />
         <BrainScrollStory />
+        <ShowcaseFilm />
         <ErrorBoundary>
           <AIPlayground />
         </ErrorBoundary>
         <Capabilities />
         <About />
+        <Faq />
         <Journey />
         <Footer />
       </div>
 
       <BackToTop />
+      <MobilePlaygroundNudge />
       <SurpriseToasts />
       <Signature />
       <FocusMode />
-      <CookieConsent />
-      <BuilderCompanion />
     </main>
   );
 }

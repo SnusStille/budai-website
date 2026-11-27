@@ -16,12 +16,12 @@ export const translations = {
     },
     hero: {
       badge: "Utvecklarförhandsvisning",
-      title1: "AI som tar",
-      title2: "arbetet vidare",
+      title1: "Ge plats åt",
+      title2: "det viktiga.",
       titleAccent: "Sverige",
       words: [],
       subtitle:
-        "Byggd i Sverige för riktigt vardagsarbete. Skriv, analysera, planera och gör rörig kontext till konkret handling på svenska och engelska — prova gratis direkt i Playground.",
+        "En AI-arbetsyta för skrivande, planering och analys på svenska eller engelska. Börja som gäst i Playground.",
       ctaPrimary: "Öppna Playground",
       ctaSecondary: "Gå med i väntelistan",
     },
@@ -96,7 +96,7 @@ export const translations = {
     },
     cookie: {
       title: "Vi använder cookies",
-      text: "Nödvändig lagring för sajten. Anonym analys laddas bara om du accepterar.",
+      text: "Nödvändig lagring för sajten. Sidvisningar och grova kontakt-/väntelistehändelser mäts bara om du accepterar.",
       accept: "Acceptera",
       decline: "Avböj",
       more: "Läs mer",
@@ -119,12 +119,12 @@ export const translations = {
     },
     hero: {
       badge: "Developer Preview",
-      title1: "AI that moves",
-      title2: "work forward",
+      title1: "Make room for",
+      title2: "what matters.",
       titleAccent: "Sweden",
       words: [],
       subtitle:
-        "Built in Sweden for real everyday work. Write, analyze, plan, and turn messy context into clear action in Swedish and English — free to try in the live Playground right now.",
+        "A workspace for writing, planning, and analysis in Swedish or English. Start in the Playground as a guest.",
       ctaPrimary: "Open Playground",
       ctaSecondary: "Join the waitlist",
     },
@@ -199,7 +199,7 @@ export const translations = {
     },
     cookie: {
       title: "We use cookies",
-      text: "Essential storage for the site. Anonymous analytics loads only if you accept.",
+      text: "Essential site storage. Page views and coarse contact/waitlist events are measured only if you accept.",
       accept: "Accept",
       decline: "Decline",
       more: "Learn more",

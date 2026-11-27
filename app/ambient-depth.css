@@ -1,0 +1,13 @@
+/* One continuous, quiet 3D orbit behind the existing neural brain. */
+.universe-depth-field { position:fixed; z-index:0; top:3vh; right:-11vw; width:min(88vw,1320px); height:min(88vh,860px); overflow:visible; pointer-events:none; opacity:.58; perspective:1100px; transition:opacity .65s ease; }
+.ambient-depth-rig { position:absolute; inset:0; transform-style:preserve-3d; transform:rotateX(calc(5deg + var(--ambient-pointer-y,0deg))) rotateY(calc(-8deg + var(--ambient-pointer-x,0deg))); animation:ambient-depth-drift 34s ease-in-out infinite alternate; }
+.ambient-orbit { position:absolute; inset:0; width:100%; height:100%; overflow:visible; transform:rotateX(68deg) rotateZ(-14deg); filter:drop-shadow(0 0 18px #76d6e61b); }
+.ambient-orbit-track,.ambient-orbit-trace { fill:none; vector-effect:non-scaling-stroke; }
+.ambient-orbit-track { stroke:#91deea36; stroke-width:1.2; }
+.ambient-orbit-trace { stroke:#d2fbffb2; stroke-width:2; stroke-linecap:round; stroke-dasharray:480 2600; animation:ambient-orbit-flow 32s linear infinite; }
+@keyframes ambient-depth-drift { from { transform:rotateX(calc(3deg + var(--ambient-pointer-y,0deg))) rotateY(calc(-10deg + var(--ambient-pointer-x,0deg))) translate3d(0,0,0); } to { transform:rotateX(calc(7deg + var(--ambient-pointer-y,0deg))) rotateY(calc(-6deg + var(--ambient-pointer-x,0deg))) translate3d(-6px,5px,0); } }
+@keyframes ambient-orbit-flow { to { stroke-dashoffset:-3080; } }
+.budai-ambient-paused .ambient-depth-rig,.budai-ambient-paused .ambient-orbit-trace { animation-play-state:paused!important; }
+html[data-chapter]:not([data-chapter="intelligence"]) .universe-depth-field { opacity:0; }
+@media(max-width:767px) { .universe-depth-field { top:7vh; right:-54vw; width:142vw; height:72vh; opacity:.42; }.ambient-orbit { transform:rotateX(72deg) rotateZ(-12deg); } }
+@media(prefers-reduced-motion:reduce) { .universe-depth-field,.ambient-depth-rig,.ambient-orbit-trace { animation:none!important; }.universe-depth-field { opacity:.32; transition:none; } }

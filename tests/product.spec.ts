@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 
 declare global {
-  interface Window { __chatRequest: Record<string, unknown> | null; __streamCancelled: boolean; }
+  interface Window { __chatRequest: Record<string, unknown> | null; __streamCancelled: boolean; __analyticsEvents: unknown[][]; __clipboardWrites: string[]; __sharePayloads: Array<{ title: string; text: string; url: string }>; }
 }
 
 test.beforeEach(async ({ page }) => {
@@ -102,12 +102,12 @@ test("Stop response cancels the existing stream reader and releases the composer
 test("Playground error/retry state remains functional without a configured model provider and preserves daily quota on failure", async ({ page }) => {
   await page.route("**/api/playground", route => route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ error: "Temporarily unavailable. Please retry." }) }));
   await page.goto("/#playground");
-  await expect(page.locator("#playground").getByText("12/12 messages left today")).toBeVisible();
+  await expect(page.locator("#playground").getByText("5/5 messages left today")).toBeVisible();
   const input = page.getByRole("textbox", { name: "Message BudAI", exact: true });
   await input.fill("Help me plan tomorrow.");
   await input.press("Enter");
   await expect(page.getByText("Temporarily unavailable. Please retry.", { exact: true })).toBeVisible();
-  await expect(page.locator("#playground").getByText("12/12 messages left today")).toBeVisible();
+  await expect(page.locator("#playground").getByText("5/5 messages left today")).toBeVisible();
   await expect(input).toBeEnabled();
   await expect(page.locator("[data-global-loader]")).toHaveCount(0);
 });
@@ -130,6 +130,8 @@ test("capability actions prefill the REAL Playground instead of a second Hero As
 });
 
 test("waitlist keeps native validation, company details, referral controls, and honest failure", async ({ page }) => {
+  const qaIp = `192.0.2.${Math.floor(Math.random() * 254) + 1}`;
+  await page.route("**/api/waitlist", (route) => route.continue({ headers: { ...route.request().headers(), "x-forwarded-for": qaIp } }));
   await page.goto("/#waitlist");
   const form = page.locator("#waitlist form");
   const email = form.getByRole("textbox", { name: "Email", exact: true });
@@ -271,6 +273,19 @@ test("cookie choice is the single consent source and can be changed later", asyn
 });
 
 
+test("cookie consent and withdrawal are reachable from a direct contact-page visit", async ({ page }) => {
+  await page.addInitScript(() => localStorage.removeItem("budai-cookies"));
+  await page.goto("/contact");
+  const banner = page.getByRole("dialog", { name: /cookies/i });
+  await expect(banner).toBeVisible({ timeout: 10_000 });
+  await banner.getByRole("button", { name: "Accept", exact: true }).click();
+  const settings = page.getByRole("button", { name: "Cookie settings", exact: true }).last();
+  await expect(settings).toBeVisible();
+  await settings.click();
+  await banner.getByRole("button", { name: "Decline", exact: true }).click();
+  expect(await page.evaluate(() => localStorage.getItem("budai-cookies"))).toBe("declined");
+});
+
 test("plans and waitlist make no discount, price or launch-date promise", async ({ page }) => {
   await page.goto("/#waitlist");
   const waitlist = page.locator("#waitlist");
@@ -324,19 +339,21 @@ test("admin auth uses a server-set session cookie and /admin stays out of indexe
 
 test("waitlist API validates server-side, requires consent and quietly drops bots", async ({ request }) => {
   const base = { email: "qa-signup@example.invalid", name: "QA", consent: true, account_type: "individual" };
-  const noConsent = await request.post("/api/waitlist", { data: { ...base, consent: false } });
+  // Keep repeated local runs isolated from the app's in-memory rate limit.
+  const headers = { "x-forwarded-for": `192.0.2.${Math.floor(Math.random() * 254) + 1}` };
+  const noConsent = await request.post("/api/waitlist", { data: { ...base, consent: false }, headers });
   expect(noConsent.status()).toBe(400);
   expect((await noConsent.json()).error).toBe("consent_required");
 
-  const badEmail = await request.post("/api/waitlist", { data: { ...base, email: "not-an-email" } });
+  const badEmail = await request.post("/api/waitlist", { data: { ...base, email: "not-an-email" }, headers });
   expect(badEmail.status()).toBe(400);
   expect((await badEmail.json()).error).toBe("invalid_email");
 
   // A filled honeypot gets a 200 but must never reach the database.
-  const bot = await request.post("/api/waitlist", { data: { ...base, website: "https://spam.example" } });
+  const bot = await request.post("/api/waitlist", { data: { ...base, website: "https://spam.example" }, headers });
   expect(bot.status()).toBe(200);
 
-  const real = await request.post("/api/waitlist", { data: base });
+  const real = await request.post("/api/waitlist", { data: base, headers });
   // No database is configured in the browser QA environment.
   expect([200, 503]).toContain(real.status());
 });
@@ -526,7 +543,8 @@ test("social metadata uses one image URL and publishes Organization JSON-LD (A7/
     return {
       og: meta('meta[property="og:image"]'),
       twitter: meta('meta[name="twitter:image"]'),
-      ld: JSON.parse(raw) as { "@graph"?: Array<{ "@type"?: string }> },
+      title: document.title,
+      ld: JSON.parse(raw) as { "@graph"?: Array<{ "@type"?: string; name?: string; email?: string }> },
     };
   });
   expect(head.og).toBeTruthy();
@@ -535,6 +553,10 @@ test("social metadata uses one image URL and publishes Organization JSON-LD (A7/
   const types = (head.ld["@graph"] ?? []).map((node) => node["@type"]);
   expect(types).toContain("SoftwareApplication");
   expect(types).toContain("Organization");
+  expect(types).toContain("Person");
+  expect(head.title).toContain("Oliver Stille");
+  const organization = head.ld["@graph"]?.find((node) => node["@type"] === "Organization");
+  expect(organization?.email).toBe("info@stilledev.se");
 });
 
 test("daily-limit meter says messages, not credits, in both languages (D2)", async ({ page }) => {
@@ -549,6 +571,193 @@ test("daily-limit meter says messages, not credits, in both languages (D2)", asy
   await expect(sv).toBeVisible();
   await expect(sv).toContainText("meddelanden kvar idag");
   expect(await sv.textContent()).not.toMatch(/credits/i);
+});
+
+test("hero contact action opens the localized contact page", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.locator(".hero-contact")).toHaveAttribute("href", "/contact");
+  await expect(page.locator(".hero-contact")).toContainText("Contact us");
+
+  await page.goto("/sv");
+  const heroContact = page.locator(".hero-contact");
+  await expect(heroContact).toHaveAttribute("href", "/sv/contact");
+  await expect(heroContact).toContainText("Kontakta oss");
+  await heroContact.click();
+  await expect(page).toHaveURL(/\/sv\/contact$/);
+  await expect(page.getByRole("link", { name: "info@stilledev.se", exact: true }).first()).toBeVisible();
+});
+
+test("contact email is canonical in both languages and the enquiry form gives a durable success state", async ({ page }) => {
+  await page.route("**/api/contact", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true }) }));
+  await page.goto("/contact");
+  await expect(page.getByRole("link", { name: "info@stilledev.se", exact: true }).first()).toHaveAttribute("href", "mailto:info@stilledev.se");
+  const form = page.locator("form").last();
+  await form.locator('input[autocomplete="name"]').fill("QA Visitor");
+  await form.locator('input[autocomplete="email"]').fill("qa@example.invalid");
+  await form.locator("textarea").fill("A test enquiry.");
+  await form.locator('input[type="checkbox"]').check();
+  await form.getByRole("button", { name: "Send message" }).click();
+  await expect(page.getByRole("heading", { name: "Message received" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "info@stilledev.se", exact: true }).last()).toHaveAttribute("href", "mailto:info@stilledev.se");
+
+  await page.goto("/sv/contact");
+  await expect(page.getByRole("link", { name: "info@stilledev.se", exact: true }).first()).toHaveAttribute("href", "mailto:info@stilledev.se");
+  await expect(page.getByRole("heading", { name: "Kontakta Stilledev" })).toBeVisible();
+});
+
+test("contact email copy gives localized confirmation without losing the mailto action", async ({ page }) => {
+  await page.addInitScript(() => {
+    window.__clipboardWrites = [];
+    Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: async (text: string) => { window.__clipboardWrites.push(text); } } });
+  });
+  await page.goto("/contact");
+  await expect(page.getByRole("link", { name: /info@stilledev\.se/ }).first()).toHaveAttribute("href", "mailto:info@stilledev.se");
+  await page.getByRole("button", { name: "Copy email", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Copied", exact: true })).toBeVisible();
+  expect(await page.evaluate(() => window.__clipboardWrites)).toEqual(["info@stilledev.se"]);
+
+  await page.goto("/sv/contact");
+  await page.getByRole("button", { name: "Kopiera e-post", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Kopierad", exact: true })).toBeVisible();
+});
+
+test("footer sharing copies the localized URL and the back-to-top control doubles as a quiet reading-progress cue", async ({ page }) => {
+  await page.addInitScript(() => {
+    window.__clipboardWrites = [];
+    Object.defineProperty(navigator, "share", { configurable: true, value: undefined });
+    Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: async (text: string) => { window.__clipboardWrites.push(text); } } });
+  });
+  await page.goto("/");
+  await page.locator("#continuation").scrollIntoViewIfNeeded();
+  await page.getByRole("button", { name: "Share BudAI", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Link copied", exact: true })).toBeVisible();
+  const homeUrl = new URL("/", page.url()).href;
+  expect(await page.evaluate(() => window.__clipboardWrites)).toEqual([homeUrl]);
+  const progressRing = page.locator("[data-scroll-progress]");
+  await expect(progressRing).toBeVisible();
+  await expect.poll(async () => Number(await progressRing.getAttribute("data-scroll-progress"))).toBeGreaterThan(0.8);
+  await page.getByRole("button", { name: "Back to top", exact: true }).click();
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
+
+  await page.goto("/sv");
+  await page.locator("#continuation").scrollIntoViewIfNeeded();
+  await page.getByRole("button", { name: "Dela BudAI", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Länk kopierad", exact: true })).toBeVisible();
+  const svUrl = new URL("/sv", page.url()).href;
+  expect(await page.evaluate(() => window.__clipboardWrites.at(-1))).toBe(svUrl);
+  await expect(page.getByRole("button", { name: "Till toppen", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Till toppen", exact: true }).click();
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
+});
+
+test("contact and footer utility actions keep touch targets and avoid horizontal overflow on narrow phones", async ({ page }) => {
+  for (const width of [320, 390]) {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto("/sv/contact");
+    const copyButton = page.getByRole("button", { name: "Kopiera e-post", exact: true });
+    await expect(copyButton).toBeVisible();
+    expect(await copyButton.evaluate(element => element.getBoundingClientRect().height)).toBeGreaterThanOrEqual(44);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
+
+    await page.goto("/sv");
+    await page.locator("#continuation").scrollIntoViewIfNeeded();
+    const shareButton = page.getByRole("button", { name: "Dela BudAI", exact: true });
+    await expect(shareButton).toBeVisible();
+    const bounds = await shareButton.boundingBox();
+    expect(bounds).toBeTruthy();
+    expect(bounds!.x).toBeGreaterThanOrEqual(0);
+    expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(width + 1);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
+  }
+});
+
+test("footer uses the native share sheet when available without calling the clipboard", async ({ page }) => {
+  await page.addInitScript(() => {
+    window.__sharePayloads = [];
+    window.__clipboardWrites = [];
+    Object.defineProperty(navigator, "share", { configurable: true, value: async (payload: { title: string; text: string; url: string }) => { window.__sharePayloads.push(payload); } });
+    Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: async (text: string) => { window.__clipboardWrites.push(text); } } });
+  });
+  await page.goto("/sv");
+  await page.locator("#continuation").scrollIntoViewIfNeeded();
+  await page.getByRole("button", { name: "Dela BudAI", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Delat", exact: true })).toBeVisible();
+  const payloads = await page.evaluate(() => window.__sharePayloads);
+  expect(payloads).toHaveLength(1);
+  const localizedHome = new URL("/sv", page.url()).href;
+  expect(payloads[0]).toMatchObject({ title: "BudAI by Stilledev", url: localizedHome });
+  expect(await page.evaluate(() => window.__clipboardWrites)).toHaveLength(0);
+});
+
+test("cookie preferences never duplicate the footer control with a fixed bottom button", async ({ page }) => {
+  const settings = page.getByRole("button", { name: /Cookie settings|Cookieinställningar/ });
+  for (const path of ["/", "/sv", "/contact", "/sv/contact", "/legal/privacy", "/labs", "/changelog"]) {
+    await page.goto(path);
+    await expect.poll(() => settings.count()).toBeLessThanOrEqual(1);
+  }
+  await page.goto("/");
+  await expect(page.getByRole("button", { name: /Cookie settings|Cookieinställningar/ })).toHaveCount(1);
+});
+
+test("the landing keeps gentle depth and starter prompts without a random Surprise me action", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  let apiCalls = 0;
+  await page.route("**/api/playground", async route => { apiCalls++; await route.fulfill({ status: 200, body: "Unexpected submission" }); });
+  await page.goto("/");
+  const field = page.locator(".universe-depth-field");
+  await expect(field).toHaveCount(1);
+  expect(await field.evaluate(node => getComputedStyle(node).perspective)).not.toBe("none");
+  const pause = page.getByRole("button", { name: "Pause motion" });
+  await expect(pause).toBeVisible();
+  await pause.click();
+  await expect(page.locator("html")).toHaveClass(/budai-ambient-paused/);
+  await expect(page.locator(".ambient-depth-rig")).toHaveCSS("animation-play-state", "paused");
+  await page.getByRole("button", { name: "Resume motion" }).click();
+  await expect(page.locator("html")).not.toHaveClass(/budai-ambient-paused/);
+  await expect(page.locator(".hero-universe .hero-surprise")).toHaveCount(0);
+  await page.locator(".hero-universe").getByRole("button", { name: "Personal · write & plan" }).click();
+  const input = page.getByRole("textbox", { name: "Message BudAI", exact: true });
+  await expect(input).toHaveValue(/.+/);
+  expect(apiCalls).toBe(0);
+});
+
+test("in-product feedback is localized, keyboard-friendly and gives a clear submitted state", async ({ page }) => {
+  await page.route("**/api/feedback", route => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true }) }));
+  await page.goto("/");
+  const trigger = page.getByRole("button", { name: "Send BudAI feedback" });
+  await expect(trigger).toHaveText("Feedback");
+  await trigger.click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByRole("heading", { name: "What could be better?" })).toBeVisible();
+  await expect(dialog.getByRole("button", { name: "Idea" })).toHaveAttribute("aria-pressed", "true");
+  await dialog.getByRole("button", { name: "Something broke" }).click();
+  await expect(dialog.getByRole("button", { name: "Something broke" })).toHaveAttribute("aria-pressed", "true");
+  await dialog.getByRole("textbox", { name: /Tell us a little more/ }).fill("The new menu is much easier to find.");
+  await dialog.getByRole("button", { name: "Send feedback" }).click();
+  await expect(dialog.getByRole("heading", { name: "Thanks for helping us improve." })).toBeVisible();
+  await dialog.getByRole("button", { name: "Close feedback" }).click();
+  await expect(dialog).toHaveCount(0);
+  await expect(trigger).toBeFocused();
+});
+
+test("business analytics events are opt-in and exclude form or email values", async ({ page }) => {
+  await page.addInitScript(() => {
+    window.__analyticsEvents = [];
+    window.va = (...args) => window.__analyticsEvents.push(args);
+  });
+  await page.goto("/contact");
+  const emailLink = page.getByRole("link", { name: "info@stilledev.se", exact: true }).first();
+  await emailLink.evaluate((element) => element.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true })));
+  expect(await page.evaluate(() => window.__analyticsEvents)).toHaveLength(0);
+
+  await page.getByRole("button", { name: "Cookie settings", exact: true }).last().click();
+  await page.getByRole("dialog").getByRole("button", { name: "Accept", exact: true }).click();
+  await emailLink.evaluate((element) => element.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true })));
+  const events = await page.evaluate(() => window.__analyticsEvents);
+  expect(events.length).toBeGreaterThan(0);
+  expect(JSON.stringify(events)).toContain("contact_email_click");
+  expect(JSON.stringify(events)).not.toContain("info@stilledev.se");
 });
 
 test("the Vercel mirror domain is noindexed but the canonical host is not (A5)", async ({ request }) => {
@@ -643,7 +852,7 @@ test("F1: /sv is a real Swedish page, hreflang is reciprocal and the cookie surv
   expect(svResponse.status()).toBe(200);
   const svHtml = await svResponse.text();
   expect(svHtml).toMatch(/<html[^>]*\blang="sv"/);
-  expect(svHtml).toContain("Fortsätt samtalet.");
+  expect(svHtml).toContain("Prova BudAI.");
 
   // A stored preference is respected by the server, not only after hydration.
   const cookieHtml = await (await request.get("/", { headers: { cookie: "budai-lang=sv" } })).text();
@@ -671,7 +880,7 @@ test("F1: /sv is a real Swedish page, hreflang is reciprocal and the cookie surv
   await page.goto("/sv");
   await expect(page.locator("link[rel='canonical']")).toHaveAttribute("href", /\/sv$/);
   await expect(page.locator("html")).toHaveAttribute("lang", "sv");
-  await expect(page.getByRole("heading", { name: "Fortsätt samtalet." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Prova BudAI." })).toBeVisible();
 
   // The nav switch persists the choice for the next server request.
   await page.goto("/");

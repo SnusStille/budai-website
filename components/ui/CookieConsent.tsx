@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Cookie, X } from "lucide-react";
 import Link from "next/link";
@@ -19,13 +20,17 @@ import {
  */
 export default function CookieConsent({ forceDocumentNavigation = false }: { forceDocumentNavigation?: boolean } = {}) {
   const [visible, setVisible] = useState(false);
+  const pathname = usePathname();
   const { t, lang } = useLang();
+  const isAdminPage = pathname?.startsWith("/admin") ?? false;
 
   useEffect(() => {
-    if (readConsent()) return;
+    const current = readConsent();
+    if (current || isAdminPage) return;
     const timer = window.setTimeout(() => setVisible(true), 2200);
     return () => window.clearTimeout(timer);
-  }, []);
+  }, [isAdminPage]);
+
 
   // "Cookie settings" in the footer lets a visitor change or withdraw consent.
   useEffect(() => {
@@ -34,14 +39,15 @@ export default function CookieConsent({ forceDocumentNavigation = false }: { for
     return () => window.removeEventListener(CONSENT_SETTINGS_EVENT, reopen);
   }, []);
 
-  const save = (choice: ConsentChoice) => {
-    writeConsent(choice);
+  const save = (nextChoice: ConsentChoice) => {
+    writeConsent(nextChoice);
     setVisible(false);
   };
 
   return (
-    <AnimatePresence>
-      {visible && (
+    <>
+      <AnimatePresence>
+      {visible && !isAdminPage && (
         <motion.div
           initial={{ y: 24, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -96,6 +102,7 @@ export default function CookieConsent({ forceDocumentNavigation = false }: { for
           </div>
         </motion.div>
       )}
-    </AnimatePresence>
+      </AnimatePresence>
+    </>
   );
 }

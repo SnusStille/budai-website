@@ -1,15 +1,21 @@
 "use client";
 import { LIMITS } from "@/lib/limits";
 
-import { ArrowDown, ArrowRight, FileText, Languages, Network, Zap } from "lucide-react";
+import { ArrowDown, ArrowRight, FileText, Languages, Mail, Network, Pause, Play, Zap } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useLang } from "@/components/ui/LanguageContext";
 import StockholmClock from "@/components/ui/StockholmClock";
-import { StilledevLink } from "@/components/ui/BudAILogo";
 
 /** Landing hero paired with the persistent single-owner 3D Neural Brain stage. */
 export default function Hero() {
   const { t, lang } = useLang();
   const sv = lang === "sv";
+  const [motionPaused, setMotionPaused] = useState(false);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("budai-ambient-paused", motionPaused);
+    return () => document.documentElement.classList.remove("budai-ambient-paused");
+  }, [motionPaused]);
   const chips = [
     {
       icon: FileText,
@@ -51,15 +57,12 @@ export default function Hero() {
     window.dispatchEvent(new CustomEvent("budai:prompt", { detail: prompt }));
     document.getElementById("playground")?.scrollIntoView({ behavior: "smooth" });
   };
-
   return (
     <section id="intelligence" className="hero-universe" aria-labelledby="hero-title">
-      <div className="hero-light" aria-hidden="true" />
       <div className="hero-content">
         <div className="hero-eyebrow">
           <i className="signal-dot" aria-hidden="true" />
           {t.hero.badge}
-          <span className="hero-edition">BUDAI / 01 · THE SPARK</span>
         </div>
         <h1 id="hero-title" tabIndex={-1}>
           <span>{t.hero.title1}</span>
@@ -67,8 +70,8 @@ export default function Hero() {
         </h1>
         <p className="hero-locale">
           {sv
-            ? "Varje handling börjar med en signal. Byggd i Sverige för arbete på svenska och engelska."
-            : "Every action starts with a signal. Built in Sweden for Swedish and English work."}
+            ? "Byggd i Sverige för arbete på svenska och engelska."
+            : "Built in Sweden for work in Swedish and English."}
         </p>
         <p className="hero-description">{t.hero.subtitle}</p>
         <div className="hero-actions">
@@ -81,8 +84,15 @@ export default function Hero() {
             <ArrowRight size={16} />
           </a>
         </div>
+        <a className="hero-contact" href={sv ? "/sv/contact" : "/contact"}>
+          <span className="hero-contact-icon"><Mail size={15} aria-hidden="true" /></span>
+          <span><small>{sv ? "KONTAKTA STILLEDEV" : "CONTACT STILLEDEV"}</small><b>{sv ? "Kontakta oss" : "Contact us"}</b></span>
+          <ArrowRight size={14} aria-hidden="true" />
+        </a>
         <div className="hero-features" aria-label={sv ? "Prova en idé i Playground" : "Try an idea in Playground"}>
-          <span className="hero-feature-hint">{sv ? "VÄLJ EN IDÉ ATT BÖRJA MED" : "PICK AN IDEA TO GET STARTED"} <ArrowRight size={12} aria-hidden="true" /></span>
+          <span className="hero-feature-hint">
+            <span>{sv ? "VÄLJ EN IDÉ ATT BÖRJA MED" : "PICK AN IDEA TO GET STARTED"} <ArrowRight size={12} aria-hidden="true" /></span>
+          </span>
           {chips.map(({ icon: Icon, label, region, prompt }) => (
             <button
               type="button"
@@ -102,23 +112,27 @@ export default function Hero() {
         </div>
         <p className="hero-product-note">
           {sv
-            ? `En arbetsyta för ditt eget fokus idag och teamets flöden imorgon — prova gratis som gäst (${LIMITS.guest.messagesPerDay}/dag) eller logga in gratis (${LIMITS.member.messagesPerDay}/dag) för minne du kan styra, historik och bildanalys.`
-            : `One workspace for personal focus today and team workflows tomorrow — try free as a guest (${LIMITS.guest.messagesPerDay}/day) or sign in free (${LIMITS.member.messagesPerDay}/day) for memory you control, history, and vision.`}
+            ? `Börja gratis som gäst (${LIMITS.guest.messagesPerDay} meddelanden per dag). Logga in för historik och minne du kan styra (${LIMITS.member.messagesPerDay} meddelanden per dag).`
+            : `Start free as a guest (${LIMITS.guest.messagesPerDay} messages a day). Sign in for history and memory you can control (${LIMITS.member.messagesPerDay} messages a day).`}
         </p>
         <p className="hero-credit">
           {sv ? "Utvecklad av " : "Built by "}
-          <StilledevLink /> <span>·</span> Sweden
+          <a href="#about" className="text-accent-cyan hover:text-white">Stilledev</a> <span>·</span> Sweden
         </p>
         <StockholmClock />
       </div>
       <div className="hero-bottom">
         <span>
-          <i /> 01 — {sv ? "GNISTAN · INTELLIGENSKÄRNAN" : "THE SPARK · INTELLIGENCE CORE"}
+          <i /> {sv ? "FORTSÄTT NEDÅT FÖR ATT SE HUR DET FUNGERAR" : "SCROLL TO SEE HOW IT WORKS"}
         </span>
-        <a href="#playground">
-          {sv ? "Från tanke till handling" : "From intelligence to action"}
+        <a href="#signal" aria-label={sv ? "Utforska hjärnan och signalens väg till Playground" : "Explore the brain and follow the signal to Playground"}>
+          {sv ? "Utforska signalens väg" : "Explore the signal path"}
           <ArrowDown size={14} />
         </a>
+        <button type="button" className="hero-motion-toggle" aria-pressed={motionPaused} onClick={() => setMotionPaused(value => !value)}>
+          {motionPaused ? <Play size={12} aria-hidden="true" /> : <Pause size={12} aria-hidden="true" />}
+          {motionPaused ? (sv ? "Återuppta rörelse" : "Resume motion") : (sv ? "Pausa rörelse" : "Pause motion")}
+        </button>
       </div>
     </section>
   );

@@ -12,6 +12,6 @@ export async function GET(req:NextRequest){
     env:{ adminPassword:adminConfigured(), supabaseUrl:!!process.env.NEXT_PUBLIC_SUPABASE_URL, supabaseAnon:!!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY, serviceRole:!!process.env.SUPABASE_SERVICE_ROLE_KEY, anthropic:!!process.env.ANTHROPIC_API_KEY, openai:!!process.env.OPENAI_API_KEY, siteUrl:!!process.env.NEXT_PUBLIC_SITE_URL, nodeEnv:process.env.NODE_ENV||"unknown" },
     database:{ connected:dbOk, latencyMs:dbMs, tables },
     api:{ healthEndpoint:health },
-    email:{ provider: process.env.RESEND_API_KEY||process.env.SENDGRID_API_KEY ? "configured" : "not_configured", note:"No transactional email provider key detected. Waitlist/contact confirmation emails are therefore not sent; in-app admin notifications are used instead." },
+    email:{ provider: process.env.RESEND_API_KEY && process.env.EMAIL_FROM ? "configured" : "not_configured", note: process.env.RESEND_API_KEY && process.env.EMAIL_FROM ? "Lead notifications are sent to info@stilledev.se; submissions are saved in the CRM before email delivery." : "Transactional email is not configured. Contact and waitlist submissions are still saved in the admin CRM; email notifications and confirmations are not sent." },
   });
 }

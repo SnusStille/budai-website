@@ -3,7 +3,8 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { Menu, X, Globe, Bell } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { Menu, X, Globe, Bell, ArrowUpRight, MessageSquareText } from "lucide-react";
 import { useLang } from "@/components/ui/LanguageContext";
 import BudAIWordmark from "@/components/ui/BudAIWordmark";
 import BudAILogo from "@/components/ui/BudAILogo";
@@ -21,6 +22,7 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [active, setActive] = useState("");
   const { lang, setLang, t } = useLang();
+  const pathname = usePathname();
   const mobileMenu = useRef<HTMLDivElement>(null);
   const menuToggle = useRef<HTMLButtonElement>(null);
 
@@ -65,6 +67,7 @@ export default function Navbar() {
     { label: t.nav.capabilities, href: "#capabilities", id: "capabilities" },
     { label: lang === "sv" ? "Byggaren" : "Builder", href: "#about", id: "about" },
     { label: t.nav.roadmap, href: "#roadmap", id: "roadmap" },
+    { label: "Labs", href: lang === "sv" ? "/sv/labs" : "/labs", id: "labs" },
   ];
 
   const isLinkActive = (id: string) => active === id;
@@ -111,7 +114,6 @@ export default function Navbar() {
                 </span>
               </span>
             </Link>
-            <a href={lang === "sv" ? "/sv/labs" : "/labs"} className="hidden sm:inline-flex items-center rounded-full border border-accent-cyan/25 bg-accent-cyan/[0.06] px-3 py-1.5 text-[11px] font-semibold text-accent-cyan transition-colors hover:bg-accent-cyan/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-cyan">Labs <span aria-hidden="true" className="ml-1">↗</span></a>
             </div>
 
             <div className="hidden lg:flex items-center justify-center gap-0.5">
@@ -121,15 +123,12 @@ export default function Navbar() {
                   <a
                     key={l.href}
                     href={l.href}
-                    className={`relative whitespace-nowrap px-2.5 xl:px-3.5 py-2 text-sm rounded-lg transition-colors ${
-                      isActive
-                        ? "text-white"
-                        : l.id === "playground"
-                          ? "text-accent-cyan hover:text-white hover:bg-white/5"
-                          : "text-muted hover:text-white hover:bg-white/5"
-                    }`}
+                    onClick={() => setMobileOpen(false)}
+                    aria-current={isActive ? "location" : undefined}
+                    title={l.id === "labs" ? (lang === "sv" ? "Labs · under utveckling" : "Labs · under development") : undefined}
+                    className={`relative whitespace-nowrap px-2.5 xl:px-3.5 py-2 text-sm rounded-lg transition-colors ${l.id === "labs" ? "nav-labs-link" : isActive ? "text-white" : l.id === "playground" ? "text-accent-cyan hover:text-white hover:bg-white/5" : "text-muted hover:text-white hover:bg-white/5"}`}
                   >
-                    {l.label}
+                    {l.id === "labs" ? <span className="nav-labs-chip"><i aria-hidden="true" />{l.label}<ArrowUpRight size={12} aria-hidden="true" /></span> : l.label}
                     <span
                       className={`absolute bottom-1 left-1/2 -translate-x-1/2 h-0.5 rounded-full bg-accent-cyan transition-all duration-300 ${
                         isActive ? "w-5 opacity-100 shadow-[0_0_8px_rgba(0,229,255,0.6)]" : "w-0 opacity-0"
@@ -163,15 +162,6 @@ export default function Navbar() {
                 ))}
               </div>
 
-              <button
-                type="button"
-                onClick={() => window.dispatchEvent(new Event("budai:command-palette"))}
-                aria-label={lang === "sv" ? "Öppna kommandopalett (⌘K)" : "Open command palette (⌘K)"}
-                title={lang === "sv" ? "Kommandopalett (⌘K)" : "Command palette (⌘K)"}
-                className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.08] bg-black/30 px-2.5 py-1.5 font-mono text-[10px] text-white/70 transition-colors hover:border-accent-cyan/40 hover:text-white"
-              >
-                <span>⌘K</span>
-              </button>
               <button
                 type="button"
                 onClick={() => window.dispatchEvent(new Event("budai:whats-new"))}
@@ -242,17 +232,13 @@ export default function Navbar() {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.04 }}
                   onClick={() => setMobileOpen(false)}
-                  className={`px-4 py-3.5 text-lg rounded-xl transition-colors ${
-                    isLinkActive(l.id)
-                      ? "text-white bg-white/5 border border-accent-cyan/20"
-                      : "text-white/80 hover:text-white hover:bg-white/5"
-                  }`}
+                  title={l.id === "labs" ? (lang === "sv" ? "Labs · under utveckling" : "Labs · under development") : undefined}
+                  className={`px-4 py-3.5 text-lg rounded-xl transition-colors ${l.id === "labs" ? "nav-labs-mobile" : isLinkActive(l.id) ? "text-white bg-white/5 border border-accent-cyan/20" : "text-white/80 hover:text-white hover:bg-white/5"}`}
                 >
-                  {l.label}
+                  {l.id === "labs" ? <span className="nav-labs-chip"><i aria-hidden="true" />{l.label}<ArrowUpRight size={15} aria-hidden="true" /></span> : l.label}
                 </motion.a>
               ))}
 
-              <a href={lang === "sv" ? "/sv/labs" : "/labs"} onClick={() => setMobileOpen(false)} className="px-4 py-3.5 text-lg rounded-xl text-accent-cyan hover:bg-white/5">Labs</a>
               <div className="flex items-center gap-3 mt-4 px-4">
                 <Globe className="w-4 h-4 text-muted" />
                 <div className="flex p-0.5 rounded-full bg-black/40 border border-white/[0.08]">
@@ -286,17 +272,6 @@ export default function Navbar() {
                   type="button"
                   onClick={() => {
                     setMobileOpen(false);
-                    window.dispatchEvent(new Event("budai:command-palette"));
-                  }}
-                  className="inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.03] px-3.5 py-2 text-xs font-medium text-white/85 hover:text-white"
-                >
-                  <span className="font-mono text-[10px] text-accent-cyan">⌘K</span>
-                  {lang === "sv" ? "Kommandopalett" : "Command palette"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMobileOpen(false);
                     window.dispatchEvent(new Event("budai:whats-new"));
                   }}
                   className="inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.03] px-3.5 py-2 text-xs font-medium text-white/85 hover:text-white"
@@ -310,8 +285,9 @@ export default function Navbar() {
                     setMobileOpen(false);
                     window.dispatchEvent(new Event("budai:feedback"));
                   }}
-                  className="inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.03] px-3.5 py-2 text-xs font-medium text-white/85 hover:text-white"
+                  className="inline-flex min-h-10 items-center gap-2 rounded-full border border-[#82dce6]/25 bg-gradient-to-r from-[#82dce6]/[.09] to-white/[.025] px-3.5 py-2 text-xs font-medium text-white/90 transition-colors hover:border-[#82dce6]/45 hover:text-white"
                 >
+                  <MessageSquareText className="h-3.5 w-3.5 text-[#91e2e8]" aria-hidden="true" />
                   {lang === "sv" ? "Skicka feedback" : "Send feedback"}
                 </button>
               </div>

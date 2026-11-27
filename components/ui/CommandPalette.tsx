@@ -68,14 +68,6 @@ export default function CommandPalette() {
         keywords: "builder 3d workspace ide byggaren kod",
       },
       {
-        id: "labs",
-        label: sv ? "Labs — under utveckling" : "Labs — under development",
-        hint: "↗",
-        icon: Sparkles,
-        action: () => { setOpen(false); router.push(sv ? "/sv/labs" : "/labs"); },
-        keywords: "labs stilledev studio development utveckling oliver grundare",
-      },
-      {
         id: "roadmap",
         label: sv ? "Se Roadmap" : "View Roadmap",
         hint: "05",
@@ -151,18 +143,8 @@ export default function CommandPalette() {
         },
         keywords: "language svenska english translate språk",
       },
-      {
-        id: "discord",
-        label: sv ? "Kontakta Stilledev på Discord" : "Message Stilledev on Discord",
-        icon: Cpu,
-        action: () => {
-          window.open("https://discord.com/users/353944097301594123", "_blank", "noopener,noreferrer");
-          setOpen(false);
-        },
-        keywords: "developer contact discord stilledev kontakt",
-      },
     ],
-    [sv, setLang, goTo, router]
+    [sv, setLang, goTo]
   );
 
   const filtered = useMemo(() => {

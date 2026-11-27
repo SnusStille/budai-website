@@ -2,6 +2,7 @@
 import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { readConsent, subscribeConsent } from "@/lib/consent";
+import { trackBusinessEvent } from "@/lib/analytics/events";
 /** Consent-gated, GDPR-minimal page-view beacon. No IP/UA/fingerprint stored server-side. */
 export default function PageViewTracker(){
   const pathname=usePathname(); const last=useRef("");
@@ -14,5 +15,17 @@ export default function PageViewTracker(){
     };
     send(); return subscribeConsent(()=>{ last.current=""; send(); });
   },[pathname]);
+  useEffect(() => {
+    const onClick = (event: MouseEvent) => {
+      const anchor = (event.target as Element | null)?.closest<HTMLAnchorElement>("a[href]");
+      if (!anchor) return;
+      const href = anchor.getAttribute("href") || "";
+      if (href.startsWith("mailto:")) trackBusinessEvent("contact_email_click");
+      else if (/^\/(?:sv\/)?contact(?:\/|$)/.test(href)) trackBusinessEvent("contact_cta_click");
+      else if (href === "#waitlist") trackBusinessEvent("waitlist_cta_click");
+    };
+    document.addEventListener("click", onClick, true);
+    return () => document.removeEventListener("click", onClick, true);
+  }, []);
   return null;
 }

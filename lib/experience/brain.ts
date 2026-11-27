@@ -87,8 +87,10 @@ export function brainJourneyProgress(y: number, top: number, height: number, vie
 
 /** Stable target: lens changes, never framebuffers on every scroll tick. */
 export function brainFovAt(motion: BrainMotion | undefined, height: number, mobile: boolean) {
-  if (motion?.kind !== "journey") return mobile ? 1.35 : 0.87;
-  return 0.87;
+  // A wider portrait lens keeps the entire brain and story copy in separate
+  // visual lanes instead of letting the model balloon behind mobile text.
+  if (motion?.kind === "journey") return mobile ? 1.28 : 0.87;
+  return mobile ? 1.35 : 0.87;
 }
 
 export function playgroundArrivalAt(progress: number) {

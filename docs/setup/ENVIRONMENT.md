@@ -52,4 +52,4 @@ Set the same variables in Project Settings → Environment Variables (server-onl
 See also [SECURITY.md](../../SECURITY.md) and [GO_LIVE.md](GO_LIVE.md).
 
 
-Optional email: `RESEND_API_KEY` + `EMAIL_FROM` (verified domain) enable contact/waitlist confirmation emails and admin lead alerts (`ADMIN_NOTIFICATION_EMAIL`). Without them, in-app admin notifications are used and nothing is emailed.
+Optional email: `RESEND_API_KEY` + `EMAIL_FROM` (a verified sender on a domain you control) enable contact/waitlist lead notifications to `info@stilledev.se` and submitter confirmations. Contact and waitlist entries are persisted in the admin CRM before email delivery; when the provider is not configured or delivery fails, no email is sent but the saved lead remains available in the dashboard.

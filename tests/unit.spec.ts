@@ -77,8 +77,9 @@ test("code reveal is deterministic, monotonic, bounded, and preserves every sour
 test("mobile brain uses one full-height target and a finite reversible perspective lens", () => {
   const hero = brainFovAt({ kind:"intro", progress:0 }, 844, true);
   expect(hero).toBeGreaterThan(.87);
-  expect(brainFovAt({ kind:"journey", progress:0, entry:0 },844,true)).toBe(.87);
-  expect(brainFovAt({ kind:"journey", progress:.5, entry:1 },844,true)).toBe(.87);
+  expect(brainFovAt({ kind:"journey", progress:0, entry:0 },844,true)).toBe(1.28);
+  expect(brainFovAt({ kind:"journey", progress:.5, entry:1 },844,true)).toBe(1.28);
+  expect(brainFovAt({ kind:"journey", progress:.5, entry:1 },1000,false)).toBe(.87);
   expect(brainFovAt({ kind:"intro", progress:0 },1000,false)).toBe(.87);
   for (const height of [0, 370, 667, 844, 1200]) for (const entry of [0,.1,.5,.9,1]) {
     const fov = brainFovAt({ kind:"journey",progress:entry,entry },height,true);
@@ -179,6 +180,8 @@ test("CHAPTERS renumbers Roadmap to 05 and omits the removed standalone 05 Next 
 
 
 test("daily-limit copy reads the single LIMITS source instead of hardcoded numbers", () => {
+  expect(LIMITS.guest.messagesPerDay).toBe(5);
+  expect(LIMITS.member.messagesPerDay).toBe(20);
   expect(limitFor("guest", "messages")).toBe(LIMITS.guest.messagesPerDay);
   expect(limitFor("member", "messages")).toBe(LIMITS.member.messagesPerDay);
   const copyFiles = [
@@ -189,7 +192,7 @@ test("daily-limit copy reads the single LIMITS source instead of hardcoded numbe
     "components/experience/CapabilityStudioScreen.tsx",
     "lib/experience/developer-room.ts",
   ];
-  const stale = /12\s*\/\s*(?:dag|day)|80\s*\/\s*(?:dag|day)|12 meddelanden|80 meddelanden|12 messages\/day|80 messages\/day|10\s*\/\s*day|35\s*\/\s*day/;
+  const stale = /(?:5|12|20|80)\s*\/\s*(?:dag|day)|(?:5|12|20|80) meddelanden|(?:5|12|20|80) messages\/day|10\s*\/\s*day|35\s*\/\s*day/;
   for (const file of copyFiles) {
     const source = readFileSync(file, "utf8");
     expect(source, `${file} still hardcodes a daily limit`).not.toMatch(stale);

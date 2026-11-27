@@ -1,21 +1,22 @@
 "use client";
 
-import CompanionRestore from "@/components/ui/CompanionRestore";
 import StatusPill from "@/components/ui/StatusPill";
 import Link from "next/link";
-import { useEffect, useRef } from "react";
-import { Github, MessageSquare, Linkedin, Mail, ArrowUpRight } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Github, Linkedin, Mail, ArrowUpRight, Share2 } from "lucide-react";
 import BudAIWordmark from "@/components/ui/BudAIWordmark";
 import {subscribeJourney} from "@/lib/experience/scroll";
 import BudAILogo, { StilledevMark } from "@/components/ui/BudAILogo";
 import { useLang } from "@/components/ui/LanguageContext";
 import { openCookieSettings } from "@/lib/consent";
+import { CONTACT_MAILTO } from "@/lib/contact";
 
 const groups = (lang: string) => [
   {
     title: lang === "sv" ? "Produkt" : "Product",
     links: [
       { label: lang === "sv" ? "Förmågor" : "Capabilities", href: "#capabilities" },
+      { label: lang === "sv" ? "Vanliga frågor" : "FAQ", href: "#faq" },
       { label: "AI Playground", href: "#playground" },
       { label: "Roadmap", href: "#roadmap" },
       { label: lang === "sv" ? "Väntelista" : "Waitlist", href: "#waitlist" },
@@ -24,8 +25,8 @@ const groups = (lang: string) => [
   {
     title: lang === "sv" ? "Företag" : "Company",
     links: [
-      { label: "Labs", href: lang === "sv" ? "/sv/labs" : "/labs" },
-      { label: lang === "sv" ? "Byggaren" : "Builder", href: "#about" },
+      { label: "Oliver Stille", href: "#oliver-stille" },
+      { label: lang === "sv" ? "Om Stilledev" : "About Stilledev", href: "#about" },
       { label: lang === "sv" ? "Kontakt" : "Contact", href: lang === "sv" ? "/sv/contact" : "/contact" },
       { label: lang === "sv" ? "Vad är nytt" : "What's new", href: "/changelog" },
     ],
@@ -44,9 +45,8 @@ const groups = (lang: string) => [
 
 const socials = [
   { icon: Github, href: "https://github.com/SnusStille", label: "GitHub" },
-  { icon: MessageSquare, href: "https://discord.com/users/353944097301594123", label: "Discord" },
   { icon: Linkedin, href: "https://www.linkedin.com/in/oliver-stille-8bb48a403/", label: "LinkedIn" },
-  { icon: Mail, href: "mailto:Stilleinc@hotmail.com", label: "Email" },
+  { icon: Mail, href: CONTACT_MAILTO, label: "Email" },
 ];
 
 export default function Footer() {
@@ -54,15 +54,44 @@ export default function Footer() {
   useEffect(()=>subscribeJourney(frame=>{const el=footer.current;if(!el)return;const p=frame.closing??0;el.style.setProperty("--closing-progress",String(p));el.dataset.closingProgress=p.toFixed(4);}),[]);
   const { lang, t } = useLang();
   const groupsData = groups(lang);
+  const [shareState, setShareState] = useState<"idle" | "shared" | "copied" | "error">("idle");
+
+  const shareBudAI = async () => {
+    const url = new URL(lang === "sv" ? "/sv" : "/", window.location.origin).href;
+    const payload = {
+      title: "BudAI by Stilledev",
+      text: lang === "sv" ? "Upptäck BudAI från Stilledev." : "Explore BudAI by Stilledev.",
+      url,
+    };
+    if (navigator.share) {
+      try {
+        await navigator.share(payload);
+        setShareState("shared");
+        window.setTimeout(() => setShareState("idle"), 2400);
+        return;
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      setShareState("copied");
+      window.setTimeout(() => setShareState("idle"), 2400);
+    } catch {
+      setShareState("error");
+      window.setTimeout(() => setShareState("idle"), 3000);
+    }
+  };
+
 
   return (
     <footer ref={footer} id="continuation" className="site-footer relative border-t border-white/[0.04]">
       <div className="closing-composition">
         <div className="closing-field" aria-hidden="true"><span/><i data-outro-anchor/><span/></div>
-        <span className="closing-kicker">{lang==="sv"?"SIGNALEN FORTSÄTTER":"THE SIGNAL CONTINUES"}</span>
-        <h2>{lang==="sv"?"Fortsätt samtalet.":"Continue the conversation."}</h2>
-        <p>{lang==="sv"?"Öppna Playground för att testa på svenska eller engelska — och var med när nästa steg byggs.":"Open the Playground to test live in Swedish or English — and help shape what gets built next."}</p>
-        <a href="#playground">{lang==="sv"?"Tillbaka till Playground":"Back to Playground"}<ArrowUpRight size={15}/></a>
+        <span className="closing-kicker">{lang==="sv"?"STILLEDEV · BUDAI":"STILLEDEV · BUDAI"}</span>
+        <h2>{lang==="sv"?"Prova BudAI.":"Try BudAI."}</h2>
+        <p>{lang==="sv"?"Testa arbetsytan på svenska eller engelska. För projektförfrågningar och samarbeten, kontakta Stilledev.":"Try the workspace in Swedish or English. For project enquiries and collaborations, contact Stilledev."}</p>
+        <a href="#playground">{lang==="sv"?"Öppna Playground":"Open the Playground"}<ArrowUpRight size={15}/></a>
       </div>
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent-cyan/20 to-transparent" />
       <div className="max-w-7xl mx-auto px-6 lg:px-8 py-14 md:py-16">
@@ -74,8 +103,8 @@ export default function Footer() {
             </Link>
             <p className="text-sm text-muted leading-relaxed max-w-sm mb-6">
               {lang === "sv"
-                ? "Utvecklad i Sverige av Stilledev för riktigt arbete på svenska och engelska — med live Playground, minne du kan styra och tydlig väg från tanke till handling."
-                : "Built in Sweden by Stilledev for real work in Swedish and English — featuring a live Playground, memory you control, and a clear path from raw context to action."}
+                ? "BudAI utvecklas av Stilledev, grundat av Oliver Stille i Sverige. En AI-arbetsyta för skrivande, planering och analys på svenska och engelska."
+                : "BudAI is built by Stilledev, founded by Oliver Stille in Sweden. An AI workspace for writing, planning and analysis in Swedish and English."}
             </p>
             <div className="flex items-center gap-2.5">
               {socials.map((s) => (
@@ -116,6 +145,16 @@ export default function Footer() {
           ))}
         </div>
 
+        <div className="mt-10 flex flex-wrap items-center justify-end gap-3 border-t border-white/[0.04] pt-6">
+          <button type="button" onClick={shareBudAI} className="inline-flex min-h-11 items-center gap-2 rounded-full border border-white/10 px-4 py-2 text-sm text-muted transition-colors hover:border-accent-cyan/30 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-cyan/50">
+            <Share2 className="h-4 w-4 text-accent-cyan" aria-hidden="true" />
+            {shareState === "shared" ? (lang === "sv" ? "Delat" : "Shared") : shareState === "copied" ? (lang === "sv" ? "Länk kopierad" : "Link copied") : shareState === "error" ? (lang === "sv" ? "Kunde inte dela" : "Could not share") : (lang === "sv" ? "Dela BudAI" : "Share BudAI")}
+          </button>
+          <span className="sr-only" role="status" aria-live="polite">
+            {shareState === "shared" ? (lang === "sv" ? "Delningsmenyn öppnad." : "Share sheet opened.") : shareState === "copied" ? (lang === "sv" ? "Länk kopierad." : "Link copied.") : shareState === "error" ? (lang === "sv" ? "Kunde inte dela eller kopiera länken." : "Could not share or copy the link.") : ""}
+          </span>
+        </div>
+
         <div className="mt-14 pt-8 border-t border-white/[0.04] flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-sm text-muted">{t.footer.rights}</p>
           <p className="text-sm text-muted flex items-center gap-1.5">
@@ -124,7 +163,6 @@ export default function Footer() {
             <span className="text-muted/30">·</span>
             <span className="text-xs">{lang === "sv" ? "Sverige" : "Sweden"}</span>
           </p>
-          <CompanionRestore />
           <button
             type="button"
             onClick={openCookieSettings}

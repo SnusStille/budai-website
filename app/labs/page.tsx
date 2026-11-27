@@ -1,21 +1,52 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
-import StilledevLabs from "@/components/sections/StilledevLabs";
 import "./labs.css";
+import LabsShareButton from "@/components/sections/LabsShareButton";
+
+const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://stilledev.se").replace(/\/$/, "");
 
 export async function generateMetadata(): Promise<Metadata> {
   const h = await headers();
   const sv = h.get("x-budai-lang") === "sv";
-  const swedishPath = h.get("x-budai-path") === "/sv/labs";
-  const base = (process.env.NEXT_PUBLIC_SITE_URL || "https://stilledev.se").replace(/\/$/, "");
+  const path = h.get("x-budai-path") === "/sv/labs" ? "/sv/labs" : "/labs";
+  const canonical = `${siteUrl}${path}`;
+  const title = sv ? "Stilledev Labs — under utveckling" : "Stilledev Labs — under development";
+  const description = sv ? "Stilledev Labs är under utveckling. Något nytt tar form." : "Stilledev Labs is under development. Something new is taking shape.";
   return {
-    title: { absolute: "Labs" },
-    description: sv ? "Labs från Stilledev EF är under utveckling." : "Labs by Stilledev EF is under development.",
+    title: { absolute: title },
+    description,
+    alternates: { canonical, languages: { en: `${siteUrl}/labs`, sv: `${siteUrl}/sv/labs`, "x-default": `${siteUrl}/labs` } },
     robots: { index: false, follow: true },
-    alternates: { canonical: swedishPath ? "/sv/labs" : "/labs", languages: { en: `${base}/labs`, sv: `${base}/sv/labs`, "x-default": `${base}/labs` } },
-    openGraph: { title: "Labs", description: sv ? "Labs från Stilledev EF är under utveckling." : "Labs by Stilledev EF is under development." },
-    twitter: { card: "summary_large_image", title: "Labs", description: sv ? "Labs från Stilledev EF är under utveckling." : "Labs by Stilledev EF is under development.", images: ["/og.png"] },
+    openGraph: { type: "website", url: canonical, siteName: "Stilledev", title, description, images: [{ url: "/og.png", width: 1200, height: 630, alt: "Stilledev" }], locale: sv ? "sv_SE" : "en_US" },
+    twitter: { card: "summary_large_image", title, description, images: ["/og.png"] },
   };
 }
 
-export default function LabsPage() { return <StilledevLabs />; }
+export default async function LabsPage() {
+  const sv = (await headers()).get("x-budai-lang") === "sv";
+  return (
+    <main id="main" className="labs-hold-page">
+      <div className="labs-hold-grid" aria-hidden="true" />
+      <header className="labs-hold-header">
+        <span className="labs-hold-brand">STILLEDEV<span>.</span></span>
+        <div className="labs-hold-nav">
+          <a className="labs-back-home" href={sv ? "/sv" : "/"}>
+            <span aria-hidden="true">←</span>{sv ? "Tillbaka till BudAI" : "Back to BudAI"}
+          </a>
+          <nav aria-label={sv ? "Välj språk" : "Choose language"}>
+            <a href="/labs" aria-current={!sv ? "page" : undefined}>EN</a>
+            <a href="/sv/labs" aria-current={sv ? "page" : undefined}>SV</a>
+          </nav>
+        </div>
+      </header>
+      <section className="labs-hold-message" aria-labelledby="labs-hold-title">
+        <p className="labs-hold-eyebrow">{sv ? "STILLEDEV LABS" : "STILLEDEV LABS"}</p>
+        <h1 id="labs-hold-title">STILLEDEV<br /><span>LABS</span></h1>
+        <p className="labs-hold-status">{sv ? "UNDER UTVECKLING" : "UNDER DEVELOPMENT"}</p>
+        <p className="labs-hold-line">{sv ? "Något nytt tar form." : "Something new is taking shape."}</p>
+        <LabsShareButton lang={sv ? "sv" : "en"} />
+      </section>
+      <span className="labs-hold-index" aria-hidden="true">S / L — 01</span>
+    </main>
+  );
+}
