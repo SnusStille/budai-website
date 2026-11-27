@@ -11,11 +11,11 @@ export async function generateMetadata(): Promise<Metadata> {
   const path = h.get("x-budai-path") === "/sv/labs" ? "/sv/labs" : "/labs";
   const canonical = `${siteUrl}${path}`;
   const title = sv
-    ? "Stilledev Labs — Berätta om din idé"
-    : "Stilledev Labs — Share your idea";
+    ? "Stilledev Labs — Från idé till färdig digital lösning"
+    : "Stilledev Labs — From idea to finished digital product";
   const description = sv
-    ? "Beskriv din idé för BudAI. Få ärlig feedback, smarta förslag och en tydlig väg framåt – tillsammans med Oliver Stille."
-    : "Describe your idea to BudAI. Get honest feedback, smart suggestions, and a clear path forward – together with Oliver Stille.";
+    ? "Jag heter Oliver Stille och bygger hemsidor, webbappar, FiveM/Roblox-script och skräddarsydda digitala lösningar. Börja med att beskriv din idé – BudAI hjälper oss förstå omfattningen, sedan hör jag av mig personligen."
+    : "I'm Oliver Stille and I build websites, web apps, FiveM/Roblox scripts, and custom digital solutions. Start by describing your idea — BudAI helps us understand the scope, then I'll get in touch personally.";
   return {
     title: { absolute: title },
     description,

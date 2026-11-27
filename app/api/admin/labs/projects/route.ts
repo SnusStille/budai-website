@@ -35,6 +35,7 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const id = searchParams.get("id");
   const status = searchParams.get("status");
+  const category = searchParams.get("category");
   const q = searchParams.get("q");
   const limit = Math.min(parseInt(searchParams.get("limit") || "50", 10), 200);
 
@@ -91,6 +92,10 @@ export async function GET(req: NextRequest) {
 
   if (status && status !== "all") {
     query = query.eq("status", status);
+  }
+
+  if (category && category !== "all") {
+    query = query.eq("project_category", category);
   }
 
   if (q) {

@@ -36,6 +36,7 @@ type ProjectStatus =
 type ProjectCategory =
   | "website" | "web_application" | "mobile_app" | "ai_service"
   | "automation" | "ecommerce" | "booking_system" | "saas_platform"
+  | "game_development" | "roblox" | "fivem"
   | "integration" | "consulting" | "other" | "unknown";
 
 const STATUS_LABELS: Record<ProjectStatus, { label: string; color: string }> = {
@@ -59,7 +60,10 @@ const CATEGORY_LABELS: Record<ProjectCategory, string> = {
   ecommerce: "E-handel",
   booking_system: "Bokningssystem",
   saas_platform: "SaaS-plattform",
-  integration: "Integration",
+  game_development: "Spelutveckling",
+  roblox: "Roblox",
+  fivem: "FiveM/GTA V",
+  integration: "Integration/Skräddarsytt",
   consulting: "Konsultation",
   other: "Övrigt",
   unknown: "Okänd",
@@ -156,6 +160,7 @@ export default function LabsProjects() {
   const [error, setError] = useState("");
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<"updated" | "priority" | "created">("updated");
   const [selected, setSelected] = useState<string | null>(null);
   const [detail, setDetail] = useState<{ project: Project; messages: Message[]; notes: Note[] } | null>(null);
@@ -168,6 +173,7 @@ export default function LabsProjects() {
     try {
       const params = new URLSearchParams();
       if (statusFilter !== "all") params.set("status", statusFilter);
+      if (categoryFilter !== "all") params.set("category", categoryFilter);
       if (q) params.set("q", q);
       params.set("limit", "100");
       const res = await fetch(`/api/admin/labs/projects?${params}`, {
@@ -190,7 +196,7 @@ export default function LabsProjects() {
       }
     } catch { setError("Network error"); }
     finally { setLoading(false); }
-  }, [statusFilter, q, sortBy]);
+  }, [statusFilter, categoryFilter, q, sortBy]);
 
   const openProject = useCallback(async (id: string) => {
     setSelected(id);
@@ -320,6 +326,28 @@ export default function LabsProjects() {
             <button type="button" className={btn} onClick={() => void loadProjects()}>
               <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
             </button>
+          </div>
+
+          {/* Category filter chips */}
+          <div className="flex flex-wrap gap-1.5">
+            {(["all", "website", "web_application", "mobile_app", "game_development", "fivem", "roblox", "ai_service", "automation", "ecommerce", "booking_system", "saas_platform", "integration", "other"] as const).map((cat) => {
+              const isActive = categoryFilter === cat;
+              const label = cat === "all" ? "Alla" : CATEGORY_LABELS[cat as ProjectCategory] || cat;
+              return (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => setCategoryFilter(cat)}
+                  className={`px-2.5 py-1 text-[10.5px] font-medium rounded-full border transition-all ${
+                    isActive
+                      ? "border-accent-cyan/40 bg-accent-cyan/10 text-accent-cyan"
+                      : "border-white/[0.08] bg-white/[0.02] text-muted hover:text-white/80 hover:border-white/15"
+                  }`}
+                >
+                  {label}
+                </button>
+              );
+            })}
           </div>
 
           {error && (

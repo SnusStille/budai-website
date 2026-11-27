@@ -8,7 +8,7 @@ import { Menu, X, Globe, Bell, ArrowUpRight, MessageSquareText } from "lucide-re
 import { useLang } from "@/components/ui/LanguageContext";
 import BudAIWordmark from "@/components/ui/BudAIWordmark";
 import BudAILogo from "@/components/ui/BudAILogo";
-import StilledevLogo from "@/components/ui/StilledevLogo";
+import LangSwitcher from "@/components/ui/LangSwitcher";
 import { subscribeJourney } from "@/lib/experience/scroll";
 
 
@@ -106,8 +106,8 @@ export default function Navbar() {
               </span>
               <span className="flex flex-col leading-none">
                 <BudAIWordmark className="nav-wordmark" />
-                <span className="mt-1 hidden items-center gap-1.5 font-mono text-[8.5px] uppercase tracking-[0.18em] text-white/35 sm:flex">
-                  by <span className="text-accent-cyan/80 font-semibold tracking-[0.14em]">STILLEDEV</span>
+                <span className="mt-1 hidden sm:flex items-center gap-1.5 font-mono text-[8.5px] uppercase tracking-[0.18em] text-white/30">
+                  by <span className="text-accent-cyan/80 font-semibold tracking-[0.14em]">Stilledev</span>
                 </span>
               </span>
             </Link>
@@ -137,27 +137,8 @@ export default function Navbar() {
             </div>
 
             <div className="hidden lg:flex items-center gap-2 lg:justify-self-end">
-              <div
-                className="flex items-center p-0.5 rounded-full bg-black/30 border border-white/[0.07]"
-                role="group"
-                aria-label="Language"
-              >
-                {(["en", "sv"] as const).map((code) => (
-                  <button
-                    key={code}
-                    type="button"
-                    onClick={() => setLang(code)}
-                    aria-pressed={lang === code}
-                    className={`relative min-w-[2.4rem] px-2.5 py-1 text-[10.5px] font-semibold tracking-wide rounded-full transition-all ${
-                      lang === code
-                        ? "bg-white/[0.1] text-white shadow-sm"
-                        : "text-muted/60 hover:text-white/80"
-                    }`}
-                  >
-                    {code === "en" ? "EN" : "SV"}
-                  </button>
-                ))}
-              </div>
+              {/* Shared language switcher — same dropdown style as Labs */}
+              <LangSwitcher variant="dropdown" />
 
               <button
                 type="button"
@@ -181,19 +162,8 @@ export default function Navbar() {
             </div>
 
             <div className="flex items-center gap-2 lg:hidden">
-              <div className="flex items-center rounded-full border border-white/[0.08] bg-black/40 p-0.5" role="group" aria-label="Language">
-                {(["en", "sv"] as const).map((code) => (
-                  <button
-                    key={code}
-                    type="button"
-                    onClick={() => setLang(code)}
-                    aria-pressed={lang === code}
-                    className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ${lang === code ? "bg-gradient-to-r from-accent-cyan to-accent-purple text-white" : "text-muted/70"}`}
-                  >
-                    {code.toUpperCase()}
-                  </button>
-                ))}
-              </div>
+              {/* Shared language switcher (pill variant for mobile) */}
+              <LangSwitcher variant="pill" labsContext={false} />
               <a href="#playground" className="rounded-full bg-accent-cyan px-3.5 py-1.5 text-xs font-semibold text-[#020205]">
                 {lang === "sv" ? "Prova" : "Try"}
               </a>
@@ -251,30 +221,7 @@ export default function Navbar() {
 
               <div className="flex items-center gap-3 mt-4 px-4">
                 <Globe className="w-4 h-4 text-muted" />
-                <div className="flex p-0.5 rounded-full bg-black/40 border border-white/[0.08]">
-                  <button
-                    type="button"
-                    onClick={() => setLang("en")}
-                    className={`px-4 py-2 text-sm font-semibold rounded-full ${
-                      lang === "en"
-                        ? "bg-gradient-to-r from-accent-cyan to-accent-purple text-white"
-                        : "text-muted"
-                    }`}
-                  >
-                    English
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setLang("sv")}
-                    className={`px-4 py-2 text-sm font-semibold rounded-full ${
-                      lang === "sv"
-                        ? "bg-gradient-to-r from-accent-cyan to-accent-purple text-white"
-                        : "text-muted"
-                    }`}
-                  >
-                    Svenska
-                  </button>
-                </div>
+                <LangSwitcher variant="pill" />
               </div>
 
               <div className="flex flex-wrap items-center gap-2 mt-3 px-4">

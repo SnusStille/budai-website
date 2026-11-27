@@ -55,12 +55,32 @@ begin
       'ecommerce',
       'booking_system',
       'saas_platform',
+      'game_development',
+      'roblox',
+      'fivem',
       'integration',
       'consulting',
       'other',
       'unknown'
     );
   end if;
+end $$;
+
+-- Add new enum values safely for existing installations (ALTER TYPE ADD VALUE IF NOT EXISTS requires PG 12+)
+do $$
+begin
+  alter type labs_project_category add value if not exists 'game_development';
+exception when others then null;
+end $$;
+do $$
+begin
+  alter type labs_project_category add value if not exists 'roblox';
+exception when others then null;
+end $$;
+do $$
+begin
+  alter type labs_project_category add value if not exists 'fivem';
+exception when others then null;
 end $$;
 
 -- ============================================================================
@@ -80,8 +100,9 @@ create table if not exists public.labs_conversations (
   title text not null default 'New conversation',
   language text not null default 'sv' check (language in ('sv', 'en')),
   consent_given boolean not null default false,
-  -- Project category (auto-detected by AI)
+  -- Project category (user-selected or AI-detected)
   project_category labs_project_category default 'unknown',
+  selected_service text,
   -- Dynamic conversation state (updated by AI each turn)
   project_profile jsonb default '{}'::jsonb,
   -- Internally assessed priority score (0-100), computed by AI
@@ -108,6 +129,7 @@ alter table public.labs_conversations add column if not exists priority_strength
 alter table public.labs_conversations add column if not exists priority_concerns text[] default '{}';
 alter table public.labs_conversations add column if not exists priority_recommendation text;
 alter table public.labs_conversations add column if not exists priority_scored_at timestamptz;
+alter table public.labs_conversations add column if not exists selected_service text;
 alter table public.labs_conversations add column if not exists turn_count integer not null default 0;
 alter table public.labs_conversations add column if not exists last_assistant_message_at timestamptz;
 
@@ -397,6 +419,20 @@ $$;
 
 revoke all on function public.labs_get_context(uuid) from public, anon, authenticated;
 grant execute on function public.labs_get_context(uuid) to service_role;
+
+-- ============================================================================
+-- v3 ADDITIONS — Admin panel upgrades
+-- Run these if upgrading from v2.1. Safe to run on fresh installs too.
+-- (selected_service column is added in the migration block above — line ~132)
+-- ============================================================================
+
+-- internal_notes on labs_projects: Oliver's private notes (not visible to AI or customer)
+alter table public.labs_projects
+  add column if not exists internal_notes text;
+
+-- next_recommended_action on labs_projects: what Oliver should do next
+alter table public.labs_projects
+  add column if not exists next_recommended_action text;
 
 -- ============================================================================
 -- DONE. Verify with:
