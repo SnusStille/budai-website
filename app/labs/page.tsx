@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
-import "./labs.css";
 import LabsShareButton from "@/components/sections/LabsShareButton";
-import BackToBudAI from "@/components/ui/BackToBudAI";
+import StandalonePageShell from "@/components/site/StandalonePageShell";
 
 const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://stilledev.se").replace(/\/$/, "");
 
@@ -26,23 +25,20 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function LabsPage() {
   const sv = (await headers()).get("x-budai-lang") === "sv";
   return (
-    <main id="main" className="labs-hold-page">
-      <div className="labs-hold-grid" aria-hidden="true" />
-      <header className="labs-hold-header">
-        <BackToBudAI href={sv ? "/sv" : "/"} lang={sv ? "sv" : "en"} />
-        <nav aria-label={sv ? "Välj språk" : "Choose language"}>
-          <a href="/labs" aria-current={!sv ? "page" : undefined}>EN</a>
-          <a href="/sv/labs" aria-current={sv ? "page" : undefined}>SV</a>
-        </nav>
-      </header>
-      <section className="labs-hold-message" aria-labelledby="labs-hold-title">
-        <p className="labs-hold-eyebrow">{sv ? "STILLEDEV LABS" : "STILLEDEV LABS"}</p>
-        <h1 id="labs-hold-title">STILLEDEV<br /><span>LABS</span></h1>
-        <p className="labs-hold-status">{sv ? "UNDER UTVECKLING" : "UNDER DEVELOPMENT"}</p>
-        <p className="labs-hold-line">{sv ? "Något nytt tar form." : "Something new is taking shape."}</p>
+    <StandalonePageShell
+      title="STILLEDEV LABS"
+      eyebrow={sv ? "STILLEDEV · EXPERIMENT" : "STILLEDEV · EXPERIMENT"}
+      icon="labs"
+      lang={sv ? "sv" : "en"}
+      enHref="/labs"
+      svHref="/sv/labs"
+      backHref={sv ? "/sv" : "/"}
+    >
+      <p className="labs-hold-status">{sv ? "UNDER UTVECKLING" : "UNDER DEVELOPMENT"}</p>
+      <p className="labs-hold-line">{sv ? "Något nytt tar form." : "Something new is taking shape."}</p>
+      <div className="standalone-page-actions">
         <LabsShareButton lang={sv ? "sv" : "en"} />
-      </section>
-      <span className="labs-hold-index" aria-hidden="true">S / L — 01</span>
-    </main>
+      </div>
+    </StandalonePageShell>
   );
 }

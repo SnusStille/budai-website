@@ -10,6 +10,8 @@ import "./ambient-depth.css";
 import "./showcase.css";
 import "./founder-profile.css";
 import "./page-chrome.css";
+import "./standalone.css";
+import "./labs/labs.css";
 import "./home-surprises.css";
 import "./faq.css";
 import "./phone-welcome.css";
@@ -228,7 +230,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const path = canonicalPath(h.get("x-budai-path") || "/");
   // These pages have deliberate responsive layouts and must remain available
   // on phones, including direct entry to contact, Labs, and legal pages.
-  const phoneAccessiblePage = path.startsWith("/legal/") || path === "/contact" || path === "/sv/contact" || path === "/labs" || path === "/sv/labs" || path === "/admin" || path.startsWith("/admin/");
+  const phoneAccessiblePage = path.startsWith("/legal/") || path === "/contact" || path === "/sv/contact" || path === "/labs" || path === "/sv/labs" || path === "/oliver-stille" || path === "/sv/oliver-stille" || path === "/changelog" || path === "/admin" || path.startsWith("/admin/");
   return (
     <html
       lang={lang}

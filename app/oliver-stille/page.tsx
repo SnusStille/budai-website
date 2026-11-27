@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import FounderProfile from "@/components/sections/FounderProfile";
 
 const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://stilledev.se").replace(/\/$/, "");
@@ -30,6 +31,7 @@ export const metadata: Metadata = {
   keywords: ["Oliver Stille", "Stilledev", "Founder", "Swedish software studio", "digital development", "AI"],
 };
 
-export default function OliverStillePage() {
-  return <FounderProfile />;
+export default async function OliverStillePage() {
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
+  return <FounderProfile nonce={nonce} />;
 }

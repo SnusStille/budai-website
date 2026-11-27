@@ -45,6 +45,30 @@ test("repeated Back to BudAI controls share one upper-left position and the BudA
   }
 });
 
+test("secondary pages share the legal reading surface, typography and language controls", async ({ page }) => {
+  await prepare(page);
+  const surface = [] as Array<{ background: string; radius: string; headingSize: string }>;
+  for (const path of ["/legal/privacy", "/legal/data", "/labs", "/sv/labs", "/oliver-stille", "/sv/oliver-stille", "/contact", "/sv/contact", "/changelog"]) {
+    await page.goto(path);
+    await expect(page.locator(".standalone-page-shell")).toBeVisible();
+    await expect(page.locator(".standalone-page-card")).toBeVisible();
+    await expect(page.getByRole("group", { name: /Choose language|Välj språk/ })).toBeVisible();
+    surface.push(await page.locator(".standalone-page-shell").evaluate(main => ({
+      background: getComputedStyle(main).backgroundColor,
+      radius: getComputedStyle(main.querySelector(".standalone-page-card")!).borderRadius,
+      headingSize: getComputedStyle(main.querySelector(".standalone-page-card h1")!).fontSize,
+    })));
+  }
+  expect(new Set(surface.map(item => item.background)).size).toBe(1);
+  expect(new Set(surface.map(item => item.radius)).size).toBe(1);
+  expect(new Set(surface.map(item => item.headingSize)).size).toBe(1);
+
+  await page.goto("/legal/privacy");
+  await page.getByRole("button", { name: "SV" }).click();
+  await expect(page.locator("html")).toHaveAttribute("lang", "sv");
+  await expect(page.getByRole("heading", { name: "Integritetspolicy" })).toBeVisible();
+});
+
 test("homepage uses BudAI site icons while keeping Stilledev and Oliver linked in search metadata", async ({ page }) => {
   await prepare(page);
   await page.goto("/");
@@ -92,7 +116,7 @@ test("English and Swedish contact pages provide consistent direct contact, canon
 });
 
 test("founder profile pages remain readable and overflow-free on mobile", async ({ browser }) => {
-  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, reducedMotion: "reduce" });
+  const context = await browser.newContext({ userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1", viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, reducedMotion: "reduce" });
   const page = await context.newPage(); await prepare(page);
   for (const [path, heading, contact] of [["/oliver-stille", "Oliver Stille", "Contact Stilledev"], ["/sv/oliver-stille", "Oliver Stille", "Kontakta Stilledev"]]) {
     await page.goto(path);
