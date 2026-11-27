@@ -18,6 +18,8 @@ test("the landing has one ambient orbit, no robot, and no command-key control in
   expect(await page.locator(".universe-atmosphere").evaluate(node => getComputedStyle(node, "::before").content)).toBe("none");
   await expect(page.locator("[data-builder-companion], .bot-avatar, img[src*='builder-bot']")).toHaveCount(0);
   await expect(page.locator(".site-navigation").getByRole("button", { name: /⌘K|command palette/i })).toHaveCount(0);
+  await expect(page.locator(".hero-universe .hero-surprise")).toHaveCount(0);
+  await expect(page.locator(".feedback-launcher-spark")).toHaveCount(0);
   const box = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth);
   expect(box).toBeLessThanOrEqual(1);
 });

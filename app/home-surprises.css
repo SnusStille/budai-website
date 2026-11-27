@@ -1,20 +1,15 @@
 .hero-feature-hint { justify-content:space-between; gap:12px; }
 .hero-feature-hint > span { display:inline-flex; align-items:center; gap:6px; }
-.hero-surprise { display:inline-flex; min-height:30px; align-items:center; gap:7px; border:1px solid #a4dce62a; border-radius:999px; padding:0 10px; color:#cce8ed; background:linear-gradient(110deg,#93e1eb12,#ffffff05); font:600 9px/1 var(--font-jakarta),sans-serif; letter-spacing:0; white-space:nowrap; transition:border-color .16s,background .16s,color .16s; }
-.hero-surprise svg { color:#91e1eb; }
-.hero-surprise:hover { border-color:#a4dce66e; color:#f3fdff; background:#93e1eb16; }
 .hero-motion-toggle { display:inline-flex; min-height:38px; align-items:center; gap:7px; border:1px solid #a3d4df20; border-radius:999px; padding:0 11px; color:#9bb5c0; background:#0810186e; font:8px/1 var(--font-jetbrains),monospace; letter-spacing:.04em; transition:border-color .16s,color .16s,background .16s; }
 .hero-motion-toggle svg { color:#9bdfe8; }
 .hero-motion-toggle:hover,.hero-motion-toggle[aria-pressed="true"] { border-color:#9edfe75a; color:#e3f8fa; background:#8bdde512; }
 @media(max-width:767px) {
  .hero-feature-hint { align-items:center; font-size:7px; letter-spacing:.1em; }
  .hero-feature-hint > span { gap:3px; }
- .hero-surprise { min-height:29px; padding-inline:8px; font-size:8px; }
  .hero-bottom { flex-wrap:wrap; gap:6px 12px; }
  .hero-bottom > span { flex:1 1 48%; max-width:55%; }
  .hero-motion-toggle { min-height:34px; padding-inline:9px; font-size:7px; }
 }
-@media(max-width:380px) { .hero-feature-hint { flex-wrap:wrap; }.hero-feature-hint .hero-surprise { margin-left:auto; } }
 @media(prefers-reduced-motion:reduce) { .hero-motion-toggle { display:none; } }
 .mobile-playground-nudge { position:fixed; z-index:39; left:50%; bottom:max(16px,env(safe-area-inset-bottom)); display:inline-flex; min-height:46px; align-items:center; gap:10px; transform:translateX(-50%); border:1px solid #a6e7ed55; border-radius:999px; padding:0 17px; background:linear-gradient(110deg,#d3f6f2,#a4d9f1); color:#07131a; box-shadow:0 8px 28px #0006,0 0 30px #8de4ed18; font-size:12px; font-weight:700; animation:nudge-enter .2s ease-out both; }
 .mobile-playground-nudge:hover { background:linear-gradient(110deg,#e8fffb,#bdeaff); }

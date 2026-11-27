@@ -1,7 +1,7 @@
 "use client";
 import { LIMITS } from "@/lib/limits";
 
-import { ArrowDown, ArrowRight, FileText, Languages, Mail, Network, Pause, Play, Shuffle, Zap } from "lucide-react";
+import { ArrowDown, ArrowRight, FileText, Languages, Mail, Network, Pause, Play, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLang } from "@/components/ui/LanguageContext";
 import StockholmClock from "@/components/ui/StockholmClock";
@@ -57,11 +57,6 @@ export default function Hero() {
     window.dispatchEvent(new CustomEvent("budai:prompt", { detail: prompt }));
     document.getElementById("playground")?.scrollIntoView({ behavior: "smooth" });
   };
-  const surpriseMe = () => {
-    const options = chips.map(chip => chip.prompt);
-    activateChipPrompt(options[Math.floor(Math.random() * options.length)]);
-  };
-
   return (
     <section id="intelligence" className="hero-universe" aria-labelledby="hero-title">
       <div className="hero-content">
@@ -97,9 +92,6 @@ export default function Hero() {
         <div className="hero-features" aria-label={sv ? "Prova en idé i Playground" : "Try an idea in Playground"}>
           <span className="hero-feature-hint">
             <span>{sv ? "VÄLJ EN IDÉ ATT BÖRJA MED" : "PICK AN IDEA TO GET STARTED"} <ArrowRight size={12} aria-hidden="true" /></span>
-            <button type="button" className="hero-surprise" onClick={surpriseMe}>
-              <Shuffle size={12} aria-hidden="true" />{sv ? "Överraska mig" : "Surprise me"}
-            </button>
           </span>
           {chips.map(({ icon: Icon, label, region, prompt }) => (
             <button

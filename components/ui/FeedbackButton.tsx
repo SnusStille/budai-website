@@ -3,7 +3,7 @@
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
-import { Bug, Check, Lightbulb, MessageSquare, Send, Sparkles, X } from "lucide-react";
+import { Bug, Check, Lightbulb, MessageSquare, Send, X } from "lucide-react";
 import { useLang } from "@/components/ui/LanguageContext";
 
 const KINDS = [
@@ -96,7 +96,6 @@ export default function FeedbackButton() {
       >
         <span className="feedback-launcher-icon"><MessageSquare className="h-4 w-4" aria-hidden="true" /></span>
         <span>Feedback</span>
-        <span className="feedback-launcher-spark"><Sparkles className="h-3.5 w-3.5" aria-hidden="true" /></span>
       </button>
 
       {typeof document !== "undefined" && createPortal(

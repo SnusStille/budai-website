@@ -699,7 +699,7 @@ test("cookie preferences never duplicate the footer control with a fixed bottom 
   await expect(page.getByRole("button", { name: /Cookie settings|Cookieinställningar/ })).toHaveCount(1);
 });
 
-test("the landing adds gentle depth, lets visitors pause it, and offers a safe surprise prompt", async ({ page }) => {
+test("the landing keeps gentle depth and starter prompts without a random Surprise me action", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "no-preference" });
   let apiCalls = 0;
   await page.route("**/api/playground", async route => { apiCalls++; await route.fulfill({ status: 200, body: "Unexpected submission" }); });
@@ -714,7 +714,8 @@ test("the landing adds gentle depth, lets visitors pause it, and offers a safe s
   await expect(page.locator(".ambient-depth-rig")).toHaveCSS("animation-play-state", "paused");
   await page.getByRole("button", { name: "Resume motion" }).click();
   await expect(page.locator("html")).not.toHaveClass(/budai-ambient-paused/);
-  await page.getByRole("button", { name: "Surprise me", exact: true }).click();
+  await expect(page.locator(".hero-universe .hero-surprise")).toHaveCount(0);
+  await page.locator(".hero-universe").getByRole("button", { name: "Personal · write & plan" }).click();
   const input = page.getByRole("textbox", { name: "Message BudAI", exact: true });
   await expect(input).toHaveValue(/.+/);
   expect(apiCalls).toBe(0);

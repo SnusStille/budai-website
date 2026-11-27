@@ -1,6 +1,5 @@
 /* Feedback is a small product conversation, not a generic alert box. */
 .feedback-launcher-icon { display:grid; width:26px; height:26px; place-items:center; border:1px solid #89dfeb2a; border-radius:50%; background:#7fe0ed0d; color:#8fe2ed; }
-.feedback-launcher-spark { display:grid; width:20px; height:20px; place-items:center; color:#86dcd6; opacity:.8; }
 .feedback-dialog { max-height:calc(100dvh - 24px); overflow-y:auto; overscroll-behavior:contain; }
 .feedback-dialog-glow { position:absolute; top:-140px; right:-100px; width:320px; height:260px; pointer-events:none; background:radial-gradient(ellipse,rgba(83,203,218,.12),transparent 70%); }
 .feedback-kicker { display:flex; align-items:center; gap:8px; color:#91aeb9; font:700 9px/1.3 var(--font-jetbrains),monospace; letter-spacing:.17em; }
