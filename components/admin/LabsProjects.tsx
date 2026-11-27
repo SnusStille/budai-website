@@ -1,0 +1,760 @@
+"use client";
+
+import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  Search,
+  MessageSquare,
+  Trash2,
+  User,
+  Mail,
+  Phone,
+  Building2,
+  Calendar,
+  DollarSign,
+  AlertTriangle,
+  PencilLine,
+  RefreshCw,
+  Star,
+  Download,
+  Clock,
+  Zap,
+  ChevronRight,
+  Tag,
+} from "lucide-react";
+
+type ProjectStatus =
+  | "new_inquiry"
+  | "conversation_active"
+  | "needs_review"
+  | "qualified"
+  | "meeting_requested"
+  | "quote_sent"
+  | "accepted"
+  | "declined"
+  | "completed";
+
+type ProjectCategory =
+  | "website" | "web_application" | "mobile_app" | "ai_service"
+  | "automation" | "ecommerce" | "booking_system" | "saas_platform"
+  | "integration" | "consulting" | "other" | "unknown";
+
+const STATUS_LABELS: Record<ProjectStatus, { label: string; color: string }> = {
+  new_inquiry: { label: "Ny förfrågan", color: "border-cyan-400/30 text-cyan-400 bg-cyan-400/5" },
+  conversation_active: { label: "Pågående", color: "border-blue-400/30 text-blue-400 bg-blue-400/5" },
+  needs_review: { label: "Behöver granskas", color: "border-amber-400/30 text-amber-400 bg-amber-400/5" },
+  qualified: { label: "Kvalificerat", color: "border-emerald-400/30 text-emerald-400 bg-emerald-400/5" },
+  meeting_requested: { label: "Möte önskas", color: "border-purple-400/30 text-purple-400 bg-purple-400/5" },
+  quote_sent: { label: "Offert skickad", color: "border-violet-400/30 text-violet-400 bg-violet-400/5" },
+  accepted: { label: "Accepterat", color: "border-green-400/30 text-green-400 bg-green-400/5" },
+  declined: { label: "Avböjt", color: "border-red-400/30 text-red-400 bg-red-400/5" },
+  completed: { label: "Avslutat", color: "border-white/15 text-muted bg-white/[0.02]" },
+};
+
+const CATEGORY_LABELS: Record<ProjectCategory, string> = {
+  website: "Webbplats",
+  web_application: "Webbapplikation",
+  mobile_app: "Mobilapp",
+  ai_service: "AI-tjänst",
+  automation: "Automation",
+  ecommerce: "E-handel",
+  booking_system: "Bokningssystem",
+  saas_platform: "SaaS-plattform",
+  integration: "Integration",
+  consulting: "Konsultation",
+  other: "Övrigt",
+  unknown: "Okänd",
+};
+
+const COMPLEXITY_LABELS: Record<string, { label: string; color: string }> = {
+  low: { label: "Låg", color: "text-emerald-400" },
+  medium: { label: "Medel", color: "text-amber-400" },
+  high: { label: "Hög", color: "text-orange-400" },
+  very_high: { label: "Mycket hög", color: "text-red-400" },
+};
+
+const ASSESSMENT_LABELS: Record<string, { label: string; color: string }> = {
+  realistic: { label: "Realistisk", color: "text-emerald-400" },
+  tight: { label: "Ansträngd", color: "text-amber-400" },
+  unrealistic: { label: "Orealistisk", color: "text-red-400" },
+  unknown: { label: "Okänd", color: "text-muted" },
+};
+
+const card = "rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5";
+const input = "w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white placeholder:text-muted focus:border-accent-cyan/40 focus:outline-none transition-colors";
+const btn = "inline-flex items-center gap-2 rounded-xl border border-white/10 px-3.5 py-2 text-sm text-white/80 transition hover:bg-white/5 disabled:opacity-50";
+
+type Project = {
+  id: string;
+  status: ProjectStatus;
+  starred: boolean;
+  contact_name: string | null;
+  contact_email: string | null;
+  contact_phone: string | null;
+  company: string | null;
+  project_title: string | null;
+  project_category: ProjectCategory;
+  customer_goal: string | null;
+  target_audience: string | null;
+  problem: string | null;
+  proposed_solution: string | null;
+  scope_mvp: string | null;
+  key_features: string[];
+  technical_requirements: string[];
+  technical_complexity: string | null;
+  budget: string | null;
+  budget_assessment: string | null;
+  timeline: string | null;
+  timeline_assessment: string | null;
+  business_risks: string[];
+  technical_risks: string[];
+  opportunities: string[];
+  competition: string | null;
+  recommended_mvp: string | null;
+  next_steps: string | null;
+  priority_score: number | null;
+  priority_strengths: string[];
+  priority_concerns: string[];
+  priority_recommendation: string | null;
+  summary_generated_at: string | null;
+  contact_collected_at: string | null;
+  last_summary_update_at: string | null;
+  is_read: boolean;
+  admin_notes_count: number;
+  message_count?: number;
+  created_at: string;
+  updated_at: string;
+};
+
+type Message = { id: string; role: "user" | "assistant"; content: string; created_at: string };
+type Note = { id: string; body: string; created_at: string };
+type StatusCount = Record<string, number>;
+
+function scoreColor(score: number | null): string {
+  if (score === null) return "text-muted";
+  if (score >= 75) return "text-emerald-400";
+  if (score >= 50) return "text-amber-400";
+  if (score >= 25) return "text-orange-400";
+  return "text-red-400";
+}
+
+function formatDate(s: string) {
+  return new Date(s).toLocaleString("sv-SE", { dateStyle: "short", timeStyle: "short" });
+}
+function timeAgo(s: string) {
+  const diff = Date.now() - new Date(s).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "nu";
+  if (mins < 60) return `${mins}m`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h`;
+  return `${Math.floor(hrs / 24)}d`;
+}
+
+export default function LabsProjects() {
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [q, setQ] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<"updated" | "priority" | "created">("updated");
+  const [selected, setSelected] = useState<string | null>(null);
+  const [detail, setDetail] = useState<{ project: Project; messages: Message[]; notes: Note[] } | null>(null);
+  const [noteText, setNoteText] = useState("");
+  const [statusCounts, setStatusCounts] = useState<StatusCount>({});
+  const [unread, setUnread] = useState(0);
+
+  const loadProjects = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (statusFilter !== "all") params.set("status", statusFilter);
+      if (q) params.set("q", q);
+      params.set("limit", "100");
+      const res = await fetch(`/api/admin/labs/projects?${params}`, {
+        cache: "no-store", credentials: "same-origin",
+      });
+      const data = await res.json();
+      if (res.ok) {
+        let list = data.projects || [];
+        if (sortBy === "priority") {
+          list = [...list].sort((a: Project, b: Project) => (b.priority_score ?? -1) - (a.priority_score ?? -1));
+        } else if (sortBy === "created") {
+          list = [...list].sort((a: Project, b: Project) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        }
+        setProjects(list);
+        setStatusCounts(data.statusCounts || {});
+        setUnread(data.unreadCount || 0);
+        setError("");
+      } else {
+        setError(data.error || "Failed to load");
+      }
+    } catch { setError("Network error"); }
+    finally { setLoading(false); }
+  }, [statusFilter, q, sortBy]);
+
+  const openProject = useCallback(async (id: string) => {
+    setSelected(id);
+    try {
+      const res = await fetch(`/api/admin/labs/projects?id=${encodeURIComponent(id)}`, {
+        cache: "no-store", credentials: "same-origin",
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setDetail(data);
+        if (data.project?.is_read === false) {
+          await fetch(`/api/admin/labs/projects`, {
+            method: "PATCH", headers: { "Content-Type": "application/json" },
+            credentials: "same-origin",
+            body: JSON.stringify({ id, fields: { is_read: true } }),
+          });
+          void loadProjects();
+        }
+      }
+    } catch { setError("Failed to load project"); }
+  }, [loadProjects]);
+
+  const updateStatus = async (id: string, status: ProjectStatus) => {
+    await fetch("/api/admin/labs/projects", {
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      credentials: "same-origin",
+      body: JSON.stringify({ id, fields: { status } }),
+    });
+    void loadProjects();
+    if (detail?.project.id === id) setDetail({ ...detail, project: { ...detail.project, status } });
+  };
+
+  const toggleStar = async (id: string, current: boolean) => {
+    await fetch("/api/admin/labs/projects", {
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      credentials: "same-origin",
+      body: JSON.stringify({ id, fields: { starred: !current } }),
+    });
+    void loadProjects();
+    if (detail?.project.id === id) setDetail({ ...detail, project: { ...detail.project, starred: !current } });
+  };
+
+  const addNote = async () => {
+    if (!selected || !noteText.trim()) return;
+    const res = await fetch("/api/admin/labs/notes", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      credentials: "same-origin",
+      body: JSON.stringify({ projectId: selected, body: noteText }),
+    });
+    if (res.ok) {
+      setNoteText("");
+      void openProject(selected);
+      void loadProjects();
+    }
+  };
+
+  const deleteNote = async (noteId: string) => {
+    if (!confirm("Ta bort anteckningen?")) return;
+    await fetch(`/api/admin/labs/notes?id=${noteId}`, { method: "DELETE", credentials: "same-origin" });
+    if (selected) void openProject(selected);
+  };
+
+  useEffect(() => { void loadProjects(); }, [loadProjects]);
+
+  const stats = useMemo(() => ({
+    total: Object.values(statusCounts).reduce((a: number, b: number) => a + (b as number), 0),
+    new: (statusCounts as Record<string, number>).new_inquiry || 0,
+    active: (statusCounts as Record<string, number>).conversation_active || 0,
+    meeting: (statusCounts as Record<string, number>).meeting_requested || 0,
+    qualified: (statusCounts as Record<string, number>).qualified || 0,
+  }), [statusCounts]);
+
+  return (
+    <div className="space-y-5">
+      {/* Stats bar */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+        {[
+          { label: "Totalt", value: stats.total, dim: true },
+          { label: "Nya", value: stats.new },
+          { label: "Pågående", value: stats.active },
+          { label: "Kvalificerade", value: stats.qualified },
+          { label: "Möte", value: stats.meeting },
+        ].map((s) => (
+          <div key={s.label} className={card} style={{ padding: "14px 16px" }}>
+            <p className="text-[11px] font-medium uppercase tracking-wide text-muted">{s.label}</p>
+            <p className={`mt-1 text-2xl font-bold tabular-nums ${s.dim ? "" : "text-accent-cyan"}`}>{s.value}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Project list + detail */}
+      <div className="grid gap-5 xl:grid-cols-5">
+        <div className="space-y-3 xl:col-span-2">
+          <div className="flex flex-wrap gap-2">
+            <div className="relative min-w-[180px] flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+              <input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && void loadProjects()}
+                placeholder="Sök namn, e-post, projekt..."
+                className={`${input} pl-9`}
+                aria-label="Sök projekt"
+              />
+            </div>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white [&>option]:bg-[#0c0c14]"
+            >
+              <option value="all">Alla statusar</option>
+              {Object.entries(STATUS_LABELS).map(([key, { label }]) => (
+                <option key={key} value={key}>
+                  {label} {(statusCounts as Record<string, number>)[key] ? `(${(statusCounts as Record<string, number>)[key]})` : ""}
+                </option>
+              ))}
+            </select>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as "updated" | "priority" | "created")}
+              className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white [&>option]:bg-[#0c0c14]"
+            >
+              <option value="updated">Senast aktiv</option>
+              <option value="priority">Prioritet</option>
+              <option value="created">Senast skapad</option>
+            </select>
+            <button type="button" className={btn} onClick={() => void loadProjects()}>
+              <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+            </button>
+          </div>
+
+          {error && (
+            <p className="rounded-lg border border-amber-400/25 bg-amber-400/10 px-3 py-2 text-xs text-amber-200">{error}</p>
+          )}
+
+          {unread > 0 && (
+            <p className="flex items-center gap-1.5 text-xs text-accent-cyan">
+              <Zap className="h-3 w-3" /> {unread} olästa projekt
+            </p>
+          )}
+
+          {loading ? (
+            <div className={card}><div className="flex items-center gap-2 text-muted"><RefreshCw className="h-4 w-4 animate-spin" /> Laddar...</div></div>
+          ) : projects.length === 0 ? (
+            <div className={card}>
+              <p className="text-sm text-muted">
+                Inga projekt än. När besökare chattar med BudAI och lämnar sina kontaktuppgifter dyker projekten upp här.
+              </p>
+              <p className="mt-2 text-xs text-muted/70">
+                Pågående konversationer utan kontaktuppgifter syns inte i listan förrän BudAI bedömt dem som kvalificerade.
+              </p>
+            </div>
+          ) : (
+            <ul className="space-y-2">
+              {projects.map((p) => {
+                const statusInfo = STATUS_LABELS[p.status];
+                return (
+                  <li key={p.id}>
+                    <button
+                      type="button"
+                      onClick={() => void openProject(p.id)}
+                      className={`group relative w-full rounded-xl border p-4 text-left transition ${
+                        selected === p.id
+                          ? "border-accent-cyan/25 bg-accent-cyan/[0.04]"
+                          : "border-white/[0.06] bg-white/[0.015] hover:bg-white/[0.035] hover:border-white/[0.1]"
+                      }`}
+                    >
+                      <span className="flex flex-wrap items-center gap-2">
+                        <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${statusInfo.color}`}>
+                          {statusInfo.label}
+                        </span>
+                        {p.priority_score !== null && p.priority_score > 0 && (
+                          <span className={`font-mono text-[10px] font-bold ${scoreColor(p.priority_score)}`}>
+                            {p.priority_score}/100
+                          </span>
+                        )}
+                        {p.starred && <Star className="h-3 w-3 text-amber-400 fill-amber-400" />}
+                        {!p.is_read && (
+                          <span className="h-1.5 w-1.5 rounded-full bg-accent-cyan" style={{ boxShadow: "0 0 6px rgba(0,229,255,0.6)" }} />
+                        )}
+                        <span className="ml-auto flex items-center gap-1 text-[11px] text-muted">
+                          <Clock className="h-3 w-3" />
+                          {timeAgo(p.updated_at)}
+                        </span>
+                      </span>
+                      <span className="mt-2 block font-semibold text-white text-[14px] leading-snug">
+                        {p.project_title || p.customer_goal?.slice(0, 80) || "Ej namngivet projekt"}
+                      </span>
+                      <span className="mt-1 block text-[12px] text-muted truncate">
+                        {p.contact_name || "Namnlös"} · {p.contact_email || "Ingen e-post"}
+                        {p.company ? ` · ${p.company}` : ""}
+                        {p.project_category && p.project_category !== "unknown" && (
+                          <> · {CATEGORY_LABELS[p.project_category]}</>
+                        )}
+                      </span>
+                      {(p.message_count ?? 0) > 0 && (
+                        <span className="mt-1.5 flex items-center gap-1 text-[11px] text-muted/70">
+                          <MessageSquare className="h-3 w-3" /> {p.message_count} meddelanden
+                          <ChevronRight className="h-3 w-3 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </span>
+                      )}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+
+        {/* Project detail */}
+        <div className="xl:col-span-3 space-y-4">
+          {detail ? (
+            <>
+              {/* Header */}
+              <div className={card}>
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <button
+                        type="button"
+                        onClick={() => void toggleStar(detail.project.id, detail.project.starred)}
+                        className="text-muted hover:text-amber-400 transition"
+                        aria-label="Stjärnmärk"
+                      >
+                        <Star className={`h-4 w-4 ${detail.project.starred ? "fill-amber-400 text-amber-400" : ""}`} />
+                      </button>
+                      <h3 className="text-lg font-semibold text-white truncate">
+                        {detail.project.project_title || "Projekt"}
+                      </h3>
+                    </div>
+                    <p className="text-xs text-muted">
+                      Skapat {formatDate(detail.project.created_at)} · Senast {formatDate(detail.project.updated_at)}
+                      {detail.project.message_count ? ` · ${detail.project.message_count} meddelanden` : ""}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {detail.project.priority_score !== null && (
+                      <span className={`text-sm font-mono font-bold ${scoreColor(detail.project.priority_score)}`}>
+                        {detail.project.priority_score}/100
+                      </span>
+                    )}
+                    <select
+                      value={detail.project.status}
+                      onChange={(e) => void updateStatus(detail.project.id, e.target.value as ProjectStatus)}
+                      className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs text-white [&>option]:bg-[#0c0c14]"
+                    >
+                      {Object.entries(STATUS_LABELS).map(([key, { label }]) => (
+                        <option key={key} value={key}>{label}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Contact info grid */}
+                <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                  {detail.project.contact_name && (
+                    <div className="flex items-start gap-2.5 text-sm">
+                      <User className="mt-0.5 h-4 w-4 text-muted shrink-0" />
+                      <div>
+                        <p className="text-[10px] uppercase tracking-wide text-muted font-mono">Namn</p>
+                        <p className="text-white/85">{detail.project.contact_name}</p>
+                      </div>
+                    </div>
+                  )}
+                  {detail.project.contact_email && (
+                    <div className="flex items-start gap-2.5 text-sm">
+                      <Mail className="mt-0.5 h-4 w-4 text-muted shrink-0" />
+                      <div>
+                        <p className="text-[10px] uppercase tracking-wide text-muted font-mono">E-post</p>
+                        <a href={`mailto:${detail.project.contact_email}`} className="text-accent-cyan hover:underline break-all">
+                          {detail.project.contact_email}
+                        </a>
+                      </div>
+                    </div>
+                  )}
+                  {detail.project.contact_phone && (
+                    <div className="flex items-start gap-2.5 text-sm">
+                      <Phone className="mt-0.5 h-4 w-4 text-muted shrink-0" />
+                      <div>
+                        <p className="text-[10px] uppercase tracking-wide text-muted font-mono">Telefon</p>
+                        <p className="text-white/85">{detail.project.contact_phone}</p>
+                      </div>
+                    </div>
+                  )}
+                  {detail.project.company && (
+                    <div className="flex items-start gap-2.5 text-sm">
+                      <Building2 className="mt-0.5 h-4 w-4 text-muted shrink-0" />
+                      <div>
+                        <p className="text-[10px] uppercase tracking-wide text-muted font-mono">Företag</p>
+                        <p className="text-white/85">{detail.project.company}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {detail.project.contact_collected_at && (
+                  <p className="mt-3 text-[11px] text-muted">
+                    Kontakt mottagen {formatDate(detail.project.contact_collected_at)}
+                  </p>
+                )}
+              </div>
+
+              {/* Priority analysis */}
+              {(detail.project.priority_strengths?.length > 0 || detail.project.priority_concerns?.length > 0) && (
+                <div className={card}>
+                  <h4 className="mb-3 text-sm font-semibold text-white flex items-center gap-2">
+                    <Zap className="h-4 w-4 text-accent-cyan" />
+                    BudAI:s projektbedömning
+                    {detail.project.priority_score !== null && (
+                      <span className={`ml-auto font-mono text-sm ${scoreColor(detail.project.priority_score)}`}>
+                        {detail.project.priority_score}/100
+                      </span>
+                    )}
+                  </h4>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    {detail.project.priority_strengths?.length > 0 && (
+                      <div>
+                        <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-400/80 mb-2">Styrkor</p>
+                        <ul className="space-y-1">
+                          {detail.project.priority_strengths.map((s, i) => (
+                            <li key={i} className="text-sm text-white/75 flex gap-2 leading-relaxed">
+                              <span className="text-emerald-400 mt-1">•</span>
+                              <span>{s}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {detail.project.priority_concerns?.length > 0 && (
+                      <div>
+                        <p className="text-[11px] font-semibold uppercase tracking-wide text-amber-400/80 mb-2">Risker / att notera</p>
+                        <ul className="space-y-1">
+                          {detail.project.priority_concerns.map((s, i) => (
+                            <li key={i} className="text-sm text-white/75 flex gap-2 leading-relaxed">
+                              <AlertTriangle className="h-3 w-3 text-amber-400 shrink-0 mt-1" />
+                              <span>{s}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                  {detail.project.priority_recommendation && (
+                    <div className="mt-4 p-3 rounded-xl bg-accent-cyan/[0.05] border border-accent-cyan/20">
+                      <p className="text-[11px] font-semibold uppercase tracking-wide text-accent-cyan mb-1">Rekommendation</p>
+                      <p className="text-sm text-white/85">{detail.project.priority_recommendation}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* AI Summary */}
+              {(detail.project.customer_goal || detail.project.problem || detail.project.proposed_solution) && (
+                <div className={card}>
+                  <h4 className="mb-4 text-sm font-semibold text-white flex items-center gap-2">
+                    <Tag className="h-4 w-4 text-accent-cyan" />
+                    Projektsammanfattning
+                    {detail.project.project_category && detail.project.project_category !== "unknown" && (
+                      <span className="ml-2 text-[10px] font-mono text-muted rounded border border-white/10 px-2 py-0.5">
+                        {CATEGORY_LABELS[detail.project.project_category]}
+                      </span>
+                    )}
+                    {detail.project.technical_complexity && COMPLEXITY_LABELS[detail.project.technical_complexity] && (
+                      <span className={`ml-1 text-[10px] font-mono rounded border border-current px-2 py-0.5 ${COMPLEXITY_LABELS[detail.project.technical_complexity].color} opacity-70`}>
+                        {COMPLEXITY_LABELS[detail.project.technical_complexity].label} komplexitet
+                      </span>
+                    )}
+                  </h4>
+                  <div className="space-y-4">
+                    {detail.project.customer_goal && (
+                      <div>
+                        <p className="text-[11px] font-semibold uppercase tracking-wide text-muted mb-1">Mål</p>
+                        <p className="text-sm text-white/85 whitespace-pre-wrap">{detail.project.customer_goal}</p>
+                      </div>
+                    )}
+                    {detail.project.target_audience && (
+                      <div>
+                        <p className="text-[11px] font-semibold uppercase tracking-wide text-muted mb-1">Målgrupp</p>
+                        <p className="text-sm text-white/85">{detail.project.target_audience}</p>
+                      </div>
+                    )}
+                    {detail.project.problem && (
+                      <div>
+                        <p className="text-[11px] font-semibold uppercase tracking-wide text-muted mb-1">Problem</p>
+                        <p className="text-sm text-white/85 whitespace-pre-wrap">{detail.project.problem}</p>
+                      </div>
+                    )}
+                    {detail.project.proposed_solution && (
+                      <div>
+                        <p className="text-[11px] font-semibold uppercase tracking-wide text-muted mb-1">Föreslagen lösning</p>
+                        <p className="text-sm text-white/85 whitespace-pre-wrap">{detail.project.proposed_solution}</p>
+                      </div>
+                    )}
+                    {detail.project.key_features?.length > 0 && (
+                      <div>
+                        <p className="text-[11px] font-semibold uppercase tracking-wide text-muted mb-2">MVP-nyckelfunktioner</p>
+                        <ul className="space-y-1">
+                          {detail.project.key_features.map((f, i) => (
+                            <li key={i} className="text-sm text-white/80 pl-4 relative before:content-[''] before:absolute before:left-0 before:top-[9px] before:w-1 before:h-1 before:rounded-full before:bg-accent-cyan">{f}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {detail.project.recommended_mvp && (
+                      <div>
+                        <p className="text-[11px] font-semibold uppercase tracking-wide text-muted mb-1">BudAI:s MVP-förslag</p>
+                        <p className="text-sm text-white/85 whitespace-pre-wrap">{detail.project.recommended_mvp}</p>
+                      </div>
+                    )}
+                    <div className="grid gap-4 sm:grid-cols-2 pt-2">
+                      {detail.project.budget && (
+                        <div className="flex items-start gap-2">
+                          <DollarSign className="mt-0.5 h-4 w-4 text-muted shrink-0" />
+                          <div>
+                            <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">Budget</p>
+                            <p className="text-sm text-white/85">{detail.project.budget}</p>
+                            {detail.project.budget_assessment && ASSESSMENT_LABELS[detail.project.budget_assessment] && (
+                              <p className={`text-[11px] ${ASSESSMENT_LABELS[detail.project.budget_assessment].color} mt-0.5`}>
+                                {ASSESSMENT_LABELS[detail.project.budget_assessment].label}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                      {detail.project.timeline && (
+                        <div className="flex items-start gap-2">
+                          <Calendar className="mt-0.5 h-4 w-4 text-muted shrink-0" />
+                          <div>
+                            <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">Tidsplan</p>
+                            <p className="text-sm text-white/85">{detail.project.timeline}</p>
+                            {detail.project.timeline_assessment && ASSESSMENT_LABELS[detail.project.timeline_assessment] && (
+                              <p className={`text-[11px] ${ASSESSMENT_LABELS[detail.project.timeline_assessment].color} mt-0.5`}>
+                                {ASSESSMENT_LABELS[detail.project.timeline_assessment].label}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    {(detail.project.business_risks?.length > 0 || detail.project.technical_risks?.length > 0) && (
+                      <div className="grid gap-3 sm:grid-cols-2 pt-1">
+                        {detail.project.business_risks?.length > 0 && (
+                          <div>
+                            <p className="text-[11px] font-semibold uppercase tracking-wide text-amber-400/80 mb-1.5">Affärsrisker</p>
+                            <ul className="space-y-1">
+                              {detail.project.business_risks.map((r, i) => (
+                                <li key={i} className="text-xs text-white/70 flex gap-1.5"><AlertTriangle className="h-3 w-3 text-amber-400 shrink-0 mt-0.5" />{r}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        {detail.project.technical_risks?.length > 0 && (
+                          <div>
+                            <p className="text-[11px] font-semibold uppercase tracking-wide text-orange-400/80 mb-1.5">Tekniska risker</p>
+                            <ul className="space-y-1">
+                              {detail.project.technical_risks.map((r, i) => (
+                                <li key={i} className="text-xs text-white/70 flex gap-1.5"><AlertTriangle className="h-3 w-3 text-orange-400 shrink-0 mt-0.5" />{r}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    {detail.project.opportunities?.length > 0 && (
+                      <div>
+                        <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-400/80 mb-1.5">Möjligheter</p>
+                        <ul className="space-y-1">
+                          {detail.project.opportunities.map((o, i) => (
+                            <li key={i} className="text-xs text-white/70 pl-3 relative before:content-['→'] before:absolute before:left-0 before:text-emerald-400">{o}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {detail.project.next_steps && (
+                      <div className="flex items-start gap-2 pt-1">
+                        <ChevronRight className="mt-0.5 h-4 w-4 text-emerald-400 shrink-0" />
+                        <div>
+                          <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-400/80">Nästa steg</p>
+                          <p className="text-sm text-white/85 whitespace-pre-wrap">{detail.project.next_steps}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Conversation */}
+              <div className={card}>
+                <h4 className="mb-3 text-sm font-semibold text-white flex items-center gap-2">
+                  <MessageSquare className="h-4 w-4 text-accent-cyan" />
+                  Konversation ({detail.messages.length} meddelanden)
+                </h4>
+                <div className="max-h-[450px] space-y-2.5 overflow-y-auto pr-1">
+                  {detail.messages.map((m) => (
+                    <div key={m.id} className={`rounded-xl p-3 text-sm ${m.role === "user" ? "bg-white/[0.03]" : "bg-accent-cyan/[0.03]"}`}>
+                      <p className="mb-1 flex items-center justify-between font-mono text-[10px] uppercase tracking-wide text-muted">
+                        <span>{m.role === "user" ? "Kund" : "BudAI"}</span>
+                        <span>{formatDate(m.created_at)}</span>
+                      </p>
+                      <p className="whitespace-pre-wrap text-white/82 leading-relaxed">{m.content}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Notes */}
+              <div className={card}>
+                <h4 className="mb-3 text-sm font-semibold text-white flex items-center gap-2">
+                  <PencilLine className="h-4 w-4 text-accent-cyan" />
+                  Interna anteckningar
+                  {(detail.notes?.length ?? 0) > 0 && (
+                    <span className="ml-1 rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-muted">{detail.notes.length}</span>
+                  )}
+                </h4>
+                {detail.notes && detail.notes.length > 0 && (
+                  <div className="mb-4 space-y-2">
+                    {detail.notes.map((n) => (
+                      <div key={n.id} className="group flex items-start gap-2 rounded-lg bg-white/[0.025] p-3 border border-white/[0.05]">
+                        <p className="flex-1 text-sm text-white/80 whitespace-pre-wrap">{n.body}</p>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="text-[10px] text-muted">{formatDate(n.created_at)}</span>
+                          <button
+                            type="button"
+                            onClick={() => void deleteNote(n.id)}
+                            className="text-muted opacity-0 group-hover:opacity-100 transition hover:text-red-400"
+                            aria-label="Ta bort"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <textarea
+                  value={noteText}
+                  onChange={(e) => setNoteText(e.target.value)}
+                  rows={2}
+                  maxLength={2000}
+                  placeholder="Lägg till en intern anteckning..."
+                  className={input}
+                />
+                <button
+                  type="button"
+                  className="mt-2 inline-flex items-center gap-2 rounded-xl bg-accent-cyan px-4 py-2 text-sm font-semibold text-black disabled:opacity-50 transition hover:bg-[#33ebff]"
+                  disabled={!noteText.trim()}
+                  onClick={() => void addNote()}
+                >
+                  Spara anteckning
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className={card}>
+              <p className="text-sm text-muted leading-relaxed">
+                Välj ett projekt i listan för att se alla detaljer: fullständig konversation, AI-sammanfattning, budget, tidsplan, risker, kontaktuppgifter och interna anteckningar.
+              </p>
+              <p className="mt-3 text-xs text-muted/80 leading-relaxed">
+                BudAI analyserar automatiskt varje konversation och uppdaterar projektprofilen allteftersom information samlas in. När tillräckligt med data finns och kunden lämnat kontaktuppgifter skapas ett projekt här med en strukturerad sammanfattning och prioritetspoäng.
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
