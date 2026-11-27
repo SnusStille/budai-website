@@ -38,12 +38,8 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function LabsPage() {
-  const h = await headers();
-  const sv = h.get("x-budai-lang") === "sv";
-  const lang = sv ? "sv" : "en";
-
   // Read session (middleware ensures it exists for /labs routes)
   await getSession();
 
-  return <LabsChat lang={lang} />;
+  return <LabsChat />;
 }

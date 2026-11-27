@@ -5,5 +5,5 @@ export default function LabsLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return children;
+  return <div data-labs-root>{children}</div>;
 }

@@ -8,6 +8,7 @@ import { Menu, X, Globe, Bell, ArrowUpRight, MessageSquareText } from "lucide-re
 import { useLang } from "@/components/ui/LanguageContext";
 import BudAIWordmark from "@/components/ui/BudAIWordmark";
 import BudAILogo from "@/components/ui/BudAILogo";
+import StilledevLogo from "@/components/ui/StilledevLogo";
 import { subscribeJourney } from "@/lib/experience/scroll";
 
 
@@ -67,7 +68,6 @@ export default function Navbar() {
     { label: t.nav.capabilities, href: "#capabilities", id: "capabilities" },
     { label: lang === "sv" ? "Byggaren" : "Builder", href: "#about", id: "about" },
     { label: t.nav.roadmap, href: "#roadmap", id: "roadmap" },
-    { label: "Labs", href: lang === "sv" ? "/sv/labs" : "/labs", id: "labs" },
   ];
 
   const isLinkActive = (id: string) => active === id;
@@ -85,7 +85,7 @@ export default function Navbar() {
         }`}
       >
         <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 lg:h-[4.5rem] lg:grid lg:grid-cols-[auto_1fr_auto] lg:gap-4">
+          <div className="flex items-center justify-between h-14 lg:h-16 lg:grid lg:grid-cols-[auto_1fr_auto] lg:gap-6">
             <div className="flex items-center gap-3">
             <Link
               href="/"
@@ -93,14 +93,11 @@ export default function Navbar() {
               className="flex items-center gap-2.5 group outline-none focus-visible:ring-2 focus-visible:ring-accent-cyan/50 rounded-lg"
               aria-label="BudAI home"
               onClick={(e) => {
-                // On the landing page scroll to top instead of reloading; on any
-                // other route let the link navigate home. No dead hash-only links.
-                if (window.location.pathname === "/") {
+                if (window.location.pathname === "/" || window.location.pathname === "/sv") {
                   e.preventDefault();
                   if (window.scrollY > 300) window.scrollTo({ top: 0, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
                 }
                 (e.currentTarget as HTMLElement).blur();
-                // Progressive easter egg: every click advances the sequence (see LogoEasterEgg)
                 window.dispatchEvent(new CustomEvent("budai:logo-click", { detail: { el: e.currentTarget } }));
               }}
             >
@@ -109,8 +106,8 @@ export default function Navbar() {
               </span>
               <span className="flex flex-col leading-none">
                 <BudAIWordmark className="nav-wordmark" />
-                <span className="mt-1.5 hidden items-center gap-1.5 font-mono text-[9px] uppercase tracking-[0.2em] text-white/40 sm:flex">
-                  DEVELOPED BY <b className="font-bold text-accent-cyan [text-shadow:0_0_12px_rgba(0,229,255,0.55)]">STILLEDEV</b>
+                <span className="mt-1 hidden items-center gap-1.5 font-mono text-[8.5px] uppercase tracking-[0.18em] text-white/35 sm:flex">
+                  by <span className="text-accent-cyan/80 font-semibold tracking-[0.14em]">STILLEDEV</span>
                 </span>
               </span>
             </Link>
@@ -139,9 +136,9 @@ export default function Navbar() {
               })}
             </div>
 
-            <div className="hidden lg:flex items-center gap-2.5 lg:justify-self-end">
+            <div className="hidden lg:flex items-center gap-2 lg:justify-self-end">
               <div
-                className="flex items-center p-0.5 rounded-full bg-black/40 border border-white/[0.08] shadow-inner"
+                className="flex items-center p-0.5 rounded-full bg-black/30 border border-white/[0.07]"
                 role="group"
                 aria-label="Language"
               >
@@ -151,10 +148,10 @@ export default function Navbar() {
                     type="button"
                     onClick={() => setLang(code)}
                     aria-pressed={lang === code}
-                    className={`relative min-w-[2.6rem] px-3 py-1.5 text-[11px] font-semibold tracking-wide rounded-full transition-all ${
+                    className={`relative min-w-[2.4rem] px-2.5 py-1 text-[10.5px] font-semibold tracking-wide rounded-full transition-all ${
                       lang === code
-                        ? "bg-gradient-to-r from-accent-cyan to-accent-purple text-white shadow-[0_0_16px_rgba(0,229,255,0.25)]"
-                        : "text-muted/70 hover:text-white"
+                        ? "bg-white/[0.1] text-white shadow-sm"
+                        : "text-muted/60 hover:text-white/80"
                     }`}
                   >
                     {code === "en" ? "EN" : "SV"}
@@ -166,15 +163,19 @@ export default function Navbar() {
                 type="button"
                 onClick={() => window.dispatchEvent(new Event("budai:whats-new"))}
                 aria-label={lang === "sv" ? "Vad är nytt" : "What's new"}
-                className="relative rounded-full border border-white/[0.08] p-2 text-white/70 transition-colors hover:border-accent-cyan/40 hover:text-white"
+                className="relative rounded-full p-1.5 text-white/60 transition-colors hover:text-white"
               >
-                <Bell className="h-4 w-4" />
-                <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-accent-cyan" />
+                <Bell className="h-[15px] w-[15px]" />
+                <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-accent-cyan" />
               </button>
-              <a href="#playground" className="hidden xl:inline-flex whitespace-nowrap rounded-full border border-white/15 px-4 py-2 text-sm font-medium text-white transition-colors hover:border-accent-cyan/40">
-                Playground
+              <a
+                href={lang === "sv" ? "/sv/labs" : "/labs"}
+                className="hidden xl:inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-1.5 text-[12px] font-medium text-accent-cyan/90 border border-accent-cyan/20 bg-accent-cyan/[0.05] transition-all hover:border-accent-cyan/40 hover:bg-accent-cyan/10 hover:text-accent-cyan"
+              >
+                Labs
+                <ArrowUpRight size={11} />
               </a>
-              <a href="#waitlist" className="btn-primary whitespace-nowrap !px-4 xl:!px-5 !py-2.5 text-sm">
+              <a href="#waitlist" className="btn-primary whitespace-nowrap !px-4 !py-2 text-[13px]">
                 <span>{t.nav.requestAccess}</span>
               </a>
             </div>
@@ -232,12 +233,21 @@ export default function Navbar() {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.04 }}
                   onClick={() => setMobileOpen(false)}
-                  title={l.id === "labs" ? (lang === "sv" ? "Labs · under utveckling" : "Labs · under development") : undefined}
-                  className={`px-4 py-3.5 text-lg rounded-xl transition-colors ${l.id === "labs" ? "nav-labs-mobile" : isLinkActive(l.id) ? "text-white bg-white/5 border border-accent-cyan/20" : "text-white/80 hover:text-white hover:bg-white/5"}`}
+                  className={`px-4 py-3.5 text-lg rounded-xl transition-colors ${isLinkActive(l.id) ? "text-white bg-white/5 border border-accent-cyan/20" : "text-white/80 hover:text-white hover:bg-white/5"}`}
                 >
-                  {l.id === "labs" ? <span className="nav-labs-chip"><i aria-hidden="true" />{l.label}<ArrowUpRight size={15} aria-hidden="true" /></span> : l.label}
+                  {l.label}
                 </motion.a>
               ))}
+              <motion.a
+                href={lang === "sv" ? "/sv/labs" : "/labs"}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: links.length * 0.04 }}
+                onClick={() => setMobileOpen(false)}
+                className="px-4 py-3.5 text-lg rounded-xl transition-colors nav-labs-mobile"
+              >
+                <span className="nav-labs-chip"><i aria-hidden="true" />Labs<ArrowUpRight size={15} aria-hidden="true" /></span>
+              </motion.a>
 
               <div className="flex items-center gap-3 mt-4 px-4">
                 <Globe className="w-4 h-4 text-muted" />

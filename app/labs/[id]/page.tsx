@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import LabsChat from "@/components/labs/LabsChat";
-import { getSession, isValidConversationId } from "@/lib/labs/session";
-import { serviceClient } from "@/lib/supabase/service";
+import { isValidConversationId } from "@/lib/labs/session";
+import { getSession } from "@/lib/labs/session";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -18,7 +18,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const path = h.get("x-budai-path") || "";
   const isSvPath = path.startsWith("/sv/");
   const canonical = `${siteUrl}${isSvPath ? `/sv/labs/${id}` : `/labs/${id}`}`;
-  const title = sv ? "Stilledev Labs — Fortsätt konversationen" : "Stilledev Labs — Continue conversation";
+  const title = sv
+    ? "Stilledev Labs — Fortsätt konversationen"
+    : "Stilledev Labs — Continue conversation";
   const description = sv
     ? "Fortsätt din konversation med BudAI."
     : "Continue your conversation with BudAI.";
@@ -37,54 +39,9 @@ export default async function LabsConversationPage({ params }: Props) {
     notFound();
   }
 
-  const h = await headers();
-  const sv = h.get("x-budai-lang") === "sv";
-  const lang = sv ? "sv" : "en";
+  // Ensure session cookie exists (middleware handles this, but double-check)
+  await getSession();
 
-  // Read session (middleware ensures it exists for /labs routes)
-  const sessionId = await getSession();
-
-  // Try to load the conversation - but only if it belongs to this session
-  let initialMessages: { id: string; role: "user" | "assistant"; content: string; createdAt?: string }[] = [];
-  let conversationBelongsToSession = false;
-
-  if (sessionId) {
-    const sb = serviceClient();
-    if (sb) {
-      const { data: conv } = await sb
-        .from("labs_conversations")
-        .select("id, session_id, language")
-        .eq("id", id)
-        .maybeSingle();
-
-      if (conv && conv.session_id === sessionId) {
-        conversationBelongsToSession = true;
-        const { data: messages } = await sb
-          .from("labs_messages")
-          .select("id, role, content, created_at")
-          .eq("conversation_id", id)
-          .order("created_at", { ascending: true });
-
-        initialMessages = (messages || []).map((m) => ({
-          id: m.id,
-          role: m.role as "user" | "assistant",
-          content: m.content,
-          createdAt: m.created_at,
-        }));
-      }
-    }
-  }
-
-  // If the conversation doesn't belong to this session, render empty chat
-  if (!conversationBelongsToSession) {
-    return <LabsChat lang={lang} />;
-  }
-
-  return (
-    <LabsChat
-      lang={lang}
-      initialConversationId={id}
-      initialMessages={initialMessages}
-    />
-  );
+  // LabsChat reads the conversation ID from the URL path itself
+  return <LabsChat />;
 }

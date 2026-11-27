@@ -28,8 +28,8 @@ export function buildLabsSystemPrompt(args: {
 
   const langLine =
     lang === "sv"
-      ? "Respond in Swedish. If the user clearly writes only English, switch to English."
-      : "Respond in English. If the user clearly writes only Swedish, switch to Swedish.";
+      ? "DEFAULT LANGUAGE: Swedish. Respond in Swedish for the entire conversation. If the user writes their messages exclusively in English, switch to English and stay in English for the rest of the conversation. Never mix languages within a single message. The [[PROFILE:]] block fields should be in the SAME language as your response (for free-text fields like customer_goal, problem, etc.). Enum fields (project_category, technical_complexity, budget_assessment, timeline_assessment, conversation_stage, and array items in key_features/risks/opportunities etc.) should use the language the customer is writing in."
+      : "DEFAULT LANGUAGE: English. Respond in English for the entire conversation. If the user writes their messages exclusively in Swedish, switch to Swedish and stay in Swedish for the rest of the conversation. Never mix languages within a single message. The [[PROFILE:]] block fields should be in the SAME language as your response (for free-text fields like customer_goal, problem, etc.). Enum fields (project_category, technical_complexity, budget_assessment, timeline_assessment, conversation_stage, and array items in key_features/risks/opportunities etc.) should use the language the customer is writing in.";
 
   return `You are BudAI — the intelligent project consultant for Stilledev Labs, a personal software development studio run by Oliver Stille, based in Sweden.
 

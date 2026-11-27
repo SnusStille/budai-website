@@ -10,7 +10,6 @@ import "./showcase.css";
 import "./founder-profile.css";
 import "./page-chrome.css";
 import "./standalone.css";
-import "./labs/labs.css";
 import "./home-surprises.css";
 import "./faq.css";
 import "./phone-welcome.css";

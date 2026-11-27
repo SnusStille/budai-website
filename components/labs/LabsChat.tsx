@@ -1,17 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { AnimatePresence, motion } from "framer-motion";
-import {
-  Send,
-  Plus,
-  Menu,
-  X,
-  Check,
-  ArrowLeft,
-  User,
-} from "lucide-react";
+import { Send, Plus, X, User } from "lucide-react";
+import { useLang } from "@/components/ui/LanguageContext";
+import LabsHeader from "@/components/labs/LabsHeader";
+import StilledevLogo from "@/components/ui/StilledevLogo";
 import {
   WELCOME_MESSAGE_SV,
   WELCOME_MESSAGE_EN,
@@ -19,13 +14,19 @@ import {
   STARTER_PROMPTS_EN,
   MIN_TURNS_BEFORE_CONTACT,
 } from "@/lib/labs/prompt";
-import { detectContactRequest, detectContactInfo } from "@/lib/labs/profile";
+import {
+  extractProfile,
+  extractSummary,
+  mergeProfile,
+  detectContactRequest,
+  detectContactInfo,
+} from "@/lib/labs/profile";
+import { useLabsTranslation } from "@/lib/labs/i18n";
 
 type Message = {
-  id: string;
+  id?: string;
   role: "user" | "assistant";
   content: string;
-  createdAt?: string;
 };
 
 type Conversation = {
@@ -33,6 +34,8 @@ type Conversation = {
   title: string;
   updated_at: string;
   message_count: number;
+  project_category?: string;
+  priority_score?: number;
 };
 
 type ContactForm = {
@@ -43,64 +46,55 @@ type ContactForm = {
   preferredContact: "email" | "phone" | "digital_meeting";
 };
 
-type LabsChatProps = {
-  lang: "sv" | "en";
-  initialConversationId?: string | null;
-  initialMessages?: Message[];
+const EMPTY_CONTACT: ContactForm = {
+  name: "",
+  email: "",
+  phone: "",
+  company: "",
+  preferredContact: "email",
 };
 
-const genId = () => Math.random().toString(36).slice(2, 11);
-
-export default function LabsChat({
-  lang = "sv",
-  initialConversationId = null,
-  initialMessages = [],
-}: LabsChatProps) {
+export default function LabsChat() {
+  const { lang } = useLang();
+  const t = useLabsTranslation(lang);
   const router = useRouter();
-  const [conversationId, setConversationId] = useState<string | null>(initialConversationId);
-  const [messages, setMessages] = useState<Message[]>(initialMessages);
-  const [input, setInput] = useState("");
-  const [isStreaming, setIsStreaming] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [showHistory, setShowHistory] = useState(false);
-  const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [showContactForm, setShowContactForm] = useState(false);
-  const [contactSubmitted, setContactSubmitted] = useState(false);
-  const [contactSubmitting, setContactSubmitting] = useState(false);
-  const [contactForm, setContactForm] = useState<ContactForm>({
-    name: "",
-    email: "",
-    phone: "",
-    company: "",
-    preferredContact: "email",
-  });
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
-  const [streamingCursor, setStreamingCursor] = useState(false);
-
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLTextAreaElement>(null);
-  const abortRef = useRef<AbortController | null>(null);
 
   const isSv = lang === "sv";
-  const welcome = isSv ? WELCOME_MESSAGE_SV : WELCOME_MESSAGE_EN;
+  const welcomeMessage = isSv ? WELCOME_MESSAGE_SV : WELCOME_MESSAGE_EN;
   const starters = isSv ? STARTER_PROMPTS_SV : STARTER_PROMPTS_EN;
 
-  const welcomeMessage: Message = useMemo(() => ({
-    id: "welcome",
-    role: "assistant",
-    content: welcome,
-  }), [welcome]);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState("");
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [streamingCursor, setStreamingCursor] = useState(false);
+  const [conversationId, setConversationId] = useState<string | null>(null);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [contactOpen, setContactOpen] = useState(false);
+  const [contactForm, setContactForm] = useState<ContactForm>(EMPTY_CONTACT);
+  const [contactErrors, setContactErrors] = useState<Record<string, string>>({});
+  const [contactSubmitted, setContactSubmitted] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+  const [userMessageCount, setUserMessageCount] = useState(0);
 
-  const showWelcome = messages.length === 0;
-  const userMessageCount = messages.filter((m) => m.role === "user").length;
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   // Auto-scroll to bottom
   useEffect(() => {
-    const el = messagesEndRef.current;
-    if (el) el.scrollIntoView({ behavior: isStreaming ? "auto" : "smooth", block: "end" });
+    messagesEndRef.current?.scrollIntoView({ behavior: isStreaming ? "auto" : "smooth" });
   }, [messages, isStreaming]);
 
-  // Load conversations
+  // Auto-resize textarea
+  useEffect(() => {
+    const ta = textareaRef.current;
+    if (!ta) return;
+    ta.style.height = "auto";
+    ta.style.height = Math.min(ta.scrollHeight, 200) + "px";
+  }, [input]);
+
+  // Load conversations list
   const loadConversations = useCallback(async () => {
     try {
       const res = await fetch("/api/labs/conversations", { cache: "no-store" });
@@ -108,588 +102,539 @@ export default function LabsChat({
         const data = await res.json();
         setConversations(data.conversations || []);
       }
-    } catch { /* ignore */ }
+    } catch { /* silent */ }
   }, []);
 
   useEffect(() => { void loadConversations(); }, [loadConversations]);
 
-  // Focus input once we have messages (after welcome)
+  // Load existing conversation from URL on mount
   useEffect(() => {
-    if (!showWelcome && !isStreaming) {
-      inputRef.current?.focus();
+    const match = window.location.pathname.match(/\/(?:sv\/)?labs\/([a-f0-9-]+)/i);
+    if (match) {
+      void openConversation(match[1]);
     }
-  }, [showWelcome, isStreaming]);
-
-  // Auto-resize textarea
-  const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setInput(e.target.value);
-    e.target.style.height = "auto";
-    e.target.style.height = Math.min(e.target.scrollHeight, 200) + "px";
-  };
-
-  // Keyboard: Enter = send, Shift+Enter = newline
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
-      e.preventDefault();
-      void sendMessage(input);
-    }
-  };
-
-  const sendMessage = useCallback(
-    async (text: string) => {
-      const trimmed = text.trim();
-      if (!trimmed || isStreaming) return;
-
-      setError(null);
-      setFieldErrors({});
-      setInput("");
-      if (inputRef.current) {
-        inputRef.current.style.height = "auto";
-      }
-
-      const userMsg: Message = { id: genId(), role: "user", content: trimmed };
-      setMessages((prev) => [...prev, userMsg]);
-      setIsStreaming(true);
-      setStreamingCursor(true);
-
-      const assistantId = genId();
-      setMessages((prev) => [...prev, { id: assistantId, role: "assistant", content: "" }]);
-
-      const abort = new AbortController();
-      abortRef.current = abort;
-
-      try {
-        const res = await fetch("/api/labs/chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: trimmed, conversationId, lang }),
-          signal: abort.signal,
-        });
-
-        if (!res.ok || !res.body) {
-          const err = await res.json().catch(() => ({}));
-          throw new Error(
-            err.error ||
-            (isSv ? "Kunde inte skicka meddelande." : "Failed to send message.")
-          );
-        }
-
-        const reader = res.body.getReader();
-        const decoder = new TextDecoder();
-        let fullText = "";
-        let currentConvId = conversationId;
-        let foundMeta = false;
-        let receivedContactRequest = false;
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          const chunk = decoder.decode(value, { stream: true });
-          const parts = chunk.split("\u0000");
-
-          for (let i = 0; i < parts.length; i++) {
-            const part = parts[i];
-            if (i < parts.length - 1 || foundMeta) {
-              const maybeJson = part.trim();
-              if (maybeJson.startsWith("{") && maybeJson.includes("conversationId")) {
-                try {
-                  const meta = JSON.parse(maybeJson);
-                  if (meta.conversationId && !currentConvId) {
-                    currentConvId = meta.conversationId;
-                    setConversationId(meta.conversationId);
-                    window.history.replaceState({}, "", `/labs/${meta.conversationId}`);
-                  }
-                  foundMeta = true;
-                  continue;
-                } catch { /* not JSON */ }
-              }
-              if (part.length > 0) fullText += part;
-            } else {
-              fullText += part;
-            }
-          }
-
-          setMessages((prev) =>
-            prev.map((m) => (m.id === assistantId ? { ...m, content: fullText } : m))
-          );
-
-          // Detect contact request mid-stream (after minimum turns)
-          const newUserCount = userMessageCount + 1;
-          if (
-            !receivedContactRequest &&
-            newUserCount >= MIN_TURNS_BEFORE_CONTACT &&
-            detectContactRequest(fullText, lang)
-          ) {
-            receivedContactRequest = true;
-            // Auto-detect email/phone from full conversation
-            const allText = [...messages.map((m) => m.content), trimmed, fullText].join(" ");
-            const detected = detectContactInfo(allText);
-            if (detected.email) {
-              const email = detected.email;
-              setContactForm((f) => ({ ...f, email }));
-            }
-            if (detected.phone) {
-              const phone = detected.phone;
-              setContactForm((f) => ({ ...f, phone }));
-            }
-          }
-        }
-
-        // After stream completes, show contact form if detected
-        setStreamingCursor(false);
-        const finalUserCount = userMessageCount + 1;
-        if (receivedContactRequest && finalUserCount >= MIN_TURNS_BEFORE_CONTACT) {
-          setTimeout(() => setShowContactForm(true), 800);
-        }
-
-        void loadConversations();
-      } catch (err) {
-        setStreamingCursor(false);
-        if (err instanceof Error && err.name === "AbortError") {
-          // cancelled — keep streamed partial
-        } else {
-          const message = err instanceof Error
-            ? err.message
-            : (isSv ? "Ett fel uppstod." : "An error occurred.");
-          setError(message);
-          setMessages((prev) => prev.filter((m) => m.id !== assistantId));
-        }
-      } finally {
-        setIsStreaming(false);
-        abortRef.current = null;
-      }
-    },
-    [conversationId, isStreaming, lang, isSv, loadConversations, messages, userMessageCount]
-  );
-
-  const startNewChat = () => {
-    setConversationId(null);
-    setMessages([]);
-    setError(null);
-    setShowContactForm(false);
-    setContactSubmitted(false);
-    setFieldErrors({});
-    setShowHistory(false);
-    window.history.replaceState({}, "", isSv ? "/sv/labs" : "/labs");
-    setTimeout(() => inputRef.current?.focus(), 50);
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const openConversation = async (id: string) => {
-    setShowHistory(false);
-    setError(null);
     try {
       const res = await fetch(`/api/labs/conversations?id=${id}`, { cache: "no-store" });
       if (res.ok) {
         const data = await res.json();
+        setMessages(data.messages || []);
         setConversationId(id);
-        setMessages(
-          (data.messages || []).map((m: { id: string; role: "user" | "assistant"; content: string; created_at: string }) => ({
-            id: m.id,
-            role: m.role,
-            content: m.content.replace(/\[\[(PROFILE|SUMMARY):[\s\S]*?\]\]/gi, "").trim(),
-            createdAt: m.created_at,
-          }))
-        );
-        window.history.replaceState({}, "", `/labs/${id}`);
+        setHistoryOpen(false);
+        setContactSubmitted(!!data.project?.contact_collected_at);
+        const userMsgs = (data.messages || []).filter((m: Message) => m.role === "user");
+        setUserMessageCount(userMsgs.length);
       }
-    } catch {
-      setError(isSv ? "Kunde inte ladda konversationen." : "Could not load conversation.");
+    } catch { /* silent */ }
+  };
+
+  const startNewChat = () => {
+    setMessages([]);
+    setInput("");
+    setConversationId(null);
+    setContactOpen(false);
+    setContactSubmitted(false);
+    setErrorMsg("");
+    setUserMessageCount(0);
+    setHistoryOpen(false);
+    window.history.replaceState({}, "", isSv ? "/sv/labs" : "/labs");
+    textareaRef.current?.focus();
+  };
+
+  const sendMessage = async (text?: string) => {
+    const trimmed = (text ?? input).trim();
+    if (!trimmed || isStreaming) return;
+
+    // Abort any previous request
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    const userMsg: Message = { role: "user", content: trimmed };
+    setMessages((prev) => [...prev, userMsg]);
+    setInput("");
+    setErrorMsg("");
+    setIsStreaming(true);
+    setStreamingCursor(true);
+
+    // Add empty assistant message that will stream into
+    const assistantMsg: Message = { role: "assistant", content: "" };
+    setMessages((prev) => [...prev, assistantMsg]);
+
+    const newUserCount = userMessageCount + 1;
+    setUserMessageCount(newUserCount);
+
+    try {
+      const res = await fetch("/api/labs/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: trimmed, conversationId, lang }),
+        signal: controller.signal,
+      });
+
+      if (!res.ok) {
+        if (res.status === 429) {
+          setErrorMsg(t.errors.rateLimited);
+        } else if (res.status === 503) {
+          setErrorMsg(t.errors.dbUnavailable);
+        } else {
+          setErrorMsg(t.errors.sendFailed);
+        }
+        setIsStreaming(false);
+        setStreamingCursor(false);
+        setMessages((prev) => prev.slice(0, -1));
+        return;
+      }
+
+      const reader = res.body?.getReader();
+      if (!reader) throw new Error("No reader");
+
+      const decoder = new TextDecoder();
+      let fullText = "";
+      let cleanText = "";
+      let receivedContactRequest = false;
+      let metaReceived = false;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+
+        // Split on metadata delimiter (null byte)
+        const parts = chunk.split("\u0000");
+        for (let i = 0; i < parts.length; i++) {
+          const part = parts[i];
+          if (i === parts.length - 1 && !done) {
+            // Last part of a non-final chunk might be incomplete text; append to buffer
+            fullText += part;
+          } else if (part.startsWith("{") && i === parts.length - 1 || (part.startsWith("{") && done)) {
+            // This is likely metadata JSON
+            try {
+              const meta = JSON.parse(part);
+              if (meta.conversationId && !conversationId) {
+                setConversationId(meta.conversationId);
+                const newPath = isSv ? `/sv/labs/${meta.conversationId}` : `/labs/${meta.conversationId}`;
+                window.history.replaceState({}, "", newPath);
+              }
+              metaReceived = true;
+              continue;
+            } catch {
+              fullText += part;
+            }
+          } else {
+            fullText += part;
+          }
+        }
+
+        // Strip [[PROFILE:]] and [[SUMMARY:]] blocks from visible text
+        cleanText = fullText.replace(/\[\[(PROFILE|SUMMARY):[\s\S]*?\]\]/gi, "").trim();
+
+        // Check for contact request phrases mid-stream
+        if (!receivedContactRequest && !contactSubmitted && newUserCount >= MIN_TURNS_BEFORE_CONTACT) {
+          if (detectContactRequest(cleanText + fullText, lang)) {
+            receivedContactRequest = true;
+            // Auto-detect email/phone from full conversation
+            const allText = [...messages.map((m) => m.content), trimmed, cleanText, fullText].join(" ");
+            const detected = detectContactInfo(allText);
+            setContactForm((prev) => {
+              const next = { ...prev };
+              if (detected.email) next.email = detected.email;
+              if (detected.phone) next.phone = detected.phone;
+              return next;
+            });
+            setContactOpen(true);
+          }
+        }
+
+        // Update the assistant message with clean text (no markers visible)
+        setMessages((prev) => {
+          const updated = [...prev];
+          updated[updated.length - 1] = { role: "assistant", content: cleanText };
+          return updated;
+        });
+      }
+
+      setStreamingCursor(false);
+      setIsStreaming(false);
+
+      // After stream completes, show contact form if detected
+      if (receivedContactRequest && !contactOpen && !contactSubmitted) {
+        setContactOpen(true);
+      }
+
+      // Refresh conversation list
+      void loadConversations();
+    } catch (err) {
+      if ((err as Error).name !== "AbortError") {
+        setErrorMsg(t.errors.networkError);
+        setMessages((prev) => prev.slice(0, -1));
+      }
+      setIsStreaming(false);
+      setStreamingCursor(false);
     }
   };
 
-  const submitContact = async () => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      void sendMessage();
+    }
+  };
+
+  const submitContact = async (e: React.FormEvent) => {
+    e.preventDefault();
     const errors: Record<string, string> = {};
-    if (!contactForm.name.trim() || contactForm.name.trim().length < 2) {
-      errors.name = isSv ? "Ange ditt namn." : "Please enter your name.";
-    }
-    if (!contactForm.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactForm.email)) {
-      errors.email = isSv ? "Ange en giltig e-postadress." : "Please enter a valid email.";
-    }
+    if (contactForm.name.trim().length < 2) errors.name = t.contact.nameRequired;
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactForm.email.trim())) errors.email = t.contact.emailRequired;
+
     if (Object.keys(errors).length > 0) {
-      setFieldErrors(errors);
+      setContactErrors(errors);
       return;
     }
-    if (!conversationId) return;
-
-    setContactSubmitting(true);
-    setFieldErrors({});
-    setError(null);
+    setContactErrors({});
 
     try {
       const res = await fetch("/api/labs/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ conversationId, ...contactForm }),
+        body: JSON.stringify({
+          conversationId,
+          name: contactForm.name.trim(),
+          email: contactForm.email.trim(),
+          phone: contactForm.phone.trim() || undefined,
+          company: contactForm.company.trim() || undefined,
+          preferredContact: contactForm.preferredContact,
+        }),
       });
 
       if (res.ok) {
         setContactSubmitted(true);
-        setShowContactForm(false);
-        const firstName = contactForm.name.split(" ")[0];
-        const contactMethod = contactForm.preferredContact === "phone"
-          ? (isSv ? "telefon" : "phone")
-          : contactForm.preferredContact === "digital_meeting"
-          ? (isSv ? "ett digitalt möte" : "a digital meeting")
-          : (isSv ? "e-post" : "email");
-
+        setContactOpen(false);
+        // Add confirmation message
         const confirmMsg: Message = {
-          id: genId(),
           role: "assistant",
           content: isSv
-            ? `Tack, ${firstName}! Dina kontaktuppgifter är sparade. Oliver kommer att läsa igenom vår konversation och höra av sig via ${contactMethod} inom kort.\n\nUnder tiden får du gärna fortsätta att ställa frågor eller förtydliga dina tankar här — jag finns kvar.`
-            : `Thanks, ${firstName}! Your contact details are saved. Oliver will review our conversation and reach out via ${contactMethod} shortly.\n\nFeel free to keep asking questions or clarifying your thoughts here in the meantime — I'm still here.`,
+            ? `**${t.contact.successTitle}** ${t.contact.successMessage}`
+            : `**${t.contact.successTitle}** ${t.contact.successMessage}`,
         };
         setMessages((prev) => [...prev, confirmMsg]);
         void loadConversations();
       } else {
-        const err = await res.json().catch(() => ({}));
-        setError(err.error || (isSv ? "Kunde inte spara." : "Could not save."));
+        setErrorMsg(t.errors.sendFailed);
       }
     } catch {
-      setError(isSv ? "Nätverksfel. Försök igen." : "Network error. Please try again.");
-    } finally {
-      setContactSubmitting(false);
+      setErrorMsg(t.errors.networkError);
     }
   };
 
+  // Handle starter click
+  const handleStarter = (prompt: string) => {
+    if (!isStreaming) void sendMessage(prompt);
+  };
+
+  const isWelcome = messages.length === 0;
+
   return (
     <div className="labs-container">
-      {/* Header */}
-      <header className="labs-header">
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <button
-            type="button"
-            className="labs-header-btn"
-            onClick={() => setShowHistory(true)}
-            aria-label={isSv ? "Konversationshistorik" : "Conversation history"}
-          >
-            <Menu size={15} />
-          </button>
-          <a href={isSv ? "/" : "/"} className="labs-wordmark" aria-label="Stilledev Labs home">
-            <div className="labs-wordmark-mark">B</div>
-            <span className="labs-wordmark-text">STILLEDEV LABS</span>
-          </a>
-        </div>
-        <div className="labs-header-actions">
-          <button
-            type="button"
-            className="labs-header-btn"
-            onClick={startNewChat}
-            aria-label={isSv ? "Ny konversation" : "New conversation"}
-            title={isSv ? "Ny konversation" : "New conversation"}
-          >
-            <Plus size={15} />
-            <span className="hidden sm:inline">{isSv ? "Ny" : "New"}</span>
-          </button>
-        </div>
-      </header>
+      <LabsHeader
+        onToggleHistory={() => setHistoryOpen(true)}
+        onNewChat={startNewChat}
+        showHistoryButton={!isWelcome || conversations.length > 0}
+      />
+
+      <main className="labs-main">
+        {errorMsg && (
+          <div className="labs-error" role="alert">{errorMsg}</div>
+        )}
+
+        {isWelcome ? (
+          <div className="labs-welcome">
+            <div className="labs-welcome-mark">
+              <StilledevLogo size="lg" animated />
+            </div>
+            <h1 className="labs-welcome-title">
+              {isSv ? (
+                <>Berätta om din <em>idé</em>.</>
+              ) : (
+                <>Tell me about your <em>idea</em>.</>
+              )}
+            </h1>
+            <p className="labs-welcome-subtitle">{t.welcome.subtitle}</p>
+            <p className="labs-welcome-honest">{t.welcome.honest}</p>
+            <div className="labs-starters">
+              {t.starters.map((starter, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => handleStarter(starter)}
+                  className="labs-starter-btn"
+                  disabled={isStreaming}
+                >
+                  {starter}
+                </button>
+              ))}
+            </div>
+            <p className="labs-welcome-assistant">{t.welcome.assistant}</p>
+          </div>
+        ) : (
+          <div className="labs-messages" role="log" aria-live="polite">
+            {messages.map((msg, i) => (
+              <div key={i} className={`labs-message ${msg.role}`}>
+                <div className={`labs-message-avatar ${msg.role}`} aria-hidden>
+                  {msg.role === "user" ? (
+                    <User size={14} />
+                  ) : (
+                    <span style={{ fontSize: 10 }}>S</span>
+                  )}
+                </div>
+                <div className="labs-message-body">
+                  <div className="labs-message-role">
+                    {msg.role === "user"
+                      ? (isSv ? "Du" : "You")
+                      : "BudAI"}
+                  </div>
+                  <div className="labs-message-content">
+                    {msg.content}
+                    {streamingCursor && i === messages.length - 1 && msg.role === "assistant" && (
+                      <span className="labs-streaming-cursor" aria-hidden />
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+            <div ref={messagesEndRef} className="labs-messages-end" />
+          </div>
+        )}
+
+        {!isWelcome && (
+          <div className="labs-input-wrap">
+            <div className="labs-input-container">
+              <textarea
+                ref={textareaRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder={isStreaming ? t.chat.typing + "…" : t.chat.placeholder}
+                className="labs-textarea"
+                rows={1}
+                disabled={isStreaming}
+                aria-label={t.chat.newMessage}
+              />
+              <button
+                type="button"
+                onClick={() => void sendMessage()}
+                disabled={!input.trim() || isStreaming}
+                className="labs-send-btn"
+                aria-label={t.chat.send}
+              >
+                <Send size={16} />
+              </button>
+            </div>
+            <div className="labs-input-footer">
+              <div className="labs-kbd-hint">
+                <span className="labs-kbd">⏎</span> {isSv ? "Skicka" : "Send"}
+                <span style={{ margin: "0 4px" }}>·</span>
+                <span className="labs-kbd">⇧⏎</span> {isSv ? "Ny rad" : "New line"}
+              </div>
+              {!isWelcome && userMessageCount < MIN_TURNS_BEFORE_CONTACT && (
+                <p className="labs-disclaimer">{t.footer.disclaimer}</p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {isWelcome && (
+          <div className="labs-input-wrap" style={{ paddingTop: 0 }}>
+            <div className="labs-input-container">
+              <textarea
+                ref={textareaRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder={t.chat.placeholder}
+                className="labs-textarea"
+                rows={1}
+                aria-label={t.chat.newMessage}
+              />
+              <button
+                type="button"
+                onClick={() => void sendMessage()}
+                disabled={!input.trim()}
+                className="labs-send-btn"
+                aria-label={t.chat.send}
+              >
+                <Send size={16} />
+              </button>
+            </div>
+            <div className="labs-input-footer" style={{ justifyContent: "center" }}>
+              <p className="labs-disclaimer">{t.footer.disclaimer}</p>
+            </div>
+          </div>
+        )}
+      </main>
 
       {/* History panel */}
       <AnimatePresence>
-        {showHistory && (
+        {historyOpen && (
           <>
-            <motion.div
-              className="labs-history-overlay"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowHistory(false)}
-            />
-            <motion.div
-              className="labs-history-panel"
-              initial={{ x: -300 }}
+            <div className="labs-history-overlay" onClick={() => setHistoryOpen(false)} />
+            <motion.aside
+              initial={{ x: "-100%" }}
               animate={{ x: 0 }}
-              exit={{ x: -300 }}
-              transition={{ type: "spring", damping: 28, stiffness: 280 }}
+              exit={{ x: "-100%" }}
+              transition={{ duration: 0.25, ease: [0.16, 1, 0.36, 1] }}
+              className="labs-history-panel"
+              aria-label={t.history.title}
             >
               <div className="labs-history-header">
-                <h2>{isSv ? "Konversationer" : "Conversations"}</h2>
+                <h2 className="labs-history-title">{t.history.title}</h2>
                 <button
                   type="button"
+                  onClick={() => setHistoryOpen(false)}
                   className="labs-history-close"
-                  onClick={() => setShowHistory(false)}
-                  aria-label={isSv ? "Stäng" : "Close"}
+                  aria-label={t.nav.close}
                 >
-                  <X size={16} />
+                  <X size={18} />
                 </button>
               </div>
-              <button type="button" className="labs-new-chat-btn" onClick={startNewChat}>
-                <Plus size={15} />
-                {isSv ? "Ny konversation" : "New conversation"}
-              </button>
+
               {conversations.length === 0 ? (
-                <p className="labs-history-empty">
-                  {isSv ? "Inga tidigare konversationer." : "No previous conversations."}
-                </p>
+                <p className="labs-history-empty">{t.history.empty}</p>
               ) : (
                 <ul className="labs-history-list">
                   {conversations.map((c) => (
                     <li key={c.id}>
                       <button
                         type="button"
-                        className={`labs-history-item ${c.id === conversationId ? "active" : ""}`}
-                        onClick={() => openConversation(c.id)}
-                        title={c.title}
+                        onClick={() => void openConversation(c.id)}
+                        className={`labs-history-item ${conversationId === c.id ? "active" : ""}`}
                       >
-                        {c.title}
+                        {c.title || (isSv ? "Namnlös konversation" : "Untitled conversation")}
                       </button>
                     </li>
                   ))}
                 </ul>
               )}
+
               <div className="labs-history-footer">
-                <a href={isSv ? "/" : "/"} className="labs-history-link">
-                  <ArrowLeft size={13} />
-                  {isSv ? "Tillbaka till Stilledev" : "Back to Stilledev"}
+                <button type="button" onClick={startNewChat} className="labs-history-new-btn">
+                  <Plus size={14} />
+                  {t.history.startNew}
+                </button>
+                <a href={isSv ? "/sv" : "/"} className="labs-history-link">
+                  {t.history.viewSite}
                 </a>
               </div>
-            </motion.div>
+            </motion.aside>
           </>
         )}
       </AnimatePresence>
 
-      {/* Main chat */}
-      <main className="labs-main">
-        {showWelcome ? (
-          <div className="labs-welcome">
-            <div className="labs-welcome-mark">B</div>
-            <h1 className="labs-welcome-title">
-              Every great project starts with a conversation.
-            </h1>
-            <p className="labs-welcome-subtitle">
-              {isSv
-                ? "Beskriv din idé, ditt problem eller något du vill bygga. Jag hjälper dig att utveckla tanken, ifrågasätta det som inte håller och förstå vad som faktiskt krävs."
-                : "Describe your idea, your problem, or something you want to build. I'll help you develop the thought, challenge what doesn't hold up, and understand what it actually takes."}
-            </p>
-            <p className="labs-welcome-assistant">
-              {isSv
-                ? "Jag är BudAI, Oliver Stilles projektassistent. Projekt genomförs personligen av Oliver på Stilledev."
-                : "I'm BudAI, Oliver Stille's project assistant. Projects are personally delivered by Oliver at Stilledev."}
-            </p>
-            <div className="labs-starters">
-              {starters.map((prompt) => (
-                <button
-                  key={prompt}
-                  type="button"
-                  className="labs-starter-btn"
-                  onClick={() => void sendMessage(prompt)}
-                  disabled={isStreaming}
-                >
-                  {prompt}
-                </button>
-              ))}
-            </div>
-          </div>
-        ) : (
-          <div className="labs-messages">
-            <div style={{ padding: "8px 0 0" }}>
-              <button
-                type="button"
-                onClick={startNewChat}
-                className="labs-header-btn"
-                style={{ fontSize: 11, padding: "5px 10px" }}
-              >
-                <Plus size={12} />
-                {isSv ? "Ny konversation" : "New chat"}
-              </button>
-            </div>
-            {messages.map((msg) => (
-              <div key={msg.id} className={`labs-message ${msg.role}`}>
-                <div className={`labs-message-avatar ${msg.role}`}>
-                  {msg.role === "user" ? <User size={13} /> : "B"}
-                </div>
-                <div className="labs-message-body">
-                  <div className="labs-message-role">
-                    {msg.role === "user" ? (isSv ? "Du" : "You") : "BudAI"}
-                  </div>
-                  <div
-                    className={`labs-message-content ${
-                      msg.role === "assistant" && msg.id === messages[messages.length - 1]?.id && streamingCursor
-                        ? "labs-streaming-cursor"
-                        : ""
-                    }`}
-                  >
-                    {msg.content || ""}
-                  </div>
-                </div>
-              </div>
-            ))}
-            {error && (
-              <div className="labs-error">
-                <span>{error}</span>
-                <button type="button" onClick={() => setError(null)} aria-label="Dismiss">×</button>
-              </div>
-            )}
-            <div ref={messagesEndRef} className="labs-messages-end" />
-          </div>
-        )}
-
-        {/* Input area */}
-        <div className="labs-input-wrap">
-          <div className="labs-input-container">
-            <textarea
-              ref={inputRef}
-              className="labs-input"
-              value={input}
-              onChange={handleInput}
-              onKeyDown={handleKeyDown}
-              placeholder={isSv ? "Berätta vad du vill skapa..." : "Tell me what you want to create..."}
-              rows={1}
-              disabled={isStreaming}
-              aria-label={isSv ? "Skriv ditt meddelande" : "Type your message"}
-              autoComplete="off"
-            />
-            <button
-              type="button"
-              className="labs-send-btn"
-              onClick={() => void sendMessage(input)}
-              disabled={!input.trim() || isStreaming}
-              aria-label={isSv ? "Skicka" : "Send"}
-            >
-              <Send size={15} />
-            </button>
-          </div>
-          <p className="labs-input-hint">
-            <kbd>Enter</kbd> <span>{isSv ? "sänd" : "send"}</span>
-            <span style={{ margin: "0 2px" }}>·</span>
-            <kbd>Shift</kbd>+<kbd>Enter</kbd> <span>{isSv ? "radbyte" : "new line"}</span>
-          </p>
-        </div>
-
-        <div className="labs-disclaimer">
-          {isSv ? (
-            <>
-              BudAI är en AI-assistent. Projekt genomförs personligen av{" "}
-              <a href="/oliver-stille">Oliver Stille</a>.{" "}
-              <a href="/legal/privacy">{isSv ? "Integritet" : "Privacy"}</a>
-            </>
-          ) : (
-            <>
-              BudAI is an AI assistant. Projects are personally delivered by{" "}
-              <a href="/oliver-stille">Oliver Stille</a>.{" "}
-              <a href="/legal/privacy">Privacy</a>
-            </>
-          )}
-        </div>
-      </main>
-
-      {/* Contact form modal */}
+      {/* Contact modal */}
       <AnimatePresence>
-        {showContactForm && !contactSubmitted && (
-          <motion.div
-            className="labs-contact-overlay"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setShowContactForm(false)}
-          >
+        {contactOpen && !contactSubmitted && (
+          <div className="labs-modal-overlay" role="dialog" aria-modal="true" onClick={(e) => {
+            if (e.target === e.currentTarget) setContactOpen(false);
+          }}>
             <motion.div
-              className="labs-contact-modal"
-              initial={{ opacity: 0, y: 16, scale: 0.97 }}
+              initial={{ opacity: 0, y: 12, scale: 0.97 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 8 }}
-              transition={{ type: "spring", damping: 24, stiffness: 260 }}
-              onClick={(e) => e.stopPropagation()}
+              exit={{ opacity: 0, y: 8, scale: 0.97 }}
+              transition={{ duration: 0.25, ease: [0.16, 1, 0.36, 1] }}
+              className="labs-modal"
             >
-              <h3>{isSv ? "Lämna dina kontaktuppgifter" : "Leave your contact details"}</h3>
-              <p>
-                {isSv
-                  ? "Oliver kommer att läsa igenom konversationen och höra av sig personligen för att diskutera projekt, upplägg och nästa steg."
-                  : "Oliver will review the conversation and reach out personally to discuss the project, approach, and next steps."}
-              </p>
-
-              <div className="labs-field">
-                <label>
-                  {isSv ? "Namn" : "Name"} <span className="required">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={contactForm.name}
-                  onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
-                  placeholder={isSv ? "Ditt namn" : "Your name"}
-                  autoFocus
-                />
-                {fieldErrors.name && <p className="labs-field-error">{fieldErrors.name}</p>}
+              <div className="labs-modal-header">
+                <h2 className="labs-modal-title">{t.contact.title}</h2>
+                <button type="button" onClick={() => setContactOpen(false)} className="labs-modal-close" aria-label={t.nav.close}>
+                  <X size={18} />
+                </button>
               </div>
+              <p className="labs-modal-subtitle">{t.contact.subtitle}</p>
 
-              <div className="labs-field">
-                <label>
-                  E-post <span className="required">*</span>
-                </label>
-                <input
-                  type="email"
-                  value={contactForm.email}
-                  onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
-                  placeholder={isSv ? "din@email.se" : "your@email.com"}
-                />
-                {fieldErrors.email && <p className="labs-field-error">{fieldErrors.email}</p>}
-              </div>
+              <form onSubmit={submitContact}>
+                <div className="labs-field">
+                  <label className="labs-field-label" htmlFor="labs-contact-name">{t.contact.name}</label>
+                  <input
+                    id="labs-contact-name"
+                    type="text"
+                    value={contactForm.name}
+                    onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
+                    className={`labs-input ${contactErrors.name ? "error" : ""}`}
+                    placeholder={isSv ? "T.ex. Anna Andersson" : "e.g. Jane Smith"}
+                    autoFocus
+                  />
+                  {contactErrors.name && <p className="labs-field-error">{contactErrors.name}</p>}
+                </div>
 
-              <div className="labs-field">
-                <label>{isSv ? "Telefon (valfritt)" : "Phone (optional)"}</label>
-                <input
-                  type="tel"
-                  value={contactForm.phone}
-                  onChange={(e) => setContactForm({ ...contactForm, phone: e.target.value })}
-                  placeholder={isSv ? "070 123 45 67" : "+46 70 123 45 67"}
-                />
-              </div>
+                <div className="labs-field">
+                  <label className="labs-field-label" htmlFor="labs-contact-email">{t.contact.email}</label>
+                  <input
+                    id="labs-contact-email"
+                    type="email"
+                    value={contactForm.email}
+                    onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
+                    className={`labs-input ${contactErrors.email ? "error" : ""}`}
+                    placeholder="name@company.com"
+                  />
+                  {contactErrors.email && <p className="labs-field-error">{contactErrors.email}</p>}
+                </div>
 
-              <div className="labs-field">
-                <label>{isSv ? "Företag (valfritt)" : "Company (optional)"}</label>
-                <input
-                  type="text"
-                  value={contactForm.company}
-                  onChange={(e) => setContactForm({ ...contactForm, company: e.target.value })}
-                  placeholder={isSv ? "Företagsnamn" : "Company name"}
-                />
-              </div>
+                <div className="labs-field">
+                  <label className="labs-field-label" htmlFor="labs-contact-phone">{t.contact.phone}</label>
+                  <input
+                    id="labs-contact-phone"
+                    type="tel"
+                    value={contactForm.phone}
+                    onChange={(e) => setContactForm({ ...contactForm, phone: e.target.value })}
+                    className="labs-input"
+                    placeholder={isSv ? "+46 70 123 45 67" : "+1 555 123 4567"}
+                  />
+                </div>
 
-              <div className="labs-field">
-                <label>{isSv ? "Föredragen kontaktväg" : "Preferred contact method"}</label>
-                <select
-                  value={contactForm.preferredContact}
-                  onChange={(e) =>
-                    setContactForm({
-                      ...contactForm,
-                      preferredContact: e.target.value as ContactForm["preferredContact"],
-                    })
-                  }
-                >
-                  <option value="email">E-post</option>
-                  <option value="phone">{isSv ? "Telefon" : "Phone"}</option>
-                  <option value="digital_meeting">
-                    {isSv ? "Digitalt möte" : "Digital meeting"}
-                  </option>
-                </select>
-              </div>
+                <div className="labs-field">
+                  <label className="labs-field-label" htmlFor="labs-contact-company">{t.contact.company}</label>
+                  <input
+                    id="labs-contact-company"
+                    type="text"
+                    value={contactForm.company}
+                    onChange={(e) => setContactForm({ ...contactForm, company: e.target.value })}
+                    className="labs-input"
+                    placeholder={isSv ? "Företagsnamn" : "Company name"}
+                  />
+                </div>
 
-              {error && (
-                <p className="labs-field-error" style={{ marginBottom: 8 }}>
-                  {error}
-                </p>
-              )}
+                <div className="labs-field">
+                  <label className="labs-field-label">{t.contact.preferredContact}</label>
+                  <div className="labs-contact-options">
+                    {([
+                      ["email", t.contact.contactEmail],
+                      ["phone", t.contact.contactPhone],
+                      ["digital_meeting", t.contact.contactMeeting],
+                    ] as const).map(([value, label]) => (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() => setContactForm({ ...contactForm, preferredContact: value })}
+                        className={`labs-contact-option ${contactForm.preferredContact === value ? "active" : ""}`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
-              <button
-                type="button"
-                className="labs-contact-submit"
-                onClick={() => void submitContact()}
-                disabled={contactSubmitting}
-              >
-                {contactSubmitting
-                  ? (isSv ? "Skickar..." : "Sending...")
-                  : (isSv ? "Skicka" : "Submit")}
-              </button>
-              <button
-                type="button"
-                className="labs-contact-cancel"
-                onClick={() => setShowContactForm(false)}
-              >
-                {isSv ? "Jag vill fortsätta chatta först" : "I want to keep chatting first"}
-              </button>
+                <button type="submit" className="labs-submit-btn">
+                  {t.contact.submit}
+                </button>
+
+                <p className="labs-privacy-note">{t.contact.privacyNote}</p>
+              </form>
             </motion.div>
-          </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </div>
