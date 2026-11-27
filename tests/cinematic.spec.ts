@@ -28,7 +28,8 @@ test("restored neural journey is after landing and before the REAL Playground; o
   await expect(brain).toHaveAttribute("data-rendered", "true");
   await expect(brain).toHaveCount(1);
   await expect(page.locator(".hero-sculpture-core, .hero-sculpture-ring")).toHaveCount(0);
-  await expect(page.locator(".hero-signal-sculpture path")).toHaveCount(4);
+  await expect(page.locator(".hero-signal-sculpture, .hero-light")).toHaveCount(0);
+  await expect(page.locator(".universe-depth-field .ambient-orbit")).toHaveCount(1);
   await expect(page.locator(".hero-bottom a")).toHaveAttribute("href", "#signal");
   await expect(page.locator(".hero-bottom a")).toContainText("Explore the signal path");
   await expect(page.locator(".journey-route-label")).toContainText("SIGNAL → CONTEXT → ACTION");

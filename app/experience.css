@@ -494,8 +494,7 @@ html[data-budai-intro="playing"] .hero-content > * { opacity: 0; transform: tran
 }
 
 /* Shared atmosphere and the lazy, persistent WebGL / DOM projection stage. */
-.universe-atmosphere { position: fixed; inset: 0; z-index: 0; pointer-events: none; background: radial-gradient(ellipse at calc(70% - var(--journey-phase, 0) * 5%) 42%, #14283a38, transparent 68%), linear-gradient(140deg, #020205, #03060c 65%, #050811); }
-.universe-atmosphere::before { content: ""; position: absolute; inset: -20% 0; background: repeating-linear-gradient(90deg, transparent 0 calc(16.666% - 1px), #8295b008 calc(16.666% - 1px) 16.666%); transform: translateY(var(--journey-shift, 0px)); mask-image: linear-gradient(transparent, black 40%, transparent 85%); }
+.universe-atmosphere { position: fixed; inset: 0; z-index: 0; pointer-events: none; background: radial-gradient(ellipse at 70% 42%, #14283a38, transparent 68%), linear-gradient(140deg, #020205, #03060c 65%, #050811); }
 .universe-world { position: fixed; inset: 0; z-index: 1; pointer-events: none; }
 .universe-world > canvas { position: absolute; display: block; inset: 0; }
 .world-dom-layer { position: absolute; inset: 0; pointer-events: none; }
@@ -1085,11 +1084,6 @@ html[data-budai-intro="playing"] #main .confluence-cell {animation-play-state:pa
 @media(max-width:767px) { .playground-introduction::before {inset:-25px 0;} }
 
 /* The landing is editorial, not a continuation of an opening model/logo. */
-.hero-light {position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 80% 43%,#30475212,transparent 55%);}
-.hero-signal {position:absolute;left:74%;top:40%;width:100px;text-align:center;color:#7395a5;font:8px var(--font-jetbrains),monospace;letter-spacing:.15em;}
-.hero-signal>div {position:relative;width:1px;height:150px;background:linear-gradient(transparent,#a0c3cd4d,transparent);margin:24px auto;}
-.hero-signal i {position:absolute;left:-2px;top:48%;width:5px;height:5px;border-radius:50%;background:#accfd6;box-shadow:0 0 18px #8cb7c440;}
-@media(max-width:767px){.hero-signal{display:none;}}
 
 .brain-poster-story {mask-image:radial-gradient(ellipse,black 45%,transparent 76%);}
 
@@ -1199,8 +1193,6 @@ html[data-world-state="ready"] .closing-field>i {background:transparent;box-shad
 
 /* Creative direction V2: an editorial command deck around the existing neural core. */
 .hero-universe { isolation:isolate; overflow:clip; }
-.hero-universe::before { content:""; position:absolute; z-index:0; inset:9% 4% 10% 46%; pointer-events:none; background:linear-gradient(135deg,#b9e5f008 1px,transparent 1px); background-size:42px 42px; mask-image:linear-gradient(90deg,transparent,#000 28%,transparent 92%); transform:skewY(-8deg); }
-.hero-light { background:radial-gradient(ellipse at 74% 43%,#8de3f31a,transparent 37%),radial-gradient(ellipse at 52% 84%,#9384d108,transparent 38%); animation:hero-light-breathe 20s ease-in-out infinite alternate; }
 .hero-content { max-width:720px; width:60%; }
 .hero-eyebrow { margin-bottom:25px; color:#bdd3dc; letter-spacing:.14em; }
 .hero-eyebrow .signal-dot { box-shadow:0 0 0 5px #7fdae30d,0 0 18px #71cee788; }
@@ -1247,7 +1239,6 @@ html[data-world-state="ready"] .closing-field>i {background:transparent;box-shad
 }
 @media(max-width:767px) {
   .hero-universe { padding:145px 24px 112px; min-height:880px; }
-  .hero-universe::before { inset:16% -8% 35% 18%; opacity:.65; }
   .hero-content { width:100%; max-width:560px; }
   .hero-content h1 { font-size:clamp(48px,12vw,72px); line-height:1.01; }
   .hero-contact { margin-top:22px; }
@@ -1265,21 +1256,8 @@ html[data-world-state="ready"] .closing-field>i {background:transparent;box-shad
 
   .hero-contact,.hero-contact > svg { transition:none!important; }
 }
-.hero-signal-sculpture { position:absolute; z-index:1; top:12%; right:0; width:min(58vw,790px); height:auto; overflow:visible; pointer-events:none; opacity:.34; }
-.hero-signal-path { stroke:#8de3ed; stroke-width:1; vector-effect:non-scaling-stroke; }
-.hero-signal-path-a,.hero-signal-path-b,.hero-signal-path-c { opacity:.34; }
-.hero-signal-trace { stroke:#c4f5fb; stroke-width:.65; opacity:.15; stroke-dasharray:2 12; animation:hero-signal-flow 18s linear infinite; }
-.hero-signal-node { fill:#9beaf3; filter:drop-shadow(0 0 7px #7de5f4b0); transform-box:fill-box; transform-origin:center; animation:hero-node-breathe 5s ease-in-out infinite; }
-.hero-signal-node:nth-of-type(2n) { animation-delay:-2.4s; }
-@keyframes hero-signal-flow { to { stroke-dashoffset:-168; } }
-@keyframes hero-node-breathe { 0%,100% { opacity:.48; transform:scale(.88); } 50% { opacity:.95; transform:scale(1.12); } }
-@keyframes hero-light-breathe { from { opacity:.72; transform:scale(.99); } to { opacity:1; transform:scale(1.035); } }
-@media(max-width:767px) { .hero-signal-sculpture { top:16%; right:-22%; width:78vw; opacity:.2; } }
-
 /* LANDING → BRAIN → PLAYGROUND
    Remove the competing hero orb; the brain is the single focal object. */
-.hero-universe::before { border:0; }
-.hero-signal-sculpture { z-index:0; }
 .hero-content { position:relative; z-index:2; }
 .hero-bottom { z-index:2; }
 .hero-bottom > span { max-width:44%; line-height:1.6; }
@@ -1308,9 +1286,4 @@ html[data-world-state="ready"] .closing-field>i {background:transparent;box-shad
   .brain-journey[data-enhanced="true"] .original-brain-tour { left:24px; right:24px; bottom:10%; width:auto; height:120px; }
   .brain-journey[data-enhanced="true"] .original-brain-stage h3 { font-size:32px; margin:5px 0; }
   .brain-journey[data-enhanced="true"] .original-brain-stage p { max-width:260px; font-size:11px; line-height:1.55; }
-}
-@media(prefers-reduced-motion:reduce) {
-  .hero-signal-path { stroke-dasharray:none; }
-  .hero-signal-node { filter:none; animation:none; }
-  .hero-signal-trace,.hero-light { animation:none; }
 }

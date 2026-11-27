@@ -4,8 +4,6 @@
 
 import { useEffect, useState } from "react";
 import PhoneDesktopNotice from "@/components/sections/PhoneDesktopNotice";
-import CompanionRestore from "@/components/ui/CompanionRestore";
-import BuilderCompanion from "@/components/sections/BuilderCompanion";
 import { ArrowDown, ArrowUpRight, Monitor, Sparkles } from "lucide-react";
 import AIPlayground from "@/components/sections/AIPlayground";
 import { BudAIWordmark } from "@/components/ui/BudAILogo";
@@ -72,13 +70,11 @@ export default function PhoneWelcome({ normalizeLanguagePath = false }: { normal
           <a href="/legal/privacy">{sv ? "Integritet" : "Privacy"}</a>
           <a href="/legal/terms">{sv ? "Villkor" : "Terms"}</a>
           <a href="/legal/cookies">Cookies</a>
-          <CompanionRestore phone />
           <button type="button" onClick={openCookieSettings}>{sv ? "Cookieinställningar" : "Cookie settings"}</button>
         </div>
       </footer>
     </div>
     {noticeOpen && <PhoneDesktopNotice sv={sv} changeLanguage={changeLanguage} onConfirm={confirmNotice} />}
-    {!noticeOpen && <BuilderCompanion phone />}
     </>
   );
 }

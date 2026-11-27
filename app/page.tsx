@@ -21,9 +21,10 @@ import Footer from "@/components/sections/Footer";
 import WorldStage from "@/components/experience/WorldStage";
 import AmbientDepthField from "@/components/experience/AmbientDepthField";
 import ShowcaseFilm from "@/components/sections/ShowcaseFilm";
+import Faq from "@/components/sections/Faq";
+import MobilePlaygroundNudge from "@/components/ui/MobilePlaygroundNudge";
 import About from "@/components/sections/About";
 import AIPlayground from "@/components/sections/AIPlayground";
-import BuilderCompanion from "@/components/sections/BuilderCompanion";
 
 
 export default function Home() {
@@ -98,15 +99,16 @@ export default function Home() {
         </ErrorBoundary>
         <Capabilities />
         <About />
+        <Faq />
         <Journey />
         <Footer />
       </div>
 
       <BackToTop />
+      <MobilePlaygroundNudge />
       <SurpriseToasts />
       <Signature />
       <FocusMode />
-      <BuilderCompanion />
     </main>
   );
 }

@@ -68,7 +68,7 @@ import {
 import PlaygroundArrival from "@/components/experience/PlaygroundArrival";
 import BudAIWordmark from "@/components/ui/BudAIWordmark";
 import BudAILogo from "@/components/ui/BudAILogo";
-import BotAvatar from "@/components/ui/BotAvatar";
+import AssistantMark from "@/components/ui/AssistantMark";
 import { useLang } from "@/components/ui/LanguageContext";
 import { useAuth } from "@/components/auth/AuthProvider";
 import {
@@ -2539,7 +2539,7 @@ export default function AIPlayground({ phoneOnly = false }: { phoneOnly?: boolea
                         <User className="w-4 h-4 text-white/70" />
                       </div>
                     ) : (
-                      <BotAvatar size={34} state={msg.id === messages[messages.length - 1]?.id && activity !== "idle" ? "talking" : "idle"} />
+                      <AssistantMark size={34} state={msg.id === messages[messages.length - 1]?.id && activity !== "idle" ? "talking" : "idle"} />
                     )}
                     <div
                       className={`min-w-0 max-w-[min(100%,820px)] space-y-2 ${
@@ -2852,7 +2852,7 @@ export default function AIPlayground({ phoneOnly = false }: { phoneOnly?: boolea
                   <div className="flex gap-2.5">
                     <div className="relative w-9 h-9 rounded-xl bg-gradient-to-br from-accent-cyan/90 to-accent-purple/90 p-[2px] shrink-0 shadow-[0_0_24px_rgba(0,229,255,0.35)]">
                       <div className="w-full h-full rounded-[10px] bg-[#07070e] flex items-center justify-center overflow-hidden">
-                        <BotAvatar size={26} state="thinking" />
+                        <AssistantMark size={26} state="thinking" />
                       </div>
                       {busy && !typingText && (
                         <span className="absolute -inset-1 rounded-xl border border-accent-cyan/30 logo-pulse-ring pointer-events-none" />

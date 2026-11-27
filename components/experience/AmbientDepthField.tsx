@@ -2,20 +2,13 @@
 
 import { useEffect, useRef } from "react";
 
-const PARTICLES = [
-  [8, 22, 2], [17, 74, 3], [28, 14, 2], [36, 58, 2], [45, 33, 3],
-  [54, 82, 2], [63, 18, 2], [72, 66, 3], [83, 38, 2], [92, 80, 2],
-] as const;
-
-/** A cheap CSS-3D orbital field, deliberately behind the single existing brain scene. */
+/** One restrained 3D orbit behind the brain; no competing particles, grids or canvases. */
 export default function AmbientDepthField() {
   const field = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const el = field.current;
-    if (!el) return;
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
-    if (reduced.matches) return;
+    if (!el || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     let frame = 0;
     let x = 0, y = 0;
     const render = () => {
@@ -26,8 +19,8 @@ export default function AmbientDepthField() {
     };
     const move = (event: PointerEvent) => {
       if (event.pointerType === "touch") return;
-      x = ((event.clientX / Math.max(1, innerWidth)) - .5) * 5;
-      y = ((event.clientY / Math.max(1, innerHeight)) - .5) * -4;
+      x = ((event.clientX / Math.max(1, innerWidth)) - .5) * 3;
+      y = ((event.clientY / Math.max(1, innerHeight)) - .5) * -2;
       if (!frame) frame = requestAnimationFrame(render);
     };
     window.addEventListener("pointermove", move, { passive: true });
@@ -40,13 +33,10 @@ export default function AmbientDepthField() {
   return (
     <div ref={field} className="universe-depth-field" aria-hidden="true">
       <div className="ambient-depth-rig">
-        <div className="ambient-orbit ambient-orbit-a"><i /><i /></div>
-        <div className="ambient-orbit ambient-orbit-b"><i /><i /></div>
-        <div className="ambient-orbit ambient-orbit-c"><i /></div>
-        <div className="ambient-core"><i /><b /><span /></div>
-        <div className="ambient-particles">
-          {PARTICLES.map(([left, top, size], index) => <i key={index} style={{ left: `${left}%`, top: `${top}%`, width: size, height: size, animationDelay: `${index * -1.7}s` }} />)}
-        </div>
+        <svg className="ambient-orbit" viewBox="0 0 1200 800" fill="none">
+          <ellipse className="ambient-orbit-track" cx="620" cy="400" rx="490" ry="205" />
+          <ellipse className="ambient-orbit-trace" cx="620" cy="400" rx="490" ry="205" />
+        </svg>
       </div>
     </div>
   );

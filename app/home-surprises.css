@@ -16,3 +16,8 @@
 }
 @media(max-width:380px) { .hero-feature-hint { flex-wrap:wrap; }.hero-feature-hint .hero-surprise { margin-left:auto; } }
 @media(prefers-reduced-motion:reduce) { .hero-motion-toggle { display:none; } }
+.mobile-playground-nudge { position:fixed; z-index:39; left:50%; bottom:max(16px,env(safe-area-inset-bottom)); display:inline-flex; min-height:46px; align-items:center; gap:10px; transform:translateX(-50%); border:1px solid #a6e7ed55; border-radius:999px; padding:0 17px; background:linear-gradient(110deg,#d3f6f2,#a4d9f1); color:#07131a; box-shadow:0 8px 28px #0006,0 0 30px #8de4ed18; font-size:12px; font-weight:700; animation:nudge-enter .2s ease-out both; }
+.mobile-playground-nudge:hover { background:linear-gradient(110deg,#e8fffb,#bdeaff); }
+.mobile-playground-nudge:focus-visible { outline:2px solid #a8eff7; outline-offset:4px; }
+@keyframes nudge-enter { from { opacity:0; transform:translate(-50%,8px); } to { opacity:1; transform:translate(-50%,0); } }
+@media(prefers-reduced-motion:reduce) { .mobile-playground-nudge { animation:none; } }

@@ -1,7 +1,6 @@
 "use client";
 
 import StatusPill from "@/components/ui/StatusPill";
-import CompanionRestore from "@/components/ui/CompanionRestore";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { Github, Linkedin, Mail, ArrowUpRight, Share2 } from "lucide-react";
@@ -17,6 +16,7 @@ const groups = (lang: string) => [
     title: lang === "sv" ? "Produkt" : "Product",
     links: [
       { label: lang === "sv" ? "Förmågor" : "Capabilities", href: "#capabilities" },
+      { label: lang === "sv" ? "Vanliga frågor" : "FAQ", href: "#faq" },
       { label: "AI Playground", href: "#playground" },
       { label: "Roadmap", href: "#roadmap" },
       { label: lang === "sv" ? "Väntelista" : "Waitlist", href: "#waitlist" },
@@ -163,7 +163,6 @@ export default function Footer() {
             <span className="text-muted/30">·</span>
             <span className="text-xs">{lang === "sv" ? "Sverige" : "Sweden"}</span>
           </p>
-          <CompanionRestore />
           <button
             type="button"
             onClick={openCookieSettings}

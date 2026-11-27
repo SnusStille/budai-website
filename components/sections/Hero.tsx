@@ -64,18 +64,6 @@ export default function Hero() {
 
   return (
     <section id="intelligence" className="hero-universe" aria-labelledby="hero-title">
-      <div className="hero-light" aria-hidden="true" />
-      <svg className="hero-signal-sculpture" viewBox="0 0 720 520" fill="none" aria-hidden="true">
-        <path className="hero-signal-path hero-signal-path-a" d="M18 342C130 342 126 170 252 170S390 385 500 286 605 120 704 120" />
-        <path className="hero-signal-path hero-signal-path-b" d="M14 408C144 408 174 262 282 262S424 118 527 198 627 361 708 361" />
-        <path className="hero-signal-path hero-signal-path-c" d="M84 90C194 90 205 211 318 211S455 431 562 431 644 280 710 280" />
-        <path className="hero-signal-path hero-signal-trace" d="M18 342 252 170 500 286 704 120M14 408 282 262 527 198 708 361M84 90 318 211 562 431 710 280" />
-        <circle className="hero-signal-node" cx="252" cy="170" r="4" />
-        <circle className="hero-signal-node" cx="500" cy="286" r="5" />
-        <circle className="hero-signal-node" cx="282" cy="262" r="3" />
-        <circle className="hero-signal-node" cx="527" cy="198" r="4" />
-        <circle className="hero-signal-node" cx="562" cy="431" r="3" />
-      </svg>
       <div className="hero-content">
         <div className="hero-eyebrow">
           <i className="signal-dot" aria-hidden="true" />
