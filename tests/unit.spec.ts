@@ -338,6 +338,7 @@ test("CSP uses a per-request nonce and blocks the risky default sources", () => 
   expect(a).toContain("object-src 'none'");
   expect(a).toContain("base-uri 'self'");
   expect(a).toContain("form-action 'self'");
+  expect(a).toContain("frame-src 'self' https://streamable.com");
   expect(a).toContain("'strict-dynamic'");
   expect(a).not.toContain("upgrade-insecure-requests");
   expect(a).not.toContain("frame-ancestors"); // cross-origin preview iframe

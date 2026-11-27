@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import Link from "next/link";
 import { ArrowRight, Code2 } from "lucide-react";
 import { useLang } from "@/components/ui/LanguageContext";
 import { subscribeJourney } from "@/lib/experience/scroll";
@@ -64,7 +65,7 @@ export default function About() {
             <p>{sv ? "Från en kort specifikation till typsäker kod, gränssnitt och strukturerade arbetsflöden — byggd med samma arkitektur som driver BudAI." : "From a short brief to type-safe code, interfaces, and structured workflows — built with the same architecture that powers BudAI."}</p>
             <div id="oliver-stille" className="builder-byline scroll-mt-24" aria-label={sv ? "Om Stilledev och dess grundare" : "About Stilledev and its founder"}>
               <span>STILLEDEV EF <i /> {sv ? "GRUNDAT AV OLIVER STILLE" : "FOUNDED BY OLIVER STILLE"}</span>
-              <p>{sv ? "Oliver Stille grundade Stilledev och arbetar med digital utveckling och AI." : "Oliver Stille founded Stilledev and works in digital development and AI."}</p>
+              <p>{sv ? <><Link href="/sv/oliver-stille" className="founder-byline-link">Oliver Stille</Link> grundade Stilledev och arbetar med digital utveckling och AI.</> : <><Link href="/oliver-stille" className="founder-byline-link">Oliver Stille</Link> founded Stilledev and works in digital development and AI.</>}</p>
             </div>
             <div className="reality-creation-pills" role="group" aria-label={sv ? "Prova en idé i Playground" : "Try an idea in Playground"} data-thought-to-reality>
               <span className="builder-ideas-label" aria-hidden="true">{sv ? "PROVA EN IDÉ" : "TRY AN IDEA"} <ArrowRight size={11} /></span>

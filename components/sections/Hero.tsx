@@ -116,8 +116,11 @@ export default function Hero() {
             : `Start free as a guest (${LIMITS.guest.messagesPerDay} messages a day). Sign in for history and memory you can control (${LIMITS.member.messagesPerDay} messages a day).`}
         </p>
         <p className="hero-credit">
-          {sv ? "Utvecklad av " : "Built by "}
-          <a href="#about" className="text-accent-cyan hover:text-white">Stilledev</a> <span>·</span> Sweden
+          {sv ? "Grundat av " : "Founded by "}
+          <a href={sv ? "/sv/oliver-stille" : "/oliver-stille"} className="text-accent-cyan hover:text-white">Oliver Stille</a>
+          <span> · </span>
+          <a href="#about" className="text-accent-cyan hover:text-white">Stilledev</a>
+          <span> · </span>{sv ? "Sverige" : "Sweden"}
         </p>
         <StockholmClock />
       </div>

@@ -25,7 +25,7 @@ const groups = (lang: string) => [
   {
     title: lang === "sv" ? "Företag" : "Company",
     links: [
-      { label: "Oliver Stille", href: "#oliver-stille" },
+      { label: "Oliver Stille", href: lang === "sv" ? "/sv/oliver-stille" : "/oliver-stille" },
       { label: lang === "sv" ? "Om Stilledev" : "About Stilledev", href: "#about" },
       { label: lang === "sv" ? "Kontakt" : "Contact", href: lang === "sv" ? "/sv/contact" : "/contact" },
       { label: lang === "sv" ? "Vad är nytt" : "What's new", href: "/changelog" },

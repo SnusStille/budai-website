@@ -25,12 +25,12 @@ test("Labs is a static bilingual under-development placeholder with no interacti
   }
 });
 
-test("public navigation links to localized Labs while keeping placeholders off the homepage", async ({ page }) => {
+test("public navigation links to localized Labs and the founder profile", async ({ page }) => {
   await quiet(page);
   for (const [path, href] of [["/", "/labs"], ["/sv", "/sv/labs"]]) {
     await page.goto(path);
     await expect(page.locator(`a[href="${href}"]`).first()).toHaveText("Labs");
-    await expect(page.locator('a[href="/oliver-stille"],a[href="/sv/oliver-stille"]')).toHaveCount(0);
+    await expect(page.locator("footer").getByRole("link", { name: "Oliver Stille" })).toHaveAttribute("href", path === "/sv" ? "/sv/oliver-stille" : "/oliver-stille");
     expect(await page.locator("body").innerText()).not.toMatch(/Labs is under development|Labs är under utveckling/i);
   }
 });
