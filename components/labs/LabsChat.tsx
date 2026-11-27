@@ -552,11 +552,39 @@ export default function LabsChat() {
               </div>
             </motion.div>
 
+            {/* Value props */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.54 }}
+              className="labs-valueprops-section"
+            >
+              <div className="labs-valueprops-grid">
+                {([
+                  ["directTitle", "directBody", "→"],
+                  ["honestTitle", "honestBody", "✓"],
+                  ["deliveryTitle", "deliveryBody", "◈"],
+                ] as const).map(([titleKey, bodyKey, sym], i) => (
+                  <motion.div
+                    key={titleKey}
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.35, delay: 0.56 + i * 0.05 }}
+                    className="labs-valueprop"
+                  >
+                    <span className="labs-valueprop-symbol">{sym}</span>
+                    <h4 className="labs-valueprop-title">{(t.valueProps as any)[titleKey]}</h4>
+                    <p className="labs-valueprop-body">{(t.valueProps as any)[bodyKey]}</p>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+
             {/* Direct input */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: 0.45 }}
+              transition={{ duration: 0.4, delay: 0.62 }}
               className="labs-direct-input"
             >
               <p className="labs-section-label">{t.hero.orDescribe}</p>

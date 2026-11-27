@@ -90,6 +90,15 @@ export const labsTranslations = {
       noObligation: "Ingen förpliktelse att köpa.",
       personalReview: "Oliver granskar alla förfrågningar personligen.",
     },
+    valueProps: {
+      title: "Därför väljer kunderna Stilledev",
+      directTitle: "Direktkontakt med utvecklaren",
+      directBody: "Inga säljare. Inga projektledare som vidarebefordrar. Du pratar direkt med mig som bygger din produkt.",
+      honestTitle: "Ärlig teknisk bedömning",
+      honestBody: "Jag säger nej när en idé inte håller eller när budgeten inte matchar omfattningen. Bättre en rak sanning än ett trevligt ljug.",
+      deliveryTitle: "Från idé till leverans",
+      deliveryBody: "Samma person tar dig från första samtal till sjösatt produkt. Inga kunskapsluckor, inga överlämningar, inga överraskningar.",
+    },
     // Chat interface
     chat: {
       placeholder: "Beskriv din idé, ditt problem eller din fråga…",
@@ -276,6 +285,15 @@ export const labsTranslations = {
       noAccount: "No account required.",
       noObligation: "No obligation to buy.",
       personalReview: "Oliver reviews every inquiry personally.",
+    },
+    valueProps: {
+      title: "Why clients choose Stilledev",
+      directTitle: "Direct contact with the builder",
+      directBody: "No salespeople. No account managers. You talk directly to me — the person designing and coding your product.",
+      honestTitle: "Honest technical assessment",
+      honestBody: "I'll tell you no when an idea doesn't hold up or the budget doesn't match the scope. A straight no is worth twenty polite yes's.",
+      deliveryTitle: "From idea to launch",
+      deliveryBody: "The same person takes you from first conversation to launched product. No knowledge gaps, no handoffs, no surprises.",
     },
     chat: {
       placeholder: "Describe your idea, problem, or question…",

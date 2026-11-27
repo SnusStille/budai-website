@@ -548,6 +548,50 @@ body:has([data-labs-root]) {
   line-height: 1.5;
 }
 
+/* ── Value props ── */
+.labs-valueprops-section {
+  width: 100%;
+  margin-bottom: 28px;
+}
+.labs-valueprops-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.labs-valueprop {
+  padding: 16px;
+  border: 1px solid var(--labs-border);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.01);
+  text-align: left;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+.labs-valueprop:hover {
+  border-color: var(--labs-border-strong);
+  background: rgba(255, 255, 255, 0.025);
+}
+.labs-valueprop-symbol {
+  font-family: var(--labs-mono);
+  font-size: 16px;
+  color: var(--labs-accent);
+  opacity: 0.7;
+  display: block;
+  margin-bottom: 8px;
+}
+.labs-valueprop-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  margin: 0 0 5px;
+  letter-spacing: -0.01em;
+}
+.labs-valueprop-body {
+  font-size: 12px;
+  color: var(--labs-text-muted);
+  line-height: 1.55;
+  margin: 0;
+}
+
 /* ── Direct input (on welcome) ── */
 .labs-direct-input {
   width: 100%;
@@ -1698,6 +1742,8 @@ body:has([data-labs-root]) {
   .labs-trust-row { gap: 8px; font-size: 10.5px; }
   .labs-scenario-card { padding: 10px 12px; gap: 10px; }
   .labs-scenario-text { font-size: 12.5px; }
+  .labs-valueprops-grid { grid-template-columns: 1fr; gap: 6px; }
+  .labs-valueprop { padding: 14px; }
 
   .labs-blueprint-header { padding: 12px 14px; }
   .labs-blueprint-body { padding: 12px 14px; gap: 10px; }
@@ -1739,6 +1785,10 @@ body:has([data-labs-root]) {
   .labs-service-grid { grid-template-columns: 1fr; }
   .labs-process-grid { grid-template-columns: 1fr 1fr; }
   .labs-scenario-tag { display: none; }
+}
+
+@media (min-width: 641px) and (max-width: 860px) {
+  .labs-valueprops-grid { grid-template-columns: 1fr 1fr; }
 }
 
 /* Selection */

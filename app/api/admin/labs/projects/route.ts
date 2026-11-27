@@ -20,6 +20,7 @@ const ALLOWED_UPDATE_FIELDS = [
   "competition", "existing_solutions", "recommended_mvp", "next_steps",
   "technical_complexity", "admin_assignee", "priority_score",
   "priority_strengths", "priority_concerns", "priority_recommendation",
+  "internal_notes", "next_recommended_action",
 ];
 
 export async function GET(req: NextRequest) {
@@ -71,6 +72,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       project,
       conversation,
+      // Extract latest profile snapshot from conversation for blueprint/confidence display
+      profile: conversation?.project_profile || null,
       messages: (messages || []).map((m) => ({
         ...m,
         content: m.content.replace(/\[\[(PROFILE|SUMMARY):[\s\S]*?\]\]/gi, "").trim(),
