@@ -55,6 +55,8 @@ test("secondary pages share the legal reading surface, typography and language c
     await expect(page.getByRole("group", { name: /Choose language|Välj språk/ })).toBeVisible();
     await expect(page.getByRole("progressbar", { name: /Reading progress|Läsförlopp/ })).toBeVisible();
     await expect(page.getByRole("button", { name: /Share page|Dela sidan/ })).toBeVisible();
+    await expect(page.getByRole("button", { name: /Share page|Dela sidan/ })).toHaveCount(1);
+    if (path.includes("labs")) await expect(page.locator(".labs-share-button, .labs-share-wrap")).toHaveCount(0);
     await expect(page.locator(".standalone-page-tools")).toContainText(/\d+ min (read|läsning)/);
     surface.push(await page.locator(".standalone-page-shell").evaluate(main => ({
       background: getComputedStyle(main).backgroundColor,
