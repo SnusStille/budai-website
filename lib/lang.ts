@@ -23,8 +23,37 @@ export function canonicalPath(pathname: string): string {
   return clean || "/";
 }
 
-/** Only the homepage has a real language pair. Never invent /sv/... URLs for
- *  routes that do not exist — hreflang must point at real, reciprocal pages. */
+/** Only routes with a real /sv/... counterpart should declare hreflang alternates.
+ *  Never invent /sv/... URLs for routes that do not exist — hreflang must point
+ *  at real, reciprocal pages. */
 export function hasLanguageAlternate(pathname: string): boolean {
-  return pathname === "/" || pathname === SWEDISH_PATH;
+  return (
+    pathname === "/" ||
+    pathname === SWEDISH_PATH ||
+    pathname === "/labs" ||
+    pathname === "/sv/labs" ||
+    pathname.startsWith("/labs/") ||
+    pathname.startsWith("/sv/labs/") ||
+    pathname === "/contact" ||
+    pathname === "/sv/contact" ||
+    pathname === "/oliver-stille" ||
+    pathname === "/sv/oliver-stille"
+  );
+}
+
+/** Given a pathname, return its language counterpart. */
+export function languageAlternate(pathname: string): { sv?: string; en?: string } {
+  // / -> /sv/labs doesn't make sense; alternates are per-page pairs
+  if (pathname === "/" || pathname === SWEDISH_PATH) return { en: "/", sv: SWEDISH_PATH };
+  if (pathname === "/contact" || pathname === "/sv/contact") return { en: "/contact", sv: "/sv/contact" };
+  if (pathname === "/oliver-stille" || pathname === "/sv/oliver-stille") return { en: "/oliver-stille", sv: "/sv/oliver-stille" };
+  if (pathname === "/labs") return { en: "/labs", sv: "/sv/labs" };
+  if (pathname === "/sv/labs") return { en: "/labs", sv: "/sv/labs" };
+  // /labs/[id] <-> /sv/labs/[id]
+  const labsMatch = pathname.match(/^\/(?:sv\/)?labs\/(.+)$/);
+  if (labsMatch) {
+    const id = labsMatch[1];
+    return { en: `/labs/${id}`, sv: `/sv/labs/${id}` };
+  }
+  return {};
 }

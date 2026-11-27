@@ -3,6 +3,7 @@ import { createServerClient } from "@supabase/ssr";
 import { buildCsp } from "@/lib/csp";
 import { isNonCanonicalHost } from "@/lib/host";
 import { LANG_COOKIE, resolveLang } from "@/lib/lang";
+import { LABS_SESSION_COOKIE, generateSessionId, sessionCookieValue } from "@/lib/labs/session";
 
 /**
  * Per-request CSP nonce + optional session refresh for Supabase Auth (PKCE).
@@ -38,6 +39,12 @@ export async function middleware(request: NextRequest) {
     return res;
   };
   let response = makeResponse();
+
+  // Stilledev Labs: ensure anonymous session cookie exists for /labs routes
+  if ((pathname === "/labs" || pathname.startsWith("/labs/") || pathname === "/sv/labs" || pathname.startsWith("/sv/labs/")) && !request.cookies.has(LABS_SESSION_COOKIE)) {
+    const sid = generateSessionId();
+    response.headers.append("Set-Cookie", sessionCookieValue(sid));
+  }
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;

@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Lock, Eye, EyeOff, RefreshCw, Download, Search, LayoutDashboard, Users, BarChart3,
   Inbox, MessageSquare, MessagesSquare, Globe, Shield, ScrollText, Cpu, FileDown,
-  Bell, X, Menu, LogOut, Check, Megaphone, Wrench, ExternalLink, Trash2,
+  Bell, X, Menu, LogOut, Check, Megaphone, Wrench, ExternalLink, Trash2, FlaskConical,
 } from "lucide-react";
 import StatsCards from "@/components/admin/StatsCards";
 import UserTable from "@/components/admin/UserTable";
@@ -12,15 +12,16 @@ import ActivityChart, { type SeriesPoint } from "@/components/admin/ActivityChar
 import AdminInbox from "@/components/admin/AdminInbox";
 import SystemTerminal from "@/components/admin/SystemTerminal";
 import BudAILogo from "@/components/ui/BudAILogo";
+import LabsProjects from "@/components/admin/LabsProjects";
 import Link from "next/link";
 import { getWaitlistUsers, getWaitlistStats } from "@/lib/data";
 import type { WaitlistUser } from "@/types";
 
-type Section = "overview"|"analytics"|"waitlist"|"contact"|"chats"|"feedback"|"content"|"users"|"audit"|"system"|"export";
+type Section = "overview"|"analytics"|"waitlist"|"contact"|"chats"|"feedback"|"labs"|"content"|"users"|"audit"|"system"|"export";
 const NAV: {id:Section;label:string;icon:typeof Users}[] = [
   {id:"overview",label:"Overview",icon:LayoutDashboard},{id:"analytics",label:"Analytics",icon:BarChart3},
   {id:"waitlist",label:"Waitlist",icon:Users},{id:"contact",label:"Contact / Leads",icon:Inbox},
-  {id:"chats",label:"Conversations",icon:MessagesSquare},{id:"feedback",label:"Feedback",icon:MessageSquare},{id:"content",label:"Website & Content",icon:Globe},
+  {id:"chats",label:"Conversations",icon:MessagesSquare},{id:"labs",label:"Labs Projects",icon:FlaskConical},{id:"feedback",label:"Feedback",icon:MessageSquare},{id:"content",label:"Website & Content",icon:Globe},
   {id:"users",label:"Users & Access",icon:Shield},{id:"audit",label:"Audit Log",icon:ScrollText},
   {id:"system",label:"System",icon:Cpu},{id:"export",label:"Export",icon:FileDown},
 ];
@@ -223,6 +224,8 @@ export default function AdminPage(){
           {chatErr&&<p className="rounded-lg border border-amber-400/25 bg-amber-400/10 px-3 py-2 text-xs text-amber-200">{chatErr}</p>}
           {chats.length===0?<p className="text-sm text-muted">No conversations found.</p> : <ul className="space-y-2">{chats.map(c=>(<li key={c.id}><button type="button" onClick={()=>void openChat(c.id)} className="w-full rounded-xl border border-white/[0.08] bg-white/[0.02] p-3.5 text-left hover:bg-white/[0.04]"><span className="block truncate text-sm font-medium text-white">{c.title||"Untitled"}</span><span className="text-[11px] text-muted">{c.display_name||c.email||"Unknown"} · {c.message_count} msgs · {new Date(c.updated_at).toLocaleString("sv-SE")}</span></button></li>))}</ul>}
         </div><div className="xl:col-span-3">{selectedChat?(<div className={card}><h3 className="font-semibold">{String(selectedChat.conversation.title||"Conversation")}</h3><p className="text-xs text-muted">{String(selectedChat.conversation.email||"")} · {selectedChat.messages.length} messages</p><div className="mt-4 max-h-[60vh] space-y-2 overflow-y-auto">{selectedChat.messages.map(m=>(<div key={m.id} className={`rounded-xl p-3 text-sm ${m.role==="user"?"bg-accent-cyan/10":"bg-white/[0.03]"}`}><p className="mb-1 font-mono text-[10px] uppercase text-muted">{m.role} · {new Date(m.created_at).toLocaleString("sv-SE")}</p><p className="whitespace-pre-wrap text-white/85">{m.content}</p></div>))}</div></div>):(<div className={card}><p className="text-sm text-muted">Select a conversation to inspect it. Admin-only, service-role read — handle personal data with care.</p></div>)}</div></div>)}
+
+        {section==="labs"&&(<LabsProjects/>)}
 
         {section==="feedback"&&(<div className="space-y-4"><div className={card}><h3 className="font-semibold">Product feedback triage</h3><p className="mt-1 text-xs text-muted">From the in-product feedback button and Playground ratings. Mark read, set status — changes are audit-logged. Requires MIGRATION_v14 for status fields.</p></div>
           {feedbackItems.length===0?<div className={card}><p className="text-sm text-muted">No feedback yet.</p></div>:<ul className="space-y-2">{feedbackItems.map(f=>(<li key={f.id} className={`rounded-2xl border p-4 ${f.is_read?"border-white/[0.06] bg-white/[0.01] opacity-75":"border-white/[0.09] bg-white/[0.02]"}`}><div className="flex flex-wrap items-center gap-2"><span className="rounded-full border border-accent-cyan/25 px-2 py-0.5 text-[10px] font-semibold uppercase text-accent-cyan">{f.kind}{f.rating?` · ${f.rating}`:""}</span><span className="text-[11px] text-muted">{f.page||""} · {new Date(f.created_at).toLocaleString("sv-SE")}</span><span className="ml-auto flex items-center gap-2"><select value={f.status||"new"} onChange={e=>void patchFeedback(f.id,{status:e.target.value})} className="rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-xs text-white [&>option]:bg-[#07070e]" aria-label="Feedback status"><option value="new">New</option><option value="in_progress">In progress</option><option value="resolved">Resolved</option><option value="archived">Archived</option></select><button type="button" className="text-xs text-accent-cyan" onClick={()=>void patchFeedback(f.id,{is_read:!f.is_read})}>{f.is_read?"Mark unread":"Mark read"}</button></span></div><p className="mt-2 whitespace-pre-wrap text-sm text-white/85">{f.message}</p></li>))}</ul>}

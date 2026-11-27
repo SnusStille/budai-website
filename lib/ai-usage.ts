@@ -9,7 +9,7 @@
 export type AiUsageEvent = {
   event: "ai.usage";
   provider: "anthropic" | "openai";
-  operation: "chat" | "image";
+  operation: "chat" | "image" | "labs_chat";
   model: string;
   tier: "guest" | "member" | "unknown";
   stream: boolean;

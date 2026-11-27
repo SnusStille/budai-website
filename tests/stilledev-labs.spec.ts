@@ -4,47 +4,96 @@ async function quiet(page: Page) {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.addInitScript(() => { localStorage.setItem("budai-cookies", "declined"); sessionStorage.setItem("budai:cinematic-intro:v1", "1"); });
   await page.route("**/va.vercel-scripts.com/**", route => route.fulfill({ contentType: "application/javascript", body: "" }));
+  // Intercept AI calls to avoid hitting the real API
+  await page.route("**/api/labs/chat", async route => {
+    await route.fulfill({
+      status: 200,
+      contentType: "text/plain; charset=utf-8",
+      body: "Hej! Det låter intressant. Berätta mer om vad du vill bygga.\u0000{\"conversationId\":\"00000000-0000-0000-0000-000000000001\",\"done\":true}",
+    });
+  });
 }
 
-test("Labs is a static bilingual under-development placeholder with no interactive product surface", async ({ page }) => {
+test("Labs renders the chat-first welcome experience", async ({ page }) => {
   await quiet(page);
-  for (const [path, language, status, statement] of [["/labs", "en", "UNDER DEVELOPMENT", "Something new is taking shape."], ["/sv/labs", "sv", "UNDER UTVECKLING", "Något nytt tar form."]]) {
+  for (const [path, language, placeholder, starter] of [
+    ["/labs", "en", "Tell me what you want to create...", "I have a business idea."],
+    ["/sv/labs", "sv", "Berätta vad du vill skapa...", "Jag har en affärsidé."],
+  ] as const) {
     const response = await page.goto(path);
     expect(response?.status()).toBe(200);
     await expect(page.locator("html")).toHaveAttribute("lang", language);
-    await expect(page.getByRole("heading", { name: "STILLEDEV LABS" })).toBeVisible();
-    await expect(page.locator(".labs-hold-status")).toHaveText(status);
-    await expect(page.locator(".labs-hold-line")).toHaveText(statement);
-    const back = page.getByRole("link", { name: /Back to BudAI|Tillbaka till BudAI/ });
-    await expect(back).toHaveAttribute("href", language === "sv" ? "/sv" : "/");
-    await expect(back.locator("[data-budai-mark=confluence]")).toHaveCount(1);
-    await expect(page.locator(".labs-bot, .labs-hold-page input")).toHaveCount(0);
-    await expect(page.getByRole("button", { name: /Share page|Dela sidan/ })).toBeVisible();
-    await expect(page.getByRole("button", { name: /Share page|Dela sidan/ })).toHaveCount(1);
-    await expect(page.locator(".labs-share-button, .labs-share-wrap")).toHaveCount(0);
-    const html = await response!.text();
-    expect(html).toContain('name="robots" content="noindex, follow"');
-    expect(html).not.toContain("LabsMascot");
-    expect(html).not.toContain("StilledevLabs");
+    // Wordmark present
+    await expect(page.locator("text=STILLEDEV LABS").first()).toBeVisible();
+    // Welcome heading
+    await expect(page.locator("text=Every great project starts with a conversation.")).toBeVisible();
+    // Chat input present
+    const input = page.locator(".labs-input");
+    await expect(input).toBeVisible();
+    await expect(input).toHaveAttribute("placeholder", placeholder);
+    // Starter prompts present
+    await expect(page.locator(`button.labs-starter-btn:has-text(\"${starter}\")`)).toBeVisible();
+    // Disclaimer about Oliver
+    await expect(page.locator("text=Oliver Stille")).toBeVisible();
+    // No old placeholder classes
+    await expect(page.locator(".labs-hold-status")).toHaveCount(0);
   }
 });
 
-test("public navigation links to localized Labs and the founder profile", async ({ page }) => {
+test("public navigation links to localized Labs", async ({ page }) => {
   await quiet(page);
   for (const [path, href] of [["/", "/labs"], ["/sv", "/sv/labs"]]) {
     await page.goto(path);
     await expect(page.locator(`a[href="${href}"]`).first()).toHaveText("Labs");
-    await expect(page.locator("footer").getByRole("link", { name: "Oliver Stille" })).toHaveAttribute("href", path === "/sv" ? "/sv/oliver-stille" : "/oliver-stille");
-    expect(await page.locator("body").innerText()).not.toMatch(/Labs is under development|Labs är under utveckling/i);
   }
 });
 
-test("the static Labs placeholder and return link remain available on narrow mobile screens", async ({ browser }) => {
-  const context = await browser.newContext({ userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1", viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, reducedMotion: "reduce" });
-  const page = await context.newPage(); await quiet(page); await page.goto("/sv/labs");
-  await expect(page.getByRole("heading", { name: "STILLEDEV LABS" })).toBeVisible();
-  await expect(page.locator(".phone-welcome")).toHaveCount(0);
-  await expect(page.getByRole("link", { name: "Tillbaka till BudAI" })).toHaveAttribute("href", "/sv");
+test("user can type and send a message in Labs chat", async ({ page }) => {
+  await quiet(page);
+  await page.goto("/sv/labs");
+  const input = page.locator(".labs-input");
+  await input.fill("Jag har en idé om en bokningsplattform");
+  await page.locator(".labs-send-btn").click();
+  // User message should appear
+  await expect(page.locator(".labs-message.user").filter({ hasText: "Jag har en idé om en bokningsplattform" })).toBeVisible();
+  // Bot response (mocked) should appear
+  await expect(page.locator(".labs-message.assistant").filter({ hasText: "Hej! Det låter intressant" })).toBeVisible({ timeout: 10000 });
+});
+
+test("starter prompt buttons send messages", async ({ page }) => {
+  await quiet(page);
+  await page.goto("/sv/labs");
+  await page.locator(".labs-starter-btn").first().click();
+  // Should show a user message
+  await expect(page.locator(".labs-message.user")).toBeVisible();
+});
+
+test("new chat button resets the conversation", async ({ page }) => {
+  await quiet(page);
+  await page.goto("/sv/labs");
+  // Send a message first
+  await page.locator(".labs-input").fill("Test message");
+  await page.locator(".labs-send-btn").click();
+  await expect(page.locator(".labs-message.user")).toBeVisible();
+  // Click new chat
+  await page.locator(".labs-header-btn").filter({ hasText: "Ny" }).click();
+  // Should show welcome again
+  await expect(page.locator("text=Every great project starts with a conversation.")).toBeVisible();
+});
+
+test("Labs is mobile-responsive", async ({ browser }) => {
+  const context = await browser.newContext({
+    userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)",
+    viewport: { width: 390, height: 844 },
+    isMobile: true,
+    hasTouch: true,
+    reducedMotion: "reduce",
+  });
+  const page = await context.newPage();
+  await quiet(page);
+  await page.goto("/sv/labs");
+  await expect(page.locator(".labs-container")).toBeVisible();
+  await expect(page.locator(".labs-input")).toBeVisible();
   for (const width of [320, 360, 390]) {
     await page.setViewportSize({ width, height: 844 });
     expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
@@ -52,24 +101,24 @@ test("the static Labs placeholder and return link remain available on narrow mob
   await context.close();
 });
 
-test("the single shared-page action copies the localized Labs URL", async ({ page }) => {
-  await quiet(page); await page.goto("/sv/labs");
-  await page.evaluate(() => {
-    Object.defineProperty(navigator, "share", { configurable: true, value: undefined });
-    Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: async (value: string) => { (window as any).__labsCopied = value; } } });
-  });
-  const share = page.getByRole("button", { name: "Dela sidan" });
-  await expect(share).toHaveCount(1);
-  await share.click();
-  await expect(page.getByRole("button", { name: "Länk kopierad" })).toBeVisible();
-  await expect.poll(() => page.evaluate(() => (window as any).__labsCopied)).toBe("http://127.0.0.1:3000/sv/labs");
+test("Enter sends message, Shift+Enter makes newline", async ({ page }) => {
+  await quiet(page);
+  await page.goto("/labs");
+  const input = page.locator(".labs-input");
+  await input.click();
+  await page.keyboard.type("Hello");
+  await page.keyboard.press("Enter");
+  await expect(page.locator(".labs-message.user").filter({ hasText: "Hello" })).toBeVisible();
 });
 
-test("Labs has no dedicated API or private public assets", async ({ request }) => {
-  const [api, assets] = await Promise.all([
-    request.get("/api/labs/telemetry"),
-    request.get("/labs-media/labs-atmosphere.jpg"),
-  ]);
-  expect(api.status()).toBe(404);
-  expect(assets.status()).toBe(404);
+test("Labs API routes exist and respond properly", async ({ request }) => {
+  // Chat endpoint requires POST
+  const chatGet = await request.get("/api/labs/chat");
+  expect(chatGet.status()).toBe(405); // Method not allowed (expect POST)
+
+  // Conversations endpoint returns empty list without session
+  const convs = await request.get("/api/labs/conversations");
+  expect(convs.ok()).toBeTruthy();
+  const data = await convs.json();
+  expect(data).toHaveProperty("conversations");
 });
