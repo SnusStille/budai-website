@@ -47,8 +47,8 @@ test("the film is launched only from the landing CTA in a clean portrait dialog"
   await expect(page.locator(".showcase-film-overlay")).toHaveCount(0);
   await expect(page.locator(".showcase-film-reopen")).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Show film" })).toHaveCount(0);
-  await page.getByRole("button", { name: "Copy info@stilledev.se" }).click();
-  await expect(page.locator(".hero-email-copy small")).toHaveText("COPIED");
+  await expect(page.locator(".hero-email-copy")).toHaveCount(0);
+  await expect(page.locator(".hero-contact")).toBeVisible();
 
   const watchButton = page.getByRole("button", { name: "Watch Showcase" });
   await expect(watchButton).toBeVisible();

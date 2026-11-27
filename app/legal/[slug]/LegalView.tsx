@@ -1,23 +1,21 @@
 "use client";
 
 import type { LegalSlug } from "@/lib/legal-slugs";
-import { motion } from "framer-motion";
-import { Shield, FileText, Cookie, Scale, Database } from "lucide-react";
 import { useLang } from "@/components/ui/LanguageContext";
 import { CONTACT_EMAIL, CONTACT_MAILTO } from "@/lib/contact";
 import CookieSettingsButton from "@/components/ui/CookieSettingsButton";
-import BackToBudAI from "@/components/ui/BackToBudAI";
+import StandalonePageShell from "@/components/site/StandalonePageShell";
 
 type Page = {
   title: { en: string; sv: string };
-  icon: React.ElementType;
+  icon: "privacy" | "file" | "cookie" | "gdpr" | "data";
   paragraphs: { en: string[]; sv: string[] };
 };
 
 const content: Record<LegalSlug, Page> = {
   privacy: {
     title: { en: "Privacy Policy", sv: "Integritetspolicy" },
-    icon: Shield,
+    icon: "privacy",
     paragraphs: {
       en: [
         "BudAI values your privacy. We only collect data necessary to provide our services. Personal information is processed in line with GDPR and stored on secure infrastructure.",
@@ -45,7 +43,7 @@ const content: Record<LegalSlug, Page> = {
   },
   terms: {
     title: { en: "Terms of Service", sv: "Användarvillkor" },
-    icon: FileText,
+    icon: "file",
     paragraphs: {
       en: [
         "By using BudAI you agree to these terms. The developer preview is provided as-is and may change, pause, or have limits without notice.",
@@ -63,7 +61,7 @@ const content: Record<LegalSlug, Page> = {
   },
   cookies: {
     title: { en: "Cookie Policy", sv: "Cookiepolicy" },
-    icon: Cookie,
+    icon: "cookie",
     paragraphs: {
       en: [
         "BudAI stores only what the site and sign-in need to function: your language preference (a functional budai-lang cookie plus local storage, so the page can be rendered in the right language by the server), the session, and your cookie choice. That storage is always active.",
@@ -79,7 +77,7 @@ const content: Record<LegalSlug, Page> = {
   },
   data: {
     title: { en: "How your data is handled", sv: "Så hanteras dina data" },
-    icon: Database,
+    icon: "data",
     paragraphs: {
       en: [
         "This page is a plain-language summary of what happens to what you type into BudAI during the developer preview. The Privacy Policy and the GDPR page contain the formal wording.",
@@ -107,7 +105,7 @@ const content: Record<LegalSlug, Page> = {
   },
   gdpr: {
     title: { en: "GDPR", sv: "GDPR" },
-    icon: Scale,
+    icon: "gdpr",
     paragraphs: {
       en: [
         "BudAI is designed with GDPR in mind. Your rights include access, rectification, erasure, restriction, portability, and objection where applicable.",
@@ -133,46 +131,32 @@ export default function LegalView({ slug, phoneOnly = false }: { slug: LegalSlug
   const { lang } = useLang();
   const L = lang === "sv" ? "sv" : "en";
 
+  const languagePath = `/legal/${slug}`;
+
   return (
-    <main id="main" tabIndex={-1} className="min-h-screen bg-background text-white pt-20 pb-16 px-4 sm:px-6">
-      <div className="max-w-2xl mx-auto">
-        <div className="flex items-center justify-between gap-3 mb-8">
-          <BackToBudAI lang={L} nativeLink={phoneOnly} />
-        </div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45 }}
-          className="rounded-3xl border border-white/[0.08] bg-white/[0.02] p-6 sm:p-8"
-        >
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-accent-cyan/90 to-accent-purple/90 flex items-center justify-center">
-              <Icon className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{page.title[L]}</h1>
-              <p className="text-[11px] text-muted font-mono mt-0.5">stilledev.se · BudAI</p>
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            {page.paragraphs[L].map((p, i) => (
-              <p key={i} className="text-sm sm:text-[15px] text-muted leading-relaxed">
-                {p}
-              </p>
-            ))}
-          </div>
-
-          <p className="mt-5 text-sm text-muted">{L === "sv" ? "Frågor eller begäran om personuppgifter? Kontakta Stilledev: " : "Questions or data requests? Contact Stilledev: "}<a className="text-accent-cyan underline" href={CONTACT_MAILTO}>{CONTACT_EMAIL}</a></p>
-          {slug === "cookies" && <CookieSettingsButton lang={L} />}
-          <p className="mt-8 text-xs text-muted/60">
-            {L === "sv"
-              ? "Detta är en tydlig preview-policy. Fullständiga bolagsdokument kan uppdateras före bred lansering."
-              : "This is a clear preview policy. Full company documents may be updated before broader launch."}
+    <StandalonePageShell
+      title={page.title[L]}
+      icon={Icon}
+      lang={L}
+      enHref={languagePath}
+      svHref={languagePath}
+      nativeBackLink={phoneOnly}
+    >
+      <div className="space-y-4">
+        {page.paragraphs[L].map((p, i) => (
+          <p key={i} className="text-sm leading-relaxed text-muted sm:text-[15px]">
+            {p}
           </p>
-        </motion.div>
+        ))}
       </div>
-    </main>
+
+      <p className="mt-5 text-sm text-muted">{L === "sv" ? "Frågor eller begäran om personuppgifter? Kontakta Stilledev: " : "Questions or data requests? Contact Stilledev: "}<a className="text-accent-cyan underline" href={CONTACT_MAILTO}>{CONTACT_EMAIL}</a></p>
+      {slug === "cookies" && <CookieSettingsButton lang={L} />}
+      <p className="mt-8 text-xs text-muted/60">
+        {L === "sv"
+          ? "Detta är en tydlig preview-policy. Fullständiga bolagsdokument kan uppdateras före bred lansering."
+          : "This is a clear preview policy. Full company documents may be updated before broader launch."}
+      </p>
+    </StandalonePageShell>
   );
 }

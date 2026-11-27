@@ -3,7 +3,7 @@ import Link from "next/link";
 import ContactForm from "@/components/sections/ContactForm";
 import ContactEmailActions from "@/components/sections/ContactEmailActions";
 import { StilledevMark } from "@/components/ui/BudAILogo";
-import BackToBudAI from "@/components/ui/BackToBudAI";
+import StandalonePageShell from "@/components/site/StandalonePageShell";
 
 const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://stilledev.se").replace(/\/$/, "");
 const organizationId = `${siteUrl}/#organization`;
@@ -26,20 +26,17 @@ export default async function ContactPageContent({ sv = false }: { sv?: boolean 
   };
 
   return (
-    <main id="main" tabIndex={-1} className="min-h-screen bg-background px-4 py-12 text-white sm:px-6 sm:py-16">
-      <div className="mx-auto max-w-5xl">
-        <nav className="mb-12 flex items-center justify-between gap-4 border-b border-white/[0.08] pb-5" aria-label={sv ? "Sidnavigering" : "Page navigation"}>
-          <BackToBudAI href={sv ? "/sv" : "/"} lang={sv ? "sv" : "en"} />
-          <div className="flex items-center gap-2 text-xs font-medium" aria-label={sv ? "Välj språk" : "Choose language"}>
-            <Link href="/contact" aria-current={!sv ? "page" : undefined} className={!sv ? "rounded-full bg-white/10 px-3 py-2 text-white" : "rounded-full px-3 py-2 text-muted hover:text-white"}>EN</Link>
-            <Link href="/sv/contact" aria-current={sv ? "page" : undefined} className={sv ? "rounded-full bg-white/10 px-3 py-2 text-white" : "rounded-full px-3 py-2 text-muted hover:text-white"}>SV</Link>
-          </div>
-        </nav>
-
+    <StandalonePageShell
+      title={name}
+      eyebrow={sv ? "STILLEDEV · FÖRETAGSKONTAKT" : "STILLEDEV · BUSINESS ENQUIRIES"}
+      icon="contact"
+      lang={sv ? "sv" : "en"}
+      enHref="/contact"
+      svHref="/sv/contact"
+      backHref={sv ? "/sv" : "/"}
+    >
         <header className="contact-hero-grid">
           <div className="contact-hero-copy">
-            <p className="contact-eyebrow"><span className="contact-eyebrow-pulse" />STILLEDEV <i /> {sv ? "FÖRETAGSKONTAKT" : "BUSINESS ENQUIRIES"}</p>
-            <h1 className="contact-title">{name}</h1>
             <p className="contact-description">
               {sv
                 ? "Stilledev är en svensk mjukvarustudio grundad av Oliver Stille. Hör av dig om BudAI, digital utveckling, AI-projekt, samarbeten eller andra professionella frågor."
@@ -61,7 +58,7 @@ export default async function ContactPageContent({ sv = false }: { sv?: boolean 
           </div>
         </header>
 
-        <section className="mt-12 grid gap-8 border-t border-white/[0.08] pt-8 lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.72fr)] lg:gap-12" aria-labelledby="contact-form-title">
+        <section className="mt-12 grid gap-8 border-t border-white/[0.08] pt-8" aria-labelledby="contact-form-title">
           <div>
             <h2 id="contact-form-title" className="mb-2 text-2xl font-medium tracking-tight">{sv ? "Skicka en förfrågan" : "Send an enquiry"}</h2>
             <p className="mb-5 max-w-xl text-sm leading-relaxed text-muted">{sv ? "Beskriv kort vad du vill prata om. Föredrar du e-post kan du skriva direkt till företagets inkorg." : "Tell us briefly what you would like to discuss. If you prefer, email the business inbox directly."}</p>
@@ -82,7 +79,6 @@ export default async function ContactPageContent({ sv = false }: { sv?: boolean 
           <span>{sv ? "UTVECKLAD AV STILLEDEV · SVERIGE" : "DEVELOPED BY STILLEDEV · SWEDEN"}</span>
         </div>
         <script type="application/ld+json" nonce={nonce} dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, "\\u003c") }} />
-      </div>
-    </main>
+    </StandalonePageShell>
   );
 }
