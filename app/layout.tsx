@@ -4,7 +4,6 @@ import "@fontsource-variable/plus-jakarta-sans";
 import "@fontsource-variable/jetbrains-mono";
 import "./globals.css";
 import "./experience.css";
-import "./contact.css";
 import "./feedback.css";
 import "./ambient-depth.css";
 import "./showcase.css";

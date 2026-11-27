@@ -601,27 +601,27 @@ test("contact email is canonical in both languages and the enquiry form gives a 
   await form.locator('input[type="checkbox"]').check();
   await form.getByRole("button", { name: "Send message" }).click();
   await expect(page.getByRole("heading", { name: "Message received" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "info@stilledev.se", exact: true }).last()).toHaveAttribute("href", "mailto:info@stilledev.se");
+  await expect(page.getByRole("link", { name: "info@stilledev.se", exact: true })).toHaveCount(1);
+  await expect(page.getByRole("link", { name: "info@stilledev.se", exact: true })).toHaveAttribute("href", "mailto:info@stilledev.se");
 
   await page.goto("/sv/contact");
   await expect(page.getByRole("link", { name: "info@stilledev.se", exact: true }).first()).toHaveAttribute("href", "mailto:info@stilledev.se");
   await expect(page.getByRole("heading", { name: "Kontakta Stilledev" })).toBeVisible();
 });
 
-test("contact email copy gives localized confirmation without losing the mailto action", async ({ page }) => {
-  await page.addInitScript(() => {
-    window.__clipboardWrites = [];
-    Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: async (text: string) => { window.__clipboardWrites.push(text); } } });
-  });
-  await page.goto("/contact");
-  await expect(page.getByRole("link", { name: /info@stilledev\.se/ }).first()).toHaveAttribute("href", "mailto:info@stilledev.se");
-  await page.getByRole("button", { name: "Copy email", exact: true }).click();
-  await expect(page.getByRole("button", { name: "Copied", exact: true })).toBeVisible();
-  expect(await page.evaluate(() => window.__clipboardWrites)).toEqual(["info@stilledev.se"]);
-
-  await page.goto("/sv/contact");
-  await page.getByRole("button", { name: "Kopiera e-post", exact: true }).click();
-  await expect(page.getByRole("button", { name: "Kopierad", exact: true })).toBeVisible();
+test("contact pages keep one direct-email option beside the form and omit redundant contact blocks", async ({ page }) => {
+  for (const [path, directEmailCopy] of [["/contact", "Prefer to email the company directly?"], ["/sv/contact", "Föredrar du att mejla företaget direkt?"]] as const) {
+    await page.goto(path);
+    await expect(page.locator("form")).toBeVisible();
+    await expect(page.getByRole("link", { name: "info@stilledev.se", exact: true })).toHaveCount(1);
+    await expect(page.getByRole("link", { name: "info@stilledev.se", exact: true })).toHaveAttribute("href", "mailto:info@stilledev.se");
+    await expect(page.locator(".standalone-page-content")).toContainText(directEmailCopy);
+    await expect(page.getByRole("button", { name: /Copy email|Kopiera e-post/ })).toHaveCount(0);
+    await expect(page.locator(".contact-signal-panel, .contact-page aside, .contact-hero-grid")).toHaveCount(0);
+    await expect(page.getByRole("button", { name: /Share page|Dela sidan/ })).toHaveCount(0);
+    await expect(page.getByRole("progressbar")).toHaveCount(0);
+    await expect(page.locator("form")).toHaveCount(1);
+  }
 });
 
 test("footer sharing copies the localized URL and the back-to-top control doubles as a quiet reading-progress cue", async ({ page }) => {
@@ -653,13 +653,14 @@ test("footer sharing copies the localized URL and the back-to-top control double
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
 });
 
-test("contact and footer utility actions keep touch targets and avoid horizontal overflow on narrow phones", async ({ page }) => {
+test("contact email and footer utility actions keep touch targets and avoid horizontal overflow on narrow phones", async ({ page }) => {
   for (const width of [320, 390]) {
     await page.setViewportSize({ width, height: 844 });
     await page.goto("/sv/contact");
-    const copyButton = page.getByRole("button", { name: "Kopiera e-post", exact: true });
-    await expect(copyButton).toBeVisible();
-    expect(await copyButton.evaluate(element => element.getBoundingClientRect().height)).toBeGreaterThanOrEqual(44);
+    const emailLink = page.getByRole("link", { name: "info@stilledev.se", exact: true });
+    await expect(emailLink).toBeVisible();
+    expect(await emailLink.evaluate(element => element.getBoundingClientRect().height)).toBeGreaterThanOrEqual(44);
+    await expect(page.getByRole("link", { name: "info@stilledev.se", exact: true })).toHaveCount(1);
     expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
 
     await page.goto("/sv");

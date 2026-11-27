@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
-import LabsShareButton from "@/components/sections/LabsShareButton";
 import StandalonePageShell from "@/components/site/StandalonePageShell";
 
 const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://stilledev.se").replace(/\/$/, "");
@@ -36,9 +35,6 @@ export default async function LabsPage() {
     >
       <p className="labs-hold-status">{sv ? "UNDER UTVECKLING" : "UNDER DEVELOPMENT"}</p>
       <p className="labs-hold-line">{sv ? "Något nytt tar form." : "Something new is taking shape."}</p>
-      <div className="standalone-page-actions">
-        <LabsShareButton lang={sv ? "sv" : "en"} />
-      </div>
     </StandalonePageShell>
   );
 }

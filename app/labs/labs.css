@@ -1,7 +1,3 @@
 .labs-hold-status { display:inline-flex; align-items:center; gap:10px; margin:0 0 8px; color:#9bb7bf; font:700 9px/1.4 var(--font-jetbrains),monospace; letter-spacing:.15em; }
 .labs-hold-status::before { width:6px; height:6px; border-radius:50%; background:#8de0c7; box-shadow:0 0 14px #80ddeb99; content:""; }
 .labs-hold-line { color:#d6e4e8; font-size:16px; letter-spacing:-.015em; }
-.labs-share-wrap { margin:0; }
-.labs-share-button { display:inline-flex; min-height:40px; align-items:center; gap:9px; border:1px solid #bce9ff20; border-radius:999px; padding:0 14px; color:#dce9ed; background:#8fddeb08; font-size:11px; font-weight:600; transition:border-color .18s,color .18s,background .18s; }
-.labs-share-button:hover { border-color:#9cdded65; color:#fff; background:#8fddeb12; }
-.labs-share-button svg:first-child { color:#91dfe9; }

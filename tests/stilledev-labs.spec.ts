@@ -19,7 +19,9 @@ test("Labs is a static bilingual under-development placeholder with no interacti
     await expect(back).toHaveAttribute("href", language === "sv" ? "/sv" : "/");
     await expect(back.locator("[data-budai-mark=confluence]")).toHaveCount(1);
     await expect(page.locator(".labs-bot, .labs-hold-page input")).toHaveCount(0);
-    await expect(page.getByRole("button", { name: /Share Labs|Dela Labs/ })).toBeVisible();
+    await expect(page.getByRole("button", { name: /Share page|Dela sidan/ })).toBeVisible();
+    await expect(page.getByRole("button", { name: /Share page|Dela sidan/ })).toHaveCount(1);
+    await expect(page.locator(".labs-share-button, .labs-share-wrap")).toHaveCount(0);
     const html = await response!.text();
     expect(html).toContain('name="robots" content="noindex, follow"');
     expect(html).not.toContain("LabsMascot");
@@ -50,13 +52,16 @@ test("the static Labs placeholder and return link remain available on narrow mob
   await context.close();
 });
 
-test("Labs share copies the localized public URL and announces the result", async ({ page }) => {
+test("the single shared-page action copies the localized Labs URL", async ({ page }) => {
   await quiet(page); await page.goto("/sv/labs");
   await page.evaluate(() => {
+    Object.defineProperty(navigator, "share", { configurable: true, value: undefined });
     Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: async (value: string) => { (window as any).__labsCopied = value; } } });
   });
-  await page.getByRole("button", { name: "Dela Labs" }).click();
-  await expect(page.getByRole("button", { name: "Länken kopierad" })).toBeVisible();
+  const share = page.getByRole("button", { name: "Dela sidan" });
+  await expect(share).toHaveCount(1);
+  await share.click();
+  await expect(page.getByRole("button", { name: "Länk kopierad" })).toBeVisible();
   await expect.poll(() => page.evaluate(() => (window as any).__labsCopied)).toBe("http://127.0.0.1:3000/sv/labs");
 });
 
