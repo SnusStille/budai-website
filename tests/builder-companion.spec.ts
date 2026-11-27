@@ -9,6 +9,23 @@ async function quiet(page: Page) {
   await page.route("**/va.vercel-scripts.com/**", route => route.fulfill({ contentType: "application/javascript", body: "" }));
 }
 
+test("the companion stays visibly docked to the screen edge even after its peek animation is used", async ({ page }) => {
+  await quiet(page);
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.addInitScript(() => sessionStorage.setItem("budai:companion:appearances:v2", "2"));
+  await page.goto("/");
+  const buddy = page.locator("[data-builder-companion]");
+  await expect(buddy).toBeVisible({ timeout: 8000 });
+  const launcher = buddy.getByRole("button", { name: "Open BudAI menu" });
+  await expect(launcher).toBeVisible();
+  await expect.poll(() => buddy.evaluate(node => Number.parseFloat(getComputedStyle(node).opacity))).toBeGreaterThan(.9);
+  const visibleSliver = await launcher.evaluate(node => {
+    const rect = node.getBoundingClientRect();
+    return rect.right > innerWidth && rect.left < innerWidth && innerWidth - rect.left > 50;
+  });
+  expect(visibleSliver).toBe(true);
+});
+
 test("the companion stays unobtrusive, opens a three-link menu, and stops auto-peeking after interaction", async ({ page }) => {
   await quiet(page); await page.emulateMedia({ reducedMotion: "reduce" }); await page.goto("/");
   const buddy = page.locator("[data-builder-companion]");

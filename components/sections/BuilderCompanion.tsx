@@ -40,7 +40,7 @@ export default function BuilderCompanion({ phone = false }: { phone?: boolean })
       setAppearances(Math.min(2, Math.max(0, Number(sessionStorage.getItem(APPEARANCES)) || 0)));
     } catch { /* session storage is optional */ }
     setHidden(readCompanionHidden());
-    const timer = window.setTimeout(() => setReady(true), 4500);
+    const timer = window.setTimeout(() => setReady(true), 1100);
     return () => window.clearTimeout(timer);
   }, []);
 

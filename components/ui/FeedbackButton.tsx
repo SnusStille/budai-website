@@ -95,7 +95,7 @@ export default function FeedbackButton() {
         className="feedback-launcher fixed bottom-5 right-16 z-40 hidden min-h-11 items-center gap-2.5 rounded-full border border-white/10 bg-[#07111a]/90 px-4 text-sm font-medium text-white/85 shadow-lg backdrop-blur-xl transition-all hover:border-accent-cyan/35 hover:bg-[#0b1923] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-cyan/60 md:flex"
       >
         <span className="feedback-launcher-icon"><MessageSquare className="h-4 w-4" aria-hidden="true" /></span>
-        <span>{sv ? "Hjälp oss vässa BudAI" : "Help shape BudAI"}</span>
+        <span>Feedback</span>
         <span className="feedback-launcher-spark"><Sparkles className="h-3.5 w-3.5" aria-hidden="true" /></span>
       </button>
 

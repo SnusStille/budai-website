@@ -7,7 +7,7 @@ export type AccessTier = "guest" | "member";
 
 export const LIMITS = {
   guest: {
-    messagesPerDay: 12,
+    messagesPerDay: 5,
     imagesPerDay: 0, // vision upload not for guests (or 1 if you prefer)
     generationsPerDay: 0,
     maxHistory: 2, // local only
@@ -16,7 +16,7 @@ export const LIMITS = {
     label: { sv: "Gäst", en: "Guest" },
   },
   member: {
-    messagesPerDay: 80,
+    messagesPerDay: 20,
     imagesPerDay: 15,
     generationsPerDay: 8,
     maxHistory: 40,

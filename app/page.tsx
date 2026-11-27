@@ -19,6 +19,8 @@ import WhatsNew from "@/components/ui/WhatsNew";
 import Shortcuts from "@/components/ui/Shortcuts";
 import Footer from "@/components/sections/Footer";
 import WorldStage from "@/components/experience/WorldStage";
+import AmbientDepthField from "@/components/experience/AmbientDepthField";
+import ShowcaseFilm from "@/components/sections/ShowcaseFilm";
 import About from "@/components/sections/About";
 import AIPlayground from "@/components/sections/AIPlayground";
 import BuilderCompanion from "@/components/sections/BuilderCompanion";
@@ -80,6 +82,7 @@ export default function Home() {
       <ScrollProgress />
       <SectionDots />
       <div className="universe-atmosphere" aria-hidden="true" />
+      <AmbientDepthField />
 
       <div className="relative z-10">
         <Navbar />
@@ -89,6 +92,7 @@ export default function Home() {
         <LazyEgg />
         <Hero />
         <BrainScrollStory />
+        <ShowcaseFilm />
         <ErrorBoundary>
           <AIPlayground />
         </ErrorBoundary>

@@ -1,0 +1,26 @@
+/* Quiet 3D depth behind the single neural-brain canvas: CSS only, no extra GPU scene. */
+.universe-depth-field { position:fixed; z-index:0; top:2vh; right:-12vw; width:min(78vw,1120px); height:min(91vh,930px); overflow:visible; pointer-events:none; opacity:.67; perspective:1050px; perspective-origin:52% 48%; }
+.ambient-depth-rig { position:absolute; inset:0; transform-style:preserve-3d; transform:rotateX(calc(4deg + var(--ambient-pointer-y,0deg))) rotateY(calc(-8deg + var(--ambient-pointer-x,0deg))); animation:ambient-depth-drift 38s ease-in-out infinite alternate; }
+.ambient-orbit { position:absolute; left:50%; top:48%; display:block; border:1px solid #86d9e532; border-radius:50%; transform-style:preserve-3d; box-shadow:0 0 48px #66d4ec08,inset 0 0 26px #66d4ec07; }
+.ambient-orbit-a { width:82%; height:40%; transform:translate(-50%,-50%) rotateX(66deg) rotateZ(-19deg); animation:ambient-orbit-turn-a 76s linear infinite; }
+.ambient-orbit-b { width:68%; height:58%; border-color:#a0bce02d; transform:translate(-50%,-50%) rotateY(68deg) rotateZ(32deg); animation:ambient-orbit-turn-b 94s linear infinite; }
+.ambient-orbit-c { width:53%; height:76%; border-color:#83c8e52b; transform:translate(-50%,-50%) rotateX(74deg) rotateY(-24deg) rotateZ(58deg); animation:ambient-orbit-turn-c 110s linear infinite; }
+.ambient-orbit > i { position:absolute; width:5px; height:5px; border-radius:50%; background:#a1eaf2; box-shadow:0 0 14px 3px #75d8e955; }
+.ambient-orbit > i:first-child { left:17%; top:11%; }
+.ambient-orbit > i:last-child { right:13%; bottom:18%; width:3px; height:3px; background:#bcc9f1; box-shadow:0 0 12px 2px #a7b8f04d; }
+.ambient-core { position:absolute; left:50%; top:48%; width:35%; aspect-ratio:1; border:1px solid #8bdce51a; border-radius:50%; transform:translate(-50%,-50%) translateZ(48px); background:radial-gradient(circle,#69d5eb0d,transparent 67%); box-shadow:0 0 95px #60cde90c; }
+.ambient-core i,.ambient-core b,.ambient-core span { position:absolute; left:50%; top:50%; border:1px solid #9be5ef20; border-radius:50%; transform:translate(-50%,-50%); }
+.ambient-core i { width:68%; height:68%; transform:translate(-50%,-50%) rotateX(65deg); }
+.ambient-core b { width:84%; height:42%; transform:translate(-50%,-50%) rotateY(65deg) rotateZ(-18deg); }
+.ambient-core span { width:5px; height:5px; border:0; background:#a5edf1; box-shadow:0 0 18px 5px #70d6ed48; animation:ambient-core-pulse 7s ease-in-out infinite; }
+.ambient-particles { position:absolute; inset:9% 5%; transform:translateZ(80px); }
+.ambient-particles > i { position:absolute; display:block; border-radius:50%; background:#a7e6f0; box-shadow:0 0 10px 2px #7cd8e339; animation:ambient-particle-float 13s ease-in-out infinite alternate; }
+@keyframes ambient-depth-drift { from { transform:rotateX(calc(3deg + var(--ambient-pointer-y,0deg))) rotateY(calc(-7deg + var(--ambient-pointer-x,0deg))) translate3d(0,0,0); } to { transform:rotateX(calc(7deg + var(--ambient-pointer-y,0deg))) rotateY(calc(-3deg + var(--ambient-pointer-x,0deg))) translate3d(-8px,6px,0); } }
+@keyframes ambient-orbit-turn-a { to { rotate:0 0 1 360deg; } }
+@keyframes ambient-orbit-turn-b { to { rotate:0 1 0 360deg; } }
+@keyframes ambient-orbit-turn-c { to { rotate:1 0 0 360deg; } }
+@keyframes ambient-core-pulse { 0%,100% { opacity:.42; scale:.8; } 50% { opacity:.9; scale:1.2; } }
+@keyframes ambient-particle-float { from { translate:0 5px; opacity:.25; } to { translate:0 -10px; opacity:.75; } }
+.budai-ambient-paused :is(.universe-depth-field,.hero-light,.hero-signal-trace,.hero-signal-node), .budai-ambient-paused .universe-depth-field * { animation-play-state:paused!important; }
+@media(max-width:767px) { .universe-depth-field { top:1vh; right:-55vw; width:142vw; height:75vh; opacity:.36; }.ambient-core { width:44%; }.ambient-orbit-a { width:93%; }.ambient-orbit-b { width:78%; }.ambient-orbit-c { width:61%; } }
+@media(prefers-reduced-motion:reduce) { .universe-depth-field *, .universe-depth-field { animation:none!important; transition:none!important; }.universe-depth-field { opacity:.25; } }

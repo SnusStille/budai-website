@@ -102,12 +102,12 @@ test("Stop response cancels the existing stream reader and releases the composer
 test("Playground error/retry state remains functional without a configured model provider and preserves daily quota on failure", async ({ page }) => {
   await page.route("**/api/playground", route => route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ error: "Temporarily unavailable. Please retry." }) }));
   await page.goto("/#playground");
-  await expect(page.locator("#playground").getByText("12/12 messages left today")).toBeVisible();
+  await expect(page.locator("#playground").getByText("5/5 messages left today")).toBeVisible();
   const input = page.getByRole("textbox", { name: "Message BudAI", exact: true });
   await input.fill("Help me plan tomorrow.");
   await input.press("Enter");
   await expect(page.getByText("Temporarily unavailable. Please retry.", { exact: true })).toBeVisible();
-  await expect(page.locator("#playground").getByText("12/12 messages left today")).toBeVisible();
+  await expect(page.locator("#playground").getByText("5/5 messages left today")).toBeVisible();
   await expect(input).toBeEnabled();
   await expect(page.locator("[data-global-loader]")).toHaveCount(0);
 });
@@ -699,10 +699,32 @@ test("cookie preferences never duplicate the footer control with a fixed bottom 
   await expect(page.getByRole("button", { name: /Cookie settings|Cookieinställningar/ })).toHaveCount(1);
 });
 
+test("the landing adds gentle depth, lets visitors pause it, and offers a safe surprise prompt", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  let apiCalls = 0;
+  await page.route("**/api/playground", async route => { apiCalls++; await route.fulfill({ status: 200, body: "Unexpected submission" }); });
+  await page.goto("/");
+  const field = page.locator(".universe-depth-field");
+  await expect(field).toHaveCount(1);
+  expect(await field.evaluate(node => getComputedStyle(node).perspective)).not.toBe("none");
+  const pause = page.getByRole("button", { name: "Pause motion" });
+  await expect(pause).toBeVisible();
+  await pause.click();
+  await expect(page.locator("html")).toHaveClass(/budai-ambient-paused/);
+  await expect(page.locator(".ambient-depth-rig")).toHaveCSS("animation-play-state", "paused");
+  await page.getByRole("button", { name: "Resume motion" }).click();
+  await expect(page.locator("html")).not.toHaveClass(/budai-ambient-paused/);
+  await page.getByRole("button", { name: "Surprise me", exact: true }).click();
+  const input = page.getByRole("textbox", { name: "Message BudAI", exact: true });
+  await expect(input).toHaveValue(/.+/);
+  expect(apiCalls).toBe(0);
+});
+
 test("in-product feedback is localized, keyboard-friendly and gives a clear submitted state", async ({ page }) => {
   await page.route("**/api/feedback", route => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true }) }));
   await page.goto("/");
   const trigger = page.getByRole("button", { name: "Send BudAI feedback" });
+  await expect(trigger).toHaveText("Feedback");
   await trigger.click();
   const dialog = page.getByRole("dialog");
   await expect(dialog).toBeVisible();

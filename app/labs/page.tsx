@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import "./labs.css";
+import LabsShareButton from "@/components/sections/LabsShareButton";
 
 const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://stilledev.se").replace(/\/$/, "");
 
@@ -28,16 +29,22 @@ export default async function LabsPage() {
       <div className="labs-hold-grid" aria-hidden="true" />
       <header className="labs-hold-header">
         <span className="labs-hold-brand">STILLEDEV<span>.</span></span>
-        <nav aria-label={sv ? "Välj språk" : "Choose language"}>
-          <a href="/labs" aria-current={!sv ? "page" : undefined}>EN</a>
-          <a href="/sv/labs" aria-current={sv ? "page" : undefined}>SV</a>
-        </nav>
+        <div className="labs-hold-nav">
+          <a className="labs-back-home" href={sv ? "/sv" : "/"}>
+            <span aria-hidden="true">←</span>{sv ? "Tillbaka till BudAI" : "Back to BudAI"}
+          </a>
+          <nav aria-label={sv ? "Välj språk" : "Choose language"}>
+            <a href="/labs" aria-current={!sv ? "page" : undefined}>EN</a>
+            <a href="/sv/labs" aria-current={sv ? "page" : undefined}>SV</a>
+          </nav>
+        </div>
       </header>
       <section className="labs-hold-message" aria-labelledby="labs-hold-title">
         <p className="labs-hold-eyebrow">{sv ? "STILLEDEV LABS" : "STILLEDEV LABS"}</p>
         <h1 id="labs-hold-title">STILLEDEV<br /><span>LABS</span></h1>
         <p className="labs-hold-status">{sv ? "UNDER UTVECKLING" : "UNDER DEVELOPMENT"}</p>
         <p className="labs-hold-line">{sv ? "Något nytt tar form." : "Something new is taking shape."}</p>
+        <LabsShareButton lang={sv ? "sv" : "en"} />
       </section>
       <span className="labs-hold-index" aria-hidden="true">S / L — 01</span>
     </main>

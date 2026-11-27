@@ -1,7 +1,8 @@
 "use client";
 import { LIMITS } from "@/lib/limits";
 
-import { ArrowDown, ArrowRight, FileText, Languages, Mail, Network, Zap } from "lucide-react";
+import { ArrowDown, ArrowRight, FileText, Languages, Mail, Network, Pause, Play, Shuffle, Zap } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useLang } from "@/components/ui/LanguageContext";
 import StockholmClock from "@/components/ui/StockholmClock";
 
@@ -9,6 +10,12 @@ import StockholmClock from "@/components/ui/StockholmClock";
 export default function Hero() {
   const { t, lang } = useLang();
   const sv = lang === "sv";
+  const [motionPaused, setMotionPaused] = useState(false);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("budai-ambient-paused", motionPaused);
+    return () => document.documentElement.classList.remove("budai-ambient-paused");
+  }, [motionPaused]);
   const chips = [
     {
       icon: FileText,
@@ -49,6 +56,10 @@ export default function Hero() {
   const activateChipPrompt = (prompt: string) => {
     window.dispatchEvent(new CustomEvent("budai:prompt", { detail: prompt }));
     document.getElementById("playground")?.scrollIntoView({ behavior: "smooth" });
+  };
+  const surpriseMe = () => {
+    const options = chips.map(chip => chip.prompt);
+    activateChipPrompt(options[Math.floor(Math.random() * options.length)]);
   };
 
   return (
@@ -96,7 +107,12 @@ export default function Hero() {
           <ArrowRight size={14} aria-hidden="true" />
         </a>
         <div className="hero-features" aria-label={sv ? "Prova en idé i Playground" : "Try an idea in Playground"}>
-          <span className="hero-feature-hint">{sv ? "VÄLJ EN IDÉ ATT BÖRJA MED" : "PICK AN IDEA TO GET STARTED"} <ArrowRight size={12} aria-hidden="true" /></span>
+          <span className="hero-feature-hint">
+            <span>{sv ? "VÄLJ EN IDÉ ATT BÖRJA MED" : "PICK AN IDEA TO GET STARTED"} <ArrowRight size={12} aria-hidden="true" /></span>
+            <button type="button" className="hero-surprise" onClick={surpriseMe}>
+              <Shuffle size={12} aria-hidden="true" />{sv ? "Överraska mig" : "Surprise me"}
+            </button>
+          </span>
           {chips.map(({ icon: Icon, label, region, prompt }) => (
             <button
               type="button"
@@ -133,6 +149,10 @@ export default function Hero() {
           {sv ? "Utforska signalens väg" : "Explore the signal path"}
           <ArrowDown size={14} />
         </a>
+        <button type="button" className="hero-motion-toggle" aria-pressed={motionPaused} onClick={() => setMotionPaused(value => !value)}>
+          {motionPaused ? <Play size={12} aria-hidden="true" /> : <Pause size={12} aria-hidden="true" />}
+          {motionPaused ? (sv ? "Återuppta rörelse" : "Resume motion") : (sv ? "Pausa rörelse" : "Pause motion")}
+        </button>
       </div>
     </section>
   );

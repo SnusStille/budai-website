@@ -180,6 +180,8 @@ test("CHAPTERS renumbers Roadmap to 05 and omits the removed standalone 05 Next 
 
 
 test("daily-limit copy reads the single LIMITS source instead of hardcoded numbers", () => {
+  expect(LIMITS.guest.messagesPerDay).toBe(5);
+  expect(LIMITS.member.messagesPerDay).toBe(20);
   expect(limitFor("guest", "messages")).toBe(LIMITS.guest.messagesPerDay);
   expect(limitFor("member", "messages")).toBe(LIMITS.member.messagesPerDay);
   const copyFiles = [
@@ -190,7 +192,7 @@ test("daily-limit copy reads the single LIMITS source instead of hardcoded numbe
     "components/experience/CapabilityStudioScreen.tsx",
     "lib/experience/developer-room.ts",
   ];
-  const stale = /12\s*\/\s*(?:dag|day)|80\s*\/\s*(?:dag|day)|12 meddelanden|80 meddelanden|12 messages\/day|80 messages\/day|10\s*\/\s*day|35\s*\/\s*day/;
+  const stale = /(?:5|12|20|80)\s*\/\s*(?:dag|day)|(?:5|12|20|80) meddelanden|(?:5|12|20|80) messages\/day|10\s*\/\s*day|35\s*\/\s*day/;
   for (const file of copyFiles) {
     const source = readFileSync(file, "utf8");
     expect(source, `${file} still hardcodes a daily limit`).not.toMatch(stale);
