@@ -103,10 +103,9 @@ export default function Hero() {
             <span><small>{sv ? "KONTAKTA STILLEDEV" : "CONTACT STILLEDEV"}</small><b>{sv ? "Kontakta oss" : "Contact us"}</b></span>
             <ArrowRight size={14} aria-hidden="true" />
           </a>
-          <button type="button" className="hero-film-trigger" onClick={openShowreel} title={sv ? "Öppna filmen nere i hörnet (V)" : "Open the corner film player (V)"}>
+          <button type="button" className="hero-film-trigger" onClick={openShowreel} title={sv ? "Öppna Stilledevs showreel" : "Open the Stilledev showcase film"}>
             <span className="hero-film-icon"><Play size={14} fill="currentColor" aria-hidden="true" /></span>
-            <span><small>{sv ? "STILLEDEV / FILM 01" : "STILLEDEV / FILM 01"}</small><b>{sv ? "Se filmen" : "Watch the film"}</b></span>
-            <kbd aria-hidden="true">V</kbd>
+            <span><small>STILLEDEV / FILM 01</small><b>{sv ? "Se showreelen" : "Watch Showcase"}</b></span>
           </button>
           <button type="button" className="hero-email-copy" onClick={copyContactEmail} aria-label={emailCopyState === "copied" ? (sv ? "E-postadressen kopierad" : "Email address copied") : (sv ? `Kopiera ${CONTACT_EMAIL}` : `Copy ${CONTACT_EMAIL}`)}>
             <span className="hero-email-copy-icon">{emailCopyState === "copied" ? <Check size={14} aria-hidden="true" /> : <Copy size={14} aria-hidden="true" />}</span>

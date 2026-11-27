@@ -1212,7 +1212,6 @@ html[data-world-state="ready"] .closing-field>i {background:transparent;box-shad
 .hero-film-trigger b,.hero-email-copy b { color:#e5f5f8; font-size:12px; font-weight:600; letter-spacing:.01em; }
 .hero-film-icon,.hero-email-copy-icon { display:grid; flex:none; place-items:center; width:35px; height:35px; border:1px solid #9de7f428; border-radius:5px; background:#84d8e40c; color:#9de7f4; }
 .hero-film-icon { background:linear-gradient(145deg,#c8f6eb1c,#75d2ce0a); color:#a7f4e5; }
-.hero-film-trigger kbd { margin-left:2px; border:1px solid #a5d8e52e; border-radius:4px; padding:2px 6px; color:#8ca5ae; font:700 9px/1.2 var(--font-jetbrains),monospace; }
 .hero-email-copy { background:linear-gradient(110deg,#b3e9f006,#b9a6f503); }
 .hero-email-copy b { font-family:var(--font-jetbrains),monospace; font-size:10px; }
 .hero-email-copy-icon { color:#a8c3cd; }

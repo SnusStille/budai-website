@@ -1,52 +1,33 @@
-/* A tiny dock stays in the corner; only the requested action loads Streamable. */
-.showcase-film-player { position:fixed; z-index:48; left:max(18px,env(safe-area-inset-left)); bottom:max(18px,env(safe-area-inset-bottom)); width:min(184px,calc((100dvh - 44px)*.5625)); color:#edf8f7; font-family:var(--font-jakarta),system-ui,sans-serif; animation:showcase-dock-in .4s cubic-bezier(.2,.8,.2,1) both; }
-.showcase-film-player-card { overflow:hidden; border:1px solid #a5e7df55; border-radius:15px; background:#020609; box-shadow:0 12px 42px #000a,0 0 24px #6ce2da0c; }
-.showcase-film-player-screen { position:relative; width:100%; aspect-ratio:9/16; overflow:hidden; background:#020609; }
-.showcase-film-player-screen iframe { position:absolute; inset:0; display:block; width:100%; height:100%; border:0; background:#020609; color-scheme:dark; }
-.showcase-film-player-controls { position:absolute; z-index:2; inset:0 0 auto; display:flex; align-items:center; justify-content:space-between; gap:4px; min-height:37px; padding:5px 6px 12px 9px; background:linear-gradient(#020609bd,transparent); pointer-events:none; }
-.showcase-film-player-label { overflow:hidden; color:#f0fffa; font:700 7px/1 var(--font-jetbrains),monospace; letter-spacing:.11em; text-overflow:ellipsis; white-space:nowrap; text-shadow:0 1px 5px #000; }
-.showcase-film-player-label i { color:#86e6d8; font-style:normal; }
-.showcase-film-player-actions { display:flex; flex:none; align-items:center; gap:2px; pointer-events:auto; }
-.showcase-film-control { display:grid; place-items:center; width:24px; height:24px; border:1px solid #dcfff333; border-radius:7px; background:#071318d9; color:#e8fbf5; cursor:pointer; transition:background .16s ease,border-color .16s ease,color .16s ease; backdrop-filter:blur(8px); }
-.showcase-film-control:hover { border-color:#b6f4e57a; background:#173238ed; color:#fff; }
-.showcase-film-mini { display:flex; align-items:center; gap:8px; min-height:52px; border:1px solid #8fd9d45c; border-radius:14px; padding:7px 8px; background:linear-gradient(145deg,#0b171ef5,#050a0ff5); box-shadow:0 12px 36px #0009,0 0 24px #6ce2da0d; backdrop-filter:blur(18px); }
-.showcase-film-mini-open { display:flex; flex:1; align-items:center; gap:8px; min-width:0; border:0; background:transparent; color:inherit; text-align:left; cursor:pointer; }
-.showcase-film-mini-play { display:grid; flex:none; place-items:center; width:30px; height:30px; padding-left:2px; border:1px solid #b1f1e979; border-radius:50%; background:linear-gradient(145deg,#c8f6eb,#75d2ce); color:#071419; box-shadow:0 0 18px #72ddd442; transition:transform .18s ease,box-shadow .18s ease; }
-.showcase-film-mini-open:hover .showcase-film-mini-play { transform:scale(1.06); box-shadow:0 0 24px #72ddd477; }
-.showcase-film-mini-copy { display:flex; flex-direction:column; gap:4px; }
-.showcase-film-mini-copy strong { color:#d9eeea; font:700 8px/1 var(--font-jetbrains),monospace; letter-spacing:.15em; }
-.showcase-film-mini-copy small { color:#8aa3a3; font-size:10px; }
-.showcase-film-mini > a { display:inline-flex; flex:none; align-items:center; gap:5px; min-height:30px; border:1px solid #b6f0e545; border-radius:999px; padding:0 9px; background:#9fe8dc12; color:#c8f5e9; font-size:9px; font-weight:700; text-decoration:none; transition:background .16s ease,color .16s ease; }
-.showcase-film-mini > a:hover { background:#b8f5e52b; color:#fff; }
-@keyframes showcase-dock-in { from { opacity:0; transform:translateY(12px) scale(.98); } to { opacity:1; transform:translateY(0) scale(1); } }
-
-/* Focus mode remains portrait-first and grows only when the visitor asks. */
-.showcase-film-player.is-expanded { position:fixed; z-index:1100; inset:0; display:grid; place-items:center; width:100vw; height:100dvh; max-height:100dvh; overflow:auto; padding:max(20px,env(safe-area-inset-top)) max(20px,env(safe-area-inset-right)) max(20px,env(safe-area-inset-bottom)) max(20px,env(safe-area-inset-left)); animation:none; }
-.showcase-film-player.is-expanded::before { content:""; position:fixed; z-index:-1; inset:0; background:radial-gradient(ellipse at 50% 38%,#12252edb,transparent 75%),#020508ed; backdrop-filter:blur(22px); }
-.showcase-film-player.is-expanded .showcase-film-player-card { width:min(430px,calc((100dvh - 40px)*.5625),calc(100vw - 40px)); border-radius:18px; box-shadow:0 28px 100px #000c,0 0 80px #6ce2da12; }
-.showcase-film-player.is-expanded .showcase-film-player-controls { min-height:44px; padding:7px 8px 14px 12px; }
-.showcase-film-player.is-expanded .showcase-film-player-label { font-size:8px; }
-.showcase-film-player.is-expanded .showcase-film-control { width:30px; height:30px; }
-.showcase-film-player.is-minimized { width:min(252px,calc(100vw - 24px)); }
-.journey-page:has(.showcase-film-player[data-dock-visible="true"]) .mobile-playground-nudge { display:none !important; }
-
-.showcase-film-control:focus-visible,.showcase-film-mini-open:focus-visible,.showcase-film-mini > a:focus-visible { outline:2px solid #b7f2e8; outline-offset:3px; }
-@media(max-width:760px) {
- .showcase-film-player { left:max(12px,env(safe-area-inset-left)); bottom:max(12px,env(safe-area-inset-bottom)); width:min(158px,calc((100dvh - 32px)*.5625)); }
- .showcase-film-player-controls { min-height:32px; padding:4px 4px 9px 7px; }
- .showcase-film-player-label { font-size:6px; letter-spacing:.08em; }
- .showcase-film-control { width:21px; height:21px; }
- .showcase-film-player.is-expanded { padding:max(12px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left)); }
- .showcase-film-player.is-expanded .showcase-film-player-card { width:min(430px,calc((100dvh - 24px)*.5625),calc(100vw - 24px)); border-radius:15px; }
- .showcase-film-player.is-expanded .showcase-film-player-controls { min-height:38px; padding:5px 6px 11px 9px; }
- .showcase-film-player.is-expanded .showcase-film-control { width:26px; height:26px; }
- .showcase-film-mini { min-height:50px; }
-}
-@media(max-width:360px) {
- .showcase-film-player.is-minimized { width:min(252px,calc(100vw - 24px)); }
- .showcase-film-mini > a { gap:4px; padding-inline:8px; }
+/* The film is absent until the landing-page CTA opens its accessible dialog. */
+.showcase-film-overlay { position:fixed; z-index:1100; inset:0; display:grid; place-items:center; overflow:auto; padding:max(16px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(16px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left)); background:radial-gradient(ellipse at 50% 36%,#142b36d9,transparent 72%),#020508ed; backdrop-filter:blur(20px); animation:showcase-overlay-in .2s ease-out both; }
+.showcase-film-modal { width:min(360px,calc((100dvh - 150px)*.5625),calc(100vw - 32px)); overflow:hidden; border:1px solid #a5e7df55; border-radius:18px; background:linear-gradient(150deg,#0b171e,#04080c 78%); color:#edf8f7; box-shadow:0 30px 100px #000d,0 0 70px #6ce2da12; animation:showcase-modal-in .24s cubic-bezier(.2,.8,.2,1) both; }
+.showcase-film-modal.is-expanded { width:min(440px,calc((100dvh - 150px)*.5625),calc(100vw - 32px)); }
+.showcase-film-modal-header { display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:62px; padding:10px 12px 10px 16px; border-bottom:1px solid #a5d8e518; }
+.showcase-film-modal-header > div:first-child { min-width:0; }
+.showcase-film-modal-header p { color:#91b5b9; font:700 8px/1.2 var(--font-jetbrains),monospace; letter-spacing:.14em; }
+.showcase-film-modal-header p span { padding:0 4px; color:#83e0d0; }
+.showcase-film-modal-header h2 { margin-top:5px; overflow:hidden; color:#e8f7f3; font-size:13px; font-weight:600; letter-spacing:-.02em; text-overflow:ellipsis; white-space:nowrap; }
+.showcase-film-modal-actions { display:flex; flex:none; align-items:center; gap:5px; }
+.showcase-film-modal-control { display:grid; place-items:center; width:32px; height:32px; border:1px solid #b6f0e526; border-radius:8px; background:#b8f7ee0b; color:#b9d5d5; cursor:pointer; transition:background .16s ease,border-color .16s ease,color .16s ease; }
+.showcase-film-modal-control:hover { border-color:#b6f4e57a; background:#173238ed; color:#fff; }
+.showcase-film-modal-screen { position:relative; width:100%; aspect-ratio:9/16; overflow:hidden; background:#020609; }
+.showcase-film-modal-screen iframe { position:absolute; inset:0; display:block; width:100%; height:100%; border:0; background:#020609; color-scheme:dark; }
+.showcase-film-modal-footer { display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:54px; padding:8px 12px 8px 16px; border-top:1px solid #a5d8e518; }
+.showcase-film-modal-footer p { color:#839ca0; font-size:9px; }
+.showcase-film-modal-footer a { display:inline-flex; flex:none; align-items:center; gap:6px; min-height:32px; border:1px solid #b6f0e545; border-radius:999px; padding:0 10px; background:#9fe8dc12; color:#c8f5e9; font-size:9px; font-weight:700; text-decoration:none; transition:background .16s ease,color .16s ease; }
+.showcase-film-modal-footer a:hover { background:#b8f5e52b; color:#fff; }
+.showcase-film-modal-control:focus-visible,.showcase-film-modal-footer a:focus-visible { outline:2px solid #b7f2e8; outline-offset:3px; }
+@keyframes showcase-overlay-in { from { opacity:0; } to { opacity:1; } }
+@keyframes showcase-modal-in { from { opacity:0; transform:translateY(10px) scale(.985); } to { opacity:1; transform:translateY(0) scale(1); } }
+@media(max-width:420px) {
+ .showcase-film-modal-header { min-height:56px; padding:8px 9px 8px 12px; }
+ .showcase-film-modal-header h2 { font-size:12px; }
+ .showcase-film-modal-control { width:29px; height:29px; }
+ .showcase-film-modal-footer { min-height:49px; padding:7px 9px 7px 12px; }
+ .showcase-film-modal-footer p { font-size:8px; }
+ .showcase-film-modal-footer a { min-height:30px; padding-inline:9px; font-size:8px; }
 }
 @media(prefers-reduced-motion:reduce) {
- .showcase-film-player { animation:none; }
- .showcase-film-mini-play,.showcase-film-control,.showcase-film-mini > a { transition:none; }
+ .showcase-film-overlay,.showcase-film-modal { animation:none; }
+ .showcase-film-modal-control,.showcase-film-modal-footer a { transition:none; }
 }

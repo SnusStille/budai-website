@@ -24,7 +24,7 @@ test("the landing has one ambient orbit, no robot, and no command-key control in
   expect(box).toBeLessThanOrEqual(1);
 });
 
-test("the film is only a compact corner dock, with a responsive portrait player on demand", async ({ page }) => {
+test("the film is launched only from the landing CTA in a clean portrait dialog", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.context().grantPermissions(["clipboard-read", "clipboard-write"], { origin: "http://127.0.0.1:3000" });
   await page.emulateMedia({ reducedMotion: "no-preference" });
@@ -42,69 +42,61 @@ test("the film is only a compact corner dock, with a responsive portrait player 
   const csp = response?.headers()["content-security-policy"] ?? "";
   expect(csp).toContain("frame-src 'self' https://streamable.com");
 
-  const dock = page.locator(".showcase-film-player");
   await expect(page.locator(".showcase-film-section")).toHaveCount(0);
-  await expect(dock).toBeVisible();
-  await expect(dock).toHaveAttribute("data-minimized", "true");
-  await expect(dock).toHaveAttribute("data-dock-visible", "true");
-  await expect(dock.locator("iframe")).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "Show film" })).toHaveCount(0);
+  await expect(page.locator(".showcase-film-player")).toHaveCount(0);
+  await expect(page.locator(".showcase-film-overlay")).toHaveCount(0);
   await expect(page.locator(".showcase-film-reopen")).toHaveCount(0);
-  await expect(page.locator(".mobile-playground-nudge")).toBeHidden();
+  await expect(page.getByRole("button", { name: "Show film" })).toHaveCount(0);
   await page.getByRole("button", { name: "Copy info@stilledev.se" }).click();
   await expect(page.locator(".hero-email-copy small")).toHaveText("COPIED");
 
-  await page.getByRole("button", { name: /Watch the film/ }).click();
-  const frame = dock.locator("iframe");
+  const watchButton = page.getByRole("button", { name: "Watch Showcase" });
+  await expect(watchButton).toBeVisible();
+  await watchButton.click();
+  const modal = page.locator(".showcase-film-modal");
+  const frame = modal.locator("iframe");
+  await expect(modal).toBeVisible();
+  await expect(modal).toHaveAttribute("aria-modal", "true");
+  await expect(modal.getByRole("heading", { name: "An idea, in motion." })).toBeVisible();
   await expect(frame).toHaveAttribute("src", "https://streamable.com/e/bhs4y1?autoplay=1&muted=1&loop=1");
   await expect(frame).toHaveAttribute("loading", "lazy");
   await expect(frame).toHaveAttribute("title", "Stilledev showcase film");
   await expect(frame).toHaveAttribute("allowfullscreen", "");
-  await expect(dock.locator(".showcase-film-player-label")).toHaveText("STILLEDEV · FILM 01");
-
-  const desktopFrame = await dock.locator(".showcase-film-player-screen").boundingBox();
+  const desktopFrame = await modal.locator(".showcase-film-modal-screen").boundingBox();
   expect(desktopFrame).not.toBeNull();
   expect(Math.abs(desktopFrame!.width / desktopFrame!.height - 9 / 16)).toBeLessThan(.03);
-  expect(desktopFrame!.width).toBeLessThanOrEqual(185);
 
-  await page.getByRole("button", { name: "View fullscreen" }).click();
-  await expect(dock).toHaveAttribute("aria-modal", "true");
+  await page.getByRole("button", { name: "Expand film" }).click();
+  await expect(modal).toHaveClass(/is-expanded/);
   await page.keyboard.press("Escape");
-  await expect(dock).toHaveAttribute("data-expanded", "false");
-  await page.getByRole("button", { name: "Minimize film player" }).click();
-  await expect(page.locator(".showcase-film-mini")).toBeVisible();
-  await expect(frame).toHaveCount(0);
-  await page.getByRole("button", { name: "Play the showcase film" }).click();
-  await expect(frame).toBeVisible();
+  await expect(page.locator(".showcase-film-modal")).toHaveCount(0);
 
   await page.setViewportSize({ width: 390, height: 844 });
-  const mobileFrame = await dock.locator(".showcase-film-player-screen").boundingBox();
+  await watchButton.click();
+  const mobileFrame = await page.locator(".showcase-film-modal-screen").boundingBox();
   expect(mobileFrame).not.toBeNull();
   expect(Math.abs(mobileFrame!.width / mobileFrame!.height - 9 / 16)).toBeLessThan(.03);
-  expect(mobileFrame!.width).toBeLessThanOrEqual(159);
   expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
-
-  await page.getByRole("button", { name: "Close film player" }).click();
-  await expect(dock).toHaveCount(0);
-  await page.keyboard.press("v");
-  await expect(page.locator(".showcase-film-player iframe")).toBeVisible();
-  await page.getByRole("button", { name: "Close film player" }).click();
-  await page.evaluate(() => {
-    const input = document.createElement("input");
-    input.id = "film-shortcut-input-test";
-    document.body.append(input);
-    input.focus();
-    input.dispatchEvent(new KeyboardEvent("keydown", { key: "v", bubbles: true }));
-  });
-  await expect(dock).toHaveCount(0);
+  await page.locator(".showcase-film-overlay").click({ position: { x: 4, y: 4 } });
+  await expect(page.locator(".showcase-film-modal")).toHaveCount(0);
 
   await page.emulateMedia({ reducedMotion: "reduce" });
-  await page.reload();
-  await expect(page.locator(".showcase-film-section")).toHaveCount(0);
-  await expect(page.locator(".showcase-film-player iframe")).toHaveCount(0);
-  await page.getByRole("button", { name: "Play the showcase film" }).click();
-  await expect(page.locator(".showcase-film-player iframe")).toHaveAttribute("src", "https://streamable.com/e/bhs4y1?muted=1");
-  await expect(page.locator(".showcase-film-player")).toHaveCSS("animation-name", "none");
+  await watchButton.click();
+  await expect(page.locator(".showcase-film-modal iframe")).toHaveAttribute("src", "https://streamable.com/e/bhs4y1?muted=1");
+  await expect(page.locator(".showcase-film-overlay")).toHaveCSS("animation-name", "none");
+  await page.getByRole("dialog").getByRole("link", { name: "Try the Playground" }).click();
+  await expect(page.locator(".showcase-film-modal")).toHaveCount(0);
+  await expect(page.locator("#playground")).toBeInViewport();
+
+  await page.goto("/sv");
+  await page.getByRole("button", { name: "Se showreelen" }).click();
+  await expect(page.getByRole("heading", { name: "En idé blir till." })).toBeVisible();
+  await expect(page.getByRole("dialog").getByRole("link", { name: "Prova Playground" })).toBeVisible();
+  await page.getByRole("button", { name: "Stäng filmen" }).click();
+  await expect(page.locator(".showcase-film-modal")).toHaveCount(0);
+
+  await page.goto("/contact");
+  await expect(page.locator(".hero-film-trigger")).toHaveCount(0);
 });
 
 test("the bilingual FAQ opens natively and uses the same centrally configured limits", async ({ page }) => {
@@ -131,7 +123,6 @@ test("the mobile Playground shortcut only appears between the landing and Playgr
   await page.goto("/");
   const nudge = page.locator(".mobile-playground-nudge");
   await expect(nudge).toHaveCount(0);
-  await page.getByRole("button", { name: "Close film player" }).click();
   await page.locator("#signal").scrollIntoViewIfNeeded();
   await expect(nudge).toBeVisible();
   await nudge.click();
