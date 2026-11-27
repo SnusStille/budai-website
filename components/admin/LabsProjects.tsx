@@ -20,6 +20,7 @@ import {
   Zap,
   ChevronRight,
   Tag,
+  Sparkles,
 } from "lucide-react";
 
 type ProjectStatus =
@@ -214,6 +215,8 @@ export default function LabsProjects() {
         setDetail(data);
         setInternalNotes(data.project?.internal_notes || "");
         setNextAction(data.project?.next_recommended_action || "");
+        setAnalysis(null);
+        setAnalysisError(null);
         if (data.project?.is_read === false) {
           await fetch(`/api/admin/labs/projects`, {
             method: "PATCH", headers: { "Content-Type": "application/json" },
@@ -262,6 +265,31 @@ export default function LabsProjects() {
       ...detail,
       project: { ...detail.project, internal_notes: internalNotes, next_recommended_action: nextAction },
     });
+  };
+
+  // AI project analysis (admin-only)
+  const [analysis, setAnalysis] = useState<string | null>(null);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
+  const runAnalysis = async () => {
+    if (!detail) return;
+    setAnalyzing(true);
+    setAnalysisError(null);
+    setAnalysis(null);
+    try {
+      const res = await fetch("/api/admin/labs/projects/analyze", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({ id: detail.project.id }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Okänt fel");
+      setAnalysis(data.analysis || "(Ingen analys returnerades)");
+    } catch (e: any) {
+      setAnalysisError(e.message || String(e));
+    } finally {
+      setAnalyzing(false);
+    }
   };
 
   const addNote = async () => {
@@ -809,6 +837,34 @@ export default function LabsProjects() {
                   )}
                 </div>
               )}
+
+              {/* AI Analysis */}
+              <div className={card}>
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-sm font-semibold text-white flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-accent-cyan" />
+                    AI-projektanalys
+                  </h4>
+                  <button
+                    onClick={() => void runAnalysis()}
+                    disabled={analyzing}
+                    className="text-[11px] px-2.5 py-1 bg-accent-cyan/15 text-accent-cyan border border-accent-cyan/30 rounded-md hover:bg-accent-cyan/25 disabled:opacity-50 transition"
+                  >
+                    {analyzing ? "Analyserar..." : analysis ? "Analysera igen" : "Analysera projekt"}
+                  </button>
+                </div>
+                {analysisError && (
+                  <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded p-2 mb-2">{analysisError}</p>
+                )}
+                {analysis && (
+                  <div className="text-xs text-white/80 leading-relaxed whitespace-pre-wrap bg-white/[0.02] border border-white/[0.05] rounded-md p-3 max-h-[400px] overflow-y-auto">
+                    {analysis}
+                  </div>
+                )}
+                {!analysis && !analysisError && !analyzing && (
+                  <p className="text-xs text-white/50">Klicka på "Analysera projekt" för att få en intern AI-bedömning av konversationen: teknisk analys, saknade uppgifter, rekommenderad första fråga och varningsflaggor. Analysen sparas inte automatiskt.</p>
+                )}
+              </div>
 
               {/* Oliver's working notes */}
               <div className={card}>

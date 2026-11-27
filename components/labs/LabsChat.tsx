@@ -23,6 +23,7 @@ import { useLabsTranslation } from "@/lib/labs/i18n";
 import { SERVICES, type ServiceCategory, type ServiceDef } from "@/lib/labs/services";
 import ProjectBlueprint from "@/components/labs/ProjectBlueprint";
 import { renderMarkdown } from "@/lib/labs/markdown";
+import { WebsiteDemo, WebAppDemo, GameDemo, RobloxDemo, AutomationDemo } from "./SolutionDemos";
 
 type Message = {
   id?: string;
@@ -208,6 +209,19 @@ export default function LabsChat() {
       : `I'm interested in ${service.shortEn.toLowerCase()}.`;
     void sendMessage(prompt, service.id);
   };
+
+  const selectCategory = (id: ServiceCategory, contextHint?: string) => {
+    const svc = SERVICES.find((s) => s.id === id);
+    if (!svc) return;
+    setSelectedService(id);
+    const base = isSv ? svc.shortSv.toLowerCase() : svc.shortEn.toLowerCase();
+    const prompt = contextHint
+      ? (isSv ? `Jag är intresserad av ${contextHint} (inom ${base}).` : `I'm interested in ${contextHint} (within ${base}).`)
+      : (isSv ? `Jag är intresserad av ${base}.` : `I'm interested in ${base}.`);
+    void sendMessage(prompt, id);
+  };
+
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   const sendMessage = async (text?: string, serviceId?: ServiceCategory | null) => {
     const trimmed = (text ?? input).trim();
@@ -552,6 +566,25 @@ export default function LabsChat() {
               </div>
             </motion.div>
 
+            {/* Solution explorer */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.48 }}
+              className="labs-explorer-section"
+            >
+              <div className="labs-section-label">{t.explorer.label}</div>
+              <h2 className="labs-section-title">{t.explorer.title}</h2>
+              <div className="labs-explorer-grid">
+                <WebsiteDemo onExplore={() => selectCategory("website")} title={t.explorer.website} exploreLabel={t.explorer.exploreBtn} conceptLabel={t.explorer.conceptLabel} lang={lang} />
+                <WebAppDemo onExplore={() => selectCategory("webapp")} title={t.explorer.webapp} exploreLabel={t.explorer.exploreBtn} conceptLabel={t.explorer.conceptLabel} lang={lang} />
+                <GameDemo onExplore={() => selectCategory("game", isSv ? "FiveM-servrar och inventory-system" : "FiveM servers and inventory systems")} title={t.explorer.game} exploreLabel={t.explorer.exploreBtn} conceptLabel={t.explorer.conceptLabel} lang={lang} />
+                <RobloxDemo onExplore={() => selectCategory("game", isSv ? "Roblox-spel och Luau-script" : "Roblox games and Luau scripts")} title={t.explorer.roblox} exploreLabel={t.explorer.exploreBtn} conceptLabel={t.explorer.conceptLabel} lang={lang} />
+                <AutomationDemo onExplore={() => selectCategory("ai_automation")} title={t.explorer.automation} exploreLabel={t.explorer.exploreBtn} conceptLabel={t.explorer.conceptLabel} lang={lang} />
+              </div>
+              <p className="labs-explorer-hint">{t.explorer.hint}</p>
+            </motion.div>
+
             {/* Value props */}
             <motion.div
               initial={{ opacity: 0 }}
@@ -698,6 +731,42 @@ export default function LabsChat() {
               </div>
             </div>
           </>
+        )}
+
+        {/* FAQ & Privacy */}
+        {!isChatActive && (
+          <motion.section
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.7 }}
+            className="labs-faq-section"
+          >
+            <h2 className="labs-section-title">{t.faq.title}</h2>
+            <div className="labs-faq-list">
+              {t.faq.items.map((item, i) => (
+                <div key={i} className={`labs-faq-item ${openFaq === i ? "labs-faq-open" : ""}`}>
+                  <button
+                    className="labs-faq-q"
+                    onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                    aria-expanded={openFaq === i}
+                  >
+                    <span>{item.q}</span>
+                    <ChevronRight size={16} className="labs-faq-chev" />
+                  </button>
+                  {openFaq === i && (
+                    <div className="labs-faq-a">{renderMarkdown(item.a)}</div>
+                  )}
+                </div>
+              ))}
+            </div>
+            <div className="labs-privacy-note">
+              <div className="labs-privacy-icon">◈</div>
+              <div>
+                <strong>{t.privacy.title}</strong>
+                <p>{t.privacy.body}</p>
+              </div>
+            </div>
+          </motion.section>
         )}
 
         {/* Footer */}

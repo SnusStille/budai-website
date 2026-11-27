@@ -1,4 +1,5 @@
 import "./labs.css";
+import "./demos.css";
 
 export default function LabsLayout({
   children,
