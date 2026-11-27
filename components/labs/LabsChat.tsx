@@ -2,7 +2,6 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useRouter } from "next/navigation";
 import { Send, Plus, X, User } from "lucide-react";
 import { useLang } from "@/components/ui/LanguageContext";
 import LabsHeader from "@/components/labs/LabsHeader";
@@ -57,7 +56,6 @@ const EMPTY_CONTACT: ContactForm = {
 export default function LabsChat() {
   const { lang } = useLang();
   const t = useLabsTranslation(lang);
-  const router = useRouter();
 
   const isSv = lang === "sv";
   const welcomeMessage = isSv ? WELCOME_MESSAGE_SV : WELCOME_MESSAGE_EN;
