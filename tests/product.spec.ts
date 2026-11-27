@@ -689,6 +689,35 @@ test("footer uses the native share sheet when available without calling the clip
   expect(await page.evaluate(() => window.__clipboardWrites)).toHaveLength(0);
 });
 
+test("cookie preferences never duplicate the footer control with a fixed bottom button", async ({ page }) => {
+  const settings = page.getByRole("button", { name: /Cookie settings|Cookieinställningar/ });
+  for (const path of ["/", "/sv", "/contact", "/sv/contact", "/legal/privacy", "/labs", "/changelog"]) {
+    await page.goto(path);
+    await expect.poll(() => settings.count()).toBeLessThanOrEqual(1);
+  }
+  await page.goto("/");
+  await expect(page.getByRole("button", { name: /Cookie settings|Cookieinställningar/ })).toHaveCount(1);
+});
+
+test("in-product feedback is localized, keyboard-friendly and gives a clear submitted state", async ({ page }) => {
+  await page.route("**/api/feedback", route => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true }) }));
+  await page.goto("/");
+  const trigger = page.getByRole("button", { name: "Send BudAI feedback" });
+  await trigger.click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByRole("heading", { name: "What could be better?" })).toBeVisible();
+  await expect(dialog.getByRole("button", { name: "Idea" })).toHaveAttribute("aria-pressed", "true");
+  await dialog.getByRole("button", { name: "Something broke" }).click();
+  await expect(dialog.getByRole("button", { name: "Something broke" })).toHaveAttribute("aria-pressed", "true");
+  await dialog.getByRole("textbox", { name: /Tell us a little more/ }).fill("The new menu is much easier to find.");
+  await dialog.getByRole("button", { name: "Send feedback" }).click();
+  await expect(dialog.getByRole("heading", { name: "Thanks for helping us improve." })).toBeVisible();
+  await dialog.getByRole("button", { name: "Close feedback" }).click();
+  await expect(dialog).toHaveCount(0);
+  await expect(trigger).toBeFocused();
+});
+
 test("business analytics events are opt-in and exclude form or email values", async ({ page }) => {
   await page.addInitScript(() => {
     window.__analyticsEvents = [];

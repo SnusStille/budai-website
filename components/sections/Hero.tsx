@@ -76,8 +76,8 @@ export default function Hero() {
         </h1>
         <p className="hero-locale">
           {sv
-            ? "Varje handling börjar med en signal. Byggd i Sverige för arbete på svenska och engelska."
-            : "Every action starts with a signal. Built in Sweden for Swedish and English work."}
+            ? "Byggd i Sverige för arbete på svenska och engelska."
+            : "Built in Sweden for work in Swedish and English."}
         </p>
         <p className="hero-description">{t.hero.subtitle}</p>
         <div className="hero-actions">
@@ -116,8 +116,8 @@ export default function Hero() {
         </div>
         <p className="hero-product-note">
           {sv
-            ? `En arbetsyta för ditt eget fokus idag och teamets flöden imorgon — prova gratis som gäst (${LIMITS.guest.messagesPerDay}/dag) eller logga in gratis (${LIMITS.member.messagesPerDay}/dag) för minne du kan styra, historik och bildanalys.`
-            : `One workspace for personal focus today and team workflows tomorrow — try free as a guest (${LIMITS.guest.messagesPerDay}/day) or sign in free (${LIMITS.member.messagesPerDay}/day) for memory you control, history, and vision.`}
+            ? `Börja gratis som gäst (${LIMITS.guest.messagesPerDay} meddelanden per dag). Logga in för historik och minne du kan styra (${LIMITS.member.messagesPerDay} meddelanden per dag).`
+            : `Start free as a guest (${LIMITS.guest.messagesPerDay} messages a day). Sign in for history and memory you can control (${LIMITS.member.messagesPerDay} messages a day).`}
         </p>
         <p className="hero-credit">
           {sv ? "Utvecklad av " : "Built by "}

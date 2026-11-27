@@ -4,6 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import ContactForm from "@/components/sections/ContactForm";
 import ContactEmailActions from "@/components/sections/ContactEmailActions";
 import CookieSettingsButton from "@/components/ui/CookieSettingsButton";
+import { StilledevMark } from "@/components/ui/BudAILogo";
 
 const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://stilledev.se").replace(/\/$/, "");
 const organizationId = `${siteUrl}/#organization`;
@@ -29,8 +30,10 @@ export default async function ContactPageContent({ sv = false }: { sv?: boolean 
     <main id="main" tabIndex={-1} className="min-h-screen bg-background px-4 py-12 text-white sm:px-6 sm:py-16">
       <div className="mx-auto max-w-5xl">
         <nav className="mb-12 flex items-center justify-between gap-4 border-b border-white/[0.08] pb-5" aria-label={sv ? "Sidnavigering" : "Page navigation"}>
-          <Link href={sv ? "/sv" : "/"} className="inline-flex min-h-11 items-center gap-2 text-sm text-muted transition-colors hover:text-white">
-            <ArrowLeft size={15} aria-hidden="true" />{sv ? "Stilledev" : "Stilledev home"}
+          <Link href={sv ? "/sv" : "/"} aria-label={sv ? "Stilledev startsida" : "Stilledev home"} className="inline-flex min-h-11 items-center gap-2.5 rounded-lg text-sm text-muted transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-cyan/50">
+            <ArrowLeft size={15} aria-hidden="true" />
+            <StilledevMark size={26} />
+            <span className="font-semibold tracking-wide text-accent-cyan">Stilledev</span>
           </Link>
           <div className="flex items-center gap-2 text-xs font-medium" aria-label={sv ? "Välj språk" : "Choose language"}>
             <Link href="/contact" aria-current={!sv ? "page" : undefined} className={!sv ? "rounded-full bg-white/10 px-3 py-2 text-white" : "rounded-full px-3 py-2 text-muted hover:text-white"}>EN</Link>
@@ -38,15 +41,29 @@ export default async function ContactPageContent({ sv = false }: { sv?: boolean 
           </div>
         </nav>
 
-        <header className="max-w-3xl">
-          <p className="mb-4 font-mono text-[10px] uppercase tracking-[0.18em] text-accent-cyan">STILLEDEV · {sv ? "FÖRETAGSKONTAKT" : "BUSINESS ENQUIRIES"}</p>
-          <h1 className="text-4xl font-semibold tracking-[-0.045em] sm:text-5xl">{name}</h1>
-          <p className="mt-5 max-w-2xl text-base leading-relaxed text-muted sm:text-lg">
-            {sv
-              ? "Stilledev är en svensk mjukvarustudio grundad av Oliver Stille. Hör av dig om BudAI, digital utveckling, AI-projekt, samarbeten eller andra professionella frågor."
-              : "Stilledev is a Swedish software studio founded by Oliver Stille. Get in touch about BudAI, digital development, AI projects, partnerships or other professional enquiries."}
-          </p>
-          <ContactEmailActions />
+        <header className="contact-hero-grid">
+          <div className="contact-hero-copy">
+            <p className="contact-eyebrow"><span className="contact-eyebrow-pulse" />STILLEDEV <i /> {sv ? "FÖRETAGSKONTAKT" : "BUSINESS ENQUIRIES"}</p>
+            <h1 className="contact-title">{name}</h1>
+            <p className="contact-description">
+              {sv
+                ? "Stilledev är en svensk mjukvarustudio grundad av Oliver Stille. Hör av dig om BudAI, digital utveckling, AI-projekt, samarbeten eller andra professionella frågor."
+                : "Stilledev is a Swedish software studio founded by Oliver Stille. Get in touch about BudAI, digital development, AI projects, partnerships or other professional enquiries."}
+            </p>
+            <ContactEmailActions />
+          </div>
+          <div className="contact-signal-panel" aria-hidden="true">
+            <span className="contact-signal-label">STILLEDEV <i /> OPEN CHANNEL</span>
+            <div className="contact-signal-orbit contact-signal-orbit-a" />
+            <div className="contact-signal-orbit contact-signal-orbit-b" />
+            <div className="contact-signal-core"><StilledevMark size={48} /></div>
+            <span className="contact-signal-line contact-signal-line-a" />
+            <span className="contact-signal-line contact-signal-line-b" />
+            <span className="contact-signal-node contact-signal-node-a" />
+            <span className="contact-signal-node contact-signal-node-b" />
+            <span className="contact-signal-caption">{sv ? "SVERIGE · SV / EN" : "SWEDEN · EN / SV"}</span>
+            <span className="contact-signal-index">01</span>
+          </div>
         </header>
 
         <section className="mt-12 grid gap-8 border-t border-white/[0.08] pt-8 lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.72fr)] lg:gap-12" aria-labelledby="contact-form-title">

@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X, Globe, Bell } from "lucide-react";
+import { Menu, X, Globe, Bell, ArrowUpRight, MessageSquareText } from "lucide-react";
 import { useLang } from "@/components/ui/LanguageContext";
 import BudAIWordmark from "@/components/ui/BudAIWordmark";
 import BudAILogo from "@/components/ui/BudAILogo";
@@ -125,15 +125,10 @@ export default function Navbar() {
                     href={l.href}
                     onClick={() => setMobileOpen(false)}
                     aria-current={isActive ? "location" : undefined}
-                    className={`relative whitespace-nowrap px-2.5 xl:px-3.5 py-2 text-sm rounded-lg transition-colors ${
-                      isActive
-                        ? "text-white"
-                        : l.id === "playground"
-                          ? "text-accent-cyan hover:text-white hover:bg-white/5"
-                          : "text-muted hover:text-white hover:bg-white/5"
-                    }`}
+                    title={l.id === "labs" ? (lang === "sv" ? "Labs · under utveckling" : "Labs · under development") : undefined}
+                    className={`relative whitespace-nowrap px-2.5 xl:px-3.5 py-2 text-sm rounded-lg transition-colors ${l.id === "labs" ? "nav-labs-link" : isActive ? "text-white" : l.id === "playground" ? "text-accent-cyan hover:text-white hover:bg-white/5" : "text-muted hover:text-white hover:bg-white/5"}`}
                   >
-                    {l.label}
+                    {l.id === "labs" ? <span className="nav-labs-chip"><i aria-hidden="true" />{l.label}<ArrowUpRight size={12} aria-hidden="true" /></span> : l.label}
                     <span
                       className={`absolute bottom-1 left-1/2 -translate-x-1/2 h-0.5 rounded-full bg-accent-cyan transition-all duration-300 ${
                         isActive ? "w-5 opacity-100 shadow-[0_0_8px_rgba(0,229,255,0.6)]" : "w-0 opacity-0"
@@ -246,13 +241,10 @@ export default function Navbar() {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.04 }}
                   onClick={() => setMobileOpen(false)}
-                  className={`px-4 py-3.5 text-lg rounded-xl transition-colors ${
-                    isLinkActive(l.id)
-                      ? "text-white bg-white/5 border border-accent-cyan/20"
-                      : "text-white/80 hover:text-white hover:bg-white/5"
-                  }`}
+                  title={l.id === "labs" ? (lang === "sv" ? "Labs · under utveckling" : "Labs · under development") : undefined}
+                  className={`px-4 py-3.5 text-lg rounded-xl transition-colors ${l.id === "labs" ? "nav-labs-mobile" : isLinkActive(l.id) ? "text-white bg-white/5 border border-accent-cyan/20" : "text-white/80 hover:text-white hover:bg-white/5"}`}
                 >
-                  {l.label}
+                  {l.id === "labs" ? <span className="nav-labs-chip"><i aria-hidden="true" />{l.label}<ArrowUpRight size={15} aria-hidden="true" /></span> : l.label}
                 </motion.a>
               ))}
 
@@ -313,8 +305,9 @@ export default function Navbar() {
                     setMobileOpen(false);
                     window.dispatchEvent(new Event("budai:feedback"));
                   }}
-                  className="inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.03] px-3.5 py-2 text-xs font-medium text-white/85 hover:text-white"
+                  className="inline-flex min-h-10 items-center gap-2 rounded-full border border-[#82dce6]/25 bg-gradient-to-r from-[#82dce6]/[.09] to-white/[.025] px-3.5 py-2 text-xs font-medium text-white/90 transition-colors hover:border-[#82dce6]/45 hover:text-white"
                 >
+                  <MessageSquareText className="h-3.5 w-3.5 text-[#91e2e8]" aria-hidden="true" />
                   {lang === "sv" ? "Skicka feedback" : "Send feedback"}
                 </button>
               </div>

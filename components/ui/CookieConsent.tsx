@@ -9,7 +9,6 @@ import { useLang } from "./LanguageContext";
 import {
   CONSENT_SETTINGS_EVENT,
   readConsent,
-  subscribeConsent,
   writeConsent,
   type ConsentChoice,
 } from "@/lib/consent";
@@ -21,21 +20,17 @@ import {
  */
 export default function CookieConsent({ forceDocumentNavigation = false }: { forceDocumentNavigation?: boolean } = {}) {
   const [visible, setVisible] = useState(false);
-  const [choice, setChoice] = useState<ConsentChoice | null>(null);
   const pathname = usePathname();
   const { t, lang } = useLang();
-  const hasCookieSettingsInFooter = (pathname === "/" || pathname === "/sv") && !forceDocumentNavigation;
   const isAdminPage = pathname?.startsWith("/admin") ?? false;
 
   useEffect(() => {
     const current = readConsent();
-    setChoice(current);
     if (current || isAdminPage) return;
     const timer = window.setTimeout(() => setVisible(true), 2200);
     return () => window.clearTimeout(timer);
   }, [isAdminPage]);
 
-  useEffect(() => subscribeConsent(setChoice), []);
 
   // "Cookie settings" in the footer lets a visitor change or withdraw consent.
   useEffect(() => {
@@ -46,22 +41,11 @@ export default function CookieConsent({ forceDocumentNavigation = false }: { for
 
   const save = (nextChoice: ConsentChoice) => {
     writeConsent(nextChoice);
-    setChoice(nextChoice);
     setVisible(false);
   };
 
   return (
     <>
-      {!isAdminPage && !visible && choice && !forceDocumentNavigation && !hasCookieSettingsInFooter && (
-        <button
-          type="button"
-          onClick={() => setVisible(true)}
-          className="fixed bottom-4 left-4 z-[54] min-h-10 rounded-full border border-white/15 bg-[#07070e]/90 px-3.5 text-[11px] text-muted shadow-lg backdrop-blur hover:text-white"
-          style={{ bottom: "max(1rem, env(safe-area-inset-bottom))" }}
-        >
-          {lang === "sv" ? "Cookieinställningar" : "Cookie settings"}
-        </button>
-      )}
       <AnimatePresence>
       {visible && !isAdminPage && (
         <motion.div

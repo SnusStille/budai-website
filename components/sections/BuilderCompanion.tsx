@@ -16,6 +16,8 @@ export default function BuilderCompanion({ phone = false }: { phone?: boolean })
   const { lang } = useLang();
   const sv = lang === "sv";
   const launcherRef = useRef<HTMLButtonElement>(null);
+  const companionRef = useRef<HTMLElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
   const [ready, setReady] = useState(false);
   const [hidden, setHidden] = useState(false);
   const [blocked, setBlocked] = useState(true);
@@ -38,7 +40,7 @@ export default function BuilderCompanion({ phone = false }: { phone?: boolean })
       setAppearances(Math.min(2, Math.max(0, Number(sessionStorage.getItem(APPEARANCES)) || 0)));
     } catch { /* session storage is optional */ }
     setHidden(readCompanionHidden());
-    const timer = window.setTimeout(() => setReady(true), 7000);
+    const timer = window.setTimeout(() => setReady(true), 4500);
     return () => window.clearTimeout(timer);
   }, []);
 
@@ -106,8 +108,18 @@ export default function BuilderCompanion({ phone = false }: { phone?: boolean })
   useEffect(() => { if (blocked) setOpen(false); }, [blocked]);
 
   useEffect(() => {
+    if (!open) return;
+    menuRef.current?.querySelector<HTMLElement>("a[href]")?.focus({ preventScroll: true });
+    const onPointerDown = (event: PointerEvent) => {
+      if (!companionRef.current?.contains(event.target as Node)) setOpen(false);
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => document.removeEventListener("pointerdown", onPointerDown);
+  }, [open]);
+
+  useEffect(() => {
     if (!ready || hidden || blocked || !heroVisible || open || interacted || appearances >= 2 || reducedMotion) return;
-    const delay = appearances === 0 ? 9000 + Math.random() * 5000 : 90000 + Math.random() * 30000;
+    const delay = appearances === 0 ? 4200 + Math.random() * 1600 : 90000 + Math.random() * 30000;
     const timer = window.setTimeout(() => {
       setOpen(false);
       setAppearances(current => {
@@ -136,26 +148,34 @@ export default function BuilderCompanion({ phone = false }: { phone?: boolean })
 
   if (!ready || hidden || blocked || typeof document === "undefined") return null;
   const menu = [
-    { label: sv ? "Prova Playground" : "Try the Playground", href: phone ? "#phone-chat" : "#playground", icon: Sparkles },
-    { label: sv ? "Utforska BudAI" : "Explore BudAI", href: "#capabilities", icon: ArrowUpRight },
-    { label: sv ? "Kontakta Stilledev" : "Contact Stilledev", href: sv ? "/sv/contact" : "/contact", icon: Mail },
+    { label: sv ? "Prova Playground" : "Try the Playground", detail: sv ? "Skriv, planera och utforska" : "Write, plan, and explore", href: phone ? "#phone-chat" : "#playground", icon: Sparkles },
+    { label: sv ? "Utforska BudAI" : "Explore BudAI", detail: sv ? "Se vad arbetsytan innehåller" : "See what the workspace offers", href: "#capabilities", icon: ArrowUpRight },
+    { label: sv ? "Kontakta Stilledev" : "Contact Stilledev", detail: sv ? "Frågor och projektförfrågningar" : "Questions and project enquiries", href: sv ? "/sv/contact" : "/contact", icon: Mail },
   ];
 
   return createPortal(
-    <aside className={`builder-companion builder-companion-quiet ${phone ? "is-phone" : ""} ${interacted ? "has-interacted" : ""}`} aria-label={sv ? "BudAI-robot" : "BudAI robot"} data-builder-companion onKeyDown={event => { if (event.key === "Escape" && open) { event.stopPropagation(); setOpen(false); launcherRef.current?.focus({ preventScroll: true }); } }}>
+    <aside ref={companionRef} className={`builder-companion builder-companion-quiet ${phone ? "is-phone" : ""} ${interacted ? "has-interacted" : ""}`} aria-label={sv ? "BudAI-robot" : "BudAI robot"} data-builder-companion onKeyDown={event => { if (event.key === "Escape" && open) { event.stopPropagation(); setOpen(false); launcherRef.current?.focus({ preventScroll: true }); } }}>
       <AnimatePresence initial={false}>
-        {open && <motion.div className="companion-note companion-note-quiet" id="companion-note" role="dialog" aria-label={sv ? "Snabbnavigering" : "Quick navigation"}
+        {open && <motion.div ref={menuRef} className="companion-note companion-note-quiet" id="companion-note" role="dialog" aria-modal="false" aria-labelledby="companion-note-title" aria-describedby="companion-note-description"
           initial={reducedMotion ? { opacity: 0 } : { opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: reducedMotion ? .1 : .18 }}>
-          <div className="companion-note-top"><span><i /> {sv ? "VÄLJ EN VÄG" : "QUICK LINKS"}</span><button type="button" onClick={() => { setOpen(false); launcherRef.current?.focus(); }} aria-label={sv ? "Stäng menyn" : "Close menu"}><X size={16} /></button></div>
+          <div className="companion-note-top">
+            <span><i /><span id="companion-note-title">{sv ? "VÄLJ NÄSTA STEG" : "WHERE TO NEXT?"}</span></span>
+            <button type="button" onClick={() => { setOpen(false); launcherRef.current?.focus({ preventScroll: true }); }} aria-label={sv ? "Stäng menyn" : "Close menu"}><X size={16} /></button>
+          </div>
+          <p id="companion-note-description" className="companion-note-description">{sv ? "En snabb väg till rätt plats." : "A quick way to the right place."}</p>
           <nav className="companion-quick-links" aria-label={sv ? "Snabblänkar" : "Quick links"}>
-            {menu.map(({ label, href, icon: Icon }) => <a key={href} href={href} onClick={takeControl}><Icon size={15} aria-hidden="true" />{label}<ArrowUpRight size={13} aria-hidden="true" /></a>)}
+            {menu.map(({ label, detail, href, icon: Icon }) => <a key={href} href={href} onClick={takeControl}>
+              <Icon size={17} aria-hidden="true" />
+              <span className="companion-link-copy"><b>{label}</b><small>{detail}</small></span>
+              <ArrowUpRight size={14} aria-hidden="true" />
+            </a>)}
           </nav>
           <div className="companion-bottom"><span>BUDAI / STILLEDEV</span><button type="button" onClick={dismiss}>{sv ? "Dölj roboten" : "Hide robot"}</button></div>
         </motion.div>}
       </AnimatePresence>
-      <button ref={launcherRef} type="button" className="companion-launcher companion-launcher-quiet" onClick={toggle} aria-expanded={open} aria-controls={open ? "companion-note" : undefined} aria-label={open ? (sv ? "Stäng snabbnavigering" : "Close quick links") : (sv ? "Öppna snabbnavigering" : "Open quick links")}>
+      <button ref={launcherRef} type="button" className="companion-launcher companion-launcher-quiet" onClick={toggle} aria-expanded={open} aria-controls={open ? "companion-note" : undefined} aria-label={open ? (sv ? "Stäng snabbmenyn" : "Close BudAI menu") : (sv ? "Öppna BudAI-menyn" : "Open BudAI menu")}>
         <span className="companion-orbit" aria-hidden="true" /><span className="companion-bot"><LabsMascot companion staticOnly /></span>
-        <span className="companion-tag" aria-hidden="true"><i /> {sv ? "KLICKA PÅ MIG" : "CLICK ON ME"}</span>
+        <span className="companion-tag" aria-hidden="true"><i /> {sv ? "TRYCK HÄR" : "CLICK ME"}</span>
       </button>
     </aside>, document.body,
   );

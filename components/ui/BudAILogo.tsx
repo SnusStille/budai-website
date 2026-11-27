@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef } from "react";
+import { useEffect, useRef } from "react";
 import Wordmark from "./BudAIWordmark";
 import { BUDAI_BRAND, BUDAI_MARK_PATH, BUDAI_SIGNAL_PATHS } from "@/lib/brand";
 
@@ -53,23 +53,16 @@ export function StilledevMark({
   size?: number;
   className?: string;
 }) {
-  const uid = useId().replace(/:/g, "");
   return (
     <span
       className={`inline-flex items-center justify-center shrink-0 ${className}`}
       style={{ width: size, height: size }}
       aria-hidden
     >
-      <svg viewBox="0 0 32 32" className="w-full h-full" fill="none">
-        <defs>
-          <linearGradient id={`sm-${uid}`} x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#00e5ff" />
-            <stop offset="100%" stopColor="#8b5cf6" />
-          </linearGradient>
-        </defs>
-        <path d="M16 2.5 28.5 9.4v13.2L16 29.5 3.5 22.6V9.4L16 2.5Z" stroke={`url(#sm-${uid})`} strokeWidth="1.3" fill="rgba(0,229,255,0.05)" />
-        <path d="M8.2 19.9 16 7.7l7.8 12.2M11.1 15.6 16 24.3l4.9-8.7M8.2 19.9h15.6" stroke={`url(#sm-${uid})`} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
-        <circle cx="16" cy="15.9" r="2" fill={`url(#sm-${uid})`} />
+      <svg viewBox="0 0 32 32" className="w-full h-full" fill="none" aria-hidden="true">
+        <path data-stilledev-mark d="M24 8.8c-1.7-2.1-4.3-3.1-7.8-3.1-4.5 0-7.6 2.1-7.6 5.3 0 3 2.6 4.3 7.2 5.2l1.1.2c4.8 1 7.2 2.4 7.2 5.4 0 3.6-3.3 6.1-8.3 6.1-3.8 0-6.8-1.2-8.8-3.4" stroke="#8edee9" strokeWidth="4.6" strokeLinecap="round" strokeLinejoin="round" opacity=".2" />
+        <path d="M24 8.8c-1.7-2.1-4.3-3.1-7.8-3.1-4.5 0-7.6 2.1-7.6 5.3 0 3 2.6 4.3 7.2 5.2l1.1.2c4.8 1 7.2 2.4 7.2 5.4 0 3.6-3.3 6.1-8.3 6.1-3.8 0-6.8-1.2-8.8-3.4" stroke="#f4fbfc" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M15.5 14.8 16.9 16l-1.4 1.2-1.4-1.2 1.4-1.2Z" fill="#8edee9" />
       </svg>
     </span>
   );

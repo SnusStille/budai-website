@@ -16,12 +16,12 @@ export const translations = {
     },
     hero: {
       badge: "Utvecklarförhandsvisning",
-      title1: "AI som tar",
-      title2: "arbetet vidare",
+      title1: "Ge plats åt",
+      title2: "det viktiga.",
       titleAccent: "Sverige",
       words: [],
       subtitle:
-        "Skriv, analysera och planera — gör sedan rörig kontext till tydliga nästa steg. Prova gratis i Playground.",
+        "En AI-arbetsyta för skrivande, planering och analys på svenska eller engelska. Börja som gäst i Playground.",
       ctaPrimary: "Öppna Playground",
       ctaSecondary: "Gå med i väntelistan",
     },
@@ -119,12 +119,12 @@ export const translations = {
     },
     hero: {
       badge: "Developer Preview",
-      title1: "AI that moves",
-      title2: "work forward",
+      title1: "Make room for",
+      title2: "what matters.",
       titleAccent: "Sweden",
       words: [],
       subtitle:
-        "Write, analyze and plan — then turn messy context into clear next steps. Try it free in the live Playground.",
+        "A workspace for writing, planning, and analysis in Swedish or English. Start in the Playground as a guest.",
       ctaPrimary: "Open Playground",
       ctaSecondary: "Join the waitlist",
     },

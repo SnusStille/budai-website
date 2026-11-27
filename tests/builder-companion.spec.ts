@@ -15,11 +15,12 @@ test("the companion stays unobtrusive, opens a three-link menu, and stops auto-p
   await expect(buddy).toHaveCount(0);
   await expect(buddy).toBeVisible({ timeout: 12000 });
   await expect(buddy.locator("canvas")).toHaveCount(0);
-  const launcher = buddy.getByRole("button", { name: "Open quick links" });
+  const launcher = buddy.getByRole("button", { name: "Open BudAI menu" });
   await launcher.click();
-  const menu = buddy.getByRole("dialog", { name: "Quick navigation" });
+  const menu = buddy.getByRole("dialog", { name: "WHERE TO NEXT?" });
   await expect(menu).toBeVisible();
   await expect(menu.getByRole("link")).toHaveCount(3);
+  await expect(menu.getByRole("link").first()).toBeFocused();
   await expect(menu.getByRole("link", { name: /Try the Playground/ })).toHaveAttribute("href", "#playground");
   await expect(menu.getByRole("link", { name: /Explore BudAI/ })).toHaveAttribute("href", "#capabilities");
   await expect(menu.getByRole("link", { name: /Contact Stilledev/ })).toHaveAttribute("href", "/contact");
@@ -40,9 +41,9 @@ test("the full-motion companion makes one brief edge peek and becomes manual-onl
     const node = document.querySelector<HTMLElement>(".builder-companion-quiet");
     return !!node && Number.parseFloat(getComputedStyle(node).opacity) > 0.7;
   });
-  await expect(buddy.getByRole("button", { name: "Open quick links" })).toBeVisible();
-  await buddy.getByRole("button", { name: "Open quick links" }).click();
-  await expect(buddy.getByRole("dialog", { name: "Quick navigation" })).toBeVisible();
+  await expect(buddy.getByRole("button", { name: "Open BudAI menu" })).toBeVisible();
+  await buddy.getByRole("button", { name: "Open BudAI menu" }).click();
+  await expect(buddy.getByRole("dialog", { name: "WHERE TO NEXT?" })).toBeVisible();
   await expect(buddy).toHaveClass(/has-interacted/);
 });
 
@@ -51,15 +52,15 @@ test("the Swedish companion is localized, has a finite menu and remains static u
   const buddy = page.locator("[data-builder-companion]"); await expect(buddy).toBeVisible({ timeout: 12000 });
   await expect(buddy.locator(".labs-bot-fallback")).toBeVisible();
   await expect(buddy.locator("canvas")).toHaveCount(0);
-  await buddy.getByRole("button", { name: "Öppna snabbnavigering" }).click();
-  const menu = buddy.getByRole("dialog", { name: "Snabbnavigering" });
+  await buddy.getByRole("button", { name: "Öppna BudAI-menyn" }).click();
+  const menu = buddy.getByRole("dialog", { name: "Välj nästa steg" });
   await expect(menu.getByRole("link")).toHaveCount(3);
   await expect(menu.getByRole("link", { name: /Prova Playground/ })).toHaveAttribute("href", "#playground");
   await expect(menu.getByRole("link", { name: /Kontakta Stilledev/ })).toHaveAttribute("href", "/sv/contact");
   await expect(buddy.getByRole("button", { name: "Dölj roboten" })).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(menu).toHaveCount(0);
-  await expect(buddy.getByRole("button", { name: "Öppna snabbnavigering" })).toBeFocused();
+  await expect(buddy.getByRole("button", { name: "Öppna BudAI-menyn" })).toBeFocused();
 });
 
 test("the phone companion waits for the welcome notice, stays out of Playground and fits the viewport", async ({ browser }) => {
@@ -72,6 +73,6 @@ test("the phone companion waits for the welcome notice, stays out of Playground 
   await expect(buddy).toBeVisible({ timeout: 12000 });
   await expect(buddy.locator("canvas")).toHaveCount(0);
   expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
-  await expect(buddy.getByRole("button", { name: "Open quick links" })).toBeVisible();
+  await expect(buddy.getByRole("button", { name: "Open BudAI menu" })).toBeVisible();
   await context.close();
 });
