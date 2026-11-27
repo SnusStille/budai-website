@@ -21,7 +21,25 @@ export default function ShowcaseFilm() {
     const updatePreference = () => setReducedMotion(preference.matches);
     updatePreference();
     preference.addEventListener("change", updatePreference);
-    return () => preference.removeEventListener("change", updatePreference);
+
+    const openFilm = () => {
+      setClosed(false);
+      setMinimized(false);
+      setExpanded(false);
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key.toLowerCase() !== "v" || event.metaKey || event.ctrlKey || event.altKey || event.repeat) return;
+      const target = event.target as HTMLElement | null;
+      if (target?.isContentEditable || target?.closest(".showcase-film-player") || ["INPUT", "TEXTAREA", "SELECT"].includes(target?.tagName ?? "")) return;
+      openFilm();
+    };
+    window.addEventListener("budai:show-film", openFilm);
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      preference.removeEventListener("change", updatePreference);
+      window.removeEventListener("budai:show-film", openFilm);
+      window.removeEventListener("keydown", onKeyDown);
+    };
   }, []);
 
   useEffect(() => {
@@ -49,12 +67,7 @@ export default function ShowcaseFilm() {
   };
 
   return (
-    closed ? (
-      <button type="button" className="showcase-film-reopen" onClick={() => { setClosed(false); setMinimized(true); }}>
-        <Play size={13} fill="currentColor" aria-hidden="true" />
-        <span>{sv ? "Visa filmen" : "Show film"}</span>
-      </button>
-    ) : (
+    closed ? null : (
       <aside
         className={`showcase-film-player${expanded ? " is-expanded" : ""}${minimized ? " is-minimized" : ""}`}
         aria-label={sv ? "Stilledevs showcasefilm" : "Stilledev showcase film"}

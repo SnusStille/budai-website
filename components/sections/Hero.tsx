@@ -1,16 +1,29 @@
 "use client";
 import { LIMITS } from "@/lib/limits";
 
-import { ArrowDown, ArrowRight, FileText, Languages, Mail, Network, Pause, Play, Zap } from "lucide-react";
+import { ArrowDown, ArrowRight, Check, Copy, FileText, Languages, Mail, Network, Pause, Play, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLang } from "@/components/ui/LanguageContext";
 import StockholmClock from "@/components/ui/StockholmClock";
+import { CONTACT_EMAIL } from "@/lib/contact";
 
 /** Landing hero paired with the persistent single-owner 3D Neural Brain stage. */
 export default function Hero() {
   const { t, lang } = useLang();
   const sv = lang === "sv";
   const [motionPaused, setMotionPaused] = useState(false);
+  const [emailCopyState, setEmailCopyState] = useState<"idle" | "copied" | "failed">("idle");
+
+  const copyContactEmail = async () => {
+    try {
+      await navigator.clipboard.writeText(CONTACT_EMAIL);
+      setEmailCopyState("copied");
+    } catch {
+      setEmailCopyState("failed");
+    }
+  };
+
+  const openShowreel = () => window.dispatchEvent(new Event("budai:show-film"));
 
   useEffect(() => {
     document.documentElement.classList.toggle("budai-ambient-paused", motionPaused);
@@ -84,11 +97,22 @@ export default function Hero() {
             <ArrowRight size={16} />
           </a>
         </div>
-        <a className="hero-contact" href={sv ? "/sv/contact" : "/contact"}>
-          <span className="hero-contact-icon"><Mail size={15} aria-hidden="true" /></span>
-          <span><small>{sv ? "KONTAKTA STILLEDEV" : "CONTACT STILLEDEV"}</small><b>{sv ? "Kontakta oss" : "Contact us"}</b></span>
-          <ArrowRight size={14} aria-hidden="true" />
-        </a>
+        <div className="hero-utility-actions" role="group" aria-label={sv ? "Snabba genvägar" : "Quick actions"}>
+          <a className="hero-contact" href={sv ? "/sv/contact" : "/contact"}>
+            <span className="hero-contact-icon"><Mail size={15} aria-hidden="true" /></span>
+            <span><small>{sv ? "KONTAKTA STILLEDEV" : "CONTACT STILLEDEV"}</small><b>{sv ? "Kontakta oss" : "Contact us"}</b></span>
+            <ArrowRight size={14} aria-hidden="true" />
+          </a>
+          <button type="button" className="hero-film-trigger" onClick={openShowreel} title={sv ? "Öppna filmen nere i hörnet (V)" : "Open the corner film player (V)"}>
+            <span className="hero-film-icon"><Play size={14} fill="currentColor" aria-hidden="true" /></span>
+            <span><small>{sv ? "STILLEDEV / FILM 01" : "STILLEDEV / FILM 01"}</small><b>{sv ? "Se filmen" : "Watch the film"}</b></span>
+            <kbd aria-hidden="true">V</kbd>
+          </button>
+          <button type="button" className="hero-email-copy" onClick={copyContactEmail} aria-label={emailCopyState === "copied" ? (sv ? "E-postadressen kopierad" : "Email address copied") : (sv ? `Kopiera ${CONTACT_EMAIL}` : `Copy ${CONTACT_EMAIL}`)}>
+            <span className="hero-email-copy-icon">{emailCopyState === "copied" ? <Check size={14} aria-hidden="true" /> : <Copy size={14} aria-hidden="true" />}</span>
+            <span><small aria-live="polite">{emailCopyState === "copied" ? (sv ? "KOPIERAD" : "COPIED") : emailCopyState === "failed" ? (sv ? "KOPIERING EJ TILLGÄNGLIG" : "COPY UNAVAILABLE") : (sv ? "KOPIERA E-POST" : "COPY EMAIL")}</small><b>{CONTACT_EMAIL}</b></span>
+          </button>
+        </div>
         <div className="hero-features" aria-label={sv ? "Prova en idé i Playground" : "Try an idea in Playground"}>
           <span className="hero-feature-hint">
             <span>{sv ? "VÄLJ EN IDÉ ATT BÖRJA MED" : "PICK AN IDEA TO GET STARTED"} <ArrowRight size={12} aria-hidden="true" /></span>

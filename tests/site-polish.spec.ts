@@ -26,6 +26,7 @@ test("the landing has one ambient orbit, no robot, and no command-key control in
 
 test("the film is only a compact corner dock, with a responsive portrait player on demand", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
+  await page.context().grantPermissions(["clipboard-read", "clipboard-write"], { origin: "http://127.0.0.1:3000" });
   await page.emulateMedia({ reducedMotion: "no-preference" });
   await page.addInitScript(() => {
     localStorage.setItem("budai-cookies", "declined");
@@ -47,9 +48,13 @@ test("the film is only a compact corner dock, with a responsive portrait player 
   await expect(dock).toHaveAttribute("data-minimized", "true");
   await expect(dock).toHaveAttribute("data-dock-visible", "true");
   await expect(dock.locator("iframe")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Show film" })).toHaveCount(0);
+  await expect(page.locator(".showcase-film-reopen")).toHaveCount(0);
   await expect(page.locator(".mobile-playground-nudge")).toBeHidden();
+  await page.getByRole("button", { name: "Copy info@stilledev.se" }).click();
+  await expect(page.locator(".hero-email-copy small")).toHaveText("COPIED");
 
-  await page.getByRole("button", { name: "Play the showcase film" }).click();
+  await page.getByRole("button", { name: /Watch the film/ }).click();
   const frame = dock.locator("iframe");
   await expect(frame).toHaveAttribute("src", "https://streamable.com/e/bhs4y1?autoplay=1&muted=1&loop=1");
   await expect(frame).toHaveAttribute("loading", "lazy");
@@ -78,6 +83,20 @@ test("the film is only a compact corner dock, with a responsive portrait player 
   expect(Math.abs(mobileFrame!.width / mobileFrame!.height - 9 / 16)).toBeLessThan(.03);
   expect(mobileFrame!.width).toBeLessThanOrEqual(159);
   expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
+
+  await page.getByRole("button", { name: "Close film player" }).click();
+  await expect(dock).toHaveCount(0);
+  await page.keyboard.press("v");
+  await expect(page.locator(".showcase-film-player iframe")).toBeVisible();
+  await page.getByRole("button", { name: "Close film player" }).click();
+  await page.evaluate(() => {
+    const input = document.createElement("input");
+    input.id = "film-shortcut-input-test";
+    document.body.append(input);
+    input.focus();
+    input.dispatchEvent(new KeyboardEvent("keydown", { key: "v", bubbles: true }));
+  });
+  await expect(dock).toHaveCount(0);
 
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.reload();
