@@ -2,13 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ArrowDownRight, ArrowUpRight, Maximize2, Minimize2, Play, X } from "lucide-react";
-import BudAILogo from "@/components/ui/BudAILogo";
 import { useLang } from "@/components/ui/LanguageContext";
 
-// Keep the original, finished Streamable film; only the player parameters change.
+// Keep the original Streamable film; only use its documented player options.
 const STREAMABLE_EMBED = "https://streamable.com/e/bhs4y1";
 
-/** An editorial film feature with a persistent, controllable player dock. */
+/** A compact, portrait-format film feature with a persistent corner player. */
 export default function ShowcaseFilm() {
   const { lang } = useLang();
   const sectionRef = useRef<HTMLElement>(null);
@@ -70,7 +69,7 @@ export default function ShowcaseFilm() {
   const playgroundLabel = sv ? "Prova Playground" : "Try the Playground";
   const tryLabel = sv ? "Testa nu" : "Try it now";
   const title = sv ? "En idé blir till." : "An idea, in motion.";
-  const streamableSrc = `${STREAMABLE_EMBED}?${reducedMotion ? "muted=1&logo=0" : "autoplay=1&muted=1&loop=1&logo=0"}`;
+  const streamableSrc = `${STREAMABLE_EMBED}?${reducedMotion ? "muted=1" : "autoplay=1&muted=1&loop=1"}`;
 
   return (
     <>
@@ -132,16 +131,6 @@ export default function ShowcaseFilm() {
             </div>
           ) : (
             <div className="showcase-film-player-card">
-              <div className="showcase-film-player-top">
-                <div className="showcase-film-player-brand"><BudAILogo size="xs" animated={false} className="showcase-film-player-mark" /><span><strong>BUDAI</strong><small>{sv ? "STILLEDEV / KORTFILM" : "STILLEDEV / SHORT FILM"}</small></span></div>
-                <div className="showcase-film-player-controls">
-                  <button type="button" className="showcase-film-control" onClick={() => { setExpanded(false); setMinimized(true); }} aria-label={sv ? "Minimera filmspelaren" : "Minimize film player"} title={sv ? "Minimera" : "Minimize"}><Minimize2 size={15} aria-hidden="true" /></button>
-                  <button type="button" className="showcase-film-control" onClick={() => setExpanded(value => !value)} aria-label={expanded ? (sv ? "Stäng storbild" : "Exit fullscreen") : (sv ? "Visa i storbild" : "View fullscreen")} title={expanded ? (sv ? "Återställ" : "Restore") : (sv ? "Storbild" : "Fullscreen")}>
-                    {expanded ? <Minimize2 size={15} aria-hidden="true" /> : <Maximize2 size={15} aria-hidden="true" />}
-                  </button>
-                  <button type="button" className="showcase-film-control" onClick={() => { setExpanded(false); setClosed(true); }} aria-label={sv ? "Stäng filmspelaren" : "Close film player"} title={sv ? "Stäng" : "Close"}><X size={15} aria-hidden="true" /></button>
-                </div>
-              </div>
               <div className="showcase-film-player-screen">
                 {reducedMotion !== null && (
                   <iframe
@@ -153,12 +142,16 @@ export default function ShowcaseFilm() {
                     referrerPolicy="strict-origin-when-cross-origin"
                   />
                 )}
-              </div>
-              <div className="showcase-film-player-bottom">
-                <p>{title}<span>{sv ? "En titt in i Stilledev" : "A look inside Stilledev"}</span></p>
-                <a href="#playground" onClick={() => { setExpanded(false); setMinimized(true); }}>
-                  {playgroundLabel}<ArrowUpRight size={14} aria-hidden="true" />
-                </a>
+                <div className="showcase-film-player-controls">
+                  <span className="showcase-film-player-label">STILLEDEV <i>·</i> FILM 01</span>
+                  <div className="showcase-film-player-actions">
+                    <button type="button" className="showcase-film-control" onClick={() => { setExpanded(false); setMinimized(true); }} aria-label={sv ? "Minimera filmspelaren" : "Minimize film player"} title={sv ? "Minimera" : "Minimize"}><Minimize2 size={14} aria-hidden="true" /></button>
+                    <button type="button" className="showcase-film-control" onClick={() => setExpanded(value => !value)} aria-label={expanded ? (sv ? "Stäng storbild" : "Exit fullscreen") : (sv ? "Visa i storbild" : "View fullscreen")} title={expanded ? (sv ? "Återställ" : "Restore") : (sv ? "Storbild" : "Fullscreen")}>
+                      {expanded ? <Minimize2 size={14} aria-hidden="true" /> : <Maximize2 size={14} aria-hidden="true" />}
+                    </button>
+                    <button type="button" className="showcase-film-control" onClick={() => { setExpanded(false); setClosed(true); }} aria-label={sv ? "Stäng filmspelaren" : "Close film player"} title={sv ? "Stäng" : "Close"}><X size={14} aria-hidden="true" /></button>
+                  </div>
+                </div>
               </div>
             </div>
           )}
