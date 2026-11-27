@@ -53,6 +53,9 @@ test("secondary pages share the legal reading surface, typography and language c
     await expect(page.locator(".standalone-page-shell")).toBeVisible();
     await expect(page.locator(".standalone-page-card")).toBeVisible();
     await expect(page.getByRole("group", { name: /Choose language|Välj språk/ })).toBeVisible();
+    await expect(page.getByRole("progressbar", { name: /Reading progress|Läsförlopp/ })).toBeVisible();
+    await expect(page.getByRole("button", { name: /Share page|Dela sidan/ })).toBeVisible();
+    await expect(page.locator(".standalone-page-tools")).toContainText(/\d+ min (read|läsning)/);
     surface.push(await page.locator(".standalone-page-shell").evaluate(main => ({
       background: getComputedStyle(main).backgroundColor,
       radius: getComputedStyle(main.querySelector(".standalone-page-card")!).borderRadius,
@@ -67,6 +70,29 @@ test("secondary pages share the legal reading surface, typography and language c
   await page.getByRole("button", { name: "SV" }).click();
   await expect(page.locator("html")).toHaveAttribute("lang", "sv");
   await expect(page.getByRole("heading", { name: "Integritetspolicy" })).toBeVisible();
+});
+
+test("standalone pages expose useful reading progress and copy a shareable canonical URL", async ({ page }) => {
+  await prepare(page);
+  await page.addInitScript(() => {
+    let copied = "";
+    Object.defineProperty(navigator, "share", { configurable: true, value: undefined });
+    Object.defineProperty(navigator, "clipboard", { configurable: true, value: {
+      writeText: async (value: string) => { copied = value; },
+      readText: async () => copied,
+    } });
+  });
+  await page.goto("/legal/privacy");
+  const share = page.locator(".standalone-page-tools button");
+  await expect(share).toHaveAccessibleName("Share page");
+  await share.click();
+  await expect(share).toContainText("Link copied");
+  await expect(page.locator(".standalone-page-tools [role='status']")).toHaveText("Page link copied.");
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(page.url());
+
+  const progress = page.getByRole("progressbar", { name: "Reading progress" });
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  await expect(progress).toHaveAttribute("aria-valuenow", "100");
 });
 
 test("homepage uses BudAI site icons while keeping Stilledev and Oliver linked in search metadata", async ({ page }) => {
