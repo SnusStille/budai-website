@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { CheckCircle2, Send } from "lucide-react";
 import { useLang } from "@/components/ui/LanguageContext";
-import { CONTACT_EMAIL, CONTACT_MAILTO } from "@/lib/contact";
 import { trackBusinessEvent } from "@/lib/analytics/events";
 
 const field = "w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white placeholder:text-muted/70 focus:border-accent-cyan/50 focus:outline-none focus:ring-1 focus:ring-accent-cyan/30";
@@ -38,7 +37,7 @@ export default function ContactForm() {
       });
       const result = await response.json().catch(() => ({})) as { error?: string; dev?: boolean; stored?: boolean };
       if (response.ok && result.dev && result.stored !== true) {
-        setError(sv ? "Det lokala testläget sparar inte förfrågningar. Mejla oss direkt så att inget försvinner." : "The local preview does not store enquiries. Email us directly so nothing gets lost.");
+        setError(sv ? "Det lokala testläget sparar inte förfrågningar, så meddelandet skickades inte." : "The local preview cannot store enquiries, so this message was not sent.");
         setState("error");
         return;
       }
@@ -48,13 +47,13 @@ export default function ContactForm() {
         return;
       }
       setError(response.status === 429
-        ? (sv ? "För många försök. Prova igen senare eller mejla oss direkt." : "Too many submissions. Try again later or email us directly.")
+        ? (sv ? "För många försök. Prova igen senare." : "Too many submissions. Please try again later.")
         : result.error === "not_configured"
-          ? (sv ? "Formuläret är tillfälligt otillgängligt. Mejla oss direkt så att din förfrågan kommer fram." : "The form is temporarily unavailable. Email us directly so your enquiry reaches us.")
-          : (sv ? "Formuläret kunde inte skickas. Mejla oss direkt eller försök igen." : "The form could not be submitted. Email us directly or try again."));
+          ? (sv ? "Formuläret är tillfälligt otillgängligt." : "The form is temporarily unavailable.")
+          : (sv ? "Formuläret kunde inte skickas. Försök igen." : "The form could not be submitted. Please try again."));
       setState("error");
     } catch {
-      setError(sv ? "Nätverksfel. Mejla oss direkt eller försök igen." : "Network error. Email us directly or try again.");
+      setError(sv ? "Nätverksfel. Försök igen." : "Network error. Please try again.");
       setState("error");
     }
   };
@@ -64,7 +63,6 @@ export default function ContactForm() {
       <CheckCircle2 className="mx-auto mb-3 h-8 w-8 text-accent-green" />
       <h2 className="font-semibold">{sv ? "Meddelande mottaget" : "Message received"}</h2>
       <p className="mt-1 text-sm text-muted">{sv ? "Tack — din förfrågan har sparats så att vi kan följa upp den." : "Thanks — your enquiry has been saved so we can follow up."}</p>
-      <p className="mt-3 text-sm"><a className="text-accent-cyan underline" href={CONTACT_MAILTO}>{CONTACT_EMAIL}</a></p>
     </div>
   );
 
@@ -81,9 +79,8 @@ export default function ContactForm() {
       <label className="block text-sm"><span className="mb-1.5 block text-white/80">{sv ? "Meddelande" : "Message"} *</span><textarea required rows={6} maxLength={5000} className={field} value={form.message} onChange={set("message")} placeholder={sv ? "Hur kan vi hjälpa dig?" : "How can we help?"} /></label>
       <input tabIndex={-1} autoComplete="off" aria-hidden="true" className="hidden" name="website" value={form.website} onChange={set("website")} />
       <label className="flex items-start gap-2.5 text-xs leading-relaxed text-muted"><input required type="checkbox" checked={form.consent} onChange={set("consent")} className="mt-0.5 accent-[#00e5ff]" />{sv ? "Jag godkänner att Stilledev behandlar mina kontaktuppgifter och mitt meddelande för att besvara förfrågan, enligt integritetspolicyn. *" : "I agree that Stilledev may process my contact details and message to answer this enquiry, as described in the privacy policy. *"}</label>
-      {error && <div className="rounded-lg border border-red-400/25 bg-red-400/10 px-3 py-2 text-sm text-red-200" role="alert"><p>{error}</p><a className="mt-1 inline-block font-medium underline" href={CONTACT_MAILTO}>{sv ? `Mejla ${CONTACT_EMAIL}` : `Email ${CONTACT_EMAIL}`}</a></div>}
+      {error && <div className="rounded-lg border border-red-400/25 bg-red-400/10 px-3 py-2 text-sm text-red-200" role="alert">{error}</div>}
       <button type="submit" disabled={state === "sending"} className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-gradient-to-r from-accent-cyan to-accent-purple px-5 py-3 text-sm font-semibold text-white disabled:opacity-60"><Send className="h-4 w-4" />{state === "sending" ? (sv ? "Skickar…" : "Sending…") : (sv ? "Skicka meddelande" : "Send message")}</button>
-      <p className="text-xs text-muted">{sv ? "Vill du hellre mejla direkt? " : "Prefer to email directly? "}<a className="text-accent-cyan underline" href={CONTACT_MAILTO}>{CONTACT_EMAIL}</a></p>
     </form>
   );
 }

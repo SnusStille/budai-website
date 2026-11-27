@@ -19,6 +19,8 @@ type StandalonePageShellProps = {
   svHref: string;
   backHref?: string;
   nativeBackLink?: boolean;
+  showShare?: boolean;
+  showReadingProgress?: boolean;
   children: ReactNode;
 };
 
@@ -32,6 +34,8 @@ export default function StandalonePageShell({
   svHref,
   backHref,
   nativeBackLink = false,
+  showShare = true,
+  showReadingProgress = true,
   children,
 }: StandalonePageShellProps) {
   const router = useRouter();
@@ -39,7 +43,8 @@ export default function StandalonePageShell({
   const Icon = PAGE_ICONS[icon];
   const contentRef = useRef<HTMLDivElement>(null);
   const [progress, setProgress] = useState(0);
-  const [readMinutes, setReadMinutes] = useState(1);
+  const [hasScroll, setHasScroll] = useState(false);
+  const [readMinutes, setReadMinutes] = useState<number | null>(null);
   const [shareState, setShareState] = useState<"idle" | "copied" | "error">("idle");
   const selectLanguage = (next: "en" | "sv", href: string) => {
     setLang(next);
@@ -51,7 +56,7 @@ export default function StandalonePageShell({
     const content = contentRef.current;
     if (!content) return;
     const words = (content.innerText.trim().match(/\S+/g) ?? []).length;
-    setReadMinutes(Math.max(1, Math.ceil(words / 200)));
+    setReadMinutes(words >= 120 ? Math.ceil(words / 200) : null);
   }, []);
 
   useEffect(() => {
@@ -60,6 +65,7 @@ export default function StandalonePageShell({
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => {
         const range = document.documentElement.scrollHeight - window.innerHeight;
+        setHasScroll(range > 2);
         setProgress(range > 0 ? Math.min(100, Math.max(0, (window.scrollY / range) * 100)) : 0);
       });
     };
@@ -107,16 +113,18 @@ export default function StandalonePageShell({
 
   return (
     <main id="main" tabIndex={-1} className="standalone-page-shell min-h-screen bg-background px-4 pb-16 pt-20 text-white sm:px-6">
-      <div
-        className="standalone-reading-progress"
-        role="progressbar"
-        aria-label={sv ? "Läsförlopp" : "Reading progress"}
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-valuenow={Math.round(progress)}
-      >
-        <span style={{ transform: `scaleX(${progress / 100})` }} />
-      </div>
+      {showReadingProgress && hasScroll && (
+        <div
+          className="standalone-reading-progress"
+          role="progressbar"
+          aria-label={sv ? "Läsförlopp" : "Reading progress"}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={Math.round(progress)}
+        >
+          <span style={{ transform: `scaleX(${progress / 100})` }} />
+        </div>
+      )}
       <div className="mx-auto w-full max-w-2xl">
         <nav className="standalone-page-nav mb-8 flex items-center justify-between gap-3" aria-label={lang === "sv" ? "Sidnavigering och språk" : "Page navigation and language"}>
           <BackToBudAI href={backHref ?? (lang === "sv" ? "/sv" : "/")} lang={lang} nativeLink={nativeBackLink} />
@@ -141,16 +149,22 @@ export default function StandalonePageShell({
               <p className="mt-0.5 font-mono text-[11px] text-muted">{eyebrow}</p>
             </div>
           </header>
-          <div className="standalone-page-tools">
-            <span>{sv ? `${readMinutes} min läsning` : `${readMinutes} min read`}</span>
-            <button type="button" onClick={() => void sharePage()}>
-              {shareState === "copied" ? <Check aria-hidden="true" /> : shareState === "error" ? <Copy aria-hidden="true" /> : navigatorCanShare() ? <Share2 aria-hidden="true" /> : <Copy aria-hidden="true" />}
-              {shareState === "copied" ? (sv ? "Länk kopierad" : "Link copied") : shareState === "error" ? (sv ? "Kunde inte kopiera" : "Could not copy") : (sv ? "Dela sidan" : "Share page")}
-            </button>
-            <span className="sr-only" role="status" aria-live="polite">
-              {shareState === "copied" ? (sv ? "Sidans länk kopierad." : "Page link copied.") : shareState === "error" ? (sv ? "Kunde inte dela eller kopiera länken." : "Could not share or copy the link.") : ""}
-            </span>
-          </div>
+          {(showShare || readMinutes !== null) && (
+            <div className="standalone-page-tools">
+              {readMinutes !== null && <span>{sv ? `${readMinutes} min läsning` : `${readMinutes} min read`}</span>}
+              {showShare && (
+                <>
+                  <button type="button" onClick={() => void sharePage()}>
+                    {shareState === "copied" ? <Check aria-hidden="true" /> : shareState === "error" ? <Copy aria-hidden="true" /> : navigatorCanShare() ? <Share2 aria-hidden="true" /> : <Copy aria-hidden="true" />}
+                    {shareState === "copied" ? (sv ? "Länk kopierad" : "Link copied") : shareState === "error" ? (sv ? "Kunde inte kopiera" : "Could not copy") : (sv ? "Dela sidan" : "Share page")}
+                  </button>
+                  <span className="sr-only" role="status" aria-live="polite">
+                    {shareState === "copied" ? (sv ? "Sidans länk kopierad." : "Page link copied.") : shareState === "error" ? (sv ? "Kunde inte dela eller kopiera länken." : "Could not share or copy the link.") : ""}
+                  </span>
+                </>
+              )}
+            </div>
+          )}
           <div className="standalone-page-content" ref={contentRef}>{children}</div>
         </motion.article>
       </div>

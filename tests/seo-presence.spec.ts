@@ -53,11 +53,19 @@ test("secondary pages share the legal reading surface, typography and language c
     await expect(page.locator(".standalone-page-shell")).toBeVisible();
     await expect(page.locator(".standalone-page-card")).toBeVisible();
     await expect(page.getByRole("group", { name: /Choose language|Välj språk/ })).toBeVisible();
-    await expect(page.getByRole("progressbar", { name: /Reading progress|Läsförlopp/ })).toBeVisible();
-    await expect(page.getByRole("button", { name: /Share page|Dela sidan/ })).toBeVisible();
-    await expect(page.getByRole("button", { name: /Share page|Dela sidan/ })).toHaveCount(1);
-    if (path.includes("labs")) await expect(page.locator(".labs-share-button, .labs-share-wrap")).toHaveCount(0);
-    await expect(page.locator(".standalone-page-tools")).toContainText(/\d+ min (read|läsning)/);
+    if (path.includes("contact")) {
+      await expect(page.getByRole("progressbar")).toHaveCount(0);
+      await expect(page.getByRole("button", { name: /Share page|Dela sidan/ })).toHaveCount(0);
+      await expect(page.locator(".standalone-page-tools")).toHaveCount(0);
+    } else {
+      if (path.includes("legal") || path.includes("changelog")) await expect(page.getByRole("progressbar", { name: /Reading progress|Läsförlopp/ })).toBeVisible();
+      else await expect(page.getByRole("progressbar")).toHaveCount(0);
+      await expect(page.getByRole("button", { name: /Share page|Dela sidan/ })).toBeVisible();
+      await expect(page.getByRole("button", { name: /Share page|Dela sidan/ })).toHaveCount(1);
+      if (path.includes("labs")) await expect(page.locator(".labs-share-button, .labs-share-wrap")).toHaveCount(0);
+      if (path.includes("legal") || path.includes("changelog")) await expect(page.locator(".standalone-page-tools")).toContainText(/\d+ min (read|läsning)/);
+      else await expect(page.locator(".standalone-page-tools > span:not(.sr-only)")).toHaveCount(0);
+    }
     surface.push(await page.locator(".standalone-page-shell").evaluate(main => ({
       background: getComputedStyle(main).backgroundColor,
       radius: getComputedStyle(main.querySelector(".standalone-page-card")!).borderRadius,
