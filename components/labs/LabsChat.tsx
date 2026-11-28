@@ -284,6 +284,17 @@ export default function LabsChat() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Escape key closes modals/drawers
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      if (contactOpen && !contactSubmitted) { setContactOpen(false); return; }
+      if (historyOpen) { setHistoryOpen(false); return; }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [contactOpen, contactSubmitted, historyOpen]);
+
   const openConversation = async (id: string) => {
     try {
       const res = await fetch(`/api/labs/conversations?id=${id}`, { cache: "no-store" });
@@ -1265,6 +1276,8 @@ export default function LabsChat() {
               exit={{ x: "-100%" }}
               transition={{ duration: 0.25, ease: [0.16, 1, 0.36, 1] }}
               className="labs-history-panel"
+              role="dialog"
+              aria-modal="true"
               aria-label={t.history.title}
             >
               <div className="labs-history-header">
@@ -1307,7 +1320,7 @@ export default function LabsChat() {
       {/* Contact modal */}
       <AnimatePresence>
         {contactOpen && !contactSubmitted && (
-          <div className="labs-modal-overlay" role="dialog" aria-modal="true" onClick={(e) => {
+          <div className="labs-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="labs-contact-modal-title" onClick={(e) => {
             if (e.target === e.currentTarget) setContactOpen(false);
           }}>
             <motion.div
@@ -1318,7 +1331,7 @@ export default function LabsChat() {
               className="labs-modal"
             >
               <div className="labs-modal-header">
-                <h2 className="labs-modal-title">{t.contact.title}</h2>
+                <h2 id="labs-contact-modal-title" className="labs-modal-title">{t.contact.title}</h2>
                 <button type="button" onClick={() => setContactOpen(false)} className="labs-modal-close" aria-label={t.nav.close}>
                   <X size={18} />
                 </button>
