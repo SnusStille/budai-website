@@ -340,18 +340,18 @@ body:has([data-labs-root]) {
 /* ── Hero ── */
 .labs-hero {
   text-align: center;
-  margin-bottom: 40px;
-  padding-top: 24px;
+  margin-bottom: 32px;
+  padding-top: 16px;
 }
 
 .labs-hero-mark {
   display: flex;
   justify-content: center;
-  margin-bottom: 24px;
-  opacity: 0.95;
+  margin-bottom: 20px;
+  opacity: 0.92;
 }
 
-.labs-hero-mark > div { transform: scale(1.05); }
+.labs-hero-mark > div { transform: scale(0.95); }
 
 .labs-hero-eyebrow {
   display: inline-flex;
@@ -441,18 +441,18 @@ body:has([data-labs-root]) {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 6px;
-  padding: 16px;
+  gap: 5px;
+  padding: 14px;
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid var(--labs-border);
-  border-radius: 14px;
+  border-radius: 13px;
   cursor: pointer;
   text-align: left;
   font-family: inherit;
   color: var(--labs-text);
   position: relative;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  min-height: 118px;
+  min-height: 104px;
   overflow: hidden;
 }
 
@@ -1912,10 +1912,10 @@ body:has([data-labs-root]) {
 .labs-faq-section {
   width: 100%;
   max-width: 620px;
-  margin: 0 auto 28px;
+  margin: 0 auto 20px;
   padding: 0 var(--labs-px);
 }
-.labs-faq-list { display: flex; flex-direction: column; gap: 6px; margin-top: 14px; }
+.labs-faq-list { display: flex; flex-direction: column; gap: 4px; margin-top: 10px; }
 .labs-faq-item {
   border: 1px solid var(--labs-border);
   border-radius: 10px;
@@ -1927,12 +1927,12 @@ body:has([data-labs-root]) {
 .labs-faq-open { border-color: rgba(0,229,255,0.3); }
 .labs-faq-q {
   width: 100%;
-  padding: 13px 16px;
+  padding: 11px 14px;
   background: none;
   border: none;
   color: var(--labs-text);
   font-family: var(--labs-sans);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   text-align: left;
   display: flex;
@@ -1948,8 +1948,8 @@ body:has([data-labs-root]) {
 }
 .labs-faq-open .labs-faq-chev { transform: rotate(90deg); color: var(--labs-accent); }
 .labs-faq-a {
-  padding: 0 16px 14px;
-  font-size: 13.5px;
+  padding: 0 14px 12px;
+  font-size: 12.5px;
   color: var(--labs-text-muted);
   line-height: 1.6;
 }
