@@ -67,6 +67,7 @@ export default function Navbar() {
     { label: t.nav.capabilities, href: "#capabilities", id: "capabilities" },
     { label: lang === "sv" ? "Byggaren" : "Builder", href: "#about", id: "about" },
     { label: t.nav.roadmap, href: "#roadmap", id: "roadmap" },
+    { label: "Labs", href: lang === "sv" ? "/sv/labs" : "/labs", id: "labs" },
   ];
 
   const isLinkActive = (id: string) => active === id;
@@ -113,21 +114,46 @@ export default function Navbar() {
             <div className="hidden lg:flex items-center justify-center gap-0.5">
               {links.map((l) => {
                 const isActive = isLinkActive(l.id);
-                return (
+                const isExternal = !l.href.startsWith("#");
+                const isLabs = l.id === "labs";
+                const className = `relative whitespace-nowrap px-2.5 xl:px-3.5 py-2 text-sm rounded-lg transition-colors ${
+                  isLabs
+                    ? "nav-labs-link"
+                    : isActive
+                      ? "text-white"
+                      : l.id === "playground"
+                        ? "text-accent-cyan hover:text-white hover:bg-white/5"
+                        : "text-muted hover:text-white hover:bg-white/5"
+                }`;
+                const inner = isLabs
+                  ? <span className="nav-labs-chip"><i aria-hidden="true" />{l.label}<ArrowUpRight size={12} aria-hidden="true" /></span>
+                  : l.label;
+                return isExternal ? (
+                  <Link
+                    key={l.href}
+                    href={l.href}
+                    onClick={() => setMobileOpen(false)}
+                    title={isLabs ? (lang === "sv" ? "Stilledev.Labs" : "Stilledev.Labs") : undefined}
+                    className={className}
+                  >
+                    {inner}
+                  </Link>
+                ) : (
                   <a
                     key={l.href}
                     href={l.href}
                     onClick={() => setMobileOpen(false)}
                     aria-current={isActive ? "location" : undefined}
-                    title={l.id === "labs" ? (lang === "sv" ? "Labs · under utveckling" : "Labs · under development") : undefined}
-                    className={`relative whitespace-nowrap px-2.5 xl:px-3.5 py-2 text-sm rounded-lg transition-colors ${l.id === "labs" ? "nav-labs-link" : isActive ? "text-white" : l.id === "playground" ? "text-accent-cyan hover:text-white hover:bg-white/5" : "text-muted hover:text-white hover:bg-white/5"}`}
+                    className={className}
                   >
-                    {l.id === "labs" ? <span className="nav-labs-chip"><i aria-hidden="true" />{l.label}<ArrowUpRight size={12} aria-hidden="true" /></span> : l.label}
-                    <span
-                      className={`absolute bottom-1 left-1/2 -translate-x-1/2 h-0.5 rounded-full bg-accent-cyan transition-all duration-300 ${
-                        isActive ? "w-5 opacity-100 shadow-[0_0_8px_rgba(0,229,255,0.6)]" : "w-0 opacity-0"
-                      }`}
-                    />
+                    {inner}
+                    {!isLabs && (
+                      <span
+                        className={`absolute bottom-1 left-1/2 -translate-x-1/2 h-0.5 rounded-full bg-accent-cyan transition-all duration-300 ${
+                          isActive ? "w-5 opacity-100 shadow-[0_0_8px_rgba(0,229,255,0.6)]" : "w-0 opacity-0"
+                        }`}
+                      />
+                    )}
                   </a>
                 );
               })}
@@ -146,13 +172,6 @@ export default function Navbar() {
                 <Bell className="h-[15px] w-[15px]" />
                 <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-accent-cyan" />
               </button>
-              <a
-                href={lang === "sv" ? "/sv/labs" : "/labs"}
-                className="hidden xl:inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-1.5 text-[12px] font-medium text-accent-cyan/90 border border-accent-cyan/20 bg-accent-cyan/[0.05] transition-all hover:border-accent-cyan/40 hover:bg-accent-cyan/10 hover:text-accent-cyan"
-              >
-                Labs
-                <ArrowUpRight size={11} />
-              </a>
               <a href="#waitlist" className="btn-primary whitespace-nowrap !px-4 !py-2 text-[13px]">
                 <span>{t.nav.requestAccess}</span>
               </a>

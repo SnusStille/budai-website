@@ -3718,3 +3718,121 @@ body:has([data-labs-root]) {
 .labs-main { overflow-anchor: none; }
 .labs-messages > * { overflow-anchor: none; }
 .labs-messages > :last-child { overflow-anchor: auto; }
+
+/* ── Footer breakout — lets full-width footer live inside .labs-main (max-width:720px)
+   without breaking the sticky input flow. Uses vw-based negative margins. ── */
+.labs-footer-breakout {
+  margin: 0 calc(50% - 50vw);
+  width: 100vw;
+  overflow-x: hidden;
+}
+
+/* ── 3D-ish animated background ──
+   Layered: perspective horizon grid + 3 floating orbs + rotating rings.
+   All GPU-accelerated (transform/opacity) so it doesn't block scrolling. ── */
+.labs-bg-3d {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  perspective: 1000px;
+  perspective-origin: 50% 35%;
+}
+
+/* Horizon grid (receding lines) */
+.labs-bg-grid {
+  position: absolute;
+  left: 50%;
+  top: 38%;
+  width: 200vw;
+  height: 140vh;
+  margin-left: -100vw;
+  background-image:
+    linear-gradient(to right, rgba(0,229,255,0.07) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(124,92,255,0.06) 1px, transparent 1px);
+  background-size: 60px 60px;
+  transform-origin: 50% 0;
+  transform: rotateX(68deg);
+  mask-image: linear-gradient(to bottom, transparent 0%, black 35%, black 70%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 35%, black 70%, transparent 100%);
+  animation: labs-grid-drift 24s linear infinite;
+  opacity: 0.35;
+}
+@keyframes labs-grid-drift {
+  0% { background-position: 0 0, 0 0; }
+  100% { background-position: 0 60px, 0 0; }
+}
+
+/* Floating glowing orbs (simulate 3D with scale/opacity/blur) */
+.labs-bg-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px);
+  will-change: transform, opacity;
+}
+.labs-bg-orb-1 {
+  width: 380px; height: 380px;
+  top: 8%; left: -80px;
+  background: radial-gradient(circle at center, rgba(0,229,255,0.22), transparent 70%);
+  animation: labs-orb-float-1 22s ease-in-out infinite alternate;
+}
+.labs-bg-orb-2 {
+  width: 320px; height: 320px;
+  top: 35%; right: -60px;
+  background: radial-gradient(circle at center, rgba(124,92,255,0.18), transparent 70%);
+  animation: labs-orb-float-2 28s ease-in-out infinite alternate;
+}
+.labs-bg-orb-3 {
+  width: 260px; height: 260px;
+  bottom: 15%; left: 35%;
+  background: radial-gradient(circle at center, rgba(52,211,153,0.12), transparent 70%);
+  animation: labs-orb-float-3 34s ease-in-out infinite alternate;
+}
+@keyframes labs-orb-float-1 {
+  0%   { transform: translate3d(0, 0, 0) scale(1); opacity: 0.7; }
+  100% { transform: translate3d(80px, 40px, 0) scale(1.15); opacity: 1; }
+}
+@keyframes labs-orb-float-2 {
+  0%   { transform: translate3d(0, 0, 0) scale(1); opacity: 0.6; }
+  100% { transform: translate3d(-60px, 50px, 0) scale(1.1); opacity: 0.9; }
+}
+@keyframes labs-orb-float-3 {
+  0%   { transform: translate3d(0, 0, 0) scale(0.9); opacity: 0.5; }
+  100% { transform: translate3d(-40px, -60px, 0) scale(1.2); opacity: 0.85; }
+}
+
+/* Rotating concentric rings in the upper area */
+.labs-bg-rings {
+  position: absolute;
+  top: -80px;
+  right: -100px;
+  width: 500px;
+  height: 500px;
+  transform-style: preserve-3d;
+  animation: labs-rings-spin 60s linear infinite;
+}
+.labs-bg-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(0,229,255,0.08);
+}
+.labs-bg-ring:nth-child(1) { transform: rotateX(70deg) rotateY(10deg); border-color: rgba(0,229,255,0.1); }
+.labs-bg-ring:nth-child(2) { inset: 40px; transform: rotateX(70deg) rotateY(30deg); border-color: rgba(124,92,255,0.08); animation: labs-rings-counter 45s linear infinite reverse; }
+.labs-bg-ring:nth-child(3) { inset: 80px; transform: rotateX(70deg) rotateY(50deg); border-color: rgba(0,229,255,0.05); }
+@keyframes labs-rings-spin {
+  to { transform: rotateZ(360deg); }
+}
+@keyframes labs-rings-counter {
+  to { transform: rotateX(70deg) rotateY(30deg) rotateZ(-360deg); }
+}
+
+/* Dim the ambient pseudo-element glows so the 3D bg is the star */
+.labs-container::before { opacity: 0.5; }
+.labs-container::after  { opacity: 0.4; }
+
+@media (prefers-reduced-motion: reduce) {
+  .labs-bg-grid, .labs-bg-orb, .labs-bg-rings { animation: none !important; }
+  .labs-bg-grid { opacity: 0.2; }
+}

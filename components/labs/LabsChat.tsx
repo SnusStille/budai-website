@@ -346,6 +346,40 @@ export default function LabsChat() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [contactOpen, contactSubmitted, historyOpen]);
 
+  // Ensure page starts at the very top on mount (not mid-page)
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }, []);
+
+  // Smooth Back-to-BudAI page transition: intercept clicks, fade+slide out, then navigate
+  useEffect(() => {
+    const budaiPaths = ["/", "/sv"];
+    const isBudaiLink = (href: string) => {
+      if (!href) return false;
+      if (href.startsWith("http")) return false;
+      return budaiPaths.includes(href) ||
+        href === "/sv/" ||
+        (href.startsWith("/#") || href.startsWith("/sv#"));
+    };
+    const onClick = (e: MouseEvent) => {
+      const a = (e.target as Element)?.closest("a") as HTMLAnchorElement | null;
+      if (!a) return;
+      const href = a.getAttribute("href");
+      if (!href || !isBudaiLink(href)) return;
+      // Only handle plain left-clicks, no modifier keys
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+      const container = document.querySelector("[data-labs-root] .labs-container") as HTMLElement | null;
+      if (!container) return;
+      e.preventDefault();
+      container.classList.add("labs-leaving");
+      window.setTimeout(() => {
+        window.location.href = href;
+      }, 300);
+    };
+    document.addEventListener("click", onClick, false);
+    return () => document.removeEventListener("click", onClick, false);
+  }, []);
+
   const openConversation = async (id: string) => {
     try {
       const res = await fetch(`/api/labs/conversations?id=${id}`, { cache: "no-store" });
@@ -812,6 +846,17 @@ export default function LabsChat() {
 
   return (
     <div className="labs-container">
+      {/* 3D animated background — perspective grid + floating orbs */}
+      <div className="labs-bg-3d" aria-hidden="true">
+        <div className="labs-bg-grid" />
+        <div className="labs-bg-orb labs-bg-orb-1" />
+        <div className="labs-bg-orb labs-bg-orb-2" />
+        <div className="labs-bg-orb labs-bg-orb-3" />
+        <div className="labs-bg-rings">
+          <div className="labs-bg-ring" /><div className="labs-bg-ring" /><div className="labs-bg-ring" />
+        </div>
+      </div>
+
       <LabsHeader
         onToggleHistory={() => setHistoryOpen(true)}
         onNewChat={startNewChat}
@@ -896,49 +941,6 @@ export default function LabsChat() {
                     </div>
                   );
                 })}
-              </div>
-            </motion.div>
-
-            {/* Quick starters — example prompts */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.4, delay: 0.25 }}
-              className="labs-quick-starters"
-              style={{ justifyContent: "center" }}
-            >
-              {(isSv ? STARTER_PROMPTS_SV : STARTER_PROMPTS_EN).slice(0, 4).map((p, i) => (
-                <motion.button
-                  key={i}
-                  type="button"
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: 0.3 + i * 0.05 }}
-                  className="labs-quick-starter"
-                  onClick={() => { setInput(p); setTimeout(() => textareaRef.current?.focus(), 50); }}
-                >
-                  {p}
-                </motion.button>
-              ))}
-            </motion.div>
-
-            {/* Built by Oliver — trust section */}
-            <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.7 }}
-              className="labs-builder-section"
-            >
-              <div className="labs-builder-inner">
-                <h3 className="labs-builder-title">{t.builder.title}</h3>
-                <p className="labs-builder-body">{t.builder.body}</p>
-                <div className="labs-trust-row">
-                  <span>✓ {t.trust.noAccount}</span>
-                  <span className="labs-trust-dot" />
-                  <span>✓ {t.trust.personalReview}</span>
-                  <span className="labs-trust-dot" />
-                  <span>✓ {t.trust.noObligation}</span>
-                </div>
               </div>
             </motion.div>
           </div>
@@ -1244,10 +1246,15 @@ export default function LabsChat() {
             </span>
           </div>
         )}
-      </main>
 
-      {/* Full Labs footer */}
-      <LabsFooter journeyStage={journeyStage} />
+        {/* Spacer to ensure footer never hides under the sticky input's gradient fade */}
+        <div style={{ height: 32, flexShrink: 0 }} aria-hidden />
+
+        {/* Full Labs footer (inside main so sticky input transitions smoothly into it) */}
+        <div className="labs-footer-breakout">
+          <LabsFooter journeyStage={journeyStage} />
+        </div>
+      </main>
 
       {/* Feedback FAB */}
       <FeedbackButton />

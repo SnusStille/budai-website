@@ -6,7 +6,6 @@ import { useEffect, useRef, useState } from "react";
 import { Github, Linkedin, Mail, ArrowUpRight, Share2 } from "lucide-react";
 import {subscribeJourney} from "@/lib/experience/scroll";
 import StilledevWordmark from "@/components/ui/StilledevWordmark";
-import { StilledevMark } from "@/components/ui/BudAILogo";
 import { useLang } from "@/components/ui/LanguageContext";
 import { CONTACT_MAILTO } from "@/lib/contact";
 
@@ -157,7 +156,7 @@ export default function Footer() {
           <p className="text-sm text-muted">{t.footer.rights}</p>
           <p className="text-sm text-muted flex items-center gap-1.5">
             {lang === "sv" ? "Utvecklad av" : "Developed by"}{" "}
-            <span className="inline-flex items-center gap-1.5 text-accent-cyan font-medium"><StilledevMark size={16} />Stilledev</span>
+            <span className="text-accent-cyan font-medium">Stilledev</span>
             <span className="text-muted/30">·</span>
             <span className="text-xs">{lang === "sv" ? "Sverige" : "Sweden"}</span>
           </p>

@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Github, Linkedin, Mail, Share2, ArrowUpRight } from "lucide-react";
 import StilledevWordmark from "@/components/ui/StilledevWordmark";
-import { StilledevMark } from "@/components/ui/BudAILogo";
 import { useLang } from "@/components/ui/LanguageContext";
 import { CONTACT_MAILTO } from "@/lib/contact";
 
@@ -176,10 +175,7 @@ export default function LabsFooter({ journeyStage }: { journeyStage: string }) {
           </p>
           <p className="labs-footer-credit">
             {isSv ? "Utvecklad av" : "Developed by"}{" "}
-            <span className="labs-footer-stilledev">
-              <StilledevMark size={16} />
-              Stilledev
-            </span>
+            <span className="labs-footer-stilledev">Stilledev</span>
             <span className="labs-footer-dot">·</span>
             <span className="text-xs">{isSv ? "Sverige" : "Sweden"}</span>
           </p>

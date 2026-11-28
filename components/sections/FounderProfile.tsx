@@ -41,11 +41,11 @@ export default function FounderProfile({ sv = false, nonce }: { sv?: boolean; no
           : "Oliver works across digital product development and applied AI. Stilledev builds BudAI, an AI workspace for writing, planning and analysis in Swedish and English."}
       </p>
       <div className="standalone-page-actions">
-        <Link href={home} className="standalone-page-action">
-          {sv ? "Utforska BudAI" : "Explore BudAI"}<ArrowUpRight size={14} aria-hidden="true" />
-        </Link>
         <Link href={labs} className="standalone-page-action standalone-page-action-primary">
           <FlaskConical size={14} aria-hidden="true" />{sv ? "Stilledev Labs" : "Stilledev Labs"}<ArrowUpRight size={14} aria-hidden="true" />
+        </Link>
+        <Link href={home} className="standalone-page-action">
+          {sv ? "Utforska BudAI" : "Explore BudAI"}<ArrowUpRight size={14} aria-hidden="true" />
         </Link>
         <Link href={contact} className="standalone-page-action">
           {sv ? "Kontakta Stilledev" : "Contact Stilledev"}<ArrowUpRight size={14} aria-hidden="true" />
