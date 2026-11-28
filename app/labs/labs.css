@@ -1433,6 +1433,36 @@ body:has([data-labs-root]) {
   50% { opacity: 0; }
 }
 
+/* ── Idea Sparks (contextual empty-input suggestions) ── */
+.labs-idea-sparks {
+  max-width:760px; margin:0 auto 8px; padding:0 4px;
+  display:flex; flex-direction:column; gap:6px;
+}
+.labs-sparks-label {
+  display:inline-flex; align-items:center; gap:5px;
+  font-family:var(--labs-mono); font-size:10px; font-weight:600;
+  text-transform:uppercase; letter-spacing:0.08em;
+  color:var(--labs-text-dim); padding:0 2px;
+}
+.labs-sparks-row {
+  display:flex; flex-wrap:wrap; gap:6px;
+}
+.labs-spark-chip {
+  padding:7px 12px; border-radius:100px;
+  background:rgba(255,255,255,0.04);
+  border:1px solid var(--labs-border);
+  color:rgba(234,236,239,0.75); font-size:12px;
+  font-family:var(--labs-sans); cursor:pointer;
+  transition: all 0.15s ease; text-align:left;
+  line-height:1.3;
+}
+.labs-spark-chip:hover {
+  background:rgba(250,120,60,0.10);
+  border-color:rgba(250,120,60,0.35);
+  color:#fff; transform:translateY(-1px);
+}
+.labs-spark-chip:active { transform: translateY(0); }
+
 /* ── Input area ── */
 .labs-input-wrap {
   position: sticky;
@@ -3190,6 +3220,7 @@ body:has([data-labs-root]) {
 .labs-scenario-card:focus-visible,
 .labs-quick-starter:focus-visible,
 .ss-chip:focus-visible,
+.labs-spark-chip:focus-visible,
 .labs-flow-card:focus-visible,
 .fb-fab:focus-visible,
 .labs-header-icon-btn:focus-visible,
@@ -3245,6 +3276,8 @@ body:has([data-labs-root]) {
   .fb-fab { bottom:16px; right:16px; padding:9px 12px; }
   .labs-back-to-top { bottom:62px; right:16px; width:34px; height:34px; }
   .labs-scroll-bottom { bottom:106px; right:16px; width:34px; height:34px; }
+  .labs-spark-chip { font-size:11.5px; padding:6px 10px; }
+  .labs-idea-sparks { padding:0 2px; }
 }
 
 /* Markdown headings in messages */

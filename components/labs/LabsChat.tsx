@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Send, Plus, X, User, ChevronRight, ChevronDown, ChevronUp, ArrowLeft, ArrowUp, MessageSquare, Lightbulb, UserCheck } from "lucide-react";
 import { useSearchParams } from "next/navigation";
@@ -684,6 +684,48 @@ export default function LabsChat() {
   const isWelcome = messages.length === 0 && !selectedService;
   const isChatActive = messages.length > 0 || !!selectedService;
 
+  // Idea Sparks — context-aware empty-input suggestions based on what's still unknown
+  const ideaSparks = useMemo(() => {
+    if (!isChatActive) return [] as string[];
+    const sparks: string[] = [];
+    const p = liveProfile;
+    const sv = lang === "sv";
+    const hasGoal = !!p?.customer_goal;
+    const featureCount = p?.key_features?.length ?? 0;
+    const hasBudget = p?.budget_info?.amount || p?.budget_info?.range || p?.budget_info?.constraint;
+    const hasTimeline = !!p?.timeline?.target_date || !!p?.timeline?.preference;
+    const hasAudience = !!p?.target_audience?.primary;
+    const hasPlatform = !!p?.technical_assumptions?.preferred_platform?.length;
+    const hasDesign = p?.design_preferences?.existing_assets !== undefined;
+
+    if (!hasGoal && featureCount === 0) {
+      if (sv) {
+        sparks.push("Beskriv din idé med dina egna ord");
+        sparks.push("Jag vill bygga en webbapp där användare kan...");
+        sparks.push("Vilka projekt bygger du oftast?");
+      } else {
+        sparks.push("Describe your idea in your own words");
+        sparks.push("I want to build a web app where users can...");
+        sparks.push("What projects do you usually take on?");
+      }
+      return sparks.slice(0, 3);
+    }
+    if (!hasBudget) sparks.push(sv ? "Min budget ligger runt..." : "My budget is around...");
+    if (!hasTimeline) sparks.push(sv ? "Jag vill helst lansera inom..." : "I'd like to launch within...");
+    if (!hasAudience && featureCount > 0) sparks.push(sv ? "Målgruppen är främst..." : "The target audience is mainly...");
+    if (!hasPlatform && featureCount > 1) sparks.push(sv ? "Jag tänker mig en webbplats först" : "I'm thinking website first");
+    if (featureCount < 3 && hasGoal) sparks.push(sv ? "Viktigaste funktionerna är..." : "The key features are...");
+    if (hasBudget && hasTimeline && featureCount >= 3 && !hasDesign) sparks.push(sv ? "Jag har redan skisser i Figma" : "I already have Figma mockups");
+    if (featureCount >= 2 && hasGoal && (journeyStage === "scoping" || journeyStage === "assessment")) {
+      sparks.push(sv ? "Vad skulle en MVP kosta?" : "What would an MVP cost?");
+      sparks.push(sv ? "Kan du sammanfatta projektet?" : "Can you summarize the project?");
+    }
+    if (journeyStage === "blueprint_ready" || journeyStage === "awaiting_confirmation" || journeyStage === "contact_ready") {
+      sparks.push(sv ? "Jag vill gå vidare och boka möte" : "I want to proceed and book a call");
+    }
+    return sparks.slice(0, 4);
+  }, [isChatActive, liveProfile, lang, journeyStage]);
+
   return (
     <div className="labs-container">
       <LabsHeader
@@ -1001,6 +1043,36 @@ export default function LabsChat() {
                       </motion.li>
                     ))}
                   </ol>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Idea Sparks — contextual nudges when input is empty */}
+            {!input.trim() && ideaSparks.length > 0 && !isStreaming && !summarySubmitted && (
+              <motion.div
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className="labs-idea-sparks"
+              >
+                <span className="labs-sparks-label">
+                  <Lightbulb size={11} />
+                  {isSv ? "Idéer att ta vidare" : "Ideas to explore"}
+                </span>
+                <div className="labs-sparks-row">
+                  {ideaSparks.map((s, i) => (
+                    <motion.button
+                      key={s}
+                      type="button"
+                      initial={{ opacity: 0, y: 4, scale: 0.97 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      transition={{ duration: 0.25, delay: i * 0.06, ease: [0.16, 1, 0.36, 1] }}
+                      className="labs-spark-chip"
+                      onClick={() => { setInput(s); setTimeout(() => textareaRef.current?.focus(), 50); }}
+                    >
+                      {s}
+                    </motion.button>
+                  ))}
                 </div>
               </motion.div>
             )}
