@@ -2835,6 +2835,33 @@ body:has([data-labs-root]) {
   font-style:italic; line-height:1.5;
 }
 
+/* ── Missing Pieces — "what we still need to know" panel ── */
+.pbc-missing {
+  max-width:560px; margin:-8px auto 14px; padding:10px 14px 12px;
+  background:rgba(0,229,255,0.025);
+  border:1px solid rgba(0,229,255,0.10);
+  border-top:none;
+  border-radius:0 0 12px 12px;
+  position:relative;
+  margin-top:-14px;
+  z-index:0;
+}
+.pbc-missing-head {
+  display:flex; align-items:center; gap:5px;
+  font-family:var(--labs-mono); font-size:9px; font-weight:600;
+  text-transform:uppercase; letter-spacing:0.08em;
+  color:rgba(0,229,255,0.65); margin-bottom:6px;
+}
+.pbc-missing-list { list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:4px; }
+.pbc-missing-item {
+  display:flex; align-items:center; gap:7px;
+  font-size:11px; color:rgba(234,236,239,0.6); line-height:1.4;
+}
+.pbc-missing-dot { flex-shrink:0; opacity:0.5; }
+.pbc-missing-high .pbc-missing-dot { color:#f87171; }
+.pbc-missing-med .pbc-missing-dot { color:#fbbf24; }
+.pbc-missing-low .pbc-missing-dot { color:rgba(255,255,255,0.3); }
+
 .pbc-meta {
   display: flex;
   flex-wrap: wrap;

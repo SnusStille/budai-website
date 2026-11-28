@@ -35,6 +35,7 @@ import FeedbackButton from "@/components/ui/FeedbackButton";
 import TypingIndicator from "./TypingIndicator";
 import ProjectBriefCard from "./ProjectBriefCard";
 import RequirementsMap from "./RequirementsMap";
+import MissingPieces from "./MissingPieces";
 import WhatsNew from "@/components/ui/WhatsNew";
 import BackToBudAI from "@/components/ui/BackToBudAI";
 
@@ -948,6 +949,11 @@ export default function LabsChat() {
             {/* Requirements Map — intelligent "you'll also need" detection */}
             {isChatActive && liveProfile && (
               <RequirementsMap data={liveProfile} lang={lang} />
+            )}
+
+            {/* Missing Pieces — plain-language "what we still need to know" */}
+            {isChatActive && liveProfile && (
+              <MissingPieces data={liveProfile} lang={lang} />
             )}
 
             {/* Live Understanding panel — discrete real-time "what we know" */}
