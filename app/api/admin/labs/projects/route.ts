@@ -20,6 +20,7 @@ const ALLOWED_UPDATE_FIELDS = [
   "competition", "existing_solutions", "recommended_mvp", "next_steps",
   "technical_complexity", "admin_assignee", "priority_score",
   "priority_strengths", "priority_concerns", "priority_recommendation",
+  "internal_notes", "next_recommended_action",
 ];
 
 export async function GET(req: NextRequest) {
@@ -35,6 +36,7 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const id = searchParams.get("id");
   const status = searchParams.get("status");
+  const category = searchParams.get("category");
   const q = searchParams.get("q");
   const limit = Math.min(parseInt(searchParams.get("limit") || "50", 10), 200);
 
@@ -70,6 +72,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       project,
       conversation,
+      // Extract latest profile snapshot from conversation for blueprint/confidence display
+      profile: conversation?.project_profile || null,
       messages: (messages || []).map((m) => ({
         ...m,
         content: m.content.replace(/\[\[(PROFILE|SUMMARY):[\s\S]*?\]\]/gi, "").trim(),
@@ -91,6 +95,10 @@ export async function GET(req: NextRequest) {
 
   if (status && status !== "all") {
     query = query.eq("status", status);
+  }
+
+  if (category && category !== "all") {
+    query = query.eq("project_category", category);
   }
 
   if (q) {

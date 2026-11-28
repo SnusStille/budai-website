@@ -78,6 +78,8 @@ export async function POST(req: NextRequest) {
     const userMessage: string = typeof body?.message === "string" ? body.message : "";
     const conversationIdParam: string | null = typeof body?.conversationId === "string" ? body.conversationId : null;
     const lang = body?.lang === "en" ? "en" : "sv";
+    const selectedService: string | null =
+      typeof body?.selectedService === "string" ? body.selectedService : null;
 
     if (!userMessage || userMessage.trim().length === 0) {
       return NextResponse.json({ error: "Message cannot be empty." }, { status: 400 });
@@ -109,7 +111,12 @@ export async function POST(req: NextRequest) {
       } else {
         const { data: newConv, error: createErr } = await sb
           .from("labs_conversations")
-          .insert({ session_id: sessionId, language: lang, project_profile: EMPTY_PROJECT_PROFILE })
+          .insert({
+            session_id: sessionId,
+            language: lang,
+            project_profile: EMPTY_PROJECT_PROFILE,
+            selected_service: selectedService || null,
+          })
           .select("id")
           .single();
         if (createErr || !newConv) {
@@ -121,7 +128,12 @@ export async function POST(req: NextRequest) {
     } else {
       const { data: newConv, error: createErr } = await sb
         .from("labs_conversations")
-        .insert({ session_id: sessionId, language: lang, project_profile: EMPTY_PROJECT_PROFILE })
+        .insert({
+          session_id: sessionId,
+          language: lang,
+          project_profile: EMPTY_PROJECT_PROFILE,
+          selected_service: selectedService || null,
+        })
         .select("id")
         .single();
       if (createErr || !newConv) {
@@ -206,6 +218,7 @@ export async function POST(req: NextRequest) {
       projectProfile: currentProfile,
       turnCount: newTurnCount,
       isNewConversation,
+      selectedService: (selectedService as any) || null,
     });
 
     const model = configuredModels().quality;

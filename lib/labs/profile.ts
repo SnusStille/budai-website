@@ -14,6 +14,9 @@ export type ProjectCategory =
   | "ecommerce"
   | "booking_system"
   | "saas_platform"
+  | "game_development"
+  | "roblox"
+  | "fivem"
   | "integration"
   | "consulting"
   | "other"
@@ -21,17 +24,55 @@ export type ProjectCategory =
 
 export type ComplexityLevel = "low" | "medium" | "high" | "very_high" | null;
 export type AssessmentLevel = "realistic" | "tight" | "unrealistic" | "unknown" | null;
-export type ConversationStage = "discovery" | "scoping" | "assessment" | "contact_ready" | "closed";
+export type ConversationStage = "discovery" | "scoping" | "assessment" | "blueprint_ready" | "contact_ready" | "closed";
+
+export type RequestType = "new_development" | "debugging" | "optimization" | "extension" | "integration" | "consultation" | "unknown";
+
+export type ConfidenceField = "clear" | "partial" | "missing";
+
+export interface RealityCheck {
+  technically_feasible: boolean | null;
+  simpler_alternatives: string[];
+  external_services_needed: string[];
+  integration_risks: string[];
+  security_concerns: string[];
+  budget_scope_fit: AssessmentLevel;
+  recommended_first_steps: string[];
+  red_flags: string[];
+}
+
+export interface ScopePhase {
+  phase: "mvp" | "v2" | "v3";
+  name: string;
+  description: string | null;
+  features: string[];
+  estimated_complexity: ComplexityLevel;
+}
+
+export interface ConfidenceAssessment {
+  project_description: ConfidenceField;
+  requirements_clarity: ConfidenceField;
+  budget_clarity: ConfidenceField;
+  timeline_clarity: ConfidenceField;
+  technical_clarity: ConfidenceField;
+  target_audience_clarity: ConfidenceField;
+  contact_info: ConfidenceField;
+  overall_score: number; // 0-100
+  missing_critical: string[];
+}
 
 export interface ProjectProfile {
   project_title: string | null;
   project_category: ProjectCategory;
+  request_type: RequestType;
   customer_goal: string | null;
   target_audience: string | null;
   problem: string | null;
   proposed_solution: string | null;
   key_features: string[];
+  suggested_features: string[]; // features BudAI suggests that customer didn't mention
   technical_requirements: string[];
+  suggested_tech_stack: string[];
   technical_complexity: ComplexityLevel;
   budget: string | null;
   budget_assessment: AssessmentLevel;
@@ -42,6 +83,17 @@ export interface ProjectProfile {
   opportunities: string[];
   competition: string | null;
   recommended_mvp: string | null;
+  // Project Blueprint (professional brief fields)
+  blueprint_ready: boolean;
+  executive_summary: string | null;
+  success_criteria: string[];
+  // Scope phasing
+  phases: ScopePhase[];
+  // Technical Reality Check (internal — for Oliver's eyes)
+  reality_check: RealityCheck;
+  // Project Confidence (internal — how ready is this for Oliver to review?)
+  confidence: ConfidenceAssessment;
+  // Legacy fields
   next_steps: string | null;
   unanswered_questions: string[];
   decision_maker: string | null;
@@ -63,15 +115,22 @@ export interface SummaryProfile extends ProjectProfile {
 
 const VALID_CATEGORIES = new Set<ProjectCategory>([
   "website", "web_application", "mobile_app", "ai_service", "automation",
-  "ecommerce", "booking_system", "saas_platform", "integration", "consulting",
+  "ecommerce", "booking_system", "saas_platform", "game_development",
+  "roblox", "fivem", "integration", "consulting",
   "other", "unknown",
 ]);
 
 const VALID_COMPLEXITY = new Set(["low", "medium", "high", "very_high"]);
 const VALID_ASSESSMENT = new Set(["realistic", "tight", "unrealistic", "unknown"]);
 const VALID_STAGES = new Set<ConversationStage>([
-  "discovery", "scoping", "assessment", "contact_ready", "closed",
+  "discovery", "scoping", "assessment", "blueprint_ready", "contact_ready", "closed",
 ]);
+
+const VALID_REQUEST_TYPES = new Set<RequestType>([
+  "new_development", "debugging", "optimization", "extension", "integration", "consultation", "unknown",
+]);
+
+const VALID_CONFIDENCE = new Set<ConfidenceField>(["clear", "partial", "missing"]);
 
 function safeString(v: unknown, maxLen = 2000): string | null {
   if (typeof v === "string" && v.trim().length > 0) return v.trim().slice(0, maxLen);
@@ -107,6 +166,86 @@ function safeStage(v: unknown): ConversationStage {
   return "discovery";
 }
 
+function safeRequestType(v: unknown): RequestType {
+  if (typeof v === "string" && VALID_REQUEST_TYPES.has(v as RequestType)) return v as RequestType;
+  return "unknown";
+}
+
+function safeConfidenceField(v: unknown): ConfidenceField {
+  if (typeof v === "string" && VALID_CONFIDENCE.has(v as ConfidenceField)) return v as ConfidenceField;
+  return "missing";
+}
+
+function safeRealityCheck(v: unknown): RealityCheck {
+  const empty: RealityCheck = {
+    technically_feasible: null,
+    simpler_alternatives: [],
+    external_services_needed: [],
+    integration_risks: [],
+    security_concerns: [],
+    budget_scope_fit: null,
+    recommended_first_steps: [],
+    red_flags: [],
+  };
+  if (!v || typeof v !== "object") return empty;
+  const obj = v as Record<string, unknown>;
+  return {
+    technically_feasible: typeof obj.technically_feasible === "boolean" ? obj.technically_feasible : null,
+    simpler_alternatives: safeArray(obj.simpler_alternatives, 5, 200),
+    external_services_needed: safeArray(obj.external_services_needed, 5, 100),
+    integration_risks: safeArray(obj.integration_risks, 5, 200),
+    security_concerns: safeArray(obj.security_concerns, 5, 200),
+    budget_scope_fit: safeAssessment(obj.budget_scope_fit),
+    recommended_first_steps: safeArray(obj.recommended_first_steps, 5, 200),
+    red_flags: safeArray(obj.red_flags, 5, 200),
+  };
+}
+
+function safePhases(v: unknown): ScopePhase[] {
+  if (!Array.isArray(v)) return [];
+  return v.slice(0, 3).map((p, i) => {
+    const phaseNames: ScopePhase["phase"][] = ["mvp", "v2", "v3"];
+    if (!p || typeof p !== "object") {
+      return { phase: phaseNames[i] || "mvp", name: "", description: null, features: [], estimated_complexity: null };
+    }
+    const obj = p as Record<string, unknown>;
+    return {
+      phase: phaseNames[i] || "mvp",
+      name: typeof obj.name === "string" ? obj.name.slice(0, 80) : (i === 0 ? "MVP" : `Version ${i + 1}`),
+      description: safeString(obj.description, 500),
+      features: safeArray(obj.features, 8, 200),
+      estimated_complexity: safeComplexity(obj.estimated_complexity),
+    };
+  });
+}
+
+function safeConfidence(v: unknown): ConfidenceAssessment {
+  const empty: ConfidenceAssessment = {
+    project_description: "missing",
+    requirements_clarity: "missing",
+    budget_clarity: "missing",
+    timeline_clarity: "missing",
+    technical_clarity: "missing",
+    target_audience_clarity: "missing",
+    contact_info: "missing",
+    overall_score: 0,
+    missing_critical: [],
+  };
+  if (!v || typeof v !== "object") return empty;
+  const obj = v as Record<string, unknown>;
+  return {
+    project_description: safeConfidenceField(obj.project_description),
+    requirements_clarity: safeConfidenceField(obj.requirements_clarity),
+    budget_clarity: safeConfidenceField(obj.budget_clarity),
+    timeline_clarity: safeConfidenceField(obj.timeline_clarity),
+    technical_clarity: safeConfidenceField(obj.technical_clarity),
+    target_audience_clarity: safeConfidenceField(obj.target_audience_clarity),
+    contact_info: safeConfidenceField(obj.contact_info),
+    overall_score: safeScore(obj.overall_score),
+    missing_critical: safeArray(obj.missing_critical, 8, 150),
+  };
+}
+
 function safeScore(v: unknown): number {
   if (typeof v === "number" && Number.isFinite(v)) return Math.max(0, Math.min(100, Math.round(v)));
   if (typeof v === "string") {
@@ -117,15 +256,17 @@ function safeScore(v: unknown): number {
 }
 
 function mergeProfile(prev: ProjectProfile, next: Partial<ProjectProfile>): ProjectProfile {
-  // Merge arrays by replacing with new values (AI provides complete lists)
-  // But scalar fields only update if not null
+  // Deep merge: nested objects (reality_check, confidence) are merged, arrays replaced, scalars overwritten when non-null
   const out: ProjectProfile = { ...prev };
+  const nestedObjectKeys = new Set(["reality_check", "confidence"]);
 
   for (const [key, value] of Object.entries(next)) {
     if (value === null || value === undefined) continue;
     const outRecord = out as unknown as Record<string, unknown>;
     if (Array.isArray(value)) {
       outRecord[key] = value;
+    } else if (nestedObjectKeys.has(key) && typeof value === "object" && outRecord[key] && typeof outRecord[key] === "object") {
+      outRecord[key] = { ...(outRecord[key] as object), ...value };
     } else {
       outRecord[key] = value;
     }
@@ -154,12 +295,15 @@ export function extractProfile(text: string): {
       profile = {
         project_title: safeString(parsed.project_title, 120),
         project_category: safeCategory(parsed.project_category),
+        request_type: safeRequestType(parsed.request_type),
         customer_goal: safeString(parsed.customer_goal),
         target_audience: safeString(parsed.target_audience),
         problem: safeString(parsed.problem),
         proposed_solution: safeString(parsed.proposed_solution),
-        key_features: safeArray(parsed.key_features, 10),
+        key_features: safeArray(parsed.key_features, 12),
+        suggested_features: safeArray(parsed.suggested_features, 8),
         technical_requirements: safeArray(parsed.technical_requirements, 10),
+        suggested_tech_stack: safeArray(parsed.suggested_tech_stack, 6),
         technical_complexity: safeComplexity(parsed.technical_complexity),
         budget: safeString(parsed.budget, 200),
         budget_assessment: safeAssessment(parsed.budget_assessment),
@@ -170,6 +314,12 @@ export function extractProfile(text: string): {
         opportunities: safeArray(parsed.opportunities, 8),
         competition: safeString(parsed.competition),
         recommended_mvp: safeString(parsed.recommended_mvp),
+        blueprint_ready: typeof parsed.blueprint_ready === "boolean" ? parsed.blueprint_ready : false,
+        executive_summary: safeString(parsed.executive_summary, 800),
+        success_criteria: safeArray(parsed.success_criteria, 6, 200),
+        phases: safePhases(parsed.phases),
+        reality_check: safeRealityCheck(parsed.reality_check),
+        confidence: safeConfidence(parsed.confidence),
         next_steps: safeString(parsed.next_steps),
         unanswered_questions: safeArray(parsed.unanswered_questions, 12),
         decision_maker: safeString(parsed.decision_maker, 200),
@@ -208,12 +358,15 @@ export function extractSummary(text: string): {
       const base = {
         project_title: safeString(parsed.project_title, 120),
         project_category: safeCategory(parsed.project_category),
+        request_type: safeRequestType(parsed.request_type),
         customer_goal: safeString(parsed.customer_goal),
         target_audience: safeString(parsed.target_audience),
         problem: safeString(parsed.problem),
         proposed_solution: safeString(parsed.proposed_solution),
-        key_features: safeArray(parsed.key_features, 10),
+        key_features: safeArray(parsed.key_features, 12),
+        suggested_features: safeArray(parsed.suggested_features, 8),
         technical_requirements: safeArray(parsed.technical_requirements, 10),
+        suggested_tech_stack: safeArray(parsed.suggested_tech_stack, 6),
         technical_complexity: safeComplexity(parsed.technical_complexity),
         budget: safeString(parsed.budget, 200),
         budget_assessment: safeAssessment(parsed.budget_assessment),
@@ -224,6 +377,12 @@ export function extractSummary(text: string): {
         opportunities: safeArray(parsed.opportunities, 8),
         competition: safeString(parsed.competition),
         recommended_mvp: safeString(parsed.recommended_mvp),
+        blueprint_ready: typeof parsed.blueprint_ready === "boolean" ? parsed.blueprint_ready : false,
+        executive_summary: safeString(parsed.executive_summary, 800),
+        success_criteria: safeArray(parsed.success_criteria, 6, 200),
+        phases: safePhases(parsed.phases),
+        reality_check: safeRealityCheck(parsed.reality_check),
+        confidence: safeConfidence(parsed.confidence),
         next_steps: safeString(parsed.next_steps),
         unanswered_questions: safeArray(parsed.unanswered_questions, 12),
         decision_maker: safeString(parsed.decision_maker, 200),

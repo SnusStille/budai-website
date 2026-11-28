@@ -1,0 +1,488 @@
+/* ==========================================================================
+   Stilledev Labs — Interactive Solution Demos
+   Mini concept previews for each service category. CSS-only, no real images.
+   Labeled as KONCEPT/CONCEPT to avoid being mistaken for real client work.
+   ========================================================================== */
+
+.sd-shell {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--labs-border);
+  border-radius: 14px;
+  overflow: hidden;
+  transition: all 0.25s cubic-bezier(0.16,1,0.3,1);
+  display: flex;
+  flex-direction: column;
+}
+.sd-shell:hover {
+  border-color: rgba(255,255,255,0.12);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.3);
+}
+
+.sd-chrome {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: rgba(0,0,0,0.3);
+  border-bottom: 1px solid var(--labs-border);
+  flex-shrink: 0;
+}
+.sd-chrome-dots {
+  display: flex;
+  gap: 4px;
+}
+.sd-chrome-dots span {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: rgba(255,255,255,0.15);
+}
+.sd-chrome-dots span:first-child { background: #ff5f57; }
+.sd-chrome-dots span:nth-child(2) { background: #febc2e; }
+.sd-chrome-dots span:last-child { background: #28c840; }
+.sd-chrome-label {
+  font-family: var(--labs-mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--labs-text-muted);
+}
+.sd-stage {
+  padding: 14px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 200px;
+}
+.sd-explore-btn {
+  width: 100%;
+  padding: 10px 14px;
+  background: rgba(255,255,255,0.02);
+  border: none;
+  border-top: 1px solid var(--labs-border);
+  color: var(--accent, #00e5ff);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  transition: background 0.15s ease;
+}
+.sd-explore-btn:hover {
+  background: rgba(255,255,255,0.05);
+}
+
+/* ── Website mockup ── */
+.sd-site {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  font-size: 0;
+}
+.sd-site-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+}
+.sd-site-logo {
+  width: 36px; height: 8px; border-radius: 2px;
+  background: #fff; opacity: 0.85; flex-shrink: 0;
+}
+.sd-site-link {
+  width: 32px; height: 5px; border-radius: 2px;
+  background: rgba(255,255,255,0.2); flex-shrink: 0;
+}
+.sd-site-link-short { width: 20px; margin-left: auto; }
+.sd-site-cta {
+  width: 40px; height: 12px; border-radius: 3px;
+  background: var(--accent); flex-shrink: 0;
+  box-shadow: 0 0 8px color-mix(in srgb, var(--accent) 40%, transparent);
+}
+.sd-site-hero {
+  background: linear-gradient(135deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.sd-site-eyebrow {
+  width: 40px; height: 4px; border-radius: 2px;
+  background: var(--accent); opacity: 0.7;
+}
+.sd-site-h1 {
+  height: 9px; width: 80%; border-radius: 2px;
+  background: #fff;
+}
+.sd-site-h1-short { width: 60%; }
+.sd-site-sub {
+  height: 5px; width: 90%; border-radius: 2px;
+  background: rgba(255,255,255,0.2); margin-top: 2px;
+}
+.sd-site-btn {
+  width: 60px; height: 14px; border-radius: 4px;
+  background: var(--accent); margin-top: 6px;
+}
+.sd-site-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+.sd-site-card {
+  aspect-ratio: 4/3;
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 6px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.03), transparent);
+  position: relative;
+}
+.sd-site-card::before {
+  content: ""; position: absolute; top: 6px; left: 6px; right: 6px; height: 4px;
+  background: rgba(255,255,255,0.15); border-radius: 1px;
+}
+.sd-site-card::after {
+  content: ""; position: absolute; top: 14px; left: 6px; width: 40%; height: 3px;
+  background: rgba(255,255,255,0.08); border-radius: 1px;
+}
+
+/* ── Dashboard mockup ── */
+.sd-dash {
+  display: flex;
+  gap: 8px;
+  flex: 1;
+}
+.sd-dash-sidebar {
+  width: 48px;
+  background: rgba(0,0,0,0.2);
+  border-radius: 6px;
+  padding: 8px 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  flex-shrink: 0;
+}
+.sd-dash-logo {
+  width: 18px; height: 18px; border-radius: 4px;
+  background: var(--accent); margin: 0 auto 6px;
+  box-shadow: 0 0 8px color-mix(in srgb, var(--accent) 40%, transparent);
+}
+.sd-dash-nav {
+  height: 4px; border-radius: 2px;
+  background: rgba(255,255,255,0.08);
+}
+.sd-dash-nav-active {
+  background: var(--accent); opacity: 0.8;
+}
+.sd-dash-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+.sd-dash-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.sd-dash-title {
+  height: 8px; width: 50%; border-radius: 2px; background: #fff;
+}
+.sd-dash-badge {
+  width: 34px; height: 10px; border-radius: 4px;
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+}
+.sd-dash-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 5px;
+}
+.sd-dash-stat {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 5px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.sd-dash-stat-num { height: 8px; width: 70%; border-radius: 2px; background: #fff; }
+.sd-dash-stat-num-p { background: #34d399; }
+.sd-dash-stat-num-a { background: #fbbf24; }
+.sd-dash-stat-lab { height: 3px; width: 50%; border-radius: 1px; background: rgba(255,255,255,0.15); }
+.sd-dash-chart {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  padding: 6px;
+  background: rgba(0,0,0,0.15);
+  border-radius: 6px;
+  min-height: 60px;
+}
+.sd-dash-bar {
+  flex: 1;
+  background: linear-gradient(180deg, var(--accent), color-mix(in srgb, var(--accent) 40%, transparent));
+  border-radius: 2px 2px 0 0;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+.sd-dash-bar:hover { opacity: 1; }
+
+/* ── FiveM inventory ── */
+.sd-fivem {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  background: linear-gradient(135deg, rgba(0,0,0,0.4), rgba(0,0,0,0.2));
+  border-radius: 6px;
+  padding: 10px;
+}
+.sd-fivem-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.sd-fivem-title {
+  font-family: var(--labs-mono);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 0.12em;
+}
+.sd-fivem-weight {
+  font-family: var(--labs-mono);
+  font-size: 8px;
+  color: rgba(255,255,255,0.4);
+}
+.sd-fivem-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  flex: 1;
+}
+.sd-fivem-slot {
+  aspect-ratio: 1;
+  background: rgba(0,0,0,0.4);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+.sd-fivem-empty { background: rgba(0,0,0,0.2); border-color: rgba(255,255,255,0.04); cursor: default; }
+.sd-fivem-slot:hover:not(.sd-fivem-empty) { border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); }
+.sd-fivem-selected { border-color: var(--accent) !important; box-shadow: 0 0 6px color-mix(in srgb, var(--accent) 40%, transparent); }
+.sd-fivem-rare { border-color: color-mix(in srgb, var(--accent) 50%, rgba(255,255,255,0.1)); }
+.sd-fivem-item {
+  font-family: var(--labs-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.7);
+}
+.sd-fivem-detail {
+  padding: 6px 8px;
+  background: rgba(0,0,0,0.3);
+  border-radius: 4px;
+  border-left: 2px solid var(--accent);
+}
+.sd-fivem-dname {
+  display: block;
+  font-size: 10px;
+  font-weight: 600;
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.sd-fivem-dmeta {
+  display: block;
+  font-size: 8px;
+  color: rgba(255,255,255,0.4);
+  margin-top: 2px;
+  font-family: var(--labs-mono);
+}
+
+/* ── Roblox game UI ── */
+.sd-roblox {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  background: linear-gradient(180deg, #1a2642 0%, #2d3e6e 100%);
+  border-radius: 6px;
+  padding: 10px;
+}
+.sd-rblx-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.sd-rblx-coin {
+  font-family: var(--labs-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: #fbbf24;
+}
+.sd-rblx-level {
+  font-family: var(--labs-mono);
+  font-size: 9px;
+  color: rgba(255,255,255,0.7);
+  background: rgba(255,255,255,0.1);
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+.sd-rblx-scene {
+  flex: 1;
+  position: relative;
+  background: linear-gradient(180deg, #4a6fa5 0%, #6b9ad4 60%, #8bba70 60%, #5a8a3c 100%);
+  border-radius: 4px;
+  min-height: 60px;
+  overflow: hidden;
+}
+.sd-rblx-player {
+  position: absolute;
+  bottom: 10px; left: 20%;
+  width: 14px; height: 22px;
+  background: #e0495e;
+  border-radius: 3px 3px 2px 2px;
+  box-shadow: 0 2px 0 rgba(0,0,0,0.2);
+}
+.sd-rblx-player::before {
+  content: ""; position: absolute; top: -8px; left: 2px;
+  width: 10px; height: 10px; border-radius: 2px;
+  background: #f5d0a0;
+}
+.sd-rblx-block {
+  position: absolute;
+  border-radius: 2px;
+  box-shadow: inset -2px -2px 0 rgba(0,0,0,0.2);
+}
+.sd-rblx-block-1 { bottom: 0; left: 50%; width: 16px; height: 16px; background: #8b5a3c; }
+.sd-rblx-block-2 { bottom: 16px; left: 55%; width: 14px; height: 12px; background: #c4a574; }
+.sd-rblx-block-3 { bottom: 0; right: 10%; width: 18px; height: 12px; background: #6b8e4f; }
+.sd-rblx-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.sd-rblx-bar {
+  height: 5px; background: rgba(0,0,0,0.4); border-radius: 3px; overflow: hidden;
+}
+.sd-rblx-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #22c55e, #4ade80);
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+.sd-rblx-prolabel {
+  font-family: var(--labs-mono);
+  font-size: 8px;
+  color: rgba(255,255,255,0.6);
+}
+.sd-rblx-actions { display: flex; gap: 4px; }
+.sd-rblx-btn {
+  flex: 1;
+  padding: 5px;
+  background: #34d399;
+  color: #0a0a0f;
+  border: none;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 9px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.sd-rblx-btn:hover { background: #4ade80; }
+
+/* ── Automation workflow ── */
+.sd-auto {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  flex: 1;
+  padding: 6px 0;
+}
+.sd-auto-step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+}
+.sd-auto-dot {
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.15);
+  background: transparent;
+  flex-shrink: 0;
+  position: relative;
+}
+.sd-auto-done .sd-auto-dot {
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--accent) 50%, transparent);
+}
+.sd-auto-dot-active {
+  background: var(--accent) !important;
+  border-color: var(--accent) !important;
+  animation: sd-pulse 1.5s ease-in-out infinite;
+}
+@keyframes sd-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 50%, transparent); }
+  50% { box-shadow: 0 0 0 5px transparent; }
+}
+.sd-auto-label {
+  font-size: 10.5px;
+  color: rgba(255,255,255,0.5);
+}
+.sd-auto-done .sd-auto-label { color: #fff; }
+.sd-auto-active .sd-auto-label { color: var(--accent); }
+.sd-auto-line {
+  width: 2px; height: 10px;
+  background: rgba(255,255,255,0.1);
+  margin-left: 6px;
+}
+.sd-auto-line-done { background: var(--accent); }
+
+/* ── Explore demos section wrapper ── */
+.labs-explorer-section {
+  width: 100%;
+  margin-bottom: 28px;
+}
+.labs-explorer-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.labs-explorer-hint {
+  font-size: 10px;
+  color: var(--labs-text-faint);
+  text-align: center;
+  margin-top: 10px;
+  font-family: var(--labs-mono);
+  letter-spacing: 0.02em;
+}
+
+@media (max-width: 700px) {
+  .labs-explorer-grid { grid-template-columns: 1fr; }
+}
+@media (min-width: 701px) and (max-width: 1000px) {
+  .labs-explorer-grid { grid-template-columns: repeat(2, 1fr); }
+}
+.sd-title {
+  padding: 10px 14px 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--labs-text);
+  letter-spacing: -0.01em;
+}

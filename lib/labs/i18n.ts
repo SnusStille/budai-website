@@ -12,41 +12,144 @@ export const labsTranslations = {
     nav: {
       stilledev: "Stilledev",
       labs: "Labs",
-      newChat: "Ny konversation",
+      newChat: "Ny",
       history: "Historik",
-      backToSite: "Tillbaka till Stilledev",
+      backToSite: "Tillbaka",
       close: "Stäng",
+      language: "Språk",
     },
-    // Welcome screen
+    // Hero / Intro (above chat)
+    hero: {
+      eyebrow: "Digital utvecklingsstudio",
+      title: "Från idé till",
+      titleAccent: "färdig digital lösning.",
+      subtitle: "Jag heter Oliver Stille och bygger hemsidor, webbappar, spelscript och skräddarsydda digitala lösningar. Börja med att beskriva din idé nedan – BudAI hjälper oss förstå omfattningen, sedan hör jag av mig personligen.",
+      servicesLabel: "Vad vill du bygga?",
+      orDescribe: "Eller beskriv din idé direkt:",
+    },
+    // Service categories
+    services: {
+      website: "Hemsidor",
+      webapp: "Webbapplikationer",
+      app: "Appar & Mobil",
+      game: "Spelscript & FiveM",
+      custom: "Skräddarsytt",
+      ai_automation: "AI & Automation",
+      unsure: "Osäker?",
+      websiteDesc: "Hemsidor, e-handel & portfolior",
+      webappDesc: "SaaS, dashboards & system",
+      appDesc: "Mobilappar & PWA",
+      gameDesc: "FiveM, Roblox & Lua",
+      customDesc: "API:er, integrationer & kod",
+      aiDesc: "AI-lösningar & automation",
+      unsureDesc: "Beskriv din idé",
+    },
+    // Welcome screen (after selecting service or for returning users)
     welcome: {
       greeting: "Berätta om din idé.",
-      subtitle: "Jag är BudAI, Olivers intelligenta konsult. Jag hjälper dig att utforska ditt projekt, identifiera risker och avgöra om det är värt att bygga — innan vi skriver en rad kod.",
-      honest: "Ärlig feedback. Inga säljpitcher. Bara en riktig teknisk bedömning.",
+      subtitle: "Jag är BudAI, Olivers intelligenta konsult. Jag hjälper dig att utforska ditt projekt, identifiera risker och avgöra vad som behöver byggas – innan vi skriver en rad kod.",
+      honest: "Ärlig feedback. Inga tomma löften. Bara en riktig teknisk bedömning.",
       assistant: "Driven av Claude · Utvecklad av Oliver Stille",
+      backToServices: "Välj annat område",
     },
-    // Starter prompts
-    starters: [
-      "Jag har en idé till en webbapp",
-      "Jag vill bygga en AI-tjänst",
-      "Jag har en befintlig produkt som behöver förbättras",
-      "Jag behöver automatisera något i mitt företag",
-      "Jag vill sälja något online",
-      "Jag är inte säker på vad jag behöver — kan du hjälpa mig?",
-    ],
+    // Scenarios — "Build something different"
+    scenarios: {
+      label: "Vad andra bygger",
+      title: "Varje projekt börjar med en tydlig utmaning.",
+      items: [
+        { tag: "Företag", text: "En bilfirma behöver en modern hemsida med lager, bokning och provkörning." },
+        { tag: "SaaS", text: "En entreprenör vill bygga ett bokningssystem för frisörer och skönhetssalonger." },
+        { tag: "FiveM", text: "En serverägare behöver ett skräddarsytt inventory- och ekonomisystem till QBCore." },
+        { tag: "Roblox", text: "En spelutvecklare vill skapa ett simulator-spel med progression och DataStore." },
+        { tag: "Automation", text: "Ett företag vill automatisera sin manuella kundhantering och fakturering." },
+      ],
+    },
+    // Process — 5 steps
+    process: {
+      title: "Från idé till leverans",
+      step1Title: "Upptäck",
+      step1Desc: "Beskriv din idé. Ju mer detaljer, desto bättre – men det går utmärkt att börja enkelt.",
+      step2Title: "Diskutera",
+      step2Desc: "BudAI ställer relevanta frågor, identifierar risker och föreslår förbättringar.",
+      step3Title: "Definera",
+      step3Desc: "Tillsammans formar vi en tydlig projektbild med omfattning, MVP och faser.",
+      step4Title: "Granska",
+      step4Desc: "Oliver går personligen igenom underlaget och återkommer med en konkret bedömning.",
+      step5Title: "Bygg",
+      step5Desc: "När vi är överens om omfattning och pris påbörjas utvecklingen – med löpande dialog.",
+    },
+    // Built by Oliver
+    builder: {
+      title: "Byggt av en person, inte en fabrik.",
+      body: "Jag heter Oliver Stille och driver Stilledev från Stockholm. AI:n hjälper mig att förstå vad du behöver – men det är jag som granskar, designar, kodar, testar och levererar. Inga mellanhänder. Inga outhyrda team. Bär ett och samma ansvar från första samtal till sjösatt produkt.",
+      cta: "Börja beskriv din idé",
+    },
+    // Footer / trust
+    trust: {
+      noAccount: "Inget konto krävs.",
+      noObligation: "Ingen förpliktelse att köpa.",
+      personalReview: "Oliver granskar alla förfrågningar personligen.",
+    },
+    explorer: {
+      label: "Utforska lösningar",
+      title: "Se vad som kan byggas.",
+      hint: "Koncept — klicka för att starta en konsultation inom det området",
+      conceptLabel: "KONCEPT",
+      exploreBtn: "Utforska denna lösning",
+      website: "Företagshemsida",
+      webapp: "Dashboard & system",
+      game: "FiveM Inventory",
+      roblox: "Roblox-spel",
+      automation: "Automatiserat flöde",
+    },
+    faq: {
+      title: "Vanliga frågor",
+      items: [
+        { q: "Vad kostar ett projekt?", a: "Jag lämnar inga standardpriser eftersom varje projekt är unikt. Efter vår konsultation återkommer jag med en konkret offert baserad på omfattning, teknik och tidsåtgång." },
+        { q: "Hur kommer jag igång?", a: "Börja med att beskriv din idé i chatten. BudAI ställer några frågor, sedan går jag igenom underlaget och hör av mig personligen." },
+        { q: "Kan ni hjälpa till med ett befintligt projekt?", a: "Ja — jag arbetar med vidareutveckling, felsökning och optimering av befintliga system, oavsett om det är en webbplats, ett FiveM-script eller en app." },
+        { q: "Vem bygger egentligen?", a: "Jag som heter Oliver Stille bygger allt. BudAI är en AI-assistent som hjälper oss förstå omfattningen, men det är jag som designar, kodar, testar och levererar." },
+        { q: "Hur lång tid tar ett projekt?", a: "Det beror helt på omfattning. En enklare hemsida kan vara klar på några veckor. Ett större system tar längre tid. Jag återkommer med realistisk tidsplan efter att vi pratat igenom projektet." },
+        { q: "Måste jag veta exakt vad jag vill ha?", a: "Nej — det är det konsultationen är till för. Berätta vad du vill åstadkomma, så hjälper vi dig att formulera krav och hitta en bra lösning." },
+      ],
+    },
+    privacy: {
+      title: "Hur vi hanterar din information",
+      body: "Din konversation sparas för att jag ska kunna granska den och ge dig ett korrekt svar. Dina kontaktuppgifter delas aldrig med tredje part och används endast för att kontakta dig om ditt projekt. Du behöver inget konto.",
+    },
+    valueProps: {
+      title: "Därför väljer kunderna Stilledev",
+      directTitle: "Direktkontakt med utvecklaren",
+      directBody: "Inga säljare. Inga projektledare som vidarebefordrar. Du pratar direkt med mig som bygger din produkt.",
+      honestTitle: "Ärlig teknisk bedömning",
+      honestBody: "Jag säger nej när en idé inte håller eller när budgeten inte matchar omfattningen. Bättre en rak sanning än ett trevligt ljug.",
+      deliveryTitle: "Från idé till leverans",
+      deliveryBody: "Samma person tar dig från första samtal till sjösatt produkt. Inga kunskapsluckor, inga överlämningar, inga överraskningar.",
+    },
     // Chat interface
     chat: {
       placeholder: "Beskriv din idé, ditt problem eller din fråga…",
+      placeholderService: "Berätta mer om ditt projekt…",
       send: "Skicka",
       typing: "BudAI tänker",
       newMessage: "Nytt meddelande",
       scrollToBottom: "Scrolla till botten",
+      startTyping: "Börja skriva…",
     },
+    // Starter prompts (general, shown when no category selected)
+    starters: [
+      "Jag behöver en ny hemsida till mitt företag",
+      "Jag vill bygga en SaaS-tjänst",
+      "Jag behöver ett script till min FiveM-server",
+      "Jag vill integrera AI i min produkt",
+      "Jag har en idé men vet inte var jag ska börja",
+    ],
     // History panel
     history: {
       title: "Dina konversationer",
       empty: "Inga tidigare konversationer. Ditt första projekt kommer att sparas här.",
-      startNew: "Starta en ny konversation",
-      viewSite: "Besök stilledev.se",
+      startNew: "Ny konversation",
+      viewSite: "Till stilledev.se",
       delete: "Ta bort",
     },
     // Contact form
@@ -79,14 +182,15 @@ export const labsTranslations = {
       dbUnavailable: "Tjänsten är för närvarande otillgänglig. Försök igen senare.",
       sessionExpired: "Sessionen har upphört. Ladda om sidan för att starta en ny konversation.",
     },
-    // Disclaimer / Footer
+    // Footer / trust
     footer: {
+      tagline: "Byggt med precision i Stockholm",
       disclaimer: "BudAI är en AI-assistent. Slutliga beslut och offerter görs alltid av Oliver personligen.",
-      poweredBy: "Driven av Claude",
     },
-    // Admin labels (used in admin panel for Labs projects)
+    // Admin labels
     admin: {
       title: "Stilledev Labs — Projektöversikt",
+      allCategories: "Alla kategorier",
       stats: {
         total: "Totalt",
         new: "Nya",
@@ -105,7 +209,6 @@ export const labsTranslations = {
       loading: "Laddar…",
       conversationCount: (n: number) => `${n} meddelanden`,
     },
-    // Status labels
     status: {
       new_inquiry: "Ny förfrågan",
       conversation_active: "Pågående",
@@ -126,6 +229,9 @@ export const labsTranslations = {
       ecommerce: "E-handel",
       booking_system: "Bokningssystem",
       saas_platform: "SaaS-plattform",
+      game_development: "Spelutveckling",
+      roblox: "Roblox",
+      fivem: "FiveM",
       integration: "Integration",
       consulting: "Konsultation",
       other: "Övrigt",
@@ -133,48 +239,139 @@ export const labsTranslations = {
     },
   },
   en: {
-    // Header / Navigation
     nav: {
       stilledev: "Stilledev",
       labs: "Labs",
-      newChat: "New chat",
+      newChat: "New",
       history: "History",
-      backToSite: "Back to Stilledev",
+      backToSite: "Back",
       close: "Close",
+      language: "Language",
     },
-    // Welcome screen
+    hero: {
+      eyebrow: "Digital Development Studio",
+      title: "From idea to",
+      titleAccent: "finished digital product.",
+      subtitle: "I'm Oliver Stille and I build websites, web applications, game scripts and custom digital solutions. Start by describing your idea below — BudAI helps us understand the scope, then I'll get in touch personally.",
+      servicesLabel: "What do you want to build?",
+      orDescribe: "Or describe your idea directly:",
+    },
+    services: {
+      website: "Websites",
+      webapp: "Web Apps",
+      app: "Apps & Mobile",
+      game: "Game Scripts",
+      custom: "Custom Code",
+      ai_automation: "AI & Automation",
+      unsure: "Not sure?",
+      websiteDesc: "Sites, e-commerce & portfolios",
+      webappDesc: "SaaS, dashboards & systems",
+      appDesc: "Mobile apps & PWA",
+      gameDesc: "FiveM, Roblox & Lua",
+      customDesc: "APIs, integrations & code",
+      aiDesc: "AI solutions & automation",
+      unsureDesc: "Describe your idea",
+    },
     welcome: {
       greeting: "Tell me about your idea.",
-      subtitle: "I'm BudAI, Oliver's intelligent consultant. I'll help you explore your project, identify risks, and determine if it's worth building — before we write a single line of code.",
-      honest: "Honest feedback. No sales pitches. Just a real technical assessment.",
+      subtitle: "I'm BudAI, Oliver's intelligent consultant. I'll help you explore your project, identify risks, and work out what actually needs to be built — before we write a single line of code.",
+      honest: "Honest feedback. No empty promises. Just a real technical assessment.",
       assistant: "Powered by Claude · Built by Oliver Stille",
+      backToServices: "Choose another area",
     },
-    // Starter prompts
-    starters: [
-      "I have an idea for a web app",
-      "I want to build an AI service",
-      "I have an existing product that needs improvement",
-      "I need to automate something in my business",
-      "I want to sell something online",
-      "I'm not sure what I need — can you help?",
-    ],
-    // Chat interface
+    scenarios: {
+      label: "What others build",
+      title: "Every project starts with a clear challenge.",
+      items: [
+        { tag: "Business", text: "A car dealership needs a modern website with inventory, booking, and test drives." },
+        { tag: "SaaS", text: "An entrepreneur wants to build a booking system for hairdressers and beauty salons." },
+        { tag: "FiveM", text: "A server owner needs a custom inventory and economy system for QBCore." },
+        { tag: "Roblox", text: "A game developer wants to create a simulator game with progression and DataStore." },
+        { tag: "Automation", text: "A company wants to automate their manual customer management and invoicing." },
+      ],
+    },
+    process: {
+      title: "From idea to delivery",
+      step1Title: "Discover",
+      step1Desc: "Describe your idea. More detail is better — but it's totally fine to start simple.",
+      step2Title: "Discuss",
+      step2Desc: "BudAI asks relevant questions, identifies risks, and suggests improvements.",
+      step3Title: "Define",
+      step3Desc: "Together we shape a clear project picture: scope, MVP, and phased plan.",
+      step4Title: "Review",
+      step4Desc: "Oliver personally reviews the brief and comes back with a concrete assessment.",
+      step5Title: "Build",
+      step5Desc: "Once scope and price are agreed, development begins — with continuous dialogue.",
+    },
+    builder: {
+      title: "Built by a person, not a factory.",
+      body: "I'm Oliver Stille and I run Stilledev from Stockholm, Sweden. The AI helps me understand what you need — but I'm the one who reviews, designs, codes, tests and delivers. No middlemen. No outsourced teams. One person responsible from first conversation to launched product.",
+      cta: "Start describing your idea",
+    },
+    trust: {
+      noAccount: "No account required.",
+      noObligation: "No obligation to buy.",
+      personalReview: "Oliver reviews every inquiry personally.",
+    },
+    explorer: {
+      label: "Explore solutions",
+      title: "See what can be built.",
+      hint: "Concepts — click to start a consultation in that area",
+      conceptLabel: "CONCEPT",
+      exploreBtn: "Explore this solution",
+      website: "Business website",
+      webapp: "Dashboard & systems",
+      game: "FiveM Inventory",
+      roblox: "Roblox game",
+      automation: "Automated workflow",
+    },
+    faq: {
+      title: "Frequently asked questions",
+      items: [
+        { q: "What does a project cost?", a: "I don't have fixed prices because every project is different. After our consultation I'll come back with a concrete quote based on scope, technology and time required." },
+        { q: "How do I get started?", a: "Start by describing your idea in the chat. BudAI asks a few questions, then I review the brief and reach out to you personally." },
+        { q: "Can you help with an existing project?", a: "Yes — I work on extension, debugging and optimization of existing systems, whether it's a website, a FiveM script or an app." },
+        { q: "Who actually builds it?", a: "My name is Oliver Stille and I build everything. BudAI is an AI assistant that helps us understand scope, but I'm the one who designs, codes, tests and delivers." },
+        { q: "How long does a project take?", a: "It depends entirely on scope. A simple website can be done in a few weeks. A larger system takes longer. I'll give you a realistic timeline after we talk it through." },
+        { q: "Do I need to know exactly what I want?", a: "No — that's what the consultation is for. Tell me what you want to achieve, and we'll work out the requirements and find a good solution together." },
+      ],
+    },
+    privacy: {
+      title: "How we handle your information",
+      body: "Your conversation is saved so I can review it and give you an accurate response. Your contact details are never shared with third parties and are only used to contact you about your project. No account required.",
+    },
+    valueProps: {
+      title: "Why clients choose Stilledev",
+      directTitle: "Direct contact with the builder",
+      directBody: "No salespeople. No account managers. You talk directly to me — the person designing and coding your product.",
+      honestTitle: "Honest technical assessment",
+      honestBody: "I'll tell you no when an idea doesn't hold up or the budget doesn't match the scope. A straight no is worth twenty polite yes's.",
+      deliveryTitle: "From idea to launch",
+      deliveryBody: "The same person takes you from first conversation to launched product. No knowledge gaps, no handoffs, no surprises.",
+    },
     chat: {
       placeholder: "Describe your idea, problem, or question…",
+      placeholderService: "Tell me more about your project…",
       send: "Send",
       typing: "BudAI is thinking",
       newMessage: "New message",
       scrollToBottom: "Scroll to bottom",
+      startTyping: "Start typing…",
     },
-    // History panel
+    starters: [
+      "I need a new website for my business",
+      "I want to build a SaaS product",
+      "I need a script for my FiveM server",
+      "I want to integrate AI into my product",
+      "I have an idea but don't know where to start",
+    ],
     history: {
       title: "Your conversations",
       empty: "No previous conversations. Your first project will be saved here.",
-      startNew: "Start a new conversation",
+      startNew: "New conversation",
       viewSite: "Visit stilledev.se",
       delete: "Delete",
     },
-    // Contact form
     contact: {
       title: "Leave your contact details",
       subtitle: "Oliver will review your project brief and reach out personally to discuss next steps.",
@@ -196,7 +393,6 @@ export const labsTranslations = {
       detectedMessage: "It seems you're interested in talking further. Leave your details and Oliver will contact you.",
       privacyNote: "Your details are never shared with third parties. Used only to contact you about this project.",
     },
-    // Errors
     errors: {
       sendFailed: "Could not send message. Please try again.",
       networkError: "Network error. Check your connection and try again.",
@@ -204,14 +400,13 @@ export const labsTranslations = {
       dbUnavailable: "The service is currently unavailable. Please try again later.",
       sessionExpired: "Session expired. Reload the page to start a new conversation.",
     },
-    // Disclaimer / Footer
     footer: {
+      tagline: "Built with precision in Stockholm",
       disclaimer: "BudAI is an AI assistant. Final decisions and quotes are always made by Oliver personally.",
-      poweredBy: "Powered by Claude",
     },
-    // Admin labels
     admin: {
       title: "Stilledev Labs — Project Overview",
+      allCategories: "All categories",
       stats: {
         total: "Total",
         new: "New",
@@ -230,7 +425,6 @@ export const labsTranslations = {
       loading: "Loading…",
       conversationCount: (n: number) => `${n} messages`,
     },
-    // Status labels
     status: {
       new_inquiry: "New inquiry",
       conversation_active: "Active",
@@ -251,6 +445,9 @@ export const labsTranslations = {
       ecommerce: "E-commerce",
       booking_system: "Booking system",
       saas_platform: "SaaS platform",
+      game_development: "Game Development",
+      roblox: "Roblox",
+      fivem: "FiveM",
       integration: "Integration",
       consulting: "Consulting",
       other: "Other",

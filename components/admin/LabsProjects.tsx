@@ -20,6 +20,7 @@ import {
   Zap,
   ChevronRight,
   Tag,
+  Sparkles,
 } from "lucide-react";
 
 type ProjectStatus =
@@ -36,6 +37,7 @@ type ProjectStatus =
 type ProjectCategory =
   | "website" | "web_application" | "mobile_app" | "ai_service"
   | "automation" | "ecommerce" | "booking_system" | "saas_platform"
+  | "game_development" | "roblox" | "fivem"
   | "integration" | "consulting" | "other" | "unknown";
 
 const STATUS_LABELS: Record<ProjectStatus, { label: string; color: string }> = {
@@ -59,7 +61,10 @@ const CATEGORY_LABELS: Record<ProjectCategory, string> = {
   ecommerce: "E-handel",
   booking_system: "Bokningssystem",
   saas_platform: "SaaS-plattform",
-  integration: "Integration",
+  game_development: "Spelutveckling",
+  roblox: "Roblox",
+  fivem: "FiveM/GTA V",
+  integration: "Integration/Skräddarsytt",
   consulting: "Konsultation",
   other: "Övrigt",
   unknown: "Okänd",
@@ -120,6 +125,8 @@ type Project = {
   last_summary_update_at: string | null;
   is_read: boolean;
   admin_notes_count: number;
+  internal_notes: string | null;
+  next_recommended_action: string | null;
   message_count?: number;
   created_at: string;
   updated_at: string;
@@ -156,9 +163,13 @@ export default function LabsProjects() {
   const [error, setError] = useState("");
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<"updated" | "priority" | "created">("updated");
   const [selected, setSelected] = useState<string | null>(null);
-  const [detail, setDetail] = useState<{ project: Project; messages: Message[]; notes: Note[] } | null>(null);
+  const [detail, setDetail] = useState<{ project: Project; messages: Message[]; notes: Note[]; profile?: any } | null>(null);
+  const [internalNotes, setInternalNotes] = useState("");
+  const [nextAction, setNextAction] = useState("");
+  const [savingNotes, setSavingNotes] = useState(false);
   const [noteText, setNoteText] = useState("");
   const [statusCounts, setStatusCounts] = useState<StatusCount>({});
   const [unread, setUnread] = useState(0);
@@ -168,6 +179,7 @@ export default function LabsProjects() {
     try {
       const params = new URLSearchParams();
       if (statusFilter !== "all") params.set("status", statusFilter);
+      if (categoryFilter !== "all") params.set("category", categoryFilter);
       if (q) params.set("q", q);
       params.set("limit", "100");
       const res = await fetch(`/api/admin/labs/projects?${params}`, {
@@ -190,7 +202,7 @@ export default function LabsProjects() {
       }
     } catch { setError("Network error"); }
     finally { setLoading(false); }
-  }, [statusFilter, q, sortBy]);
+  }, [statusFilter, categoryFilter, q, sortBy]);
 
   const openProject = useCallback(async (id: string) => {
     setSelected(id);
@@ -201,6 +213,10 @@ export default function LabsProjects() {
       const data = await res.json();
       if (res.ok) {
         setDetail(data);
+        setInternalNotes(data.project?.internal_notes || "");
+        setNextAction(data.project?.next_recommended_action || "");
+        setAnalysis(null);
+        setAnalysisError(null);
         if (data.project?.is_read === false) {
           await fetch(`/api/admin/labs/projects`, {
             method: "PATCH", headers: { "Content-Type": "application/json" },
@@ -231,6 +247,49 @@ export default function LabsProjects() {
     });
     void loadProjects();
     if (detail?.project.id === id) setDetail({ ...detail, project: { ...detail.project, starred: !current } });
+  };
+
+  const saveAdminFields = async () => {
+    if (!detail) return;
+    setSavingNotes(true);
+    await fetch("/api/admin/labs/projects", {
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      credentials: "same-origin",
+      body: JSON.stringify({
+        id: detail.project.id,
+        fields: { internal_notes: internalNotes, next_recommended_action: nextAction },
+      }),
+    });
+    setSavingNotes(false);
+    setDetail({
+      ...detail,
+      project: { ...detail.project, internal_notes: internalNotes, next_recommended_action: nextAction },
+    });
+  };
+
+  // AI project analysis (admin-only)
+  const [analysis, setAnalysis] = useState<string | null>(null);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
+  const runAnalysis = async () => {
+    if (!detail) return;
+    setAnalyzing(true);
+    setAnalysisError(null);
+    setAnalysis(null);
+    try {
+      const res = await fetch("/api/admin/labs/projects/analyze", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({ id: detail.project.id }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Okänt fel");
+      setAnalysis(data.analysis || "(Ingen analys returnerades)");
+    } catch (e: any) {
+      setAnalysisError(e.message || String(e));
+    } finally {
+      setAnalyzing(false);
+    }
   };
 
   const addNote = async () => {
@@ -320,6 +379,28 @@ export default function LabsProjects() {
             <button type="button" className={btn} onClick={() => void loadProjects()}>
               <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
             </button>
+          </div>
+
+          {/* Category filter chips */}
+          <div className="flex flex-wrap gap-1.5">
+            {(["all", "website", "web_application", "mobile_app", "game_development", "fivem", "roblox", "ai_service", "automation", "ecommerce", "booking_system", "saas_platform", "integration", "other"] as const).map((cat) => {
+              const isActive = categoryFilter === cat;
+              const label = cat === "all" ? "Alla" : CATEGORY_LABELS[cat as ProjectCategory] || cat;
+              return (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => setCategoryFilter(cat)}
+                  className={`px-2.5 py-1 text-[10.5px] font-medium rounded-full border transition-all ${
+                    isActive
+                      ? "border-accent-cyan/40 bg-accent-cyan/10 text-accent-cyan"
+                      : "border-white/[0.08] bg-white/[0.02] text-muted hover:text-white/80 hover:border-white/15"
+                  }`}
+                >
+                  {label}
+                </button>
+              );
+            })}
           </div>
 
           {error && (
@@ -676,6 +757,152 @@ export default function LabsProjects() {
                   </div>
                 </div>
               )}
+
+              {/* Confidence / Blueprint (from AI profile) */}
+              {detail.profile && detail.profile.confidence && (
+                <div className={card}>
+                  <h4 className="mb-3 text-sm font-semibold text-white flex items-center gap-2">
+                    <Zap className="h-4 w-4 text-accent-cyan" />
+                    Projekt Confidence
+                    <span className={`ml-auto font-mono text-sm ${
+                      (detail.profile.confidence?.overall_score ?? 0) >= 70 ? "text-emerald-400" :
+                      (detail.profile.confidence?.overall_score ?? 0) >= 45 ? "text-amber-400" : "text-red-400"
+                    }`}>
+                      {detail.profile.confidence?.overall_score ?? 0}/100
+                    </span>
+                  </h4>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
+                    {([
+                      ["project_description", "Beskrivning"],
+                      ["requirements_clarity", "Kravbild"],
+                      ["technical_clarity", "Teknik"],
+                      ["budget_clarity", "Budget"],
+                      ["timeline_clarity", "Tidsplan"],
+                      ["target_audience_clarity", "Målgrupp"],
+                    ] as const).map(([key, label]) => {
+                      const v = detail.profile.confidence?.[key];
+                      const color = v === "clear" ? "bg-emerald-400/20 text-emerald-300 border-emerald-400/30"
+                        : v === "partial" ? "bg-amber-400/15 text-amber-300 border-amber-400/25"
+                        : "bg-red-400/10 text-red-300 border-red-400/20";
+                      const dot = v === "clear" ? "●" : v === "partial" ? "◐" : "○";
+                      return (
+                        <div key={key} className={`text-[11px] px-2 py-1.5 rounded-md border ${color} flex items-center gap-1.5 font-medium`}>
+                          <span className="font-mono text-[10px]">{dot}</span>
+                          {label}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {detail.profile.confidence.missing_critical?.length > 0 && (
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wide text-amber-400/80 mb-1.5 font-semibold">Saknas för en bra bedömning</p>
+                      <ul className="space-y-0.5">
+                        {detail.profile.confidence.missing_critical.map((m: string, i: number) => (
+                          <li key={i} className="text-xs text-white/70 flex gap-2">
+                            <span className="text-amber-400">•</span>{m}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {detail.profile.reality_check?.red_flags?.length > 0 && (
+                    <div className="mt-3">
+                      <p className="text-[10px] uppercase tracking-wide text-red-400/80 mb-1.5 font-semibold">Röda flaggor</p>
+                      <ul className="space-y-0.5">
+                        {detail.profile.reality_check.red_flags.map((r: string, i: number) => (
+                          <li key={i} className="text-xs text-white/70 flex gap-2">
+                            <AlertTriangle className="h-3 w-3 text-red-400 shrink-0 mt-0.5" />{r}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {detail.profile.phases?.length > 0 && detail.profile.phases.some((p: any) => p.features?.length > 0 || p.description) && (
+                    <div className="mt-3">
+                      <p className="text-[10px] uppercase tracking-wide text-accent-cyan/80 mb-2 font-semibold">Fasplan</p>
+                      <div className="space-y-1.5">
+                        {detail.profile.phases.filter((p: any) => p.features?.length > 0 || p.description).map((p: any, i: number) => (
+                          <div key={i} className="text-xs bg-white/[0.02] border border-white/[0.05] rounded-md p-2">
+                            <span className="font-semibold text-white/90">{p.name || `Fas ${i+1}`}</span>
+                            {p.description && <span className="text-white/60"> — {p.description}</span>}
+                            {p.features?.length > 0 && (
+                              <ul className="mt-1 text-white/60 pl-3 list-disc">
+                                {p.features.slice(0, 4).map((f: string, j: number) => <li key={j}>{f}</li>)}
+                              </ul>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* AI Analysis */}
+              <div className={card}>
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-sm font-semibold text-white flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-accent-cyan" />
+                    AI-projektanalys
+                  </h4>
+                  <button
+                    onClick={() => void runAnalysis()}
+                    disabled={analyzing}
+                    className="text-[11px] px-2.5 py-1 bg-accent-cyan/15 text-accent-cyan border border-accent-cyan/30 rounded-md hover:bg-accent-cyan/25 disabled:opacity-50 transition"
+                  >
+                    {analyzing ? "Analyserar..." : analysis ? "Analysera igen" : "Analysera projekt"}
+                  </button>
+                </div>
+                {analysisError && (
+                  <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded p-2 mb-2">{analysisError}</p>
+                )}
+                {analysis && (
+                  <div className="text-xs text-white/80 leading-relaxed whitespace-pre-wrap bg-white/[0.02] border border-white/[0.05] rounded-md p-3 max-h-[400px] overflow-y-auto">
+                    {analysis}
+                  </div>
+                )}
+                {!analysis && !analysisError && !analyzing && (
+                  <p className="text-xs text-white/50">Klicka på "Analysera projekt" för att få en intern AI-bedömning av konversationen: teknisk analys, saknade uppgifter, rekommenderad första fråga och varningsflaggor. Analysen sparas inte automatiskt.</p>
+                )}
+              </div>
+
+              {/* Oliver's working notes */}
+              <div className={card}>
+                <h4 className="mb-3 text-sm font-semibold text-white flex items-center gap-2">
+                  <PencilLine className="h-4 w-4 text-accent-cyan" />
+                  Olivers arbetsanteckningar
+                </h4>
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-[10px] uppercase tracking-wide text-muted font-mono block mb-1.5">Interna anteckningar</label>
+                    <textarea
+                      value={internalNotes}
+                      onChange={(e) => setInternalNotes(e.target.value)}
+                      rows={3}
+                      placeholder="Privata anteckningar om projektet... (syns ej för kund eller AI)"
+                      className={input}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] uppercase tracking-wide text-muted font-mono block mb-1.5">Nästa åtgärd</label>
+                    <input
+                      type="text"
+                      value={nextAction}
+                      onChange={(e) => setNextAction(e.target.value)}
+                      placeholder="T.ex. 'Ring upp på tisdag' eller 'Skapa offert'"
+                      className={input}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => void saveAdminFields()}
+                    disabled={savingNotes}
+                    className="inline-flex items-center gap-2 rounded-xl bg-accent-cyan/20 border border-accent-cyan/30 text-accent-cyan px-3.5 py-1.5 text-xs font-semibold transition hover:bg-accent-cyan/30 disabled:opacity-50"
+                  >
+                    {savingNotes ? "Sparar..." : "Spara anteckningar"}
+                  </button>
+                </div>
+              </div>
 
               {/* Conversation */}
               <div className={card}>

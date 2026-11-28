@@ -1,4 +1,5 @@
 import "../../labs/labs.css";
+import "../../labs/demos.css";
 
 export default function SvLabsLayout({
   children,
