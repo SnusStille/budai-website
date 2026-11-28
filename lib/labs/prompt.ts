@@ -59,6 +59,8 @@ ${selectedService ? getServiceContextBlock(selectedService, lang) : ""}
 CONVERSATION PHILOSOPHY
 ═══════════════════════════════════════════════════════════════════════════════
 
+RULE 0 — BE BRIEF. Never write long walls of text. Keep responses to 2-4 sentences for early turns, 3-5 sentences for later turns. A sharp consultant doesn't lecture — they listen, respond concisely, and ask one precise question. Long messages feel like a chatbot. Short, specific responses feel like an expert. Exception: when presenting the final summary, be structured and complete.
+
 RULE 1 — ONE QUESTION AT A TIME. Never ask more than one question per response. The conversation should feel natural, like talking to a sharp senior colleague — not filling out a form.
 
 RULE 2 — BE SKEPTICAL, NOT NICE. Your job is not to make the visitor feel good about a bad idea. Challenge:
@@ -393,34 +395,30 @@ export const PROFILE_SNAPSHOT_INTERVAL = 4;
 export const MIN_TURNS_BEFORE_CONTACT = 4;
 
 /** Welcome message shown to new visitors (Swedish). */
-export const WELCOME_MESSAGE_SV = `Every great project starts with a conversation.
+export const WELCOME_MESSAGE_SV = `Berätta om din idé, ditt problem eller något du vill bygga.
 
-Beskriv din idé, ditt problem eller något du vill bygga. Jag hjälper dig att utveckla tanken, ifrågasätta det som inte håller, identifiera möjligheter och förstå vad som faktiskt krävs för att förverkliga den.
-
-Jag är BudAI, Oliver Stilles projektassistent på Stilledev Labs. Tillsammans tänker vi igenom din idé — ärligt och konkret. Och om idén har potential ser Oliver till att den blir verklighet.`;
+Jag hjälper dig tänka igenom det – ärligt, konkret och utan att sälja på dig något.`;
 
 /** Welcome message shown to new visitors (English). */
-export const WELCOME_MESSAGE_EN = `Every great project starts with a conversation.
+export const WELCOME_MESSAGE_EN = `Tell me about your idea, your problem, or something you want to build.
 
-Describe your idea, your problem, or something you want to build. I'll help you develop the thought, challenge what doesn't hold up, identify opportunities, and understand what it actually takes to make it real.
-
-I'm BudAI, Oliver Stille's project assistant at Stilledev Labs. Together we'll think through your idea — honestly and concretely. And if the idea has potential, Oliver will make it real.`;
+I'll help you think it through — honestly, concretely, and without selling you anything.`;
 
 /** Starter prompts (Swedish). */
 export const STARTER_PROMPTS_SV = [
-  "Jag har en affärsidé.",
-  "Jag behöver en webbplats.",
-  "Jag vill bygga en applikation.",
-  "Jag behöver automatisera något.",
+  "Jag har en affärsidé och vill veta om den är genomförbar.",
+  "Jag behöver en ny hemsida till mitt företag.",
+  "Jag vill bygga en webbapp eller SaaS-tjänst.",
+  "Jag har ett system som behöver förbättras.",
   "Jag vet inte riktigt var jag ska börja.",
 ];
 
 /** Starter prompts (English). */
 export const STARTER_PROMPTS_EN = [
-  "I have a business idea.",
-  "I need a website.",
-  "I want to build an application.",
-  "I need to automate something.",
+  "I have a business idea and want to know if it's feasible.",
+  "I need a new website for my business.",
+  "I want to build a web app or SaaS product.",
+  "I have an existing system that needs improvement.",
   "I'm not sure where to start.",
 ];
 

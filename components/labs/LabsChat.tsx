@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Plus, X, User, ChevronRight, ArrowLeft, RefreshCw, Sparkles } from "lucide-react";
+import { Send, Plus, X, User, ChevronRight, ChevronDown, ArrowLeft, RefreshCw, Sparkles } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useLang } from "@/components/ui/LanguageContext";
 import LabsHeader from "@/components/labs/LabsHeader";
@@ -11,6 +11,8 @@ import {
   WELCOME_MESSAGE_SV,
   WELCOME_MESSAGE_EN,
   MIN_TURNS_BEFORE_CONTACT,
+  STARTER_PROMPTS_SV,
+  STARTER_PROMPTS_EN,
 } from "@/lib/labs/prompt";
 import {
   extractProfile,
@@ -153,9 +155,11 @@ export default function LabsChat() {
   const [liveProfile, setLiveProfile] = useState<any | null>(null);
   const [scrolled, setScrolled] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
+  const [showScrollBtn, setShowScrollBtn] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const mainRef = useRef<HTMLElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
 
@@ -182,17 +186,24 @@ export default function LabsChat() {
 
   useEffect(() => { void loadConversations(); }, [loadConversations]);
 
-  // Scroll progress indicator + header shadow on scroll
+  // Scroll progress indicator + header shadow + scroll-to-bottom visibility
   useEffect(() => {
     const onScroll = () => {
       const scrollY = window.scrollY;
       setScrolled(scrollY > 8);
       const docHeight = document.documentElement.scrollHeight - window.innerHeight;
       setScrollProgress(docHeight > 0 ? (scrollY / docHeight) * 100 : 0);
+      // Show "scroll to bottom" if more than 120px from bottom (during streaming)
+      const fromBottom = docHeight - scrollY;
+      setShowScrollBtn(isStreaming && fromBottom > 150);
     };
     window.addEventListener("scroll", onScroll, { passive: true });
     onScroll();
     return () => window.removeEventListener("scroll", onScroll);
+  }, [isStreaming]);
+
+  const scrollToBottom = useCallback(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, []);
 
   useEffect(() => {
@@ -917,7 +928,7 @@ export default function LabsChat() {
               <LiveUnderstanding profile={liveProfile} lang={lang} labels={t.liveUnderstanding} stage={journeyStage} />
             )}
 
-            <div className="labs-messages" role="log" aria-live="polite">
+            <div ref={messagesContainerRef} className="labs-messages" role="log" aria-live="polite">
               {messages.map((msg, i) => (
                 <div key={i} className={`labs-message ${msg.role} ${streamingCursor && i === messages.length - 1 && msg.role === "assistant" ? "labs-thinking" : ""}`}>
                   <div className={`labs-message-avatar ${msg.role}`} aria-hidden>
@@ -992,6 +1003,24 @@ export default function LabsChat() {
             )}
 
             <div className="labs-input-wrap">
+              {/* Quick starters above input when empty and no chat active */}
+              {!isChatActive && (
+                <div className="labs-quick-starters">
+                  {(isSv ? STARTER_PROMPTS_SV : STARTER_PROMPTS_EN).map((p, i) => (
+                    <motion.button
+                      key={i}
+                      type="button"
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3, delay: 0.8 + i * 0.06 }}
+                      className="labs-quick-starter"
+                      onClick={() => { setInput(p); setTimeout(() => textareaRef.current?.focus(), 50); }}
+                    >
+                      {p}
+                    </motion.button>
+                  ))}
+                </div>
+              )}
               <div className="labs-input-container">
                 <textarea
                   ref={textareaRef}
@@ -1120,6 +1149,24 @@ export default function LabsChat() {
 
       {/* Feedback FAB */}
       <FeedbackButton lang={lang} conversationId={conversationId} />
+
+      {/* Scroll to bottom during streaming */}
+      <AnimatePresence>
+        {showScrollBtn && (
+          <motion.button
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            type="button"
+            className="labs-scroll-bottom"
+            onClick={scrollToBottom}
+            aria-label={isSv ? "Scrolla till botten" : "Scroll to bottom"}
+            title={isSv ? "Scrolla till botten" : "Scroll to bottom"}
+          >
+            <ChevronDown size={16} />
+          </motion.button>
+        )}
+      </AnimatePresence>
 
       {/* History panel */}
       <AnimatePresence>

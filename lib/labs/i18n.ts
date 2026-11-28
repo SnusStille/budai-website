@@ -20,12 +20,12 @@ export const labsTranslations = {
     },
     // Hero / Intro (above chat)
     hero: {
-      eyebrow: "Digital utvecklingsstudio",
-      title: "Från idé till",
-      titleAccent: "färdig digital lösning.",
-      subtitle: "Jag heter Oliver Stille och bygger hemsidor, webbappar, spelscript och skräddarsydda digitala lösningar. Börja med att beskriva din idé nedan – BudAI hjälper oss förstå omfattningen, sedan hör jag av mig personligen.",
-      servicesLabel: "Vad vill du bygga?",
-      orDescribe: "Eller beskriv din idé direkt:",
+      eyebrow: "Stilledev Labs",
+      title: "Berätta om din",
+      titleAccent: "idé.",
+      subtitle: "Beskriv vad du vill bygga, ditt problem eller din fråga. Jag hjälper dig tänka igenom det – konkret och ärligt. Oliver bygger om idén håller.",
+      servicesLabel: "Vad handlar det om?",
+      orDescribe: "Eller beskriv fritt:",
     },
     // Service categories
     services: {
@@ -309,12 +309,12 @@ export const labsTranslations = {
       language: "Language",
     },
     hero: {
-      eyebrow: "Digital Development Studio",
-      title: "From idea to",
-      titleAccent: "finished digital product.",
-      subtitle: "I'm Oliver Stille and I build websites, web applications, game scripts and custom digital solutions. Start by describing your idea below — BudAI helps us understand the scope, then I'll get in touch personally.",
-      servicesLabel: "What do you want to build?",
-      orDescribe: "Or describe your idea directly:",
+      eyebrow: "Stilledev Labs",
+      title: "Tell me about your",
+      titleAccent: "idea.",
+      subtitle: "Describe what you want to build, your problem, or your question. I'll help you think it through — concretely and honestly. Oliver builds if the idea holds.",
+      servicesLabel: "What's it about?",
+      orDescribe: "Or just start typing:",
     },
     services: {
       website: "Websites",
