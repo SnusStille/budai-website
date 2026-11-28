@@ -1,9 +1,12 @@
 "use client";
 
 /**
- * Minimal markdown renderer for BudAI messages.
- * Handles: paragraphs, bold (**text**), italic (*text*), inline code (`text`), bullet lists, numbered lists.
- * No external dependencies. XSS-safe: escapes HTML first, then adds our own tags.
+ * Minimal markdown renderer for BudAI/Labs messages.
+ * Handles: paragraphs, bold (**text**), italic (*text*), inline code (`text`),
+ * bullet lists, numbered lists, headings (##, ###), horizontal rules.
+ * No external dependencies. XSS-safe: no raw HTML injection.
+ *
+ * Designed for streaming: handles partial lines gracefully.
  */
 import { Fragment } from "react";
 
@@ -16,43 +19,35 @@ function escapeHtml(s: string): string {
     .replace(/'/g, "&#039;");
 }
 
-/** Convert inline markdown (bold/italic/code) to React nodes on a text fragment */
+/** Convert inline markdown to React nodes */
 function renderInline(text: string, keyPrefix: string): (string | JSX.Element)[] {
   const nodes: (string | JSX.Element)[] = [];
-  // We process bold (**x**), italic (*x* when not part of **), inline code (`x`), in a single pass
-  // Simpler: split by tokens sequentially
   let remaining = text;
   let idx = 0;
 
-  // Tokenize by finding first matching pattern each time
   while (remaining.length > 0) {
-    // Find nearest of **, *, `
     const boldIdx = remaining.indexOf("**");
     const codeIdx = remaining.indexOf("`");
     const itIdx = remaining.indexOf("*");
 
-    // Pick closest marker (prefer bold over italic since ** starts with *)
     const candidates: { kind: "bold" | "italic" | "code"; pos: number; end: number }[] = [];
     if (boldIdx !== -1) {
       const end = remaining.indexOf("**", boldIdx + 2);
-      if (end !== -1) candidates.push({ kind: "bold", pos: boldIdx, end });
+      if (end !== -1 && end > boldIdx + 2) candidates.push({ kind: "bold", pos: boldIdx, end });
     }
     if (codeIdx !== -1) {
       const end = remaining.indexOf("`", codeIdx + 1);
-      if (end !== -1) candidates.push({ kind: "code", pos: codeIdx, end });
+      if (end !== -1 && end > codeIdx + 1) candidates.push({ kind: "code", pos: codeIdx, end });
     }
-    // Italic: find single * not preceded/followed by *
     if (itIdx !== -1) {
-      // check not part of **
       const prev = itIdx > 0 ? remaining[itIdx - 1] : "";
       const next = itIdx + 1 < remaining.length ? remaining[itIdx + 1] : "";
-      if (prev !== "*" && next !== "*") {
-        // find closing *
+      if (prev !== "*" && next !== "*" && prev !== " ") {
         const end = remaining.indexOf("*", itIdx + 1);
         if (end !== -1 && end > itIdx + 1) {
           const endPrev = end > 0 ? remaining[end - 1] : "";
           const endNext = end + 1 < remaining.length ? remaining[end + 1] : "";
-          if (endPrev !== "*" && endNext !== "*") {
+          if (endPrev !== "*" && endNext !== "*" && remaining[itIdx + 1] !== " ") {
             candidates.push({ kind: "italic", pos: itIdx, end });
           }
         }
@@ -88,18 +83,50 @@ function renderInline(text: string, keyPrefix: string): (string | JSX.Element)[]
   return nodes;
 }
 
-/** Render a complete message as React blocks (paragraphs + lists) */
+/** Detect heading level (##, ###, ####) */
+function matchHeading(line: string): { level: number; text: string } | null {
+  const m = line.match(/^(#{1,4})\s+(.+)$/);
+  if (!m) return null;
+  return { level: m[1].length, text: m[2] };
+}
+
+/** Render a complete message as React blocks */
 export function renderMarkdown(content: string): JSX.Element {
+  // Normalize line endings
+  const normalized = content.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+  // Remove any leftover control characters except \n and \t
+  const cleaned = normalized.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "");
+  const lines = cleaned.split("\n");
+
   const blocks: JSX.Element[] = [];
-  const lines = content.split("\n");
   let i = 0;
   let blockIdx = 0;
 
   while (i < lines.length) {
     const line = lines[i];
 
-    // Bullet list: "- " or "• "
-    if (/^[-•*]\s+/.test(line) && !/^\*{2}/.test(line.slice(2))) {
+    // Horizontal rule: ---, ___, *** on their own
+    if (/^\s*([-*_])\1{2,}\s*$/.test(line)) {
+      blocks.push(<hr key={blockIdx++} className="labs-md-hr" />);
+      i++;
+      continue;
+    }
+
+    // Heading: ## Title, ### Subtitle
+    const heading = matchHeading(line);
+    if (heading) {
+      const Tag = (`h${Math.min(heading.level + 2, 5)}`) as keyof JSX.IntrinsicElements;
+      blocks.push(
+        <Tag key={blockIdx++} className={`labs-md-h labs-md-h${heading.level}`}>
+          {renderInline(heading.text.trim(), `h-${blockIdx}`)}
+        </Tag>
+      );
+      i++;
+      continue;
+    }
+
+    // Bullet list: "- ", "• ", "* "
+    if (/^[-•*]\s+/.test(line)) {
       const items: string[] = [];
       while (i < lines.length && /^[-•*]\s+/.test(lines[i])) {
         items.push(lines[i].replace(/^[-•*]\s+/, ""));
@@ -115,7 +142,7 @@ export function renderMarkdown(content: string): JSX.Element {
       continue;
     }
 
-    // Numbered list: "1. ", "2. ", etc.
+    // Numbered list: "1. ", "2. "
     if (/^\d+\.\s+/.test(line)) {
       const items: string[] = [];
       while (i < lines.length && /^\d+\.\s+/.test(lines[i])) {
@@ -132,24 +159,35 @@ export function renderMarkdown(content: string): JSX.Element {
       continue;
     }
 
-    // Empty line - paragraph break
+    // Empty line
     if (line.trim() === "") {
       i++;
       continue;
     }
 
-    // Paragraph: collect until empty line or list
+    // Paragraph: collect consecutive non-empty, non-special lines
     const paraLines: string[] = [line];
     i++;
-    while (i < lines.length && lines[i].trim() !== "" && !/^[-•*]\s+/.test(lines[i]) && !/^\d+\.\s+/.test(lines[i])) {
+    while (
+      i < lines.length &&
+      lines[i].trim() !== "" &&
+      !/^[-•*]\s+/.test(lines[i]) &&
+      !/^\d+\.\s+/.test(lines[i]) &&
+      !matchHeading(lines[i]) &&
+      !/^\s*([-*_])\1{2,}\s*$/.test(lines[i])
+    ) {
       paraLines.push(lines[i]);
       i++;
     }
-    blocks.push(
-      <p key={blockIdx++} className="labs-md-p">
-        {renderInline(paraLines.join(" "), `p-${blockIdx}`)}
-      </p>
-    );
+    // Join with space — but keep intentional short lines (treat single newlines as spaces)
+    const paraText = paraLines.join(" ").replace(/\s+/g, " ").trim();
+    if (paraText) {
+      blocks.push(
+        <p key={blockIdx++} className="labs-md-p">
+          {renderInline(paraText, `p-${blockIdx}`)}
+        </p>
+      );
+    }
   }
 
   return <Fragment>{blocks}</Fragment>;

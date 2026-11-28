@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Plus, X, User, ChevronRight, ChevronDown, ArrowLeft, RefreshCw, Sparkles } from "lucide-react";
+import { Send, Plus, X, User, ChevronRight, ChevronDown, ChevronUp, ArrowLeft, ArrowUp, RefreshCw, Sparkles } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useLang } from "@/components/ui/LanguageContext";
 import LabsHeader from "@/components/labs/LabsHeader";
@@ -156,23 +156,99 @@ export default function LabsChat() {
   const [scrolled, setScrolled] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [showScrollBtn, setShowScrollBtn] = useState(false);
+  const [showBackToTop, setShowBackToTop] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const mainRef = useRef<HTMLElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
+  // Track whether user is pinned to bottom — controls auto-scroll behavior
+  const isAtBottomRef = useRef(true);
+  // Track whether we just sent a message (force-scroll on assistant response start)
+  const justSentRef = useRef(false);
+  // Prevent scroll-feedback loops
+  const programmaticScrollRef = useRef(false);
 
+  /** Auto-scroll logic: only scroll to bottom if user was already at bottom,
+   *  or if they just sent a message. Never fight the user's scroll position. */
+  const maybeScrollToBottom = useCallback((behavior: ScrollBehavior = "auto") => {
+    if (isAtBottomRef.current || justSentRef.current) {
+      programmaticScrollRef.current = true;
+      messagesEndRef.current?.scrollIntoView({ behavior, block: "end" });
+      // Reset after next frame so user-initiated scrolls register correctly
+      requestAnimationFrame(() => { programmaticScrollRef.current = false; });
+      justSentRef.current = false;
+    }
+  }, []);
+
+  // Scroll to bottom when new message is added (complete message, not every token)
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: isStreaming ? "auto" : "smooth" });
-  }, [messages, isStreaming]);
+    if (messages.length > 0) {
+      const lastMsg = messages[messages.length - 1];
+      // Smooth scroll on new user message; instant on final assistant message
+      const isUser = lastMsg.role === "user";
+      maybeScrollToBottom(isUser ? "smooth" : "auto");
+    }
+  // Only react when message count changes, not content updates during streaming
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messages.length]);
 
+  // Textarea auto-resize without layout jumps
   useEffect(() => {
     const ta = textareaRef.current;
     if (!ta) return;
     ta.style.height = "auto";
     ta.style.height = Math.min(ta.scrollHeight, 200) + "px";
   }, [input]);
+
+  // Track user-initiated scroll: detect if they've moved away from bottom
+  useEffect(() => {
+    const onScroll = () => {
+      if (programmaticScrollRef.current) return; // ignore our own scrolls
+      const scrollY = window.scrollY;
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const fromBottom = docHeight - scrollY;
+      // "At bottom" = within 40px of bottom (accounts for rounding, input height)
+      isAtBottomRef.current = fromBottom < 60;
+      setScrolled(scrollY > 8);
+      setScrollProgress(docHeight > 0 ? (scrollY / docHeight) * 100 : 0);
+      // Show "scroll to bottom" button during streaming if scrolled up
+      setShowScrollBtn(isStreaming && !isAtBottomRef.current && fromBottom > 120);
+      // Show back-to-top once scrolled a meaningful distance
+      setShowBackToTop(scrollY > 600);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [isStreaming]);
+
+  // During streaming, keep at bottom if pinned (throttled via rAF)
+  useEffect(() => {
+    if (!isStreaming) return;
+    let raf: number;
+    const tick = () => {
+      maybeScrollToBottom("auto");
+      raf = requestAnimationFrame(tick);
+    };
+    // Start after a brief delay so first content chunk renders
+    const start = setTimeout(() => { raf = requestAnimationFrame(tick); }, 100);
+    return () => {
+      clearTimeout(start);
+      cancelAnimationFrame(raf);
+    };
+  }, [isStreaming, maybeScrollToBottom]);
+
+  const scrollToBottom = useCallback(() => {
+    isAtBottomRef.current = true;
+    programmaticScrollRef.current = true;
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    requestAnimationFrame(() => { programmaticScrollRef.current = false; });
+  }, []);
+
+  const scrollToTop = useCallback(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
 
   const loadConversations = useCallback(async () => {
     try {
@@ -185,26 +261,6 @@ export default function LabsChat() {
   }, []);
 
   useEffect(() => { void loadConversations(); }, [loadConversations]);
-
-  // Scroll progress indicator + header shadow + scroll-to-bottom visibility
-  useEffect(() => {
-    const onScroll = () => {
-      const scrollY = window.scrollY;
-      setScrolled(scrollY > 8);
-      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-      setScrollProgress(docHeight > 0 ? (scrollY / docHeight) * 100 : 0);
-      // Show "scroll to bottom" if more than 120px from bottom (during streaming)
-      const fromBottom = docHeight - scrollY;
-      setShowScrollBtn(isStreaming && fromBottom > 150);
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    onScroll();
-    return () => window.removeEventListener("scroll", onScroll);
-  }, [isStreaming]);
-
-  const scrollToBottom = useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, []);
 
   useEffect(() => {
     const match = window.location.pathname.match(/\/(?:sv\/)?labs\/([a-f0-9-]+)/i);
@@ -409,6 +465,9 @@ export default function LabsChat() {
     setIsStreaming(true);
     setStreamingCursor(true);
     setShowProcess(false);
+    // When user sends a message, force scroll to bottom for the response
+    justSentRef.current = true;
+    isAtBottomRef.current = true;
 
     const assistantMsg: Message = { role: "assistant", content: "" };
     setMessages((prev) => [...prev, assistantMsg]);
@@ -1154,9 +1213,10 @@ export default function LabsChat() {
       <AnimatePresence>
         {showScrollBtn && (
           <motion.button
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
+            initial={{ opacity: 0, scale: 0.8, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.8, y: 10 }}
+            transition={{ duration: 0.2 }}
             type="button"
             className="labs-scroll-bottom"
             onClick={scrollToBottom}
@@ -1164,6 +1224,25 @@ export default function LabsChat() {
             title={isSv ? "Scrolla till botten" : "Scroll to bottom"}
           >
             <ChevronDown size={16} />
+          </motion.button>
+        )}
+      </AnimatePresence>
+
+      {/* Back to top button */}
+      <AnimatePresence>
+        {showBackToTop && !showScrollBtn && (
+          <motion.button
+            initial={{ opacity: 0, scale: 0.8, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.8, y: 10 }}
+            transition={{ duration: 0.2 }}
+            type="button"
+            className="labs-back-to-top"
+            onClick={scrollToTop}
+            aria-label={isSv ? "Tillbaka till toppen" : "Back to top"}
+            title={isSv ? "Tillbaka till toppen" : "Back to top"}
+          >
+            <ArrowUp size={15} />
           </motion.button>
         )}
       </AnimatePresence>

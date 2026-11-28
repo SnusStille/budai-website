@@ -2593,15 +2593,33 @@ body:has([data-labs-root]) {
 .labs-flows-section { margin-top: 24px; margin-bottom: 8px; }
 .labs-process-section { margin-bottom: 12px; }
 
-/* Scroll-to-bottom button during streaming */
+/* Back to top button */
+.labs-back-to-top {
+  position:fixed; bottom:84px; right:20px; z-index:44;
+  width:36px; height:36px; border-radius:50%;
+  background:rgba(12,12,20,0.85);
+  border:1px solid rgba(255,255,255,0.1);
+  color:rgba(255,255,255,0.6); cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  backdrop-filter:blur(12px);
+  box-shadow:0 4px 16px rgba(0,0,0,0.3);
+  transition:all 0.2s ease;
+}
+.labs-back-to-top:hover {
+  background:rgba(255,255,255,0.08);
+  color:#fff; border-color:rgba(255,255,255,0.2);
+  transform:scale(1.08);
+}
+
+/* Reposition scroll-bottom to sit above back-to-top/feedback */
 .labs-scroll-bottom {
-  position:fixed; bottom:84px; right:20px; z-index:45;
+  position:fixed; bottom:130px; right:20px; z-index:45;
   width:36px; height:36px; border-radius:50%;
   background:rgba(8,8,13,0.9);
   border:1px solid rgba(0,229,255,0.3);
   color:var(--labs-accent); cursor:pointer;
   display:flex; align-items:center; justify-content:center;
-  backdrop-filter: blur(12px);
+  backdrop-filter:blur(12px);
   box-shadow:0 4px 16px rgba(0,0,0,0.4), 0 0 12px rgba(0,229,255,0.15);
   transition:all 0.2s ease;
 }
@@ -2609,3 +2627,30 @@ body:has([data-labs-root]) {
   background:rgba(0,229,255,0.15);
   transform:scale(1.1);
 }
+
+/* On mobile, make FABs smaller to avoid covering */
+@media (max-width:500px) {
+  .fb-fab { bottom:16px; right:16px; padding:9px 12px; }
+  .labs-back-to-top { bottom:70px; right:16px; width:34px; height:34px; }
+  .labs-scroll-bottom { bottom:116px; right:16px; width:34px; height:34px; }
+}
+
+/* Markdown headings in messages */
+.labs-md-h { margin: 1em 0 0.4em; font-weight: 600; color: #fff; letter-spacing: -0.015em; }
+.labs-md-h2 { font-size: 16px; }
+.labs-md-h3 { font-size: 14.5px; }
+.labs-md-h4 { font-size: 13.5px; color: rgba(255,255,255,0.85); }
+.labs-md-hr { border: none; border-top: 1px solid rgba(255,255,255,0.06); margin: 1em 0; }
+
+/* Lists tighten */
+.labs-md-list li, .labs-md-ol li { line-height: 1.65; }
+
+/* User messages in bubbles — override list styles inside */
+.labs-message.user .labs-message-content ul,
+.labs-message.user .labs-message-content ol { padding-left: 1.2em; margin: 0.4em 0; }
+
+/* Better paragraph spacing */
+.labs-md-p + .labs-md-p { margin-top: 0.6em; }
+
+/* Inline code */
+.labs-inline-code { font-size: 0.85em; }
