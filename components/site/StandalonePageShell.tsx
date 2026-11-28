@@ -1,10 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Check, Cookie, Copy, Database, FileText, FlaskConical, History, Mail, Scale, Share2, Shield, UserRound } from "lucide-react";
 import BackToBudAI from "@/components/ui/BackToBudAI";
+import LangSwitcher from "@/components/ui/LangSwitcher";
 import { useLang } from "@/components/ui/LanguageContext";
 
 const PAGE_ICONS = { cookie: Cookie, data: Database, file: FileText, labs: FlaskConical, history: History, contact: Mail, gdpr: Scale, privacy: Shield, founder: UserRound };
@@ -38,19 +38,12 @@ export default function StandalonePageShell({
   showReadingProgress = true,
   children,
 }: StandalonePageShellProps) {
-  const router = useRouter();
-  const { setLang } = useLang();
   const Icon = PAGE_ICONS[icon];
   const contentRef = useRef<HTMLDivElement>(null);
   const [progress, setProgress] = useState(0);
   const [hasScroll, setHasScroll] = useState(false);
   const [readMinutes, setReadMinutes] = useState<number | null>(null);
   const [shareState, setShareState] = useState<"idle" | "copied" | "error">("idle");
-  const selectLanguage = (next: "en" | "sv", href: string) => {
-    setLang(next);
-    if (href === window.location.pathname) router.refresh();
-    else router.push(href);
-  };
 
   useEffect(() => {
     const content = contentRef.current;
@@ -128,10 +121,7 @@ export default function StandalonePageShell({
       <div className="mx-auto w-full max-w-2xl">
         <nav className="standalone-page-nav mb-8 flex items-center justify-between gap-3" aria-label={lang === "sv" ? "Sidnavigering och språk" : "Page navigation and language"}>
           <BackToBudAI href={backHref ?? (lang === "sv" ? "/sv" : "/")} lang={lang} nativeLink={nativeBackLink} />
-          <div className="standalone-page-languages" role="group" aria-label={lang === "sv" ? "Välj språk" : "Choose language"}>
-            <button type="button" aria-pressed={lang === "en"} onClick={() => selectLanguage("en", enHref)}>EN</button>
-            <button type="button" aria-pressed={lang === "sv"} onClick={() => selectLanguage("sv", svHref)}>SV</button>
-          </div>
+          <LangSwitcher variant="pill" labsContext="main" />
         </nav>
 
         <motion.article

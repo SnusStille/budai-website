@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Plus, X, User, ChevronRight, ChevronDown, ArrowLeft, ArrowUp, MessageSquare, Lightbulb, UserCheck, FileText } from "lucide-react";
+import { Send, Plus, X, User, ChevronRight, ChevronDown, ArrowLeft, MessageSquare, Lightbulb, UserCheck, FileText } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useLang } from "@/components/ui/LanguageContext";
 import LabsHeader from "@/components/labs/LabsHeader";
@@ -31,7 +31,7 @@ import ProjectJourney from "./ProjectJourney";
 import ProjectSummaryCard from "./ProjectSummaryCard";
 import SmartSuggestions from "./SmartSuggestions";
 import LiveUnderstanding from "./LiveUnderstanding";
-import FeedbackButton from "./FeedbackButton";
+import FeedbackButton from "@/components/ui/FeedbackButton";
 import TypingIndicator from "./TypingIndicator";
 import ProjectBriefCard from "./ProjectBriefCard";
 import WhatsNew from "@/components/ui/WhatsNew";
@@ -222,8 +222,8 @@ export default function LabsChat() {
         isAtBottomRef.current = fromBottom < 80;
         setScrolled(scrollY > 8);
         setScrollProgress(docHeight > 0 ? (scrollY / docHeight) * 100 : 0);
-        setShowScrollBtn(isStreamingRef.current && !isAtBottomRef.current && fromBottom > 120);
-        setShowBackToTop(scrollY > 250);
+        setShowScrollBtn(isStreamingRef.current && !isAtBottomRef.current && fromBottom > 200);
+        setShowBackToTop(scrollY > 500);
         setBriefDockVisible(scrollY > 200 && messages.length > 2);
         ticking = false;
       });
@@ -1209,7 +1209,7 @@ export default function LabsChat() {
       </main>
 
       {/* Feedback FAB */}
-      <FeedbackButton lang={lang} conversationId={conversationId} />
+      <FeedbackButton />
 
       {/* Scroll to bottom during streaming */}
       <AnimatePresence>
@@ -1230,21 +1230,21 @@ export default function LabsChat() {
         )}
       </AnimatePresence>
 
-      {/* Back to top button */}
+      {/* Back to top button — matches main BudAI site */}
       <AnimatePresence>
         {showBackToTop && !showScrollBtn && (
           <motion.button
-            initial={{ opacity: 0, scale: 0.8, y: 10 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.8, y: 10 }}
-            transition={{ duration: 0.2 }}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 16 }}
+            transition={{ duration: 0.3 }}
             type="button"
             className="labs-back-to-top"
             onClick={scrollToTop}
-            aria-label={isSv ? "Tillbaka till toppen" : "Back to top"}
-            title={isSv ? "Tillbaka till toppen" : "Back to top"}
+            aria-label={isSv ? "Till toppen" : "Back to top"}
+            title={isSv ? "Till toppen" : "Back to top"}
           >
-            <ArrowUp size={15} />
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M12 19V5M5 12l7-7 7 7" /></svg>
           </motion.button>
         )}
       </AnimatePresence>
