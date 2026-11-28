@@ -29,6 +29,8 @@ import ProjectJourney from "./ProjectJourney";
 import ProjectSummaryCard from "./ProjectSummaryCard";
 import SmartSuggestions from "./SmartSuggestions";
 import LiveUnderstanding from "./LiveUnderstanding";
+import FeedbackButton from "./FeedbackButton";
+import TypingIndicator from "./TypingIndicator";
 
 type Message = {
   id?: string;
@@ -149,8 +151,11 @@ export default function LabsChat() {
   const [submittingBrief, setSubmittingBrief] = useState(false);
   const [copiedToast, setCopiedToast] = useState(false);
   const [liveProfile, setLiveProfile] = useState<any | null>(null);
+  const [scrolled, setScrolled] = useState(false);
+  const [scrollProgress, setScrollProgress] = useState(0);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const mainRef = useRef<HTMLElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
 
@@ -176,6 +181,19 @@ export default function LabsChat() {
   }, []);
 
   useEffect(() => { void loadConversations(); }, [loadConversations]);
+
+  // Scroll progress indicator + header shadow on scroll
+  useEffect(() => {
+    const onScroll = () => {
+      const scrollY = window.scrollY;
+      setScrolled(scrollY > 8);
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      setScrollProgress(docHeight > 0 ? (scrollY / docHeight) * 100 : 0);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   useEffect(() => {
     const match = window.location.pathname.match(/\/(?:sv\/)?labs\/([a-f0-9-]+)/i);
@@ -579,9 +597,11 @@ export default function LabsChat() {
         onToggleHistory={() => setHistoryOpen(true)}
         onNewChat={startNewChat}
         showHistoryButton={conversations.length > 0 || isChatActive}
+        scrolled={scrolled}
+        scrollProgress={scrollProgress}
       />
 
-      <main className="labs-main">
+      <main ref={mainRef} className="labs-main">
         {errorMsg && <div className="labs-error" role="alert">{errorMsg}</div>}
 
         {isWelcome ? (
@@ -912,8 +932,10 @@ export default function LabsChat() {
                       {msg.role === "user" ? (isSv ? "Du" : "You") : "BudAI"}
                     </div>
                     <div className="labs-message-content">
-                      {msg.role === "assistant" ? renderMarkdown(msg.content) : msg.content}
-                      {streamingCursor && i === messages.length - 1 && msg.role === "assistant" && (
+                      {msg.role === "assistant" && msg.content.length === 0 && isStreaming && i === messages.length - 1 ? (
+                        <TypingIndicator />
+                      ) : msg.role === "assistant" ? renderMarkdown(msg.content) : msg.content}
+                      {streamingCursor && i === messages.length - 1 && msg.role === "assistant" && msg.content.length > 0 && (
                         <span className="labs-streaming-cursor" aria-hidden />
                       )}
                     </div>
@@ -1066,10 +1088,27 @@ export default function LabsChat() {
           <div className="labs-footer-brand">
             <StilledevWordmark size="sm" showTagline={false} />
           </div>
-          <p className="labs-footer-text">{t.footer.tagline}</p>
+          {isChatActive && (
+            <div className="labs-conv-progress" aria-hidden>
+              <span>{isSv ? "Framsteg" : "Progress"}</span>
+              <span className="labs-conv-dots">
+                {["discovery","scoping","assessment","blueprint_ready","conclusion_proposed","submitted"].map((stage, idx) => {
+                  const stages = ["discovery","scoping","assessment","blueprint_ready","conclusion_proposed","submitted"];
+                  const curIdx = stages.indexOf(journeyStage);
+                  const state = idx < curIdx ? "done" : idx === curIdx ? "active" : "";
+                  return <span key={stage} className={`labs-conv-dot ${state}`} />;
+                })}
+              </span>
+            </div>
+          )}
+          {!isChatActive && <p className="labs-footer-text">{t.footer.tagline}</p>}
           <div className="labs-footer-links">
             <a href={isSv ? "/sv" : "/"} className="labs-footer-link">
-              {isSv ? "Stilledev" : "Stilledev"}
+              BudAI
+            </a>
+            <span style={{ color: "var(--labs-text-faint)", fontSize: 8 }}>·</span>
+            <a href={isSv ? "/sv" : "/"} className="labs-footer-link">
+              Stilledev
             </a>
             <span style={{ color: "var(--labs-text-faint)", fontSize: 8 }}>·</span>
             <span className="labs-footer-link" style={{ cursor: "default" }}>
@@ -1078,6 +1117,9 @@ export default function LabsChat() {
           </div>
         </footer>
       </main>
+
+      {/* Feedback FAB */}
+      <FeedbackButton lang={lang} conversationId={conversationId} />
 
       {/* History panel */}
       <AnimatePresence>
