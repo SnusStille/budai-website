@@ -191,26 +191,77 @@ export default function ProjectBriefCard({
         </div>
       )}
 
-      {/* Feature chips */}
-      {featuresCount > 0 && (
+      {/* Feature chips — visually separated by source */}
+      {(featuresCount > 0 || (data.nice_to_have_features || []).length > 0 || (data.suggested_features || []).length > 0) && (
         <div className="pbc-section">
           <span className="pbc-section-label"><Layers size={10} /> {l.features}</span>
-          <div className="pbc-features">
-            {data.key_features!.slice(0, 4).map((f, i) => (
-              <motion.span
-                key={i}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.25, delay: i * 0.04 }}
-                className="pbc-feat-chip"
-              >
-                {truncate(f, 32)}
-              </motion.span>
-            ))}
-            {featuresCount > 4 && (
-              <span className="pbc-feat-more">+{featuresCount - 4} {l.more}</span>
-            )}
-          </div>
+
+          {/* Customer-stated MUST-HAVE features */}
+          {featuresCount > 0 && (
+            <div className="pbc-feat-group">
+              <span className="pbc-feat-group-label">{lang === "sv" ? "Dina krav" : "Your requirements"}</span>
+              <div className="pbc-features">
+                {data.key_features!.slice(0, 5).map((f, i) => (
+                  <motion.span
+                    key={`m-${i}`}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.25, delay: i * 0.04 }}
+                    className="pbc-feat-chip pbc-feat-must"
+                  >
+                    {truncate(f, 30)}
+                  </motion.span>
+                ))}
+                {featuresCount > 5 && (
+                  <span className="pbc-feat-more">+{featuresCount - 5} {l.more}</span>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Nice-to-have features */}
+          {(data.nice_to_have_features || []).length > 0 && (
+            <div className="pbc-feat-group">
+              <span className="pbc-feat-group-label pbc-fgl-nice">{lang === "sv" ? "Bra att ha" : "Nice to have"}</span>
+              <div className="pbc-features">
+                {(data.nice_to_have_features || []).slice(0, 3).map((f, i) => (
+                  <motion.span
+                    key={`n-${i}`}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.25, delay: 0.1 + i * 0.04 }}
+                    className="pbc-feat-chip pbc-feat-nice"
+                  >
+                    {truncate(f, 28)}
+                  </motion.span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* AI-suggested features */}
+          {(data.suggested_features || []).length > 0 && (
+            <div className="pbc-feat-group">
+              <span className="pbc-feat-group-label pbc-fgl-suggested">
+                <Sparkles size={9} />
+                {lang === "sv" ? "BudAI föreslår" : "BudAI suggests"}
+              </span>
+              <div className="pbc-features">
+                {(data.suggested_features || []).slice(0, 3).map((f, i) => (
+                  <motion.span
+                    key={`s-${i}`}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.25, delay: 0.2 + i * 0.04 }}
+                    className="pbc-feat-chip pbc-feat-suggested"
+                  >
+                    <Sparkles size={8} />
+                    {truncate(f, 26)}
+                  </motion.span>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 

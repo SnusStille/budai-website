@@ -2568,6 +2568,37 @@ body:has([data-labs-root]) {
   padding: 4px 0;
 }
 
+/* Feature groups — visually separate must-have / nice-to-have / AI-suggested */
+.pbc-feat-group { margin-top:8px; }
+.pbc-feat-group:first-child { margin-top:6px; }
+.pbc-feat-group-label {
+  display:inline-flex; align-items:center; gap:4px;
+  font-family:var(--labs-mono); font-size:9px; font-weight:600;
+  text-transform:uppercase; letter-spacing:0.06em;
+  color:rgba(255,255,255,0.35); margin-bottom:5px;
+}
+.pbc-fgl-nice { color:rgba(251,191,36,0.6); }
+.pbc-fgl-suggested { color:rgba(124,92,255,0.8); }
+
+.pbc-feat-chip { display:inline-flex; align-items:center; gap:3px; }
+.pbc-feat-must {
+  background:rgba(0,229,255,0.08);
+  border-color:rgba(0,229,255,0.2);
+  color:rgba(234,236,239,0.85);
+}
+.pbc-feat-nice {
+  background:rgba(251,191,36,0.06);
+  border-color:rgba(251,191,36,0.18);
+  color:rgba(251,191,36,0.85);
+  border-style:dashed;
+}
+.pbc-feat-suggested {
+  background:linear-gradient(135deg, rgba(124,92,255,0.10), rgba(0,229,255,0.06));
+  border-color:rgba(124,92,255,0.3);
+  color:rgba(200,186,255,0.9);
+}
+.pbc-feat-suggested svg { opacity:0.7; color:#a78bfa; }
+
 /* Phasing (MVP/V2/V3 bar viz) */
 .pbc-phases { display:flex; flex-direction:column; gap:7px; margin-top:6px; }
 .pbc-phase-row { display:flex; flex-direction:column; gap:4px; }
