@@ -34,6 +34,7 @@ import LiveUnderstanding from "./LiveUnderstanding";
 import FeedbackButton from "@/components/ui/FeedbackButton";
 import TypingIndicator from "./TypingIndicator";
 import ProjectBriefCard from "./ProjectBriefCard";
+import RequirementsMap from "./RequirementsMap";
 import WhatsNew from "@/components/ui/WhatsNew";
 import BackToBudAI from "@/components/ui/BackToBudAI";
 
@@ -942,6 +943,11 @@ export default function LabsChat() {
             {/* Live Project Brief Card — shows the project taking shape */}
             {isChatActive && liveProfile && (
               <ProjectBriefCard data={liveProfile} lang={lang} isStreaming={isStreaming} />
+            )}
+
+            {/* Requirements Map — intelligent "you'll also need" detection */}
+            {isChatActive && liveProfile && (
+              <RequirementsMap data={liveProfile} lang={lang} />
             )}
 
             {/* Live Understanding panel — discrete real-time "what we know" */}

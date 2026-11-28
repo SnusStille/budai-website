@@ -2789,6 +2789,52 @@ body:has([data-labs-root]) {
 }
 .pbc-mvp-note svg { opacity:0.8; flex-shrink:0; color:#00e5ff; }
 
+/* ── Requirements Map (infrastructure detection) ── */
+.req-map {
+  max-width:760px; margin:10px auto 0; padding:12px 14px;
+  background:linear-gradient(135deg, rgba(124,92,255,0.05), rgba(0,229,255,0.03));
+  border:1px solid rgba(124,92,255,0.15);
+  border-radius:12px;
+}
+.req-map-head {
+  display:flex; align-items:center; gap:7px; margin-bottom:10px;
+}
+.req-map-head-icon {
+  display:flex; align-items:center; justify-content:center;
+  width:20px; height:20px; border-radius:6px;
+  background:rgba(124,92,255,0.15); color:#a78bfa; flex-shrink:0;
+}
+.req-map-title {
+  font-size:11px; font-weight:600; color:rgba(234,236,239,0.85);
+}
+.req-map-hint {
+  font-family:var(--labs-mono); font-size:9px; color:rgba(255,255,255,0.35);
+  letter-spacing:0.05em; margin-left:auto;
+}
+.req-map-grid {
+  display:flex; flex-wrap:wrap; gap:5px;
+}
+.req-map-item {
+  display:inline-flex; align-items:center; gap:5px;
+  padding:5px 10px; border-radius:8px;
+  background:rgba(255,255,255,0.03);
+  border:1px solid color-mix(in srgb, var(--req-color) 25%, rgba(255,255,255,0.05));
+  color:rgba(234,236,239,0.75); font-size:11px;
+  transition:all 0.15s ease;
+}
+.req-map-item:hover {
+  background:color-mix(in srgb, var(--req-color) 10%, rgba(255,255,255,0.03));
+  color:#fff;
+}
+.req-map-item-icon {
+  color: var(--req-color);
+  opacity: 0.85;
+}
+.req-map-footnote {
+  margin:8px 0 0; font-size:10px; color:rgba(255,255,255,0.35);
+  font-style:italic; line-height:1.5;
+}
+
 .pbc-meta {
   display: flex;
   flex-wrap: wrap;
