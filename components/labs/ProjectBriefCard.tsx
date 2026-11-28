@@ -342,11 +342,39 @@ export default function ProjectBriefCard({
         )}
       </div>
 
-      {/* Risks (if any) */}
-      {risks.length > 0 && (
-        <div className="pbc-risks">
-          <AlertTriangle size={11} />
-          <span>{truncate(risks[0], 100)}</span>
+      {/* Reality Check — honest feasibility / budget fit / simpler alternatives */}
+      {(data.reality_check?.red_flags?.length || data.reality_check?.simpler_alternatives?.length || data.reality_check?.budget_scope_fit === "unrealistic" || data.reality_check?.technically_feasible === false || risks.length > 0) && (
+        <div className="pbc-reality">
+          <div className="pbc-reality-head">
+            <AlertTriangle size={11} />
+            <span>{lang === "sv" ? "Reality check" : "Reality check"}</span>
+          </div>
+          {data.reality_check?.technically_feasible === false && (
+            <div className="pbc-reality-item pbc-rci-red">
+              <span>{lang === "sv" ? "Viss teknisk risk identifierad" : "Some technical risk identified"}</span>
+            </div>
+          )}
+          {data.reality_check?.budget_scope_fit === "tight" && (
+            <div className="pbc-reality-item pbc-rci-amber">
+              <span>{lang === "sv" ? "Budgeten kan vara något stram för alla funktioner" : "Budget may be slightly tight for all features"}</span>
+            </div>
+          )}
+          {data.reality_check?.budget_scope_fit === "unrealistic" && (
+            <div className="pbc-reality-item pbc-rci-red">
+              <span>{lang === "sv" ? "Budgeten sannolikt inte i linje med omfattningen — vi diskuterar avgränsningar" : "Budget likely not aligned with scope — let's discuss trade-offs"}</span>
+            </div>
+          )}
+          {risks.slice(0, 1).map((r, i) => (
+            <div key={i} className="pbc-reality-item pbc-rci-amber">
+              <span>{truncate(r, 110)}</span>
+            </div>
+          ))}
+          {(data.reality_check?.simpler_alternatives || []).slice(0, 1).map((s, i) => (
+            <div key={i} className="pbc-reality-item pbc-rci-green">
+              <CheckCircle2 size={10} />
+              <span>{truncate(s, 110)}</span>
+            </div>
+          ))}
         </div>
       )}
 

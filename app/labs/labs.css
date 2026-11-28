@@ -2671,20 +2671,34 @@ body:has([data-labs-root]) {
   color: var(--labs-text-faint);
 }
 
-.pbc-risks {
-  display: flex;
-  align-items: flex-start;
-  gap: 6px;
-  font-size: 11px;
-  color: #fbbf24;
-  background: rgba(251,191,36,0.05);
-  border: 1px solid rgba(251,191,36,0.12);
-  border-radius: 8px;
-  padding: 7px 10px;
-  margin-bottom: 12px;
-  line-height: 1.45;
+/* Reality check panel — honest feasibility/budget-fit feedback */
+.pbc-reality {
+  background:linear-gradient(135deg, rgba(251,191,36,0.05), rgba(248,113,113,0.03));
+  border:1px solid rgba(251,191,36,0.15);
+  border-radius:10px;
+  padding:10px 12px;
+  margin-bottom:12px;
+  display:flex; flex-direction:column; gap:6px;
 }
-.pbc-risks svg { flex-shrink: 0; margin-top: 1px; }
+.pbc-reality-head {
+  display:flex; align-items:center; gap:6px;
+  font-family:var(--labs-mono); font-size:9px; font-weight:700;
+  text-transform:uppercase; letter-spacing:0.08em;
+  color:#fbbf24; margin-bottom:2px;
+}
+.pbc-reality-item {
+  display:flex; align-items:flex-start; gap:6px;
+  font-size:11px; line-height:1.45; padding:4px 0;
+  border-top:1px solid rgba(255,255,255,0.04);
+}
+.pbc-reality-item:first-of-type { border-top:none; padding-top:2px; }
+.pbc-rci-amber { color:rgba(251,191,36,0.9); }
+.pbc-rci-red   { color:rgba(248,113,113,0.95); }
+.pbc-rci-green { color:rgba(52,211,153,0.9); }
+.pbc-rci-green svg { color:#34d399; flex-shrink:0; margin-top:2px; }
+
+/* Legacy — still used elsewhere; keep minimal */
+.pbc-risks { display:none; }
 
 .pbc-progress {
   display: flex;
