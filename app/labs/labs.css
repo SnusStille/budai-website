@@ -1894,3 +1894,88 @@ body:has([data-labs-root]) {
   line-height: 1;
   margin-top: 1px;
 }
+
+/* ── Project Journey indicator ── */
+.pj-container {
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto 14px;
+  padding: 0 var(--labs-px);
+  opacity: 0.85;
+}
+.pj-track {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0;
+}
+.pj-step {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+.pj-step:last-child { flex: 0; }
+.pj-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.02);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s cubic-bezier(0.16,1,0.3,1);
+  color: var(--labs-accent);
+}
+.pj-dot-active {
+  border-color: var(--labs-accent);
+  background: color-mix(in srgb, var(--labs-accent) 15%, transparent);
+}
+.pj-dot-current {
+  background: var(--labs-accent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--labs-accent) 15%, transparent),
+              0 0 12px color-mix(in srgb, var(--labs-accent) 40%, transparent);
+  animation: pj-pulse 2s ease-in-out infinite;
+}
+@keyframes pj-pulse {
+  0%,100% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--labs-accent) 15%, transparent), 0 0 12px color-mix(in srgb, var(--labs-accent) 40%, transparent); }
+  50% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--labs-accent) 10%, transparent), 0 0 18px color-mix(in srgb, var(--labs-accent) 50%, transparent); }
+}
+.pj-line {
+  flex: 1;
+  height: 1.5px;
+  background: rgba(255,255,255,0.08);
+  margin: 0 4px;
+  transition: background 0.4s ease;
+}
+.pj-line-active {
+  background: color-mix(in srgb, var(--labs-accent) 50%, rgba(255,255,255,0.1));
+}
+.pj-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+}
+.pj-label {
+  flex: 1;
+  text-align: center;
+  font-size: 9px;
+  font-family: var(--labs-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--labs-text-faint);
+  transition: color 0.3s;
+}
+.pj-label-current {
+  color: var(--labs-accent);
+  font-weight: 600;
+}
+.pj-label-done {
+  color: var(--labs-text-muted);
+}
+
+@media (max-width: 500px) {
+  .pj-container { max-width: 100%; }
+  .pj-label { font-size: 8px; letter-spacing: 0.04em; }
+}

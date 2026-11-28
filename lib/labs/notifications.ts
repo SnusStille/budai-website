@@ -14,7 +14,8 @@ export type LabsNotificationKind =
   | "contact_received"
   | "project_qualified"
   | "summary_ready"
-  | "high_priority_lead";
+  | "high_priority_lead"
+  | "brief_submitted";
 
 /** Create a notification in the DB and optionally email it. */
 export async function createLabsNotification(opts: {
