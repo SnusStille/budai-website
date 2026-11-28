@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Plus, X, User, ChevronRight, ChevronDown, ChevronUp, ArrowLeft, ArrowUp, RefreshCw, Sparkles } from "lucide-react";
+import { Send, Plus, X, User, ChevronRight, ChevronDown, ChevronUp, ArrowLeft, ArrowUp } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useLang } from "@/components/ui/LanguageContext";
 import LabsHeader from "@/components/labs/LabsHeader";
@@ -26,13 +26,13 @@ import { useLabsTranslation } from "@/lib/labs/i18n";
 import { SERVICES, type ServiceCategory, type ServiceDef } from "@/lib/labs/services";
 import ProjectBlueprint from "@/components/labs/ProjectBlueprint";
 import { renderMarkdown } from "@/lib/labs/markdown";
-import { WebsiteDemo, WebAppDemo, GameDemo, RobloxDemo, AutomationDemo } from "./SolutionDemos";
 import ProjectJourney from "./ProjectJourney";
 import ProjectSummaryCard from "./ProjectSummaryCard";
 import SmartSuggestions from "./SmartSuggestions";
 import LiveUnderstanding from "./LiveUnderstanding";
 import FeedbackButton from "./FeedbackButton";
 import TypingIndicator from "./TypingIndicator";
+import WhatsNew from "@/components/ui/WhatsNew";
 
 type Message = {
   id?: string;
@@ -144,7 +144,7 @@ export default function LabsChat() {
   const [errorMsg, setErrorMsg] = useState("");
   const [userMessageCount, setUserMessageCount] = useState(0);
   const [selectedService, setSelectedService] = useState<ServiceCategory | null>(null);
-  const [showProcess, setShowProcess] = useState(false);
+
   const [blueprintShown, setBlueprintShown] = useState(false);
   const [summaryShown, setSummaryShown] = useState(false);
   const [summaryProfile, setSummaryProfile] = useState<any | null>(null);
@@ -169,6 +169,8 @@ export default function LabsChat() {
   const justSentRef = useRef(false);
   // Prevent scroll-feedback loops
   const programmaticScrollRef = useRef(false);
+  // Mirror isStreaming in a ref for the RAF-throttled scroll handler
+  const isStreamingRef = useRef(false);
 
   /** Auto-scroll logic: only scroll to bottom if user was already at bottom,
    *  or if they just sent a message. Never fight the user's scroll position. */
@@ -202,26 +204,29 @@ export default function LabsChat() {
     ta.style.height = Math.min(ta.scrollHeight, 200) + "px";
   }, [input]);
 
-  // Track user-initiated scroll: detect if they've moved away from bottom
+  // Track user-initiated scroll: RAF-throttled to prevent jank
   useEffect(() => {
+    let ticking = false;
     const onScroll = () => {
-      if (programmaticScrollRef.current) return; // ignore our own scrolls
-      const scrollY = window.scrollY;
-      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-      const fromBottom = docHeight - scrollY;
-      // "At bottom" = within 40px of bottom (accounts for rounding, input height)
-      isAtBottomRef.current = fromBottom < 60;
-      setScrolled(scrollY > 8);
-      setScrollProgress(docHeight > 0 ? (scrollY / docHeight) * 100 : 0);
-      // Show "scroll to bottom" button during streaming if scrolled up
-      setShowScrollBtn(isStreaming && !isAtBottomRef.current && fromBottom > 120);
-      // Show back-to-top once scrolled a meaningful distance
-      setShowBackToTop(scrollY > 600);
+      if (programmaticScrollRef.current) return;
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        const scrollY = window.scrollY;
+        const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+        const fromBottom = docHeight - scrollY;
+        isAtBottomRef.current = fromBottom < 80;
+        setScrolled(scrollY > 8);
+        setScrollProgress(docHeight > 0 ? (scrollY / docHeight) * 100 : 0);
+        setShowScrollBtn(isStreamingRef.current && !isAtBottomRef.current && fromBottom > 120);
+        setShowBackToTop(scrollY > 600);
+        ticking = false;
+      });
     };
     window.addEventListener("scroll", onScroll, { passive: true });
     onScroll();
     return () => window.removeEventListener("scroll", onScroll);
-  }, [isStreaming]);
+  }, []);
 
   // During streaming, keep at bottom if pinned (throttled via rAF)
   useEffect(() => {
@@ -305,7 +310,6 @@ export default function LabsChat() {
         setHistoryOpen(false);
         setContactSubmitted(!!data.project?.contact_collected_at);
         setSelectedService(null);
-        setShowProcess(false);
         const userMsgs = (data.messages || []).filter((m: Message) => m.role === "user");
         setUserMessageCount(userMsgs.length);
       }
@@ -321,7 +325,6 @@ export default function LabsChat() {
     setErrorMsg("");
     setUserMessageCount(0);
     setSelectedService(null);
-    setShowProcess(false);
     setBlueprintShown(false);
     setSummaryShown(false);
     setSummaryProfile(null);
@@ -474,8 +477,8 @@ export default function LabsChat() {
     setInput("");
     setErrorMsg("");
     setIsStreaming(true);
+    isStreamingRef.current = true;
     setStreamingCursor(true);
-    setShowProcess(false);
     // When user sends a message, force scroll to bottom for the response
     justSentRef.current = true;
     isAtBottomRef.current = true;
@@ -509,6 +512,7 @@ export default function LabsChat() {
         else if (res.status === 503) setErrorMsg(t.errors.dbUnavailable);
         else setErrorMsg(t.errors.sendFailed);
         setIsStreaming(false);
+    isStreamingRef.current = false;
         setStreamingCursor(false);
         setMessages((prev) => prev.slice(0, -1));
         return;
@@ -597,6 +601,7 @@ export default function LabsChat() {
 
       setStreamingCursor(false);
       setIsStreaming(false);
+    isStreamingRef.current = false;
       if (receivedContactRequest && !contactOpen && !contactSubmitted) setContactOpen(true);
       void loadConversations();
     } catch (err) {
@@ -605,6 +610,7 @@ export default function LabsChat() {
         setMessages((prev) => prev.slice(0, -1));
       }
       setIsStreaming(false);
+    isStreamingRef.current = false;
       setStreamingCursor(false);
     }
   };
@@ -787,92 +793,7 @@ export default function LabsChat() {
               </div>
             </motion.div>
 
-            {/* Dedicated flows — Existing Project / Idea to MVP */}
-            {t.scenarios.dedicatedFlows && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.5, delay: 0.34 }}
-                className="labs-flows-section"
-              >
-                <p className="labs-section-label">{t.scenarios.dedicatedFlows.label}</p>
-                <div className="labs-flows-grid">
-                  <motion.button
-                    type="button"
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.35, delay: 0.38 }}
-                    onClick={() => {
-                      setInput(t.scenarios.dedicatedFlows.existing.prompt);
-                      setTimeout(() => textareaRef.current?.focus(), 80);
-                    }}
-                    className="labs-flow-card"
-                  >
-                    <span className="labs-flow-card-icon"><RefreshCw size={14} /></span>
-                    <span className="labs-flow-tag">{t.scenarios.dedicatedFlows.existing.tag}</span>
-                    <span className="labs-flow-title">{t.scenarios.dedicatedFlows.existing.title}</span>
-                    <span className="labs-flow-desc">{t.scenarios.dedicatedFlows.existing.desc}</span>
-                    <ChevronRight className="labs-flow-arrow" size={16} />
-                  </motion.button>
-                  <motion.button
-                    type="button"
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.35, delay: 0.43 }}
-                    onClick={() => {
-                      setInput(t.scenarios.dedicatedFlows.idea.prompt);
-                      setTimeout(() => textareaRef.current?.focus(), 80);
-                    }}
-                    className="labs-flow-card"
-                  >
-                    <span className="labs-flow-card-icon"><Sparkles size={14} /></span>
-                    <span className="labs-flow-tag">{t.scenarios.dedicatedFlows.idea.tag}</span>
-                    <span className="labs-flow-title">{t.scenarios.dedicatedFlows.idea.title}</span>
-                    <span className="labs-flow-desc">{t.scenarios.dedicatedFlows.idea.desc}</span>
-                    <ChevronRight className="labs-flow-arrow" size={16} />
-                  </motion.button>
-                </div>
-              </motion.div>
-            )}
 
-            {/* Process section — 5 steps */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.4 }}
-              className="labs-process-section"
-            >
-              <button
-                type="button"
-                onClick={() => setShowProcess(!showProcess)}
-                className="labs-process-toggle"
-              >
-                {showProcess ? "−" : "+"} {t.process.title}
-              </button>
-              <AnimatePresence>
-                {showProcess && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="labs-process-grid"
-                  >
-                    {[1, 2, 3, 4, 5].map((n) => {
-                      const key = `step${n}Title` as keyof typeof t.process;
-                      const descKey = `step${n}Desc` as keyof typeof t.process;
-                      return (
-                        <div key={n} className="labs-process-step">
-                          <span className="labs-process-num">{n}</span>
-                          <span className="labs-process-title">{t.process[key] as string}</span>
-                          <span className="labs-process-desc">{t.process[descKey] as string}</span>
-                        </div>
-                      );
-                    })}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.div>
 
             {/* Built by Oliver */}
             <motion.div
@@ -895,52 +816,7 @@ export default function LabsChat() {
               </div>
             </motion.div>
 
-            {/* Solution explorer */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.48 }}
-              className="labs-explorer-section"
-            >
-              <div className="labs-section-label">{t.explorer.label}</div>
-              <h2 className="labs-section-title">{t.explorer.title}</h2>
-              <div className="labs-explorer-grid">
-                <WebsiteDemo onExplore={() => selectCategory("website")} title={t.explorer.website} exploreLabel={t.explorer.exploreBtn} conceptLabel={t.explorer.conceptLabel} lang={lang} />
-                <WebAppDemo onExplore={() => selectCategory("webapp")} title={t.explorer.webapp} exploreLabel={t.explorer.exploreBtn} conceptLabel={t.explorer.conceptLabel} lang={lang} />
-                <GameDemo onExplore={() => selectCategory("game", isSv ? "FiveM-servrar och inventory-system" : "FiveM servers and inventory systems")} title={t.explorer.game} exploreLabel={t.explorer.exploreBtn} conceptLabel={t.explorer.conceptLabel} lang={lang} />
-                <RobloxDemo onExplore={() => selectCategory("game", isSv ? "Roblox-spel och Luau-script" : "Roblox games and Luau scripts")} title={t.explorer.roblox} exploreLabel={t.explorer.exploreBtn} conceptLabel={t.explorer.conceptLabel} lang={lang} />
-                <AutomationDemo onExplore={() => selectCategory("ai_automation")} title={t.explorer.automation} exploreLabel={t.explorer.exploreBtn} conceptLabel={t.explorer.conceptLabel} lang={lang} />
-              </div>
-              <p className="labs-explorer-hint">{t.explorer.hint}</p>
-            </motion.div>
 
-            {/* Value props */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.54 }}
-              className="labs-valueprops-section"
-            >
-              <div className="labs-valueprops-grid">
-                {([
-                  ["directTitle", "directBody", "→"],
-                  ["honestTitle", "honestBody", "✓"],
-                  ["deliveryTitle", "deliveryBody", "◈"],
-                ] as const).map(([titleKey, bodyKey, sym], i) => (
-                  <motion.div
-                    key={titleKey}
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.35, delay: 0.56 + i * 0.05 }}
-                    className="labs-valueprop"
-                  >
-                    <span className="labs-valueprop-symbol">{sym}</span>
-                    <h4 className="labs-valueprop-title">{(t.valueProps as any)[titleKey]}</h4>
-                    <p className="labs-valueprop-body">{(t.valueProps as any)[bodyKey]}</p>
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
 
             {/* Direct input */}
             <motion.div
@@ -1411,6 +1287,9 @@ export default function LabsChat() {
       </AnimatePresence>
 
       {/* Contact success overlay in chat is handled by message add */}
+
+      {/* What's New panel — shared with BudAI main site */}
+      <WhatsNew />
     </div>
   );
 }

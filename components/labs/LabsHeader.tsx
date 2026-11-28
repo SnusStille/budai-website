@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Menu, Plus, ArrowLeft, ArrowUpRight, Mail } from "lucide-react";
+import { useState } from "react";
+import { Menu, Plus, ArrowLeft, Bell } from "lucide-react";
 import { useLang } from "@/components/ui/LanguageContext";
 import StilledevWordmark from "@/components/ui/StilledevWordmark";
 import LangSwitcher from "@/components/ui/LangSwitcher";
@@ -29,18 +30,29 @@ export default function LabsHeader({
   const { lang } = useLang();
   const t = useLabsTranslation(lang);
   const pathname = usePathname();
+  const router = useRouter();
+  const [leaving, setLeaving] = useState(false);
 
   const isOnDeepLink = pathname.match(/\/(?:sv\/)?labs\/[a-f0-9-]+$/i);
   const backHref = lang === "sv" ? "/sv/labs" : "/labs";
   const budaiHref = lang === "sv" ? "/sv" : "/";
-  const contactHref = lang === "sv" ? "/sv/contact" : "/contact";
+
+  const handleBackToBudai = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    // Smooth fade-out transition before navigating
+    e.preventDefault();
+    if (leaving) return;
+    setLeaving(true);
+    setTimeout(() => {
+      router.push(budaiHref);
+    }, 280);
+  };
 
   return (
     <motion.header
       initial={{ y: -60, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.5, delay: 0.05, ease: [0.22, 1, 0.36, 1] }}
-      className={`labs-header ${scrolled ? "labs-scrolled" : ""}`}
+      className={`labs-header ${scrolled ? "labs-scrolled" : ""} ${leaving ? "labs-header-leaving" : ""}`}
       role="banner"
     >
       <div
@@ -49,7 +61,7 @@ export default function LabsHeader({
         aria-hidden
       />
       <div className="labs-header-inner">
-        {/* Left side: nav + brand */}
+        {/* Left side */}
         <div className="labs-header-left">
           {isOnDeepLink ? (
             <Link
@@ -70,45 +82,43 @@ export default function LabsHeader({
             </button>
           ) : null}
 
-          {/* Brand — Stilledev wordmark with Labs context, matching main site */}
+          {/* Brand — Stilledev · Labs (no "BudAI" text per request) */}
           <Link
             href={budaiHref}
             className="labs-header-brand"
-            aria-label="Stilledev — BudAI home"
+            aria-label="Stilledev — home"
+            onClick={handleBackToBudai}
           >
             <StilledevWordmark size="sm" />
             <span className="labs-header-brand-divider" aria-hidden />
-            <span className="labs-header-brand-label">
-              <span className="labs-header-brand-budai">BudAI</span>
-              <span className="labs-header-brand-labs">Labs</span>
-            </span>
+            <span className="labs-header-brand-labs">Labs</span>
           </Link>
 
-          {/* Back to BudAI pill — only on chat/deep-link states, not on welcome */}
-          {isOnDeepLink && (
-            <Link
-              href={budaiHref}
-              className="labs-header-back-pill"
-              title={t.nav.backToBudai}
-            >
-              <span className="labs-header-pill-dot" aria-hidden />
-              {t.nav.backToBudai}
-              <ArrowUpRight size={11} aria-hidden="true" />
-            </Link>
-          )}
+          {/* Back to BudAI — same pill style as standalone pages */}
+          <a
+            href={budaiHref}
+            className="labs-header-back-pill"
+            onClick={handleBackToBudai}
+            title={t.nav.backToBudai}
+          >
+            <span className="labs-header-pill-dot" aria-hidden />
+            {t.nav.backToBudai}
+          </a>
         </div>
 
-        {/* Right side: actions */}
+        {/* Right side */}
         <div className="labs-header-right">
-          {/* Contact link — desktop only */}
-          <Link
-            href={contactHref}
-            className="labs-header-contact-link hidden md:inline-flex"
-            title={t.nav.contact}
+          {/* What's new (bell) — dispatches the same event as BudAI navbar */}
+          <button
+            type="button"
+            onClick={() => window.dispatchEvent(new Event("budai:whats-new"))}
+            className="labs-header-bell-btn"
+            aria-label={lang === "sv" ? "Vad är nytt" : "What's new"}
+            title={lang === "sv" ? "Vad är nytt" : "What's new"}
           >
-            <Mail size={13} />
-            <span>{t.nav.contact}</span>
-          </Link>
+            <Bell size={15} />
+            <span className="labs-header-bell-dot" aria-hidden />
+          </button>
 
           {onNewChat && (
             <button
@@ -123,7 +133,6 @@ export default function LabsHeader({
             </button>
           )}
 
-          {/* Language switcher — shared component */}
           <LangSwitcher variant="dropdown" labsContext />
         </div>
       </div>

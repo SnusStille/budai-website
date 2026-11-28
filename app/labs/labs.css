@@ -53,6 +53,14 @@ body:has([data-labs-root]) {
   text-rendering: optimizeLegibility;
 }
 
+/* Page exit transition (when clicking Back to BudAI) */
+.labs-container.labs-leaving {
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 0.28s ease, transform 0.28s ease;
+  pointer-events: none;
+}
+
 .labs-container {
   display: flex;
   flex-direction: column;
@@ -63,6 +71,8 @@ body:has([data-labs-root]) {
   font-family: var(--labs-font-stack);
   position: relative;
   overflow-x: hidden;
+  padding-top: var(--labs-header-height);
+  transition: opacity 0.28s ease, transform 0.28s ease;
 }
 
 /* Ambient depth — very understated radial glows, no noise */
@@ -94,24 +104,31 @@ body:has([data-labs-root]) {
 }
 
 /* ──────────────────────────────────────────────────────────────────────
-   HEADER — unified with BudAI topbar visual language
+   HEADER — fixed, always visible, unified with BudAI
    ────────────────────────────────────────────────────────────────────── */
 
 .labs-header {
-  position: sticky;
+  position: fixed;
   top: 0;
-  z-index: 30;
+  left: 0;
+  right: 0;
+  z-index: 50;
   height: var(--labs-header-height);
   background: rgba(2, 2, 5, 0.72);
   backdrop-filter: saturate(180%) blur(24px);
   -webkit-backdrop-filter: saturate(180%) blur(24px);
   border-bottom: 1px solid transparent;
-  transition: box-shadow 0.25s ease, border-color 0.25s ease, background 0.25s ease;
+  transition: box-shadow 0.25s ease, border-color 0.25s ease, background 0.25s ease, opacity 0.28s ease;
 }
 .labs-header.labs-scrolled {
-  background: rgba(2, 2, 5, 0.88);
+  background: rgba(2, 2, 5, 0.92);
   border-bottom-color: rgba(255,255,255,0.07);
   box-shadow: 0 4px 24px rgba(0,0,0,0.4), 0 1px 0 rgba(255,255,255,0.03) inset;
+}
+/* Fade-out when navigating back to BudAI */
+.labs-header-leaving {
+  opacity: 0;
+  pointer-events: none;
 }
 .labs-scroll-progress {
   position: absolute;
@@ -150,7 +167,7 @@ body:has([data-labs-root]) {
   flex-shrink: 0;
 }
 
-/* Brand — Stilledev wordmark + BudAI/Labs labels, matching main site */
+/* Brand — Stilledev wordmark + Labs badge only (no "BudAI" text) */
 .labs-header-brand {
   display: inline-flex;
   align-items: center;
@@ -177,20 +194,6 @@ body:has([data-labs-root]) {
   flex-shrink: 0;
 }
 
-.labs-header-brand-label {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 5px;
-  flex-shrink: 0;
-}
-
-.labs-header-brand-budai {
-  font-size: 11px;
-  font-weight: 500;
-  color: rgba(255,255,255,0.6);
-  letter-spacing: -0.01em;
-}
-
 .labs-header-brand-labs {
   font-family: var(--labs-mono);
   font-size: 9px;
@@ -205,30 +208,32 @@ body:has([data-labs-root]) {
   line-height: 1;
 }
 
-/* Back to BudAI pill — matches nav-labs-chip style from main site */
+/* Back to BudAI pill — matches standalone-back-link / nav-labs-chip style */
 .labs-header-back-pill {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   font-size: 11px;
-  font-weight: 500;
-  color: #d8f1f2;
+  font-weight: 600;
+  color: #d5eaf0;
   text-decoration: none;
-  padding: 5px 10px;
+  padding: 0 11px;
+  min-height: 30px;
   border-radius: 999px;
-  background: linear-gradient(120deg, #9beaf30d, #9beaf304);
-  border: 1px solid #80dce62d;
+  background: linear-gradient(110deg, #9cdded10, transparent);
+  border: 1px solid #9cdded35;
   margin-left: 6px;
   transition: all 0.18s ease;
   white-space: nowrap;
 }
 .labs-header-back-pill:hover {
-  background: linear-gradient(120deg, #9beaf318, #9beaf308);
-  border-color: #80dce66b;
+  background: #9cdded16;
+  border-color: #9cdded76;
+  color: #f0fbfc;
   transform: translateY(-1px);
 }
 .labs-header-back-pill:focus-visible {
-  outline: 2px solid var(--labs-accent);
+  outline: 2px solid #a9f1fa;
   outline-offset: 3px;
 }
 
@@ -241,27 +246,40 @@ body:has([data-labs-root]) {
   flex-shrink: 0;
 }
 
-/* Contact link — subtle, desktop */
-.labs-header-contact-link {
+/* Bell button — same style as BudAI navbar */
+.labs-header-bell-btn {
+  position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--labs-text-muted);
-  text-decoration: none;
-  padding: 6px 10px;
-  border-radius: 8px;
-  transition: all 0.15s ease;
-  white-space: nowrap;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  color: rgba(255,255,255,0.55);
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease;
+  flex-shrink: 0;
 }
-.labs-header-contact-link:hover {
-  color: var(--labs-text);
-  background: rgba(255,255,255,0.04);
+.labs-header-bell-btn:hover {
+  color: #fff;
+  background: rgba(255,255,255,0.05);
 }
-.labs-header-contact-link:focus-visible {
+.labs-header-bell-btn:focus-visible {
   outline: 2px solid var(--labs-accent);
   outline-offset: 2px;
+}
+.labs-header-bell-dot {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--labs-accent);
+  box-shadow: 0 0 6px rgba(0,229,255,0.6);
 }
 
 /* Icon button (menu/back) */
@@ -1215,13 +1233,11 @@ body:has([data-labs-root]) {
   transform: translateY(0);
 }
 
-/* ── Messages area ── */
+/* ── Messages area — scrolls with the page, no internal scroll container ── */
 .labs-messages {
   flex: 1;
-  padding: 24px 0 4px;
-  overflow-y: auto;
-  scroll-behavior: smooth;
-  -webkit-overflow-scrolling: touch;
+  padding: 8px 0 4px;
+  overflow: visible;
 }
 
 .labs-messages-end {
@@ -1325,9 +1341,11 @@ body:has([data-labs-root]) {
 .labs-input-wrap {
   position: sticky;
   bottom: 0;
-  padding: 16px 0 20px;
-  background: linear-gradient(to top, var(--labs-bg) 75%, transparent 100%);
-  z-index: 5;
+  padding: 12px 0 16px;
+  background: linear-gradient(to top, var(--labs-bg) 65%, var(--labs-bg) 80%, transparent 100%);
+  z-index: 10;
+  /* Prevent scroll anchoring issues */
+  overflow-anchor: none;
 }
 
 .labs-input-container {
@@ -2036,11 +2054,9 @@ body:has([data-labs-root]) {
 }
 
 @media (max-width: 560px) {
-  .labs-process-grid { grid-template-columns: 1fr 1fr; }
-
-  /* Hide BudAI label on very small screens, keep only wordmark + Labs tag */
-  .labs-header-brand-budai { display: none; }
+  /* Hide divider + Labs badge on very small screens to save space */
   .labs-header-brand-divider { display: none; }
+  .labs-header-brand-labs { display: none; }
 }
 
 @media (max-width: 380px) {
@@ -2049,16 +2065,8 @@ body:has([data-labs-root]) {
   .labs-starter-btn { padding: 7px 12px; font-size: 12px; }
   .labs-input-footer { flex-direction: column; gap: 4px; align-items: flex-start; }
   .labs-service-grid { grid-template-columns: 1fr; }
-  .labs-process-grid { grid-template-columns: 1fr 1fr; }
   .labs-scenario-tag { display: none; }
-
-  /* Minimal header on smallest screens — just icon + wordmark */
-  .labs-header-brand-label { display: none; }
   .labs-header-brand { padding: 4px; }
-}
-
-@media (min-width: 641px) and (max-width: 860px) {
-  .labs-valueprops-grid { grid-template-columns: 1fr 1fr; }
 }
 
 /* Selection */
@@ -2777,7 +2785,7 @@ body:has([data-labs-root]) {
 
 /* Back to top button */
 .labs-back-to-top {
-  position:fixed; bottom:84px; right:20px; z-index:44;
+  position:fixed; bottom:76px; right:20px; z-index:44;
   width:36px; height:36px; border-radius:50%;
   background:rgba(12,12,20,0.85);
   border:1px solid rgba(255,255,255,0.1);
@@ -2793,9 +2801,9 @@ body:has([data-labs-root]) {
   transform:scale(1.08);
 }
 
-/* Reposition scroll-bottom to sit above back-to-top/feedback */
+/* Scroll-to-bottom sits above back-to-top */
 .labs-scroll-bottom {
-  position:fixed; bottom:130px; right:20px; z-index:45;
+  position:fixed; bottom:122px; right:20px; z-index:45;
   width:36px; height:36px; border-radius:50%;
   background:rgba(8,8,13,0.9);
   border:1px solid rgba(0,229,255,0.3);
@@ -2813,8 +2821,8 @@ body:has([data-labs-root]) {
 /* On mobile, make FABs smaller to avoid covering */
 @media (max-width:500px) {
   .fb-fab { bottom:16px; right:16px; padding:9px 12px; }
-  .labs-back-to-top { bottom:70px; right:16px; width:34px; height:34px; }
-  .labs-scroll-bottom { bottom:116px; right:16px; width:34px; height:34px; }
+  .labs-back-to-top { bottom:62px; right:16px; width:34px; height:34px; }
+  .labs-scroll-bottom { bottom:106px; right:16px; width:34px; height:34px; }
 }
 
 /* Markdown headings in messages */
