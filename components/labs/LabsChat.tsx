@@ -936,7 +936,7 @@ export default function LabsChat() {
 
             {/* Live Project Brief Card — shows the project taking shape */}
             {isChatActive && liveProfile && (
-              <ProjectBriefCard data={liveProfile} lang={lang} />
+              <ProjectBriefCard data={liveProfile} lang={lang} isStreaming={isStreaming} />
             )}
 
             {/* Live Understanding panel — discrete real-time "what we know" */}

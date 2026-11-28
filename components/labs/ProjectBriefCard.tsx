@@ -93,9 +93,11 @@ function truncate(s: string, max: number) {
 export default function ProjectBriefCard({
   data,
   lang,
+  isStreaming = false,
 }: {
   data: BriefData | null;
   lang: "sv" | "en";
+  isStreaming?: boolean;
 }) {
   if (!data) return null;
 
@@ -164,17 +166,19 @@ export default function ProjectBriefCard({
               {data.project_title || truncate(data.customer_goal || "Project", 50)}
             </div>
             <div className="pbc-stage">
-              {isReady ? (
+              {isStreaming ? (
+                <><span className="pbc-live-dot" />{lang === "sv" ? "Analyserar…" : "Analyzing…"}</>
+              ) : isReady ? (
                 <><CheckCircle2 size={10} /> {l.ready}</>
               ) : (
                 <><Sparkles size={10} /> {l.building}</>
               )}
-              {stageLabel && <span className="pbc-stage-sep">·</span>}
-              {stageLabel && <span>{stageLabel}</span>}
+              {!isStreaming && stageLabel && <span className="pbc-stage-sep">·</span>}
+              {!isStreaming && stageLabel && <span>{stageLabel}</span>}
             </div>
           </div>
         </div>
-        <div className="pbc-score-ring" style={{
+        <div className={`pbc-score-ring ${isStreaming ? "streaming" : ""}`} style={{
           background: `conic-gradient(${scorePct >= 60 ? "#00e5ff" : scorePct >= 35 ? "#fbbf24" : "rgba(255,255,255,0.15)"} ${scorePct * 3.6}deg, rgba(255,255,255,0.06) 0deg)`,
         }}>
           <div className="pbc-score-inner">
