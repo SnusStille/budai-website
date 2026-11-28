@@ -11,7 +11,15 @@
  * This is THE moment where the customer sees their idea materialize.
  */
 import { motion, AnimatePresence } from "framer-motion";
-import { FileText, Target, Clock, Wallet, Layers, AlertTriangle, CheckCircle2, Sparkles, ChevronRight } from "lucide-react";
+import { FileText, Target, Clock, Wallet, Layers, AlertTriangle, CheckCircle2, Sparkles, ChevronRight, Rocket } from "lucide-react";
+
+interface PhaseDef {
+  phase: "mvp" | "v2" | "v3";
+  name: string;
+  description: string | null;
+  features: string[];
+  estimated_complexity?: string | null;
+}
 
 interface BriefData {
   project_title?: string | null;
@@ -23,10 +31,20 @@ interface BriefData {
   suggested_features?: string[];
   technical_complexity?: "low" | "medium" | "high" | "very_high" | null;
   budget?: string | null;
+  budget_info?: {
+    amount?: string | null;
+    range?: string | null;
+    constraint?: string | null;
+    budget_assessment?: "realistic" | "tight" | "unrealistic" | "unknown" | null;
+  };
   budget_assessment?: "realistic" | "tight" | "unrealistic" | "unknown" | null;
+  budget_range?: string | null;
   timeline?: string | null;
   timeline_assessment?: "realistic" | "tight" | "unrealistic" | "unknown" | null;
   conversation_stage?: string;
+  recommended_mvp?: string | null;
+  phases?: PhaseDef[];
+  field_sources?: Record<string, string>;
   confidence?: {
     overall_score?: number;
     project_description?: string;
@@ -35,6 +53,12 @@ interface BriefData {
     timeline_clarity?: string;
     target_audience_clarity?: string;
     contact_info?: string;
+  };
+  reality_check?: {
+    budget_scope_fit?: string;
+    simpler_alternatives?: string[];
+    red_flags?: string[];
+    technically_feasible?: boolean | null;
   };
   business_risks?: string[];
   technical_risks?: string[];
@@ -187,6 +211,52 @@ export default function ProjectBriefCard({
               <span className="pbc-feat-more">+{featuresCount - 4} {l.more}</span>
             )}
           </div>
+        </div>
+      )}
+
+      {/* MVP Phase visualization — recommended scope split across MVP / V2 / V3 */}
+      {data.phases && data.phases.some(p => (p.features || []).length > 0) && (
+        <div className="pbc-section">
+          <span className="pbc-section-label"><Rocket size={10} /> {lang === "sv" ? "Rekommenderad uppdelning" : "Recommended phasing"}</span>
+          <div className="pbc-phases">
+            {(["mvp", "v2", "v3"] as const).map((phaseKey, pi) => {
+              const phase = data.phases!.find(p => p.phase === phaseKey);
+              const fCount = phase?.features?.length || 0;
+              const labels: Record<string, { sv: string; en: string }> = {
+                mvp: { sv: "MVP (lansering)", en: "MVP (launch)" },
+                v2:  { sv: "V2 (nästa steg)", en: "V2 (next step)" },
+                v3:  { sv: "V3 (senare)", en: "V3 (later)" },
+              };
+              const maxF = Math.max(1, ...data.phases!.map(p => (p.features || []).length));
+              const pct = fCount > 0 ? Math.max(20, (fCount / maxF) * 100) : 0;
+              const colors = ["#00e5ff", "#7c5cff", "rgba(255,255,255,0.35)"];
+              return (
+                <div key={phaseKey} className={`pbc-phase-row ${fCount === 0 ? "empty" : ""}`}>
+                  <div className="pbc-phase-head">
+                    <span className={`pbc-phase-tag pbc-phase-tag-${phaseKey}`}>
+                      {lang === "sv" ? labels[phaseKey].sv : labels[phaseKey].en}
+                    </span>
+                    {phase?.name && phase.name.length > 0 && (
+                      <span className="pbc-phase-name">{truncate(phase.name, 40)}</span>
+                    )}
+                    <span className="pbc-phase-count">{fCount}</span>
+                  </div>
+                  <div className="pbc-phase-bar-track">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${pct}%` }}
+                      transition={{ duration: 0.6, delay: 0.3 + pi * 0.1, ease: [0.16, 1, 0.36, 1] }}
+                      className="pbc-phase-bar-fill"
+                      style={{ background: colors[pi] }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          {data.recommended_mvp && (
+            <p className="pbc-mvp-note"><Rocket size={9} /> {truncate(data.recommended_mvp, 140)}</p>
+          )}
         </div>
       )}
 

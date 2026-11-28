@@ -2568,6 +2568,39 @@ body:has([data-labs-root]) {
   padding: 4px 0;
 }
 
+/* Phasing (MVP/V2/V3 bar viz) */
+.pbc-phases { display:flex; flex-direction:column; gap:7px; margin-top:6px; }
+.pbc-phase-row { display:flex; flex-direction:column; gap:4px; }
+.pbc-phase-row.empty { opacity:0.35; }
+.pbc-phase-head { display:flex; align-items:center; gap:8px; }
+.pbc-phase-tag {
+  font-family:var(--labs-mono); font-size:9px; font-weight:700;
+  padding:2px 7px; border-radius:4px; letter-spacing:0.04em;
+  text-transform:uppercase;
+}
+.pbc-phase-tag-mvp { background:rgba(0,229,255,0.12); color:#00e5ff; }
+.pbc-phase-tag-v2  { background:rgba(124,92,255,0.12); color:#a78bfa; }
+.pbc-phase-tag-v3  { background:rgba(255,255,255,0.06); color:rgba(255,255,255,0.55); }
+.pbc-phase-name { font-size:11px; color:rgba(255,255,255,0.7); flex:1; }
+.pbc-phase-count {
+  font-family:var(--labs-mono); font-size:10px; color:rgba(255,255,255,0.45);
+  margin-left:auto;
+}
+.pbc-phase-bar-track {
+  height:5px; background:rgba(255,255,255,0.06); border-radius:3px; overflow:hidden;
+}
+.pbc-phase-bar-fill {
+  height:100%; border-radius:3px;
+}
+.pbc-mvp-note {
+  display:flex; align-items:center; gap:5px;
+  font-size:10.5px; color:rgba(0,229,255,0.75);
+  margin:8px 0 0; padding:8px 10px;
+  background:rgba(0,229,255,0.05); border-radius:8px;
+  line-height:1.5;
+}
+.pbc-mvp-note svg { opacity:0.8; flex-shrink:0; color:#00e5ff; }
+
 .pbc-meta {
   display: flex;
   flex-wrap: wrap;
