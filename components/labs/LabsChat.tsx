@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Plus, X, User, ChevronRight, ChevronDown, ChevronUp, ArrowLeft, ArrowUp, MessageSquare, Lightbulb, UserCheck } from "lucide-react";
+import { Send, Plus, X, User, ChevronRight, ChevronDown, ChevronUp, ArrowLeft, ArrowUp, MessageSquare, Lightbulb, UserCheck, FileText } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useLang } from "@/components/ui/LanguageContext";
 import LabsHeader from "@/components/labs/LabsHeader";
@@ -159,6 +159,7 @@ export default function LabsChat() {
   const [scrollProgress, setScrollProgress] = useState(0);
   const [showScrollBtn, setShowScrollBtn] = useState(false);
   const [showBackToTop, setShowBackToTop] = useState(false);
+  const [briefDockVisible, setBriefDockVisible] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const mainRef = useRef<HTMLElement>(null);
@@ -222,6 +223,7 @@ export default function LabsChat() {
         setScrollProgress(docHeight > 0 ? (scrollY / docHeight) * 100 : 0);
         setShowScrollBtn(isStreamingRef.current && !isAtBottomRef.current && fromBottom > 120);
         setShowBackToTop(scrollY > 600);
+        setBriefDockVisible(scrollY > 300 && messages.length > 2);
         ticking = false;
       });
     };
@@ -933,6 +935,32 @@ export default function LabsChat() {
             )}
 
             <ProjectJourney stage={journeyStage} lang={lang} visible={isChatActive} />
+
+            {/* Compact dock — visible when scrolled, keeps key brief data in view */}
+            <AnimatePresence>
+              {briefDockVisible && liveProfile && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.25 }}
+                  className="pbc-dock"
+                >
+                  <div className="pbc-dock-left">
+                    <span className="pbc-dock-icon"><FileText size={11} /></span>
+                    <span className="pbc-dock-title">
+                      {(() => {
+                        const t = liveProfile.project_title || liveProfile.customer_goal || (isSv ? "Projekt" : "Project");
+                        return t.length > 50 ? t.slice(0, 50).replace(/\s+\S*$/, "") + "…" : t;
+                      })()}
+                    </span>
+                  </div>
+                  <div className="pbc-dock-score">
+                    {Math.round(liveProfile.confidence?.overall_score || 0)}%
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* Live Project Brief Card — shows the project taking shape */}
             {isChatActive && liveProfile && (
