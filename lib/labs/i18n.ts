@@ -62,7 +62,24 @@ export const labsTranslations = {
         { tag: "FiveM", text: "En serverägare behöver ett skräddarsytt inventory- och ekonomisystem till QBCore." },
         { tag: "Roblox", text: "En spelutvecklare vill skapa ett simulator-spel med progression och DataStore." },
         { tag: "Automation", text: "Ett företag vill automatisera sin manuella kundhantering och fakturering." },
+        { tag: "Förbättra", text: "Jag har redan en hemsida eller ett system som behöver förbättras eller byggas om." },
+        { tag: "Från idé", text: "Jag har en affärsidé men vet inte var jag ska börja — hjälp mig forma en MVP." },
       ],
+      dedicatedFlows: {
+        label: "Eller börja här",
+        existing: {
+          tag: "Befintligt projekt",
+          title: "Förbättra något jag redan har",
+          desc: "Berätta om din nuvarande webbplats eller system, vad som inte fungerar och vad du vill uppnå.",
+          prompt: "Jag har redan en webbplats eller ett system som jag vill förbättra. Jag vill börja med att beskriva nuläget och vad jag vill åstadkomma.",
+        },
+        idea: {
+          tag: "Ny idé",
+          title: "Från idé till MVP",
+          desc: "Beskriv din idé grovt — jag hjälper dig utforska om den är genomförbar, forma omfattningen och hitta ett rimligt första steg.",
+          prompt: "Jag har en affärsidé som jag vill utforska och eventuellt bygga. Hjälp mig förstå vad en bra första version (MVP) skulle kunna se ut.",
+        },
+      },
     },
     // Process — 5 steps
     process: {
@@ -331,7 +348,24 @@ export const labsTranslations = {
         { tag: "FiveM", text: "A server owner needs a custom inventory and economy system for QBCore." },
         { tag: "Roblox", text: "A game developer wants to create a simulator game with progression and DataStore." },
         { tag: "Automation", text: "A company wants to automate their manual customer management and invoicing." },
+        { tag: "Improve", text: "I already have a website or system that needs improving or rebuilding." },
+        { tag: "From idea", text: "I have a business idea but don't know where to start — help me shape an MVP." },
       ],
+      dedicatedFlows: {
+        label: "Or start here",
+        existing: {
+          tag: "Existing project",
+          title: "Improve something I already have",
+          desc: "Tell me about your current website or system, what isn't working, and what you want to achieve.",
+          prompt: "I already have a website or system that I want to improve. I'd like to start by describing the current state and what I want to accomplish.",
+        },
+        idea: {
+          tag: "New idea",
+          title: "From idea to MVP",
+          desc: "Describe your idea roughly — I'll help you explore if it's feasible, shape the scope, and find a realistic first step.",
+          prompt: "I have a business idea I want to explore and potentially build. Help me understand what a good first version (MVP) could look like.",
+        },
+      },
     },
     process: {
       title: "From idea to delivery",

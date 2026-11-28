@@ -2,7 +2,8 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Plus, X, User, ChevronRight, ArrowLeft } from "lucide-react";
+import { Send, Plus, X, User, ChevronRight, ArrowLeft, RefreshCw, Sparkles } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import { useLang } from "@/components/ui/LanguageContext";
 import LabsHeader from "@/components/labs/LabsHeader";
 import StilledevWordmark from "@/components/ui/StilledevWordmark";
@@ -122,6 +123,7 @@ export default function LabsChat() {
   const { lang } = useLang();
   const t = useLabsTranslation(lang);
   const isSv = lang === "sv";
+  const searchParams = useSearchParams();
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -177,7 +179,23 @@ export default function LabsChat() {
 
   useEffect(() => {
     const match = window.location.pathname.match(/\/(?:sv\/)?labs\/([a-f0-9-]+)/i);
-    if (match) void openConversation(match[1]);
+    if (match) { void openConversation(match[1]); return; }
+    // Handle URL intent: ?intent=existing or ?intent=idea
+    const intent = searchParams.get("intent");
+    if (intent === "existing" || intent === "idea") {
+      const flow = t.scenarios.dedicatedFlows?.[intent as "existing" | "idea"];
+      if (flow) {
+        setTimeout(() => {
+          setInput(flow.prompt);
+          setTimeout(() => textareaRef.current?.focus(), 100);
+        }, 600);
+      }
+    }
+    const ref = searchParams.get("ref");
+    if (ref) {
+      // Track referral source in first user message context (we'll let it pass naturally)
+      sessionStorage.setItem("labs_ref", ref);
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -223,11 +241,50 @@ export default function LabsChat() {
     if (submittingBrief || summarySubmitted || summaryConfirmed) return;
     setSubmittingBrief(true);
     setSummaryConfirmed(true);
+
+    // Check if we already have contact info (email) from the conversation
+    let hasEmail = false;
+    let hasName = false;
     try {
+      // Scan all messages for email/name
+      const allText = messages.map(m => m.content).join("\n");
+      const detected = detectContactInfo(allText);
+      const emailVal = detected.email;
+      const phoneVal = detected.phone;
+      if (emailVal) {
+        hasEmail = true;
+        setContactForm(prev => ({ ...prev, email: emailVal, phone: phoneVal || prev.phone }));
+      }
+      // Detect name from profile
+      const profName = summaryProfile?.customer?.name;
+      if (profName) {
+        hasName = true;
+        setContactForm(prev => ({ ...prev, name: profName }));
+      } else {
+        const nameMatch = allText.match(/(?:jag heter|mitt namn är|my name is|i(?:'| a)m )([a-zåäö][a-zåäö]+)/i);
+        if (nameMatch && nameMatch[1].length >= 2) {
+          hasName = true;
+          const capName = nameMatch[1].charAt(0).toUpperCase() + nameMatch[1].slice(1).toLowerCase();
+          setContactForm(prev => ({ ...prev, name: capName }));
+        }
+      }
+    } catch {}
+
+    try {
+      if (!hasEmail && !contactSubmitted) {
+        // Open contact form so customer can provide email before final submission
+        setContactOpen(true);
+        setSubmittingBrief(false);
+        // Don't send the message yet — the contact form submission will trigger final send
+        return;
+      }
+
       const confirmMsg = isSv
         ? "Jag bekräftar sammanfattningen. Den ser korrekt ut. Skicka den till Oliver."
         : "I confirm the summary. It looks correct. Please send it to Oliver.";
       await sendMessage(confirmMsg);
+    } catch {
+      setSummaryConfirmed(false);
     } finally {
       setSubmittingBrief(false);
     }
@@ -484,6 +541,19 @@ export default function LabsChat() {
       if (res.ok) {
         setContactSubmitted(true);
         setContactOpen(false);
+
+        // If customer was confirming the summary, now also send the brief confirmation
+        if (summaryConfirmed && summaryShown && !summarySubmitted) {
+          const briefConfirmMsg = isSv
+            ? "Jag har angett mina kontaktuppgifter. Skicka projektbriefen till Oliver."
+            : "I've provided my contact details. Please send the project brief to Oliver.";
+          // Small delay so the contact-success message shows first
+          setTimeout(() => {
+            void sendMessage(briefConfirmMsg);
+            setSummarySubmitted(true);
+          }, 400);
+        }
+
         const confirmMsg: Message = {
           role: "assistant",
           content: isSv
@@ -603,6 +673,54 @@ export default function LabsChat() {
                 ))}
               </div>
             </motion.div>
+
+            {/* Dedicated flows — Existing Project / Idea to MVP */}
+            {t.scenarios.dedicatedFlows && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.5, delay: 0.34 }}
+                className="labs-flows-section"
+              >
+                <p className="labs-section-label">{t.scenarios.dedicatedFlows.label}</p>
+                <div className="labs-flows-grid">
+                  <motion.button
+                    type="button"
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.35, delay: 0.38 }}
+                    onClick={() => {
+                      setInput(t.scenarios.dedicatedFlows.existing.prompt);
+                      setTimeout(() => textareaRef.current?.focus(), 80);
+                    }}
+                    className="labs-flow-card"
+                  >
+                    <span className="labs-flow-card-icon"><RefreshCw size={14} /></span>
+                    <span className="labs-flow-tag">{t.scenarios.dedicatedFlows.existing.tag}</span>
+                    <span className="labs-flow-title">{t.scenarios.dedicatedFlows.existing.title}</span>
+                    <span className="labs-flow-desc">{t.scenarios.dedicatedFlows.existing.desc}</span>
+                    <ChevronRight className="labs-flow-arrow" size={16} />
+                  </motion.button>
+                  <motion.button
+                    type="button"
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.35, delay: 0.43 }}
+                    onClick={() => {
+                      setInput(t.scenarios.dedicatedFlows.idea.prompt);
+                      setTimeout(() => textareaRef.current?.focus(), 80);
+                    }}
+                    className="labs-flow-card"
+                  >
+                    <span className="labs-flow-card-icon"><Sparkles size={14} /></span>
+                    <span className="labs-flow-tag">{t.scenarios.dedicatedFlows.idea.tag}</span>
+                    <span className="labs-flow-title">{t.scenarios.dedicatedFlows.idea.title}</span>
+                    <span className="labs-flow-desc">{t.scenarios.dedicatedFlows.idea.desc}</span>
+                    <ChevronRight className="labs-flow-arrow" size={16} />
+                  </motion.button>
+                </div>
+              </motion.div>
+            )}
 
             {/* Process section — 5 steps */}
             <motion.div
@@ -781,7 +899,7 @@ export default function LabsChat() {
 
             <div className="labs-messages" role="log" aria-live="polite">
               {messages.map((msg, i) => (
-                <div key={i} className={`labs-message ${msg.role}`}>
+                <div key={i} className={`labs-message ${msg.role} ${streamingCursor && i === messages.length - 1 && msg.role === "assistant" ? "labs-thinking" : ""}`}>
                   <div className={`labs-message-avatar ${msg.role}`} aria-hidden>
                     {msg.role === "user" ? (
                       <User size={14} />
@@ -1030,6 +1148,13 @@ export default function LabsChat() {
                   <X size={18} />
                 </button>
               </div>
+              {summaryConfirmed && !summarySubmitted && (
+                <div className="labs-contact-context">
+                  {isSv
+                    ? "Nästan klart! Fyll i dina uppgifter nedan så skickas projektbriefen direkt till Oliver. Han återkommer personligen inom 1 arbetsdag."
+                    : "Almost done! Fill in your details below and the project brief will be sent directly to Oliver. He'll get back to you personally within 1 working day."}
+                </div>
+              )}
               <p className="labs-modal-subtitle">{t.contact.subtitle}</p>
               <form onSubmit={submitContact}>
                 <div className="labs-field">
