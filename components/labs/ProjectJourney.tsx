@@ -67,8 +67,10 @@ export default function ProjectJourney({
 
   if (!visible) return null;
 
-  // Only show after scoping begins
-  if (stage === "discovery" && activeIdx < 1) return null;
+  // Show from first message onwards so customer always sees progress
+  if (stage === "discovery") {
+    // Discovery stage — show "Start" dot active
+  }
 
   return (
     <motion.div

@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Plus, X, User, ChevronRight, ChevronDown, ChevronUp, ArrowLeft, ArrowUp } from "lucide-react";
+import { Send, Plus, X, User, ChevronRight, ChevronDown, ChevronUp, ArrowLeft, ArrowUp, MessageSquare, Lightbulb, UserCheck } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useLang } from "@/components/ui/LanguageContext";
 import LabsHeader from "@/components/labs/LabsHeader";
@@ -283,8 +283,12 @@ export default function LabsChat() {
     }
     const ref = searchParams.get("ref");
     if (ref) {
-      // Track referral source in first user message context (we'll let it pass naturally)
       sessionStorage.setItem("labs_ref", ref);
+    }
+    // Auto-focus textarea on desktop after hero animations
+    const isMobile = window.matchMedia("(max-width: 640px)").matches;
+    if (!isMobile) {
+      setTimeout(() => textareaRef.current?.focus(), 800);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -721,13 +725,92 @@ export default function LabsChat() {
                 <em>{t.hero.titleAccent}</em>
               </h1>
               <p className="labs-hero-subtitle">{t.hero.subtitle}</p>
+
+              {/* How it works — 3 clear steps */}
+              <div className="labs-how-it-works">
+                {t.howItWorks.steps.map((step, i) => {
+                  const icons = [<MessageSquare key="0" size={12} />, <Lightbulb key="1" size={12} />, <UserCheck key="2" size={12} />];
+                  return (
+                    <div key={i} className="labs-hiw-step">
+                      <span className="labs-hiw-icon">{icons[i]}</span>
+                      <span className="labs-hiw-num">{i + 1}</span>
+                      <span className="labs-hiw-title">{step.title}</span>
+                      <span className="labs-hiw-desc">{step.desc}</span>
+                    </div>
+                  );
+                })}
+              </div>
             </motion.div>
 
-            {/* Service grid */}
+            {/* Direct input — primary action, immediately available */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1, ease: [0.16, 1, 0.36, 1] }}
+              transition={{ duration: 0.5, delay: 0.12, ease: [0.16, 1, 0.36, 1] }}
+              className="labs-direct-input"
+            >
+              <div className="labs-input-container labs-hero-input" style={{ maxWidth: "600px", margin: "0 auto" }}>
+                <textarea
+                  ref={textareaRef}
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder={t.chat.placeholder}
+                  className="labs-textarea"
+                  rows={2}
+                  aria-label={t.chat.newMessage}
+                  enterKeyHint="send"
+                />
+                <button
+                  type="button"
+                  onClick={() => void sendMessage()}
+                  disabled={!input.trim()}
+                  className="labs-send-btn"
+                  aria-label={t.chat.send}
+                >
+                  <Send size={16} />
+                </button>
+              </div>
+            </motion.div>
+
+            {/* Quick starters — example prompts */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.4, delay: 0.25 }}
+              className="labs-quick-starters"
+              style={{ justifyContent: "center" }}
+            >
+              {(isSv ? STARTER_PROMPTS_SV : STARTER_PROMPTS_EN).slice(0, 4).map((p, i) => (
+                <motion.button
+                  key={i}
+                  type="button"
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: 0.3 + i * 0.05 }}
+                  className="labs-quick-starter"
+                  onClick={() => { setInput(p); setTimeout(() => textareaRef.current?.focus(), 50); }}
+                >
+                  {p}
+                </motion.button>
+              ))}
+            </motion.div>
+
+            {/* Divider */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.4, delay: 0.35 }}
+              className="labs-divider"
+            >
+              <span>{isSv ? "eller" : "or"}</span>
+            </motion.div>
+
+            {/* Service grid — choose a category */}
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.4, ease: [0.16, 1, 0.36, 1] }}
               className="labs-services-section"
             >
               <p className="labs-section-label">{t.hero.servicesLabel}</p>
@@ -738,7 +821,7 @@ export default function LabsChat() {
                     type="button"
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, delay: 0.15 + i * 0.05, ease: [0.16, 1, 0.36, 1] }}
+                    transition={{ duration: 0.4, delay: 0.45 + i * 0.04, ease: [0.16, 1, 0.36, 1] }}
                     onClick={() => selectService(s)}
                     className="labs-service-card"
                   >
@@ -755,7 +838,7 @@ export default function LabsChat() {
                 type="button"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ duration: 0.4, delay: 0.5 }}
+                transition={{ duration: 0.4, delay: 0.72 }}
                 onClick={() => selectService(SERVICES[6])}
                 className="labs-unsure-btn"
               >
@@ -764,100 +847,25 @@ export default function LabsChat() {
               </motion.button>
             </motion.div>
 
-            {/* Scenarios — "Build something different" */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.28 }}
-              className="labs-scenarios-section"
-            >
-              <p className="labs-section-label">{t.scenarios.label}</p>
-              <div className="labs-scenarios-grid">
-                {t.scenarios.items.map((item, i) => (
-                  <motion.button
-                    key={i}
-                    type="button"
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.35, delay: 0.3 + i * 0.04 }}
-                    onClick={() => {
-                      setInput(item.text);
-                      setTimeout(() => textareaRef.current?.focus(), 50);
-                    }}
-                    className="labs-scenario-card"
-                  >
-                    <span className="labs-scenario-tag">{item.tag}</span>
-                    <span className="labs-scenario-text">{item.text}</span>
-                  </motion.button>
-                ))}
-              </div>
-            </motion.div>
-
-
-
-            {/* Built by Oliver */}
+            {/* Built by Oliver — trust section */}
             <motion.div
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.48 }}
+              transition={{ duration: 0.5, delay: 0.7 }}
               className="labs-builder-section"
             >
               <div className="labs-builder-inner">
-                <StilledevWordmark size="sm" showTagline={false} />
                 <h3 className="labs-builder-title">{t.builder.title}</h3>
                 <p className="labs-builder-body">{t.builder.body}</p>
                 <div className="labs-trust-row">
-                  <span>{t.trust.noAccount}</span>
+                  <span>✓ {t.trust.noAccount}</span>
                   <span className="labs-trust-dot" />
-                  <span>{t.trust.noObligation}</span>
+                  <span>✓ {t.trust.personalReview}</span>
                   <span className="labs-trust-dot" />
-                  <span>{t.trust.personalReview}</span>
+                  <span>✓ {t.trust.noObligation}</span>
                 </div>
               </div>
             </motion.div>
-
-
-
-            {/* Direct input */}
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: 0.62 }}
-              className="labs-direct-input"
-            >
-              <p className="labs-section-label">{t.hero.orDescribe}</p>
-              <div className="labs-input-container" style={{ maxWidth: "600px", margin: "0 auto" }}>
-                <textarea
-                  ref={textareaRef}
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder={t.chat.placeholder}
-                  className="labs-textarea"
-                  rows={1}
-                  aria-label={t.chat.newMessage}
-                  enterKeyHint="send"
-                />
-                <button
-                  type="button"
-                  onClick={() => void sendMessage()}
-                  disabled={!input.trim()}
-                  className="labs-send-btn"
-                  aria-label={t.chat.send}
-                >
-                  <Send size={16} />
-                </button>
-              </div>
-            </motion.div>
-
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.4, delay: 0.6 }}
-              className="labs-welcome-assistant"
-            >
-              {t.welcome.assistant}
-            </motion.p>
           </div>
         ) : (
           <>
@@ -903,7 +911,7 @@ export default function LabsChat() {
                     </div>
                     <div className="labs-message-content">
                       {msg.role === "assistant" && msg.content.length === 0 && isStreaming && i === messages.length - 1 ? (
-                        <TypingIndicator />
+                        <TypingIndicator lang={lang} />
                       ) : msg.role === "assistant" ? renderMarkdown(msg.content) : msg.content}
                       {streamingCursor && i === messages.length - 1 && msg.role === "assistant" && msg.content.length > 0 && (
                         <span className="labs-streaming-cursor" aria-hidden />
@@ -962,24 +970,6 @@ export default function LabsChat() {
             )}
 
             <div className="labs-input-wrap">
-              {/* Quick starters above input when empty and no chat active */}
-              {!isChatActive && (
-                <div className="labs-quick-starters">
-                  {(isSv ? STARTER_PROMPTS_SV : STARTER_PROMPTS_EN).map((p, i) => (
-                    <motion.button
-                      key={i}
-                      type="button"
-                      initial={{ opacity: 0, y: 6 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3, delay: 0.8 + i * 0.06 }}
-                      className="labs-quick-starter"
-                      onClick={() => { setInput(p); setTimeout(() => textareaRef.current?.focus(), 50); }}
-                    >
-                      {p}
-                    </motion.button>
-                  ))}
-                </div>
-              )}
               <div className="labs-input-container">
                 <textarea
                   ref={textareaRef}

@@ -526,8 +526,70 @@ body:has([data-labs-root]) {
   line-height: 1.65;
   color: rgba(234,236,239,0.55);
   max-width: 520px;
-  margin: 0 auto;
+  margin: 0 auto 24px;
   font-weight: 400;
+}
+
+/* ── How it works (3 steps) ── */
+.labs-how-it-works {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.labs-hiw-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 14px 10px 12px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.04);
+  border-radius: 12px;
+  position: relative;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+.labs-hiw-step:hover {
+  background: rgba(255,255,255,0.035);
+  border-color: rgba(255,255,255,0.08);
+}
+
+.labs-hiw-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--labs-accent) 10%, transparent);
+  color: var(--labs-accent);
+  margin-bottom: 2px;
+}
+
+.labs-hiw-num {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  font-family: var(--labs-mono);
+  font-size: 9px;
+  color: rgba(255,255,255,0.12);
+  font-weight: 700;
+}
+
+.labs-hiw-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(234,236,239,0.85);
+  letter-spacing: -0.01em;
+}
+
+.labs-hiw-desc {
+  font-size: 10.5px;
+  line-height: 1.5;
+  color: var(--labs-text-muted);
+  text-align: center;
 }
 
 /* ── Section labels ── */
@@ -1194,6 +1256,38 @@ body:has([data-labs-root]) {
   letter-spacing: 0.02em;
   line-height: 1.5;
   font-family: var(--labs-mono);
+}
+
+/* Divider between input and categories */
+.labs-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 600px;
+  margin: 20px auto 4px;
+}
+.labs-divider::before,
+.labs-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: rgba(255,255,255,0.06);
+}
+.labs-divider span {
+  font-family: var(--labs-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--labs-text-faint);
+}
+
+/* Larger textarea on welcome screen */
+.labs-hero-input .labs-textarea {
+  min-height: 56px;
+  font-size: 15px;
+  padding: 16px 52px 16px 18px;
+  line-height: 1.5;
 }
 
 /* Starter prompts */
@@ -1990,9 +2084,33 @@ body:has([data-labs-root]) {
   .labs-header-inner { padding: 0 12px; }
   .labs-main { padding: 0 14px; }
 
-  .labs-welcome-state { padding: 28px 4px 24px; }
+  .labs-welcome-state { padding: 20px 4px 16px; }
   .labs-hero-title { font-size: 26px; }
-  .labs-hero-subtitle { font-size: 14px; }
+  .labs-hero-subtitle { font-size: 14px; margin-bottom: 18px; }
+
+  /* How it works: stack vertically on mobile */
+  .labs-how-it-works {
+    grid-template-columns: 1fr;
+    gap: 6px;
+    max-width: 340px;
+  }
+  .labs-hiw-step {
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    text-align: left;
+  }
+  .labs-hiw-num { display: none; }
+  .labs-hiw-icon { flex-shrink: 0; margin-bottom: 0; }
+  .labs-hiw-title { font-size: 12px; }
+  .labs-hiw-desc { display: none; }
+
+  .labs-hero-input .labs-textarea {
+    min-height: 48px;
+    font-size: 14px;
+    padding: 14px 48px 14px 16px;
+  }
 
   .labs-service-grid {
     grid-template-columns: repeat(2, 1fr);
@@ -2179,7 +2297,7 @@ body:has([data-labs-root]) {
   max-width: 520px;
   margin: 0 auto 14px;
   padding: 0 var(--labs-px);
-  opacity: 0.85;
+  opacity: 1;
 }
 .pj-track {
   display: flex;
@@ -2674,12 +2792,35 @@ body:has([data-labs-root]) {
 
 /* Typing indicator (three bouncing dots) */
 .ti-wrap {
-  display:inline-flex; align-items:center; gap:4px;
-  padding:4px 2px; vertical-align:middle;
+  display:inline-flex; align-items:center; gap:8px;
+  padding:6px 2px; vertical-align:middle;
+}
+.ti-stage {
+  font-family: var(--labs-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--labs-text-muted);
+  text-transform: none;
+  animation: ti-fade 0.3s ease;
+}
+@keyframes ti-fade {
+  from { opacity: 0; transform: translateY(2px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.ti-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
 }
 .ti-dot {
-  width:5px; height:5px; border-radius:50%;
+  width:4px; height:4px; border-radius:50%;
   background:var(--labs-text-muted);
+  animation: ti-bounce 1s ease-in-out infinite;
+}
+@keyframes ti-bounce {
+  0%, 100% { opacity: 0.3; transform: translateY(0); }
+  50% { opacity: 1; transform: translateY(-2px); }
 }
 
 /* Conversation progress — tiny step indicator in footer */

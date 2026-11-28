@@ -28,6 +28,16 @@ export const labsTranslations = {
       subtitle: "Beskriv vad du vill bygga, ditt problem eller din fråga. Jag hjälper dig tänka igenom det – konkret och ärligt. Oliver bygger om idén håller.",
       servicesLabel: "Vad handlar det om?",
       orDescribe: "Eller beskriv fritt:",
+      startTyping: "Börja skriv här…",
+    },
+    // How it works — 3 simple steps
+    howItWorks: {
+      label: "Hur det fungerar",
+      steps: [
+        { title: "Beskriv din idé", desc: "Skriv några meningar om vad du vill bygga. Jag ställer rätt frågor." },
+        { title: "Vi tänker tillsammans", desc: "Jag hjälper dig utforska lösningar, risker och omfattning – ärligt och konkret." },
+        { title: "Oliver tar över", desc: "När vi format en tydlig brief går den direkt till Oliver som återkommer personligen." },
+      ],
     },
     // Service categories
     services: {
@@ -319,6 +329,16 @@ export const labsTranslations = {
       subtitle: "Describe what you want to build, your problem, or your question. I'll help you think it through — concretely and honestly. Oliver builds if the idea holds.",
       servicesLabel: "What's it about?",
       orDescribe: "Or just start typing:",
+      startTyping: "Start typing here…",
+    },
+    // How it works — 3 simple steps
+    howItWorks: {
+      label: "How it works",
+      steps: [
+        { title: "Describe your idea", desc: "Write a few sentences about what you want to build. I'll ask the right questions." },
+        { title: "We think together", desc: "I'll help you explore solutions, risks, and scope — honestly and concretely." },
+        { title: "Oliver takes over", desc: "Once we've shaped a clear brief, it goes straight to Oliver who gets back to you personally." },
+      ],
     },
     services: {
       website: "Websites",

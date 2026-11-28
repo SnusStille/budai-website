@@ -1,24 +1,39 @@
 "use client";
 
 /**
- * Typing indicator — three bouncing dots shown while waiting for first AI token.
- * Appears inside the assistant message bubble for the first ~600ms to signal
- * that BudAI is thinking. Removed once streaming actually starts.
+ * Typing indicator — staged thinking states shown while waiting for first AI token.
+ * Cycles through "Analyzing", "Thinking", "Drafting" to give a sense of active processing.
+ * Three bouncing dots pulse below the label.
  */
-import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
 
-export default function TypingIndicator() {
+const STAGES_SV = ["Analyserar…", "Tänker…", "Formulerar svar…"];
+const STAGES_EN = ["Analyzing…", "Thinking…", "Drafting response…"];
+
+export default function TypingIndicator({ lang = "en" }: { lang?: "sv" | "en" }) {
+  const stages = lang === "sv" ? STAGES_SV : STAGES_EN;
+  const [stage, setStage] = useState(0);
+
+  useEffect(() => {
+    // Cycle through stages every 1.8s to show progress
+    const id = setInterval(() => {
+      setStage((s) => (s + 1) % stages.length);
+    }, 1800);
+    return () => clearInterval(id);
+  }, [stages.length]);
+
   return (
-    <span className="ti-wrap" aria-label="Thinking">
-      {[0,1,2].map(i => (
-        <motion.span
-          key={i}
-          className="ti-dot"
-          initial={{ opacity: 0.3, y: 0 }}
-          animate={{ opacity: [0.3, 1, 0.3], y: [0, -3, 0] }}
-          transition={{ duration: 0.9, repeat: Infinity, delay: i * 0.15, ease: "easeInOut" }}
-        />
-      ))}
+    <span className="ti-wrap" role="status" aria-live="polite" aria-label={stages[stage]}>
+      <span className="ti-stage">{stages[stage]}</span>
+      <span className="ti-dots">
+        {[0,1,2].map(i => (
+          <span
+            key={i}
+            className="ti-dot"
+            style={{ animationDelay: `${i * 0.15}s` }}
+          />
+        ))}
+      </span>
     </span>
   );
 }
