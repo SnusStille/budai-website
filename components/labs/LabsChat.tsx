@@ -35,6 +35,7 @@ import FeedbackButton from "./FeedbackButton";
 import TypingIndicator from "./TypingIndicator";
 import ProjectBriefCard from "./ProjectBriefCard";
 import WhatsNew from "@/components/ui/WhatsNew";
+import BackToBudAI from "@/components/ui/BackToBudAI";
 
 type Message = {
   id?: string;
@@ -222,8 +223,8 @@ export default function LabsChat() {
         setScrolled(scrollY > 8);
         setScrollProgress(docHeight > 0 ? (scrollY / docHeight) * 100 : 0);
         setShowScrollBtn(isStreamingRef.current && !isAtBottomRef.current && fromBottom > 120);
-        setShowBackToTop(scrollY > 600);
-        setBriefDockVisible(scrollY > 300 && messages.length > 2);
+        setShowBackToTop(scrollY > 250);
+        setBriefDockVisible(scrollY > 200 && messages.length > 2);
         ticking = false;
       });
     };
@@ -469,8 +470,6 @@ export default function LabsChat() {
       : (isSv ? `Jag är intresserad av ${base}.` : `I'm interested in ${base}.`);
     void sendMessage(prompt, id);
   };
-
-  const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   const sendMessage = async (text?: string, serviceId?: ServiceCategory | null) => {
     const trimmed = (text ?? input).trim();
@@ -738,6 +737,30 @@ export default function LabsChat() {
         scrollProgress={scrollProgress}
       />
 
+      {/* Ambient floating particles — subtle, calming, adds life without distraction */}
+      <div className="labs-ambient-particles" aria-hidden="true">
+        {Array.from({ length: 14 }).map((_, i) => {
+          const size = 2 + Math.random() * 4;
+          const left = Math.random() * 100;
+          const delay = Math.random() * 25;
+          const duration = 22 + Math.random() * 25;
+          const opacity = 0.3 + Math.random() * 0.4;
+          return (
+            <span
+              key={i}
+              style={{
+                width: `${size}px`,
+                height: `${size}px`,
+                left: `${left}%`,
+                animationDelay: `${delay}s`,
+                animationDuration: `${duration}s`,
+                opacity,
+              }}
+            />
+          );
+        })}
+      </div>
+
       <main ref={mainRef} className="labs-main">
         {errorMsg && (
           <div className="labs-error" role="alert">
@@ -752,6 +775,11 @@ export default function LabsChat() {
             </button>
           </div>
         )}
+
+        {/* Top nav — Back to BudAI, same position/vibe as Contact & Oliver Stille pages */}
+        <nav className="labs-top-nav" aria-label={isSv ? "Sidnavigering" : "Page navigation"}>
+          <BackToBudAI href={isSv ? "/sv" : "/"} lang={lang} />
+        </nav>
 
         {isWelcome ? (
           <div className="labs-welcome-state">
@@ -840,57 +868,6 @@ export default function LabsChat() {
                   {p}
                 </motion.button>
               ))}
-            </motion.div>
-
-            {/* Divider */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.4, delay: 0.35 }}
-              className="labs-divider"
-            >
-              <span>{isSv ? "eller" : "or"}</span>
-            </motion.div>
-
-            {/* Service grid — choose a category */}
-            <motion.div
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.4, ease: [0.16, 1, 0.36, 1] }}
-              className="labs-services-section"
-            >
-              <p className="labs-section-label">{t.hero.servicesLabel}</p>
-              <div className="labs-service-grid">
-                {SERVICES.slice(0, 6).map((s, i) => (
-                  <motion.button
-                    key={s.id}
-                    type="button"
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, delay: 0.45 + i * 0.04, ease: [0.16, 1, 0.36, 1] }}
-                    onClick={() => selectService(s)}
-                    className="labs-service-card"
-                  >
-                    <span className="labs-service-icon"><ServiceIcon icon={s.icon} /></span>
-                    <span className="labs-service-name">{isSv ? s.labelSv : s.labelEn}</span>
-                    <span className="labs-service-desc">{isSv ? s.shortSv : s.shortEn}</span>
-                    <span className="labs-service-arrow"><ChevronRight size={14} /></span>
-                  </motion.button>
-                ))}
-              </div>
-
-              {/* Unsure option */}
-              <motion.button
-                type="button"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.4, delay: 0.72 }}
-                onClick={() => selectService(SERVICES[6])}
-                className="labs-unsure-btn"
-              >
-                <ServiceIcon icon="help" />
-                <span>{isSv ? SERVICES[6].labelSv : SERVICES[6].labelEn} — {isSv ? SERVICES[6].descSv : SERVICES[6].descEn}</span>
-              </motion.button>
             </motion.div>
 
             {/* Built by Oliver — trust section */}
@@ -1160,42 +1137,6 @@ export default function LabsChat() {
               )}
             </AnimatePresence>
           </>
-        )}
-
-        {/* FAQ & Privacy */}
-        {!isChatActive && (
-          <motion.section
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.7 }}
-            className="labs-faq-section"
-          >
-            <h2 className="labs-section-title">{t.faq.title}</h2>
-            <div className="labs-faq-list">
-              {t.faq.items.map((item, i) => (
-                <div key={i} className={`labs-faq-item ${openFaq === i ? "labs-faq-open" : ""}`}>
-                  <button
-                    className="labs-faq-q"
-                    onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                    aria-expanded={openFaq === i}
-                  >
-                    <span>{item.q}</span>
-                    <ChevronRight size={16} className="labs-faq-chev" />
-                  </button>
-                  {openFaq === i && (
-                    <div className="labs-faq-a">{renderMarkdown(item.a)}</div>
-                  )}
-                </div>
-              ))}
-            </div>
-            <div className="labs-privacy-note">
-              <div className="labs-privacy-icon">◈</div>
-              <div>
-                <strong>{t.privacy.title}</strong>
-                <p>{t.privacy.body}</p>
-              </div>
-            </div>
-          </motion.section>
         )}
 
         {/* Footer */}

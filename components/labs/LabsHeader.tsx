@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { motion } from "framer-motion";
 import { useState } from "react";
 import { Menu, Plus, ArrowLeft, Bell } from "lucide-react";
 import { useLang } from "@/components/ui/LanguageContext";
@@ -48,11 +47,8 @@ export default function LabsHeader({
   };
 
   return (
-    <motion.header
-      initial={{ y: -60, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.5, delay: 0.05, ease: [0.22, 1, 0.36, 1] }}
-      className={`labs-header ${scrolled ? "labs-scrolled" : ""} ${leaving ? "labs-header-leaving" : ""}`}
+    <header
+      className={`labs-header ${scrolled ? "labs-scrolled" : ""} ${leaving ? "labs-header-leaving" : ""} labs-header-animate`}
       role="banner"
     >
       <div
@@ -82,7 +78,7 @@ export default function LabsHeader({
             </button>
           ) : null}
 
-          {/* Brand — Stilledev · Labs (no "BudAI" text per request) */}
+          {/* Brand — Stilledev · Labs */}
           <Link
             href={budaiHref}
             className="labs-header-brand"
@@ -93,17 +89,6 @@ export default function LabsHeader({
             <span className="labs-header-brand-divider" aria-hidden />
             <span className="labs-header-brand-labs">Labs</span>
           </Link>
-
-          {/* Back to BudAI — same pill style as standalone pages */}
-          <a
-            href={budaiHref}
-            className="labs-header-back-pill"
-            onClick={handleBackToBudai}
-            title={t.nav.backToBudai}
-          >
-            <span className="labs-header-pill-dot" aria-hidden />
-            {t.nav.backToBudai}
-          </a>
         </div>
 
         {/* Right side */}
@@ -136,6 +121,6 @@ export default function LabsHeader({
           <LangSwitcher variant="dropdown" labsContext />
         </div>
       </div>
-    </motion.header>
+    </header>
   );
 }
