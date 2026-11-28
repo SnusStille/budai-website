@@ -1330,12 +1330,14 @@ body:has([data-labs-root]) {
 /* ── Messages area — scrolls with the page, no internal scroll container ── */
 .labs-messages {
   flex: 1;
-  padding: 8px 0 4px;
+  padding: 8px 0 0;
   overflow: visible;
 }
 
+/* Spacer ensures last message stays above the sticky input when scrolled to bottom */
 .labs-messages-end {
-  height: 1px;
+  height: 90px;
+  flex-shrink: 0;
 }
 
 /* Individual message */

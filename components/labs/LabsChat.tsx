@@ -888,7 +888,7 @@ export default function LabsChat() {
               </div>
             )}
 
-            <ProjectJourney stage={journeyStage} lang={lang} visible={isChatActive && journeyStage !== "discovery"} />
+            <ProjectJourney stage={journeyStage} lang={lang} visible={isChatActive} />
 
             {/* Live Understanding panel — discrete real-time "what we know" */}
             {isChatActive && liveProfile && (
