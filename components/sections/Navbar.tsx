@@ -6,8 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, X, Globe, Bell, ArrowUpRight, MessageSquareText } from "lucide-react";
 import { useLang } from "@/components/ui/LanguageContext";
-import BudAIWordmark from "@/components/ui/BudAIWordmark";
-import BudAILogo from "@/components/ui/BudAILogo";
+import StilledevWordmark from "@/components/ui/StilledevWordmark";
 import LangSwitcher from "@/components/ui/LangSwitcher";
 import { subscribeJourney } from "@/lib/experience/scroll";
 
@@ -91,7 +90,7 @@ export default function Navbar() {
               href="/"
               data-budai-logo
               className="flex items-center gap-2.5 group outline-none focus-visible:ring-2 focus-visible:ring-accent-cyan/50 rounded-lg"
-              aria-label="BudAI home"
+              aria-label="Stilledev — BudAI home"
               onClick={(e) => {
                 if (window.location.pathname === "/" || window.location.pathname === "/sv") {
                   e.preventDefault();
@@ -101,14 +100,13 @@ export default function Navbar() {
                 window.dispatchEvent(new CustomEvent("budai:logo-click", { detail: { el: e.currentTarget } }));
               }}
             >
-              <span className="transition-transform duration-300 group-active:scale-95 group-hover:scale-105 inline-flex">
-                <BudAILogo size="sm" animated mode={busy ? "thinking" : "idle"} />
-              </span>
-              <span className="flex flex-col leading-none">
-                <BudAIWordmark className="nav-wordmark" />
-                <span className="mt-1 hidden sm:flex items-center gap-1.5 font-mono text-[8.5px] uppercase tracking-[0.18em] text-white/30">
-                  by <span className="text-accent-cyan/80 font-semibold tracking-[0.14em]">Stilledev</span>
-                </span>
+              <StilledevWordmark size="sm" />
+              {busy && (
+                <span className="hidden sm:inline-flex w-1.5 h-1.5 rounded-full bg-accent-cyan animate-pulse ml-0.5 shadow-[0_0_6px_rgba(0,229,255,0.7)]" aria-label="Thinking" />
+              )}
+              <span className="hidden sm:flex items-center gap-1 ml-1 pl-2.5 border-l border-white/10">
+                <span className="text-[11px] font-medium tracking-tight text-white/60">BudAI</span>
+                <span className="text-[7.5px] font-mono uppercase tracking-[0.12em] text-white/25 hidden xl:inline">Intelligence Environment</span>
               </span>
             </Link>
             </div>

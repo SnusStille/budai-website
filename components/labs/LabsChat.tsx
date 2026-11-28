@@ -24,6 +24,7 @@ import { SERVICES, type ServiceCategory, type ServiceDef } from "@/lib/labs/serv
 import ProjectBlueprint from "@/components/labs/ProjectBlueprint";
 import { renderMarkdown } from "@/lib/labs/markdown";
 import { WebsiteDemo, WebAppDemo, GameDemo, RobloxDemo, AutomationDemo } from "./SolutionDemos";
+import ProjectJourney from "./ProjectJourney";
 
 type Message = {
   id?: string;
@@ -130,6 +131,7 @@ export default function LabsChat() {
   const [contactForm, setContactForm] = useState<ContactForm>(EMPTY_CONTACT);
   const [contactErrors, setContactErrors] = useState<Record<string, string>>({});
   const [contactSubmitted, setContactSubmitted] = useState(false);
+  const [journeyStage, setJourneyStage] = useState<"discovery"|"scoping"|"assessment"|"blueprint_ready"|"conclusion_proposed"|"awaiting_confirmation"|"contact_ready"|"submitted"|"closed">("discovery");
   const [errorMsg, setErrorMsg] = useState("");
   const [userMessageCount, setUserMessageCount] = useState(0);
   const [selectedService, setSelectedService] = useState<ServiceCategory | null>(null);
@@ -299,6 +301,7 @@ export default function LabsChat() {
                 const newPath = isSv ? `/sv/labs/${meta.conversationId}` : `/labs/${meta.conversationId}`;
                 window.history.replaceState({}, "", newPath);
               }
+              if (meta.stage) setJourneyStage(meta.stage);
               continue;
             } catch {
               fullText += part;
@@ -674,6 +677,7 @@ export default function LabsChat() {
               </div>
             )}
 
+            <ProjectJourney stage={journeyStage} lang={lang} visible={isChatActive && journeyStage !== "discovery"} />
             <div className="labs-messages" role="log" aria-live="polite">
               {messages.map((msg, i) => (
                 <div key={i} className={`labs-message ${msg.role}`}>

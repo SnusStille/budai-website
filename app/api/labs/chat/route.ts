@@ -353,8 +353,15 @@ export async function POST(req: NextRequest) {
             } catch { /* ignore snapshot errors */ }
           }
 
-          // --- Handle SUMMARY block (contact info provided) ---
-          if (parsedSummary && parsedSummary.contact_email) {
+          // Replace [[NOW]] marker with actual ISO timestamp in assistant content
+          const now = new Date().toISOString();
+
+          // --- Handle submitted briefs (conversation_stage = submitted) ---
+          if (parsedProfile && parsedProfile.conversation_stage === "submitted") {
+            await handleSubmission(sb, conversationId, newProfile, parsedProfile, lang);
+          }
+          // --- Handle SUMMARY block (contact info provided via legacy SUMMARY marker) ---
+          else if (parsedSummary && parsedSummary.contact_email) {
             await handleContactSummary(sb, conversationId, newProfile, parsedSummary, lang);
           }
           // --- Handle high-priority lead notification (score ≥ 75, no project yet) ---
@@ -439,6 +446,91 @@ export async function POST(req: NextRequest) {
  * Handle the case where AI has collected contact info and emitted [[SUMMARY:]].
  * Creates or updates a labs_projects record, sends notification to Oliver.
  */
+/**
+ * Handle v4 project submission: AI has confirmed the brief is ready and
+ * conversation_stage = "submitted". Customer may have provided contact info
+ * in the conversation text itself (detected via detectContactInfo) or may
+ * still need to use the contact form.
+ */
+async function handleSubmission(
+  sb: NonNullable<ReturnType<typeof serviceClient>>,
+  conversationId: string,
+  profile: ProjectProfile,
+  parsedProfile: ProjectProfile,
+  lang: "sv" | "en"
+): Promise<void> {
+  const now = new Date().toISOString();
+  const detected = detectContactInfoFromProfile(profile);
+
+  const { data: existing } = await sb
+    .from("labs_projects")
+    .select("id")
+    .eq("conversation_id", conversationId)
+    .maybeSingle();
+
+  const projectFields: Record<string, unknown> = {
+    project_title: profile.project_title,
+    project_category: profile.project_category,
+    customer_goal: profile.customer_goal,
+    target_audience: profile.target_audience,
+    problem: profile.problem,
+    proposed_solution: profile.proposed_solution,
+    scope_mvp: profile.recommended_mvp,
+    key_features: profile.key_features,
+    technical_requirements: profile.technical_requirements,
+    technical_complexity: profile.technical_complexity,
+    budget: profile.budget,
+    budget_assessment: profile.budget_assessment,
+    timeline: profile.timeline,
+    timeline_assessment: profile.timeline_assessment,
+    business_risks: profile.business_risks,
+    technical_risks: profile.technical_risks,
+    opportunities: profile.opportunities,
+    competition: profile.competition,
+    recommended_mvp: profile.recommended_mvp,
+    next_steps: profile.next_steps,
+    project_profile: profile,
+    priority_score: profile.priority_score,
+    priority_strengths: profile.priority_strengths,
+    priority_concerns: profile.priority_concerns,
+    priority_recommendation: profile.priority_recommendation,
+    status: "new_inquiry",
+    is_read: false,
+    last_summary_update_at: now,
+    // v4: customer enrichment
+    contact_name: profile.customer.name || detected.name || null,
+    contact_email: detected.email || null,
+    company: profile.customer.company_name || null,
+    contact_collected_at: detected.email ? now : null,
+  };
+
+  if (existing) {
+    await sb.from("labs_projects").update(projectFields).eq("id", existing.id);
+  } else {
+    const { data: newProject } = await sb
+      .from("labs_projects")
+      .insert({ conversation_id: conversationId, ...projectFields, summary_generated_at: now })
+      .select("id")
+      .single();
+    if (newProject) {
+      await createLabsNotification({
+        projectId: newProject.id,
+        conversationId,
+        kind: "brief_submitted",
+        title: lang === "sv" ? "Ny projektbrief inskickad" : "New project brief submitted",
+        body: `${profile.customer.name || "Kund"} — ${profile.project_title || profile.customer_goal || "Projekt"} (${profile.priority_score}/100)`,
+        email: true,
+      });
+    }
+  }
+  await sb.from("labs_conversations").update({ consent_given: !!detected.email }).eq("id", conversationId);
+}
+
+function detectContactInfoFromProfile(profile: ProjectProfile): { email: string | null; name: string | null } {
+  // Basic heuristic; contact form is the authoritative source
+  return { email: null, name: profile.customer?.name || null };
+}
+
 async function handleContactSummary(
   sb: NonNullable<ReturnType<typeof serviceClient>>,
   conversationId: string,

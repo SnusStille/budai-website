@@ -572,6 +572,86 @@ export default function LabsProjects() {
                     Kontakt mottagen {formatDate(detail.project.contact_collected_at)}
                   </p>
                 )}
+
+                {/* v4: Customer context from AI profile */}
+                {detail.profile?.customer && (detail.profile.customer.type !== "unknown" || detail.profile.customer.industry || detail.profile.customer.role) && (
+                  <div className="mt-3 pt-3 border-t border-white/[0.06] space-y-1.5">
+                    {detail.profile.customer.type !== "unknown" && (
+                      <p className="text-xs flex gap-2">
+                        <span className="text-muted font-mono text-[10px] uppercase tracking-wide w-16 shrink-0">Typ</span>
+                        <span className="text-white/80">
+                          {{
+                            private: "Privatperson",
+                            business: "Företag",
+                            entrepreneur: "Entreprenör",
+                            gamer: "Spelutvecklare/server",
+                            existing_client: "Befintlig kund",
+                            unknown: "Okänd",
+                          }[detail.profile.customer.type as string] || detail.profile.customer.type}
+                        </span>
+                      </p>
+                    )}
+                    {detail.profile.customer.industry && (
+                      <p className="text-xs flex gap-2">
+                        <span className="text-muted font-mono text-[10px] uppercase tracking-wide w-16 shrink-0">Bransch</span>
+                        <span className="text-white/80">{detail.profile.customer.industry}</span>
+                      </p>
+                    )}
+                    {detail.profile.customer.niche && (
+                      <p className="text-xs flex gap-2">
+                        <span className="text-muted font-mono text-[10px] uppercase tracking-wide w-16 shrink-0">Nisch</span>
+                        <span className="text-white/80">{detail.profile.customer.niche}</span>
+                      </p>
+                    )}
+                    {detail.profile.customer.role && (
+                      <p className="text-xs flex gap-2">
+                        <span className="text-muted font-mono text-[10px] uppercase tracking-wide w-16 shrink-0">Roll</span>
+                        <span className="text-white/80">{detail.profile.customer.role}</span>
+                      </p>
+                    )}
+                    {detail.profile.customer.website && (
+                      <p className="text-xs flex gap-2">
+                        <span className="text-muted font-mono text-[10px] uppercase tracking-wide w-16 shrink-0">Webb</span>
+                        <a href={detail.profile.customer.website.startsWith("http") ? detail.profile.customer.website : `https://${detail.profile.customer.website}`} target="_blank" rel="noopener noreferrer" className="text-accent-cyan hover:underline break-all">{detail.profile.customer.website}</a>
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* v4: Budget & deadline quick view */}
+                {detail.profile && (
+                  <div className="mt-3 pt-3 border-t border-white/[0.06] grid grid-cols-2 gap-2 text-xs">
+                    <div>
+                      <p className="text-muted font-mono text-[10px] uppercase tracking-wide">Budget</p>
+                      <p className="text-white/80">
+                        {detail.profile.budget_info?.status === "unknown" || !detail.profile.budget
+                          ? (detail.profile.budget || "Ej angiven")
+                          : `${detail.profile.budget}${detail.profile.budget_info?.status === "estimate" ? " (uppskatt.)" : ""}`}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-muted font-mono text-[10px] uppercase tracking-wide">Tidsplan</p>
+                      <p className="text-white/80">{detail.profile.timeline || "Ej angiven"}</p>
+                    </div>
+                    {detail.profile.client_intent && detail.profile.client_intent !== "unknown" && (
+                      <div className="col-span-2">
+                        <p className="text-muted font-mono text-[10px] uppercase tracking-wide">Intention</p>
+                        <p className="text-white/80">
+                          {{
+                            new_build: "Nybygge",
+                            enhancement: "Vidareutveckling",
+                            debug: "Felsökning",
+                            quote: "Offertförfrågan",
+                            meeting: "Möte",
+                            advice: "Rådgivning",
+                            collaboration: "Långsiktigt samarbete",
+                            unknown: "Oklar",
+                          }[detail.profile.client_intent as string] || detail.profile.client_intent}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Priority analysis */}

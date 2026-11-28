@@ -24,9 +24,52 @@ export type ProjectCategory =
 
 export type ComplexityLevel = "low" | "medium" | "high" | "very_high" | null;
 export type AssessmentLevel = "realistic" | "tight" | "unrealistic" | "unknown" | null;
-export type ConversationStage = "discovery" | "scoping" | "assessment" | "blueprint_ready" | "contact_ready" | "closed";
+export type ConversationStage = "discovery" | "scoping" | "assessment" | "blueprint_ready" | "conclusion_proposed" | "awaiting_confirmation" | "contact_ready" | "submitted" | "closed";
 
 export type RequestType = "new_development" | "debugging" | "optimization" | "extension" | "integration" | "consultation" | "unknown";
+
+export type CustomerType = "private" | "business" | "entrepreneur" | "gamer" | "existing_client" | "unknown";
+export type ClientIntent = "new_build" | "enhancement" | "debug" | "quote" | "meeting" | "advice" | "collaboration" | "unknown";
+export type InfoSource = "customer_confirmed" | "customer_estimate" | "ai_inferred" | "ai_suggested" | "unknown";
+export type ConclusionState = "not_started" | "proposed" | "customer_reviewing" | "confirmed" | "submitted" | null;
+
+export interface CustomerInfo {
+  type: CustomerType;
+  name: string | null;
+  company_name: string | null;
+  industry: string | null;
+  niche: string | null;
+  role: string | null;
+  website: string | null;
+  existing_relationship: boolean;
+}
+
+export interface BudgetInfo {
+  amount: number | null;
+  currency: string | null;
+  raw_text: string | null;
+  status: "confirmed" | "estimate" | "flexible" | "unknown";
+  pricing_preference: "fixed_price" | "hourly" | "discuss" | "unknown";
+}
+
+export interface DeadlineInfo {
+  desired_start: string | null;
+  desired_completion: string | null;
+  hard_deadline: boolean | null;
+  flexibility: string | null;
+}
+
+export interface ConclusionData {
+  state: ConclusionState;
+  presented_at: string | null;
+  confirmed_at: string | null;
+  customer_notes: string | null;
+  changes_requested: string | null;
+}
+
+export interface FieldTracking {
+  [field: string]: InfoSource;
+}
 
 export type ConfidenceField = "clear" | "partial" | "missing";
 
@@ -56,6 +99,8 @@ export interface ConfidenceAssessment {
   timeline_clarity: ConfidenceField;
   technical_clarity: ConfidenceField;
   target_audience_clarity: ConfidenceField;
+  customer_info_clarity: ConfidenceField;
+  business_context_clarity: ConfidenceField;
   contact_info: ConfidenceField;
   overall_score: number; // 0-100
   missing_critical: string[];
@@ -65,23 +110,34 @@ export interface ProjectProfile {
   project_title: string | null;
   project_category: ProjectCategory;
   request_type: RequestType;
+  // ── v4: Enhanced customer understanding ──
+  client_intent: ClientIntent;
+  customer: CustomerInfo;
   customer_goal: string | null;
   target_audience: string | null;
   problem: string | null;
   proposed_solution: string | null;
-  key_features: string[];
+  // Features split: required vs nice-to-have
+  key_features: string[]; // required / must-have for MVP
+  nice_to_have_features: string[]; // optional / future
   suggested_features: string[]; // features BudAI suggests that customer didn't mention
   technical_requirements: string[];
+  existing_systems: string[];
+  external_integrations: string[];
   suggested_tech_stack: string[];
   technical_complexity: ComplexityLevel;
+  // Budget: both raw and structured
   budget: string | null;
+  budget_info: BudgetInfo;
   budget_assessment: AssessmentLevel;
   timeline: string | null;
+  deadline_info: DeadlineInfo;
   timeline_assessment: AssessmentLevel;
   business_risks: string[];
   technical_risks: string[];
   opportunities: string[];
   competition: string | null;
+  inspirations: string[]; // reference sites/products
   recommended_mvp: string | null;
   // Project Blueprint (professional brief fields)
   blueprint_ready: boolean;
@@ -93,7 +149,13 @@ export interface ProjectProfile {
   reality_check: RealityCheck;
   // Project Confidence (internal — how ready is this for Oliver to review?)
   confidence: ConfidenceAssessment;
-  // Legacy fields
+  // Conclusion engine
+  conclusion: ConclusionData;
+  // Tracking: which fields come from where
+  field_sources: FieldTracking;
+  // Next best question (what BudAI plans to ask next — internal)
+  next_best_question: string | null;
+  // Legacy / retained
   next_steps: string | null;
   unanswered_questions: string[];
   decision_maker: string | null;
@@ -123,11 +185,27 @@ const VALID_CATEGORIES = new Set<ProjectCategory>([
 const VALID_COMPLEXITY = new Set(["low", "medium", "high", "very_high"]);
 const VALID_ASSESSMENT = new Set(["realistic", "tight", "unrealistic", "unknown"]);
 const VALID_STAGES = new Set<ConversationStage>([
-  "discovery", "scoping", "assessment", "blueprint_ready", "contact_ready", "closed",
+  "discovery", "scoping", "assessment", "blueprint_ready",
+  "conclusion_proposed", "awaiting_confirmation", "contact_ready", "submitted", "closed",
 ]);
 
 const VALID_REQUEST_TYPES = new Set<RequestType>([
   "new_development", "debugging", "optimization", "extension", "integration", "consultation", "unknown",
+]);
+
+const VALID_CUSTOMER_TYPES = new Set<CustomerType>([
+  "private", "business", "entrepreneur", "gamer", "existing_client", "unknown",
+]);
+const VALID_CLIENT_INTENTS = new Set<ClientIntent>([
+  "new_build", "enhancement", "debug", "quote", "meeting", "advice", "collaboration", "unknown",
+]);
+const VALID_INFO_SOURCES = new Set<InfoSource>([
+  "customer_confirmed", "customer_estimate", "ai_inferred", "ai_suggested", "unknown",
+]);
+const VALID_BUDGET_STATUS = new Set(["confirmed", "estimate", "flexible", "unknown"] as const);
+const VALID_PRICING_PREF = new Set(["fixed_price", "hourly", "discuss", "unknown"] as const);
+const VALID_CONCLUSION_STATES = new Set<ConclusionState>([
+  "not_started", "proposed", "customer_reviewing", "confirmed", "submitted", null,
 ]);
 
 const VALID_CONFIDENCE = new Set<ConfidenceField>(["clear", "partial", "missing"]);
@@ -174,6 +252,92 @@ function safeRequestType(v: unknown): RequestType {
 function safeConfidenceField(v: unknown): ConfidenceField {
   if (typeof v === "string" && VALID_CONFIDENCE.has(v as ConfidenceField)) return v as ConfidenceField;
   return "missing";
+}
+
+function safeCustomerType(v: unknown): CustomerType {
+  if (typeof v === "string" && VALID_CUSTOMER_TYPES.has(v as CustomerType)) return v as CustomerType;
+  return "unknown";
+}
+function safeClientIntent(v: unknown): ClientIntent {
+  if (typeof v === "string" && VALID_CLIENT_INTENTS.has(v as ClientIntent)) return v as ClientIntent;
+  return "unknown";
+}
+function safeInfoSource(v: unknown): InfoSource {
+  if (typeof v === "string" && VALID_INFO_SOURCES.has(v as InfoSource)) return v as InfoSource;
+  return "unknown";
+}
+function safeNumber(v: unknown): number | null {
+  if (typeof v === "number" && Number.isFinite(v) && v >= 0) return Math.round(v);
+  return null;
+}
+function safeBool(v: unknown): boolean | null {
+  return typeof v === "boolean" ? v : null;
+}
+function safeCustomer(v: unknown): CustomerInfo {
+  const empty: CustomerInfo = {
+    type: "unknown", name: null, company_name: null, industry: null,
+    niche: null, role: null, website: null, existing_relationship: false,
+  };
+  if (!v || typeof v !== "object") return empty;
+  const o = v as Record<string, unknown>;
+  return {
+    type: safeCustomerType(o.type),
+    name: safeString(o.name, 200),
+    company_name: safeString(o.company_name, 200),
+    industry: safeString(o.industry, 200),
+    niche: safeString(o.niche, 200),
+    role: safeString(o.role, 200),
+    website: safeString(o.website, 300),
+    existing_relationship: typeof o.existing_relationship === "boolean" ? o.existing_relationship : false,
+  };
+}
+function safeBudgetInfo(v: unknown): BudgetInfo {
+  const empty: BudgetInfo = {
+    amount: null, currency: null, raw_text: null, status: "unknown", pricing_preference: "unknown",
+  };
+  if (!v || typeof v !== "object") return empty;
+  const o = v as Record<string, unknown>;
+  return {
+    amount: safeNumber(o.amount),
+    currency: typeof o.currency === "string" ? o.currency.slice(0, 3).toUpperCase() : null,
+    raw_text: safeString(o.raw_text, 200),
+    status: typeof o.status === "string" && VALID_BUDGET_STATUS.has(o.status as any) ? o.status as any : "unknown",
+    pricing_preference: typeof o.pricing_preference === "string" && VALID_PRICING_PREF.has(o.pricing_preference as any) ? o.pricing_preference as any : "unknown",
+  };
+}
+function safeDeadlineInfo(v: unknown): DeadlineInfo {
+  const empty: DeadlineInfo = { desired_start: null, desired_completion: null, hard_deadline: null, flexibility: null };
+  if (!v || typeof v !== "object") return empty;
+  const o = v as Record<string, unknown>;
+  return {
+    desired_start: safeString(o.desired_start, 200),
+    desired_completion: safeString(o.desired_completion, 200),
+    hard_deadline: safeBool(o.hard_deadline),
+    flexibility: safeString(o.flexibility, 200),
+  };
+}
+function safeConclusion(v: unknown): ConclusionData {
+  const empty: ConclusionData = { state: "not_started", presented_at: null, confirmed_at: null, customer_notes: null, changes_requested: null };
+  if (!v || typeof v !== "object") return empty;
+  const o = v as Record<string, unknown>;
+  const state = VALID_CONCLUSION_STATES.has(o.state as ConclusionState) ? (o.state as ConclusionState) : "not_started";
+  return {
+    state,
+    presented_at: safeString(o.presented_at, 50),
+    confirmed_at: safeString(o.confirmed_at, 50),
+    customer_notes: safeString(o.customer_notes, 2000),
+    changes_requested: safeString(o.changes_requested, 2000),
+  };
+}
+function safeFieldTracking(v: unknown): FieldTracking {
+  if (!v || typeof v !== "object") return {};
+  const out: FieldTracking = {};
+  for (const [k, val] of Object.entries(v as Record<string, unknown>)) {
+    if (typeof val === "string" && VALID_INFO_SOURCES.has(val as InfoSource)) {
+      out[k] = val as InfoSource;
+    }
+  }
+  return out;
 }
 
 function safeRealityCheck(v: unknown): RealityCheck {
@@ -227,6 +391,8 @@ function safeConfidence(v: unknown): ConfidenceAssessment {
     timeline_clarity: "missing",
     technical_clarity: "missing",
     target_audience_clarity: "missing",
+    customer_info_clarity: "missing",
+    business_context_clarity: "missing",
     contact_info: "missing",
     overall_score: 0,
     missing_critical: [],
@@ -240,6 +406,8 @@ function safeConfidence(v: unknown): ConfidenceAssessment {
     timeline_clarity: safeConfidenceField(obj.timeline_clarity),
     technical_clarity: safeConfidenceField(obj.technical_clarity),
     target_audience_clarity: safeConfidenceField(obj.target_audience_clarity),
+    customer_info_clarity: safeConfidenceField(obj.customer_info_clarity),
+    business_context_clarity: safeConfidenceField(obj.business_context_clarity),
     contact_info: safeConfidenceField(obj.contact_info),
     overall_score: safeScore(obj.overall_score),
     missing_critical: safeArray(obj.missing_critical, 8, 150),
@@ -256,9 +424,12 @@ function safeScore(v: unknown): number {
 }
 
 function mergeProfile(prev: ProjectProfile, next: Partial<ProjectProfile>): ProjectProfile {
-  // Deep merge: nested objects (reality_check, confidence) are merged, arrays replaced, scalars overwritten when non-null
+  // Deep merge: nested objects merged, arrays replaced, scalars overwritten when non-null
   const out: ProjectProfile = { ...prev };
-  const nestedObjectKeys = new Set(["reality_check", "confidence"]);
+  const nestedObjectKeys = new Set([
+    "reality_check", "confidence", "customer", "budget_info",
+    "deadline_info", "conclusion",
+  ]);
 
   for (const [key, value] of Object.entries(next)) {
     if (value === null || value === undefined) continue;
@@ -266,6 +437,8 @@ function mergeProfile(prev: ProjectProfile, next: Partial<ProjectProfile>): Proj
     if (Array.isArray(value)) {
       outRecord[key] = value;
     } else if (nestedObjectKeys.has(key) && typeof value === "object" && outRecord[key] && typeof outRecord[key] === "object") {
+      outRecord[key] = { ...(outRecord[key] as object), ...value };
+    } else if (key === "field_sources" && typeof value === "object" && outRecord[key] && typeof outRecord[key] === "object") {
       outRecord[key] = { ...(outRecord[key] as object), ...value };
     } else {
       outRecord[key] = value;
@@ -296,23 +469,31 @@ export function extractProfile(text: string): {
         project_title: safeString(parsed.project_title, 120),
         project_category: safeCategory(parsed.project_category),
         request_type: safeRequestType(parsed.request_type),
+        client_intent: safeClientIntent(parsed.client_intent),
+        customer: safeCustomer(parsed.customer),
         customer_goal: safeString(parsed.customer_goal),
         target_audience: safeString(parsed.target_audience),
         problem: safeString(parsed.problem),
         proposed_solution: safeString(parsed.proposed_solution),
         key_features: safeArray(parsed.key_features, 12),
+        nice_to_have_features: safeArray(parsed.nice_to_have_features || parsed.optional_features, 10),
         suggested_features: safeArray(parsed.suggested_features, 8),
         technical_requirements: safeArray(parsed.technical_requirements, 10),
+        existing_systems: safeArray(parsed.existing_systems, 8),
+        external_integrations: safeArray(parsed.external_integrations, 8),
         suggested_tech_stack: safeArray(parsed.suggested_tech_stack, 6),
         technical_complexity: safeComplexity(parsed.technical_complexity),
         budget: safeString(parsed.budget, 200),
+        budget_info: safeBudgetInfo(parsed.budget_info),
         budget_assessment: safeAssessment(parsed.budget_assessment),
         timeline: safeString(parsed.timeline, 200),
+        deadline_info: safeDeadlineInfo(parsed.deadline_info),
         timeline_assessment: safeAssessment(parsed.timeline_assessment),
         business_risks: safeArray(parsed.business_risks, 8),
         technical_risks: safeArray(parsed.technical_risks, 8),
         opportunities: safeArray(parsed.opportunities, 8),
         competition: safeString(parsed.competition),
+        inspirations: safeArray(parsed.inspirations, 6, 200),
         recommended_mvp: safeString(parsed.recommended_mvp),
         blueprint_ready: typeof parsed.blueprint_ready === "boolean" ? parsed.blueprint_ready : false,
         executive_summary: safeString(parsed.executive_summary, 800),
@@ -320,6 +501,9 @@ export function extractProfile(text: string): {
         phases: safePhases(parsed.phases),
         reality_check: safeRealityCheck(parsed.reality_check),
         confidence: safeConfidence(parsed.confidence),
+        conclusion: safeConclusion(parsed.conclusion),
+        field_sources: safeFieldTracking(parsed.field_sources),
+        next_best_question: safeString(parsed.next_best_question, 300),
         next_steps: safeString(parsed.next_steps),
         unanswered_questions: safeArray(parsed.unanswered_questions, 12),
         decision_maker: safeString(parsed.decision_maker, 200),
@@ -355,27 +539,35 @@ export function extractSummary(text: string): {
   try {
     const parsed = JSON.parse(m[1].trim());
     if (parsed && typeof parsed === "object") {
-      const base = {
+      const base: ProjectProfile = {
         project_title: safeString(parsed.project_title, 120),
         project_category: safeCategory(parsed.project_category),
         request_type: safeRequestType(parsed.request_type),
+        client_intent: safeClientIntent(parsed.client_intent),
+        customer: safeCustomer(parsed.customer),
         customer_goal: safeString(parsed.customer_goal),
         target_audience: safeString(parsed.target_audience),
         problem: safeString(parsed.problem),
         proposed_solution: safeString(parsed.proposed_solution),
         key_features: safeArray(parsed.key_features, 12),
+        nice_to_have_features: safeArray(parsed.nice_to_have_features || parsed.optional_features, 10),
         suggested_features: safeArray(parsed.suggested_features, 8),
         technical_requirements: safeArray(parsed.technical_requirements, 10),
+        existing_systems: safeArray(parsed.existing_systems, 8),
+        external_integrations: safeArray(parsed.external_integrations, 8),
         suggested_tech_stack: safeArray(parsed.suggested_tech_stack, 6),
         technical_complexity: safeComplexity(parsed.technical_complexity),
         budget: safeString(parsed.budget, 200),
+        budget_info: safeBudgetInfo(parsed.budget_info),
         budget_assessment: safeAssessment(parsed.budget_assessment),
         timeline: safeString(parsed.timeline, 200),
+        deadline_info: safeDeadlineInfo(parsed.deadline_info),
         timeline_assessment: safeAssessment(parsed.timeline_assessment),
         business_risks: safeArray(parsed.business_risks, 8),
         technical_risks: safeArray(parsed.technical_risks, 8),
         opportunities: safeArray(parsed.opportunities, 8),
         competition: safeString(parsed.competition),
+        inspirations: safeArray(parsed.inspirations, 6, 200),
         recommended_mvp: safeString(parsed.recommended_mvp),
         blueprint_ready: typeof parsed.blueprint_ready === "boolean" ? parsed.blueprint_ready : false,
         executive_summary: safeString(parsed.executive_summary, 800),
@@ -383,6 +575,9 @@ export function extractSummary(text: string): {
         phases: safePhases(parsed.phases),
         reality_check: safeRealityCheck(parsed.reality_check),
         confidence: safeConfidence(parsed.confidence),
+        conclusion: safeConclusion(parsed.conclusion),
+        field_sources: safeFieldTracking(parsed.field_sources),
+        next_best_question: safeString(parsed.next_best_question, 300),
         next_steps: safeString(parsed.next_steps),
         unanswered_questions: safeArray(parsed.unanswered_questions, 12),
         decision_maker: safeString(parsed.decision_maker, 200),
