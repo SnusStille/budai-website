@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Plus, X, User, ChevronRight, ArrowLeft, RefreshCw, Sparkles } from "lucide-react";
+import { Send, Plus, X, User, ChevronRight, ChevronDown, ArrowLeft, MessageSquare, Lightbulb, UserCheck, FileText } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useLang } from "@/components/ui/LanguageContext";
 import LabsHeader from "@/components/labs/LabsHeader";
@@ -11,6 +11,8 @@ import {
   WELCOME_MESSAGE_SV,
   WELCOME_MESSAGE_EN,
   MIN_TURNS_BEFORE_CONTACT,
+  STARTER_PROMPTS_SV,
+  STARTER_PROMPTS_EN,
 } from "@/lib/labs/prompt";
 import {
   extractProfile,
@@ -22,15 +24,20 @@ import {
 } from "@/lib/labs/profile";
 import { useLabsTranslation } from "@/lib/labs/i18n";
 import { SERVICES, type ServiceCategory, type ServiceDef } from "@/lib/labs/services";
+import { PROCESS } from "@/lib/labs/knowledge";
 import ProjectBlueprint from "@/components/labs/ProjectBlueprint";
 import { renderMarkdown } from "@/lib/labs/markdown";
-import { WebsiteDemo, WebAppDemo, GameDemo, RobloxDemo, AutomationDemo } from "./SolutionDemos";
 import ProjectJourney from "./ProjectJourney";
 import ProjectSummaryCard from "./ProjectSummaryCard";
 import SmartSuggestions from "./SmartSuggestions";
 import LiveUnderstanding from "./LiveUnderstanding";
-import FeedbackButton from "./FeedbackButton";
+import FeedbackButton from "@/components/ui/FeedbackButton";
 import TypingIndicator from "./TypingIndicator";
+import ProjectBriefCard from "./ProjectBriefCard";
+import RequirementsMap from "./RequirementsMap";
+import MissingPieces from "./MissingPieces";
+import WhatsNew from "@/components/ui/WhatsNew";
+import BackToBudAI from "@/components/ui/BackToBudAI";
 
 type Message = {
   id?: string;
@@ -142,7 +149,7 @@ export default function LabsChat() {
   const [errorMsg, setErrorMsg] = useState("");
   const [userMessageCount, setUserMessageCount] = useState(0);
   const [selectedService, setSelectedService] = useState<ServiceCategory | null>(null);
-  const [showProcess, setShowProcess] = useState(false);
+
   const [blueprintShown, setBlueprintShown] = useState(false);
   const [summaryShown, setSummaryShown] = useState(false);
   const [summaryProfile, setSummaryProfile] = useState<any | null>(null);
@@ -153,22 +160,107 @@ export default function LabsChat() {
   const [liveProfile, setLiveProfile] = useState<any | null>(null);
   const [scrolled, setScrolled] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
+  const [showScrollBtn, setShowScrollBtn] = useState(false);
+  const [showBackToTop, setShowBackToTop] = useState(false);
+  const [briefDockVisible, setBriefDockVisible] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const mainRef = useRef<HTMLElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
+  // Track whether user is pinned to bottom — controls auto-scroll behavior
+  const isAtBottomRef = useRef(true);
+  // Track whether we just sent a message (force-scroll on assistant response start)
+  const justSentRef = useRef(false);
+  // Prevent scroll-feedback loops
+  const programmaticScrollRef = useRef(false);
+  // Mirror isStreaming in a ref for the RAF-throttled scroll handler
+  const isStreamingRef = useRef(false);
 
+  /** Auto-scroll logic: only scroll to bottom if user was already at bottom,
+   *  or if they just sent a message. Never fight the user's scroll position. */
+  const maybeScrollToBottom = useCallback((behavior: ScrollBehavior = "auto") => {
+    if (isAtBottomRef.current || justSentRef.current) {
+      programmaticScrollRef.current = true;
+      messagesEndRef.current?.scrollIntoView({ behavior, block: "end" });
+      // Reset after next frame so user-initiated scrolls register correctly
+      requestAnimationFrame(() => { programmaticScrollRef.current = false; });
+      justSentRef.current = false;
+    }
+  }, []);
+
+  // Scroll to bottom when new message is added (complete message, not every token)
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: isStreaming ? "auto" : "smooth" });
-  }, [messages, isStreaming]);
+    if (messages.length > 0) {
+      const lastMsg = messages[messages.length - 1];
+      // Smooth scroll on new user message; instant on final assistant message
+      const isUser = lastMsg.role === "user";
+      maybeScrollToBottom(isUser ? "smooth" : "auto");
+    }
+  // Only react when message count changes, not content updates during streaming
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messages.length]);
 
+  // Textarea auto-resize without layout jumps
   useEffect(() => {
     const ta = textareaRef.current;
     if (!ta) return;
     ta.style.height = "auto";
     ta.style.height = Math.min(ta.scrollHeight, 200) + "px";
   }, [input]);
+
+  // Track user-initiated scroll: RAF-throttled to prevent jank
+  useEffect(() => {
+    let ticking = false;
+    const onScroll = () => {
+      if (programmaticScrollRef.current) return;
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        const scrollY = window.scrollY;
+        const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+        const fromBottom = docHeight - scrollY;
+        isAtBottomRef.current = fromBottom < 80;
+        setScrolled(scrollY > 8);
+        setScrollProgress(docHeight > 0 ? (scrollY / docHeight) * 100 : 0);
+        setShowScrollBtn(isStreamingRef.current && !isAtBottomRef.current && fromBottom > 200);
+        setShowBackToTop(scrollY > 500);
+        setBriefDockVisible(scrollY > 200 && messages.length > 2);
+        ticking = false;
+      });
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // During streaming, keep at bottom if pinned (throttled via rAF)
+  useEffect(() => {
+    if (!isStreaming) return;
+    let raf: number;
+    const tick = () => {
+      maybeScrollToBottom("auto");
+      raf = requestAnimationFrame(tick);
+    };
+    // Start after a brief delay so first content chunk renders
+    const start = setTimeout(() => { raf = requestAnimationFrame(tick); }, 100);
+    return () => {
+      clearTimeout(start);
+      cancelAnimationFrame(raf);
+    };
+  }, [isStreaming, maybeScrollToBottom]);
+
+  const scrollToBottom = useCallback(() => {
+    isAtBottomRef.current = true;
+    programmaticScrollRef.current = true;
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    requestAnimationFrame(() => { programmaticScrollRef.current = false; });
+  }, []);
+
+  const scrollToTop = useCallback(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
 
   const loadConversations = useCallback(async () => {
     try {
@@ -181,19 +273,6 @@ export default function LabsChat() {
   }, []);
 
   useEffect(() => { void loadConversations(); }, [loadConversations]);
-
-  // Scroll progress indicator + header shadow on scroll
-  useEffect(() => {
-    const onScroll = () => {
-      const scrollY = window.scrollY;
-      setScrolled(scrollY > 8);
-      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-      setScrollProgress(docHeight > 0 ? (scrollY / docHeight) * 100 : 0);
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    onScroll();
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
 
   useEffect(() => {
     const match = window.location.pathname.match(/\/(?:sv\/)?labs\/([a-f0-9-]+)/i);
@@ -211,11 +290,26 @@ export default function LabsChat() {
     }
     const ref = searchParams.get("ref");
     if (ref) {
-      // Track referral source in first user message context (we'll let it pass naturally)
       sessionStorage.setItem("labs_ref", ref);
+    }
+    // Auto-focus textarea on desktop after hero animations
+    const isMobile = window.matchMedia("(max-width: 640px)").matches;
+    if (!isMobile) {
+      setTimeout(() => textareaRef.current?.focus(), 800);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Escape key closes modals/drawers
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      if (contactOpen && !contactSubmitted) { setContactOpen(false); return; }
+      if (historyOpen) { setHistoryOpen(false); return; }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [contactOpen, contactSubmitted, historyOpen]);
 
   const openConversation = async (id: string) => {
     try {
@@ -227,7 +321,6 @@ export default function LabsChat() {
         setHistoryOpen(false);
         setContactSubmitted(!!data.project?.contact_collected_at);
         setSelectedService(null);
-        setShowProcess(false);
         const userMsgs = (data.messages || []).filter((m: Message) => m.role === "user");
         setUserMessageCount(userMsgs.length);
       }
@@ -243,7 +336,6 @@ export default function LabsChat() {
     setErrorMsg("");
     setUserMessageCount(0);
     setSelectedService(null);
-    setShowProcess(false);
     setBlueprintShown(false);
     setSummaryShown(false);
     setSummaryProfile(null);
@@ -381,8 +473,6 @@ export default function LabsChat() {
     void sendMessage(prompt, id);
   };
 
-  const [openFaq, setOpenFaq] = useState<number | null>(null);
-
   const sendMessage = async (text?: string, serviceId?: ServiceCategory | null) => {
     const trimmed = (text ?? input).trim();
     if (!trimmed || isStreaming) return;
@@ -396,8 +486,11 @@ export default function LabsChat() {
     setInput("");
     setErrorMsg("");
     setIsStreaming(true);
+    isStreamingRef.current = true;
     setStreamingCursor(true);
-    setShowProcess(false);
+    // When user sends a message, force scroll to bottom for the response
+    justSentRef.current = true;
+    isAtBottomRef.current = true;
 
     const assistantMsg: Message = { role: "assistant", content: "" };
     setMessages((prev) => [...prev, assistantMsg]);
@@ -428,6 +521,7 @@ export default function LabsChat() {
         else if (res.status === 503) setErrorMsg(t.errors.dbUnavailable);
         else setErrorMsg(t.errors.sendFailed);
         setIsStreaming(false);
+    isStreamingRef.current = false;
         setStreamingCursor(false);
         setMessages((prev) => prev.slice(0, -1));
         return;
@@ -516,6 +610,7 @@ export default function LabsChat() {
 
       setStreamingCursor(false);
       setIsStreaming(false);
+    isStreamingRef.current = false;
       if (receivedContactRequest && !contactOpen && !contactSubmitted) setContactOpen(true);
       void loadConversations();
     } catch (err) {
@@ -524,6 +619,7 @@ export default function LabsChat() {
         setMessages((prev) => prev.slice(0, -1));
       }
       setIsStreaming(false);
+    isStreamingRef.current = false;
       setStreamingCursor(false);
     }
   };
@@ -591,6 +687,48 @@ export default function LabsChat() {
   const isWelcome = messages.length === 0 && !selectedService;
   const isChatActive = messages.length > 0 || !!selectedService;
 
+  // Idea Sparks — context-aware empty-input suggestions based on what's still unknown
+  const ideaSparks = useMemo(() => {
+    if (!isChatActive) return [] as string[];
+    const sparks: string[] = [];
+    const p = liveProfile;
+    const sv = lang === "sv";
+    const hasGoal = !!p?.customer_goal;
+    const featureCount = p?.key_features?.length ?? 0;
+    const hasBudget = p?.budget_info?.amount || p?.budget_info?.range || p?.budget_info?.constraint;
+    const hasTimeline = !!p?.timeline?.target_date || !!p?.timeline?.preference;
+    const hasAudience = !!p?.target_audience?.primary;
+    const hasPlatform = !!p?.technical_assumptions?.preferred_platform?.length;
+    const hasDesign = p?.design_preferences?.existing_assets !== undefined;
+
+    if (!hasGoal && featureCount === 0) {
+      if (sv) {
+        sparks.push("Beskriv din idé med dina egna ord");
+        sparks.push("Jag vill bygga en webbapp där användare kan...");
+        sparks.push("Vilka projekt bygger du oftast?");
+      } else {
+        sparks.push("Describe your idea in your own words");
+        sparks.push("I want to build a web app where users can...");
+        sparks.push("What projects do you usually take on?");
+      }
+      return sparks.slice(0, 3);
+    }
+    if (!hasBudget) sparks.push(sv ? "Min budget ligger runt..." : "My budget is around...");
+    if (!hasTimeline) sparks.push(sv ? "Jag vill helst lansera inom..." : "I'd like to launch within...");
+    if (!hasAudience && featureCount > 0) sparks.push(sv ? "Målgruppen är främst..." : "The target audience is mainly...");
+    if (!hasPlatform && featureCount > 1) sparks.push(sv ? "Jag tänker mig en webbplats först" : "I'm thinking website first");
+    if (featureCount < 3 && hasGoal) sparks.push(sv ? "Viktigaste funktionerna är..." : "The key features are...");
+    if (hasBudget && hasTimeline && featureCount >= 3 && !hasDesign) sparks.push(sv ? "Jag har redan skisser i Figma" : "I already have Figma mockups");
+    if (featureCount >= 2 && hasGoal && (journeyStage === "scoping" || journeyStage === "assessment")) {
+      sparks.push(sv ? "Vad skulle en MVP kosta?" : "What would an MVP cost?");
+      sparks.push(sv ? "Kan du sammanfatta projektet?" : "Can you summarize the project?");
+    }
+    if (journeyStage === "blueprint_ready" || journeyStage === "awaiting_confirmation" || journeyStage === "contact_ready") {
+      sparks.push(sv ? "Jag vill gå vidare och boka möte" : "I want to proceed and book a call");
+    }
+    return sparks.slice(0, 4);
+  }, [isChatActive, liveProfile, lang, journeyStage]);
+
   return (
     <div className="labs-container">
       <LabsHeader
@@ -601,8 +739,49 @@ export default function LabsChat() {
         scrollProgress={scrollProgress}
       />
 
+      {/* Ambient floating particles — subtle, calming, adds life without distraction */}
+      <div className="labs-ambient-particles" aria-hidden="true">
+        {Array.from({ length: 14 }).map((_, i) => {
+          const size = 2 + Math.random() * 4;
+          const left = Math.random() * 100;
+          const delay = Math.random() * 25;
+          const duration = 22 + Math.random() * 25;
+          const opacity = 0.3 + Math.random() * 0.4;
+          return (
+            <span
+              key={i}
+              style={{
+                width: `${size}px`,
+                height: `${size}px`,
+                left: `${left}%`,
+                animationDelay: `${delay}s`,
+                animationDuration: `${duration}s`,
+                opacity,
+              }}
+            />
+          );
+        })}
+      </div>
+
       <main ref={mainRef} className="labs-main">
-        {errorMsg && <div className="labs-error" role="alert">{errorMsg}</div>}
+        {errorMsg && (
+          <div className="labs-error" role="alert">
+            <span>{errorMsg}</span>
+            <button
+              type="button"
+              onClick={() => setErrorMsg("")}
+              className="labs-error-dismiss"
+              aria-label={isSv ? "Stäng felmeddelande" : "Dismiss error"}
+            >
+              ×
+            </button>
+          </div>
+        )}
+
+        {/* Top nav — Back to BudAI, same position/vibe as Contact & Oliver Stille pages */}
+        <nav className="labs-top-nav" aria-label={isSv ? "Sidnavigering" : "Page navigation"}>
+          <BackToBudAI href={isSv ? "/sv" : "/"} lang={lang} />
+        </nav>
 
         {isWelcome ? (
           <div className="labs-welcome-state">
@@ -622,242 +801,31 @@ export default function LabsChat() {
                 <em>{t.hero.titleAccent}</em>
               </h1>
               <p className="labs-hero-subtitle">{t.hero.subtitle}</p>
-            </motion.div>
 
-            {/* Service grid */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1, ease: [0.16, 1, 0.36, 1] }}
-              className="labs-services-section"
-            >
-              <p className="labs-section-label">{t.hero.servicesLabel}</p>
-              <div className="labs-service-grid">
-                {SERVICES.slice(0, 6).map((s, i) => (
-                  <motion.button
-                    key={s.id}
-                    type="button"
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, delay: 0.15 + i * 0.05, ease: [0.16, 1, 0.36, 1] }}
-                    onClick={() => selectService(s)}
-                    className="labs-service-card"
-                  >
-                    <span className="labs-service-icon"><ServiceIcon icon={s.icon} /></span>
-                    <span className="labs-service-name">{isSv ? s.labelSv : s.labelEn}</span>
-                    <span className="labs-service-desc">{isSv ? s.shortSv : s.shortEn}</span>
-                    <span className="labs-service-arrow"><ChevronRight size={14} /></span>
-                  </motion.button>
-                ))}
-              </div>
-
-              {/* Unsure option */}
-              <motion.button
-                type="button"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.4, delay: 0.5 }}
-                onClick={() => selectService(SERVICES[6])}
-                className="labs-unsure-btn"
-              >
-                <ServiceIcon icon="help" />
-                <span>{isSv ? SERVICES[6].labelSv : SERVICES[6].labelEn} — {isSv ? SERVICES[6].descSv : SERVICES[6].descEn}</span>
-              </motion.button>
-            </motion.div>
-
-            {/* Scenarios — "Build something different" */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.28 }}
-              className="labs-scenarios-section"
-            >
-              <p className="labs-section-label">{t.scenarios.label}</p>
-              <div className="labs-scenarios-grid">
-                {t.scenarios.items.map((item, i) => (
-                  <motion.button
-                    key={i}
-                    type="button"
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.35, delay: 0.3 + i * 0.04 }}
-                    onClick={() => {
-                      setInput(item.text);
-                      setTimeout(() => textareaRef.current?.focus(), 50);
-                    }}
-                    className="labs-scenario-card"
-                  >
-                    <span className="labs-scenario-tag">{item.tag}</span>
-                    <span className="labs-scenario-text">{item.text}</span>
-                  </motion.button>
-                ))}
+              {/* How it works — 3 clear steps */}
+              <div className="labs-how-it-works">
+                {t.howItWorks.steps.map((step, i) => {
+                  const icons = [<MessageSquare key="0" size={12} />, <Lightbulb key="1" size={12} />, <UserCheck key="2" size={12} />];
+                  return (
+                    <div key={i} className="labs-hiw-step">
+                      <span className="labs-hiw-icon">{icons[i]}</span>
+                      <span className="labs-hiw-num">{i + 1}</span>
+                      <span className="labs-hiw-title">{step.title}</span>
+                      <span className="labs-hiw-desc">{step.desc}</span>
+                    </div>
+                  );
+                })}
               </div>
             </motion.div>
 
-            {/* Dedicated flows — Existing Project / Idea to MVP */}
-            {t.scenarios.dedicatedFlows && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.5, delay: 0.34 }}
-                className="labs-flows-section"
-              >
-                <p className="labs-section-label">{t.scenarios.dedicatedFlows.label}</p>
-                <div className="labs-flows-grid">
-                  <motion.button
-                    type="button"
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.35, delay: 0.38 }}
-                    onClick={() => {
-                      setInput(t.scenarios.dedicatedFlows.existing.prompt);
-                      setTimeout(() => textareaRef.current?.focus(), 80);
-                    }}
-                    className="labs-flow-card"
-                  >
-                    <span className="labs-flow-card-icon"><RefreshCw size={14} /></span>
-                    <span className="labs-flow-tag">{t.scenarios.dedicatedFlows.existing.tag}</span>
-                    <span className="labs-flow-title">{t.scenarios.dedicatedFlows.existing.title}</span>
-                    <span className="labs-flow-desc">{t.scenarios.dedicatedFlows.existing.desc}</span>
-                    <ChevronRight className="labs-flow-arrow" size={16} />
-                  </motion.button>
-                  <motion.button
-                    type="button"
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.35, delay: 0.43 }}
-                    onClick={() => {
-                      setInput(t.scenarios.dedicatedFlows.idea.prompt);
-                      setTimeout(() => textareaRef.current?.focus(), 80);
-                    }}
-                    className="labs-flow-card"
-                  >
-                    <span className="labs-flow-card-icon"><Sparkles size={14} /></span>
-                    <span className="labs-flow-tag">{t.scenarios.dedicatedFlows.idea.tag}</span>
-                    <span className="labs-flow-title">{t.scenarios.dedicatedFlows.idea.title}</span>
-                    <span className="labs-flow-desc">{t.scenarios.dedicatedFlows.idea.desc}</span>
-                    <ChevronRight className="labs-flow-arrow" size={16} />
-                  </motion.button>
-                </div>
-              </motion.div>
-            )}
-
-            {/* Process section — 5 steps */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.4 }}
-              className="labs-process-section"
-            >
-              <button
-                type="button"
-                onClick={() => setShowProcess(!showProcess)}
-                className="labs-process-toggle"
-              >
-                {showProcess ? "−" : "+"} {t.process.title}
-              </button>
-              <AnimatePresence>
-                {showProcess && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="labs-process-grid"
-                  >
-                    {[1, 2, 3, 4, 5].map((n) => {
-                      const key = `step${n}Title` as keyof typeof t.process;
-                      const descKey = `step${n}Desc` as keyof typeof t.process;
-                      return (
-                        <div key={n} className="labs-process-step">
-                          <span className="labs-process-num">{n}</span>
-                          <span className="labs-process-title">{t.process[key] as string}</span>
-                          <span className="labs-process-desc">{t.process[descKey] as string}</span>
-                        </div>
-                      );
-                    })}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.div>
-
-            {/* Built by Oliver */}
-            <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.48 }}
-              className="labs-builder-section"
-            >
-              <div className="labs-builder-inner">
-                <StilledevWordmark size="sm" showTagline={false} />
-                <h3 className="labs-builder-title">{t.builder.title}</h3>
-                <p className="labs-builder-body">{t.builder.body}</p>
-                <div className="labs-trust-row">
-                  <span>{t.trust.noAccount}</span>
-                  <span className="labs-trust-dot" />
-                  <span>{t.trust.noObligation}</span>
-                  <span className="labs-trust-dot" />
-                  <span>{t.trust.personalReview}</span>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Solution explorer */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.48 }}
-              className="labs-explorer-section"
-            >
-              <div className="labs-section-label">{t.explorer.label}</div>
-              <h2 className="labs-section-title">{t.explorer.title}</h2>
-              <div className="labs-explorer-grid">
-                <WebsiteDemo onExplore={() => selectCategory("website")} title={t.explorer.website} exploreLabel={t.explorer.exploreBtn} conceptLabel={t.explorer.conceptLabel} lang={lang} />
-                <WebAppDemo onExplore={() => selectCategory("webapp")} title={t.explorer.webapp} exploreLabel={t.explorer.exploreBtn} conceptLabel={t.explorer.conceptLabel} lang={lang} />
-                <GameDemo onExplore={() => selectCategory("game", isSv ? "FiveM-servrar och inventory-system" : "FiveM servers and inventory systems")} title={t.explorer.game} exploreLabel={t.explorer.exploreBtn} conceptLabel={t.explorer.conceptLabel} lang={lang} />
-                <RobloxDemo onExplore={() => selectCategory("game", isSv ? "Roblox-spel och Luau-script" : "Roblox games and Luau scripts")} title={t.explorer.roblox} exploreLabel={t.explorer.exploreBtn} conceptLabel={t.explorer.conceptLabel} lang={lang} />
-                <AutomationDemo onExplore={() => selectCategory("ai_automation")} title={t.explorer.automation} exploreLabel={t.explorer.exploreBtn} conceptLabel={t.explorer.conceptLabel} lang={lang} />
-              </div>
-              <p className="labs-explorer-hint">{t.explorer.hint}</p>
-            </motion.div>
-
-            {/* Value props */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.54 }}
-              className="labs-valueprops-section"
-            >
-              <div className="labs-valueprops-grid">
-                {([
-                  ["directTitle", "directBody", "→"],
-                  ["honestTitle", "honestBody", "✓"],
-                  ["deliveryTitle", "deliveryBody", "◈"],
-                ] as const).map(([titleKey, bodyKey, sym], i) => (
-                  <motion.div
-                    key={titleKey}
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.35, delay: 0.56 + i * 0.05 }}
-                    className="labs-valueprop"
-                  >
-                    <span className="labs-valueprop-symbol">{sym}</span>
-                    <h4 className="labs-valueprop-title">{(t.valueProps as any)[titleKey]}</h4>
-                    <p className="labs-valueprop-body">{(t.valueProps as any)[bodyKey]}</p>
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
-
-            {/* Direct input */}
+            {/* Direct input — primary action, immediately available */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: 0.62 }}
+              transition={{ duration: 0.5, delay: 0.12, ease: [0.16, 1, 0.36, 1] }}
               className="labs-direct-input"
             >
-              <p className="labs-section-label">{t.hero.orDescribe}</p>
-              <div className="labs-input-container" style={{ maxWidth: "600px", margin: "0 auto" }}>
+              <div className="labs-input-container labs-hero-input" style={{ maxWidth: "600px", margin: "0 auto" }}>
                 <textarea
                   ref={textareaRef}
                   value={input}
@@ -865,8 +833,9 @@ export default function LabsChat() {
                   onKeyDown={handleKeyDown}
                   placeholder={t.chat.placeholder}
                   className="labs-textarea"
-                  rows={1}
+                  rows={2}
                   aria-label={t.chat.newMessage}
+                  enterKeyHint="send"
                 />
                 <button
                   type="button"
@@ -880,14 +849,48 @@ export default function LabsChat() {
               </div>
             </motion.div>
 
-            <motion.p
+            {/* Quick starters — example prompts */}
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ duration: 0.4, delay: 0.6 }}
-              className="labs-welcome-assistant"
+              transition={{ duration: 0.4, delay: 0.25 }}
+              className="labs-quick-starters"
+              style={{ justifyContent: "center" }}
             >
-              {t.welcome.assistant}
-            </motion.p>
+              {(isSv ? STARTER_PROMPTS_SV : STARTER_PROMPTS_EN).slice(0, 4).map((p, i) => (
+                <motion.button
+                  key={i}
+                  type="button"
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: 0.3 + i * 0.05 }}
+                  className="labs-quick-starter"
+                  onClick={() => { setInput(p); setTimeout(() => textareaRef.current?.focus(), 50); }}
+                >
+                  {p}
+                </motion.button>
+              ))}
+            </motion.div>
+
+            {/* Built by Oliver — trust section */}
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.7 }}
+              className="labs-builder-section"
+            >
+              <div className="labs-builder-inner">
+                <h3 className="labs-builder-title">{t.builder.title}</h3>
+                <p className="labs-builder-body">{t.builder.body}</p>
+                <div className="labs-trust-row">
+                  <span>✓ {t.trust.noAccount}</span>
+                  <span className="labs-trust-dot" />
+                  <span>✓ {t.trust.personalReview}</span>
+                  <span className="labs-trust-dot" />
+                  <span>✓ {t.trust.noObligation}</span>
+                </div>
+              </div>
+            </motion.div>
           </div>
         ) : (
           <>
@@ -910,14 +913,55 @@ export default function LabsChat() {
               </div>
             )}
 
-            <ProjectJourney stage={journeyStage} lang={lang} visible={isChatActive && journeyStage !== "discovery"} />
+            <ProjectJourney stage={journeyStage} lang={lang} visible={isChatActive} />
+
+            {/* Compact dock — visible when scrolled, keeps key brief data in view */}
+            <AnimatePresence>
+              {briefDockVisible && liveProfile && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.25 }}
+                  className="pbc-dock"
+                >
+                  <div className="pbc-dock-left">
+                    <span className="pbc-dock-icon"><FileText size={11} /></span>
+                    <span className="pbc-dock-title">
+                      {(() => {
+                        const t = liveProfile.project_title || liveProfile.customer_goal || (isSv ? "Projekt" : "Project");
+                        return t.length > 50 ? t.slice(0, 50).replace(/\s+\S*$/, "") + "…" : t;
+                      })()}
+                    </span>
+                  </div>
+                  <div className="pbc-dock-score">
+                    {Math.round(liveProfile.confidence?.overall_score || 0)}%
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Live Project Brief Card — shows the project taking shape */}
+            {isChatActive && liveProfile && (
+              <ProjectBriefCard data={liveProfile} lang={lang} isStreaming={isStreaming} />
+            )}
+
+            {/* Requirements Map — intelligent "you'll also need" detection */}
+            {isChatActive && liveProfile && (
+              <RequirementsMap data={liveProfile} lang={lang} />
+            )}
+
+            {/* Missing Pieces — plain-language "what we still need to know" */}
+            {isChatActive && liveProfile && (
+              <MissingPieces data={liveProfile} lang={lang} />
+            )}
 
             {/* Live Understanding panel — discrete real-time "what we know" */}
             {isChatActive && liveProfile && (
               <LiveUnderstanding profile={liveProfile} lang={lang} labels={t.liveUnderstanding} stage={journeyStage} />
             )}
 
-            <div className="labs-messages" role="log" aria-live="polite">
+            <div ref={messagesContainerRef} className="labs-messages" role="log" aria-live="polite">
               {messages.map((msg, i) => (
                 <div key={i} className={`labs-message ${msg.role} ${streamingCursor && i === messages.length - 1 && msg.role === "assistant" ? "labs-thinking" : ""}`}>
                   <div className={`labs-message-avatar ${msg.role}`} aria-hidden>
@@ -933,7 +977,7 @@ export default function LabsChat() {
                     </div>
                     <div className="labs-message-content">
                       {msg.role === "assistant" && msg.content.length === 0 && isStreaming && i === messages.length - 1 ? (
-                        <TypingIndicator />
+                        <TypingIndicator lang={lang} />
                       ) : msg.role === "assistant" ? renderMarkdown(msg.content) : msg.content}
                       {streamingCursor && i === messages.length - 1 && msg.role === "assistant" && msg.content.length > 0 && (
                         <span className="labs-streaming-cursor" aria-hidden />
@@ -956,6 +1000,33 @@ export default function LabsChat() {
               ))}
               <div ref={messagesEndRef} className="labs-messages-end" />
             </div>
+
+            {/* Category chips — shown after first exchange when user hasn't picked a category yet */}
+            {isChatActive && !selectedService && messages.length >= 2 && messages.length <= 6 && !summaryShown && (
+              <motion.div
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4 }}
+                className="labs-category-hint"
+              >
+                <span className="labs-category-hint-label">
+                  {isSv ? "Vad handlar ditt projekt om?" : "What's your project about?"}
+                </span>
+                <div className="labs-category-chips">
+                  {SERVICES.slice(0, 6).map((s) => (
+                    <button
+                      key={s.id}
+                      type="button"
+                      className="labs-category-chip"
+                      onClick={() => selectService(s)}
+                    >
+                      <ServiceIcon icon={s.icon} />
+                      {isSv ? s.labelSv : s.labelEn}
+                    </button>
+                  ))}
+                </div>
+              </motion.div>
+            )}
 
             {/* Project Summary Card — shows when AI reaches awaiting_confirmation */}
             {summaryShown && summaryProfile && !summarySubmitted && (
@@ -983,12 +1054,71 @@ export default function LabsChat() {
               />
             )}
 
-            {/* Post-submission confirmation banner */}
+            {/* Post-submission confirmation with next steps */}
             {summarySubmitted && (
-              <div className="labs-submitted-banner">
+              <motion.div
+                initial={{ opacity: 0, y: 12, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ duration: 0.5, ease: [0.16, 1, 0.36, 1] }}
+                className="labs-submitted-banner"
+              >
+                <div className="labs-submitted-check">
+                  <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                    <circle cx="14" cy="14" r="13" stroke="#34d399" strokeWidth="1.5" />
+                    <path d="M8 14.5l4 4 8-9" stroke="#34d399" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </div>
                 <h4>{t.submitted.title}</h4>
                 <p>{t.submitted.body}</p>
-              </div>
+                <div className="labs-next-steps">
+                  <p className="labs-next-steps-label">
+                    {isSv ? "Vad händer nu?" : "What happens next?"}
+                  </p>
+                  <ol className="labs-next-steps-list">
+                    {(isSv ? PROCESS.sv.slice(1) : PROCESS.en.slice(1)).map((step, i) => (
+                      <motion.li
+                        key={i}
+                        initial={{ opacity: 0, x: -8 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.3, delay: 0.3 + i * 0.1 }}
+                      >
+                        <span className="labs-ns-num">{i + 1}</span>
+                        <span>{step}</span>
+                      </motion.li>
+                    ))}
+                  </ol>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Idea Sparks — contextual nudges when input is empty */}
+            {!input.trim() && ideaSparks.length > 0 && !isStreaming && !summarySubmitted && (
+              <motion.div
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className="labs-idea-sparks"
+              >
+                <span className="labs-sparks-label">
+                  <Lightbulb size={11} />
+                  {isSv ? "Idéer att ta vidare" : "Ideas to explore"}
+                </span>
+                <div className="labs-sparks-row">
+                  {ideaSparks.map((s, i) => (
+                    <motion.button
+                      key={s}
+                      type="button"
+                      initial={{ opacity: 0, y: 4, scale: 0.97 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      transition={{ duration: 0.25, delay: i * 0.06, ease: [0.16, 1, 0.36, 1] }}
+                      className="labs-spark-chip"
+                      onClick={() => { setInput(s); setTimeout(() => textareaRef.current?.focus(), 50); }}
+                    >
+                      {s}
+                    </motion.button>
+                  ))}
+                </div>
+              </motion.div>
             )}
 
             <div className="labs-input-wrap">
@@ -1003,6 +1133,7 @@ export default function LabsChat() {
                   rows={1}
                   disabled={isStreaming}
                   aria-label={t.chat.newMessage}
+                  enterKeyHint="send"
                 />
                 <button
                   type="button"
@@ -1047,46 +1178,13 @@ export default function LabsChat() {
           </>
         )}
 
-        {/* FAQ & Privacy */}
-        {!isChatActive && (
-          <motion.section
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.7 }}
-            className="labs-faq-section"
-          >
-            <h2 className="labs-section-title">{t.faq.title}</h2>
-            <div className="labs-faq-list">
-              {t.faq.items.map((item, i) => (
-                <div key={i} className={`labs-faq-item ${openFaq === i ? "labs-faq-open" : ""}`}>
-                  <button
-                    className="labs-faq-q"
-                    onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                    aria-expanded={openFaq === i}
-                  >
-                    <span>{item.q}</span>
-                    <ChevronRight size={16} className="labs-faq-chev" />
-                  </button>
-                  {openFaq === i && (
-                    <div className="labs-faq-a">{renderMarkdown(item.a)}</div>
-                  )}
-                </div>
-              ))}
-            </div>
-            <div className="labs-privacy-note">
-              <div className="labs-privacy-icon">◈</div>
-              <div>
-                <strong>{t.privacy.title}</strong>
-                <p>{t.privacy.body}</p>
-              </div>
-            </div>
-          </motion.section>
-        )}
-
         {/* Footer */}
         <footer className="labs-footer">
           <div className="labs-footer-brand">
             <StilledevWordmark size="sm" showTagline={false} />
+            <span className="labs-footer-credit">
+              {isSv ? "av Oliver Stille" : "by Oliver Stille"}
+            </span>
           </div>
           {isChatActive && (
             <div className="labs-conv-progress" aria-hidden>
@@ -1106,12 +1204,16 @@ export default function LabsChat() {
             <a href={isSv ? "/sv" : "/"} className="labs-footer-link">
               BudAI
             </a>
-            <span style={{ color: "var(--labs-text-faint)", fontSize: 8 }}>·</span>
-            <a href={isSv ? "/sv" : "/"} className="labs-footer-link">
-              Stilledev
+            <span className="labs-footer-sep" aria-hidden>·</span>
+            <a href={isSv ? "/sv/oliver-stille" : "/oliver-stille"} className="labs-footer-link">
+              Oliver Stille
             </a>
-            <span style={{ color: "var(--labs-text-faint)", fontSize: 8 }}>·</span>
-            <span className="labs-footer-link" style={{ cursor: "default" }}>
+            <span className="labs-footer-sep" aria-hidden>·</span>
+            <a href={isSv ? "/sv/contact" : "/contact"} className="labs-footer-link">
+              {t.nav.contact}
+            </a>
+            <span className="labs-footer-sep" aria-hidden>·</span>
+            <span className="labs-footer-link labs-footer-copy">
               © {new Date().getFullYear()}
             </span>
           </div>
@@ -1119,7 +1221,45 @@ export default function LabsChat() {
       </main>
 
       {/* Feedback FAB */}
-      <FeedbackButton lang={lang} conversationId={conversationId} />
+      <FeedbackButton />
+
+      {/* Scroll to bottom during streaming */}
+      <AnimatePresence>
+        {showScrollBtn && (
+          <motion.button
+            initial={{ opacity: 0, scale: 0.8, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.8, y: 10 }}
+            transition={{ duration: 0.2 }}
+            type="button"
+            className="labs-scroll-bottom"
+            onClick={scrollToBottom}
+            aria-label={isSv ? "Scrolla till botten" : "Scroll to bottom"}
+            title={isSv ? "Scrolla till botten" : "Scroll to bottom"}
+          >
+            <ChevronDown size={16} />
+          </motion.button>
+        )}
+      </AnimatePresence>
+
+      {/* Back to top button — matches main BudAI site */}
+      <AnimatePresence>
+        {showBackToTop && !showScrollBtn && (
+          <motion.button
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 16 }}
+            transition={{ duration: 0.3 }}
+            type="button"
+            className="labs-back-to-top"
+            onClick={scrollToTop}
+            aria-label={isSv ? "Till toppen" : "Back to top"}
+            title={isSv ? "Till toppen" : "Back to top"}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M12 19V5M5 12l7-7 7 7" /></svg>
+          </motion.button>
+        )}
+      </AnimatePresence>
 
       {/* History panel */}
       <AnimatePresence>
@@ -1132,6 +1272,8 @@ export default function LabsChat() {
               exit={{ x: "-100%" }}
               transition={{ duration: 0.25, ease: [0.16, 1, 0.36, 1] }}
               className="labs-history-panel"
+              role="dialog"
+              aria-modal="true"
               aria-label={t.history.title}
             >
               <div className="labs-history-header">
@@ -1174,7 +1316,7 @@ export default function LabsChat() {
       {/* Contact modal */}
       <AnimatePresence>
         {contactOpen && !contactSubmitted && (
-          <div className="labs-modal-overlay" role="dialog" aria-modal="true" onClick={(e) => {
+          <div className="labs-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="labs-contact-modal-title" onClick={(e) => {
             if (e.target === e.currentTarget) setContactOpen(false);
           }}>
             <motion.div
@@ -1185,7 +1327,7 @@ export default function LabsChat() {
               className="labs-modal"
             >
               <div className="labs-modal-header">
-                <h2 className="labs-modal-title">{t.contact.title}</h2>
+                <h2 id="labs-contact-modal-title" className="labs-modal-title">{t.contact.title}</h2>
                 <button type="button" onClick={() => setContactOpen(false)} className="labs-modal-close" aria-label={t.nav.close}>
                   <X size={18} />
                 </button>
@@ -1204,27 +1346,31 @@ export default function LabsChat() {
                   <input id="labs-contact-name" type="text" value={contactForm.name}
                     onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
                     className={`labs-input ${contactErrors.name ? "error" : ""}`}
-                    placeholder={isSv ? "T.ex. Anna Andersson" : "e.g. Jane Smith"} autoFocus />
+                    placeholder={isSv ? "T.ex. Anna Andersson" : "e.g. Jane Smith"}
+                    autoComplete="name" autoFocus />
                   {contactErrors.name && <p className="labs-field-error">{contactErrors.name}</p>}
                 </div>
                 <div className="labs-field">
                   <label className="labs-field-label" htmlFor="labs-contact-email">{t.contact.email}</label>
                   <input id="labs-contact-email" type="email" value={contactForm.email}
                     onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
-                    className={`labs-input ${contactErrors.email ? "error" : ""}`} placeholder="name@company.com" />
+                    className={`labs-input ${contactErrors.email ? "error" : ""}`} placeholder="name@company.com"
+                    autoComplete="email" />
                   {contactErrors.email && <p className="labs-field-error">{contactErrors.email}</p>}
                 </div>
                 <div className="labs-field">
                   <label className="labs-field-label" htmlFor="labs-contact-phone">{t.contact.phone}</label>
                   <input id="labs-contact-phone" type="tel" value={contactForm.phone}
                     onChange={(e) => setContactForm({ ...contactForm, phone: e.target.value })}
-                    className="labs-input" placeholder={isSv ? "+46 70 123 45 67" : "+1 555 123 4567"} />
+                    className="labs-input" placeholder={isSv ? "+46 70 123 45 67" : "+1 555 123 4567"}
+                    autoComplete="tel" />
                 </div>
                 <div className="labs-field">
                   <label className="labs-field-label" htmlFor="labs-contact-company">{t.contact.company}</label>
                   <input id="labs-contact-company" type="text" value={contactForm.company}
                     onChange={(e) => setContactForm({ ...contactForm, company: e.target.value })}
-                    className="labs-input" placeholder={isSv ? "Företagsnamn" : "Company name"} />
+                    className="labs-input" placeholder={isSv ? "Företagsnamn" : "Company name"}
+                    autoComplete="organization" />
                 </div>
                 <div className="labs-field">
                   <label className="labs-field-label">{t.contact.preferredContact}</label>
@@ -1247,6 +1393,9 @@ export default function LabsChat() {
       </AnimatePresence>
 
       {/* Contact success overlay in chat is handled by message add */}
+
+      {/* What's New panel — shared with BudAI main site */}
+      <WhatsNew />
     </div>
   );
 }

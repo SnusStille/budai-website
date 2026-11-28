@@ -13,6 +13,32 @@ export type Entry = {
 
 export const CHANGELOG: Entry[] = [
   {
+    id: "2026-11-27-labs",
+    date: "2026-11-27",
+    title: "Stille Labs: from idea to finished product",
+    titleSv: "Stille Labs: från idé till färdig produkt",
+    items: [
+      "New Labs experience: describe your idea, problem or project — BudAI helps you think it through, Oliver builds if the idea holds.",
+      "Natural conversation flow with smart suggestions, live understanding, and a clear project brief at the end.",
+      "Premium UI: glass header, smooth animations, message bubbles, page transitions, scroll-to-top, and stable auto-scroll.",
+      "Hard language lock: UI language is the source of truth — BudAI never auto-switches mid-conversation.",
+      "Clean markdown rendering with links, headings, lists, and no artifact characters. Swedish characters always work.",
+      "Fixed top bar with Back to BudAI, language switcher, new chat, updates bell, and contact link.",
+      "Keyboard-friendly: Escape closes dialogs, Enter sends, autocomplete on contact fields, focus-visible outlines everywhere.",
+      "Feedback FAB and project brief export (Markdown/PDF). No account required. Sessions continue later via URL.",
+    ],
+    itemsSv: [
+      "Ny Labs-upplevelse: beskriv din idé, ditt problem eller projekt — BudAI hjälper dig tänka igenom det, Oliver bygger om idén håller.",
+      "Naturlig dialogfunktion med smarta förslag, realtidsförståelse och en tydlig projektbrief i slutet.",
+      "Premium-gränssnitt: glastoppfält, mjuka animationer, meddelandebubblor, sidövergångar, scrolla-till-topp och stabil auto-scroll.",
+      "Hård språklås: UI-språket är källan till sanning — BudAI byter aldrig språk mitt i konversationen.",
+      "Ren markdown-rendering med länkar, rubriker, listor och utan artefakter. Svenska tecken fungerar alltid.",
+      "Fast topbar med Tillbaka till BudAI, språkväxlare, ny chatt, uppdateringsklocka och kontaktlänk.",
+      "Tangentbordsvänligt: Escape stänger dialoger, Enter skickar, autofyll på kontaktfält, focus-visible överallt.",
+      "Feedback-FAB och projektbrief-export (Markdown/PDF). Inget konto krävs. Sessioner kan återupptas via URL.",
+    ],
+  },
+  {
     id: "2026-11-06-fas1",
     date: "2026-11-06",
     title: "FAS1: security, honesty and CI",

@@ -15,17 +15,29 @@ export const labsTranslations = {
       newChat: "Ny",
       history: "Historik",
       backToSite: "Tillbaka",
+      backToBudai: "Tillbaka till BudAI",
+      contact: "Kontakt",
       close: "Stäng",
       language: "Språk",
     },
     // Hero / Intro (above chat)
     hero: {
-      eyebrow: "Digital utvecklingsstudio",
-      title: "Från idé till",
-      titleAccent: "färdig digital lösning.",
-      subtitle: "Jag heter Oliver Stille och bygger hemsidor, webbappar, spelscript och skräddarsydda digitala lösningar. Börja med att beskriva din idé nedan – BudAI hjälper oss förstå omfattningen, sedan hör jag av mig personligen.",
-      servicesLabel: "Vad vill du bygga?",
-      orDescribe: "Eller beskriv din idé direkt:",
+      eyebrow: "Stilledev Labs",
+      title: "Berätta om din",
+      titleAccent: "idé.",
+      subtitle: "Beskriv vad du vill bygga, ditt problem eller din fråga. Jag hjälper dig tänka igenom det – konkret och ärligt. Oliver bygger om idén håller.",
+      servicesLabel: "Vad handlar det om?",
+      orDescribe: "Eller beskriv fritt:",
+      startTyping: "Börja skriv här…",
+    },
+    // How it works — 3 simple steps
+    howItWorks: {
+      label: "Hur det fungerar",
+      steps: [
+        { title: "Beskriv din idé", desc: "Skriv några meningar om vad du vill bygga. Jag ställer rätt frågor." },
+        { title: "Vi tänker tillsammans", desc: "Jag hjälper dig utforska lösningar, risker och omfattning – ärligt och konkret." },
+        { title: "Oliver tar över", desc: "När vi format en tydlig brief går den direkt till Oliver som återkommer personligen." },
+      ],
     },
     // Service categories
     services: {
@@ -305,16 +317,28 @@ export const labsTranslations = {
       newChat: "New",
       history: "History",
       backToSite: "Back",
+      backToBudai: "Back to BudAI",
+      contact: "Contact",
       close: "Close",
       language: "Language",
     },
     hero: {
-      eyebrow: "Digital Development Studio",
-      title: "From idea to",
-      titleAccent: "finished digital product.",
-      subtitle: "I'm Oliver Stille and I build websites, web applications, game scripts and custom digital solutions. Start by describing your idea below — BudAI helps us understand the scope, then I'll get in touch personally.",
-      servicesLabel: "What do you want to build?",
-      orDescribe: "Or describe your idea directly:",
+      eyebrow: "Stilledev Labs",
+      title: "Tell me about your",
+      titleAccent: "idea.",
+      subtitle: "Describe what you want to build, your problem, or your question. I'll help you think it through — concretely and honestly. Oliver builds if the idea holds.",
+      servicesLabel: "What's it about?",
+      orDescribe: "Or just start typing:",
+      startTyping: "Start typing here…",
+    },
+    // How it works — 3 simple steps
+    howItWorks: {
+      label: "How it works",
+      steps: [
+        { title: "Describe your idea", desc: "Write a few sentences about what you want to build. I'll ask the right questions." },
+        { title: "We think together", desc: "I'll help you explore solutions, risks, and scope — honestly and concretely." },
+        { title: "Oliver takes over", desc: "Once we've shaped a clear brief, it goes straight to Oliver who gets back to you personally." },
+      ],
     },
     services: {
       website: "Websites",

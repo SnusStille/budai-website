@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, FlaskConical } from "lucide-react";
 import StandalonePageShell from "@/components/site/StandalonePageShell";
 
 const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://stilledev.se").replace(/\/$/, "");
@@ -7,6 +7,7 @@ const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://stilledev.se").rep
 export default function FounderProfile({ sv = false, nonce }: { sv?: boolean; nonce?: string }) {
   const home = sv ? "/sv" : "/";
   const contact = sv ? "/sv/contact" : "/contact";
+  const labs = sv ? "/sv/labs" : "/labs";
   const profilePath = sv ? "/sv/oliver-stille" : "/oliver-stille";
   const canonical = `${siteUrl}${profilePath}`;
   const profilePage = {
@@ -42,6 +43,9 @@ export default function FounderProfile({ sv = false, nonce }: { sv?: boolean; no
       <div className="standalone-page-actions">
         <Link href={home} className="standalone-page-action">
           {sv ? "Utforska BudAI" : "Explore BudAI"}<ArrowUpRight size={14} aria-hidden="true" />
+        </Link>
+        <Link href={labs} className="standalone-page-action standalone-page-action-primary">
+          <FlaskConical size={14} aria-hidden="true" />{sv ? "Stilledev Labs" : "Stilledev Labs"}<ArrowUpRight size={14} aria-hidden="true" />
         </Link>
         <Link href={contact} className="standalone-page-action">
           {sv ? "Kontakta Stilledev" : "Contact Stilledev"}<ArrowUpRight size={14} aria-hidden="true" />
