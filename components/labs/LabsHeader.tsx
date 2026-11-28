@@ -78,16 +78,15 @@ export default function LabsHeader({
             </button>
           ) : null}
 
-          {/* Brand — Stilledev · Labs */}
+          {/* Brand — Stilledev.Labs */}
           <Link
             href={budaiHref}
             className="labs-header-brand"
             aria-label="Stilledev — home"
             onClick={handleBackToBudai}
           >
-            <StilledevWordmark size="sm" />
-            <span className="labs-header-brand-divider" aria-hidden />
-            <span className="labs-header-brand-labs">Labs</span>
+            <StilledevWordmark size="sm" suffix="Labs" />
+            <span className="labs-header-pulse-dot" aria-hidden title={lang === "sv" ? "Live" : "Live"} />
           </Link>
         </div>
 

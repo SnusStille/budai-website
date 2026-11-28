@@ -38,6 +38,7 @@ import RequirementsMap from "./RequirementsMap";
 import MissingPieces from "./MissingPieces";
 import WhatsNew from "@/components/ui/WhatsNew";
 import BackToBudAI from "@/components/ui/BackToBudAI";
+import LabsFooter from "./LabsFooter";
 
 type Message = {
   id?: string;
@@ -166,6 +167,8 @@ export default function LabsChat() {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const mainRef = useRef<HTMLElement>(null);
+  const cursorGlowRef = useRef<HTMLDivElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -173,19 +176,20 @@ export default function LabsChat() {
   const isAtBottomRef = useRef(true);
   // Track whether we just sent a message (force-scroll on assistant response start)
   const justSentRef = useRef(false);
-  // Prevent scroll-feedback loops
-  const programmaticScrollRef = useRef(false);
+  // Timestamp of last programmatic scroll — briefly ignore wheel/touch events to prevent feedback loops
+  const lastProgrammaticScrollRef = useRef(0);
   // Mirror isStreaming in a ref for the RAF-throttled scroll handler
   const isStreamingRef = useRef(false);
+  // Detect explicit user scroll intent (wheel / touch / key) to immediately unpin
+  const userScrollingRef = useRef(false);
 
-  /** Auto-scroll logic: only scroll to bottom if user was already at bottom,
+  /** Auto-scroll logic: only scroll to bottom if user is pinned to bottom,
    *  or if they just sent a message. Never fight the user's scroll position. */
   const maybeScrollToBottom = useCallback((behavior: ScrollBehavior = "auto") => {
+    if (userScrollingRef.current) return; // user is actively scrolling away — never hijack
     if (isAtBottomRef.current || justSentRef.current) {
-      programmaticScrollRef.current = true;
+      lastProgrammaticScrollRef.current = performance.now();
       messagesEndRef.current?.scrollIntoView({ behavior, block: "end" });
-      // Reset after next frame so user-initiated scrolls register correctly
-      requestAnimationFrame(() => { programmaticScrollRef.current = false; });
       justSentRef.current = false;
     }
   }, []);
@@ -213,49 +217,82 @@ export default function LabsChat() {
   // Track user-initiated scroll: RAF-throttled to prevent jank
   useEffect(() => {
     let ticking = false;
+    const updateScrollState = () => {
+      const scrollY = window.scrollY;
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const fromBottom = docHeight - scrollY;
+      isAtBottomRef.current = fromBottom < 80;
+      setScrolled(scrollY > 8);
+      setScrollProgress(docHeight > 0 ? (scrollY / docHeight) * 100 : 0);
+      setShowScrollBtn(isStreamingRef.current && !isAtBottomRef.current && fromBottom > 200);
+      setShowBackToTop(scrollY > 500);
+      setBriefDockVisible(scrollY > 200 && messages.length > 2);
+      ticking = false;
+    };
     const onScroll = () => {
-      if (programmaticScrollRef.current) return;
+      // Ignore scroll events that occur right after a programmatic scrollIntoView
+      const sinceProgrammatic = performance.now() - lastProgrammaticScrollRef.current;
+      if (sinceProgrammatic < 150) return;
+      // User is driving the scroll — clear the "force pin" flag
+      userScrollingRef.current = true;
       if (ticking) return;
       ticking = true;
-      requestAnimationFrame(() => {
-        const scrollY = window.scrollY;
-        const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-        const fromBottom = docHeight - scrollY;
-        isAtBottomRef.current = fromBottom < 80;
-        setScrolled(scrollY > 8);
-        setScrollProgress(docHeight > 0 ? (scrollY / docHeight) * 100 : 0);
-        setShowScrollBtn(isStreamingRef.current && !isAtBottomRef.current && fromBottom > 200);
-        setShowBackToTop(scrollY > 500);
-        setBriefDockVisible(scrollY > 200 && messages.length > 2);
-        ticking = false;
-      });
+      requestAnimationFrame(updateScrollState);
     };
+    // Mark user intent immediately on wheel / touch / key scroll
+    const markUserIntent = () => { userScrollingRef.current = true; };
     window.addEventListener("scroll", onScroll, { passive: true });
-    onScroll();
-    return () => window.removeEventListener("scroll", onScroll);
+    window.addEventListener("wheel", markUserIntent, { passive: true });
+    window.addEventListener("touchmove", markUserIntent, { passive: true });
+    window.addEventListener("keydown", (e) => {
+      if (["PageUp","PageDown","Home","End","ArrowUp","ArrowDown"," "].includes(e.key)) {
+        userScrollingRef.current = true;
+      }
+    });
+    updateScrollState();
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("wheel", markUserIntent);
+      window.removeEventListener("touchmove", markUserIntent);
+    };
   }, []);
 
-  // During streaming, keep at bottom if pinned (throttled via rAF)
+  // When streaming starts, reset userScrollingRef if we were at bottom
+  useEffect(() => {
+    if (isStreaming) {
+      isStreamingRef.current = true;
+      // If the user just sent (they're at bottom by definition), allow auto-scroll
+      if (justSentRef.current) userScrollingRef.current = false;
+    } else {
+      isStreamingRef.current = false;
+      // When streaming ends, allow new auto-scroll on next message send
+      userScrollingRef.current = false;
+    }
+  }, [isStreaming]);
+
+  // During streaming, keep at bottom if pinned (throttled — only every ~150ms, NOT every frame)
   useEffect(() => {
     if (!isStreaming) return;
-    let raf: number;
+    let cancelled = false;
     const tick = () => {
+      if (cancelled) return;
       maybeScrollToBottom("auto");
-      raf = requestAnimationFrame(tick);
     };
-    // Start after a brief delay so first content chunk renders
-    const start = setTimeout(() => { raf = requestAnimationFrame(tick); }, 100);
+    const id = window.setInterval(tick, 150);
+    // Initial nudge
+    const start = setTimeout(tick, 120);
     return () => {
-      clearTimeout(start);
-      cancelAnimationFrame(raf);
+      cancelled = true;
+      window.clearInterval(id);
+      window.clearTimeout(start);
     };
   }, [isStreaming, maybeScrollToBottom]);
 
   const scrollToBottom = useCallback(() => {
+    userScrollingRef.current = false;
     isAtBottomRef.current = true;
-    programmaticScrollRef.current = true;
+    lastProgrammaticScrollRef.current = performance.now();
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-    requestAnimationFrame(() => { programmaticScrollRef.current = false; });
   }, []);
 
   const scrollToTop = useCallback(() => {
@@ -310,6 +347,95 @@ export default function LabsChat() {
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [contactOpen, contactSubmitted, historyOpen]);
+
+  // Ensure page starts at the very top on mount (not mid-page)
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }, []);
+
+  // Smooth Back-to-BudAI page transition: intercept clicks, fade+slide out, then navigate
+  useEffect(() => {
+    const budaiPaths = ["/", "/sv"];
+    const isBudaiLink = (href: string) => {
+      if (!href) return false;
+      if (href.startsWith("http")) return false;
+      return budaiPaths.includes(href) ||
+        href === "/sv/" ||
+        (href.startsWith("/#") || href.startsWith("/sv#"));
+    };
+    const onClick = (e: MouseEvent) => {
+      const a = (e.target as Element)?.closest("a") as HTMLAnchorElement | null;
+      if (!a) return;
+      const href = a.getAttribute("href");
+      if (!href || !isBudaiLink(href)) return;
+      // Only handle plain left-clicks, no modifier keys
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+      const container = document.querySelector("[data-labs-root] .labs-container") as HTMLElement | null;
+      if (!container) return;
+      e.preventDefault();
+      container.classList.add("labs-leaving");
+      window.setTimeout(() => {
+        window.location.href = href;
+      }, 300);
+    };
+    document.addEventListener("click", onClick, false);
+    return () => document.removeEventListener("click", onClick, false);
+  }, []);
+
+  // Mouse parallax for 3D background layers + cursor glow + chip hover tracking
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (window.matchMedia("(pointer: coarse)").matches) return;
+    let rafId = 0;
+    let mx = 0, my = 0, tx = 0, ty = 0;
+    const root = rootRef.current;
+    const glow = cursorGlowRef.current;
+    if (!root) return;
+
+    const onMove = (e: MouseEvent) => {
+      // Position cursor glow
+      if (glow) {
+        glow.style.left = e.clientX + "px";
+        glow.style.top = e.clientY + "px";
+      }
+      // Parallax
+      const rect = root.getBoundingClientRect();
+      tx = ((e.clientX - rect.left) / rect.width - 0.5) * 40;
+      ty = ((e.clientY - rect.top) / rect.height - 0.5) * 40;
+      // Chip radial hover (update --mx/--my on the hovered chip)
+      const chip = (e.target as Element)?.closest?.<HTMLElement>(".labs-spark-chip,.ss-chip,.labs-category-chip,.labs-quick-starter,.labs-service-card,.labs-scenario-card");
+      if (chip) {
+        const cr = chip.getBoundingClientRect();
+        const cx = ((e.clientX - cr.left) / cr.width) * 100;
+        const cy = ((e.clientY - cr.top) / cr.height) * 100;
+        chip.style.setProperty("--mx", `${cx}%`);
+        chip.style.setProperty("--my", `${cy}%`);
+      }
+      if (!rafId) rafId = requestAnimationFrame(tick);
+    };
+    const tick = () => {
+      mx += (tx - mx) * 0.08;
+      my += (ty - my) * 0.08;
+      root.style.setProperty("--labs-mouse-x", `${mx}px`);
+      root.style.setProperty("--labs-mouse-y", `${my}px`);
+      if (Math.abs(tx - mx) > 0.1 || Math.abs(ty - my) > 0.1) {
+        rafId = requestAnimationFrame(tick);
+      } else {
+        rafId = 0;
+      }
+    };
+    const onLeave = () => {
+      tx = 0; ty = 0;
+      if (!rafId) rafId = requestAnimationFrame(tick);
+    };
+    window.addEventListener("mousemove", onMove, { passive: true });
+    window.addEventListener("mouseleave", onLeave);
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseleave", onLeave);
+      cancelAnimationFrame(rafId);
+    };
+  }, []);
 
   const openConversation = async (id: string) => {
     try {
@@ -534,6 +660,7 @@ export default function LabsChat() {
       let fullText = "";
       let cleanText = "";
       let receivedContactRequest = false;
+      let pendingFragment = ""; // holds possible partial metadata between chunks
 
       while (true) {
         const { done, value } = await reader.read();
@@ -542,28 +669,73 @@ export default function LabsChat() {
         const chunk = decoder.decode(value, { stream: true });
         const parts = chunk.split("\u0000");
         for (let i = 0; i < parts.length; i++) {
-          const part = parts[i];
+          let part = parts[i];
+          if (i === 0 && pendingFragment) {
+            part = pendingFragment + part;
+            pendingFragment = "";
+          }
+          if (!part) continue;
+
+          // Incomplete fragment at the end of a chunk — may continue in next chunk
           if (i === parts.length - 1 && !done) {
-            fullText += part;
-          } else if (part.startsWith("{") && (i === parts.length - 1 || done)) {
-            try {
-              const meta = JSON.parse(part);
-              if (meta.conversationId && !conversationId) {
-                setConversationId(meta.conversationId);
-                const newPath = isSv ? `/sv/labs/${meta.conversationId}` : `/labs/${meta.conversationId}`;
-                window.history.replaceState({}, "", newPath);
-              }
-              if (meta.stage) setJourneyStage(meta.stage);
-              continue;
-            } catch {
+            // If the fragment looks like the start of a JSON metadata object, hold it
+            // instead of appending to visible text (prevents metadata leaks)
+            const trimmed = part.trimStart();
+            if (trimmed.startsWith("{") || trimmed.startsWith("[{")) {
+              pendingFragment = part;
+            } else {
               fullText += part;
             }
-          } else {
-            fullText += part;
+            continue;
           }
+
+          // Try to parse as JSON metadata (conversationId, stage, etc.)
+          // Metadata chunks are complete JSON objects (or arrays of them) surrounded by \u0000
+          const trimmedPart = part.trim();
+          const looksLikeMetadata =
+            (trimmedPart.startsWith("{") && trimmedPart.endsWith("}")) ||
+            (trimmedPart.startsWith("[{") && trimmedPart.endsWith("}]"));
+          if (looksLikeMetadata && /"conversationId"/.test(trimmedPart)) {
+            try {
+              const parsed = JSON.parse(trimmedPart);
+              // Handle both {"conversationId":...} and [{"conversationId":...}]
+              const meta = Array.isArray(parsed) ? parsed[0] : parsed;
+              if (meta && typeof meta === "object") {
+                if (meta.conversationId && !conversationId) {
+                  setConversationId(meta.conversationId);
+                  const newPath = isSv ? `/sv/labs/${meta.conversationId}` : `/labs/${meta.conversationId}`;
+                  window.history.replaceState({}, "", newPath);
+                }
+                if (meta.stage) setJourneyStage(meta.stage);
+                continue;
+              }
+            } catch {
+              /* not JSON — fall through to text */
+            }
+          }
+
+          // Regular text token
+          fullText += part;
         }
 
-        cleanText = fullText.replace(/\[\[(PROFILE|SUMMARY):[\s\S]*?\]\]/gi, "").trim();
+        // On stream end, discard any buffered pendingFragment that looks like metadata
+        // (don't let it leak into visible text)
+        if (done && pendingFragment) {
+          const trimmed = pendingFragment.trim();
+          if (!/^[\{\[]/.test(trimmed)) {
+            // Doesn't look like JSON — append as final text
+            fullText += pendingFragment;
+          }
+          pendingFragment = "";
+        }
+
+        // Strip [[PROFILE:]] / [[SUMMARY:]] blocks and any leaked JSON metadata objects
+        // (metadata JSON is always {"conversationId":…,"done":…,"stage":…} shape — never valid prose)
+        cleanText = fullText
+          .replace(/\[\[(PROFILE|SUMMARY):[\s\S]*?\]\]/gi, "")
+          .replace(/\[\s*\{\s*"conversationId"[\s\S]*?\}\s*\]/g, "")
+          .replace(/\{\s*"conversationId"[\s\S]*?\}/g, "")
+          .trim();
 
         if (!receivedContactRequest && !contactSubmitted && newUserCount >= MIN_TURNS_BEFORE_CONTACT) {
           if (detectContactRequest(cleanText + fullText, lang)) {
@@ -730,7 +902,24 @@ export default function LabsChat() {
   }, [isChatActive, liveProfile, lang, journeyStage]);
 
   return (
-    <div className="labs-container">
+    <div ref={rootRef} className="labs-container">
+      {/* 3D animated background — perspective grid + floating orbs */}
+      <div className="labs-bg-3d" aria-hidden="true">
+        <div className="labs-bg-grid" />
+        <div className="labs-bg-orb labs-bg-orb-1" />
+        <div className="labs-bg-orb labs-bg-orb-2" />
+        <div className="labs-bg-orb labs-bg-orb-3" />
+        <div className="labs-bg-rings">
+          <div className="labs-bg-ring" /><div className="labs-bg-ring" /><div className="labs-bg-ring" />
+        </div>
+      </div>
+
+      {/* Film grain for premium feel */}
+      <div className="labs-grain" aria-hidden />
+
+      {/* Mouse cursor glow */}
+      <div className="labs-cursor-glow" aria-hidden ref={cursorGlowRef} />
+
       <LabsHeader
         onToggleHistory={() => setHistoryOpen(true)}
         onNewChat={startNewChat}
@@ -793,7 +982,7 @@ export default function LabsChat() {
               className="labs-hero"
             >
               <div className="labs-hero-mark">
-                <StilledevWordmark size="xl" showTagline={false} />
+                <StilledevWordmark size="xl" showTagline={false} suffix="Labs" />
               </div>
               <span className="labs-hero-eyebrow">{t.hero.eyebrow}</span>
               <h1 className="labs-hero-title">
@@ -815,80 +1004,6 @@ export default function LabsChat() {
                     </div>
                   );
                 })}
-              </div>
-            </motion.div>
-
-            {/* Direct input — primary action, immediately available */}
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.12, ease: [0.16, 1, 0.36, 1] }}
-              className="labs-direct-input"
-            >
-              <div className="labs-input-container labs-hero-input" style={{ maxWidth: "600px", margin: "0 auto" }}>
-                <textarea
-                  ref={textareaRef}
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder={t.chat.placeholder}
-                  className="labs-textarea"
-                  rows={2}
-                  aria-label={t.chat.newMessage}
-                  enterKeyHint="send"
-                />
-                <button
-                  type="button"
-                  onClick={() => void sendMessage()}
-                  disabled={!input.trim()}
-                  className="labs-send-btn"
-                  aria-label={t.chat.send}
-                >
-                  <Send size={16} />
-                </button>
-              </div>
-            </motion.div>
-
-            {/* Quick starters — example prompts */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.4, delay: 0.25 }}
-              className="labs-quick-starters"
-              style={{ justifyContent: "center" }}
-            >
-              {(isSv ? STARTER_PROMPTS_SV : STARTER_PROMPTS_EN).slice(0, 4).map((p, i) => (
-                <motion.button
-                  key={i}
-                  type="button"
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: 0.3 + i * 0.05 }}
-                  className="labs-quick-starter"
-                  onClick={() => { setInput(p); setTimeout(() => textareaRef.current?.focus(), 50); }}
-                >
-                  {p}
-                </motion.button>
-              ))}
-            </motion.div>
-
-            {/* Built by Oliver — trust section */}
-            <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.7 }}
-              className="labs-builder-section"
-            >
-              <div className="labs-builder-inner">
-                <h3 className="labs-builder-title">{t.builder.title}</h3>
-                <p className="labs-builder-body">{t.builder.body}</p>
-                <div className="labs-trust-row">
-                  <span>✓ {t.trust.noAccount}</span>
-                  <span className="labs-trust-dot" />
-                  <span>✓ {t.trust.personalReview}</span>
-                  <span className="labs-trust-dot" />
-                  <span>✓ {t.trust.noObligation}</span>
-                </div>
               </div>
             </motion.div>
           </div>
@@ -962,8 +1077,11 @@ export default function LabsChat() {
             )}
 
             <div ref={messagesContainerRef} className="labs-messages" role="log" aria-live="polite">
-              {messages.map((msg, i) => (
-                <div key={i} className={`labs-message ${msg.role} ${streamingCursor && i === messages.length - 1 && msg.role === "assistant" ? "labs-thinking" : ""}`}>
+              {messages.map((msg, i) => {
+                const isLast = i === messages.length - 1;
+                const isJustSentUser = msg.role === "user" && isLast && isStreaming;
+                return (
+                <div key={i} className={`labs-message ${msg.role} ${streamingCursor && isLast && msg.role === "assistant" ? "labs-thinking" : ""} ${isJustSentUser ? "labs-message-sending" : ""}`}>
                   <div className={`labs-message-avatar ${msg.role}`} aria-hidden>
                     {msg.role === "user" ? (
                       <User size={14} />
@@ -997,7 +1115,7 @@ export default function LabsChat() {
                     )}
                   </div>
                 </div>
-              ))}
+              ); })}
               <div ref={messagesEndRef} className="labs-messages-end" />
             </div>
 
@@ -1091,133 +1209,126 @@ export default function LabsChat() {
               </motion.div>
             )}
 
-            {/* Idea Sparks — contextual nudges when input is empty */}
-            {!input.trim() && ideaSparks.length > 0 && !isStreaming && !summarySubmitted && (
-              <motion.div
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-                className="labs-idea-sparks"
-              >
-                <span className="labs-sparks-label">
-                  <Lightbulb size={11} />
-                  {isSv ? "Idéer att ta vidare" : "Ideas to explore"}
-                </span>
-                <div className="labs-sparks-row">
-                  {ideaSparks.map((s, i) => (
-                    <motion.button
-                      key={s}
-                      type="button"
-                      initial={{ opacity: 0, y: 4, scale: 0.97 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      transition={{ duration: 0.25, delay: i * 0.06, ease: [0.16, 1, 0.36, 1] }}
-                      className="labs-spark-chip"
-                      onClick={() => { setInput(s); setTimeout(() => textareaRef.current?.focus(), 50); }}
-                    >
-                      {s}
-                    </motion.button>
-                  ))}
-                </div>
-              </motion.div>
-            )}
-
-            <div className="labs-input-wrap">
-              <div className="labs-input-container">
-                <textarea
-                  ref={textareaRef}
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder={isStreaming ? t.chat.typing + "…" : t.chat.placeholder}
-                  className="labs-textarea"
-                  rows={1}
-                  disabled={isStreaming}
-                  aria-label={t.chat.newMessage}
-                  enterKeyHint="send"
-                />
-                <button
-                  type="button"
-                  onClick={() => void sendMessage()}
-                  disabled={!input.trim() || isStreaming}
-                  className="labs-send-btn"
-                  aria-label={t.chat.send}
-                >
-                  <Send size={16} />
-                </button>
-              </div>
-              <div className="labs-input-footer">
-                <div className="labs-input-footer-left">
-                  {conversationId && isChatActive && (
-                    <button
-                      type="button"
-                      className="labs-continue-later"
-                      onClick={copyContinueLink}
-                      title={t.continueLater.label}
-                    >
-                      {t.continueLater.label}
-                    </button>
-                  )}
-                </div>
-                <p className="labs-disclaimer">{t.footer.disclaimer}</p>
-              </div>
-            </div>
-
-            {/* Copied-to-clipboard toast */}
-            <AnimatePresence>
-              {copiedToast && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 10 }}
-                  className="labs-copied-toast"
-                >
-                  {t.continueLater.copied}
-                </motion.div>
-              )}
-            </AnimatePresence>
           </>
         )}
 
-        {/* Footer */}
-        <footer className="labs-footer">
-          <div className="labs-footer-brand">
-            <StilledevWordmark size="sm" showTagline={false} />
-            <span className="labs-footer-credit">
-              {isSv ? "av Oliver Stille" : "by Oliver Stille"}
+        {/* Idea Sparks — contextual nudges when input is empty (chat state only) */}
+        {!input.trim() && ideaSparks.length > 0 && !isStreaming && !summarySubmitted && isChatActive && (
+          <motion.div
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="labs-idea-sparks"
+          >
+            <span className="labs-sparks-label">
+              <Lightbulb size={11} />
+              {isSv ? "Idéer att ta vidare" : "Ideas to explore"}
             </span>
+            <div className="labs-sparks-row">
+              {ideaSparks.map((s, i) => (
+                <motion.button
+                  key={s}
+                  type="button"
+                  initial={{ opacity: 0, y: 4, scale: 0.97 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ duration: 0.25, delay: i * 0.06, ease: [0.16, 1, 0.36, 1] }}
+                  className="labs-spark-chip"
+                  onClick={() => { setInput(s); setTimeout(() => textareaRef.current?.focus(), 50); }}
+                >
+                  {s}
+                </motion.button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+        {/* ── SINGLE SHARED TEXTAREA (always visible — the ONLY input on the page) ── */}
+        <div className={`labs-input-wrap ${isWelcome ? "labs-input-wrap-welcome" : ""}`}>
+          <div className={`labs-input-container ${isWelcome ? "labs-hero-input" : ""}`} style={isWelcome ? { maxWidth: "600px", margin: "0 auto" } : undefined}>
+            <textarea
+              ref={textareaRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder={isStreaming ? t.chat.typing + "…" : t.chat.placeholder}
+              className="labs-textarea"
+              rows={isWelcome ? 2 : 1}
+              disabled={isStreaming}
+              aria-label={t.chat.newMessage}
+              enterKeyHint="send"
+            />
+            <button
+              type="button"
+              onClick={() => void sendMessage()}
+              disabled={!input.trim() || isStreaming}
+              className="labs-send-btn"
+              aria-label={t.chat.send}
+            >
+              <Send size={16} />
+            </button>
           </div>
-          {isChatActive && (
-            <div className="labs-conv-progress" aria-hidden>
-              <span>{isSv ? "Framsteg" : "Progress"}</span>
-              <span className="labs-conv-dots">
-                {["discovery","scoping","assessment","blueprint_ready","conclusion_proposed","submitted"].map((stage, idx) => {
-                  const stages = ["discovery","scoping","assessment","blueprint_ready","conclusion_proposed","submitted"];
-                  const curIdx = stages.indexOf(journeyStage);
-                  const state = idx < curIdx ? "done" : idx === curIdx ? "active" : "";
-                  return <span key={stage} className={`labs-conv-dot ${state}`} />;
-                })}
+          <div className="labs-input-footer">
+            <div className="labs-input-footer-left">
+              {conversationId && isChatActive && (
+                <button
+                  type="button"
+                  className="labs-continue-later"
+                  onClick={copyContinueLink}
+                  title={t.continueLater.label}
+                >
+                  {t.continueLater.label}
+                </button>
+              )}
+            </div>
+            <div className="labs-input-footer-right">
+              <p className="labs-disclaimer">{t.footer.disclaimer}</p>
+              <span className="labs-kbd-hint" aria-hidden>
+                <kbd className="labs-kbd">⏎</kbd>
+                <span>{isSv ? "skicka" : "send"}</span>
+                <span className="labs-kbd-sep">·</span>
+                <kbd className="labs-kbd">⇧⏎</kbd>
+                <span>{isSv ? "ny rad" : "new line"}</span>
               </span>
             </div>
+          </div>
+        </div>
+
+        {/* Copied-to-clipboard toast */}
+        <AnimatePresence>
+          {copiedToast && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+              className="labs-copied-toast"
+            >
+              {t.continueLater.copied}
+            </motion.div>
           )}
-          {!isChatActive && <p className="labs-footer-text">{t.footer.tagline}</p>}
-          <div className="labs-footer-links">
-            <a href={isSv ? "/sv" : "/"} className="labs-footer-link">
-              BudAI
-            </a>
-            <span className="labs-footer-sep" aria-hidden>·</span>
-            <a href={isSv ? "/sv/oliver-stille" : "/oliver-stille"} className="labs-footer-link">
-              Oliver Stille
-            </a>
-            <span className="labs-footer-sep" aria-hidden>·</span>
-            <a href={isSv ? "/sv/contact" : "/contact"} className="labs-footer-link">
-              {t.nav.contact}
-            </a>
-            <span className="labs-footer-sep" aria-hidden>·</span>
-            <span className="labs-footer-link labs-footer-copy">
-              © {new Date().getFullYear()}
+        </AnimatePresence>
+
+        {/* Conversation progress bar (only during active chat) */}
+        {isChatActive && (
+          <div className="labs-conv-progress labs-conv-progress-inline" aria-hidden>
+            <span>{isSv ? "Framsteg" : "Progress"}</span>
+            <span className="labs-conv-dots">
+              {["discovery","scoping","assessment","blueprint_ready","conclusion_proposed","submitted"].map((stage, idx) => {
+                const stages = ["discovery","scoping","assessment","blueprint_ready","conclusion_proposed","submitted"];
+                const curIdx = stages.indexOf(journeyStage);
+                const state = idx < curIdx ? "done" : idx === curIdx ? "active" : "";
+                return <span key={stage} className={`labs-conv-dot ${state}`} />;
+              })}
             </span>
           </div>
-        </footer>
+        )}
+
+        {/* Spacer to ensure footer never hides under the sticky input's gradient fade */}
+        <div style={{ height: 32, flexShrink: 0 }} aria-hidden />
+
+        {/* Full Labs footer (inside main so sticky input transitions smoothly into it) */}
+        <div className="labs-footer-breakout">
+          <LabsFooter journeyStage={journeyStage} />
+        </div>
       </main>
 
       {/* Feedback FAB */}
@@ -1384,7 +1495,7 @@ export default function LabsChat() {
                     ))}
                   </div>
                 </div>
-                <button type="submit" className="labs-submit-btn">{t.contact.submit}</button>
+                <button type="submit" className="labs-btn-primary labs-submit-btn">{t.contact.submit}</button>
                 <p className="labs-privacy-note">{t.contact.privacyNote}</p>
               </form>
             </motion.div>

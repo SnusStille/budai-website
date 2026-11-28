@@ -6,7 +6,6 @@ import { useEffect, useRef, useState } from "react";
 import { Github, Linkedin, Mail, ArrowUpRight, Share2 } from "lucide-react";
 import {subscribeJourney} from "@/lib/experience/scroll";
 import StilledevWordmark from "@/components/ui/StilledevWordmark";
-import { StilledevMark } from "@/components/ui/BudAILogo";
 import { useLang } from "@/components/ui/LanguageContext";
 import { CONTACT_MAILTO } from "@/lib/contact";
 
@@ -97,10 +96,7 @@ export default function Footer() {
         <div className="site-footer-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 lg:gap-8">
           <div className="lg:col-span-2">
             <Link href={lang === "sv" ? "/sv" : "/"} aria-label={lang === "sv" ? "Stilledev startsida" : "Stilledev home"} className="flex items-center gap-3 mb-5 group">
-              <StilledevWordmark size="md" />
-              <span className="text-xs font-mono tracking-widest text-white/40 uppercase border-l border-white/10 pl-3">
-                BudAI
-              </span>
+              <StilledevWordmark size="md" suffix="BudAI" />
             </Link>
             <p className="text-sm text-muted leading-relaxed max-w-sm mb-6">
               {lang === "sv"
@@ -160,7 +156,7 @@ export default function Footer() {
           <p className="text-sm text-muted">{t.footer.rights}</p>
           <p className="text-sm text-muted flex items-center gap-1.5">
             {lang === "sv" ? "Utvecklad av" : "Developed by"}{" "}
-            <span className="inline-flex items-center gap-1.5 text-accent-cyan font-medium"><StilledevMark size={16} />Stilledev</span>
+            <span className="text-accent-cyan font-medium">Stilledev</span>
             <span className="text-muted/30">·</span>
             <span className="text-xs">{lang === "sv" ? "Sverige" : "Sweden"}</span>
           </p>
