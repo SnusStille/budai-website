@@ -683,7 +683,19 @@ export default function LabsChat() {
       />
 
       <main ref={mainRef} className="labs-main">
-        {errorMsg && <div className="labs-error" role="alert">{errorMsg}</div>}
+        {errorMsg && (
+          <div className="labs-error" role="alert">
+            <span>{errorMsg}</span>
+            <button
+              type="button"
+              onClick={() => setErrorMsg("")}
+              className="labs-error-dismiss"
+              aria-label={isSv ? "Stäng felmeddelande" : "Dismiss error"}
+            >
+              ×
+            </button>
+          </div>
+        )}
 
         {isWelcome ? (
           <div className="labs-welcome-state">

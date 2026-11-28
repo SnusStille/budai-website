@@ -890,6 +890,21 @@ body:has([data-labs-root]) {
   border-radius: 4px;
   color: var(--labs-accent);
 }
+.labs-md-link {
+  color: var(--labs-accent);
+  text-decoration: none;
+  border-bottom: 1px solid color-mix(in srgb, var(--labs-accent) 30%, transparent);
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+.labs-md-link:hover {
+  border-bottom-color: var(--labs-accent);
+  color: color-mix(in srgb, var(--labs-accent) 80%, white);
+}
+.labs-md-link:focus-visible {
+  outline: 2px solid var(--labs-accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
 .labs-md-p {
   margin: 0 0 0.7em;
 }
@@ -1884,7 +1899,11 @@ body:has([data-labs-root]) {
 
 /* ── Error banner ── */
 .labs-error {
-  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px 10px 14px;
   background: rgba(255, 80, 80, 0.08);
   border: 1px solid rgba(255, 80, 80, 0.2);
   border-radius: var(--labs-radius-sm);
@@ -1892,6 +1911,33 @@ body:has([data-labs-root]) {
   font-size: 13px;
   margin-bottom: 12px;
   animation: labs-fade-up 0.3s ease;
+}
+
+.labs-error-dismiss {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: rgba(255, 144, 144, 0.6);
+  font-size: 18px;
+  line-height: 1;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.labs-error-dismiss:hover {
+  color: #ff9090;
+  background: rgba(255, 80, 80, 0.1);
+}
+
+.labs-error-dismiss:focus-visible {
+  outline: 2px solid rgba(255, 80, 80, 0.5);
+  outline-offset: 1px;
 }
 
 /* ── Animations ── */

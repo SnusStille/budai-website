@@ -10,13 +10,29 @@
  */
 import { Fragment } from "react";
 
-function escapeHtml(s: string): string {
-  return s
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+/** Detect a markdown link [text](url) or bare URL starting at pos */
+function matchLink(text: string, start: number): { text: string; url: string; end: number } | null {
+  // [text](url)
+  if (text[start] === "[") {
+    const closeBracket = text.indexOf("]", start);
+    if (closeBracket === -1) return null;
+    if (text[closeBracket + 1] !== "(") return null;
+    const closeParen = text.indexOf(")", closeBracket + 2);
+    if (closeParen === -1) return null;
+    const linkText = text.slice(start + 1, closeBracket);
+    const url = text.slice(closeBracket + 2, closeParen);
+    if (!linkText || !url) return null;
+    return { text: linkText, url, end: closeParen + 1 };
+  }
+  return null;
+}
+
+/** Detect a bare URL starting at or after pos */
+function matchBareUrl(text: string, start: number): { url: string; end: number } | null {
+  const rest = text.slice(start);
+  const m = rest.match(/^(https?:\/\/[^\s<>"'\)\]]+)/);
+  if (!m) return null;
+  return { url: m[1], end: start + m[1].length };
 }
 
 /** Convert inline markdown to React nodes */
@@ -24,13 +40,19 @@ function renderInline(text: string, keyPrefix: string): (string | JSX.Element)[]
   const nodes: (string | JSX.Element)[] = [];
   let remaining = text;
   let idx = 0;
+  let offset = 0;
 
   while (remaining.length > 0) {
     const boldIdx = remaining.indexOf("**");
     const codeIdx = remaining.indexOf("`");
     const itIdx = remaining.indexOf("*");
+    const linkIdx = remaining.indexOf("[");
+    const urlMatch = remaining.match(/https?:\/\//);
+    const urlIdx = urlMatch ? urlMatch.index! : -1;
 
-    const candidates: { kind: "bold" | "italic" | "code"; pos: number; end: number }[] = [];
+    type Candidate = { kind: "bold" | "italic" | "code" | "link" | "url"; pos: number; end: number; text?: string; url?: string };
+    const candidates: Candidate[] = [];
+
     if (boldIdx !== -1) {
       const end = remaining.indexOf("**", boldIdx + 2);
       if (end !== -1 && end > boldIdx + 2) candidates.push({ kind: "bold", pos: boldIdx, end });
@@ -53,6 +75,14 @@ function renderInline(text: string, keyPrefix: string): (string | JSX.Element)[]
         }
       }
     }
+    if (linkIdx !== -1) {
+      const link = matchLink(remaining, linkIdx);
+      if (link) candidates.push({ kind: "link", pos: linkIdx, end: link.end, text: link.text, url: link.url });
+    }
+    if (urlIdx !== -1 && (linkIdx === -1 || urlIdx < linkIdx)) {
+      const bare = matchBareUrl(remaining, urlIdx);
+      if (bare) candidates.push({ kind: "url", pos: urlIdx, end: bare.end, url: bare.url });
+    }
 
     if (candidates.length === 0) {
       nodes.push(remaining);
@@ -66,18 +96,56 @@ function renderInline(text: string, keyPrefix: string): (string | JSX.Element)[]
       nodes.push(remaining.slice(0, tok.pos));
     }
 
-    const inner = remaining.slice(tok.pos + (tok.kind === "bold" ? 2 : 1), tok.end);
     const k = `${keyPrefix}-${idx++}`;
 
     if (tok.kind === "bold") {
+      const inner = remaining.slice(tok.pos + 2, tok.end);
       nodes.push(<strong key={k}>{renderInline(inner, k)}</strong>);
+      remaining = remaining.slice(tok.end + 2);
     } else if (tok.kind === "italic") {
+      const inner = remaining.slice(tok.pos + 1, tok.end);
       nodes.push(<em key={k}>{renderInline(inner, k)}</em>);
-    } else {
+      remaining = remaining.slice(tok.end + 1);
+    } else if (tok.kind === "code") {
+      const inner = remaining.slice(tok.pos + 1, tok.end);
       nodes.push(<code key={k} className="labs-inline-code">{inner}</code>);
+      remaining = remaining.slice(tok.end + 1);
+    } else if (tok.kind === "link") {
+      const href = tok.url!;
+      const isExternal = href.startsWith("http");
+      nodes.push(
+        <a
+          key={k}
+          href={href}
+          className="labs-md-link"
+          target={isExternal ? "_blank" : undefined}
+          rel={isExternal ? "noopener noreferrer" : undefined}
+        >
+          {renderInline(tok.text!, k)}
+        </a>
+      );
+      remaining = remaining.slice(tok.end);
+    } else if (tok.kind === "url") {
+      const href = tok.url!;
+      // Trim trailing punctuation from URL
+      let cleanUrl = href;
+      while (cleanUrl.length > 0 && /[.,;:!?)'\]]/.test(cleanUrl[cleanUrl.length - 1])) {
+        cleanUrl = cleanUrl.slice(0, -1);
+      }
+      const displayUrl = cleanUrl.replace(/^https?:\/\//, "").replace(/\/$/, "");
+      nodes.push(
+        <a
+          key={k}
+          href={cleanUrl}
+          className="labs-md-link"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {displayUrl}
+        </a>
+      );
+      remaining = remaining.slice(tok.pos + cleanUrl.length);
     }
-
-    remaining = remaining.slice(tok.end + (tok.kind === "bold" ? 2 : 1));
   }
 
   return nodes;
