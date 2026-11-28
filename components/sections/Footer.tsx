@@ -97,10 +97,7 @@ export default function Footer() {
         <div className="site-footer-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 lg:gap-8">
           <div className="lg:col-span-2">
             <Link href={lang === "sv" ? "/sv" : "/"} aria-label={lang === "sv" ? "Stilledev startsida" : "Stilledev home"} className="flex items-center gap-3 mb-5 group">
-              <StilledevWordmark size="md" />
-              <span className="text-xs font-mono tracking-widest text-white/40 uppercase border-l border-white/10 pl-3">
-                BudAI
-              </span>
+              <StilledevWordmark size="md" suffix="BudAI" />
             </Link>
             <p className="text-sm text-muted leading-relaxed max-w-sm mb-6">
               {lang === "sv"

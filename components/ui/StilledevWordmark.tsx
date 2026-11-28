@@ -11,24 +11,28 @@ type Size = "xs" | "sm" | "md" | "lg" | "xl";
 
 /**
  * Stilledev wordmark — pure typography.
- * "Stille" in regular weight, "dev" in a lighter weight with an accent dot.
+ * "Stille" in semibold, "dev" in regular, accent dot.
+ * Optional `suffix` appends a word after the dot (e.g. "BudAI", "Labs").
  */
 export default function StilledevWordmark({
   size = "md",
   className = "",
   variant = "dark",
   showTagline = false,
+  suffix,
 }: {
   size?: Size;
   className?: string;
   variant?: "dark" | "light";
   showTagline?: boolean;
+  suffix?: string;
 }) {
   const scales: Record<Size, number> = { xs: 13, sm: 15, md: 17, lg: 22, xl: 32 };
   const px = scales[size];
   const baseColor = variant === "light" ? "#0a0a0f" : "#ffffff";
   const dotColor = variant === "light" ? "#00b8d4" : "#00e5ff";
   const subColor = variant === "light" ? "rgba(0,0,0,0.45)" : "rgba(255,255,255,0.38)";
+  const suffixColor = variant === "light" ? "rgba(0,0,0,0.55)" : "rgba(255,255,255,0.55)";
 
   return (
     <span className={`inline-flex flex-col leading-none ${className}`}>
@@ -38,6 +42,11 @@ export default function StilledevWordmark({
       >
         Stille<span style={{ fontWeight: 400 }}>dev</span>
         <span style={{ color: dotColor, marginLeft: "1px" }}>.</span>
+        {suffix && (
+          <span style={{ color: suffixColor, fontWeight: 500, marginLeft: "2px", letterSpacing: "-0.02em" }}>
+            {suffix}
+          </span>
+        )}
       </span>
       {showTagline && (
         <span
@@ -52,7 +61,22 @@ export default function StilledevWordmark({
 }
 
 /**
- * Stilledev.Labs lockup — wordmark with Labs descriptor.
+ * Stilledev.BudAI — BudAI product lockup.
+ */
+export function StilledevBudAIWordmark({
+  size = "md",
+  className = "",
+  variant = "dark",
+}: {
+  size?: Size;
+  className?: string;
+  variant?: "dark" | "light";
+}) {
+  return <StilledevWordmark size={size} className={className} variant={variant} suffix="BudAI" />;
+}
+
+/**
+ * Stilledev.Labs — Labs product lockup.
  */
 export function StilledevLabsWordmark({
   size = "md",
@@ -63,22 +87,5 @@ export function StilledevLabsWordmark({
   className?: string;
   variant?: "dark" | "light";
 }) {
-  const scales: Record<Size, number> = { xs: 12, sm: 14, md: 15, lg: 19, xl: 26 };
-  const px = scales[size];
-  const baseColor = variant === "light" ? "#0a0a0f" : "#ffffff";
-  const subColor = variant === "light" ? "rgba(0,0,0,0.4)" : "rgba(255,255,255,0.35)";
-  const accent = variant === "light" ? "#00b8d4" : "#00e5ff";
-
-  return (
-    <span className={`inline-flex items-baseline gap-2 ${className}`}>
-      <span
-        className="font-semibold tracking-tight leading-none"
-        style={{ fontSize: px, color: baseColor, letterSpacing: "-0.035em", fontFamily: STILLEDEV_TYPE.family }}
-      >
-        Stille<span style={{ fontWeight: 400 }}>dev</span>
-        <span style={{ color: accent }}>.</span>
-        <span style={{ color: subColor, fontWeight: 400, marginLeft: "4px", fontSize: px * 0.78, letterSpacing: "0" }}>Labs</span>
-      </span>
-    </span>
-  );
+  return <StilledevWordmark size={size} className={className} variant={variant} suffix="Labs" />;
 }

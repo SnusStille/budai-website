@@ -38,6 +38,7 @@ import RequirementsMap from "./RequirementsMap";
 import MissingPieces from "./MissingPieces";
 import WhatsNew from "@/components/ui/WhatsNew";
 import BackToBudAI from "@/components/ui/BackToBudAI";
+import LabsFooter from "./LabsFooter";
 
 type Message = {
   id?: string;
@@ -173,19 +174,20 @@ export default function LabsChat() {
   const isAtBottomRef = useRef(true);
   // Track whether we just sent a message (force-scroll on assistant response start)
   const justSentRef = useRef(false);
-  // Prevent scroll-feedback loops
-  const programmaticScrollRef = useRef(false);
+  // Timestamp of last programmatic scroll — briefly ignore wheel/touch events to prevent feedback loops
+  const lastProgrammaticScrollRef = useRef(0);
   // Mirror isStreaming in a ref for the RAF-throttled scroll handler
   const isStreamingRef = useRef(false);
+  // Detect explicit user scroll intent (wheel / touch / key) to immediately unpin
+  const userScrollingRef = useRef(false);
 
-  /** Auto-scroll logic: only scroll to bottom if user was already at bottom,
+  /** Auto-scroll logic: only scroll to bottom if user is pinned to bottom,
    *  or if they just sent a message. Never fight the user's scroll position. */
   const maybeScrollToBottom = useCallback((behavior: ScrollBehavior = "auto") => {
+    if (userScrollingRef.current) return; // user is actively scrolling away — never hijack
     if (isAtBottomRef.current || justSentRef.current) {
-      programmaticScrollRef.current = true;
+      lastProgrammaticScrollRef.current = performance.now();
       messagesEndRef.current?.scrollIntoView({ behavior, block: "end" });
-      // Reset after next frame so user-initiated scrolls register correctly
-      requestAnimationFrame(() => { programmaticScrollRef.current = false; });
       justSentRef.current = false;
     }
   }, []);
@@ -213,49 +215,82 @@ export default function LabsChat() {
   // Track user-initiated scroll: RAF-throttled to prevent jank
   useEffect(() => {
     let ticking = false;
+    const updateScrollState = () => {
+      const scrollY = window.scrollY;
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const fromBottom = docHeight - scrollY;
+      isAtBottomRef.current = fromBottom < 80;
+      setScrolled(scrollY > 8);
+      setScrollProgress(docHeight > 0 ? (scrollY / docHeight) * 100 : 0);
+      setShowScrollBtn(isStreamingRef.current && !isAtBottomRef.current && fromBottom > 200);
+      setShowBackToTop(scrollY > 500);
+      setBriefDockVisible(scrollY > 200 && messages.length > 2);
+      ticking = false;
+    };
     const onScroll = () => {
-      if (programmaticScrollRef.current) return;
+      // Ignore scroll events that occur right after a programmatic scrollIntoView
+      const sinceProgrammatic = performance.now() - lastProgrammaticScrollRef.current;
+      if (sinceProgrammatic < 150) return;
+      // User is driving the scroll — clear the "force pin" flag
+      userScrollingRef.current = true;
       if (ticking) return;
       ticking = true;
-      requestAnimationFrame(() => {
-        const scrollY = window.scrollY;
-        const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-        const fromBottom = docHeight - scrollY;
-        isAtBottomRef.current = fromBottom < 80;
-        setScrolled(scrollY > 8);
-        setScrollProgress(docHeight > 0 ? (scrollY / docHeight) * 100 : 0);
-        setShowScrollBtn(isStreamingRef.current && !isAtBottomRef.current && fromBottom > 200);
-        setShowBackToTop(scrollY > 500);
-        setBriefDockVisible(scrollY > 200 && messages.length > 2);
-        ticking = false;
-      });
+      requestAnimationFrame(updateScrollState);
     };
+    // Mark user intent immediately on wheel / touch / key scroll
+    const markUserIntent = () => { userScrollingRef.current = true; };
     window.addEventListener("scroll", onScroll, { passive: true });
-    onScroll();
-    return () => window.removeEventListener("scroll", onScroll);
+    window.addEventListener("wheel", markUserIntent, { passive: true });
+    window.addEventListener("touchmove", markUserIntent, { passive: true });
+    window.addEventListener("keydown", (e) => {
+      if (["PageUp","PageDown","Home","End","ArrowUp","ArrowDown"," "].includes(e.key)) {
+        userScrollingRef.current = true;
+      }
+    });
+    updateScrollState();
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("wheel", markUserIntent);
+      window.removeEventListener("touchmove", markUserIntent);
+    };
   }, []);
 
-  // During streaming, keep at bottom if pinned (throttled via rAF)
+  // When streaming starts, reset userScrollingRef if we were at bottom
+  useEffect(() => {
+    if (isStreaming) {
+      isStreamingRef.current = true;
+      // If the user just sent (they're at bottom by definition), allow auto-scroll
+      if (justSentRef.current) userScrollingRef.current = false;
+    } else {
+      isStreamingRef.current = false;
+      // When streaming ends, allow new auto-scroll on next message send
+      userScrollingRef.current = false;
+    }
+  }, [isStreaming]);
+
+  // During streaming, keep at bottom if pinned (throttled — only every ~150ms, NOT every frame)
   useEffect(() => {
     if (!isStreaming) return;
-    let raf: number;
+    let cancelled = false;
     const tick = () => {
+      if (cancelled) return;
       maybeScrollToBottom("auto");
-      raf = requestAnimationFrame(tick);
     };
-    // Start after a brief delay so first content chunk renders
-    const start = setTimeout(() => { raf = requestAnimationFrame(tick); }, 100);
+    const id = window.setInterval(tick, 150);
+    // Initial nudge
+    const start = setTimeout(tick, 120);
     return () => {
-      clearTimeout(start);
-      cancelAnimationFrame(raf);
+      cancelled = true;
+      window.clearInterval(id);
+      window.clearTimeout(start);
     };
   }, [isStreaming, maybeScrollToBottom]);
 
   const scrollToBottom = useCallback(() => {
+    userScrollingRef.current = false;
     isAtBottomRef.current = true;
-    programmaticScrollRef.current = true;
+    lastProgrammaticScrollRef.current = performance.now();
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-    requestAnimationFrame(() => { programmaticScrollRef.current = false; });
   }, []);
 
   const scrollToTop = useCallback(() => {
@@ -534,6 +569,7 @@ export default function LabsChat() {
       let fullText = "";
       let cleanText = "";
       let receivedContactRequest = false;
+      let pendingFragment = ""; // holds possible partial metadata between chunks
 
       while (true) {
         const { done, value } = await reader.read();
@@ -542,28 +578,73 @@ export default function LabsChat() {
         const chunk = decoder.decode(value, { stream: true });
         const parts = chunk.split("\u0000");
         for (let i = 0; i < parts.length; i++) {
-          const part = parts[i];
+          let part = parts[i];
+          if (i === 0 && pendingFragment) {
+            part = pendingFragment + part;
+            pendingFragment = "";
+          }
+          if (!part) continue;
+
+          // Incomplete fragment at the end of a chunk — may continue in next chunk
           if (i === parts.length - 1 && !done) {
-            fullText += part;
-          } else if (part.startsWith("{") && (i === parts.length - 1 || done)) {
-            try {
-              const meta = JSON.parse(part);
-              if (meta.conversationId && !conversationId) {
-                setConversationId(meta.conversationId);
-                const newPath = isSv ? `/sv/labs/${meta.conversationId}` : `/labs/${meta.conversationId}`;
-                window.history.replaceState({}, "", newPath);
-              }
-              if (meta.stage) setJourneyStage(meta.stage);
-              continue;
-            } catch {
+            // If the fragment looks like the start of a JSON metadata object, hold it
+            // instead of appending to visible text (prevents metadata leaks)
+            const trimmed = part.trimStart();
+            if (trimmed.startsWith("{") || trimmed.startsWith("[{")) {
+              pendingFragment = part;
+            } else {
               fullText += part;
             }
-          } else {
-            fullText += part;
+            continue;
           }
+
+          // Try to parse as JSON metadata (conversationId, stage, etc.)
+          // Metadata chunks are complete JSON objects (or arrays of them) surrounded by \u0000
+          const trimmedPart = part.trim();
+          const looksLikeMetadata =
+            (trimmedPart.startsWith("{") && trimmedPart.endsWith("}")) ||
+            (trimmedPart.startsWith("[{") && trimmedPart.endsWith("}]"));
+          if (looksLikeMetadata && /"conversationId"/.test(trimmedPart)) {
+            try {
+              const parsed = JSON.parse(trimmedPart);
+              // Handle both {"conversationId":...} and [{"conversationId":...}]
+              const meta = Array.isArray(parsed) ? parsed[0] : parsed;
+              if (meta && typeof meta === "object") {
+                if (meta.conversationId && !conversationId) {
+                  setConversationId(meta.conversationId);
+                  const newPath = isSv ? `/sv/labs/${meta.conversationId}` : `/labs/${meta.conversationId}`;
+                  window.history.replaceState({}, "", newPath);
+                }
+                if (meta.stage) setJourneyStage(meta.stage);
+                continue;
+              }
+            } catch {
+              /* not JSON — fall through to text */
+            }
+          }
+
+          // Regular text token
+          fullText += part;
         }
 
-        cleanText = fullText.replace(/\[\[(PROFILE|SUMMARY):[\s\S]*?\]\]/gi, "").trim();
+        // On stream end, discard any buffered pendingFragment that looks like metadata
+        // (don't let it leak into visible text)
+        if (done && pendingFragment) {
+          const trimmed = pendingFragment.trim();
+          if (!/^[\{\[]/.test(trimmed)) {
+            // Doesn't look like JSON — append as final text
+            fullText += pendingFragment;
+          }
+          pendingFragment = "";
+        }
+
+        // Strip [[PROFILE:]] / [[SUMMARY:]] blocks and any leaked JSON metadata objects
+        // (metadata JSON is always {"conversationId":…,"done":…,"stage":…} shape — never valid prose)
+        cleanText = fullText
+          .replace(/\[\[(PROFILE|SUMMARY):[\s\S]*?\]\]/gi, "")
+          .replace(/\[\s*\{\s*"conversationId"[\s\S]*?\}\s*\]/g, "")
+          .replace(/\{\s*"conversationId"[\s\S]*?\}/g, "")
+          .trim();
 
         if (!receivedContactRequest && !contactSubmitted && newUserCount >= MIN_TURNS_BEFORE_CONTACT) {
           if (detectContactRequest(cleanText + fullText, lang)) {
@@ -793,7 +874,7 @@ export default function LabsChat() {
               className="labs-hero"
             >
               <div className="labs-hero-mark">
-                <StilledevWordmark size="xl" showTagline={false} />
+                <StilledevWordmark size="xl" showTagline={false} suffix="Labs" />
               </div>
               <span className="labs-hero-eyebrow">{t.hero.eyebrow}</span>
               <h1 className="labs-hero-title">
@@ -815,37 +896,6 @@ export default function LabsChat() {
                     </div>
                   );
                 })}
-              </div>
-            </motion.div>
-
-            {/* Direct input — primary action, immediately available */}
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.12, ease: [0.16, 1, 0.36, 1] }}
-              className="labs-direct-input"
-            >
-              <div className="labs-input-container labs-hero-input" style={{ maxWidth: "600px", margin: "0 auto" }}>
-                <textarea
-                  ref={textareaRef}
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder={t.chat.placeholder}
-                  className="labs-textarea"
-                  rows={2}
-                  aria-label={t.chat.newMessage}
-                  enterKeyHint="send"
-                />
-                <button
-                  type="button"
-                  onClick={() => void sendMessage()}
-                  disabled={!input.trim()}
-                  className="labs-send-btn"
-                  aria-label={t.chat.send}
-                >
-                  <Send size={16} />
-                </button>
               </div>
             </motion.div>
 
@@ -1091,134 +1141,113 @@ export default function LabsChat() {
               </motion.div>
             )}
 
-            {/* Idea Sparks — contextual nudges when input is empty */}
-            {!input.trim() && ideaSparks.length > 0 && !isStreaming && !summarySubmitted && (
-              <motion.div
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-                className="labs-idea-sparks"
-              >
-                <span className="labs-sparks-label">
-                  <Lightbulb size={11} />
-                  {isSv ? "Idéer att ta vidare" : "Ideas to explore"}
-                </span>
-                <div className="labs-sparks-row">
-                  {ideaSparks.map((s, i) => (
-                    <motion.button
-                      key={s}
-                      type="button"
-                      initial={{ opacity: 0, y: 4, scale: 0.97 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      transition={{ duration: 0.25, delay: i * 0.06, ease: [0.16, 1, 0.36, 1] }}
-                      className="labs-spark-chip"
-                      onClick={() => { setInput(s); setTimeout(() => textareaRef.current?.focus(), 50); }}
-                    >
-                      {s}
-                    </motion.button>
-                  ))}
-                </div>
-              </motion.div>
-            )}
-
-            <div className="labs-input-wrap">
-              <div className="labs-input-container">
-                <textarea
-                  ref={textareaRef}
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder={isStreaming ? t.chat.typing + "…" : t.chat.placeholder}
-                  className="labs-textarea"
-                  rows={1}
-                  disabled={isStreaming}
-                  aria-label={t.chat.newMessage}
-                  enterKeyHint="send"
-                />
-                <button
-                  type="button"
-                  onClick={() => void sendMessage()}
-                  disabled={!input.trim() || isStreaming}
-                  className="labs-send-btn"
-                  aria-label={t.chat.send}
-                >
-                  <Send size={16} />
-                </button>
-              </div>
-              <div className="labs-input-footer">
-                <div className="labs-input-footer-left">
-                  {conversationId && isChatActive && (
-                    <button
-                      type="button"
-                      className="labs-continue-later"
-                      onClick={copyContinueLink}
-                      title={t.continueLater.label}
-                    >
-                      {t.continueLater.label}
-                    </button>
-                  )}
-                </div>
-                <p className="labs-disclaimer">{t.footer.disclaimer}</p>
-              </div>
-            </div>
-
-            {/* Copied-to-clipboard toast */}
-            <AnimatePresence>
-              {copiedToast && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 10 }}
-                  className="labs-copied-toast"
-                >
-                  {t.continueLater.copied}
-                </motion.div>
-              )}
-            </AnimatePresence>
           </>
         )}
 
-        {/* Footer */}
-        <footer className="labs-footer">
-          <div className="labs-footer-brand">
-            <StilledevWordmark size="sm" showTagline={false} />
-            <span className="labs-footer-credit">
-              {isSv ? "av Oliver Stille" : "by Oliver Stille"}
+        {/* Idea Sparks — contextual nudges when input is empty (chat state only) */}
+        {!input.trim() && ideaSparks.length > 0 && !isStreaming && !summarySubmitted && isChatActive && (
+          <motion.div
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="labs-idea-sparks"
+          >
+            <span className="labs-sparks-label">
+              <Lightbulb size={11} />
+              {isSv ? "Idéer att ta vidare" : "Ideas to explore"}
             </span>
-          </div>
-          {isChatActive && (
-            <div className="labs-conv-progress" aria-hidden>
-              <span>{isSv ? "Framsteg" : "Progress"}</span>
-              <span className="labs-conv-dots">
-                {["discovery","scoping","assessment","blueprint_ready","conclusion_proposed","submitted"].map((stage, idx) => {
-                  const stages = ["discovery","scoping","assessment","blueprint_ready","conclusion_proposed","submitted"];
-                  const curIdx = stages.indexOf(journeyStage);
-                  const state = idx < curIdx ? "done" : idx === curIdx ? "active" : "";
-                  return <span key={stage} className={`labs-conv-dot ${state}`} />;
-                })}
-              </span>
+            <div className="labs-sparks-row">
+              {ideaSparks.map((s, i) => (
+                <motion.button
+                  key={s}
+                  type="button"
+                  initial={{ opacity: 0, y: 4, scale: 0.97 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ duration: 0.25, delay: i * 0.06, ease: [0.16, 1, 0.36, 1] }}
+                  className="labs-spark-chip"
+                  onClick={() => { setInput(s); setTimeout(() => textareaRef.current?.focus(), 50); }}
+                >
+                  {s}
+                </motion.button>
+              ))}
             </div>
+          </motion.div>
+        )}
+
+        {/* ── SINGLE SHARED TEXTAREA (always visible — the ONLY input on the page) ── */}
+        <div className={`labs-input-wrap ${isWelcome ? "labs-input-wrap-welcome" : ""}`}>
+          <div className={`labs-input-container ${isWelcome ? "labs-hero-input" : ""}`} style={isWelcome ? { maxWidth: "600px", margin: "0 auto" } : undefined}>
+            <textarea
+              ref={textareaRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder={isStreaming ? t.chat.typing + "…" : t.chat.placeholder}
+              className="labs-textarea"
+              rows={isWelcome ? 2 : 1}
+              disabled={isStreaming}
+              aria-label={t.chat.newMessage}
+              enterKeyHint="send"
+            />
+            <button
+              type="button"
+              onClick={() => void sendMessage()}
+              disabled={!input.trim() || isStreaming}
+              className="labs-send-btn"
+              aria-label={t.chat.send}
+            >
+              <Send size={16} />
+            </button>
+          </div>
+          <div className="labs-input-footer">
+            <div className="labs-input-footer-left">
+              {conversationId && isChatActive && (
+                <button
+                  type="button"
+                  className="labs-continue-later"
+                  onClick={copyContinueLink}
+                  title={t.continueLater.label}
+                >
+                  {t.continueLater.label}
+                </button>
+              )}
+            </div>
+            <p className="labs-disclaimer">{t.footer.disclaimer}</p>
+          </div>
+        </div>
+
+        {/* Copied-to-clipboard toast */}
+        <AnimatePresence>
+          {copiedToast && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+              className="labs-copied-toast"
+            >
+              {t.continueLater.copied}
+            </motion.div>
           )}
-          {!isChatActive && <p className="labs-footer-text">{t.footer.tagline}</p>}
-          <div className="labs-footer-links">
-            <a href={isSv ? "/sv" : "/"} className="labs-footer-link">
-              BudAI
-            </a>
-            <span className="labs-footer-sep" aria-hidden>·</span>
-            <a href={isSv ? "/sv/oliver-stille" : "/oliver-stille"} className="labs-footer-link">
-              Oliver Stille
-            </a>
-            <span className="labs-footer-sep" aria-hidden>·</span>
-            <a href={isSv ? "/sv/contact" : "/contact"} className="labs-footer-link">
-              {t.nav.contact}
-            </a>
-            <span className="labs-footer-sep" aria-hidden>·</span>
-            <span className="labs-footer-link labs-footer-copy">
-              © {new Date().getFullYear()}
+        </AnimatePresence>
+
+        {/* Conversation progress bar (only during active chat) */}
+        {isChatActive && (
+          <div className="labs-conv-progress labs-conv-progress-inline" aria-hidden>
+            <span>{isSv ? "Framsteg" : "Progress"}</span>
+            <span className="labs-conv-dots">
+              {["discovery","scoping","assessment","blueprint_ready","conclusion_proposed","submitted"].map((stage, idx) => {
+                const stages = ["discovery","scoping","assessment","blueprint_ready","conclusion_proposed","submitted"];
+                const curIdx = stages.indexOf(journeyStage);
+                const state = idx < curIdx ? "done" : idx === curIdx ? "active" : "";
+                return <span key={stage} className={`labs-conv-dot ${state}`} />;
+              })}
             </span>
           </div>
-        </footer>
+        )}
       </main>
+
+      {/* Full Labs footer */}
+      <LabsFooter journeyStage={journeyStage} />
 
       {/* Feedback FAB */}
       <FeedbackButton />

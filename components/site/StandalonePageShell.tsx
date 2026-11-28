@@ -121,7 +121,7 @@ export default function StandalonePageShell({
       <div className="mx-auto w-full max-w-2xl">
         <nav className="standalone-page-nav mb-8 flex items-center justify-between gap-3" aria-label={lang === "sv" ? "Sidnavigering och språk" : "Page navigation and language"}>
           <BackToBudAI href={backHref ?? (lang === "sv" ? "/sv" : "/")} lang={lang} nativeLink={nativeBackLink} />
-          <LangSwitcher variant="pill" labsContext="main" />
+          <LangSwitcher variant="dropdown" labsContext="main" />
         </nav>
 
         <motion.article

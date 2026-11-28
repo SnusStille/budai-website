@@ -44,6 +44,7 @@
 body:has([data-labs-root]) {
   background: var(--labs-bg);
   color: var(--labs-text);
+  overscroll-behavior-y: none;
 }
 
 [data-labs-root] {
@@ -3463,7 +3464,7 @@ body:has([data-labs-root]) {
 .labs-back-to-top {
   position:fixed; bottom:20px; right:20px; z-index:44;
   width:44px; height:44px; border-radius:50%;
-  display:none; align-items:center; justify-content:center;
+  display:flex; align-items:center; justify-content:center;
   background:rgba(7,7,14,0.9);
   border:1px solid rgba(255,255,255,0.1);
   color:rgba(255,255,255,0.8); cursor:pointer;
@@ -3525,3 +3526,195 @@ body:has([data-labs-root]) {
 
 /* Inline code */
 .labs-inline-code { font-size: 0.85em; }
+
+/* ── Full Labs footer (multi-column, matches BudAI site footer) ── */
+.labs-conv-progress-inline {
+  margin-top: 8px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255,255,255,0.05);
+  justify-content: center;
+}
+
+.labs-footer-full {
+  position: relative;
+  width: 100%;
+  margin-top: 32px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.25));
+}
+.labs-footer-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 48px 20px 32px;
+}
+.labs-footer-grid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1fr 1fr;
+  gap: 40px;
+}
+@media (max-width: 768px) {
+  .labs-footer-grid { grid-template-columns: 1fr 1fr; gap: 28px; }
+  .labs-footer-brand-col { grid-column: 1 / -1; }
+}
+@media (max-width: 480px) {
+  .labs-footer-grid { grid-template-columns: 1fr; }
+}
+
+.labs-footer-brand-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.labs-footer-desc {
+  font-size: 13px;
+  color: rgba(255,255,255,0.5);
+  line-height: 1.6;
+  max-width: 320px;
+  margin: 0 0 20px;
+}
+.labs-footer-socials {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.labs-footer-social-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255,255,255,0.6);
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+.labs-footer-social-btn:hover {
+  color: #fff;
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(0,229,255,0.25);
+}
+.labs-footer-nav-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.9);
+  margin: 0 0 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.labs-footer-nav-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.bg-accent-cyan { background: #00e5ff; }
+.bg-accent-purple { background: #7c5cff; }
+.bg-accent-green { background: #34d399; }
+.labs-footer-nav-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.labs-footer-nav-link {
+  min-height: 32px;
+  font-size: 13px;
+  color: rgba(255,255,255,0.55);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+.labs-footer-nav-link:hover {
+  color: #fff;
+}
+.labs-footer-arrow {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.labs-footer-nav-link:hover .labs-footer-arrow {
+  opacity: 1;
+}
+
+.labs-footer-share-row {
+  margin-top: 36px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255,255,255,0.05);
+  display: flex;
+  justify-content: flex-end;
+}
+.labs-footer-share-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: transparent;
+  font-size: 13px;
+  color: rgba(255,255,255,0.7);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.labs-footer-share-btn:hover {
+  border-color: rgba(0,229,255,0.35);
+  color: #fff;
+}
+
+.labs-footer-bottom {
+  margin-top: 32px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255,255,255,0.05);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.labs-footer-copy {
+  font-size: 12px;
+  color: rgba(255,255,255,0.4);
+  margin: 0;
+}
+.labs-footer-credit {
+  font-size: 12px;
+  color: rgba(255,255,255,0.4);
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.labs-footer-stilledev {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #00e5ff;
+  font-weight: 500;
+}
+.labs-footer-dot {
+  color: rgba(255,255,255,0.2);
+  margin: 0 2px;
+}
+
+/* ── Shared textarea welcome state (not sticky — centered in hero) ── */
+.labs-input-wrap-welcome {
+  position: relative; /* override sticky so welcome input sits in flow */
+  bottom: auto;
+  padding: 24px 0 8px;
+  background: none;
+}
+
+/* ── Scroll anchoring fixes ──
+   Disable overflow-anchor on the main column so the browser doesn't fight
+   our programmatic scroll during streaming (root cause of "scroll hang"). */
+.labs-main { overflow-anchor: none; }
+.labs-messages > * { overflow-anchor: none; }
+.labs-messages > :last-child { overflow-anchor: auto; }
