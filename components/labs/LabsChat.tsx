@@ -32,6 +32,7 @@ import SmartSuggestions from "./SmartSuggestions";
 import LiveUnderstanding from "./LiveUnderstanding";
 import FeedbackButton from "./FeedbackButton";
 import TypingIndicator from "./TypingIndicator";
+import ProjectBriefCard from "./ProjectBriefCard";
 import WhatsNew from "@/components/ui/WhatsNew";
 
 type Message = {
@@ -889,6 +890,11 @@ export default function LabsChat() {
             )}
 
             <ProjectJourney stage={journeyStage} lang={lang} visible={isChatActive} />
+
+            {/* Live Project Brief Card — shows the project taking shape */}
+            {isChatActive && liveProfile && (
+              <ProjectBriefCard data={liveProfile} lang={lang} />
+            )}
 
             {/* Live Understanding panel — discrete real-time "what we know" */}
             {isChatActive && liveProfile && (

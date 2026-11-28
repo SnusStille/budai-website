@@ -1,0 +1,253 @@
+"use client";
+
+/**
+ * Project Brief Card — a live, compact visualization of the project taking shape.
+ *
+ * Appears once there's enough data to show something meaningful (title + goal, or
+ * 3+ confirmed fields). Shows: project title, goal summary, complexity badge,
+ * budget/timeline indicators, key features chips, and a progress meter showing
+ * how complete the brief is.
+ *
+ * This is THE moment where the customer sees their idea materialize.
+ */
+import { motion, AnimatePresence } from "framer-motion";
+import { FileText, Target, Clock, Wallet, Layers, AlertTriangle, CheckCircle2, Sparkles, ChevronRight } from "lucide-react";
+
+interface BriefData {
+  project_title?: string | null;
+  customer_goal?: string | null;
+  problem?: string | null;
+  target_audience?: string | null;
+  key_features?: string[];
+  nice_to_have_features?: string[];
+  suggested_features?: string[];
+  technical_complexity?: "low" | "medium" | "high" | "very_high" | null;
+  budget?: string | null;
+  budget_assessment?: "realistic" | "tight" | "unrealistic" | "unknown" | null;
+  timeline?: string | null;
+  timeline_assessment?: "realistic" | "tight" | "unrealistic" | "unknown" | null;
+  conversation_stage?: string;
+  confidence?: {
+    overall_score?: number;
+    project_description?: string;
+    requirements_clarity?: string;
+    budget_clarity?: string;
+    timeline_clarity?: string;
+    target_audience_clarity?: string;
+    contact_info?: string;
+  };
+  business_risks?: string[];
+  technical_risks?: string[];
+}
+
+function complexityLabel(c: string | null | undefined, lang: "sv" | "en") {
+  const map: Record<string, { sv: string; en: string; color: string }> = {
+    low:        { sv: "Låg",         en: "Low",         color: "#34d399" },
+    medium:     { sv: "Medel",       en: "Medium",      color: "#fbbf24" },
+    high:       { sv: "Hög",         en: "High",        color: "#fb923c" },
+    very_high:  { sv: "Mycket hög",  en: "Very high",   color: "#f87171" },
+  };
+  if (!c || !map[c]) return null;
+  return { label: lang === "sv" ? map[c].sv : map[c].en, color: map[c].color };
+}
+
+function budgetAssessmentLabel(a: string | null | undefined, lang: "sv" | "en") {
+  const map: Record<string, { sv: string; en: string; color: string }> = {
+    realistic:   { sv: "Realistisk",   en: "Realistic",    color: "#34d399" },
+    tight:       { sv: "Stram",       en: "Tight",        color: "#fbbf24" },
+    unrealistic: { sv: "Orealistisk", en: "Unrealistic",  color: "#f87171" },
+  };
+  if (!a || a === "unknown" || !map[a]) return null;
+  return { label: lang === "sv" ? map[a].sv : map[a].en, color: map[a].color };
+}
+
+function truncate(s: string, max: number) {
+  if (s.length <= max) return s;
+  return s.slice(0, max).replace(/\s+\S*$/, "") + "…";
+}
+
+export default function ProjectBriefCard({
+  data,
+  lang,
+}: {
+  data: BriefData | null;
+  lang: "sv" | "en";
+}) {
+  if (!data) return null;
+
+  // Only show when we have something meaningful
+  const hasTitle = !!data.project_title && data.project_title.length > 2;
+  const hasGoal = !!data.customer_goal && data.customer_goal.length > 5;
+  const featuresCount = (data.key_features || []).length;
+  const shouldShow = (hasTitle && hasGoal) || featuresCount >= 3;
+
+  if (!shouldShow) return null;
+
+  const score = data.confidence?.overall_score || 0;
+  const scorePct = Math.min(100, Math.max(0, score));
+  const comp = complexityLabel(data.technical_complexity, lang);
+  const budgetAsm = budgetAssessmentLabel(data.budget_assessment, lang);
+
+  const l = {
+    briefing: lang === "sv" ? "Din projektbrief" : "Your project brief",
+    building: lang === "sv" ? "Tar form…" : "Taking shape…",
+    ready: lang === "sv" ? "Klar för granskning" : "Ready for review",
+    goal: lang === "sv" ? "Mål" : "Goal",
+    features: lang === "sv" ? "Funktioner" : "Features",
+    more: lang === "sv" ? "till" : "more",
+    budget: lang === "sv" ? "Budget" : "Budget",
+    timeline: lang === "sv" ? "Tidsplan" : "Timeline",
+    complexity: lang === "sv" ? "Komplexitet" : "Complexity",
+    notSet: lang === "sv" ? "Ej angivet" : "Not set",
+    progress: lang === "sv" ? "Framsteg" : "Progress",
+    risks: lang === "sv" ? "Risker" : "Risks",
+  };
+
+  const stageLabels: Record<string, { sv: string; en: string }> = {
+    discovery:           { sv: "Förstår idén", en: "Understanding" },
+    scoping:             { sv: "Utforskar omfattning", en: "Exploring scope" },
+    assessment:          { sv: "Bedömer", en: "Assessing" },
+    blueprint_ready:     { sv: "Sammanfattar", en: "Summarizing" },
+    conclusion_proposed: { sv: "Klar för granskning", en: "Ready to review" },
+    awaiting_confirmation:{ sv: "Väntar på bekräftelse", en: "Awaiting confirmation" },
+    contact_ready:       { sv: "Samlar kontaktuppgifter", en: "Collecting contact" },
+    submitted:           { sv: "Skickad till Oliver", en: "Sent to Oliver" },
+  };
+  const stageLabel = data.conversation_stage
+    ? (lang === "sv" ? stageLabels[data.conversation_stage]?.sv : stageLabels[data.conversation_stage]?.en)
+    : null;
+
+  const isReady = scorePct >= 60;
+  const risks = [...(data.business_risks || []), ...(data.technical_risks || [])].slice(0, 2);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12, scale: 0.98 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.5, ease: [0.16, 1, 0.36, 1] }}
+      className="pbc-wrap"
+      role="region"
+      aria-label={l.briefing}
+    >
+      {/* Header */}
+      <div className="pbc-header">
+        <div className="pbc-header-left">
+          <span className="pbc-icon">
+            <FileText size={13} />
+          </span>
+          <div>
+            <div className="pbc-title">
+              {data.project_title || truncate(data.customer_goal || "Project", 50)}
+            </div>
+            <div className="pbc-stage">
+              {isReady ? (
+                <><CheckCircle2 size={10} /> {l.ready}</>
+              ) : (
+                <><Sparkles size={10} /> {l.building}</>
+              )}
+              {stageLabel && <span className="pbc-stage-sep">·</span>}
+              {stageLabel && <span>{stageLabel}</span>}
+            </div>
+          </div>
+        </div>
+        <div className="pbc-score-ring" style={{
+          background: `conic-gradient(${scorePct >= 60 ? "#00e5ff" : scorePct >= 35 ? "#fbbf24" : "rgba(255,255,255,0.15)"} ${scorePct * 3.6}deg, rgba(255,255,255,0.06) 0deg)`,
+        }}>
+          <div className="pbc-score-inner">
+            <span className="pbc-score-num">{Math.round(scorePct)}<i>%</i></span>
+          </div>
+        </div>
+      </div>
+
+      {/* Goal */}
+      {(data.customer_goal || data.problem) && (
+        <div className="pbc-goal">
+          <Target size={11} className="pbc-goal-icon" />
+          <p>{truncate(data.customer_goal || data.problem || "", 160)}</p>
+        </div>
+      )}
+
+      {/* Feature chips */}
+      {featuresCount > 0 && (
+        <div className="pbc-section">
+          <span className="pbc-section-label"><Layers size={10} /> {l.features}</span>
+          <div className="pbc-features">
+            {data.key_features!.slice(0, 4).map((f, i) => (
+              <motion.span
+                key={i}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.25, delay: i * 0.04 }}
+                className="pbc-feat-chip"
+              >
+                {truncate(f, 32)}
+              </motion.span>
+            ))}
+            {featuresCount > 4 && (
+              <span className="pbc-feat-more">+{featuresCount - 4} {l.more}</span>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Meta row: budget, timeline, complexity */}
+      <div className="pbc-meta">
+        <div className="pbc-meta-item">
+          <Wallet size={11} />
+          <span className="pbc-meta-label">{l.budget}</span>
+          {data.budget ? (
+            <span className="pbc-meta-value">{truncate(data.budget, 24)}</span>
+          ) : budgetAsm ? (
+            <span className="pbc-meta-value" style={{ color: budgetAsm.color }}>{budgetAsm.label}</span>
+          ) : (
+            <span className="pbc-meta-unknown">{l.notSet}</span>
+          )}
+        </div>
+        <div className="pbc-meta-item">
+          <Clock size={11} />
+          <span className="pbc-meta-label">{l.timeline}</span>
+          {data.timeline ? (
+            <span className="pbc-meta-value">{truncate(data.timeline, 24)}</span>
+          ) : (
+            <span className="pbc-meta-unknown">{l.notSet}</span>
+          )}
+        </div>
+        {comp && (
+          <div className="pbc-meta-item">
+            <Layers size={11} />
+            <span className="pbc-meta-label">{l.complexity}</span>
+            <span className="pbc-meta-value" style={{ color: comp.color }}>{comp.label}</span>
+          </div>
+        )}
+      </div>
+
+      {/* Risks (if any) */}
+      {risks.length > 0 && (
+        <div className="pbc-risks">
+          <AlertTriangle size={11} />
+          <span>{truncate(risks[0], 100)}</span>
+        </div>
+      )}
+
+      {/* Progress bar */}
+      <div className="pbc-progress">
+        <div className="pbc-progress-track">
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: `${scorePct}%` }}
+            transition={{ duration: 0.8, ease: [0.16, 1, 0.36, 1], delay: 0.2 }}
+            className="pbc-progress-fill"
+            style={{
+              background: scorePct >= 60
+                ? "linear-gradient(90deg, #00e5ff, #7c5cff)"
+                : scorePct >= 35
+                  ? "linear-gradient(90deg, #fbbf24, #fb923c)"
+                  : "rgba(255,255,255,0.15)",
+            }}
+          />
+        </div>
+        <span className="pbc-progress-label">{l.progress}: {Math.round(scorePct)}%</span>
+      </div>
+    </motion.div>
+  );
+}
