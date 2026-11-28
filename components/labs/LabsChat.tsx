@@ -1077,8 +1077,11 @@ export default function LabsChat() {
             )}
 
             <div ref={messagesContainerRef} className="labs-messages" role="log" aria-live="polite">
-              {messages.map((msg, i) => (
-                <div key={i} className={`labs-message ${msg.role} ${streamingCursor && i === messages.length - 1 && msg.role === "assistant" ? "labs-thinking" : ""}`}>
+              {messages.map((msg, i) => {
+                const isLast = i === messages.length - 1;
+                const isJustSentUser = msg.role === "user" && isLast && isStreaming;
+                return (
+                <div key={i} className={`labs-message ${msg.role} ${streamingCursor && isLast && msg.role === "assistant" ? "labs-thinking" : ""} ${isJustSentUser ? "labs-message-sending" : ""}`}>
                   <div className={`labs-message-avatar ${msg.role}`} aria-hidden>
                     {msg.role === "user" ? (
                       <User size={14} />
@@ -1112,7 +1115,7 @@ export default function LabsChat() {
                     )}
                   </div>
                 </div>
-              ))}
+              ); })}
               <div ref={messagesEndRef} className="labs-messages-end" />
             </div>
 
@@ -1277,7 +1280,16 @@ export default function LabsChat() {
                 </button>
               )}
             </div>
-            <p className="labs-disclaimer">{t.footer.disclaimer}</p>
+            <div className="labs-input-footer-right">
+              <p className="labs-disclaimer">{t.footer.disclaimer}</p>
+              <span className="labs-kbd-hint" aria-hidden>
+                <kbd className="labs-kbd">⏎</kbd>
+                <span>{isSv ? "skicka" : "send"}</span>
+                <span className="labs-kbd-sep">·</span>
+                <kbd className="labs-kbd">⇧⏎</kbd>
+                <span>{isSv ? "ny rad" : "new line"}</span>
+              </span>
+            </div>
           </div>
         </div>
 
@@ -1483,7 +1495,7 @@ export default function LabsChat() {
                     ))}
                   </div>
                 </div>
-                <button type="submit" className="labs-submit-btn">{t.contact.submit}</button>
+                <button type="submit" className="labs-btn-primary labs-submit-btn">{t.contact.submit}</button>
                 <p className="labs-privacy-note">{t.contact.privacyNote}</p>
               </form>
             </motion.div>
