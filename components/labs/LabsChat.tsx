@@ -960,6 +960,7 @@ export default function LabsChat() {
                   className="labs-textarea"
                   rows={1}
                   aria-label={t.chat.newMessage}
+                  enterKeyHint="send"
                 />
                 <button
                   type="button"
@@ -1114,6 +1115,7 @@ export default function LabsChat() {
                   rows={1}
                   disabled={isStreaming}
                   aria-label={t.chat.newMessage}
+                  enterKeyHint="send"
                 />
                 <button
                   type="button"
@@ -1362,27 +1364,31 @@ export default function LabsChat() {
                   <input id="labs-contact-name" type="text" value={contactForm.name}
                     onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
                     className={`labs-input ${contactErrors.name ? "error" : ""}`}
-                    placeholder={isSv ? "T.ex. Anna Andersson" : "e.g. Jane Smith"} autoFocus />
+                    placeholder={isSv ? "T.ex. Anna Andersson" : "e.g. Jane Smith"}
+                    autoComplete="name" autoFocus />
                   {contactErrors.name && <p className="labs-field-error">{contactErrors.name}</p>}
                 </div>
                 <div className="labs-field">
                   <label className="labs-field-label" htmlFor="labs-contact-email">{t.contact.email}</label>
                   <input id="labs-contact-email" type="email" value={contactForm.email}
                     onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
-                    className={`labs-input ${contactErrors.email ? "error" : ""}`} placeholder="name@company.com" />
+                    className={`labs-input ${contactErrors.email ? "error" : ""}`} placeholder="name@company.com"
+                    autoComplete="email" />
                   {contactErrors.email && <p className="labs-field-error">{contactErrors.email}</p>}
                 </div>
                 <div className="labs-field">
                   <label className="labs-field-label" htmlFor="labs-contact-phone">{t.contact.phone}</label>
                   <input id="labs-contact-phone" type="tel" value={contactForm.phone}
                     onChange={(e) => setContactForm({ ...contactForm, phone: e.target.value })}
-                    className="labs-input" placeholder={isSv ? "+46 70 123 45 67" : "+1 555 123 4567"} />
+                    className="labs-input" placeholder={isSv ? "+46 70 123 45 67" : "+1 555 123 4567"}
+                    autoComplete="tel" />
                 </div>
                 <div className="labs-field">
                   <label className="labs-field-label" htmlFor="labs-contact-company">{t.contact.company}</label>
                   <input id="labs-contact-company" type="text" value={contactForm.company}
                     onChange={(e) => setContactForm({ ...contactForm, company: e.target.value })}
-                    className="labs-input" placeholder={isSv ? "Företagsnamn" : "Company name"} />
+                    className="labs-input" placeholder={isSv ? "Företagsnamn" : "Company name"}
+                    autoComplete="organization" />
                 </div>
                 <div className="labs-field">
                   <label className="labs-field-label">{t.contact.preferredContact}</label>

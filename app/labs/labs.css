@@ -32,6 +32,12 @@
 
 * { box-sizing: border-box; }
 
+/* Text selection — matching accent color */
+.labs-container ::selection {
+  background: color-mix(in srgb, var(--labs-accent) 30%, transparent);
+  color: #fff;
+}
+
 /* Apply labs base styling only when a labs page is active. We don't set html/body
    globally because the CSS chunk can persist across client-side navigation;
    instead the labs-container covers the full viewport and paints its own bg. */
