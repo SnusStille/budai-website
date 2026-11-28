@@ -25,6 +25,9 @@ import ProjectBlueprint from "@/components/labs/ProjectBlueprint";
 import { renderMarkdown } from "@/lib/labs/markdown";
 import { WebsiteDemo, WebAppDemo, GameDemo, RobloxDemo, AutomationDemo } from "./SolutionDemos";
 import ProjectJourney from "./ProjectJourney";
+import ProjectSummaryCard from "./ProjectSummaryCard";
+import SmartSuggestions from "./SmartSuggestions";
+import LiveUnderstanding from "./LiveUnderstanding";
 
 type Message = {
   id?: string;
@@ -137,6 +140,13 @@ export default function LabsChat() {
   const [selectedService, setSelectedService] = useState<ServiceCategory | null>(null);
   const [showProcess, setShowProcess] = useState(false);
   const [blueprintShown, setBlueprintShown] = useState(false);
+  const [summaryShown, setSummaryShown] = useState(false);
+  const [summaryProfile, setSummaryProfile] = useState<any | null>(null);
+  const [summaryConfirmed, setSummaryConfirmed] = useState(false);
+  const [summarySubmitted, setSummarySubmitted] = useState(false);
+  const [submittingBrief, setSubmittingBrief] = useState(false);
+  const [copiedToast, setCopiedToast] = useState(false);
+  const [liveProfile, setLiveProfile] = useState<any | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -199,9 +209,82 @@ export default function LabsChat() {
     setSelectedService(null);
     setShowProcess(false);
     setBlueprintShown(false);
+    setSummaryShown(false);
+    setSummaryProfile(null);
+    setSummaryConfirmed(false);
+    setSummarySubmitted(false);
+    setLiveProfile(null);
     setHistoryOpen(false);
     window.history.replaceState({}, "", isSv ? "/sv/labs" : "/labs");
     setTimeout(() => textareaRef.current?.focus(), 100);
+  };
+
+  const confirmBrief = async () => {
+    if (submittingBrief || summarySubmitted || summaryConfirmed) return;
+    setSubmittingBrief(true);
+    setSummaryConfirmed(true);
+    try {
+      const confirmMsg = isSv
+        ? "Jag bekräftar sammanfattningen. Den ser korrekt ut. Skicka den till Oliver."
+        : "I confirm the summary. It looks correct. Please send it to Oliver.";
+      await sendMessage(confirmMsg);
+    } finally {
+      setSubmittingBrief(false);
+    }
+  };
+
+  const editBriefField = (field: string, currentValue?: string) => {
+    const fieldLabelsSv: Record<string,string> = {
+      need: "Jag vill korrigera mitt behov: ",
+      audience: "Jag vill förtydliga målgruppen: ",
+      budget: "Min budget är: ",
+      timeline: "Föredragen tidsplan är: ",
+    };
+    const fieldLabelsEn: Record<string,string> = {
+      need: "I'd like to correct what I need: ",
+      audience: "I'd like to clarify the audience: ",
+      budget: "My budget is: ",
+      timeline: "Preferred timeline: ",
+    };
+    const prefix = (isSv ? fieldLabelsSv : fieldLabelsEn)[field] || (isSv ? "Jag vill ändra: " : "I want to change: ");
+    setInput(prefix);
+    setSummaryShown(false);
+    setTimeout(() => {
+      textareaRef.current?.focus();
+      const el = textareaRef.current;
+      if (el) el.setSelectionRange(el.value.length, el.value.length);
+    }, 50);
+  };
+
+  const addToBrief = () => {
+    const prefix = isSv ? "Jag vill lägga till: " : "I want to add: ";
+    setInput(prefix);
+    setSummaryShown(false);
+    setTimeout(() => {
+      textareaRef.current?.focus();
+      const el = textareaRef.current;
+      if (el) el.setSelectionRange(el.value.length, el.value.length);
+    }, 50);
+  };
+
+  const copyContinueLink = async () => {
+    if (!conversationId) return;
+    const base = window.location.origin;
+    const prefix = isSv ? "/sv/labs/" : "/labs/";
+    const url = base + prefix + conversationId;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopiedToast(true);
+      setTimeout(() => setCopiedToast(false), 2200);
+    } catch {
+      // fallback
+      const ta = document.createElement("textarea");
+      ta.value = url;
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand("copy"); setCopiedToast(true); setTimeout(() => setCopiedToast(false), 2200); } catch {}
+      ta.remove();
+    }
   };
 
   const selectService = (service: ServiceDef) => {
@@ -328,10 +411,22 @@ export default function LabsChat() {
           }
         }
 
-        // Check if this response contains a blueprint-ready profile
+        // Extract profile from AI response (v4 profile with all metadata)
         const prof = extractProfile(fullText);
         const shouldShowBlueprint = prof.profile?.blueprint_ready && !blueprintShown;
         if (shouldShowBlueprint && prof.profile) setBlueprintShown(true);
+
+        // Live understanding — update visible profile for the panel
+        if (prof.profile) setLiveProfile(prof.profile);
+
+        // v4: Detect when AI proposes a summary (awaiting_confirmation stage)
+        if (prof.profile?.conversation_stage === "awaiting_confirmation" && !summaryShown && prof.profile) {
+          setSummaryShown(true);
+          setSummaryProfile(prof.profile);
+        }
+        if (prof.profile?.conversation_stage === "submitted") {
+          setSummarySubmitted(true);
+        }
 
         setMessages((prev) => {
           const updated = [...prev];
@@ -678,6 +773,12 @@ export default function LabsChat() {
             )}
 
             <ProjectJourney stage={journeyStage} lang={lang} visible={isChatActive && journeyStage !== "discovery"} />
+
+            {/* Live Understanding panel — discrete real-time "what we know" */}
+            {isChatActive && liveProfile && (
+              <LiveUnderstanding profile={liveProfile} lang={lang} labels={t.liveUnderstanding} stage={journeyStage} />
+            )}
+
             <div className="labs-messages" role="log" aria-live="polite">
               {messages.map((msg, i) => (
                 <div key={i} className={`labs-message ${msg.role}`}>
@@ -701,11 +802,54 @@ export default function LabsChat() {
                     {msg.blueprint && (
                       <ProjectBlueprint data={msg.blueprint} lang={lang} />
                     )}
+                    {/* Smart Suggestions: after last assistant message, done streaming, no summary */}
+                    {i === messages.length - 1 && msg.role === "assistant" && !isStreaming && !summaryShown && msg.content.length > 20 && (
+                      <SmartSuggestions
+                        lastMessage={msg.content}
+                        lang={lang}
+                        stage={journeyStage}
+                        onPick={(text) => { setInput(text); setTimeout(() => textareaRef.current?.focus(), 30); }}
+                      />
+                    )}
                   </div>
                 </div>
               ))}
               <div ref={messagesEndRef} className="labs-messages-end" />
             </div>
+
+            {/* Project Summary Card — shows when AI reaches awaiting_confirmation */}
+            {summaryShown && summaryProfile && !summarySubmitted && (
+              <ProjectSummaryCard
+                data={{
+                  project_title: summaryProfile.project_title,
+                  customer_goal: summaryProfile.customer_goal,
+                  target_audience: summaryProfile.target_audience,
+                  problem: summaryProfile.problem,
+                  proposed_solution: summaryProfile.proposed_solution,
+                  key_features: summaryProfile.key_features,
+                  nice_to_have_features: summaryProfile.nice_to_have_features,
+                  budget: summaryProfile.budget,
+                  timeline: summaryProfile.timeline,
+                  recommended_mvp: summaryProfile.recommended_mvp || summaryProfile.executive_summary,
+                  labels: t.summary,
+                }}
+                onConfirm={() => void confirmBrief()}
+                onInlineEdit={editBriefField}
+                onAddInfo={addToBrief}
+                confirmed={summaryConfirmed}
+                submitted={summarySubmitted}
+                confidence={summaryProfile.summary_confidence || 70}
+                lang={lang}
+              />
+            )}
+
+            {/* Post-submission confirmation banner */}
+            {summarySubmitted && (
+              <div className="labs-submitted-banner">
+                <h4>{t.submitted.title}</h4>
+                <p>{t.submitted.body}</p>
+              </div>
+            )}
 
             <div className="labs-input-wrap">
               <div className="labs-input-container">
@@ -730,10 +874,36 @@ export default function LabsChat() {
                   <Send size={16} />
                 </button>
               </div>
-              <div className="labs-input-footer" style={{ justifyContent: "center" }}>
+              <div className="labs-input-footer">
+                <div className="labs-input-footer-left">
+                  {conversationId && isChatActive && (
+                    <button
+                      type="button"
+                      className="labs-continue-later"
+                      onClick={copyContinueLink}
+                      title={t.continueLater.label}
+                    >
+                      {t.continueLater.label}
+                    </button>
+                  )}
+                </div>
                 <p className="labs-disclaimer">{t.footer.disclaimer}</p>
               </div>
             </div>
+
+            {/* Copied-to-clipboard toast */}
+            <AnimatePresence>
+              {copiedToast && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  className="labs-copied-toast"
+                >
+                  {t.continueLater.copied}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </>
         )}
 
