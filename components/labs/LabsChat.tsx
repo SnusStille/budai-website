@@ -24,6 +24,7 @@ import {
 } from "@/lib/labs/profile";
 import { useLabsTranslation } from "@/lib/labs/i18n";
 import { SERVICES, type ServiceCategory, type ServiceDef } from "@/lib/labs/services";
+import { PROCESS } from "@/lib/labs/knowledge";
 import ProjectBlueprint from "@/components/labs/ProjectBlueprint";
 import { renderMarkdown } from "@/lib/labs/markdown";
 import ProjectJourney from "./ProjectJourney";
@@ -967,12 +968,41 @@ export default function LabsChat() {
               />
             )}
 
-            {/* Post-submission confirmation banner */}
+            {/* Post-submission confirmation with next steps */}
             {summarySubmitted && (
-              <div className="labs-submitted-banner">
+              <motion.div
+                initial={{ opacity: 0, y: 12, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ duration: 0.5, ease: [0.16, 1, 0.36, 1] }}
+                className="labs-submitted-banner"
+              >
+                <div className="labs-submitted-check">
+                  <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                    <circle cx="14" cy="14" r="13" stroke="#34d399" strokeWidth="1.5" />
+                    <path d="M8 14.5l4 4 8-9" stroke="#34d399" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </div>
                 <h4>{t.submitted.title}</h4>
                 <p>{t.submitted.body}</p>
-              </div>
+                <div className="labs-next-steps">
+                  <p className="labs-next-steps-label">
+                    {isSv ? "Vad händer nu?" : "What happens next?"}
+                  </p>
+                  <ol className="labs-next-steps-list">
+                    {(isSv ? PROCESS.sv.slice(1) : PROCESS.en.slice(1)).map((step, i) => (
+                      <motion.li
+                        key={i}
+                        initial={{ opacity: 0, x: -8 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.3, delay: 0.3 + i * 0.1 }}
+                      >
+                        <span className="labs-ns-num">{i + 1}</span>
+                        <span>{step}</span>
+                      </motion.li>
+                    ))}
+                  </ol>
+                </div>
+              </motion.div>
             )}
 
             <div className="labs-input-wrap">
