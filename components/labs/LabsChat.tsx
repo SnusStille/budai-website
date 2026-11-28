@@ -25,6 +25,8 @@ import ProjectBlueprint from "@/components/labs/ProjectBlueprint";
 import { renderMarkdown } from "@/lib/labs/markdown";
 import { WebsiteDemo, WebAppDemo, GameDemo, RobloxDemo, AutomationDemo } from "./SolutionDemos";
 import ProjectJourney from "./ProjectJourney";
+import ProjectSummaryCard from "./ProjectSummaryCard";
+import SmartSuggestions from "./SmartSuggestions";
 
 type Message = {
   id?: string;
@@ -132,6 +134,10 @@ export default function LabsChat() {
   const [contactErrors, setContactErrors] = useState<Record<string, string>>({});
   const [contactSubmitted, setContactSubmitted] = useState(false);
   const [journeyStage, setJourneyStage] = useState<"discovery"|"scoping"|"assessment"|"blueprint_ready"|"conclusion_proposed"|"awaiting_confirmation"|"contact_ready"|"submitted"|"closed">("discovery");
+  const [summaryShown, setSummaryShown] = useState(false);
+  const [summaryProfile, setSummaryProfile] = useState<any | null>(null);
+  const [summarySubmitted, setSummarySubmitted] = useState(false);
+  const [submittingBrief, setSubmittingBrief] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [userMessageCount, setUserMessageCount] = useState(0);
   const [selectedService, setSelectedService] = useState<ServiceCategory | null>(null);
@@ -199,6 +205,9 @@ export default function LabsChat() {
     setSelectedService(null);
     setShowProcess(false);
     setBlueprintShown(false);
+    setSummaryShown(false);
+    setSummaryProfile(null);
+    setSummarySubmitted(false);
     setHistoryOpen(false);
     window.history.replaceState({}, "", isSv ? "/sv/labs" : "/labs");
     setTimeout(() => textareaRef.current?.focus(), 100);
@@ -328,10 +337,20 @@ export default function LabsChat() {
           }
         }
 
-        // Check if this response contains a blueprint-ready profile
+        // Check if this response contains a blueprint-ready profile OR summary
         const prof = extractProfile(fullText);
         const shouldShowBlueprint = prof.profile?.blueprint_ready && !blueprintShown;
         if (shouldShowBlueprint && prof.profile) setBlueprintShown(true);
+
+        // v4: Detect when AI has proposed a summary (awaiting_confirmation)
+        if (prof.profile?.conversation_stage === "awaiting_confirmation" && !summaryShown && prof.profile) {
+          setSummaryShown(true);
+          setSummaryProfile(prof.profile);
+        }
+        // If AI marks the conversation as submitted (customer confirmed earlier), show submitted state
+        if (prof.profile?.conversation_stage === "submitted") {
+          setSummarySubmitted(true);
+        }
 
         setMessages((prev) => {
           const updated = [...prev];
@@ -362,6 +381,51 @@ export default function LabsChat() {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       void sendMessage();
+    }
+  };
+
+  const confirmBrief = async () => {
+    if (submittingBrief || summarySubmitted) return;
+    setSubmittingBrief(true);
+    try {
+      // If we already have an email from the contact form, just finalize
+      // Otherwise, ask for contact info first
+      if (summaryProfile) {
+        // Tell AI the customer confirmed — send a confirmation message
+        const confirmMsg = isSv
+          ? "Jag bekräftar sammanfattningen. Den ser korrekt ut. Vad händer nu?"
+          : "I confirm the summary. It looks correct. What happens next?";
+        await sendMessage(confirmMsg);
+        setSummarySubmitted(true);
+      }
+    } finally {
+      setSubmittingBrief(false);
+    }
+  };
+
+  const editBrief = () => {
+    const editMsg = isSv
+      ? "Jag vill korrigera några saker i sammanfattningen: "
+      : "I'd like to correct a few things in the summary: ";
+    setSummaryShown(false);
+    setSummaryProfile(null);
+    const input = document.querySelector<HTMLTextAreaElement>("textarea.labs-input");
+    if (input) {
+      input.focus();
+      input.value = editMsg;
+    }
+  };
+
+  const addToBrief = () => {
+    const addMsg = isSv
+      ? "Jag vill lägga till lite mer information: "
+      : "I want to add some more information: ";
+    setSummaryShown(false);
+    setSummaryProfile(null);
+    const input = document.querySelector<HTMLTextAreaElement>("textarea.labs-input");
+    if (input) {
+      input.focus();
+      input.value = addMsg;
     }
   };
 
@@ -701,11 +765,50 @@ export default function LabsChat() {
                     {msg.blueprint && (
                       <ProjectBlueprint data={msg.blueprint} lang={lang} />
                     )}
+                    {/* Smart suggestions — after last assistant msg, not streaming, chat active, no summary yet */}
+                    {i === messages.length - 1 && msg.role === "assistant" && !isStreaming && !summaryShown && (
+                      <SmartSuggestions
+                        lastMessage={msg.content}
+                        lang={lang}
+                        stage={journeyStage}
+                        onPick={(text) => { setInput(text); textareaRef.current?.focus(); }}
+                      />
+                    )}
                   </div>
                 </div>
               ))}
               <div ref={messagesEndRef} className="labs-messages-end" />
             </div>
+
+            {/* Project Summary Card (v4 conclusion) */}
+            {summaryShown && summaryProfile && !summarySubmitted && (
+              <ProjectSummaryCard
+                data={{
+                  project_title: summaryProfile.project_title,
+                  customer_goal: summaryProfile.customer_goal,
+                  target_audience: summaryProfile.target_audience,
+                  problem: summaryProfile.problem,
+                  proposed_solution: summaryProfile.proposed_solution,
+                  key_features: summaryProfile.key_features,
+                  nice_to_have_features: summaryProfile.nice_to_have_features,
+                  budget: summaryProfile.budget,
+                  timeline: summaryProfile.timeline,
+                  recommended_mvp: summaryProfile.recommended_mvp || summaryProfile.executive_summary,
+                  labels: t.summary,
+                }}
+                onConfirm={() => void confirmBrief()}
+                onEdit={editBrief}
+                onAddInfo={addToBrief}
+                confirmed={submittingBrief}
+                submitted={summarySubmitted}
+              />
+            )}
+            {summarySubmitted && (
+              <div className="labs-submitted-banner">
+                <h4>{t.submitted.title}</h4>
+                <p>{t.submitted.body}</p>
+              </div>
+            )}
 
             <div className="labs-input-wrap">
               <div className="labs-input-container">

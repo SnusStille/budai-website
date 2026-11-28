@@ -271,6 +271,61 @@ export default function LabsProjects() {
   const [analysis, setAnalysis] = useState<string | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
+  const exportBriefMarkdown = (d: typeof detail) => {
+    if (!d) return;
+    const p = d.project;
+    const prof = d.profile || {};
+    const customer = prof.customer || {};
+    const lines: string[] = [
+      `# Projektbrief — ${p.project_title || "Utan titel"}`,
+      ``,
+      `**Skapad:** ${new Date(p.created_at).toLocaleString("sv-SE")}`,
+      `**Status:** ${p.status}`,
+      `**Prioritet:** ${p.priority_score ?? "-"}/100`,
+      ``,
+      `## Kund`,
+      `- **Namn:** ${p.contact_name || customer.name || "—"}`,
+      `- **E-post:** ${p.contact_email || "—"}`,
+      `- **Telefon:** ${p.contact_phone || "—"}`,
+      `- **Företag:** ${p.company || customer.company_name || "—"}`,
+      `- **Typ:** ${customer.type || "okänd"}`,
+      `- **Bransch:** ${customer.industry || "—"}`,
+      `- **Roll:** ${customer.role || "—"}`,
+      ``,
+      `## Projekt`,
+      `- **Kategori:** ${p.project_category || prof.project_category || "okänd"}`,
+      `- **Mål:** ${p.customer_goal || prof.customer_goal || "—"}`,
+      `- **Problem:** ${p.problem || prof.problem || "—"}`,
+      `- **Målgrupp:** ${p.target_audience || prof.target_audience || "—"}`,
+      ``,
+      `## Funktioner`,
+      ...(prof.key_features?.length ? prof.key_features.map((f: string) => `- [ ] ${f}`) : ["—"]),
+      ``,
+      ...(prof.nice_to_have_features?.length ? [`## Önskade funktioner`, ...prof.nice_to_have_features.map((f: string) => `- ${f}`), ``] : []),
+      `## Budget & Tid`,
+      `- **Budget:** ${p.budget || prof.budget || "Ej angiven"}`,
+      `- **Tidsplan:** ${p.timeline || prof.timeline || "Ej angiven"}`,
+      ``,
+      `## Rekommendation`,
+      prof.recommended_mvp || p.recommended_mvp || "—",
+      ``,
+      `## Risker`,
+      ...(prof.business_risks?.concat(prof.technical_risks || []).map((r: string) => `- ${r}`) || ["—"]),
+      ``,
+      ...(p.next_steps ? [`## Nästa steg`, p.next_steps, ``] : []),
+      ...(p.internal_notes ? [`## Olivers anteckningar`, p.internal_notes, ``] : []),
+    ];
+    const blob = new Blob([lines.join("\n")], { type: "text/markdown;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `projektbrief-${(p.project_title || "projekt").toLowerCase().replace(/\s+/g, "-").slice(0, 40)}.md`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
+
   const runAnalysis = async () => {
     if (!detail) return;
     setAnalyzing(true);
@@ -973,14 +1028,24 @@ export default function LabsProjects() {
                       className={input}
                     />
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => void saveAdminFields()}
-                    disabled={savingNotes}
-                    className="inline-flex items-center gap-2 rounded-xl bg-accent-cyan/20 border border-accent-cyan/30 text-accent-cyan px-3.5 py-1.5 text-xs font-semibold transition hover:bg-accent-cyan/30 disabled:opacity-50"
-                  >
-                    {savingNotes ? "Sparar..." : "Spara anteckningar"}
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => void saveAdminFields()}
+                      disabled={savingNotes}
+                      className="inline-flex items-center gap-2 rounded-xl bg-accent-cyan/20 border border-accent-cyan/30 text-accent-cyan px-3.5 py-1.5 text-xs font-semibold transition hover:bg-accent-cyan/30 disabled:opacity-50"
+                    >
+                      {savingNotes ? "Sparar..." : "Spara anteckningar"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => exportBriefMarkdown(detail)}
+                      className="inline-flex items-center gap-1.5 rounded-xl bg-white/[0.05] border border-white/10 text-white/70 px-3 py-1.5 text-xs font-medium transition hover:bg-white/10 hover:text-white"
+                      title="Exportera som Markdown"
+                    >
+                      <Download className="h-3 w-3" /> Export MD
+                    </button>
+                  </div>
                 </div>
               </div>
 
