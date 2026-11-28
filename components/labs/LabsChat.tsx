@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Plus, X, User, ChevronRight, ChevronDown, ChevronUp, ArrowLeft, ArrowUp, MessageSquare, Lightbulb, UserCheck, FileText } from "lucide-react";
+import { Send, Plus, X, User, ChevronRight, ChevronDown, ArrowLeft, ArrowUp, MessageSquare, Lightbulb, UserCheck, FileText } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useLang } from "@/components/ui/LanguageContext";
 import LabsHeader from "@/components/labs/LabsHeader";
@@ -988,6 +988,33 @@ export default function LabsChat() {
               ))}
               <div ref={messagesEndRef} className="labs-messages-end" />
             </div>
+
+            {/* Category chips — shown after first exchange when user hasn't picked a category yet */}
+            {isChatActive && !selectedService && messages.length >= 2 && messages.length <= 6 && !summaryShown && (
+              <motion.div
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4 }}
+                className="labs-category-hint"
+              >
+                <span className="labs-category-hint-label">
+                  {isSv ? "Vad handlar ditt projekt om?" : "What's your project about?"}
+                </span>
+                <div className="labs-category-chips">
+                  {SERVICES.slice(0, 6).map((s) => (
+                    <button
+                      key={s.id}
+                      type="button"
+                      className="labs-category-chip"
+                      onClick={() => selectService(s)}
+                    >
+                      <ServiceIcon icon={s.icon} />
+                      {isSv ? s.labelSv : s.labelEn}
+                    </button>
+                  ))}
+                </div>
+              </motion.div>
+            )}
 
             {/* Project Summary Card — shows when AI reaches awaiting_confirmation */}
             {summaryShown && summaryProfile && !summarySubmitted && (

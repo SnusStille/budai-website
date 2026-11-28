@@ -1541,6 +1541,45 @@ body:has([data-labs-root]) {
 }
 .labs-spark-chip:active { transform: translateY(0); }
 
+/* ── Category hint chips (after first exchange, before category is known) ── */
+.labs-category-hint {
+  max-width:760px; margin:4px auto 10px; padding:12px 14px;
+  background:rgba(255,255,255,0.02);
+  border:1px solid var(--labs-border);
+  border-radius:12px;
+  display:flex; flex-direction:column; gap:8px;
+}
+.labs-category-hint-label {
+  font-family:var(--labs-mono); font-size:10px; font-weight:600;
+  text-transform:uppercase; letter-spacing:0.06em;
+  color:var(--labs-text-dim);
+}
+.labs-category-chips {
+  display:flex; flex-wrap:wrap; gap:6px;
+}
+.labs-category-chip {
+  display:inline-flex; align-items:center; gap:6px;
+  padding:7px 12px; border-radius:8px;
+  background:rgba(255,255,255,0.03);
+  border:1px solid var(--labs-border);
+  color:rgba(234,236,239,0.75); font-size:12px;
+  font-family:var(--labs-font-stack); cursor:pointer;
+  transition:all 0.15s ease;
+  line-height:1.2;
+}
+.labs-category-chip:hover {
+  background:rgba(0,229,255,0.07);
+  border-color:rgba(0,229,255,0.3);
+  color:#fff; transform:translateY(-1px);
+}
+.labs-category-chip svg {
+  width:13px; height:13px; opacity:0.6;
+}
+@media (max-width:500px) {
+  .labs-category-hint { padding:10px 12px; }
+  .labs-category-chip { padding:6px 10px; font-size:11.5px; }
+}
+
 /* ── Input area ── */
 .labs-input-wrap {
   position: sticky;
@@ -3419,6 +3458,7 @@ body:has([data-labs-root]) {
 .labs-quick-starter:focus-visible,
 .ss-chip:focus-visible,
 .labs-spark-chip:focus-visible,
+.labs-category-chip:focus-visible,
 .labs-flow-card:focus-visible,
 .fb-fab:focus-visible,
 .labs-header-icon-btn:focus-visible,
