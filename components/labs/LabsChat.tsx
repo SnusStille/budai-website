@@ -1175,6 +1175,9 @@ export default function LabsChat() {
         <footer className="labs-footer">
           <div className="labs-footer-brand">
             <StilledevWordmark size="sm" showTagline={false} />
+            <span className="labs-footer-credit">
+              {isSv ? "av Oliver Stille" : "by Oliver Stille"}
+            </span>
           </div>
           {isChatActive && (
             <div className="labs-conv-progress" aria-hidden>
@@ -1194,12 +1197,16 @@ export default function LabsChat() {
             <a href={isSv ? "/sv" : "/"} className="labs-footer-link">
               BudAI
             </a>
-            <span style={{ color: "var(--labs-text-faint)", fontSize: 8 }}>·</span>
-            <a href={isSv ? "/sv" : "/"} className="labs-footer-link">
-              Stilledev
+            <span className="labs-footer-sep" aria-hidden>·</span>
+            <a href={isSv ? "/sv/oliver-stille" : "/oliver-stille"} className="labs-footer-link">
+              Oliver Stille
             </a>
-            <span style={{ color: "var(--labs-text-faint)", fontSize: 8 }}>·</span>
-            <span className="labs-footer-link" style={{ cursor: "default" }}>
+            <span className="labs-footer-sep" aria-hidden>·</span>
+            <a href={isSv ? "/sv/contact" : "/contact"} className="labs-footer-link">
+              {t.nav.contact}
+            </a>
+            <span className="labs-footer-sep" aria-hidden>·</span>
+            <span className="labs-footer-link labs-footer-copy">
               © {new Date().getFullYear()}
             </span>
           </div>
