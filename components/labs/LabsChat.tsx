@@ -167,6 +167,8 @@ export default function LabsChat() {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const mainRef = useRef<HTMLElement>(null);
+  const cursorGlowRef = useRef<HTMLDivElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -378,6 +380,61 @@ export default function LabsChat() {
     };
     document.addEventListener("click", onClick, false);
     return () => document.removeEventListener("click", onClick, false);
+  }, []);
+
+  // Mouse parallax for 3D background layers + cursor glow + chip hover tracking
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (window.matchMedia("(pointer: coarse)").matches) return;
+    let rafId = 0;
+    let mx = 0, my = 0, tx = 0, ty = 0;
+    const root = rootRef.current;
+    const glow = cursorGlowRef.current;
+    if (!root) return;
+
+    const onMove = (e: MouseEvent) => {
+      // Position cursor glow
+      if (glow) {
+        glow.style.left = e.clientX + "px";
+        glow.style.top = e.clientY + "px";
+      }
+      // Parallax
+      const rect = root.getBoundingClientRect();
+      tx = ((e.clientX - rect.left) / rect.width - 0.5) * 40;
+      ty = ((e.clientY - rect.top) / rect.height - 0.5) * 40;
+      // Chip radial hover (update --mx/--my on the hovered chip)
+      const chip = (e.target as Element)?.closest?.<HTMLElement>(".labs-spark-chip,.ss-chip,.labs-category-chip,.labs-quick-starter,.labs-service-card,.labs-scenario-card");
+      if (chip) {
+        const cr = chip.getBoundingClientRect();
+        const cx = ((e.clientX - cr.left) / cr.width) * 100;
+        const cy = ((e.clientY - cr.top) / cr.height) * 100;
+        chip.style.setProperty("--mx", `${cx}%`);
+        chip.style.setProperty("--my", `${cy}%`);
+      }
+      if (!rafId) rafId = requestAnimationFrame(tick);
+    };
+    const tick = () => {
+      mx += (tx - mx) * 0.08;
+      my += (ty - my) * 0.08;
+      root.style.setProperty("--labs-mouse-x", `${mx}px`);
+      root.style.setProperty("--labs-mouse-y", `${my}px`);
+      if (Math.abs(tx - mx) > 0.1 || Math.abs(ty - my) > 0.1) {
+        rafId = requestAnimationFrame(tick);
+      } else {
+        rafId = 0;
+      }
+    };
+    const onLeave = () => {
+      tx = 0; ty = 0;
+      if (!rafId) rafId = requestAnimationFrame(tick);
+    };
+    window.addEventListener("mousemove", onMove, { passive: true });
+    window.addEventListener("mouseleave", onLeave);
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseleave", onLeave);
+      cancelAnimationFrame(rafId);
+    };
   }, []);
 
   const openConversation = async (id: string) => {
@@ -845,7 +902,7 @@ export default function LabsChat() {
   }, [isChatActive, liveProfile, lang, journeyStage]);
 
   return (
-    <div className="labs-container">
+    <div ref={rootRef} className="labs-container">
       {/* 3D animated background — perspective grid + floating orbs */}
       <div className="labs-bg-3d" aria-hidden="true">
         <div className="labs-bg-grid" />
@@ -856,6 +913,12 @@ export default function LabsChat() {
           <div className="labs-bg-ring" /><div className="labs-bg-ring" /><div className="labs-bg-ring" />
         </div>
       </div>
+
+      {/* Film grain for premium feel */}
+      <div className="labs-grain" aria-hidden />
+
+      {/* Mouse cursor glow */}
+      <div className="labs-cursor-glow" aria-hidden ref={cursorGlowRef} />
 
       <LabsHeader
         onToggleHistory={() => setHistoryOpen(true)}

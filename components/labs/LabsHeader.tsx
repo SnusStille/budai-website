@@ -86,6 +86,7 @@ export default function LabsHeader({
             onClick={handleBackToBudai}
           >
             <StilledevWordmark size="sm" suffix="Labs" />
+            <span className="labs-header-pulse-dot" aria-hidden title={lang === "sv" ? "Live" : "Live"} />
           </Link>
         </div>
 
