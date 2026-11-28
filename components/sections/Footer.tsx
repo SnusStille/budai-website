@@ -4,9 +4,9 @@ import StatusPill from "@/components/ui/StatusPill";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { Github, Linkedin, Mail, ArrowUpRight, Share2 } from "lucide-react";
-import BudAIWordmark from "@/components/ui/BudAIWordmark";
 import {subscribeJourney} from "@/lib/experience/scroll";
-import BudAILogo, { StilledevMark } from "@/components/ui/BudAILogo";
+import StilledevWordmark from "@/components/ui/StilledevWordmark";
+import { StilledevMark } from "@/components/ui/BudAILogo";
 import { useLang } from "@/components/ui/LanguageContext";
 import { CONTACT_MAILTO } from "@/lib/contact";
 
@@ -96,9 +96,11 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto px-6 lg:px-8 py-14 md:py-16">
         <div className="site-footer-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 lg:gap-8">
           <div className="lg:col-span-2">
-            <Link href={lang === "sv" ? "/sv" : "/"} aria-label={lang === "sv" ? "BudAI startsida" : "BudAI home"} className="flex items-center gap-2.5 mb-5 group">
-              <BudAILogo size="md" animated />
-              <BudAIWordmark className="text-xl" />
+            <Link href={lang === "sv" ? "/sv" : "/"} aria-label={lang === "sv" ? "Stilledev startsida" : "Stilledev home"} className="flex items-center gap-3 mb-5 group">
+              <StilledevWordmark size="md" />
+              <span className="text-xs font-mono tracking-widest text-white/40 uppercase border-l border-white/10 pl-3">
+                BudAI
+              </span>
             </Link>
             <p className="text-sm text-muted leading-relaxed max-w-sm mb-6">
               {lang === "sv"

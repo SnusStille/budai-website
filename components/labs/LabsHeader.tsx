@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, Plus, ArrowLeft } from "lucide-react";
+import { Menu, Plus, ArrowLeft, Sparkles } from "lucide-react";
 import { useLang } from "@/components/ui/LanguageContext";
 import { StilledevLabsWordmark } from "@/components/ui/StilledevWordmark";
 import LangSwitcher from "@/components/ui/LangSwitcher";
@@ -13,6 +13,8 @@ interface LabsHeaderProps {
   onNewChat?: () => void;
   showHistoryButton?: boolean;
   compact?: boolean;
+  scrolled?: boolean;
+  scrollProgress?: number;
 }
 
 export default function LabsHeader({
@@ -20,6 +22,8 @@ export default function LabsHeader({
   onNewChat,
   showHistoryButton = true,
   compact = false,
+  scrolled = false,
+  scrollProgress = 0,
 }: LabsHeaderProps) {
   const { lang } = useLang();
   const t = useLabsTranslation(lang);
@@ -27,9 +31,15 @@ export default function LabsHeader({
 
   const isOnDeepLink = pathname.match(/\/(?:sv\/)?labs\/[a-f0-9-]+$/i);
   const backHref = lang === "sv" ? "/sv/labs" : "/labs";
+  const budaiHref = lang === "sv" ? "/sv" : "/";
 
   return (
-    <header className="labs-header" role="banner">
+    <header className={`labs-header ${scrolled ? "labs-scrolled" : ""}`} role="banner">
+      <div
+        className="labs-scroll-progress"
+        style={{ width: `${Math.min(100, Math.max(0, scrollProgress))}%` }}
+        aria-hidden
+      />
       <div className="labs-header-inner">
         {/* Left side */}
         <div className="labs-header-left">
@@ -58,6 +68,17 @@ export default function LabsHeader({
             aria-label="Stilledev Labs"
           >
             <StilledevLabsWordmark />
+          </Link>
+
+          {/* Vertical separator + BudAI link */}
+          <span className="labs-header-sep" aria-hidden>·</span>
+          <Link
+            href={budaiHref}
+            className="labs-header-budai-link"
+            title={lang === "sv" ? "Tillbaka till BudAI" : "Back to BudAI"}
+          >
+            <Sparkles size={11} />
+            <span>BudAI</span>
           </Link>
         </div>
 

@@ -2,7 +2,8 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Plus, X, User, ChevronRight, ArrowLeft } from "lucide-react";
+import { Send, Plus, X, User, ChevronRight, ArrowLeft, RefreshCw, Sparkles } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import { useLang } from "@/components/ui/LanguageContext";
 import LabsHeader from "@/components/labs/LabsHeader";
 import StilledevWordmark from "@/components/ui/StilledevWordmark";
@@ -25,6 +26,11 @@ import ProjectBlueprint from "@/components/labs/ProjectBlueprint";
 import { renderMarkdown } from "@/lib/labs/markdown";
 import { WebsiteDemo, WebAppDemo, GameDemo, RobloxDemo, AutomationDemo } from "./SolutionDemos";
 import ProjectJourney from "./ProjectJourney";
+import ProjectSummaryCard from "./ProjectSummaryCard";
+import SmartSuggestions from "./SmartSuggestions";
+import LiveUnderstanding from "./LiveUnderstanding";
+import FeedbackButton from "./FeedbackButton";
+import TypingIndicator from "./TypingIndicator";
 
 type Message = {
   id?: string;
@@ -119,6 +125,7 @@ export default function LabsChat() {
   const { lang } = useLang();
   const t = useLabsTranslation(lang);
   const isSv = lang === "sv";
+  const searchParams = useSearchParams();
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -137,8 +144,18 @@ export default function LabsChat() {
   const [selectedService, setSelectedService] = useState<ServiceCategory | null>(null);
   const [showProcess, setShowProcess] = useState(false);
   const [blueprintShown, setBlueprintShown] = useState(false);
+  const [summaryShown, setSummaryShown] = useState(false);
+  const [summaryProfile, setSummaryProfile] = useState<any | null>(null);
+  const [summaryConfirmed, setSummaryConfirmed] = useState(false);
+  const [summarySubmitted, setSummarySubmitted] = useState(false);
+  const [submittingBrief, setSubmittingBrief] = useState(false);
+  const [copiedToast, setCopiedToast] = useState(false);
+  const [liveProfile, setLiveProfile] = useState<any | null>(null);
+  const [scrolled, setScrolled] = useState(false);
+  const [scrollProgress, setScrollProgress] = useState(0);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const mainRef = useRef<HTMLElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
 
@@ -165,9 +182,38 @@ export default function LabsChat() {
 
   useEffect(() => { void loadConversations(); }, [loadConversations]);
 
+  // Scroll progress indicator + header shadow on scroll
+  useEffect(() => {
+    const onScroll = () => {
+      const scrollY = window.scrollY;
+      setScrolled(scrollY > 8);
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      setScrollProgress(docHeight > 0 ? (scrollY / docHeight) * 100 : 0);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   useEffect(() => {
     const match = window.location.pathname.match(/\/(?:sv\/)?labs\/([a-f0-9-]+)/i);
-    if (match) void openConversation(match[1]);
+    if (match) { void openConversation(match[1]); return; }
+    // Handle URL intent: ?intent=existing or ?intent=idea
+    const intent = searchParams.get("intent");
+    if (intent === "existing" || intent === "idea") {
+      const flow = t.scenarios.dedicatedFlows?.[intent as "existing" | "idea"];
+      if (flow) {
+        setTimeout(() => {
+          setInput(flow.prompt);
+          setTimeout(() => textareaRef.current?.focus(), 100);
+        }, 600);
+      }
+    }
+    const ref = searchParams.get("ref");
+    if (ref) {
+      // Track referral source in first user message context (we'll let it pass naturally)
+      sessionStorage.setItem("labs_ref", ref);
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -199,9 +245,121 @@ export default function LabsChat() {
     setSelectedService(null);
     setShowProcess(false);
     setBlueprintShown(false);
+    setSummaryShown(false);
+    setSummaryProfile(null);
+    setSummaryConfirmed(false);
+    setSummarySubmitted(false);
+    setLiveProfile(null);
     setHistoryOpen(false);
     window.history.replaceState({}, "", isSv ? "/sv/labs" : "/labs");
     setTimeout(() => textareaRef.current?.focus(), 100);
+  };
+
+  const confirmBrief = async () => {
+    if (submittingBrief || summarySubmitted || summaryConfirmed) return;
+    setSubmittingBrief(true);
+    setSummaryConfirmed(true);
+
+    // Check if we already have contact info (email) from the conversation
+    let hasEmail = false;
+    let hasName = false;
+    try {
+      // Scan all messages for email/name
+      const allText = messages.map(m => m.content).join("\n");
+      const detected = detectContactInfo(allText);
+      const emailVal = detected.email;
+      const phoneVal = detected.phone;
+      if (emailVal) {
+        hasEmail = true;
+        setContactForm(prev => ({ ...prev, email: emailVal, phone: phoneVal || prev.phone }));
+      }
+      // Detect name from profile
+      const profName = summaryProfile?.customer?.name;
+      if (profName) {
+        hasName = true;
+        setContactForm(prev => ({ ...prev, name: profName }));
+      } else {
+        const nameMatch = allText.match(/(?:jag heter|mitt namn är|my name is|i(?:'| a)m )([a-zåäö][a-zåäö]+)/i);
+        if (nameMatch && nameMatch[1].length >= 2) {
+          hasName = true;
+          const capName = nameMatch[1].charAt(0).toUpperCase() + nameMatch[1].slice(1).toLowerCase();
+          setContactForm(prev => ({ ...prev, name: capName }));
+        }
+      }
+    } catch {}
+
+    try {
+      if (!hasEmail && !contactSubmitted) {
+        // Open contact form so customer can provide email before final submission
+        setContactOpen(true);
+        setSubmittingBrief(false);
+        // Don't send the message yet — the contact form submission will trigger final send
+        return;
+      }
+
+      const confirmMsg = isSv
+        ? "Jag bekräftar sammanfattningen. Den ser korrekt ut. Skicka den till Oliver."
+        : "I confirm the summary. It looks correct. Please send it to Oliver.";
+      await sendMessage(confirmMsg);
+    } catch {
+      setSummaryConfirmed(false);
+    } finally {
+      setSubmittingBrief(false);
+    }
+  };
+
+  const editBriefField = (field: string, currentValue?: string) => {
+    const fieldLabelsSv: Record<string,string> = {
+      need: "Jag vill korrigera mitt behov: ",
+      audience: "Jag vill förtydliga målgruppen: ",
+      budget: "Min budget är: ",
+      timeline: "Föredragen tidsplan är: ",
+    };
+    const fieldLabelsEn: Record<string,string> = {
+      need: "I'd like to correct what I need: ",
+      audience: "I'd like to clarify the audience: ",
+      budget: "My budget is: ",
+      timeline: "Preferred timeline: ",
+    };
+    const prefix = (isSv ? fieldLabelsSv : fieldLabelsEn)[field] || (isSv ? "Jag vill ändra: " : "I want to change: ");
+    setInput(prefix);
+    setSummaryShown(false);
+    setTimeout(() => {
+      textareaRef.current?.focus();
+      const el = textareaRef.current;
+      if (el) el.setSelectionRange(el.value.length, el.value.length);
+    }, 50);
+  };
+
+  const addToBrief = () => {
+    const prefix = isSv ? "Jag vill lägga till: " : "I want to add: ";
+    setInput(prefix);
+    setSummaryShown(false);
+    setTimeout(() => {
+      textareaRef.current?.focus();
+      const el = textareaRef.current;
+      if (el) el.setSelectionRange(el.value.length, el.value.length);
+    }, 50);
+  };
+
+  const copyContinueLink = async () => {
+    if (!conversationId) return;
+    const base = window.location.origin;
+    const prefix = isSv ? "/sv/labs/" : "/labs/";
+    const url = base + prefix + conversationId;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopiedToast(true);
+      setTimeout(() => setCopiedToast(false), 2200);
+    } catch {
+      // fallback
+      const ta = document.createElement("textarea");
+      ta.value = url;
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand("copy"); setCopiedToast(true); setTimeout(() => setCopiedToast(false), 2200); } catch {}
+      ta.remove();
+    }
   };
 
   const selectService = (service: ServiceDef) => {
@@ -328,10 +486,22 @@ export default function LabsChat() {
           }
         }
 
-        // Check if this response contains a blueprint-ready profile
+        // Extract profile from AI response (v4 profile with all metadata)
         const prof = extractProfile(fullText);
         const shouldShowBlueprint = prof.profile?.blueprint_ready && !blueprintShown;
         if (shouldShowBlueprint && prof.profile) setBlueprintShown(true);
+
+        // Live understanding — update visible profile for the panel
+        if (prof.profile) setLiveProfile(prof.profile);
+
+        // v4: Detect when AI proposes a summary (awaiting_confirmation stage)
+        if (prof.profile?.conversation_stage === "awaiting_confirmation" && !summaryShown && prof.profile) {
+          setSummaryShown(true);
+          setSummaryProfile(prof.profile);
+        }
+        if (prof.profile?.conversation_stage === "submitted") {
+          setSummarySubmitted(true);
+        }
 
         setMessages((prev) => {
           const updated = [...prev];
@@ -389,6 +559,19 @@ export default function LabsChat() {
       if (res.ok) {
         setContactSubmitted(true);
         setContactOpen(false);
+
+        // If customer was confirming the summary, now also send the brief confirmation
+        if (summaryConfirmed && summaryShown && !summarySubmitted) {
+          const briefConfirmMsg = isSv
+            ? "Jag har angett mina kontaktuppgifter. Skicka projektbriefen till Oliver."
+            : "I've provided my contact details. Please send the project brief to Oliver.";
+          // Small delay so the contact-success message shows first
+          setTimeout(() => {
+            void sendMessage(briefConfirmMsg);
+            setSummarySubmitted(true);
+          }, 400);
+        }
+
         const confirmMsg: Message = {
           role: "assistant",
           content: isSv
@@ -414,9 +597,11 @@ export default function LabsChat() {
         onToggleHistory={() => setHistoryOpen(true)}
         onNewChat={startNewChat}
         showHistoryButton={conversations.length > 0 || isChatActive}
+        scrolled={scrolled}
+        scrollProgress={scrollProgress}
       />
 
-      <main className="labs-main">
+      <main ref={mainRef} className="labs-main">
         {errorMsg && <div className="labs-error" role="alert">{errorMsg}</div>}
 
         {isWelcome ? (
@@ -508,6 +693,54 @@ export default function LabsChat() {
                 ))}
               </div>
             </motion.div>
+
+            {/* Dedicated flows — Existing Project / Idea to MVP */}
+            {t.scenarios.dedicatedFlows && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.5, delay: 0.34 }}
+                className="labs-flows-section"
+              >
+                <p className="labs-section-label">{t.scenarios.dedicatedFlows.label}</p>
+                <div className="labs-flows-grid">
+                  <motion.button
+                    type="button"
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.35, delay: 0.38 }}
+                    onClick={() => {
+                      setInput(t.scenarios.dedicatedFlows.existing.prompt);
+                      setTimeout(() => textareaRef.current?.focus(), 80);
+                    }}
+                    className="labs-flow-card"
+                  >
+                    <span className="labs-flow-card-icon"><RefreshCw size={14} /></span>
+                    <span className="labs-flow-tag">{t.scenarios.dedicatedFlows.existing.tag}</span>
+                    <span className="labs-flow-title">{t.scenarios.dedicatedFlows.existing.title}</span>
+                    <span className="labs-flow-desc">{t.scenarios.dedicatedFlows.existing.desc}</span>
+                    <ChevronRight className="labs-flow-arrow" size={16} />
+                  </motion.button>
+                  <motion.button
+                    type="button"
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.35, delay: 0.43 }}
+                    onClick={() => {
+                      setInput(t.scenarios.dedicatedFlows.idea.prompt);
+                      setTimeout(() => textareaRef.current?.focus(), 80);
+                    }}
+                    className="labs-flow-card"
+                  >
+                    <span className="labs-flow-card-icon"><Sparkles size={14} /></span>
+                    <span className="labs-flow-tag">{t.scenarios.dedicatedFlows.idea.tag}</span>
+                    <span className="labs-flow-title">{t.scenarios.dedicatedFlows.idea.title}</span>
+                    <span className="labs-flow-desc">{t.scenarios.dedicatedFlows.idea.desc}</span>
+                    <ChevronRight className="labs-flow-arrow" size={16} />
+                  </motion.button>
+                </div>
+              </motion.div>
+            )}
 
             {/* Process section — 5 steps */}
             <motion.div
@@ -678,9 +911,15 @@ export default function LabsChat() {
             )}
 
             <ProjectJourney stage={journeyStage} lang={lang} visible={isChatActive && journeyStage !== "discovery"} />
+
+            {/* Live Understanding panel — discrete real-time "what we know" */}
+            {isChatActive && liveProfile && (
+              <LiveUnderstanding profile={liveProfile} lang={lang} labels={t.liveUnderstanding} stage={journeyStage} />
+            )}
+
             <div className="labs-messages" role="log" aria-live="polite">
               {messages.map((msg, i) => (
-                <div key={i} className={`labs-message ${msg.role}`}>
+                <div key={i} className={`labs-message ${msg.role} ${streamingCursor && i === messages.length - 1 && msg.role === "assistant" ? "labs-thinking" : ""}`}>
                   <div className={`labs-message-avatar ${msg.role}`} aria-hidden>
                     {msg.role === "user" ? (
                       <User size={14} />
@@ -693,19 +932,64 @@ export default function LabsChat() {
                       {msg.role === "user" ? (isSv ? "Du" : "You") : "BudAI"}
                     </div>
                     <div className="labs-message-content">
-                      {msg.role === "assistant" ? renderMarkdown(msg.content) : msg.content}
-                      {streamingCursor && i === messages.length - 1 && msg.role === "assistant" && (
+                      {msg.role === "assistant" && msg.content.length === 0 && isStreaming && i === messages.length - 1 ? (
+                        <TypingIndicator />
+                      ) : msg.role === "assistant" ? renderMarkdown(msg.content) : msg.content}
+                      {streamingCursor && i === messages.length - 1 && msg.role === "assistant" && msg.content.length > 0 && (
                         <span className="labs-streaming-cursor" aria-hidden />
                       )}
                     </div>
                     {msg.blueprint && (
                       <ProjectBlueprint data={msg.blueprint} lang={lang} />
                     )}
+                    {/* Smart Suggestions: after last assistant message, done streaming, no summary */}
+                    {i === messages.length - 1 && msg.role === "assistant" && !isStreaming && !summaryShown && msg.content.length > 20 && (
+                      <SmartSuggestions
+                        lastMessage={msg.content}
+                        lang={lang}
+                        stage={journeyStage}
+                        onPick={(text) => { setInput(text); setTimeout(() => textareaRef.current?.focus(), 30); }}
+                      />
+                    )}
                   </div>
                 </div>
               ))}
               <div ref={messagesEndRef} className="labs-messages-end" />
             </div>
+
+            {/* Project Summary Card — shows when AI reaches awaiting_confirmation */}
+            {summaryShown && summaryProfile && !summarySubmitted && (
+              <ProjectSummaryCard
+                data={{
+                  project_title: summaryProfile.project_title,
+                  customer_goal: summaryProfile.customer_goal,
+                  target_audience: summaryProfile.target_audience,
+                  problem: summaryProfile.problem,
+                  proposed_solution: summaryProfile.proposed_solution,
+                  key_features: summaryProfile.key_features,
+                  nice_to_have_features: summaryProfile.nice_to_have_features,
+                  budget: summaryProfile.budget,
+                  timeline: summaryProfile.timeline,
+                  recommended_mvp: summaryProfile.recommended_mvp || summaryProfile.executive_summary,
+                  labels: t.summary,
+                }}
+                onConfirm={() => void confirmBrief()}
+                onInlineEdit={editBriefField}
+                onAddInfo={addToBrief}
+                confirmed={summaryConfirmed}
+                submitted={summarySubmitted}
+                confidence={summaryProfile.summary_confidence || 70}
+                lang={lang}
+              />
+            )}
+
+            {/* Post-submission confirmation banner */}
+            {summarySubmitted && (
+              <div className="labs-submitted-banner">
+                <h4>{t.submitted.title}</h4>
+                <p>{t.submitted.body}</p>
+              </div>
+            )}
 
             <div className="labs-input-wrap">
               <div className="labs-input-container">
@@ -730,10 +1014,36 @@ export default function LabsChat() {
                   <Send size={16} />
                 </button>
               </div>
-              <div className="labs-input-footer" style={{ justifyContent: "center" }}>
+              <div className="labs-input-footer">
+                <div className="labs-input-footer-left">
+                  {conversationId && isChatActive && (
+                    <button
+                      type="button"
+                      className="labs-continue-later"
+                      onClick={copyContinueLink}
+                      title={t.continueLater.label}
+                    >
+                      {t.continueLater.label}
+                    </button>
+                  )}
+                </div>
                 <p className="labs-disclaimer">{t.footer.disclaimer}</p>
               </div>
             </div>
+
+            {/* Copied-to-clipboard toast */}
+            <AnimatePresence>
+              {copiedToast && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  className="labs-copied-toast"
+                >
+                  {t.continueLater.copied}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </>
         )}
 
@@ -778,10 +1088,27 @@ export default function LabsChat() {
           <div className="labs-footer-brand">
             <StilledevWordmark size="sm" showTagline={false} />
           </div>
-          <p className="labs-footer-text">{t.footer.tagline}</p>
+          {isChatActive && (
+            <div className="labs-conv-progress" aria-hidden>
+              <span>{isSv ? "Framsteg" : "Progress"}</span>
+              <span className="labs-conv-dots">
+                {["discovery","scoping","assessment","blueprint_ready","conclusion_proposed","submitted"].map((stage, idx) => {
+                  const stages = ["discovery","scoping","assessment","blueprint_ready","conclusion_proposed","submitted"];
+                  const curIdx = stages.indexOf(journeyStage);
+                  const state = idx < curIdx ? "done" : idx === curIdx ? "active" : "";
+                  return <span key={stage} className={`labs-conv-dot ${state}`} />;
+                })}
+              </span>
+            </div>
+          )}
+          {!isChatActive && <p className="labs-footer-text">{t.footer.tagline}</p>}
           <div className="labs-footer-links">
             <a href={isSv ? "/sv" : "/"} className="labs-footer-link">
-              {isSv ? "Stilledev" : "Stilledev"}
+              BudAI
+            </a>
+            <span style={{ color: "var(--labs-text-faint)", fontSize: 8 }}>·</span>
+            <a href={isSv ? "/sv" : "/"} className="labs-footer-link">
+              Stilledev
             </a>
             <span style={{ color: "var(--labs-text-faint)", fontSize: 8 }}>·</span>
             <span className="labs-footer-link" style={{ cursor: "default" }}>
@@ -790,6 +1117,9 @@ export default function LabsChat() {
           </div>
         </footer>
       </main>
+
+      {/* Feedback FAB */}
+      <FeedbackButton lang={lang} conversationId={conversationId} />
 
       {/* History panel */}
       <AnimatePresence>
@@ -860,6 +1190,13 @@ export default function LabsChat() {
                   <X size={18} />
                 </button>
               </div>
+              {summaryConfirmed && !summarySubmitted && (
+                <div className="labs-contact-context">
+                  {isSv
+                    ? "Nästan klart! Fyll i dina uppgifter nedan så skickas projektbriefen direkt till Oliver. Han återkommer personligen inom 1 arbetsdag."
+                    : "Almost done! Fill in your details below and the project brief will be sent directly to Oliver. He'll get back to you personally within 1 working day."}
+                </div>
+              )}
               <p className="labs-modal-subtitle">{t.contact.subtitle}</p>
               <form onSubmit={submitContact}>
                 <div className="labs-field">
